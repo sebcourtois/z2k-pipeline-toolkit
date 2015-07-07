@@ -1,0 +1,6 @@
+[submodule "python/shotgun-python-api"]
+	path = python/shotgun-python-api
+	url = https://github.com/2Minutes/shotgun-python-api.git
+[submodule "python/cg-pypeline-toolkit"]
+	path = python/cg-pypeline-toolkit
+	url = https://github.com/sebcourtois/cg-pypeline-toolkit.git
