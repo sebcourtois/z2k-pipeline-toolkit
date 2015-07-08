@@ -1,0 +1,1 @@
+"C:\Python27\python.exe" "%~dp0launchers\paris\setup_env_tools.py" False True
