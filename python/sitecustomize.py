@@ -1,4 +1,6 @@
 import site
 import os
 
-site.addsitedir(os.path.dirname(__file__))
+sSitePath = os.path.dirname(__file__)
+print "adding python site: '{}'".format(sSitePath) 
+site.addsitedir(sSitePath)
