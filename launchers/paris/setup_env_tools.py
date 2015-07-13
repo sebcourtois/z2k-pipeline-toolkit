@@ -97,7 +97,7 @@ At least 2 arguments expected :
 
 	bSetEnvs = False if sys.argv[1] != "True" else True
 	bUpdate = False if sys.argv[2] != "True" else True
-	sAppPath = sys.argv[3] if len(sys.argv) > 3 else ""
+	sAppPath = " ".join(sys.argv[3:]) if len(sys.argv) > 3 else ""
 
 	print ""
 	launch(bSetEnvs, bUpdate, sAppPath)
