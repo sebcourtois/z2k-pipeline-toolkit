@@ -1,4 +1,5 @@
 import pymel.core as pc
+import tkMayaCore as tkc
 
 '''
 Temporary module to manage modeling
@@ -12,6 +13,12 @@ identified checks
 
 '''
 
+SPECNAMES = {"grp_geo":"ctrl_global"}
+CTRLS_SIZE = 1.0
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 def getObj(in_sName):
     obj = None
@@ -28,6 +35,9 @@ def showErrors(in_errorsList, in_stoppedDef=None):
     else:
         pc.warning("\n".join(errorsList))
 
+# ---------------------------------------------------------------------------
+# createBS
+# ---------------------------------------------------------------------------
 
 def createBS():
     sel = pc.ls(sl=True)
@@ -137,3 +147,63 @@ def createBS():
     
     #And delete "BS" group.
     pc.delete(bsRoot)
+
+# ---------------------------------------------------------------------------
+# RigSet
+# ---------------------------------------------------------------------------
+
+def cleanSet(inRoot):
+    children = tkc.getChildren(inRoot, False)
+    
+    for child in children:
+        if child.name() == "grp_rig":
+            pc.delete(child)
+            return
+
+    return
+
+def createSetControlRecur(inGrp, inRoot):
+    ctrlName = inGrp.name().replace("grp_", "ctrl_")
+    icon = None
+    
+    if inGrp.name() in SPECNAMES:
+        ctrlName = SPECNAMES[inGrp.name()]
+        icon = tkc.createCubeIcon(ctrlName, size=CTRLS_SIZE, scale=(1, 0.001, 1))
+        tkc.setObjectColor(pc.ls(sl=True)[0], [255, 255, 0, 0])
+    else:
+        icon = tkc.createRingsIcon(ctrlName, size=CTRLS_SIZE)
+        tkc.setObjectColor(pc.ls(sl=True)[0], [255, 255, 255, 0])
+    
+    pc.parent(icon, inRoot)
+    tkc.matchTRS(icon, inGrp)
+    tkc.setNeutralPose(icon)
+    tkc.constrain(inGrp, icon, "Pose")
+    
+    children = tkc.getChildren(inGrp, False)
+    
+    for child in children:
+        if child.name()[:4] == "grp_" and child.getShape() == None:
+            createSetControlRecur(child, icon)
+
+def rigSet(inRoot):
+    children = tkc.getChildren(inRoot, False)
+    
+    valid = True
+    
+    if not "grp_geo" in [a.name() for a in children]:
+        pc.warning("Root is supposed to have at least one 'grp_geo' child !")
+        valid=False
+
+    for child in children:
+        if child.name() != "grp_geo" and child.name() != "grp_placeHolders" and child.name() != "grp_rig":
+            pc.warning("Unexpected asset root child {0} (expected 'grp_geo', and eventually 'grp_placeHolders' or 'grp_rig')".format(child.name()))
+            valid=False
+
+    if not valid:
+        return None
+        
+    cleanSet(inRoot)
+    
+    grp_rig = pc.group(name="grp_rig", empty=True, parent=inRoot)
+    
+    createSetControlRecur(children[0], grp_rig)
