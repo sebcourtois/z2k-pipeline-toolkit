@@ -7,3 +7,6 @@
 [submodule "python/davos-dev"]
 	path = python/davos-dev
 	url = https://github.com/2Minutes/davos-dev.git
+[submodule "python/pypeline-tool-devkit"]
+	path = python/pypeline-tool-devkit
+	url = https://github.com/sebcourtois/pypeline-tool-devkit.git
