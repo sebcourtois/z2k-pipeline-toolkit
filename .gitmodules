@@ -4,3 +4,6 @@
 [submodule "python/cg-pypeline-toolkit"]
 	path = python/cg-pypeline-toolkit
 	url = https://github.com/sebcourtois/cg-pypeline-toolkit.git
+[submodule "python/davos-dev"]
+	path = python/davos-dev
+	url = https://github.com/2Minutes/davos-dev.git
