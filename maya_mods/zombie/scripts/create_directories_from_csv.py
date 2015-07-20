@@ -6,8 +6,8 @@ import csv
 
 from PySide import QtGui
 
-from pytk.framework.util.fsutils import joinPath, iterPaths, ignorePatterns, copyFile
-from pytk.framework.util.sysutils import toStr
+from pytd.util.fsutils import joinPath, iterPaths, ignorePatterns, copyFile
+from pytd.util.sysutils import toStr
 
 ospth = os.path
 
