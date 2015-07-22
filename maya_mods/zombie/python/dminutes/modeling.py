@@ -23,17 +23,17 @@ CTRLS_SIZE = 1.0
 def getObj(in_sName):
     obj = None
     try:
-        obj = pc.PyNode(inName)
-    except:
-        pass
+        obj = pc.PyNode(in_sName)
+    except Exception, e:
+        print e
     return obj
  
 
 def showErrors(in_errorsList, in_stoppedDef=None):
     if in_stoppedDef != None:
-        pc.error(stoppedDef + " has stopped with errors:\n" + "\n".join(in_errorsList))
+        pc.error(in_stoppedDef + " has stopped with errors:\n" + "\n".join(in_errorsList))
     else:
-        pc.warning("\n".join(errorsList))
+        pc.warning("\n".join(in_errorsList))
 
 # ---------------------------------------------------------------------------
 # createBS
@@ -72,14 +72,15 @@ def createBS():
          showErrors(errors, "createBS")
          
     variation = ""
-    assetType, characterName, step = (chunk for chunk in splitName)
-    
-    if len(splitName) > 3:
-        variation = splitName[2]
-        step = splitName[3]
-    
+    assetType, characterName, variation, step = ["unknown", "unknown", "unknown", "unknown"]
+
+    if len(splitName) == 3:
+        assetType, characterName, step = splitName
+    elif len(splitName) > 3:
+        assetType, characterName, variation, step = (chunk for chunk in splitName)
+
     if assetType != "chr":
-        errors.append("Detected type is unknown" % assetType)
+        errors.append("Detected type is unknown ('%s')" % assetType)
         showErrors(errors)
     
     #Make sure that "Geometries" exists.
@@ -90,7 +91,7 @@ def createBS():
         showErrors(errors, "createBS")
     
     #Make sure that "BS" exists...
-    objname = "%s:%s" % (ns, "BS")
+    objname = "%s:%s" % (ns, "grp_BS")
     bsRoot = getObj(objname)
     if bsRoot == None:
         errors.append("BlendShapes root cannot be found ('%s')" % objname)
