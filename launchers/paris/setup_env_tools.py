@@ -45,7 +45,7 @@ def loadEnviron():
 	print " - SET {0} = {1}".format("MAYA_MODULE_PATH", modulePathNew)
 	os.environ["MAYA_MODULE_PATH"] = modulePathNew
 
-	os.environ["Z2K_DEV_ENV"] = str(int(isDev))
+	os.environ["DEV_MODE_ENV"] = str(int(isDev))
 
 	print ""
 
