@@ -109,7 +109,7 @@ def createOutlines():
         cns = pc.listConnections(origObj, type="constraint", destination=False)
         if len(cns) > 0:
             target = pc.listConnections(cns[0].name() + '.target', destination=False)
-            pc.parentConstraint( target, dupe, mo=True )
+            pc.parentConstraint( target[0], dupe, mo=True )
     
         cnt += 1
     
