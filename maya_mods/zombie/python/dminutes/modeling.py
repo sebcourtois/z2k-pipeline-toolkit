@@ -1,5 +1,6 @@
 import pymel.core as pc
 import tkMayaCore as tkc
+import pymel.core.datatypes as dt
 
 '''
 Temporary module to manage modeling
@@ -15,6 +16,11 @@ identified checks
 
 SPECNAMES = {"grp_geo":"ctrl_global"}
 CTRLS_SIZE = 1.0
+
+CTRL_SETNAME = "set_ctrls"
+GEOMETRIES_LAYERNAME = "layer_geometries"
+
+DISPLAYS_CACHE_ATTRNAME = "rig_displays"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -158,12 +164,31 @@ def cleanSet(inRoot):
     
     for child in children:
         if child.name() == "grp_rig":
+            #Save the rig data (displays) and serialize a dictionary of disctionaries in a custom attribute of root
+            dispDict = {}
+            if pc.objExists(CTRL_SETNAME):
+                ctrls = pc.sets(CTRL_SETNAME, query=True)
+
+                for ctrl in ctrls:
+                    disp = tkc.getDisplay(ctrl)
+                    if disp != None:
+                        #disp = ([(disp[0][0][0], disp[0][0][1], disp[0][0][2]), (disp[0][1][0], disp[0][1][1], disp[0][1][2]), disp[0][2]], disp[1], disp[2])
+                        dispDict[ctrl.name()] = (disp, pc.getAttr(ctrl.getShape().name() + ".overrideColor"))
+
+            if not pc.attributeQuery(DISPLAYS_CACHE_ATTRNAME, node=inRoot, exists=True):
+                inRoot.addAttr(DISPLAYS_CACHE_ATTRNAME, dt="string")
+
+            pc.setAttr(inRoot.name() + "." + DISPLAYS_CACHE_ATTRNAME, str(dispDict))
+
+            #Finally delete the rig Root 
             pc.delete(child)
             return
 
     return
 
 def createSetControlRecur(inGrp, inRoot):
+    createdObjs = ([], [])
+
     ctrlName = inGrp.name().replace("grp_", "ctrl_")
     icon = None
     
@@ -179,12 +204,28 @@ def createSetControlRecur(inGrp, inRoot):
     tkc.matchTRS(icon, inGrp)
     tkc.setNeutralPose(icon)
     tkc.constrain(inGrp, icon, "Pose")
+
+    createdObjs[0].append(icon)
     
     children = tkc.getChildren(inGrp, False)
     
+    grpsChildren = []
+
     for child in children:
-        if child.name()[:4] == "grp_" and child.getShape() == None:
-            createSetControlRecur(child, icon)
+        shape = child.getShape()
+        if child.name()[:4] == "grp_" and shape == None:
+            grpsChildren.append(child) 
+        elif shape !=None and shape.type() == "mesh":
+            createdObjs[1].append(child)
+        else:
+            pc.warning('Unmanaged object {}'.format(child.name()))
+
+    for grpChild in grpsChildren:
+        subCreatedObjs = createSetControlRecur(grpChild, icon)
+        createdObjs[0].extend(subCreatedObjs[0])
+        createdObjs[1].extend(subCreatedObjs[1])
+
+    return createdObjs
 
 def rigSet(inRoot):
     children = tkc.getChildren(inRoot, False)
@@ -202,9 +243,38 @@ def rigSet(inRoot):
 
     if not valid:
         return None
-        
+    
     cleanSet(inRoot)
     
     grp_rig = pc.group(name="grp_rig", empty=True, parent=inRoot)
     
-    createSetControlRecur(children[0], grp_rig)
+    ctrls, geos = createSetControlRecur(children[0], grp_rig)
+
+    #We can try to reApply displays if saved
+    if pc.attributeQuery(DISPLAYS_CACHE_ATTRNAME, node=inRoot, exists=True):
+        try:
+            displaysDict = eval(pc.getAttr(inRoot.name() + "." + DISPLAYS_CACHE_ATTRNAME))
+            for ctrl in ctrls:
+                if ctrl.name() in displaysDict:
+                    display, color = displaysDict[ctrl.name()]
+                    tkc.setDisplay(ctrl, trs=display[0], size=display[1], select=False, displayName=display[2])
+                    realColor = tkc.getColorFromMayaColor(color)
+                    tkc.setObjectColor(ctrl, realColor)
+        except:
+            pc.warning('Cannot reapply displays !')
+
+    #Put all controls in a set
+    if pc.objExists(CTRL_SETNAME):
+        pc.delete(CTRL_SETNAME)
+
+    pc.sets(ctrls, name=CTRL_SETNAME)
+
+    #Put all geometries in a layer, and set it to "reference"
+    if pc.objExists(GEOMETRIES_LAYERNAME):
+        pc.delete(GEOMETRIES_LAYERNAME)
+
+    pc.select(geos)
+    newLayer = pc.createDisplayLayer(name=GEOMETRIES_LAYERNAME)
+    pc.setAttr(newLayer + ".displayType", 2)
+
+    pc.select(clear=True)
