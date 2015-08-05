@@ -1,0 +1,1 @@
+"C:\Python27\python.exe" "%~dp0setup_env_tools.py" True True "C:\Program Files\Autodesk\Maya2016\bin\maya.exe"
