@@ -4,10 +4,11 @@ import subprocess
 
 # Common envs, may be different for each studio
 ENVS = {
-		"ZOMBI_TOOL_PATH":"\\\\Diskstation\\z2k\\05_3D\\zombillenium\\tool",
-		"ZOMBI_ASSET_DIR":"\\\\Diskstation\\z2k\\05_3D\\zombillenium\\asset",
-		"ZOMBI_SHOT_DIR":"\\\\Diskstation\\z2k\\05_3D\\zombillenium\\shot",
-		"ZOMBI_OUTPUT_DIR":"\\\\Diskstation\\z2k\\05_3D\\zombillenium\\output",
+		"PRIVATE_ROOT_PATH":'\\\\Diskstation\\Projects\\private\\${OPERATOR}\\zombillenium',
+		"ZOMBI_TOOL_PATH":"\\\\Diskstation\\Projects\\zombillenium\\tool",
+		"ZOMBI_ASSET_DIR":"\\\\Diskstation\\Projects\\zombillenium\\asset",
+		"ZOMBI_SHOT_DIR":"\\\\Diskstation\\Projects\\zombillenium\\shot",
+		"ZOMBI_OUTPUT_DIR":"\\\\Diskstation\\Projects\\zombillenium\\output",
 		}
 
 
@@ -77,7 +78,7 @@ def launch(bSetEnvs, bUpdate, sAppPath=""):
 	if bSetEnvs:
 		loadEnviron()
 
-	if bUpdate:
+	if bUpdate and not isDev:
 		updateLocalCopy()
 
 	if sAppPath:
