@@ -4,13 +4,12 @@ import subprocess
 
 # Common envs, may be different for each studio
 ENVS = {
-		"PRIVATE_ROOT_PATH":'\\\\Diskstation\\Projects\\private\\${OPERATOR}\\zombillenium',
-		"ZOMBI_TOOL_PATH":"\\\\Diskstation\\Projects\\zombillenium\\tool",
-		"ZOMBI_ASSET_DIR":"\\\\Diskstation\\Projects\\zombillenium\\asset",
-		"ZOMBI_SHOT_DIR":"\\\\Diskstation\\Projects\\zombillenium\\shot",
-		"ZOMBI_OUTPUT_DIR":"\\\\Diskstation\\Projects\\zombillenium\\output",
+		"ZOMBI_PRIVATE_PATH":'\\\\Diskstation\\Projects\\private\\${DAM_USER}\\zomb',
+		"ZOMBI_TOOL_PATH":"\\\\Diskstation\\Projects\\zomb\\tool",
+		"ZOMBI_ASSET_DIR":"\\\\Diskstation\\Projects\\zomb\\asset",
+		"ZOMBI_SHOT_DIR":"\\\\Diskstation\\Projects\\zomb\\shot",
+		"ZOMBI_OUTPUT_DIR":"\\\\Diskstation\\Projects\\zomb\\output",
 		}
-
 
 sCurDirPath, _ = os.path.split(os.path.abspath(__file__))
 
@@ -45,7 +44,6 @@ def loadEnviron():
 
 	print " - SET {0} = {1}".format("MAYA_MODULE_PATH", modulePathNew)
 	os.environ["MAYA_MODULE_PATH"] = modulePathNew
-
 	os.environ["DEV_MODE_ENV"] = str(int(isDev))
 
 	print ""
