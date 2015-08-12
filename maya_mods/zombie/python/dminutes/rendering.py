@@ -65,7 +65,7 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultRenderGlobals.putFrameBeforeExt",1)
     mc.setAttr("defaultRenderGlobals.extensionPadding",4)
     mc.setAttr("defaultRenderGlobals.currentRenderer","arnold", type = "string")
-    mc.setAttr("defaultRenderGlobals.imageFilePrefix","" ,type = "string")
+    #mc.setAttr("defaultRenderGlobals.imageFilePrefix","" ,type = "string")
 
 
     #arnold Settings
@@ -84,15 +84,21 @@ def setArnoldRenderOption(outputFormat):
 
         myAOVs = AOVInterface()
         #create aovs, type = rgb
-        aovNameList = ["mn_incandescence","mn_color_ambient", "mn_color_diffuse", "mn_lambert", "mn_toon" ]
+        aovNameList = ["dmn_incandescence","dmn_ambient", "dmn_diffuse", "dmn_lambert", "dmn_toon" ]
         for eachAovName in aovNameList: 
             if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
                 myAOVs.addAOV( eachAovName, aovType=5)
         #create aovs, type = float   
-        aovNameList = ["mn_incidence","mn_shadow_mask", "mn_occlusion" ]
+        aovNameList = ["dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour" ]
         for eachAovName in aovNameList: 
             if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
-                myAOVs.addAOV( eachAovName, aovType=4)
+                #myAOVs.addAOV( eachAovName, aovType=4) # desactivated so everything in rgb for the moment
+                myAOVs.addAOV( eachAovName, aovType=5)
+        #create aovs, type = rgba
+        aovNameList = ["dmn_mask00","dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04" ]
+        for eachAovName in aovNameList: 
+            if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
+                myAOVs.addAOV( eachAovName, aovType=6)
                 
         
     
