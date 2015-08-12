@@ -104,6 +104,22 @@ def conformShaderName(shadEngineList = "selection"):
 
     for each in wrongShadEngine:
         print "#### warning: 'conformShaderNames': "+each[0]+"   -->   "+each[1]
+
+
+def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
+    """
+    reference a camera for shading purpose. This tools is not to use for shot bulding.
+        cameraName (string): the camera name you want to reference
+        fileType(string): specify if the '.ma' or '.mb' file is to reference
+    """
+    zombie_asset_dir =  os.environ["ZOMBI_ASSET_DIR"]
+    shading_cam_filename =  os.path.join("$ZOMBI_ASSET_DIR", "cam",cameraName,cameraName+fileType)
+    
+    
+    if cameraName in  str(mc.file(query=True, list=True, reference = True)):
+        print "#### info 'referenceShadingCamera': a camera '"+cameraName+"' is already referenced in this scene, operation canceled"
+    else:
+        mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False)
                 
                 
            
