@@ -1,6 +1,6 @@
 import maya.cmds as mc
 
-from dminutes import rendering
-reload(rendering)
+from dminutes import shading
+reload(shading)
 
 shading.referenceShadingCamera()
