@@ -2,6 +2,9 @@ import pymel.core as pc
 import tkMayaCore as tkc
 import pymel.core.datatypes as dt
 
+import maya.cmds as mc
+import re
+
 '''
 Temporary module to manage modeling
 
@@ -358,7 +361,9 @@ def getMeshesWithSameName(printInfo = True):
         - return (list) : multipleMesh
     """
     allTransMesh =  mc.listRelatives (mc.ls("*:", type = "mesh"), parent = True, fullPath = True, type = "transform")
+    if allTransMesh is None: allTransMesh = []
     multipleMesh = []
+
     for eachTrasnMesh in allTransMesh:
         shortName = eachTrasnMesh.split("|")[-1]
         if str(allTransMesh).count(shortName+"'") > 1:
