@@ -42,7 +42,7 @@ def setArnoldRenderOption(outputFormat):
                 mc.setAttr (myCamName+".renderable", 1)
         
     else:
-        print "#### error: no 'cam_*' camera could be found in the scene"
+        print "#### error: no '*:cam_*' camera could be found in the scene"
         return
     
 
