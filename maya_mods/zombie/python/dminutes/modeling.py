@@ -307,13 +307,14 @@ def checkMeshNamingConvention(printInfo = True):
             print "#### warning: 'checkMeshNamingConvention': '(geo|aux)_name_complement##' where name and complement## are strings of 16 alphanumeric characters"
             for each in wrongMeshNamingConvention:
                 print "#### warning: 'checkMeshNamingConvention': name not conform --> "+each
+            mc.select(wrongMeshNamingConvention, replace = True)
         else:
             print "#### info: 'checkMeshNamingConvention': MESH naming convention is correct"                
             
     return wrongMeshNamingConvention
     
 
-def meshShapeNameConform(fixShapeName = False, myTransMesh = [], forceInfoOff = False):
+def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = False):
     """
     This function, makes sure every mesh shape name is concistant with its transform name: "transformName+Shape"
     Only shapes of the main name space are taken into account, referenced shapes are therefore ignored
@@ -331,7 +332,7 @@ def meshShapeNameConform(fixShapeName = False, myTransMesh = [], forceInfoOff = 
     for each in myTransMesh:  
         myShape = mc.listRelatives (each, children = True, fullPath = True, type = "shape")
         if len(myShape)!= 1:
-            print "#### error:'meshShapeNameConform' no or multiple shapes found for :"+myMesh
+            print "#### error:'meshShapeNameConform' no or multiple shapes found for :"+each
             break
         myShape = myShape[0]
         myShapeCorrectName = each+"|"+each.split("|")[-1]+"Shape"
@@ -428,4 +429,32 @@ def makeAllMeshesUnique():
             multipleMesh = getMeshesWithSameName(False)
     else:
         print "#### info: 'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name "
+
+
+
+
+def geoGroupDeleteHistory():
+    """
+    gets all the mesh transformms under the '|asset|grp_geo', delete their history and delete any intermediate unconnected shape 
+    """
+    grpGeo = mc.ls("|asset|grp_geo", l =True)
+    if not grpGeo:
+        raise ValueError("#### error 'geoGroupDeleteHistory': No '|asset|grp_geo' found")
+    else:
+        grpGeo = grpGeo[0]
+    geoShapeList = mc.ls(mc.listRelatives(grpGeo, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
+    geoTransformList = mc.listRelatives (geoShapeList, parent = True, fullPath = True, type = "transform")
+    mc.delete(geoTransformList,ch =True)
+    print "#### info :'geoGroupDeleteHistory': deteted history on "+str(len(geoTransformList))+" geometries : "
+    
+    geoShapeList = mc.ls(mc.listRelatives(grpGeo, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
+    deletedShapeList = []
+    for eachGeoShape in geoShapeList:
+        if mc.getAttr(eachGeoShape+".intermediateObject") == True:
+            if  len(mc.listHistory (eachGeoShape, lv=1)+ mc.listHistory (eachGeoShape,future = True, lv=1))>2:
+                print "#### warning :'geoGroupDeleteHistory': this intermediate mesh shape still has an history and cannot be deleted : "+eachGeoShape
+            else:
+                mc.delete(eachGeoShape)
+                deletedShapeList.append(eachGeoShape)
+            print "#### info :'geoGroupDeleteHistory': deteted "+str(len(deletedShapeList))+" intermediate(s) mesh shape : "
         
