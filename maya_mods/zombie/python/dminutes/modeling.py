@@ -4,6 +4,7 @@ import pymel.core.datatypes as dt
 
 import maya.cmds as mc
 import re
+import string
 
 '''
 Temporary module to manage modeling
@@ -311,7 +312,7 @@ def checkMeshNamingConvention(printInfo = True):
     return wrongMeshNamingConvention
     
 
-def meshShapeNameConform(fixShapeName = False, myTransMesh = []):
+def meshShapeNameConform(fixShapeName = False, myTransMesh = [], forceInfoOff = False):
     """
     This function, makes sure every mesh shape name is concistant with its transform name: "transformName+Shape"
     Only shapes of the main name space are taken into account, referenced shapes are therefore ignored
@@ -334,20 +335,20 @@ def meshShapeNameConform(fixShapeName = False, myTransMesh = []):
         myShape = myShape[0]
         myShapeCorrectName = each+"|"+each.split("|")[-1]+"Shape"
         if myShape != myShapeCorrectName and fixShapeName == True:
-            print "#### info: 'meshShapeNameConform': rename '"+myShape.split("|")[-1]+"' --> as --> '"+myShapeCorrectName.split("|")[-1]+"'"
+            if forceInfoOff is False: print "#### info: 'meshShapeNameConform': rename '"+myShape.split("|")[-1]+"' --> as --> '"+myShapeCorrectName.split("|")[-1]+"'"
             mc.rename(myShape,each.split("|")[-1]+"Shape")
             renamedNumber = renamedNumber +1
         elif myShape != myShapeCorrectName and fixShapeName == False:
             print "#### warning: 'meshShapeNameConform': '"+each+"' has a wrong shape name: '"+myShape.split("|")[-1]+"' --> should be renamed as: --> '"+myShapeCorrectName.split("|")[-1]+"'"
             shapesToFix.append(each)
     if renamedNumber != 0:
-        print "#### info: 'meshShapeNameConform': "+str(renamedNumber)+" shape(s) fixed"
+        if forceInfoOff is False: print "#### info: 'meshShapeNameConform': "+str(renamedNumber)+" shape(s) fixed"
         return None
     elif shapesToFix:
-        print "#### info: 'meshShapeNameConform': "+str(len(shapesToFix))+" shape(s) to be fixed"
+        if forceInfoOff is False: print "#### info: 'meshShapeNameConform': "+str(len(shapesToFix))+" shape(s) to be fixed"
         return shapesToFix
     elif checkAllScene == True:
-        print "#### info: 'meshShapeNameConform': all meshes shapes names are correct"
+        if forceInfoOff is False: print "#### info: 'meshShapeNameConform': all meshes shapes names are correct"
         return None
     else:
         return None
@@ -401,7 +402,7 @@ def renameMeshAsUnique(myMesh):
             i = i+1
         mc.rename(myMesh,newShortName+newDigit)
         print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+string.rstrip(myMesh,digit)+newDigit
-        meshShapeNameConform(fixShapeName = True, myTransMesh = [string.rstrip(myMesh,digit)+newDigit])
+        meshShapeNameConform(fixShapeName = True, myTransMesh = [string.rstrip(myMesh,digit)+newDigit], forceInfoOff = True )
         
     else:
         digit = "1"
@@ -409,9 +410,9 @@ def renameMeshAsUnique(myMesh):
         while str(allTransMesh).count(shortName+digit) > 0:
             digit = str(int(digit)+1)
             i = i+1
-        myMeshNew = mc.rename(myMesh,shortName+digit)
+        myMeshNew = [mc.rename(myMesh,shortName+digit)]
         print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+myMesh+digit
-        meshShapeNameConform(fixShapeName = True, myTransMesh = [string.rstrip(myMesh,digit)+newDigit])
+        meshShapeNameConform(fixShapeName = True, myTransMesh = myMeshNew, forceInfoOff = True)
 
                         
 def makeAllMeshesUnique():
