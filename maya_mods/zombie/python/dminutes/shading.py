@@ -38,10 +38,10 @@ def conformShaderName(shadEngineList = "selection"):
     wrongShadEngine = []
 
     permitted_preview_shader_type = ["lambert","surfaceShader"]
-    permitted_render_shader_type = ["aiStandard"]
+    permitted_render_shader_type = ["aiStandard", "dmnToon"]
 
     if shadEngineList == "all":
-        shadEngineList = mc.ls(type = "shadingEngine")
+        shadEngineList = mc.ls(":*",type = "shadingEngine")
         shadEngineList.remove("initialParticleSE")
         shadEngineList.remove("initialShadingGroup")
         if not shadEngineList :
