@@ -303,9 +303,10 @@ def checkMeshNamingConvention(printInfo = True):
     
     if printInfo == True:
         if wrongMeshNamingConvention:
-            print "#### warning: 'checkMeshNamingConvention': the following MESH(ES) do not match the mesh naming convention '(geo|aux)_name_complement##' where name and complement## are strings of 16 alphanumeric characters"
+            print "#### warning: 'checkMeshNamingConvention': the following MESH(ES) do not match the mesh naming convention:"
+            print "#### warning: 'checkMeshNamingConvention': '(geo|aux)_name_complement##' where name and complement## are strings of 16 alphanumeric characters"
             for each in wrongMeshNamingConvention:
-                print "#### warning: 'checkMeshNamingConvention': "+each
+                print "#### warning: 'checkMeshNamingConvention': name not conform --> "+each
         else:
             print "#### info: 'checkMeshNamingConvention': MESH naming convention is correct"                
             
