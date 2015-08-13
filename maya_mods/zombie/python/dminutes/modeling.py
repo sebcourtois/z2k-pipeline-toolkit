@@ -320,6 +320,7 @@ def meshShapeNameConform(fixShapeName = False, myTransMesh = []):
     """
     if not myTransMesh:
         myTransMesh =  mc.listRelatives (mc.ls("*:", type = "mesh"), parent = True, fullPath = True, type = "transform")
+        if myTransMesh is None: myTransMesh = []
         checkAllScene = True
     else:
         checkAllScene = False
