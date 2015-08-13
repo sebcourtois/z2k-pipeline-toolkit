@@ -21,7 +21,7 @@ def setArnoldRenderOption(outputFormat):
     #get the "cam_" camera, stops if nothing found
     # if the camera has  an "aspectRatio" extra attribute sets the camera according to it
     # make the camera renderable  
-    myCamName = mc.ls('cam_*',type = "camera")
+    myCamName = mc.ls('*:cam_*',type = "camera")
     if myCamName :
         if len(myCamName)>1:
             print "#### warning: several 'cam_*' have been found, proceeding with: "+myCamName[0]
