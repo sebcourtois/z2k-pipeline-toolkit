@@ -6,9 +6,16 @@ import string
 
 def checkGroupNamingConvention(printInfo = True):
     """
-    prendre en compte les camera...
+    get all the transform nodes that are not parent of a shape and make sure their name is conforme to the group naming convention 'grp_name_complement##' 
+        - name and complement## together is a string of 16 alphanumeric characters
+        - complement is optional
+        - exceptions are authorised for 'assets' ... 
+    printInfo (True/False) : manage the log information
+    return list of groups names that are not conform 
     """
     wrongGroupNamingConvention = []
+    groupNamingConventionExceptionLong = ["|asset"]
+    groupNamingConventionException = []
     allGroup = []
     
     allTransform = mc.ls(":*",type = "transform", long = True)
@@ -19,13 +26,15 @@ def checkGroupNamingConvention(printInfo = True):
     
     for each in allGroup:
         eachShort = each.split("|")[-1]
-        if not (re.match('^grp_[a-zA-Z0-9]{1,16}$', eachShort) or re.match('^grp_[a-zA-Z0-9]{1,16}_[a-zA-Z0-9]{1,16}$', eachShort) or re.match('^\|asset$', each)):
+        if not (re.match('^grp_[a-zA-Z0-9]{1,16}$', eachShort) or re.match('^grp_[a-zA-Z0-9]{1,16}_[a-zA-Z0-9]{1,16}$', eachShort)) and each not in groupNamingConventionExceptionLong and eachShort not in groupNamingConventionException:
             wrongGroupNamingConvention.append(each)
     
     if printInfo == True:
         print ""
         if wrongGroupNamingConvention:
-            print "#### warning: 'checkGroupNamingConvention': the following GROUP(S) do not match the mesh naming convention 'grp_name_complement##' where name and complement## are strings of 16 alphanumeric characters"
+            print "#### warning: 'checkGroupNamingConvention': the following GROUP(S) do not match the mesh naming convention : 'grp_name_complement##'"
+            print "#### warning: 'checkGroupNamingConvention':      - name and complement## together is a string of 16 alphanumeric characters"
+            print "#### warning: 'checkGroupNamingConvention':      - complement is optional"
             for each in wrongGroupNamingConvention:
                 print "#### warning: 'checkGroupNamingConvention': wrong group naming convention --> "+each
             mc.select(wrongGroupNamingConvention, r=True)
