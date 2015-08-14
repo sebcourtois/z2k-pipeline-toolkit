@@ -1,13 +1,10 @@
 
 import sys
 
-from PySide import QtGui
+from davos_maya.core.mrclibrary import MrcLibrary
+from davos.gui.assetbrowserwindow import AssetBrowserWindow
 
-from davos.core.damproject import DamProject
-#from davos.gui.assetbrowserwindow import AssetBrowserWindow
-
-#from davos_maya.core.mrclibrary import MrcLibrary
-
+WINDOW_NAME = "assetBrowserWin"
 mainWin = None
 
 def launch(argv):
