@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     sProject = argspace.project
     if not sProject:
-        sProject = "zombdev" if inDevMode() else "zombillenium"
+        sProject = "zombtest" if inDevMode() else "zombillenium"
 
     print ""
     print (" Project: '{}' ".format(sProject)).center(80, "-")
