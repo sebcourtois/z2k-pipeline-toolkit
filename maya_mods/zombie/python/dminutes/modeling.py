@@ -1,10 +1,11 @@
 import pymel.core as pc
-import tkMayaCore as tkc
+#import tkMayaCore as tkc
 import pymel.core.datatypes as dt
 
 import maya.cmds as mc
 import re
 import string
+import listUtils
 
 '''
 Temporary module to manage modeling
@@ -295,6 +296,7 @@ def checkMeshNamingConvention(printInfo = True):
     """
     wrongMeshNamingConvention = []
     allTransMesh =  mc.listRelatives (mc.ls("*:",type = "mesh"), parent = True, fullPath = True, type = "transform")
+    if allTransMesh is None: allTransMesh = []
     
     for each in allTransMesh:
         eachShort = each.split("|")[-1]
@@ -355,17 +357,19 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
     else:
         return None
 
- 
 
-def getMeshesWithSameName(printInfo = True):
+
+
+def getMeshesWithSameName(inVerbose = True, inParent = "*"):
     """
-    list all the meshes that share the same short name,
-    only meshes of the main name space are taken into account, referenced meshes are therefore ignored.
-        - printInfo (boolean) : print the 'multipleMesh' list 
+    list all the meshes that share the same short name, under de given 'inParent', 
+    by default '*' means that any unreferenced mesh in the scene is taken into account
+        - inVerbose (boolean) : print the 'multipleMesh' list
+        - inParent (string) : long name of the parent 
         - return (list) : multipleMesh
     """
-    allTransMesh =  mc.listRelatives (mc.ls("*:", type = "mesh"), parent = True, fullPath = True, type = "transform")
-    if allTransMesh is None: allTransMesh = []
+
+    allTransMesh = listUtils.getAllTransfomMeshes(inParent)
     multipleMesh = []
 
     for eachTrasnMesh in allTransMesh:
@@ -373,25 +377,25 @@ def getMeshesWithSameName(printInfo = True):
         if str(allTransMesh).count(shortName+"'") > 1:
             multipleMesh.append(eachTrasnMesh)
     if multipleMesh:
-        if printInfo is True:
+        if inVerbose is True:
             print "#### warning: 'getMeshesWithSameName': somes meshes have the same short name: "
             for each in multipleMesh:
                     print "#### warning: 'getMeshesWithSameName': "+each
         return multipleMesh
     else:
-        if printInfo is True:
-            print "#### info: 'getMeshesWithSameName': no multiple short names in the scene"
-        return None     
+        if inVerbose is True:
+            print "#### info: 'getMeshesWithSameName': no multiple short names found in '"+str(inParent)+"'"
+        return None 
 
 
-def renameMeshAsUnique(myMesh):
+def renameMeshAsUnique(myMesh, inParent = "*"):
     """
     Makes the given mesh name unique by adding a digit and/or incrementing it till the short name is unique in the scene. 
     Only meshes of the main name space are taken into account, referenced meshes are therefore ignored.
     myMesh  (string) : the long name of a mesh (a transform parent of a mesh shape) that has to be renamed to have a unique short name in the scene
 
     """
-    allTransMesh =  mc.listRelatives (mc.ls("*:", type = "mesh"), parent = True, fullPath = True, type = "transform")
+    allTransMesh = listUtils.getAllTransfomMeshes(inParent)
     shortName = myMesh.split("|")[-1]
     digit = re.findall('([0-9]+$)', myMesh)
     if digit:
@@ -417,18 +421,21 @@ def renameMeshAsUnique(myMesh):
         meshShapeNameConform(fixShapeName = True, myTransMesh = myMeshNew, forceInfoOff = True)
 
                         
-def makeAllMeshesUnique():
+def makeAllMeshesUnique(inParent = "*"):
     """
     makes all the meshes short names unique by adding a digit and/or incrementing it till the short name is unique in the scene
     then makes sure the shapes names are corrects
     """           
-    multipleMesh = getMeshesWithSameName(False)
+    multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
     if multipleMesh :
         while multipleMesh:
-            renameMeshAsUnique(multipleMesh[0])
-            multipleMesh = getMeshesWithSameName(False)
+            renameMeshAsUnique(multipleMesh[0], inParent)
+            multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
     else:
-        print "#### info: 'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name "
+        if inParent == "*":
+            print "#### info: 'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name "
+        else :
+            print "#### info: 'makeAllMeshesUnique' no multiple mesh found under '"+inParent+"' all meshes have unique short name "
 
 
 
