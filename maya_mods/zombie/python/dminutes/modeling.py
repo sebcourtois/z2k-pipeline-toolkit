@@ -1,5 +1,5 @@
 import pymel.core as pc
-#import tkMayaCore as tkc
+import tkMayaCore as tkc
 import pymel.core.datatypes as dt
 
 import maya.cmds as mc

@@ -123,5 +123,38 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
         mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False)
                 
                 
-           
+
+def conformMapPath
+"""
+determiner l'asset en cours d'edition
+deteminer le texture path en fonction de PRIVATE_MAP_DIR et tester son existance
+
+lister les files nodes
+    - si le chemin initial est deja le bon 
+        si la texture existe
+            - ajouter le file node a correctFileNodeList
+            - continue
+        sinon 
+            - warning: ajouter le file node a outNoMapFileNodeList
+            - continue
+    - sinon si il y a deja une texture au bon chemin
+        - changer le chemin
+        - ajouter le file node a correctFileNodeList
+        - continue
+    - sinon si il y une texture au chemin initial
+        - copier la texture dans le repertoire final
+        - changer le chemin
+        - ajouter le tuple (filenode,initialPath) a copiedMapFileNodeList
+        - continue
+    - sinon
+        - warning: ajouter le file node a outNoMapFileNodeList puis passer
+
+si inVerbose
+    - printer la liste des nodes dont la texture a ete copiee copiedMapFileNodeList et leur emplacemet d'origine
+    - printer la liste des nodes sans texture outNoMapFileNodeList
+    - selectionner tous les outNoMapFileNodeList
+
+in inVerbose
+out "outNoMapFileNodeList"
+"""         
 
