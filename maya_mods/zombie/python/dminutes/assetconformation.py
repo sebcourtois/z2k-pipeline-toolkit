@@ -1,4 +1,50 @@
 import maya.cmds as mc
+import re
+import string
+
+
+
+def checkGroupNamingConvention(printInfo = True):
+    """
+    get all the transform nodes that are not parent of a shape and make sure their name is conforme to the group naming convention 'grp_name_complement##' 
+        - name and complement## together is a string of 16 alphanumeric characters
+        - complement is optional
+        - exceptions are authorised for 'assets' ... 
+    printInfo (True/False) : manage the log information
+    return list of groups names that are not conform 
+    """
+    wrongGroupNamingConvention = []
+    groupNamingConventionExceptionLong = ["|asset"]
+    groupNamingConventionException = []
+    allGroup = []
+    
+    allTransform = mc.ls(":*",type = "transform", long = True)
+    if allTransform is None: allTransform = []
+    for eachTransform in allTransform:
+        if mc.listRelatives(eachTransform, children = True, shapes = True) is None:
+            allGroup.append(eachTransform)
+    
+    for each in allGroup:
+        eachShort = each.split("|")[-1]
+        if not (re.match('^grp_[a-zA-Z0-9]{1,16}$', eachShort) or re.match('^grp_[a-zA-Z0-9]{1,16}_[a-zA-Z0-9]{1,16}$', eachShort)) and each not in groupNamingConventionExceptionLong and eachShort not in groupNamingConventionException:
+            wrongGroupNamingConvention.append(each)
+    
+    if printInfo == True:
+        print ""
+        if wrongGroupNamingConvention:
+            print "#### warning: 'checkGroupNamingConvention': the following GROUP(S) do not match the mesh naming convention : 'grp_name_complement##'"
+            print "#### warning: 'checkGroupNamingConvention':      - name and complement## together is a string of 16 alphanumeric characters"
+            print "#### warning: 'checkGroupNamingConvention':      - complement is optional"
+            for each in wrongGroupNamingConvention:
+                print "#### warning: 'checkGroupNamingConvention': wrong group naming convention --> "+each
+            mc.select(wrongGroupNamingConvention, r=True)
+        else:
+            print "#### info: 'checkGroupNamingConvention': GROUP naming convention is correct"                
+            
+    return wrongGroupNamingConvention   
+    
+
+
 
 def createSubdivSets():
     """
@@ -36,33 +82,32 @@ def createSubdivSets():
             mc.sets(eachGeo, add="set_subdiv_init")
             print "#### info: add geo to 'set_subdiv_init': "+eachGeo
 
-
-def setSubdiv(preview = 0, arnold = 1):
+     
+def setSubdiv():
     """
-    this function will apply the subdivision to the geometries depending the subdivion set they belong to
-    preview (int): 0 desactivate the subdivision, 1 apply the subdivision value (according to the subgivision set), other values leave the subdiv setting unchanged
-    arnold (int): 0 desactivate the subdivision, 1 apply the subdivision value (according to the subgivision set), other values leave the subdiv setting unchanged
+    creates 'smoothLevel1' and 'smoothLevel2' extra attributes on the 'grp_geo' 
+    and connect them to the smoothLevel (preview subdiv level) of the geo shapes
     """
-    print ""
-    print "#### info: exectute 'setSubdiv("+str(preview)+","+str(arnold)+")'"
-    if preview == 0:
-        print "#### info: preview = off  |",
-    elif preview == 1:
-        print "#### info: preview = on  |",
-    else : 
-        print "#### info: preview = untouched",
-    if arnold == 0:
-        print " arnold = off"
-    elif arnold == 1:
-        print " arnold = on"
-    else : 
-        print " arnold = untouched"
+    if not mc.ls("|asset|grp_geo", l = True):
+        msg = "#### error 'setSubdiv': no '|asset|grp_geo' found"
+        raise ValueError(msg)
 
+    
+    userDefinedAttr =(mc.listAttr("|asset|grp_geo",userDefined=True))
+    if userDefinedAttr:
+        if "smoothLevel1" in userDefinedAttr:
+            mc.deleteAttr ("|asset|grp_geo.smoothLevel1")            
+        if "smoothLevel2" in userDefinedAttr:
+            mc.deleteAttr ("|asset|grp_geo.smoothLevel2") 
+
+    mc.addAttr("|asset|grp_geo",ln = "smoothLevel1", at = "long", min = 0, max = 1,dv = 0, keyable = True) 
+    mc.addAttr("|asset|grp_geo",ln = "smoothLevel2", at = "long", min = 0, max = 2,dv = 0, keyable = True)
+        
 
     subdivSets = mc.ls("set_subdiv_*", type = "objectSet")
     if not subdivSets:
-        print "#### error: no subdivision set could be found (set_subdiv_*). Please create them first"
-        return
+        msg = "#### error 'setSubdiv' : no subdivision set could be found (set_subdiv_*). Please create them first"
+        raise ValueError(msg)
 
     for eachSetSubdiv in subdivSets:
         geoInSet = mc.sets(eachSetSubdiv, query = True)
@@ -72,27 +117,37 @@ def setSubdiv(preview = 0, arnold = 1):
             subdivLevel =  int(eachSetSubdiv.split("set_subdiv_")[1])
             previewSubdivLevel = subdivLevel    
             if  0 <= subdivLevel <=9 :
-                if previewSubdivLevel > 3: 
-                    previewSubdivLevel = 3
                 print "#### info: scaning 'set_subdiv_"+str(subdivLevel)+"'"
                 for eachGeo in geoInSet:
                     eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)[0]
                     print "    "+eachGeoShape
-                    if preview == 0 or preview == 1:
-                        mc.setAttr(eachGeoShape+".displaySmoothMesh",2)
-                        mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
-                        mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
-                        mc.setAttr(eachGeoShape+".smoothLevel",subdivLevel*preview)
-                    if arnold == 0 or arnold == 1:
-                        if not mc.attributeQuery ("aiSubdivType", node = eachGeoShape , exists = True):
-                            print "#### error: "+eachGeoShape+".aiSubdivType attribute coud not be found, please check if Arnold is properly installed on your computer"
-                        else:
-                            if arnold == 0:
-                                subdivType = 0
-                            else:
-                                subdivType = 1
-                            mc.setAttr(eachGeoShape+".aiSubdivType",subdivType)
-                            mc.setAttr(eachGeoShape+".aiSubdivIterations",subdivLevel*arnold)
+                    mc.setAttr(eachGeoShape+".displaySmoothMesh",2)
+                    mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
+                    mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
+                    if previewSubdivLevel == 1:
+                        mc.connectAttr("|asset|grp_geo.smoothLevel1", eachGeoShape+".smoothLevel", f=True)
+                    if previewSubdivLevel > 1:
+                        mc.connectAttr("|asset|grp_geo.smoothLevel2", eachGeoShape+".smoothLevel",f=True)
+                    if not mc.attributeQuery ("aiSubdivType", node = eachGeoShape , exists = True):
+                        print "#### error: "+eachGeoShape+".aiSubdivType attribute coud not be found, please check if Arnold is properly installed on your computer"
+                    else:
+                        mc.setAttr(eachGeoShape+".aiSubdivType",1)
+                        mc.setAttr(eachGeoShape+".aiSubdivIterations",subdivLevel)
 
     if "set_subdiv_init" in subdivSets and mc.sets("set_subdiv_init", query = True) != None:
         print "#### warning: a geo object is still in the 'set_subdiv_init', please asssign it to a 'set_subdiv*'"
+
+def previewSubdiv(enable = True, filter = ""):
+    """
+    set the  'smoothLevel1' and 'smoothLevel2' extra attributes to 1 and 2 'grp_geo' of assets
+    """
+    geoGroupList = mc.ls("*:grp_geo", l = True)+mc.ls("grp_geo", l = True)
+
+    for eachGeoGroup in geoGroupList:
+        if "" in eachGeoGroup:
+            smoothLevelAttrList = mc.listAttr(eachGeoGroup,string = "smoothLevel*",userDefined=True)
+            if smoothLevelAttrList:
+                print "#### info: '"+eachGeoGroup.split("|")[-1]+"' subdiv preview --> "+ str(enable)
+                for eachAttr in smoothLevelAttrList:
+                    mc.setAttr(eachGeoGroup+"."+eachAttr, enable * int(eachAttr[-1]))
+

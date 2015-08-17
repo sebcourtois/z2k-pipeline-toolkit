@@ -3,4 +3,4 @@ import maya.cmds as mc
 from dminutes import assetconformation
 reload(assetconformation)
 
-assetconformation.setSubdiv(3,1)
+assetconformation.previewSubdiv(enable = True, filter = "chr_")

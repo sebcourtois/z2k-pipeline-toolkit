@@ -58,3 +58,9 @@ target/
 /.settings/
 /zombillenium.py
 /maya_mods/Toonkit_module
+
+# system Files
+*.DS_Store
+
+# alex
+launchers/alex

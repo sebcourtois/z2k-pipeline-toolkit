@@ -2,6 +2,11 @@ import pymel.core as pc
 import tkMayaCore as tkc
 import pymel.core.datatypes as dt
 
+import maya.cmds as mc
+import re
+import string
+import listUtils
+
 '''
 Temporary module to manage modeling
 
@@ -278,3 +283,185 @@ def rigSet(inRoot):
     pc.setAttr(newLayer + ".displayType", 2)
 
     pc.select(clear=True)
+
+
+    
+
+def checkMeshNamingConvention(printInfo = True):
+    """
+    check all the meshes naming convention, '(geo|aux)_name_complement##' where 'name' and 'complement##' are strings of 16 alphanumeric characters
+    only meshes of the main name space are taken into account, referenced meshes are therefore ignored.
+        - printInfo (boolean) : print the 'multipleMesh' list 
+        - return (list) : wrongMeshNamingConvention, all the meshes with a bad naming convetion
+    """
+    wrongMeshNamingConvention = []
+    allTransMesh =  mc.listRelatives (mc.ls("*:",type = "mesh"), parent = True, fullPath = True, type = "transform")
+    if allTransMesh is None: allTransMesh = []
+    
+    for each in allTransMesh:
+        eachShort = each.split("|")[-1]
+        if not (re.match('^(geo|aux)_[a-zA-Z0-9]{1,16}$', eachShort) or re.match('^(geo|aux)_[a-zA-Z0-9]{1,16}_[a-zA-Z0-9]{1,16}$', eachShort)):
+            wrongMeshNamingConvention.append(each)
+    
+    if printInfo == True:
+        if wrongMeshNamingConvention:
+            print "#### warning: 'checkMeshNamingConvention': the following MESH(ES) do not match the mesh naming convention:"
+            print "#### warning: 'checkMeshNamingConvention': '(geo|aux)_name_complement##' where name and complement## are strings of 16 alphanumeric characters"
+            for each in wrongMeshNamingConvention:
+                print "#### warning: 'checkMeshNamingConvention': name not conform --> "+each
+            mc.select(wrongMeshNamingConvention, replace = True)
+        else:
+            print "#### info: 'checkMeshNamingConvention': MESH naming convention is correct"                
+            
+    return wrongMeshNamingConvention
+    
+
+def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = False):
+    """
+    This function, makes sure every mesh shape name is concistant with its transform name: "transformName+Shape"
+    Only shapes of the main name space are taken into account, referenced shapes are therefore ignored
+        - fixShapeName (boolean): fix invalid shapes names if True, only log info otherwise
+        - return (list): the meshes list that still have an invalid shape name
+    """
+    if not myTransMesh:
+        myTransMesh =  mc.listRelatives (mc.ls("*:", type = "mesh"), parent = True, fullPath = True, type = "transform")
+        if myTransMesh is None: myTransMesh = []
+        checkAllScene = True
+    else:
+        checkAllScene = False
+    renamedNumber = 0
+    shapesToFix = []
+    for each in myTransMesh:  
+        myShape = mc.listRelatives (each, children = True, fullPath = True, type = "shape")
+        if len(myShape)!= 1:
+            print "#### error:'meshShapeNameConform' no or multiple shapes found for :"+each
+            break
+        myShape = myShape[0]
+        myShapeCorrectName = each+"|"+each.split("|")[-1]+"Shape"
+        if myShape != myShapeCorrectName and fixShapeName == True:
+            if forceInfoOff is False: print "#### info: 'meshShapeNameConform': rename '"+myShape.split("|")[-1]+"' --> as --> '"+myShapeCorrectName.split("|")[-1]+"'"
+            mc.rename(myShape,each.split("|")[-1]+"Shape")
+            renamedNumber = renamedNumber +1
+        elif myShape != myShapeCorrectName and fixShapeName == False:
+            print "#### warning: 'meshShapeNameConform': '"+each+"' has a wrong shape name: '"+myShape.split("|")[-1]+"' --> should be renamed as: --> '"+myShapeCorrectName.split("|")[-1]+"'"
+            shapesToFix.append(each)
+    if renamedNumber != 0:
+        if forceInfoOff is False: print "#### info: 'meshShapeNameConform': "+str(renamedNumber)+" shape(s) fixed"
+        return None
+    elif shapesToFix:
+        if forceInfoOff is False: print "#### info: 'meshShapeNameConform': "+str(len(shapesToFix))+" shape(s) to be fixed"
+        return shapesToFix
+    elif checkAllScene == True:
+        if forceInfoOff is False: print "#### info: 'meshShapeNameConform': all meshes shapes names are correct"
+        return None
+    else:
+        return None
+
+
+
+
+def getMeshesWithSameName(inVerbose = True, inParent = "*"):
+    """
+    list all the meshes that share the same short name, under de given 'inParent', 
+    by default '*' means that any unreferenced mesh in the scene is taken into account
+        - inVerbose (boolean) : print the 'multipleMesh' list
+        - inParent (string) : long name of the parent 
+        - return (list) : multipleMesh
+    """
+
+    allTransMesh = listUtils.getAllTransfomMeshes(inParent)
+    multipleMesh = []
+
+    for eachTrasnMesh in allTransMesh:
+        shortName = eachTrasnMesh.split("|")[-1]
+        if str(allTransMesh).count(shortName+"'") > 1:
+            multipleMesh.append(eachTrasnMesh)
+    if multipleMesh:
+        if inVerbose is True:
+            print "#### warning: 'getMeshesWithSameName': somes meshes have the same short name: "
+            for each in multipleMesh:
+                    print "#### warning: 'getMeshesWithSameName': "+each
+        return multipleMesh
+    else:
+        if inVerbose is True:
+            print "#### info: 'getMeshesWithSameName': no multiple short names found in '"+str(inParent)+"'"
+        return None 
+
+
+def renameMeshAsUnique(myMesh, inParent = "*"):
+    """
+    Makes the given mesh name unique by adding a digit and/or incrementing it till the short name is unique in the scene. 
+    Only meshes of the main name space are taken into account, referenced meshes are therefore ignored.
+    myMesh  (string) : the long name of a mesh (a transform parent of a mesh shape) that has to be renamed to have a unique short name in the scene
+
+    """
+    allTransMesh = listUtils.getAllTransfomMeshes(inParent)
+    shortName = myMesh.split("|")[-1]
+    digit = re.findall('([0-9]+$)', myMesh)
+    if digit:
+        digit = digit[0]
+        newShortName = string.rstrip(shortName,digit)
+        newDigit = string.zfill(str(int(digit)+1), len(digit))
+        i = 1
+        while str(allTransMesh).count(newShortName+newDigit) > 0:
+            newDigit = string.zfill(str(int(digit)+i), len(digit))
+            i = i+1
+        mc.rename(myMesh,newShortName+newDigit)
+        print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+string.rstrip(myMesh,digit)+newDigit
+        meshShapeNameConform(fixShapeName = True, myTransMesh = [string.rstrip(myMesh,digit)+newDigit], forceInfoOff = True )
+        
+    else:
+        digit = "1"
+        i = 1
+        while str(allTransMesh).count(shortName+digit) > 0:
+            digit = str(int(digit)+1)
+            i = i+1
+        myMeshNew = [mc.rename(myMesh,shortName+digit)]
+        print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+myMesh+digit
+        meshShapeNameConform(fixShapeName = True, myTransMesh = myMeshNew, forceInfoOff = True)
+
+                        
+def makeAllMeshesUnique(inParent = "*"):
+    """
+    makes all the meshes short names unique by adding a digit and/or incrementing it till the short name is unique in the scene
+    then makes sure the shapes names are corrects
+    """           
+    multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
+    if multipleMesh :
+        while multipleMesh:
+            renameMeshAsUnique(multipleMesh[0], inParent)
+            multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
+    else:
+        if inParent == "*":
+            print "#### info: 'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name "
+        else :
+            print "#### info: 'makeAllMeshesUnique' no multiple mesh found under '"+inParent+"' all meshes have unique short name "
+
+
+
+
+def geoGroupDeleteHistory():
+    """
+    gets all the mesh transformms under the '|asset|grp_geo', delete their history and delete any intermediate unconnected shape 
+    """
+    grpGeo = mc.ls("|asset|grp_geo", l =True)
+    if not grpGeo:
+        raise ValueError("#### error 'geoGroupDeleteHistory': No '|asset|grp_geo' found")
+    else:
+        grpGeo = grpGeo[0]
+    geoShapeList = mc.ls(mc.listRelatives(grpGeo, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
+    geoTransformList = mc.listRelatives (geoShapeList, parent = True, fullPath = True, type = "transform")
+    mc.delete(geoTransformList,ch =True)
+    print "#### info :'geoGroupDeleteHistory': deteted history on "+str(len(geoTransformList))+" geometries : "
+    
+    geoShapeList = mc.ls(mc.listRelatives(grpGeo, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
+    deletedShapeList = []
+    for eachGeoShape in geoShapeList:
+        if mc.getAttr(eachGeoShape+".intermediateObject") == True:
+            if  len(mc.listHistory (eachGeoShape, lv=1)+ mc.listHistory (eachGeoShape,future = True, lv=1))>2:
+                print "#### warning :'geoGroupDeleteHistory': this intermediate mesh shape still has an history and cannot be deleted : "+eachGeoShape
+            else:
+                mc.delete(eachGeoShape)
+                deletedShapeList.append(eachGeoShape)
+            print "#### info :'geoGroupDeleteHistory': deteted "+str(len(deletedShapeList))+" intermediate(s) mesh shape : "
+        
