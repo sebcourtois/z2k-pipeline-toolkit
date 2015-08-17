@@ -8,6 +8,10 @@ reload(damproject)
 PROJECTNAME = "zombillenium"
 PROJECT = None
 
+#FROM DAVOS !!!!
+ASSET_TYPES = ('Character 3D', 'Character 2D', 'Vehicle 3D', 'Prop 3D', 'Set 3D', 'Set 2D', 'Environment', 'Reference')
+ASSET_SUBTYPES = ('1-primaire', '2-secondaire', '3-tertiaire', '4-figurant')
+
 def sceneManagerUI():
     global PROJECT
 
@@ -29,13 +33,11 @@ def sceneManagerUI():
     initialize()
     pc.showWindow(ui)
 
-
 def initialize():
     #User info
-    print PROJECT._shotgundb.currentUser
     pc.textField('sm_user_bt', edit=True, text=PROJECT._shotgundb.currentUser['name'])
 
-    #pc.textScrollList("sm_step_dd", edit=True, removeAll=True)
+    pc.textField('sm_project_bt', edit=True, text=PROJECTNAME)
 
     items = pc.optionMenu('sm_step_dd', query=True, itemListShort=True)
     for item in items:
@@ -43,6 +45,8 @@ def initialize():
 
     for allowedstep in PROJECT._shotgundb.currentUser['sg_allowedsteps']:
         pc.menuItem("sm_step_" + allowedstep['name'], label= allowedstep['name'], parent='sm_step_dd')
+    
+    allowedstep
 
 #Callbacks management
 

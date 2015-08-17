@@ -23,7 +23,7 @@ ECHO "-------- VIDEO EXTRACTION ---------"
 call %FFMPEG% -i %1 -vcodec libx264 -acodec copy -ss %STARTTC% -to %ENDTC% -y %OUTPATH%
 
 ECHO "-------- AUDIO EXTRACTION ---------"
-SET AUDIOOUT=%OUTPATH:.mov=.wav%
+SET AUDIOOUT=%OUTPATH:animatic.mov=sound.wav%
 REM AUDIO EXTRACTION
 call %FFMPEG% -i %OUTPATH% -vn -ar 48000 -ac 2 -y %AUDIOOUT%
 
