@@ -3,6 +3,39 @@ import os
 import os.path as osp
 import subprocess
 import argparse
+import logging
+from shutil import make_archive
+from datetime import datetime
+
+CREATE_NO_WINDOW = 0x8000000
+
+def runCmd(cmd, shell=False, catchOutput=True, noCmdWindow=False):
+
+    iCreationFlags = CREATE_NO_WINDOW if noCmdWindow else 0
+
+    pipe = subprocess.Popen(cmd, shell=shell,
+                            stdout=subprocess.PIPE if catchOutput else None,
+                            stderr=subprocess.STDOUT if catchOutput else None,
+                            creationflags=iCreationFlags)
+
+    stdOut = pipe.communicate()[0]
+
+    return stdOut
+
+def getLogger():
+
+    # create logger
+    logger = logging.getLogger('simple_example')
+    logger.setLevel(logging.DEBUG)
+
+    # create console handler and set level to debug
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+
+    # add ch to logger
+    logger.addHandler(ch)
+
+    return logger
 
 class Z2kToolkit(object):
 
@@ -45,7 +78,7 @@ class Z2kToolkit(object):
     def install(self):
 
         # tools update
-        repo = osp.join(os.environ["ZOMBI_TOOL_PATH"], self.dirName)
+        repo = self.distribPath()
         if self.isDev:
             print "Tools update from development environment !"
             repo = self.rootPath
@@ -55,15 +88,48 @@ class Z2kToolkit(object):
         if repo == local_root:
             print "Source == Destination !"
         else:
-            print "Updating Zombie toolkit ! ({0}=>{1})".format(repo, local_root)
 
-            oscarPath = osp.join(repo, "maya_mods", "Toonkit_module", "Maya2016", "Standalones", "OSCAR")
-
-            cmdLine = ("robocopy /S /NFL /NDL /NJH /MIR *.* {0} {1} /XD {2} .git tests /XF {3} *.pyc .git* .*project"
-                        .format(repo, local_root, oscarPath, "setup_*.bat" if not self.isDev else ""))
-            subprocess.call(cmdLine)
+            print self.makeCopy(repo, local_root)
 
             print "Zombie toolkit updated, use your local to launch applications ! ({0})".format(osp.join(local_root, "launchers"))
+
+    def distribute(self):
+
+        if not self.isDev:
+            raise EnvironmentError("Sorry, you are not in DEV mode !")
+
+        sDistroPath = self.distribPath()
+        sOutput = self.makeCopy(self.rootPath, sDistroPath, dryRun=True).strip()
+        if not sOutput:
+            print "No changes !"
+            return
+
+        if osp.exists(sDistroPath):
+            sDate = datetime.now().strftime("%Y%m%d-%H%M")
+            sZipPath = osp.join(sDistroPath + "_backups", self.dirName + "_" + sDate)
+
+            logger = getLogger()
+            make_archive(sZipPath , "zip",
+                         root_dir=osp.dirname(sDistroPath),
+                         base_dir=osp.join('.', osp.basename(sDistroPath)),
+                         logger=logger, dry_run=False)
+
+        print self.makeCopy(self.rootPath, sDistroPath, dryRun=False)
+
+    def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False):
+
+        print "Updating Zombie toolkit: \n'{0}' -> '{1}'".format(sSrcRepoPath, sDestPath)
+
+        oscarPath = osp.join(sSrcRepoPath, "maya_mods", "Toonkit_module", "Maya2016", "Standalones", "OSCAR")
+
+        sDryRun = "/L /NJS" if dryRun else ""
+        cmdLine = ("robocopy {} /S /NFL /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {} *.pyc .git* .*project"
+                    .format(sDryRun, sSrcRepoPath, sDestPath, oscarPath,
+                            "setup_*.bat" if not self.isDev else ""))
+        return runCmd(cmdLine)
+
+    def distribPath(self):
+        return osp.join(os.environ["ZOMBI_TOOL_PATH"], self.dirName)
 
     def callCmd(self, args, update=True):
 
@@ -77,7 +143,7 @@ class Z2kToolkit(object):
     def runFromCmd(self):
 
         parser = argparse.ArgumentParser()
-        parser.add_argument("command", choices=("install", "call"))
+        parser.add_argument("command", choices=("install", "call", "distrib"))
         parser.add_argument("--update", "-u", type=int, default=1)
 
         ns, args = parser.parse_known_args()
@@ -89,6 +155,8 @@ class Z2kToolkit(object):
 
         if sCmd == "install":
             self.install()
+        elif sCmd == "distrib":
+            self.distribute()
 
 if __name__ == "__main__":
     try:
