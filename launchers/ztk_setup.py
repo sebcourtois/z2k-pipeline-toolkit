@@ -64,6 +64,10 @@ class Z2kToolkit(object):
         print " - SET {0} = {1}".format("PYTHONPATH", pythonPathNew)
         os.environ["PYTHONPATH"] = pythonPathNew
 
+        sEnvKey = "DAVOS_CONF_PACKAGE"
+        if sEnvKey not in os.environ:
+            os.environ[sEnvKey] = "zomblib.config"
+
         # Maya module path
         modulePathAdd = osp.join(self.rootPath, "maya_mods")
         modulePathOld = "" if not "MAYA_MODULE_PATH" in os.environ else os.environ["MAYA_MODULE_PATH"]
