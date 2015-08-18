@@ -39,104 +39,130 @@ class asset_lib:
 
     child_sections = asset_types
 
-    asset_dir = "{asset_type}/{asset}"
+    entity_dir = "{assetType}/{name}"
 
 class camera:
 
     prefix = "cam"
-    asset_type = prefix
+    aliases = (prefix, "Camera",)
+    assetType = prefix
 
-    public_path = osp.join(asset_lib.public_path, asset_lib.asset_dir)
-    private_path = osp.join(asset_lib.private_path, asset_lib.asset_dir)
+    public_path = osp.join(asset_lib.public_path, "{assetType}")
+    private_path = osp.join(asset_lib.private_path, "{assetType}")
 
     resource_tree = {
-        "{asset}.ma -> scene":None,
-        }
+    "{name} -> entity_dir":
+        {
+        "{name}.ma -> scene":None,
+        },
+    }
 
 class character3d:
 
+    entity_class = "davos.core.damtypes.DamAsset"
+
     prefix = "chr"
     aliases = (prefix, "Character 3D",)
-    asset_type = prefix
+    assetType = prefix
     template_dir = "asset_chr"
 
-    public_path = osp.join(asset_lib.public_path, asset_lib.asset_dir)
-    private_path = osp.join(asset_lib.private_path, asset_lib.asset_dir)
-    template_path = osp.join(project.template_path, template_dir)
+    public_path = osp.join(asset_lib.public_path, "{assetType}")
+    private_path = osp.join(asset_lib.private_path, "{assetType}")
+    template_path = project.template_path
 
     resource_tree = {
+    "{name} -> entity_dir":
+        {
         "ref -> ref_dir":{},
         "review -> review_dir":{},
         "script -> script_dir":{},
         "texture -> texture_dir":{},
-        "{asset}_anim.ma -> anim_scene":None,
-        "{asset}_modeling.ma -> modeling_scene":None,
-        "{asset}_previz.ma -> previz_scene":None,
-        "{asset}_render.ma -> render_scene":None,
-        }
+        "{name}_anim.ma -> anim_scene":None,
+        "{name}_modeling.ma -> modeling_scene":None,
+        "{name}_previz.ma -> previz_scene":None,
+        "{name}_render.ma -> render_scene":None,
+        },
+    }
 
 class prop3d:
 
+    entity_class = "davos.core.damtypes.DamAsset"
+
     prefix = "prp"
     aliases = (prefix, "Prop 3D",)
-    asset_type = prefix
+    assetType = prefix
     template_dir = "asset_vhlPrp"
 
-    public_path = osp.join(asset_lib.public_path, asset_lib.asset_dir)
-    private_path = osp.join(asset_lib.private_path, asset_lib.asset_dir)
-    template_path = osp.join(project.template_path, template_dir)
+    public_path = osp.join(asset_lib.public_path, "{assetType}")
+    private_path = osp.join(asset_lib.private_path, "{assetType}")
+    template_path = project.template_path
 
     resource_tree = {
+    "{name} -> entity_dir":
+        {
         "ref -> ref_dir":{},
         "review -> review_dir":{},
         #"script -> script_dir":{},
         "texture -> texture_dir":{},
-        "{asset}_anim.ma -> anim_scene":None,
-        "{asset}_modeling.ma -> modeling_scene":None,
-        "{asset}_previz.ma -> previz_scene":None,
-        "{asset}_render.ma -> render_scene":None,
-        }
+        "{name}_anim.ma -> anim_scene":None,
+        "{name}_modeling.ma -> modeling_scene":None,
+        "{name}_previz.ma -> previz_scene":None,
+        "{name}_render.ma -> render_scene":None,
+        },
+    }
 
 class vehicle3d(prop3d):
 
+    entity_class = "davos.core.damtypes.DamAsset"
+
     prefix = "vhl"
     aliases = (prefix, "Vehicle 3D",)
-    asset_type = prefix
+    assetType = prefix
 
 class set3d:
 
+    entity_class = "davos.core.damtypes.DamAsset"
+
     prefix = "set"
     aliases = (prefix, "Set 3D",)
-    asset_type = prefix
+    assetType = prefix
     template_dir = "asset_envSet"
 
-    public_path = osp.join(asset_lib.public_path, asset_lib.asset_dir)
-    private_path = osp.join(asset_lib.private_path, asset_lib.asset_dir)
-    template_path = osp.join(project.template_path, template_dir)
+    public_path = osp.join(asset_lib.public_path, "{assetType}")
+    private_path = osp.join(asset_lib.private_path, "{assetType}")
+    template_path = project.template_path
 
     resource_tree = {
+    "{name} -> entity_dir":
+        {
         "ref -> ref_dir":{},
         "review -> review_dir":{},
         #"script -> script_dir":{},
         "texture -> texture_dir":{},
-        "{asset}_previz.ma -> previz_scene":None,
-        "{asset}_master.ma -> master_scene":None,
-        }
+        "{name}_previz.ma -> previz_scene":None,
+        "{name}_master.ma -> master_scene":None,
+        },
+    }
+
 
 class environment3d(set3d):
 
+    entity_class = "davos.core.damtypes.DamAsset"
+
     prefix = "env"
     aliases = (prefix, "Env 3D",)
-    asset_type = prefix
+    assetType = prefix
 
 class fx_previz:
 
+    entity_class = "davos.core.damtypes.DamAsset"
+
     prefix = "fxp"
     aliases = (prefix,)
-    asset_type = prefix
+    assetType = prefix
 
-    public_path = osp.join(asset_lib.public_path, asset_lib.asset_dir)
-    private_path = osp.join(asset_lib.private_path, asset_lib.asset_dir)
+    public_path = osp.join(asset_lib.public_path, "{assetType}")
+    private_path = osp.join(asset_lib.private_path, "{assetType}")
 
 class shot_lib:
 
@@ -146,20 +172,20 @@ class shot_lib:
     shot_tree = {
         "{sequence}":
             {
-            "{shot} -> shot_dir":
+            "{name} -> entity_dir":
                 {
                  "{step} -> step_dir":
                     {
-                     "{shot}_previz.ma -> previz_scene":{},
-                     "{shot}_previz.mov -> previz_capture":{},
+                     "{name}_previz.ma -> previz_scene":{},
+                     "{name}_previz.mov -> previz_capture":{},
                     },
                 },
             },
         }
 
-    resource_files = {
+    resources_conf = {
     "previz_scene":{"produces":["previz_capture", ] },
-    "previz_capture":{},
+    "previz_capture":{"editable":False},
     }
 
 class output_lib:

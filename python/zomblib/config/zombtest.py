@@ -11,6 +11,7 @@ class project(zombase.project):
     private_path = '//Diskstation/Projects/private/${{DAM_USER}}/{}/'.format(dir_name)
     damas_root_path = "zombtest/"
 
+
 class asset_lib(zombase.asset_lib):
 
     dir_name = "asset"
@@ -20,24 +21,22 @@ class asset_lib(zombase.asset_lib):
 
 class camera(zombase.camera):
 
-    public_path = osp.join(asset_lib.public_path, asset_lib.asset_dir)
-    private_path = osp.join(asset_lib.private_path, asset_lib.asset_dir)
+    public_path = osp.join(asset_lib.public_path, "{assetType}")
+    private_path = osp.join(asset_lib.private_path, "{assetType}")
 
 class character3d(zombase.character3d):
 
     template_dir = zombase.character3d.template_dir
 
-    public_path = osp.join(asset_lib.public_path, asset_lib.asset_dir)
-    private_path = osp.join(asset_lib.private_path, asset_lib.asset_dir)
-    template_path = osp.join(project.template_path, template_dir)
+    public_path = osp.join(asset_lib.public_path, "{assetType}")
+    private_path = osp.join(asset_lib.private_path, "{assetType}")
 
 class prop3d(zombase.prop3d):
 
     template_dir = zombase.prop3d.template_dir
 
-    public_path = osp.join(asset_lib.public_path, asset_lib.asset_dir)
-    private_path = osp.join(asset_lib.private_path, asset_lib.asset_dir)
-    template_path = osp.join(project.template_path, template_dir)
+    public_path = osp.join(asset_lib.public_path, "{assetType}")
+    private_path = osp.join(asset_lib.private_path, "{assetType}")
 
 class vehicle3d(zombase.vehicle3d):
     pass
@@ -46,18 +45,17 @@ class set3d(zombase.set3d):
 
     template_dir = zombase.set3d.template_dir
 
-    public_path = osp.join(asset_lib.public_path, asset_lib.asset_dir)
-    private_path = osp.join(asset_lib.private_path, asset_lib.asset_dir)
-    template_path = osp.join(project.template_path, template_dir)
-
+    public_path = osp.join(asset_lib.public_path, "{assetType}")
+    private_path = osp.join(asset_lib.private_path, "{assetType}")
 
 class environment3d(zombase.environment3d):
     pass
 
 class fx_previz(zombase.fx_previz):
 
-    public_path = osp.join(asset_lib.public_path, asset_lib.asset_dir)
-    private_path = osp.join(asset_lib.private_path, asset_lib.asset_dir)
+    public_path = osp.join(asset_lib.public_path, "{assetType}")
+    private_path = osp.join(asset_lib.private_path, "{assetType}")
+
 
 class shot_lib(zombase.shot_lib):
 

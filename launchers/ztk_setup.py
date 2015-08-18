@@ -66,7 +66,9 @@ class Z2kToolkit(object):
 
         sEnvKey = "DAVOS_CONF_PACKAGE"
         if sEnvKey not in os.environ:
-            os.environ[sEnvKey] = "zomblib.config"
+            value = "zomblib.config"
+            print " - SET {0} = {1}".format(sEnvKey, value)
+            os.environ[sEnvKey] = value
 
         # Maya module path
         modulePathAdd = osp.join(self.rootPath, "maya_mods")
@@ -82,7 +84,7 @@ class Z2kToolkit(object):
     def install(self):
 
         # tools update
-        repo = self.distribPath()
+        repo = self.releasePath()
         if self.isDev:
             print "Tools update from development environment !"
             repo = self.rootPath
@@ -97,12 +99,12 @@ class Z2kToolkit(object):
 
             print "Zombie toolkit updated, use your local to launch applications ! ({0})".format(osp.join(local_root, "launchers"))
 
-    def distribute(self):
+    def release(self):
 
         if not self.isDev:
             raise EnvironmentError("Sorry, you are not in DEV mode !")
 
-        sDistroPath = self.distribPath()
+        sDistroPath = self.releasePath()
         sOutput = self.makeCopy(self.rootPath, sDistroPath, dryRun=True).strip()
         if not sOutput:
             print "No changes !"
@@ -132,7 +134,7 @@ class Z2kToolkit(object):
                             "setup_*.bat" if not self.isDev else ""))
         return runCmd(cmdLine)
 
-    def distribPath(self):
+    def releasePath(self):
         return osp.join(os.environ["ZOMBI_TOOL_PATH"], self.dirName)
 
     def callCmd(self, args, update=True):
@@ -147,7 +149,7 @@ class Z2kToolkit(object):
     def runFromCmd(self):
 
         parser = argparse.ArgumentParser()
-        parser.add_argument("command", choices=("install", "call", "distrib"))
+        parser.add_argument("command", choices=("install", "call", "release"))
         parser.add_argument("--update", "-u", type=int, default=1)
 
         ns, args = parser.parse_known_args()
@@ -159,8 +161,8 @@ class Z2kToolkit(object):
 
         if sCmd == "install":
             self.install()
-        elif sCmd == "distrib":
-            self.distribute()
+        elif sCmd == "release":
+            self.release()
 
 if __name__ == "__main__":
     try:
