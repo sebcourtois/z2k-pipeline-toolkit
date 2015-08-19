@@ -19,11 +19,12 @@ identified checks
 
 '''
 
-SPECNAMES = {"grp_geo":"ctrl_global"}
+SPECNAMES = {"grp_geo":"Local_SRT","global_srt":"Global_SRT", "big_daddy":"BigDaddy"}
 CTRLS_SIZE = 1.0
 
-CTRL_SETNAME = "set_ctrls"
-GEOMETRIES_LAYERNAME = "layer_geometries"
+CTRL_SETNAME = "set_control"
+CACHE_SETNAME = "set_meshCache"
+GEOMETRIES_LAYERNAME = "layer_geometry"
 
 DISPLAYS_CACHE_ATTRNAME = "rig_displays"
 
@@ -185,50 +186,81 @@ def cleanSet(inRoot):
 
             pc.setAttr(inRoot.name() + "." + DISPLAYS_CACHE_ATTRNAME, str(dispDict))
 
+            #delete the geometry layer 
+            if pc.objExists(GEOMETRIES_LAYERNAME):
+                pc.delete(GEOMETRIES_LAYERNAME)
+
+            #delete the cache set 
+            if pc.objExists(CACHE_SETNAME):
+                pc.delete(CACHE_SETNAME)
+
             #Finally delete the rig Root 
             pc.delete(child)
             return
 
     return
 
-def createSetControlRecur(inGrp, inRoot):
+def createSetControlRecur(inGrp, inRoot, b_inRecursive=True):
     createdObjs = ([], [])
 
     ctrlName = inGrp.name().replace("grp_", "ctrl_")
     icon = None
+
+    isRootControl = False
     
     if inGrp.name() in SPECNAMES:
+        if inGrp.name() == 'grp_geo':
+            isRootControl = True
+
         ctrlName = SPECNAMES[inGrp.name()]
-        icon = tkc.createCubeIcon(ctrlName, size=CTRLS_SIZE, scale=(1, 0.001, 1))
-        tkc.setObjectColor(pc.ls(sl=True)[0], [255, 255, 0, 0])
+        icon = tkc.createCubeIcon(ctrlName, size=CTRLS_SIZE, scale=(3, 0.001, 3))
+        tkc.setObjectColor(icon, [255, 128, 0, 0])
     else:
         icon = tkc.createRingsIcon(ctrlName, size=CTRLS_SIZE)
-        tkc.setObjectColor(pc.ls(sl=True)[0], [255, 255, 255, 0])
+        tkc.setObjectColor(icon, [255, 255, 255, 0])
     
     pc.parent(icon, inRoot)
     tkc.matchTRS(icon, inGrp)
     tkc.setNeutralPose(icon)
-    tkc.constrain(inGrp, icon, "Pose")
+    tkc.constrain(inGrp, icon, "Pose", inAdditionnalArg=True)
+
+    if isRootControl:
+        global_srt = tkc.createCubeIcon(SPECNAMES['global_srt'], size=CTRLS_SIZE, scale=(2, 0.001, 2))
+        tkc.setObjectColor(global_srt, [255, 255, 0, 0])
+        pc.parent(global_srt, inRoot)
+        tkc.matchTRS(global_srt, inGrp)
+        tkc.setNeutralPose(global_srt)
+        tkc.parent(icon, global_srt)
+        createdObjs[0].append(global_srt)
+
+        big_daddy = tkc.createCubeIcon(SPECNAMES['big_daddy'], size=CTRLS_SIZE, scale=(4, 0.001, 4))
+
+        pc.setAttr('{0}.visibility'.format(big_daddy.getShape().name()), False)
+        tkc.setObjectColor(big_daddy, [255, 255, 0, 0])
+        pc.parent(big_daddy, inRoot)
+        tkc.matchTRS(big_daddy, inGrp)
+        tkc.setNeutralPose(big_daddy)
+        tkc.parent(global_srt, big_daddy)
+        createdObjs[0].append(big_daddy)
 
     createdObjs[0].append(icon)
     
-    children = tkc.getChildren(inGrp, False)
-    
-    grpsChildren = []
+    if b_inRecursive:
+        children = tkc.getChildren(inGrp, False)
+        grpsChildren = []
+        for child in children:
+            shape = child.getShape()
+            if child.name()[:4] == "grp_" and shape == None:
+                grpsChildren.append(child) 
+            elif shape !=None and shape.type() == "mesh":
+                createdObjs[1].append(child)
+            else:
+                pc.warning('Unmanaged object {}'.format(child.name()))
 
-    for child in children:
-        shape = child.getShape()
-        if child.name()[:4] == "grp_" and shape == None:
-            grpsChildren.append(child) 
-        elif shape !=None and shape.type() == "mesh":
-            createdObjs[1].append(child)
-        else:
-            pc.warning('Unmanaged object {}'.format(child.name()))
-
-    for grpChild in grpsChildren:
-        subCreatedObjs = createSetControlRecur(grpChild, icon)
-        createdObjs[0].extend(subCreatedObjs[0])
-        createdObjs[1].extend(subCreatedObjs[1])
+        for grpChild in grpsChildren:
+            subCreatedObjs = createSetControlRecur(grpChild, icon)
+            createdObjs[0].extend(subCreatedObjs[0])
+            createdObjs[1].extend(subCreatedObjs[1])
 
     return createdObjs
 
@@ -273,6 +305,19 @@ def rigSet(inRoot):
         pc.delete(CTRL_SETNAME)
 
     pc.sets(ctrls, name=CTRL_SETNAME)
+
+    #Put all groups in a set for caching
+    groups=[]
+
+    for geo in geos:
+        group = geo.getParent()
+        if not group in groups:
+            groups.append(group)
+
+    if pc.objExists(CACHE_SETNAME):
+        pc.delete(CACHE_SETNAME)
+
+    pc.sets(groups, name=CACHE_SETNAME)
 
     #Put all geometries in a layer, and set it to "reference"
     if pc.objExists(GEOMETRIES_LAYERNAME):
