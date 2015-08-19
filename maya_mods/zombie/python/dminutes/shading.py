@@ -124,37 +124,87 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
                 
                 
 
-def conformMapPath
-"""
-determiner l'asset en cours d'edition
-deteminer le texture path en fonction de PRIVATE_MAP_DIR et tester son existance
+def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthorizedFormat=["jpg","tga"]):
+    """
+    checks all the unreferenced file nodes. 
+    in : inVerbose (boolean) : log info if True
+         inConform (boolean) : modify path of file nodes when requiered.
+         inCopy (boolean) : allow a copy of the texture to be made from the initial path to the final path before modifiying the path value 
+         inAuthorizedFormat (list): a list of texture extention that are considered as correct
+    out: outNoMapFileNodeList (list) : list of all the file nodes that need to be modified in order to get conform. 
+    """ 
+    if mc.ls("|asset"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        if  mainFilePathElem[-4] == "asset":
+            finalMapdir = os.path.join("$PRIVATE_MAP_DIR",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            finalMapdirExpand = os.path.join(os.environ["PRIVATE_MAP_DIR"],mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            #finalMapdirExpand = os.path.expandvars("finalMapdir")
+        else:
+            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+    
+    else :
+        raise ValueError("#### Error: no '|asset' could be found in this scene")
+        
 
-lister les files nodes
-    - si le chemin initial est deja le bon 
-        si la texture existe
-            - ajouter le file node a correctFileNodeList
-            - continue
-        sinon 
-            - warning: ajouter le file node a outNoMapFileNodeList
-            - continue
-    - sinon si il y a deja une texture au bon chemin
-        - changer le chemin
-        - ajouter le file node a correctFileNodeList
-        - continue
-    - sinon si il y une texture au chemin initial
-        - copier la texture dans le repertoire final
-        - changer le chemin
-        - ajouter le tuple (filenode,initialPath) a copiedMapFileNodeList
-        - continue
-    - sinon
-        - warning: ajouter le file node a outNoMapFileNodeList puis passer
+    fileNodeList = mc.ls("*",type ="file")
+    outWrongFileNodeList = []
+    
+    for eachFileNode in fileNodeList:
+        wrongFileNode = False
+        mapFilePath = mc.getAttr(eachFileNode+".fileTextureName")
+        mapPath = os.path.split(mapFilePath)[0]
+        fileName = os.path.split(mapFilePath)[1]       
+        finalMapFilePathExpanded = os.path.join(finalMapdirExpand,fileName)
+        finalMapFilePath = os.path.join(finalMapdir,fileName)
 
-si inVerbose
-    - printer la liste des nodes dont la texture a ete copiee copiedMapFileNodeList et leur emplacemet d'origine
-    - printer la liste des nodes sans texture outNoMapFileNodeList
-    - selectionner tous les outNoMapFileNodeList
+ 
+        #tests the texture extention
+        mapExtention = (os.path.split(mapFilePath))[-1].split(".")[-1]
+        if mapExtention  not in inAuthorizedFormat:
+            if inVerbose == True: print "#### warning: '{0:^24}' the file extention :'.{1}'  is not conform, only {2} are allowed".format(eachFileNode,mapExtention,inAuthorizedFormat)
+            outWrongFileNodeList.append(eachFileNode)
+            continue
+        #tests if used path match the finalMapDir and if the texture exists
+        elif mapPath == finalMapdirExpand:    
+            if os.path.isfile(mapFilePath) == True:
+                continue
+            else:
+                if inVerbose == True: print "#### warning: '{0:^24}' the file :'{1}' doesn't exist".format(eachFileNode,mapFilePath)       
+                outWrongFileNodeList.append(eachFileNode)
+                continue
+        #tests if the texture exists in the finalMapDir, and modify the path if inConform = True
+        elif os.path.isfile(finalMapFilePathExpanded) is True:
+            if inConform is True: 
+                mc.setAttr(eachFileNode+".fileTextureName", finalMapFilePath, type = "string")
+                if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,finalMapFilePath)
+                continue
+            else:
+                if inVerbose == True: print "#### warning: '{0:^24}' wrong path file :'{1}'".format(eachFileNode,mapFilePath)       
+                outWrongFileNodeList.append(eachFileNode)
+                continue
+        #tests if the texture file exists at the initial file path and copy it if required to the finalMapDir
+        elif os.path.isfile(mapFilePath) is True:
+            if inCopy is True:
+                print "#### Info: copy file: "+mapFilePath+" --> "+finalMapFilePathExpanded
+                shutil.copyfile(mapFilePath, finalMapFilePathExpanded)
+                if os.path.isfile(finalMapFilePathExpanded) == False: 
+                    print "#### Error: "+eachFileNode+" file could not be found: "+finalMapFilePathExpanded
+                    outWrongFileNodeList.append(eachFileNode)
+                    continue
+                mc.setAttr(eachFileNode+".fileTextureName", finalMapFilePath, type = "string")
+                if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,finalMapFilePath)                        
+                continue
+        else:
+            if inVerbose == True: print "#### warning: '{0:^24}' the file must be moved to {1}".format(eachFileNode,finalMapFilePath)                         
+            outWrongFileNodeList.append(eachFileNode)
+            continue
 
-in inVerbose
-out "outNoMapFileNodeList"
-"""         
+    print "#### warning: {} file node(s) have wrong file path settings".format(len(outWrongFileNodeList))
+    if inVerbose == True: 
+        mc.select(outWrongFileNodeList)
+        print "#### info: the wrong file nodes have been selected"
+    return outWrongFileNodeList if outWrongFileNodeList != [] else  None
 
+
+            

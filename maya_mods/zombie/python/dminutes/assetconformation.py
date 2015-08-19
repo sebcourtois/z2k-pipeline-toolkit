@@ -3,6 +3,14 @@ import re
 import string
 
 
+def onCheckInAsset():
+    """
+    lists of things to automaticaly do before doing a check-in on an asset
+    """
+    unknownNodes = ['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions']
+    mc.delete (unknownNodes)
+
+
 
 def checkGroupNamingConvention(printInfo = True):
     """
