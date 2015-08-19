@@ -5,7 +5,8 @@ import pymel.core.datatypes as dt
 import maya.cmds as mc
 import re
 import string
-import listUtils
+import miscUtils
+
 
 '''
 Temporary module to manage modeling
@@ -369,7 +370,7 @@ def getMeshesWithSameName(inVerbose = True, inParent = "*"):
         - return (list) : multipleMesh
     """
 
-    allTransMesh = listUtils.getAllTransfomMeshes(inParent)
+    allTransMesh = miscUtils.getAllTransfomMeshes(inParent)
     multipleMesh = []
 
     for eachTrasnMesh in allTransMesh:
@@ -395,7 +396,7 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
     myMesh  (string) : the long name of a mesh (a transform parent of a mesh shape) that has to be renamed to have a unique short name in the scene
 
     """
-    allTransMesh = listUtils.getAllTransfomMeshes(inParent)
+    allTransMesh = miscUtils.getAllTransfomMeshes(inParent)
     shortName = myMesh.split("|")[-1]
     digit = re.findall('([0-9]+$)', myMesh)
     if digit:

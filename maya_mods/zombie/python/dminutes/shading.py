@@ -1,6 +1,7 @@
 import maya.cmds as mc
 import re
 import os
+import miscUtils
 
 
 
@@ -121,8 +122,9 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
         print "#### info 'referenceShadingCamera': a camera '"+cameraName+"' is already referenced in this scene, operation canceled"
     else:
         mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False)
-                
-                
+              
+
+
 
 def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthorizedFormat=["jpg","tga"]):
     """
@@ -137,12 +139,12 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
-            finalMapdir = os.path.join("$PRIVATE_MAP_DIR",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
-            finalMapdirExpand = os.path.join(os.environ["PRIVATE_MAP_DIR"],mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            
+            finalMapdir = miscUtils.pathJoin("$PRIVATE_MAP_DIR",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            finalMapdirExpand = miscUtils.pathJoin(os.environ["PRIVATE_MAP_DIR"],mainFilePathElem[-3],mainFilePathElem[-2],"texture")
             #finalMapdirExpand = os.path.expandvars("finalMapdir")
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
-    
     else :
         raise ValueError("#### Error: no '|asset' could be found in this scene")
         
@@ -157,7 +159,6 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
         fileName = os.path.split(mapFilePath)[1]       
         finalMapFilePathExpanded = os.path.join(finalMapdirExpand,fileName)
         finalMapFilePath = os.path.join(finalMapdir,fileName)
-
  
         #tests the texture extention
         mapExtention = (os.path.split(mapFilePath))[-1].split(".")[-1]
@@ -166,7 +167,7 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
             outWrongFileNodeList.append(eachFileNode)
             continue
         #tests if used path match the finalMapDir and if the texture exists
-        elif mapPath == finalMapdirExpand:    
+        if mapPath == finalMapdirExpand:    
             if os.path.isfile(mapFilePath) == True:
                 continue
             else:
@@ -174,7 +175,7 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
                 outWrongFileNodeList.append(eachFileNode)
                 continue
         #tests if the texture exists in the finalMapDir, and modify the path if inConform = True
-        elif os.path.isfile(finalMapFilePathExpanded) is True:
+        if os.path.isfile(finalMapFilePathExpanded) is True:
             if inConform is True: 
                 mc.setAttr(eachFileNode+".fileTextureName", finalMapFilePath, type = "string")
                 if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,finalMapFilePath)
@@ -184,7 +185,7 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
                 outWrongFileNodeList.append(eachFileNode)
                 continue
         #tests if the texture file exists at the initial file path and copy it if required to the finalMapDir
-        elif os.path.isfile(mapFilePath) is True:
+        if os.path.isfile(mapFilePath) is True:
             if inCopy is True:
                 print "#### Info: copy file: "+mapFilePath+" --> "+finalMapFilePathExpanded
                 shutil.copyfile(mapFilePath, finalMapFilePathExpanded)
@@ -200,10 +201,11 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
             outWrongFileNodeList.append(eachFileNode)
             continue
 
-    print "#### warning: {} file node(s) have wrong file path settings".format(len(outWrongFileNodeList))
-    if inVerbose == True: 
-        mc.select(outWrongFileNodeList)
-        print "#### info: the wrong file nodes have been selected"
+    if outWrongFileNodeList: 
+        print "#### warning: {} file node(s) have wrong file path settings".format(len(outWrongFileNodeList))
+        if inVerbose == True: 
+            mc.select(outWrongFileNodeList)
+            print "#### info: the wrong file nodes have been selected"
     return outWrongFileNodeList if outWrongFileNodeList != [] else  None
 
 
