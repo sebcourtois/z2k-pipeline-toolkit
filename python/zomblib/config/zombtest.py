@@ -26,14 +26,10 @@ class camera(zombase.camera):
 
 class character3d(zombase.character3d):
 
-    template_dir = zombase.character3d.template_dir
-
     public_path = osp.join(asset_lib.public_path, "{assetType}")
     private_path = osp.join(asset_lib.private_path, "{assetType}")
 
 class prop3d(zombase.prop3d):
-
-    template_dir = zombase.prop3d.template_dir
 
     public_path = osp.join(asset_lib.public_path, "{assetType}")
     private_path = osp.join(asset_lib.private_path, "{assetType}")
@@ -42,8 +38,6 @@ class vehicle3d(zombase.vehicle3d):
     pass
 
 class set3d(zombase.set3d):
-
-    template_dir = zombase.set3d.template_dir
 
     public_path = osp.join(asset_lib.public_path, "{assetType}")
     private_path = osp.join(asset_lib.private_path, "{assetType}")
