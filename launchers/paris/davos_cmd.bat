@@ -1,7 +1,7 @@
-SET "ENGINE=%~dp0..\..\scripts\davos_cmd.py"
+SET "ENGINE=%~dp0\..\..\python\davos-dev\scripts\davos_cmd.py"
 call :resolve "%ENGINE%"
 
-"C:\Python27\python.exe" "%~dp0setup_env_tools.py" True True "C:\Python27\python.exe" -i %_RETURN%
+"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" call "C:\Python27\python.exe" %_RETURN% -p zombillenium
 pause
 
 :resolve

@@ -1,1 +1,1 @@
-"C:\Python27\python.exe" "%~dp0setup_env_tools.py" True False "C:\Users\sebcourtois\Programs\eclipse\eclipse.exe"
+"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" call "C:\Users\sebcourtois\Programs\eclipse\eclipse.exe"
