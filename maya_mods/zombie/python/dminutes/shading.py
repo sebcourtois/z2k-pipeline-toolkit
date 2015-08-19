@@ -141,7 +141,7 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
             finalMapdirExpand = os.path.join(os.environ["PRIVATE_MAP_DIR"],mainFilePathElem[-3],mainFilePathElem[-2],"texture")
             #finalMapdirExpand = os.path.expandvars("finalMapdir")
         else:
-            raise ValueError("#### Error: you are not working in an 'asset' data structure")
+            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     
     else :
         raise ValueError("#### Error: no '|asset' could be found in this scene")
