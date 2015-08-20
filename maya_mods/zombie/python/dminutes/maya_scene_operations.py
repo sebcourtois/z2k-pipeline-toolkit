@@ -49,7 +49,7 @@ def create_scene_base(o_inSceneManager):
     mc.file(force=True, new=True)
 
     #Import scene structure
-    strucure_path = os.environ['ZOMBI_TOOL_PATH'] + "\\template\\{0}_layout_tree.ma".format(o_inSceneManager.context['entity']['type'].lower())
+    strucure_path = os.environ['ZOMB_TOOL_PATH'] + "\\template\\{0}_layout_tree.ma".format(o_inSceneManager.context['entity']['type'].lower())
 
     if os.path.isfile(strucure_path):
         mc.file(strucure_path, i=True, rpr='')

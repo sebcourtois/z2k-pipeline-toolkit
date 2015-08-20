@@ -113,8 +113,8 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
         cameraName (string): the camera name you want to reference
         fileType(string): specify if the '.ma' or '.mb' file is to reference
     """
-    zombie_asset_dir =  os.environ["ZOMBI_ASSET_DIR"]
-    shading_cam_filename =  os.path.join("$ZOMBI_ASSET_DIR", "cam",cameraName,cameraName+fileType)
+    zombie_asset_dir =  os.environ["ZOMB_ASSET_PATH"]
+    shading_cam_filename =  os.path.join("$ZOMB_ASSET_PATH", "cam",cameraName,cameraName+fileType)
     
     
     if cameraName in  str(mc.file(query=True, list=True, reference = True)):
