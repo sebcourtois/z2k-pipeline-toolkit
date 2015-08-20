@@ -9,7 +9,7 @@ class project(zombase.project):
 
     public_path = '//Diskstation/Projects/{}/'.format(dir_name)
     private_path = '//Diskstation/Projects/private/${{DAVOS_USER}}/{}/'.format(dir_name)
-    damas_root_path = "zombtest/"
+    damas_root_path = "{}/".format(dir_name)
 
 
 class asset_lib(zombase.asset_lib):
