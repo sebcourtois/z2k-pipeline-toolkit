@@ -100,30 +100,30 @@ def setArnoldRenderOption(outputFormat):
         mc.setAttr("defaultArnoldDriver.halfPrecision",1)
         mc.setAttr("defaultArnoldDriver.autocrop",1)
         mc.setAttr("defaultArnoldDriver.mergeAOVs",1)
-        mc.setAttr("defaultArnoldRenderOptions.aovMode",1)
+        mc.setAttr("defaultArnoldRenderOptions.aovMode",2)#batch only
 
-        myAOVs = AOVInterface()
-        #create aovs, type = rgb
-        aovNameList = ["dmn_incandescence","dmn_ambient", "dmn_diffuse", "dmn_lambert", "dmn_toon" ]
-        for eachAovName in aovNameList: 
-            if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
-                myAOVs.addAOV( eachAovName, aovType=5)
-        #create aovs, type = float   
-        aovNameList = ["dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour" ]
-        for eachAovName in aovNameList: 
-            if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
-                #myAOVs.addAOV( eachAovName, aovType=4) # desactivated so everything in rgb for the moment
-                myAOVs.addAOV( eachAovName, aovType=5)
-        #create aovs, type = rgba
-        aovNameList = ["dmn_mask00","dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04" ]
-        for eachAovName in aovNameList: 
-            if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
-                myAOVs.addAOV( eachAovName, aovType=6)
+    myAOVs = AOVInterface()
+    #create aovs, type = rgb
+    aovNameList = ["dmn_incandescence","dmn_ambient", "dmn_diffuse", "dmn_lambert", "dmn_toon" ]
+    for eachAovName in aovNameList: 
+        if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
+            myAOVs.addAOV( eachAovName, aovType=5)
+    #create aovs, type = float   
+    aovNameList = ["dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour" ]
+    for eachAovName in aovNameList: 
+        if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
+            #myAOVs.addAOV( eachAovName, aovType=4) # desactivated so everything in rgb for the moment
+            myAOVs.addAOV( eachAovName, aovType=5)
+    #create aovs, type = rgba
+    aovNameList = ["dmn_mask00","dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04" ]
+    for eachAovName in aovNameList: 
+        if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
+            myAOVs.addAOV( eachAovName, aovType=6)
                 
         
     
     
-    if shadingMode == true:
+    if shadingMode == True:
         mc.setAttr("defaultArnoldRenderOptions.AASamples",4)
         mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",0)
     else:
