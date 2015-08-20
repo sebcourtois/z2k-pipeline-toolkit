@@ -1,20 +1,35 @@
 import maya.cmds as mc
 from mtoa.aovs import AOVInterface
 
+import miscUtils
+
 
 
 
 def setArnoldRenderOption(outputFormat):
-    print ""
-    print "------------running setArnoldRenderOption------------"
 
     """
     this scripts sets the Arnold render options for production
     it also gets the rendering camera, and set the aovs
     sting --> "outputFormat": define the frame rendering format, only "png" and "exr" accepted.
                                 "exr" also activate the AOVss
-
     """
+
+    print ""
+    print "#### {:>7}: runing shading.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
+
+    #define output directoy
+    if mc.ls("|asset"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        if  mainFilePathElem[-4] == "asset":
+            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH","asset",mainFilePathElem[-3],mainFilePathElem[-2],"review",mainFilePathElem[-2])
+        else:
+            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+    else :
+        raise ValueError("#### Error: no '|asset' could be found in this scene")
+        
+
     mmToIncheFactor = 0.0393700787401575
     camApertureInche = 35 * mmToIncheFactor 
     
@@ -65,7 +80,7 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultRenderGlobals.putFrameBeforeExt",1)
     mc.setAttr("defaultRenderGlobals.extensionPadding",4)
     mc.setAttr("defaultRenderGlobals.currentRenderer","arnold", type = "string")
-    #mc.setAttr("defaultRenderGlobals.imageFilePrefix","" ,type = "string")
+    mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputFilePath ,type = "string")
 
 
     #arnold Settings
