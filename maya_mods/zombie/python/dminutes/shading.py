@@ -16,14 +16,14 @@ def connectedToSeveralSG(myNode = ""):
         if mc.nodeType(item) == "shadingEngine":
             upStreamShadingGroupList.append(item)
     if len(upStreamShadingGroupList) >1:
-        print "####    error: 'conformShaderNames': '"+myNode+"' is connected to several shading groups  -->   "+str(upStreamShadingGroupList)
+        print "####    error: '"+myNode+"' is connected to several shading groups  -->   "+str(upStreamShadingGroupList)
         return True
     else:
         return False
 
 
 
-def conformShaderName(shadEngineList = "selection"):
+def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True ):
     """
     shadEngineList : selection, all
     conform the shading tree attached to the selected shading engine , or all the shading trees , depending on the shadEngineList value.
@@ -35,6 +35,9 @@ def conformShaderName(shadEngineList = "selection"):
     all the nodes will be renamed : 'mat_materialName_nodeType' or 'pre_materialName_nodeType'
     'materialName' part comes from the shading engine name and 'nodeType' is the node's type
     """
+    print ""
+    print "#### {:>7}: running conformShaderName(shadEngineList = {}, selectWrongShadEngine = {} )".format("info",shadEngineList, selectWrongShadEngine)
+
     correctShadEngine =[]
     wrongShadEngine = []
 
@@ -46,7 +49,7 @@ def conformShaderName(shadEngineList = "selection"):
         shadEngineList.remove("initialParticleSE")
         shadEngineList.remove("initialShadingGroup")
         if not shadEngineList :
-            print "#### info: 'conformShaderNames': no shading engine to conform"
+            print "#### {:>7}: no shading engine to conform".format("info")
             return
 
     elif shadEngineList == "selection":
@@ -54,7 +57,7 @@ def conformShaderName(shadEngineList = "selection"):
         if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
         if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
         if not shadEngineList : 
-            print "#### info: 'conformShaderNames': no shading engine selected"
+            print "#### {:>7}: no shading engine selected".format("info")
             return
 
     for each in shadEngineList:
@@ -64,8 +67,7 @@ def conformShaderName(shadEngineList = "selection"):
         else:
             #check that 2 different2 shading nodes are plugged into the surfaceShader and aiSurfaceShader input of the SG node
             correctShadEngine.append(each)
-            materialName = each.lstrip("sgr_")
-            print materialName
+            materialName = each.split("sgr_")[-1]
             preview_shader =  mc.listConnections(each+'.surfaceShader',connections = True)
             render_shader =  mc.listConnections(each+'.aiSurfaceShader',connections = True)
             if not preview_shader or not render_shader:
@@ -102,11 +104,15 @@ def conformShaderName(shadEngineList = "selection"):
                 render_shader_type = mc.nodeType(item)
                 if not re.match('mat_'+materialName+'_'+render_shader_type+'[0-9]{0,3}$',render_shader):
                     render_shader = mc.rename(item,'mat_'+materialName+'_'+render_shader_type)
+        print "#### {:>7}: {:^28} tree has been conformed properly".format("info", each)
 
-        print "####    info: 'conformShaderNames': -- "+each+" --  tree has been conformed properly" 
-
-    for each in wrongShadEngine:
-        print "#### warning: 'conformShaderNames': "+each[0]+"   -->   "+each[1]
+    if  wrongShadEngine != []:
+        if selectWrongShadEngine == True: mc.select(clear = True)
+        for each in wrongShadEngine:
+            print "#### {:>7}: {:^28} {}".format("warning", each[0], each[1])
+            if selectWrongShadEngine == True: mc.select(each[0], ne = True, add = True)
+        print "####    info: problematics shading engines have been selected"
+    return wrongShadEngine if wrongShadEngine != [] else  None
 
 
 def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
