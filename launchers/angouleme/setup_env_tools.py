@@ -5,7 +5,7 @@ import subprocess
 
 # Common envs, may be different for each studio
 ENVS = {
-		"ZOMBI_PRIVATE_PATH":'\\\\Diskstation\\Projects\\private\\${DAM_USER}\\zomb',
+		"ZOMBI_PRIVATE_PATH":'\\\\Diskstation\\Projects\\private\\${DAVOS_USER}\\zomb',
 		"ZOMBI_TOOL_PATH":"\\\\Diskstation\\Projects\\zomb\\tool",
 		"ZOMBI_ASSET_DIR":"\\\\Diskstation\\Projects\\zomb\\asset",
 		"ZOMBI_SHOT_DIR":"\\\\Diskstation\\Projects\\zomb\\shot",
