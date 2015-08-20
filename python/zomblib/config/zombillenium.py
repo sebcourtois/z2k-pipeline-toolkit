@@ -6,7 +6,7 @@ class project:
     maya_version = 2016
 
     #public_path = '//Diskstation/z2k/05_3D/{}/'.format(dir_name)
-    private_path = '$ZOMB_PRIVATE_PATH/'
+    private_path = '$PRIV_ZOMB_PATH/'
     damas_root_path = "zomb/"
 
     template_path = '$ZOMB_TOOL_PATH/template/'
@@ -26,7 +26,7 @@ class project:
 class asset_lib:
 
     public_path = '$ZOMB_ASSET_PATH'
-    private_path = project.private_path + "asset"
+    private_path = '$PRIV_ZOMB_ASSET_PATH'#project.private_path + "asset"
 
     asset_types = (
         "character3d",
@@ -167,7 +167,7 @@ class fx_previz:
 class shot_lib:
 
     public_path = '$ZOMB_SHOT_PATH'
-    private_path = project.private_path + "shot"
+    private_path = '$PRIV_ZOMB_SHOT_PATH'#project.private_path + "shot"
 
     shot_tree = {
         "{sequence}":
@@ -191,7 +191,7 @@ class shot_lib:
 class output_lib:
 
     public_path = '$ZOMB_OUTPUT_PATH'
-    private_path = project.private_path + "output"
+    private_path = '$PRIV_ZOMB_OUTPUT_PATH'#project.private_path + "output"
 
 
 
