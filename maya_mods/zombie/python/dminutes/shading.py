@@ -133,7 +133,7 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
 
 
 
-def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthorizedFormat=["jpg","tga"]):
+def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAuthorizedFormat=["jpg","tga"]):
     """
     checks all the unreferenced file nodes. 
     in : inVerbose (boolean) : log info if True
