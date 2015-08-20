@@ -148,8 +148,9 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
-            finalMapdir = miscUtils.pathJoin("$PRIVATE_MAP_DIR","asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
-            finalMapdirExpand = miscUtils.pathJoin(os.environ["PRIVATE_MAP_DIR"],"asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH","asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            #finalMapdirExpand = miscUtils.pathJoin(os.environ["PRIV_ZOMB_TEXTURE_PATH"],"asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            finalMapdirExpand = os.path.expandvars(finalMapdir)
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
