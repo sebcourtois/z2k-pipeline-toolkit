@@ -23,7 +23,9 @@ def setArnoldRenderOption(outputFormat):
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
-            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH","asset",mainFilePathElem[-3],mainFilePathElem[-2],"review",mainFilePathElem[-2])
+            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"review")
+            outputImageName = mainFilePathElem[-2]
+            mc.workspace(fileRule=["images",outputFilePath])
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
@@ -80,7 +82,7 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultRenderGlobals.putFrameBeforeExt",1)
     mc.setAttr("defaultRenderGlobals.extensionPadding",4)
     mc.setAttr("defaultRenderGlobals.currentRenderer","arnold", type = "string")
-    mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputFilePath ,type = "string")
+    mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
 
 
     #arnold Settings
