@@ -23,7 +23,7 @@ def launch(argv):
     mainWin.show(dockable=False)
 
     sProject = "zombtest" if inDevMode() else "zombillenium"
-    mainWin.setProject(sProject, libraryType=MrcLibrary)
+    mainWin.setProject(sProject)
 
 if __name__ == "__main__":
     launch(sys.argv)
