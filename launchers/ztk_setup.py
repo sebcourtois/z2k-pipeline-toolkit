@@ -135,7 +135,7 @@ class Z2kToolkit(object):
         return runCmd(cmdLine)
 
     def releasePath(self):
-        return osp.join(os.environ["ZOMBI_TOOL_PATH"], self.dirName)
+        return osp.join(os.environ["ZOMB_TOOL_PATH"], self.dirName)
 
     def callCmd(self, args, update=True):
 

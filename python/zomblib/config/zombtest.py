@@ -8,7 +8,7 @@ class project(zombase.project):
     dir_name = "zombtest"
 
     public_path = '//Diskstation/Projects/{}/'.format(dir_name)
-    private_path = '//Diskstation/Projects/private/${{DAM_USER}}/{}/'.format(dir_name)
+    private_path = '//Diskstation/Projects/private/${{DAVOS_USER}}/{}/'.format(dir_name)
     damas_root_path = "zombtest/"
 
 
