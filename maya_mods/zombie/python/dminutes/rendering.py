@@ -18,6 +18,8 @@ def setArnoldRenderOption(outputFormat):
     print ""
     print "#### {:>7}: runing shading.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
 
+    shadingMode = False
+
     #define output directoy
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
@@ -26,6 +28,7 @@ def setArnoldRenderOption(outputFormat):
             outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"review")
             outputImageName = mainFilePathElem[-2]
             mc.workspace(fileRule=["images",outputFilePath])
+            shadingMode = True
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
@@ -119,14 +122,21 @@ def setArnoldRenderOption(outputFormat):
                 
         
     
-    mc.setAttr("defaultArnoldRenderOptions.AASamples",8)
+    
+    if shadingMode == true:
+        mc.setAttr("defaultArnoldRenderOptions.AASamples",4)
+        mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",0)
+    else:
+        mc.setAttr("defaultArnoldRenderOptions.AASamples",8)
+        mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",1)
+
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples",3)
     mc.setAttr("defaultArnoldRenderOptions.GIRefractionSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.sssBssrdfSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp",1)
     mc.setAttr("defaultArnoldRenderOptions.AASampleClamp",2.5)
-    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",0)
+
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
     
 
