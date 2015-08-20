@@ -1,6 +1,7 @@
 import maya.cmds as mc
 import re
 import os
+import miscUtils
 
 
 
@@ -15,14 +16,14 @@ def connectedToSeveralSG(myNode = ""):
         if mc.nodeType(item) == "shadingEngine":
             upStreamShadingGroupList.append(item)
     if len(upStreamShadingGroupList) >1:
-        print "####    error: 'conformShaderNames': '"+myNode+"' is connected to several shading groups  -->   "+str(upStreamShadingGroupList)
+        print "####    error: '"+myNode+"' is connected to several shading groups  -->   "+str(upStreamShadingGroupList)
         return True
     else:
         return False
 
 
 
-def conformShaderName(shadEngineList = "selection"):
+def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True ):
     """
     shadEngineList : selection, all
     conform the shading tree attached to the selected shading engine , or all the shading trees , depending on the shadEngineList value.
@@ -34,6 +35,9 @@ def conformShaderName(shadEngineList = "selection"):
     all the nodes will be renamed : 'mat_materialName_nodeType' or 'pre_materialName_nodeType'
     'materialName' part comes from the shading engine name and 'nodeType' is the node's type
     """
+    print ""
+    print "#### {:>7}: running conformShaderName(shadEngineList = {}, selectWrongShadEngine = {} )".format("info",shadEngineList, selectWrongShadEngine)
+
     correctShadEngine =[]
     wrongShadEngine = []
 
@@ -45,7 +49,7 @@ def conformShaderName(shadEngineList = "selection"):
         shadEngineList.remove("initialParticleSE")
         shadEngineList.remove("initialShadingGroup")
         if not shadEngineList :
-            print "#### info: 'conformShaderNames': no shading engine to conform"
+            print "#### {:>7}: no shading engine to conform".format("info")
             return
 
     elif shadEngineList == "selection":
@@ -53,7 +57,7 @@ def conformShaderName(shadEngineList = "selection"):
         if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
         if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
         if not shadEngineList : 
-            print "#### info: 'conformShaderNames': no shading engine selected"
+            print "#### {:>7}: no shading engine selected".format("info")
             return
 
     for each in shadEngineList:
@@ -63,7 +67,7 @@ def conformShaderName(shadEngineList = "selection"):
         else:
             #check that 2 different2 shading nodes are plugged into the surfaceShader and aiSurfaceShader input of the SG node
             correctShadEngine.append(each)
-            materialName = each.lstrip("sgr_")
+            materialName = each.split("sgr_")[-1]
             preview_shader =  mc.listConnections(each+'.surfaceShader',connections = True)
             render_shader =  mc.listConnections(each+'.aiSurfaceShader',connections = True)
             if not preview_shader or not render_shader:
@@ -100,11 +104,15 @@ def conformShaderName(shadEngineList = "selection"):
                 render_shader_type = mc.nodeType(item)
                 if not re.match('mat_'+materialName+'_'+render_shader_type+'[0-9]{0,3}$',render_shader):
                     render_shader = mc.rename(item,'mat_'+materialName+'_'+render_shader_type)
+        print "#### {:>7}: {:^28} tree has been conformed properly".format("info", each)
 
-        print "####    info: 'conformShaderNames': -- "+each+" --  tree has been conformed properly" 
-
-    for each in wrongShadEngine:
-        print "#### warning: 'conformShaderNames': "+each[0]+"   -->   "+each[1]
+    if  wrongShadEngine != []:
+        if selectWrongShadEngine == True: mc.select(clear = True)
+        for each in wrongShadEngine:
+            print "#### {:>7}: {:^28} {}".format("warning", each[0], each[1])
+            if selectWrongShadEngine == True: mc.select(each[0], ne = True, add = True)
+        print "####    info: problematics shading engines have been selected"
+    return wrongShadEngine if wrongShadEngine != [] else  None
 
 
 def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
@@ -121,8 +129,9 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
         print "#### info 'referenceShadingCamera': a camera '"+cameraName+"' is already referenced in this scene, operation canceled"
     else:
         mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False)
-                
-                
+              
+
+
 
 def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthorizedFormat=["jpg","tga"]):
     """
@@ -133,16 +142,16 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
          inAuthorizedFormat (list): a list of texture extention that are considered as correct
     out: outNoMapFileNodeList (list) : list of all the file nodes that need to be modified in order to get conform. 
     """ 
+    print ""
+    print "#### info: runing shading.conformMapPath( inVerbose = {}, inConform = {}, inCopy = {}, inAuthorizedFormat = {} )".format(inVerbose , inConform , inCopy, inAuthorizedFormat)
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
-            finalMapdir = os.path.join("$PRIVATE_MAP_DIR",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
-            finalMapdirExpand = os.path.join(os.environ["PRIVATE_MAP_DIR"],mainFilePathElem[-3],mainFilePathElem[-2],"texture")
-            #finalMapdirExpand = os.path.expandvars("finalMapdir")
+            finalMapdir = miscUtils.pathJoin("$PRIVATE_MAP_DIR","asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            finalMapdirExpand = miscUtils.pathJoin(os.environ["PRIVATE_MAP_DIR"],"asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
-    
     else :
         raise ValueError("#### Error: no '|asset' could be found in this scene")
         
@@ -153,12 +162,13 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
     for eachFileNode in fileNodeList:
         wrongFileNode = False
         mapFilePath = mc.getAttr(eachFileNode+".fileTextureName")
+        mapFilePathExpand = os.path.expandvars(mapFilePath)
         mapPath = os.path.split(mapFilePath)[0]
         fileName = os.path.split(mapFilePath)[1]       
-        finalMapFilePathExpanded = os.path.join(finalMapdirExpand,fileName)
-        finalMapFilePath = os.path.join(finalMapdir,fileName)
+        finalMapFilePathExpanded = miscUtils.pathJoin(finalMapdirExpand,fileName)
+        finalMapFilePath = miscUtils.pathJoin(finalMapdir,fileName)
 
- 
+
         #tests the texture extention
         mapExtention = (os.path.split(mapFilePath))[-1].split(".")[-1]
         if mapExtention  not in inAuthorizedFormat:
@@ -166,8 +176,9 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
             outWrongFileNodeList.append(eachFileNode)
             continue
         #tests if used path match the finalMapDir and if the texture exists
-        elif mapPath == finalMapdirExpand:    
-            if os.path.isfile(mapFilePath) == True:
+        elif mapPath == finalMapdir: 
+            if os.path.isfile(mapFilePathExpand) == True:
+                if inVerbose == True: print "#### info: '{0:^24}' file and path corect :'{1}'".format(eachFileNode,mapFilePath)  
                 continue
             else:
                 if inVerbose == True: print "#### warning: '{0:^24}' the file :'{1}' doesn't exist".format(eachFileNode,mapFilePath)       
@@ -200,10 +211,11 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
             outWrongFileNodeList.append(eachFileNode)
             continue
 
-    print "#### warning: {} file node(s) have wrong file path settings".format(len(outWrongFileNodeList))
-    if inVerbose == True: 
-        mc.select(outWrongFileNodeList)
-        print "#### info: the wrong file nodes have been selected"
+    if outWrongFileNodeList: 
+        print "#### warning: {} file node(s) have wrong file path settings".format(len(outWrongFileNodeList))
+        if inVerbose == True: 
+            mc.select(outWrongFileNodeList)
+            print "#### info: the wrong file nodes have been selected"
     return outWrongFileNodeList if outWrongFileNodeList != [] else  None
 
 
