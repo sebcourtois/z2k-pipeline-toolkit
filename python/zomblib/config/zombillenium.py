@@ -166,6 +166,8 @@ class fx_previz:
 
 class shot_lib:
 
+    entity_class = "davos.core.damtypes.DamShot"
+
     public_path = '$ZOMB_SHOT_PATH'
     private_path = '$PRIV_ZOMB_SHOT_PATH'#project.private_path + "shot"
 
@@ -174,19 +176,25 @@ class shot_lib:
             {
             "{name} -> entity_dir":
                 {
-                 "{step} -> step_dir":
+                 "{step=01_previz} -> previz_dir":
                     {
-                     "{name}_previz.ma -> previz_scene":{},
-                     "{name}_previz.mov -> previz_capture":{},
+                     "{name}_previz.ma -> previz_scene":None,
+                     "{name}_previz.mov -> previz_capture":None,
+                    },
+                 "{step=02_layout} -> layout_dir":
+                    {
+                     "{name}_layout.ma -> layout_scene":None,
+                     "{name}_layout.mov -> layout_capture":None,
                     },
                 },
             },
         }
 
     resources_conf = {
-    "previz_scene":{"produces":["previz_capture", ] },
+    "previz_scene":{"produces":("previz_capture",), },
     "previz_capture":{"editable":False},
     }
+
 
 class output_lib:
 
