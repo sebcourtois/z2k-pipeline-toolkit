@@ -1,9 +1,10 @@
 import maya.cmds as mc
+import maya.OpenMaya as om
 import re
 import os
+import string 
+import subprocess
 import miscUtils
-
-
 
 
 def connectedToSeveralSG(myNode = ""):
@@ -133,7 +134,7 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
 
 
 
-def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthorizedFormat=["jpg","tga"]):
+def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAuthorizedFormat=["jpg","tga"]):
     """
     checks all the unreferenced file nodes. 
     in : inVerbose (boolean) : log info if True
@@ -148,7 +149,8 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
-            finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH","asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            #finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH","asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
             #finalMapdirExpand = miscUtils.pathJoin(os.environ["PRIV_ZOMB_TEXTURE_PATH"],"asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
             finalMapdirExpand = os.path.expandvars(finalMapdir)
         else:
@@ -220,4 +222,83 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
     return outWrongFileNodeList if outWrongFileNodeList != [] else  None
 
 
+
+def createLowResJpg(nodeList, lod = "4", jpgQuality = "70"):
+    """
+    This function creates a low resolution jpg file given texture file.
+    it also switch off the mipmap fitering, and set the given file node so it point toward this new low res jgp
+     - nodeList : (list) a list of texture file node
+     - lod : (string) 0..19 of pyramid map, largest is 0
+     - jpgQuality : (string) 1...100 highest is 100
+    """
+    mentalRayBin = os.path.normpath(os.environ['MAYA_LOCATION'].replace("Maya","mentalrayForMaya")).replace("\\", "/")
+    imfCopyCommand = mentalRayBin+"/bin/imf_copy"
+    tempDir = os.getenv ("TMPDIR")
+    tempDir = tempDir.rstrip("/")
+    
+    tempImageFormat = "tif"
+    
+    if not os.path.isdir(tempDir):
+        print "#### error: "+tempDir+" is not a valid directory"
+        return
+
+
+    fileNodeList = []
+    for each in nodeList:
+        if mc.nodeType(each) == "file":
+            fileNodeList.append(each)
+    if not fileNodeList:
+        print "#### error: No node to process. Please specify at least one Node"
+    if not os.path.isdir(mentalRayBin):
+        print "#### error: could not find the following directory: "+mentalRayBin
+        return
+
+    
+    for eachFileNode in fileNodeList:
+        textureFileName = mc.getAttr(eachFileNode+".fileTextureName")
+        textureFileName_exp  = pathExpand (textureFileName)
+        tempFile = textureFileName_exp.replace(os.path.dirname(textureFileName_exp),tempDir)+"."+tempImageFormat
+        lowResFileName  = textureFileName.split(".")[0]+"_lowRes"+textureFileName.replace(textureFileName.split(".")[0],"")+".jpg"
+        lowResFileName_exp = pathExpand (lowResFileName)
+        print "---------"
+        
+        if os.path.isfile(textureFileName_exp):
+            
+            image = om.MImage()
+            image.readFromFile(textureFileName_exp)
+            util = om.MScriptUtil()
+            widthUtil = om.MScriptUtil()
+            heightUtil = om.MScriptUtil()
+            widthPtr = widthUtil.asUintPtr()
+            heightPtr = heightUtil.asUintPtr()
+            image.getSize(widthPtr, heightPtr)
+            width = util.getUint(widthPtr)
+            height = util.getUint(heightPtr)
+            image.resize( width/2**int(lod), height/2**int(lod) )
+            image.writeToFile( tempFile, tempImageFormat)
+            subprocess.call([imfCopyCommand, "-vq",jpgQuality, tempFile,lowResFileName_exp])
+            os.remove(tempFile)
+            
+
+            statinfo = os.stat(textureFileName_exp)
+            imageSize = string.ljust(str(statinfo.st_size/1024)+" Kb",10," ")
+            textureWidth = string.ljust(str(width),5," ")
+            textureHeight = string.ljust(str(height),5," ")
+            
+            statinfo_lowRes = os.stat(lowResFileName_exp)
+            fastJpgImageSize = string.ljust(str(statinfo_lowRes.st_size/1024)+" Kb",10," ")
+            textureWidthLowRes = string.ljust(str(width/2**int(lod)),5," ")
+            textureHeightLowRes = string.ljust(str(height/2**int(lod)),5," ")
+
+            print "#### info: resize (LOD "+lod+") and convert to jpg (quality = "+jpgQuality+ ") and adjust '"+eachFileNode+"' file node attributes"
+            print "#### info: "+textureFileName+"             -->  width: "+textureWidth+"  height: "+textureHeight+"  size: "+imageSize
+            print "#### info: "+lowResFileName+"  -->  width: "+textureWidthLowRes+"  height: "+textureHeightLowRes+"  size: "+fastJpgImageSize
+            mc.setAttr(eachFileNode+".filterType", 0)
+            mc.setAttr(eachFileNode+".preFilter", 0)
+            mc.setAttr(eachFileNode+".fileTextureName",lowResFileName, type = "string")
+
+        else:
+            print "#### error: lowRes jpg creation is not possible, the following texture file do not exist: "+textureFileName_exp
+            continue
+            
             

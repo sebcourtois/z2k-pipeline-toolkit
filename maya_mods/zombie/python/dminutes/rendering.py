@@ -18,12 +18,17 @@ def setArnoldRenderOption(outputFormat):
     print ""
     print "#### {:>7}: runing shading.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
 
+    shadingMode = False
+
     #define output directoy
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
-            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH","asset",mainFilePathElem[-3],mainFilePathElem[-2],"review",mainFilePathElem[-2])
+            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"review")
+            outputImageName = mainFilePathElem[-2]
+            mc.workspace(fileRule=["images",outputFilePath])
+            shadingMode = True
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
@@ -80,7 +85,7 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultRenderGlobals.putFrameBeforeExt",1)
     mc.setAttr("defaultRenderGlobals.extensionPadding",4)
     mc.setAttr("defaultRenderGlobals.currentRenderer","arnold", type = "string")
-    mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputFilePath ,type = "string")
+    mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
 
 
     #arnold Settings
@@ -95,36 +100,43 @@ def setArnoldRenderOption(outputFormat):
         mc.setAttr("defaultArnoldDriver.halfPrecision",1)
         mc.setAttr("defaultArnoldDriver.autocrop",1)
         mc.setAttr("defaultArnoldDriver.mergeAOVs",1)
-        mc.setAttr("defaultArnoldRenderOptions.aovMode",1)
+        mc.setAttr("defaultArnoldRenderOptions.aovMode",2)#batch only
 
-        myAOVs = AOVInterface()
-        #create aovs, type = rgb
-        aovNameList = ["dmn_incandescence","dmn_ambient", "dmn_diffuse", "dmn_lambert", "dmn_toon" ]
-        for eachAovName in aovNameList: 
-            if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
-                myAOVs.addAOV( eachAovName, aovType=5)
-        #create aovs, type = float   
-        aovNameList = ["dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour" ]
-        for eachAovName in aovNameList: 
-            if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
-                #myAOVs.addAOV( eachAovName, aovType=4) # desactivated so everything in rgb for the moment
-                myAOVs.addAOV( eachAovName, aovType=5)
-        #create aovs, type = rgba
-        aovNameList = ["dmn_mask00","dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04" ]
-        for eachAovName in aovNameList: 
-            if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
-                myAOVs.addAOV( eachAovName, aovType=6)
+    myAOVs = AOVInterface()
+    #create aovs, type = rgb
+    aovNameList = ["dmn_incandescence","dmn_ambient", "dmn_diffuse", "dmn_lambert", "dmn_toon" ]
+    for eachAovName in aovNameList: 
+        if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
+            myAOVs.addAOV( eachAovName, aovType=5)
+    #create aovs, type = float   
+    aovNameList = ["dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour" ]
+    for eachAovName in aovNameList: 
+        if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
+            #myAOVs.addAOV( eachAovName, aovType=4) # desactivated so everything in rgb for the moment
+            myAOVs.addAOV( eachAovName, aovType=5)
+    #create aovs, type = rgba
+    aovNameList = ["dmn_mask00","dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04" ]
+    for eachAovName in aovNameList: 
+        if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
+            myAOVs.addAOV( eachAovName, aovType=6)
                 
         
     
-    mc.setAttr("defaultArnoldRenderOptions.AASamples",8)
+    
+    if shadingMode == True:
+        mc.setAttr("defaultArnoldRenderOptions.AASamples",4)
+        mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",0)
+    else:
+        mc.setAttr("defaultArnoldRenderOptions.AASamples",8)
+        mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",1)
+
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples",3)
     mc.setAttr("defaultArnoldRenderOptions.GIRefractionSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.sssBssrdfSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp",1)
     mc.setAttr("defaultArnoldRenderOptions.AASampleClamp",2.5)
-    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",0)
+
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
     
 
