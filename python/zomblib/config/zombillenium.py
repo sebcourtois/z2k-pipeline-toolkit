@@ -73,7 +73,13 @@ class character3d:
     resource_tree = {
     "{name} -> entity_dir":
         {
-        "ref -> ref_dir":{},
+        "ref -> ref_dir":
+            {
+            "{name}_anim.ma -> anim_ref":None,
+            "{name}_modeling.ma -> modeling_ref":None,
+            "{name}_previz.ma -> previz_ref":None,
+            "{name}_render.ma -> render_ref":None,
+            },
         "review -> review_dir":{},
         "script -> script_dir":{},
         "texture -> texture_dir":{},
@@ -100,7 +106,13 @@ class prop3d:
     resource_tree = {
     "{name} -> entity_dir":
         {
-        "ref -> ref_dir":{},
+        "ref -> ref_dir":
+            {
+            "{name}_anim.ma -> anim_ref":None,
+            "{name}_modeling.ma -> modeling_ref":None,
+            "{name}_previz.ma -> previz_ref":None,
+            "{name}_render.ma -> render_ref":None,
+            },
         "review -> review_dir":{},
         #"script -> script_dir":{},
         "texture -> texture_dir":{},
@@ -135,7 +147,11 @@ class set3d:
     resource_tree = {
     "{name} -> entity_dir":
         {
-        "ref -> ref_dir":{},
+        "ref -> ref_dir":
+            {
+            "{name}_previz.ma -> previz_ref":None,
+            "{name}_master.ma -> master_ref":None,
+            },
         "review -> review_dir":{},
         #"script -> script_dir":{},
         "texture -> texture_dir":{},
@@ -179,8 +195,14 @@ class shot_lib:
             {
             "{name} -> entity_dir":
                 {
+                 "00_data -> data_dir":
+                    {
+                     "{name}_previz.ma -> animatic_sound":None,
+                     "{name}_animatic.mov -> animatic_capture":None,
+                    },
                  "{step=01_previz} -> previz_dir":
                     {
+                     "export -> previz_export_dir":{},
                      "{name}_previz.ma -> previz_scene":None,
                      "{name}_previz.mov -> previz_capture":None,
                     },
