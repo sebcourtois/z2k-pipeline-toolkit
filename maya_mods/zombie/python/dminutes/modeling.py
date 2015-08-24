@@ -484,19 +484,11 @@ def makeAllMeshesUnique(inParent = "*"):
             print "#### info: 'makeAllMeshesUnique' no multiple mesh found under '"+inParent+"' all meshes have unique short name "
 
 
-
-
 def geoGroupDeleteHistory():
     """
     gets all the mesh transformms under the '|asset|grp_geo', delete their history and delete any intermediate unconnected shape 
     """
-    grpGeo = mc.ls("|asset|grp_geo", l =True)
-    if not grpGeo:
-        raise ValueError("#### error 'geoGroupDeleteHistory': No '|asset|grp_geo' found")
-    else:
-        grpGeo = grpGeo[0]
-    geoShapeList = mc.ls(mc.listRelatives(grpGeo, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
-    geoTransformList = mc.listRelatives (geoShapeList, parent = True, fullPath = True, type = "transform")
+    geoTransformList = miscUtils.getAllTransfomMeshes(parent = "|asset|grp_geo")
     mc.delete(geoTransformList,ch =True)
     print "#### info :'geoGroupDeleteHistory': deteted history on "+str(len(geoTransformList))+" geometries : "
     
@@ -510,4 +502,35 @@ def geoGroupDeleteHistory():
                 mc.delete(eachGeoShape)
                 deletedShapeList.append(eachGeoShape)
             print "#### info :'geoGroupDeleteHistory': deteted "+str(len(deletedShapeList))+" intermediate(s) mesh shape : "
-        
+
+
+def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
+    """
+    gets all the mesh transforms under de given inParent, an check that all the transforms values are set to 0 (1 for scales)
+    logs infos in case inVerbose is true, freeze and reset the the transforms in case inConform is True.
+    """
+    unFreezedTransfomList = []
+    freezedTransfomList = []
+    geoTransformList = miscUtils.getAllTransfomMeshes(inParent)
+    for each in geoTransformList:
+        if mc.xform( each, ws=True, q=True,  ro=True)!=[0,0,0] or mc.xform( each, ws=True, q=True,  t=True)!=[0,0,0] or mc.xform( each, ws=True, q=True,  s=True)!=[1,1,1] or mc.xform( each, ws=True, q=True, rp=True)!=[0,0,0] or mc.xform( each, ws=True, q=True, sp=True)!=[0,0,0] or mc.xform( each, os=True, q=True, rp=True)!=[0,0,0] or mc.xform( each, os=True, q=True, sp=True)!=[0,0,0]:
+            if inVerbose == True and inConform == False:
+                unFreezedTransfomList.append(each)
+                print "#### {:>7}: {:^28} has unfreezed tranform values".format("Info", each)
+            if inConform == True:
+                mc.makeIdentity (each ,apply= True, n=0, pn=1)
+                mc.makeIdentity (each ,apply= False, n=0, pn=1)
+                freezedTransfomList.append(each)
+                if inVerbose == True: print "#### {:>7}: {:^28} has been freezed and reset".format("Info", each)
+
+    if unFreezedTransfomList !=[] and inVerbose == True:
+        mc.select(unFreezedTransfomList)
+        print "#### {:>7}: The unfreezed transforms have been selected".format("Info")
+
+    if freezedTransfomList !=[]:
+        print "#### {:>7}: {} transforms have been freezed and reset".format("Info", len(freezedTransfomList))
+
+    return unFreezedTransfomList if unFreezedTransfomList != [] else  None
+
+
+
