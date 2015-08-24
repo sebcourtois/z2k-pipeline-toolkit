@@ -171,7 +171,10 @@ class shot_lib:
     public_path = '$ZOMB_SHOT_PATH'
     private_path = '$PRIV_ZOMB_SHOT_PATH'#project.private_path + "shot"
 
-    shot_tree = {
+#    template_path = project.template_path
+#    template_dir = "shot_exemple"
+
+    resource_tree = {
         "{sequence}":
             {
             "{name} -> entity_dir":
@@ -191,7 +194,7 @@ class shot_lib:
         }
 
     resources_conf = {
-    "previz_scene":{"produces":("previz_capture",), },
+    "previz_scene":{"produce":("previz_capture",), },
     "previz_capture":{"editable":False},
     }
 
