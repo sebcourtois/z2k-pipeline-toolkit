@@ -237,10 +237,10 @@ def doRefreshSceneInfo(*args):
         pc.textScrollList("sm_sceneInfo_lb", edit=True, append=" {0:<50}| {1:<50}".format(assetInfo['localinfo'], assetInfo['dbinfo']))
 
 def doUpdateScene(*args):
-    pass
+    SCENE_MANAGER.updateScene()
 
 def doUpdateShotgun(*args):
-    pass
+    SCENE_MANAGER.updateShotgun()
 
 #action buttons
 def doInit(*args):

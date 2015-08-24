@@ -10,6 +10,9 @@ import dminutes.maya_scene_operations as mop
 
 PROJECTNAME = "zombillenium"
 
+noneValue = 'None !'
+notFoundvalue = 'Not found !'
+
 #FROM DAVOS !!!!
 ASSET_TYPES = ('Character 3D', 'Character 2D', 'Vehicle 3D', 'Prop 3D', 'Set 3D', 'Set 2D', 'Environment', 'Reference')
 ASSET_SUBTYPES = ('1-primaire', '2-secondaire', '3-tertiaire', '4-figurant')
@@ -69,11 +72,16 @@ class SceneManager():
         lib = LIBS[d_inEntity['type']]
         tokens = {}
 
+        #print "d_inEntity " + str(d_inEntity)
+        nameKey = 'name'
+
         if d_inEntity['type'] == 'Shot':
-            tokens['shot']=d_inEntity['code']
-        else:
-            tokens['asset']=d_inEntity['name']
-            tokens['asset_type']=d_inEntity['name'].split('_')[0]
+            nameKey = 'code'
+            tokens['name']=d_inEntity[nameKey]
+            tokens['sequence']=d_inEntity['sg_sequence']['name']
+        elif d_inEntity['type'] == 'Asset':
+            tokens['name']=d_inEntity[nameKey]
+            tokens['assetType']=d_inEntity[nameKey].split('_')[0]
 
         #"public","asset_lib","master_file", tokens={"assetType":"chr","asset":sAssetName}
         #print 'tokens ' + str(tokens)
@@ -84,13 +92,20 @@ class SceneManager():
             pc.warning('damProject.getPath failed : {0}'.format(e))
 
         if path == None:
-            path = self.context['damProject'].getPath('public', lib, lib.replace('lib', 'dir'), tokens=tokens)
-
-            fileName = d_inEntity['name'] + FILE_SUFFIXES[self.context['step']['name']]
+            path = self.context['damProject'].getPath('public', lib, 'entity_dir', tokens=tokens)
+            fileName = None
+            
+            if d_inEntity['type'] == 'Asset':
+                fileName = d_inEntity[nameKey] + FILE_SUFFIXES[self.context['step']['name']]
+            elif d_inEntity['type'] == 'Shot':
+                fileName = d_inEntity[nameKey] + FILE_SUFFIXES[self.context['step']['name']]
 
             if 'ref' in s_inFileTag:
                 path = os.path.join(path, 'ref')
                 fileName = fileName.replace('.ma', '.mb')
+
+            if fileName == None:
+                pc.error('Cannot get file name of {0} on {1}'.format(s_inFileTag, d_inEntity))
 
             path = pathNorm(os.path.join(path, fileName))
 
@@ -101,8 +116,6 @@ class SceneManager():
         return self.context['damProject']._shotgundb.getShotAssets(self.context['entity']['code'])
 
     def getAssetsInfo(self):
-        noneValue = 'None !'
-
         sgAssets = self.getShotgunContent()
         sceneAssets = mop.getSceneContent(self)
 
@@ -124,7 +137,7 @@ class SceneManager():
 
             dbInfo = assetOccurence['asset']['name']
             if not exists:
-                dbInfo += ' (Not found !)'
+                dbInfo += ' ({0})'.format(notFoundvalue)
 
             localInfo = noneValue
             foundSceneAsset = None
@@ -137,12 +150,30 @@ class SceneManager():
             if foundSceneAsset != None:
                 remainingAssets.remove(foundSceneAsset)
 
-            assetsInfo.append({'localinfo':localInfo, 'dbinfo':dbInfo})
+            assetsInfo.append({'name':assetOccurence['asset']['name'], 'localinfo':localInfo, 'dbinfo':dbInfo, 'path':path})
 
         for remainingAsset in remainingAssets:
-            assetsInfo.append({'localinfo':remainingAsset['name'], 'dbinfo':noneValue})
+            assetsInfo.append({'name':remainingAsset['name'], 'localinfo':remainingAsset['name'], 'dbinfo':noneValue, 'path':remainingAsset['path']})
 
         return assetsInfo
+
+    def updateScene(self):
+        assetsInfo = self.getAssetsInfo()
+
+        for assetInfo in assetsInfo:
+            #print 'assetInfo["dbinfo"] ' + str(assetInfo['dbinfo'])
+            #print 'assetInfo["localinfo"] ' + str(assetInfo['localinfo'])
+            #print 'assetInfo["path"]' + str(assetInfo['path'])
+            if assetInfo['dbinfo'] != noneValue and assetInfo['dbinfo'] != assetInfo['localinfo']:
+                if notFoundvalue in assetInfo['dbinfo']:
+                    pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
+                else:
+                    mop.importAsset(assetInfo['path'])
+        
+        mop.reArrangeAssets()
+
+    def updateShotgun(self):
+        pass
 
     def do(self, s_inCmd):
         mop.do(s_inCmd, self.context['task']['content'], self)
