@@ -6,10 +6,10 @@ class project:
     maya_version = 2016
 
     #public_path = '//Diskstation/z2k/05_3D/{}/'.format(dir_name)
-    private_path = '$ZOMBI_PRIVATE_PATH/'
+    private_path = '$PRIV_ZOMB_PATH/'
     damas_root_path = "zomb/"
 
-    template_path = '$ZOMBI_TOOL_PATH/template/'
+    template_path = '$ZOMB_TOOL_PATH/template/'
 
     libraries = (
         "asset_lib",
@@ -25,8 +25,8 @@ class project:
 
 class asset_lib:
 
-    public_path = '$ZOMBI_ASSET_DIR'
-    private_path = project.private_path + "asset"
+    public_path = '$ZOMB_ASSET_PATH'
+    private_path = '$PRIV_ZOMB_ASSET_PATH'#project.private_path + "asset"
 
     asset_types = (
         "character3d",
@@ -73,7 +73,13 @@ class character3d:
     resource_tree = {
     "{name} -> entity_dir":
         {
-        "ref -> ref_dir":{},
+        "ref -> ref_dir":
+            {
+            "{name}_anim.ma -> anim_ref":None,
+            "{name}_modeling.ma -> modeling_ref":None,
+            "{name}_previz.ma -> previz_ref":None,
+            "{name}_render.ma -> render_ref":None,
+            },
         "review -> review_dir":{},
         "script -> script_dir":{},
         "texture -> texture_dir":{},
@@ -100,7 +106,13 @@ class prop3d:
     resource_tree = {
     "{name} -> entity_dir":
         {
-        "ref -> ref_dir":{},
+        "ref -> ref_dir":
+            {
+            "{name}_anim.ma -> anim_ref":None,
+            "{name}_modeling.ma -> modeling_ref":None,
+            "{name}_previz.ma -> previz_ref":None,
+            "{name}_render.ma -> render_ref":None,
+            },
         "review -> review_dir":{},
         #"script -> script_dir":{},
         "texture -> texture_dir":{},
@@ -135,7 +147,11 @@ class set3d:
     resource_tree = {
     "{name} -> entity_dir":
         {
-        "ref -> ref_dir":{},
+        "ref -> ref_dir":
+            {
+            "{name}_previz.ma -> previz_ref":None,
+            "{name}_master.ma -> master_ref":None,
+            },
         "review -> review_dir":{},
         #"script -> script_dir":{},
         "texture -> texture_dir":{},
@@ -166,32 +182,49 @@ class fx_previz:
 
 class shot_lib:
 
-    public_path = '$ZOMBI_SHOT_DIR'
-    private_path = project.private_path + "shot"
+    entity_class = "davos.core.damtypes.DamShot"
 
-    shot_tree = {
+    public_path = '$ZOMB_SHOT_PATH'
+    private_path = '$PRIV_ZOMB_SHOT_PATH'#project.private_path + "shot"
+
+#    template_path = project.template_path
+#    template_dir = "shot_exemple"
+
+    resource_tree = {
         "{sequence}":
             {
             "{name} -> entity_dir":
                 {
-                 "{step} -> step_dir":
+                 "00_data -> data_dir":
                     {
-                     "{name}_previz.ma -> previz_scene":{},
-                     "{name}_previz.mov -> previz_capture":{},
+                     "{name}_previz.ma -> animatic_sound":None,
+                     "{name}_animatic.mov -> animatic_capture":None,
+                    },
+                 "{step=01_previz} -> previz_dir":
+                    {
+                     "export -> previz_export_dir":{},
+                     "{name}_previz.ma -> previz_scene":None,
+                     "{name}_previz.mov -> previz_capture":None,
+                    },
+                 "{step=02_layout} -> layout_dir":
+                    {
+                     "{name}_layout.ma -> layout_scene":None,
+                     "{name}_layout.mov -> layout_capture":None,
                     },
                 },
             },
         }
 
     resources_conf = {
-    "previz_scene":{"produces":["previz_capture", ] },
+    "previz_scene":{"produce":("previz_capture",), },
     "previz_capture":{"editable":False},
     }
 
+
 class output_lib:
 
-    public_path = '$ZOMBI_OUTPUT_DIR'
-    private_path = project.private_path + "output"
+    public_path = '$ZOMB_OUTPUT_PATH'
+    private_path = '$PRIV_ZOMB_OUTPUT_PATH'#project.private_path + "output"
 
 
 

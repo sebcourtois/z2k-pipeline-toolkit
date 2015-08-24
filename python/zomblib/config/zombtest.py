@@ -8,8 +8,8 @@ class project(zombase.project):
     dir_name = "zombtest"
 
     public_path = '//Diskstation/Projects/{}/'.format(dir_name)
-    private_path = '//Diskstation/Projects/private/${{DAM_USER}}/{}/'.format(dir_name)
-    damas_root_path = "zombtest/"
+    private_path = '//Diskstation/Projects/private/$DAVOS_USER/{}/'.format(dir_name)
+    damas_root_path = "{}/".format(dir_name)
 
 
 class asset_lib(zombase.asset_lib):
@@ -35,7 +35,8 @@ class prop3d(zombase.prop3d):
     private_path = osp.join(asset_lib.private_path, "{assetType}")
 
 class vehicle3d(zombase.vehicle3d):
-    pass
+    public_path = osp.join(asset_lib.public_path, "{assetType}")
+    private_path = osp.join(asset_lib.private_path, "{assetType}")
 
 class set3d(zombase.set3d):
 
@@ -43,7 +44,8 @@ class set3d(zombase.set3d):
     private_path = osp.join(asset_lib.private_path, "{assetType}")
 
 class environment3d(zombase.environment3d):
-    pass
+    public_path = osp.join(asset_lib.public_path, "{assetType}")
+    private_path = osp.join(asset_lib.private_path, "{assetType}")
 
 class fx_previz(zombase.fx_previz):
 

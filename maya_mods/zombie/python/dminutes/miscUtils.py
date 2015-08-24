@@ -1,4 +1,6 @@
 import maya.cmds as mc
+import os
+
 
 
 
@@ -22,3 +24,10 @@ def getAllTransfomMeshes(inParent = "*"):
     if allTransMesh is None: allTransMesh = []
 
     return allTransMesh
+
+
+def pathJoin(*args):
+    return normPath(os.path.join(*args))
+
+def normPath(p):
+    return os.path.normpath(p).replace("\\",'/')

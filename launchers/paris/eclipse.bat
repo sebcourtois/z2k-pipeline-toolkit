@@ -1,1 +1,1 @@
-"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" call "C:\Users\sebcourtois\Programs\eclipse\eclipse.exe"
+"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch "%USERPROFILE%\Programs\eclipse\eclipse.exe"

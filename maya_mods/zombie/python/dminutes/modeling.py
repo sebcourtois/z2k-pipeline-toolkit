@@ -5,7 +5,8 @@ import pymel.core.datatypes as dt
 import maya.cmds as mc
 import re
 import string
-import listUtils
+import miscUtils
+
 
 '''
 Temporary module to manage modeling
@@ -334,7 +335,7 @@ def rigSet(inRoot):
 
 def checkMeshNamingConvention(printInfo = True):
     """
-    check all the meshes naming convention, '(geo|aux)_name_complement##' where 'name' and 'complement##' are strings of 16 alphanumeric characters
+    check all the meshes naming convention, '(geo|aux)_name_complement##' where 'name' and 'complement##' are strings of 24 alphanumeric characters
     only meshes of the main name space are taken into account, referenced meshes are therefore ignored.
         - printInfo (boolean) : print the 'multipleMesh' list 
         - return (list) : wrongMeshNamingConvention, all the meshes with a bad naming convetion
@@ -345,13 +346,13 @@ def checkMeshNamingConvention(printInfo = True):
     
     for each in allTransMesh:
         eachShort = each.split("|")[-1]
-        if not (re.match('^(geo|aux)_[a-zA-Z0-9]{1,16}$', eachShort) or re.match('^(geo|aux)_[a-zA-Z0-9]{1,16}_[a-zA-Z0-9]{1,16}$', eachShort)):
+        if not (re.match('^(geo|aux)_[a-zA-Z0-9]{1,24}$', eachShort) or re.match('^(geo|aux)_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', eachShort)):
             wrongMeshNamingConvention.append(each)
     
     if printInfo == True:
         if wrongMeshNamingConvention:
             print "#### warning: 'checkMeshNamingConvention': the following MESH(ES) do not match the mesh naming convention:"
-            print "#### warning: 'checkMeshNamingConvention': '(geo|aux)_name_complement##' where name and complement## are strings of 16 alphanumeric characters"
+            print "#### warning: 'checkMeshNamingConvention': '(geo|aux)_name_complement##' where name and complement## are strings of 24 alphanumeric characters"
             for each in wrongMeshNamingConvention:
                 print "#### warning: 'checkMeshNamingConvention': name not conform --> "+each
             mc.select(wrongMeshNamingConvention, replace = True)
@@ -414,7 +415,7 @@ def getMeshesWithSameName(inVerbose = True, inParent = "*"):
         - return (list) : multipleMesh
     """
 
-    allTransMesh = listUtils.getAllTransfomMeshes(inParent)
+    allTransMesh = miscUtils.getAllTransfomMeshes(inParent)
     multipleMesh = []
 
     for eachTrasnMesh in allTransMesh:
@@ -440,7 +441,7 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
     myMesh  (string) : the long name of a mesh (a transform parent of a mesh shape) that has to be renamed to have a unique short name in the scene
 
     """
-    allTransMesh = listUtils.getAllTransfomMeshes(inParent)
+    allTransMesh = miscUtils.getAllTransfomMeshes(inParent)
     shortName = myMesh.split("|")[-1]
     digit = re.findall('([0-9]+$)', myMesh)
     if digit:

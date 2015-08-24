@@ -1,8 +1,10 @@
 import maya.cmds as mc
+import maya.OpenMaya as om
 import re
 import os
-
-
+import string 
+import subprocess
+import miscUtils
 
 
 def connectedToSeveralSG(myNode = ""):
@@ -15,14 +17,14 @@ def connectedToSeveralSG(myNode = ""):
         if mc.nodeType(item) == "shadingEngine":
             upStreamShadingGroupList.append(item)
     if len(upStreamShadingGroupList) >1:
-        print "####    error: 'conformShaderNames': '"+myNode+"' is connected to several shading groups  -->   "+str(upStreamShadingGroupList)
+        print "####    error: '"+myNode+"' is connected to several shading groups  -->   "+str(upStreamShadingGroupList)
         return True
     else:
         return False
 
 
 
-def conformShaderName(shadEngineList = "selection"):
+def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True ):
     """
     shadEngineList : selection, all
     conform the shading tree attached to the selected shading engine , or all the shading trees , depending on the shadEngineList value.
@@ -34,6 +36,9 @@ def conformShaderName(shadEngineList = "selection"):
     all the nodes will be renamed : 'mat_materialName_nodeType' or 'pre_materialName_nodeType'
     'materialName' part comes from the shading engine name and 'nodeType' is the node's type
     """
+    print ""
+    print "#### {:>7}: running conformShaderName(shadEngineList = {}, selectWrongShadEngine = {} )".format("info",shadEngineList, selectWrongShadEngine)
+
     correctShadEngine =[]
     wrongShadEngine = []
 
@@ -45,7 +50,7 @@ def conformShaderName(shadEngineList = "selection"):
         shadEngineList.remove("initialParticleSE")
         shadEngineList.remove("initialShadingGroup")
         if not shadEngineList :
-            print "#### info: 'conformShaderNames': no shading engine to conform"
+            print "#### {:>7}: no shading engine to conform".format("info")
             return
 
     elif shadEngineList == "selection":
@@ -53,7 +58,7 @@ def conformShaderName(shadEngineList = "selection"):
         if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
         if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
         if not shadEngineList : 
-            print "#### info: 'conformShaderNames': no shading engine selected"
+            print "#### {:>7}: no shading engine selected".format("info")
             return
 
     for each in shadEngineList:
@@ -63,7 +68,7 @@ def conformShaderName(shadEngineList = "selection"):
         else:
             #check that 2 different2 shading nodes are plugged into the surfaceShader and aiSurfaceShader input of the SG node
             correctShadEngine.append(each)
-            materialName = each.lstrip("sgr_")
+            materialName = each.split("sgr_")[-1]
             preview_shader =  mc.listConnections(each+'.surfaceShader',connections = True)
             render_shader =  mc.listConnections(each+'.aiSurfaceShader',connections = True)
             if not preview_shader or not render_shader:
@@ -100,11 +105,15 @@ def conformShaderName(shadEngineList = "selection"):
                 render_shader_type = mc.nodeType(item)
                 if not re.match('mat_'+materialName+'_'+render_shader_type+'[0-9]{0,3}$',render_shader):
                     render_shader = mc.rename(item,'mat_'+materialName+'_'+render_shader_type)
+        print "#### {:>7}: {:^28} tree has been conformed properly".format("info", each)
 
-        print "####    info: 'conformShaderNames': -- "+each+" --  tree has been conformed properly" 
-
-    for each in wrongShadEngine:
-        print "#### warning: 'conformShaderNames': "+each[0]+"   -->   "+each[1]
+    if  wrongShadEngine != []:
+        if selectWrongShadEngine == True: mc.select(clear = True)
+        for each in wrongShadEngine:
+            print "#### {:>7}: {:^28} {}".format("warning", each[0], each[1])
+            if selectWrongShadEngine == True: mc.select(each[0], ne = True, add = True)
+        print "####    info: problematics shading engines have been selected"
+    return wrongShadEngine if wrongShadEngine != [] else  None
 
 
 def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
@@ -113,18 +122,19 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
         cameraName (string): the camera name you want to reference
         fileType(string): specify if the '.ma' or '.mb' file is to reference
     """
-    zombie_asset_dir =  os.environ["ZOMBI_ASSET_DIR"]
-    shading_cam_filename =  os.path.join("$ZOMBI_ASSET_DIR", "cam",cameraName,cameraName+fileType)
+    zombie_asset_dir =  os.environ["ZOMB_ASSET_PATH"]
+    shading_cam_filename =  os.path.join("$ZOMB_ASSET_PATH", "cam",cameraName,cameraName+fileType)
     
     
     if cameraName in  str(mc.file(query=True, list=True, reference = True)):
         print "#### info 'referenceShadingCamera': a camera '"+cameraName+"' is already referenced in this scene, operation canceled"
     else:
         mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False)
-                
-                
+              
 
-def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthorizedFormat=["jpg","tga"]):
+
+
+def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAuthorizedFormat=["jpg","tga"]):
     """
     checks all the unreferenced file nodes. 
     in : inVerbose (boolean) : log info if True
@@ -133,16 +143,18 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
          inAuthorizedFormat (list): a list of texture extention that are considered as correct
     out: outNoMapFileNodeList (list) : list of all the file nodes that need to be modified in order to get conform. 
     """ 
+    print ""
+    print "#### info: runing shading.conformMapPath( inVerbose = {}, inConform = {}, inCopy = {}, inAuthorizedFormat = {} )".format(inVerbose , inConform , inCopy, inAuthorizedFormat)
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
-            finalMapdir = os.path.join("$PRIVATE_MAP_DIR",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
-            finalMapdirExpand = os.path.join(os.environ["PRIVATE_MAP_DIR"],mainFilePathElem[-3],mainFilePathElem[-2],"texture")
-            #finalMapdirExpand = os.path.expandvars("finalMapdir")
+            finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            #finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH","asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            #finalMapdirExpand = miscUtils.pathJoin(os.environ["PRIV_ZOMB_TEXTURE_PATH"],"asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            finalMapdirExpand = os.path.expandvars(finalMapdir)
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
-    
     else :
         raise ValueError("#### Error: no '|asset' could be found in this scene")
         
@@ -153,12 +165,13 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
     for eachFileNode in fileNodeList:
         wrongFileNode = False
         mapFilePath = mc.getAttr(eachFileNode+".fileTextureName")
+        mapFilePathExpand = os.path.expandvars(mapFilePath)
         mapPath = os.path.split(mapFilePath)[0]
         fileName = os.path.split(mapFilePath)[1]       
-        finalMapFilePathExpanded = os.path.join(finalMapdirExpand,fileName)
-        finalMapFilePath = os.path.join(finalMapdir,fileName)
+        finalMapFilePathExpanded = miscUtils.pathJoin(finalMapdirExpand,fileName)
+        finalMapFilePath = miscUtils.pathJoin(finalMapdir,fileName)
 
- 
+
         #tests the texture extention
         mapExtention = (os.path.split(mapFilePath))[-1].split(".")[-1]
         if mapExtention  not in inAuthorizedFormat:
@@ -166,8 +179,9 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
             outWrongFileNodeList.append(eachFileNode)
             continue
         #tests if used path match the finalMapDir and if the texture exists
-        elif mapPath == finalMapdirExpand:    
-            if os.path.isfile(mapFilePath) == True:
+        elif mapPath == finalMapdir: 
+            if os.path.isfile(mapFilePathExpand) == True:
+                if inVerbose == True: print "#### info: '{0:^24}' file and path corect :'{1}'".format(eachFileNode,mapFilePath)  
                 continue
             else:
                 if inVerbose == True: print "#### warning: '{0:^24}' the file :'{1}' doesn't exist".format(eachFileNode,mapFilePath)       
@@ -200,11 +214,91 @@ def conformMapPath(inVerbose = True, inConform = False, inCopy =False, inAuthori
             outWrongFileNodeList.append(eachFileNode)
             continue
 
-    print "#### warning: {} file node(s) have wrong file path settings".format(len(outWrongFileNodeList))
-    if inVerbose == True: 
-        mc.select(outWrongFileNodeList)
-        print "#### info: the wrong file nodes have been selected"
+    if outWrongFileNodeList: 
+        print "#### warning: {} file node(s) have wrong file path settings".format(len(outWrongFileNodeList))
+        if inVerbose == True: 
+            mc.select(outWrongFileNodeList)
+            print "#### info: the wrong file nodes have been selected"
     return outWrongFileNodeList if outWrongFileNodeList != [] else  None
 
 
+
+def createLowResJpg(nodeList, lod = "4", jpgQuality = "70"):
+    """
+    This function creates a low resolution jpg file given texture file.
+    it also switch off the mipmap fitering, and set the given file node so it point toward this new low res jgp
+     - nodeList : (list) a list of texture file node
+     - lod : (string) 0..19 of pyramid map, largest is 0
+     - jpgQuality : (string) 1...100 highest is 100
+    """
+    mentalRayBin = os.path.normpath(os.environ['MAYA_LOCATION'].replace("Maya","mentalrayForMaya")).replace("\\", "/")
+    imfCopyCommand = mentalRayBin+"/bin/imf_copy"
+    tempDir = os.getenv ("TMPDIR")
+    tempDir = tempDir.rstrip("/")
+    
+    tempImageFormat = "tif"
+    
+    if not os.path.isdir(tempDir):
+        print "#### error: "+tempDir+" is not a valid directory"
+        return
+
+
+    fileNodeList = []
+    for each in nodeList:
+        if mc.nodeType(each) == "file":
+            fileNodeList.append(each)
+    if not fileNodeList:
+        print "#### error: No node to process. Please specify at least one Node"
+    if not os.path.isdir(mentalRayBin):
+        print "#### error: could not find the following directory: "+mentalRayBin
+        return
+
+    
+    for eachFileNode in fileNodeList:
+        textureFileName = mc.getAttr(eachFileNode+".fileTextureName")
+        textureFileName_exp  = pathExpand (textureFileName)
+        tempFile = textureFileName_exp.replace(os.path.dirname(textureFileName_exp),tempDir)+"."+tempImageFormat
+        lowResFileName  = textureFileName.split(".")[0]+"_lowRes"+textureFileName.replace(textureFileName.split(".")[0],"")+".jpg"
+        lowResFileName_exp = pathExpand (lowResFileName)
+        print "---------"
+        
+        if os.path.isfile(textureFileName_exp):
+            
+            image = om.MImage()
+            image.readFromFile(textureFileName_exp)
+            util = om.MScriptUtil()
+            widthUtil = om.MScriptUtil()
+            heightUtil = om.MScriptUtil()
+            widthPtr = widthUtil.asUintPtr()
+            heightPtr = heightUtil.asUintPtr()
+            image.getSize(widthPtr, heightPtr)
+            width = util.getUint(widthPtr)
+            height = util.getUint(heightPtr)
+            image.resize( width/2**int(lod), height/2**int(lod) )
+            image.writeToFile( tempFile, tempImageFormat)
+            subprocess.call([imfCopyCommand, "-vq",jpgQuality, tempFile,lowResFileName_exp])
+            os.remove(tempFile)
+            
+
+            statinfo = os.stat(textureFileName_exp)
+            imageSize = string.ljust(str(statinfo.st_size/1024)+" Kb",10," ")
+            textureWidth = string.ljust(str(width),5," ")
+            textureHeight = string.ljust(str(height),5," ")
+            
+            statinfo_lowRes = os.stat(lowResFileName_exp)
+            fastJpgImageSize = string.ljust(str(statinfo_lowRes.st_size/1024)+" Kb",10," ")
+            textureWidthLowRes = string.ljust(str(width/2**int(lod)),5," ")
+            textureHeightLowRes = string.ljust(str(height/2**int(lod)),5," ")
+
+            print "#### info: resize (LOD "+lod+") and convert to jpg (quality = "+jpgQuality+ ") and adjust '"+eachFileNode+"' file node attributes"
+            print "#### info: "+textureFileName+"             -->  width: "+textureWidth+"  height: "+textureHeight+"  size: "+imageSize
+            print "#### info: "+lowResFileName+"  -->  width: "+textureWidthLowRes+"  height: "+textureHeightLowRes+"  size: "+fastJpgImageSize
+            mc.setAttr(eachFileNode+".filterType", 0)
+            mc.setAttr(eachFileNode+".preFilter", 0)
+            mc.setAttr(eachFileNode+".fileTextureName",lowResFileName, type = "string")
+
+        else:
+            print "#### error: lowRes jpg creation is not possible, the following texture file do not exist: "+textureFileName_exp
+            continue
+            
             
