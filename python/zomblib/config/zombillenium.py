@@ -73,7 +73,13 @@ class character3d:
     resource_tree = {
     "{name} -> entity_dir":
         {
-        "ref -> ref_dir":{},
+        "ref -> ref_dir":
+            {
+            "{name}_anim.ma -> anim_ref":None,
+            "{name}_modeling.ma -> modeling_ref":None,
+            "{name}_previz.ma -> previz_ref":None,
+            "{name}_render.ma -> render_ref":None,
+            },
         "review -> review_dir":{},
         "script -> script_dir":{},
         "texture -> texture_dir":{},
@@ -100,7 +106,13 @@ class prop3d:
     resource_tree = {
     "{name} -> entity_dir":
         {
-        "ref -> ref_dir":{},
+        "ref -> ref_dir":
+            {
+            "{name}_anim.ma -> anim_ref":None,
+            "{name}_modeling.ma -> modeling_ref":None,
+            "{name}_previz.ma -> previz_ref":None,
+            "{name}_render.ma -> render_ref":None,
+            },
         "review -> review_dir":{},
         #"script -> script_dir":{},
         "texture -> texture_dir":{},
@@ -135,7 +147,11 @@ class set3d:
     resource_tree = {
     "{name} -> entity_dir":
         {
-        "ref -> ref_dir":{},
+        "ref -> ref_dir":
+            {
+            "{name}_previz.ma -> previz_ref":None,
+            "{name}_master.ma -> master_ref":None,
+            },
         "review -> review_dir":{},
         #"script -> script_dir":{},
         "texture -> texture_dir":{},
@@ -166,27 +182,44 @@ class fx_previz:
 
 class shot_lib:
 
+    entity_class = "davos.core.damtypes.DamShot"
+
     public_path = '$ZOMB_SHOT_PATH'
     private_path = '$PRIV_ZOMB_SHOT_PATH'#project.private_path + "shot"
 
-    shot_tree = {
+#    template_path = project.template_path
+#    template_dir = "shot_exemple"
+
+    resource_tree = {
         "{sequence}":
             {
             "{name} -> entity_dir":
                 {
-                 "{step} -> step_dir":
+                 "00_data -> data_dir":
                     {
-                     "{name}_previz.ma -> previz_scene":{},
-                     "{name}_previz.mov -> previz_capture":{},
+                     "{name}_previz.ma -> animatic_sound":None,
+                     "{name}_animatic.mov -> animatic_capture":None,
+                    },
+                 "{step=01_previz} -> previz_dir":
+                    {
+                     "export -> previz_export_dir":{},
+                     "{name}_previz.ma -> previz_scene":None,
+                     "{name}_previz.mov -> previz_capture":None,
+                    },
+                 "{step=02_layout} -> layout_dir":
+                    {
+                     "{name}_layout.ma -> layout_scene":None,
+                     "{name}_layout.mov -> layout_capture":None,
                     },
                 },
             },
         }
 
     resources_conf = {
-    "previz_scene":{"produces":["previz_capture", ] },
+    "previz_scene":{"produce":("previz_capture",), },
     "previz_capture":{"editable":False},
     }
+
 
 class output_lib:
 

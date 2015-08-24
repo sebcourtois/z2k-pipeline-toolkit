@@ -21,6 +21,125 @@ def setSubdivPref(i_inSubDiv=0):
 def getSceneContent(o_inSceneManager):
     return []
 
+def createImgPlane():
+    IMGP = None
+
+    if IMGP != None:
+        cam_animatic = pc.ls("cam_animatic:*")
+        if len(cam_animatic) > 0:
+            return (IMGP, cam_animatic[0])
+        else:
+            pc.delete(IMGP)
+
+    # - Remove previous Animatic Camera
+    cam_animatic = pc.ls("cam_animatic:*")
+    if len(cam_animatic) > 0:
+        pc.delete(cam_animatic)
+
+    # - Create new Animatic Camera
+    if not pc.namespace(exists='cam_animatic'):
+        pc.namespace(addNamespace='cam_animatic')
+
+    cam_animatic = pc.camera( name= 'cam_animatic:asset', aspectRatio=1.77, displayFilmGate=True )
+    cam_animatic[0].rename('cam_animatic:asset')
+    pc.setAttr( cam_animatic[1].name() +'.visibility', 0 )
+    #mc.parent( CAM_Animatic[0], grpDict['GD_ROOT'] )
+
+    IMGP = pc.imagePlane(camera = cam_animatic[1], showInAllViews=False, name="imgPlane_animatic")
+    IMGP[1].rename("imgPlane_animatic")
+
+    #SET DE L'IMAGE PLANE
+    pc.setAttr(IMGP[1].name()+".type",2)
+    #IMGP[1].fileName( Video_Path )
+    pc.setAttr(IMGP[1].name()+".fit",1)
+    pc.setAttr(IMGP[1].name()+".useFrameExtension",1)
+    pc.setAttr(IMGP[1].name()+".frameOffset",-100)
+    pc.setAttr(IMGP[1].name()+".frameIn",101)
+    pc.setAttr(IMGP[1].name()+".frameOut",1000)
+    pc.setAttr(cam_animatic[1] +".displayFilmGate", 1)
+    pc.setAttr(cam_animatic[1] +".displayGateMask", 1)
+    pc.setAttr(cam_animatic[1] +".overscan", 1.4)
+    pc.setAttr(cam_animatic[1] +".displaySafeTitle", 1)
+    pc.setAttr(cam_animatic[1] +".displaySafeAction", 1)
+    pc.setAttr(cam_animatic[1] +".displayGateMaskColor", [0,0,0])
+
+    return (IMGP[1], cam_animatic[0])
+
+def importAsset(s_inPath, s_inNS='', b_inRef=True):
+    importedAsset = None
+    if b_inRef:
+        importedAsset = pc.system.createReference(s_inPath, namespace=s_inNS)
+    else:
+        importedAsset = pc.system.importFile(s_inPath, namespace=s_inNS)
+
+def getAssetRoot(s_inNS):
+    assetRoot = None
+    deprecatedMessage = 'Asset root name is obsolete ({0})'
+
+    #try with "asset", this should be the right way
+    roots = pc.ls('{0}:asset'.format(s_inNS))
+    if len(roots) > 0:
+        assetRoot = roots[0]
+    else:
+        #try with NS:NS, for 'old' assets
+        roots = pc.ls('{0}:{0}'.format(s_inNS))
+        if len(roots) > 0:
+            assetRoot = roots[0]
+            pc.warning(deprecatedMessage.format(assetRoot.name()))
+        else:
+            #try with NS:NS except '_default' if found, for 'older' assets
+            oldRootName = '{0}:{1}'.format(s_inNS, s_inNS.replace('_default', ''))
+            roots = pc.ls(oldRootName)
+            if len(roots) > 0:
+                assetRoot = roots[0]
+                pc.warning(deprecatedMessage.format(assetRoot.name()))
+
+    return assetRoot
+
+def getRoot(o_inObj):
+    ns = o_inObj.namespace()
+    obj = o_inObj
+    objParent = obj.getParent()
+    while(objParent != None and o_inObj.namespace() == ns):
+        obj = objParent
+        objParent = obj.getParent()
+
+    return obj
+
+def reArrangeAssets():
+    #this is the template, it lacks grp_prop, grp_crowd, grp_vehicle, grp_fx, grp_light (and eventually grp_extra_rig, grp_trash)
+    structure = {
+        'cam':'grp_camera',
+        'chr':'grp_character',
+        'set':'grp_set'
+    }
+
+    #Collect references
+    refs = pc.listReferences(namespaces=True)
+
+    for ref in refs:
+        ns = ref[0]
+        nsPrefix = ns.split('_')[0]
+        for structKey in structure:
+            structParent = structure[structKey]
+            if structKey == nsPrefix:
+                #Ok, we can rearrange this !
+                root = getAssetRoot(ns)
+                if root == None:
+                    pc.warning('Can"t find root of asset with namespace {0}'.format(ns))
+                    continue
+                rootParent = root.getParent()
+                if rootParent == None or rootParent.name() != structParent:
+                    pc.parent(root, structParent)
+
+    #We could also have local cameras (cam_animatic and/or cam_sq####_sh####)
+    cams = pc.ls('cam_*:*', type='camera')
+    for cam in cams:
+        camRoot = getRoot(cam)
+        camParent = camRoot.getParent()
+        if camParent == None or camParent.name() != structure['cam']:
+            pc.parent(camRoot, structure['cam'])
+
 #GLOBALS METHODS
 def canDo(s_inCommand, s_inTask):
     cmd = COMMANDS.get(s_inCommand)
@@ -49,7 +168,9 @@ def create_scene_base(o_inSceneManager):
     mc.file(force=True, new=True)
 
     #Import scene structure
-    strucure_path = os.environ['ZOMB_TOOL_PATH'] + "\\template\\{0}_layout_tree.ma".format(o_inSceneManager.context['entity']['type'].lower())
+    template_path = o_inSceneManager.context['damProject'].getPath('template', 'project')
+    strucure_path = os.path.join(template_path, "{0}_layout_tree.ma".format(o_inSceneManager.context['entity']['type'].lower()))
+    #strucure_path = os.environ['ZOMBI_TOOL_PATH'] + "\\template\\{0}_layout_tree.ma".format(o_inSceneManager.context['entity']['type'].lower())
 
     if os.path.isfile(strucure_path):
         mc.file(strucure_path, i=True, rpr='')
@@ -59,10 +180,39 @@ def create_scene_base(o_inSceneManager):
     print 'base creation done ! ({0})'.format(o_inSceneManager.context)
 
 def create_previz_scene(o_inSceneManager):
-    sceneInfo = o_inSceneManager.getAssetsInfo()
+    o_inSceneManager.updateScene()
 
     init_scene_base(o_inSceneManager)
     init_previz_scene(o_inSceneManager)
+
+    #Import camera  "X:\asset\cam\cam_shot_default\cam_shot_default.ma"
+    camDefaultPath = os.path.join(os.environ["ZOMBI_ASSET_DIR"], 'cam', 'cam_shot_default', 'cam_shot_default.ma')
+    camName = 'cam_{0}'.format(o_inSceneManager.context['entity']['code'])
+
+    if len(pc.ls('{0}:asset'.format(camName))) == 0:
+        if os.path.isfile(camDefaultPath):
+            importAsset(camDefaultPath, camName, False)
+        else:
+            pc.warning('Default camera file cannot be found ({0})'.format(camDefaultPath))
+
+    #image plane "Y:\shot\...\00_data\sqXXXX_shXXXXa_animatic.mov"
+    imgPlanePath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_capture')
+    if os.path.isfile(imgPlanePath):
+        IMGP = createImgPlane()
+        IMGP[0].fileName(imgPlanePath)
+    else:
+        pc.warning('Image plane file cannot be found ({0})'.format(imgPlanePath))
+
+    #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
+    soundPath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_sound')
+    if os.path.isfile(soundPath):
+        pass
+    else:
+        pc.warning('Sound file cannot be found ({0})'.format(soundPath))
+
+    #lock previz, save v001 in private, here ?
+
+    reArrangeAssets()
     print 'previz creation done ! ({0})'.format(o_inSceneManager)
 
 #Inits
@@ -88,6 +238,16 @@ def init_scene_base(o_inSceneManager):
     #Subdiv
     setSubdivPref(0)
 
+    #Swatches size
+    mc.optionVar(iv=('maxImageSizeForSwatchGen', 1000))
+
+    #Legacy Viewport textures
+    mc.displayPref(maxTextureResolution=1024)
+
+    #Viewport 2.0 textures
+    mc.setAttr("hardwareRenderingGlobals.enableTextureMaxRes", 1)
+    mc.setAttr("hardwareRenderingGlobals.textureMaxResolution", 1024)
+
     #entity specific initialisation
     if o_inSceneManager.context['entity']['type'] == 'Shot':
         init_shot_constants(o_inSceneManager)
@@ -95,34 +255,8 @@ def init_scene_base(o_inSceneManager):
     print 'base initialization done ! ({0})'.format(o_inSceneManager.context)
 
 def init_previz_scene(o_inSceneManager):
-    # - Remove previous Animatic Camera
-    cam_animatic = pc.ls("cam_animatic*")
-    if len(cam_animatic) > 0:
-        pc.delete(cam_animatic)
-
-    # - Create new Animatic Camera
-    cam_animatic = pc.camera( name= 'cam_animatic', aspectRatio=1.77, displayFilmGate=True )
-    cam_animatic[0].rename('cam_animatic')
-    pc.setAttr( cam_animatic[1].name() +'.visibility', 0 )
-    #mc.parent( CAM_Animatic[0], grpDict['GD_ROOT'] )
-
     # - Create imagePlane
-    IMGP = pc.imagePlane(camera = cam_animatic[1], showInAllViews=False )
-
-    #SET DE L'IMAGE PLANE
-    pc.setAttr(IMGP[1].name()+".type",2)
-    #IMGP[1].fileName( Video_Path )
-    pc.setAttr(IMGP[1].name()+".fit",1)
-    pc.setAttr(IMGP[1].name()+".useFrameExtension",1)
-    pc.setAttr(IMGP[1].name()+".frameOffset",-100)
-    pc.setAttr(IMGP[1].name()+".frameIn",101)
-    pc.setAttr(IMGP[1].name()+".frameOut",1000)
-    pc.setAttr(cam_animatic[1] +".displayFilmGate", 1)
-    pc.setAttr(cam_animatic[1] +".displayGateMask", 1)
-    pc.setAttr(cam_animatic[1] +".overscan", 1.4)
-    pc.setAttr(cam_animatic[1] +".displaySafeTitle", 1)
-    pc.setAttr(cam_animatic[1] +".displaySafeAction", 1)
-    pc.setAttr(cam_animatic[1] +".displayGateMaskColor", [0,0,0])
+    IMGP = createImgPlane()
 
     # --- Set Viewport 2.0 AO default Value
     pc.setAttr( 'hardwareRenderingGlobals.ssaoAmount', 0.3)
@@ -136,10 +270,10 @@ def init_previz_scene(o_inSceneManager):
 
     #Image plane
     sidePanel = mc.getPanel( withLabel= 'Side View' )
-    pc.modelPanel( sidePanel, edit= True, camera= 'side' )
+    pc.modelPanel( sidePanel, edit= True, camera= IMGP[1])
     #Camera
     perspPanel = mc.getPanel( withLabel= 'Persp View' )
-    pc.modelPanel( perspPanel, edit= True, camera= 'top' )
+    pc.modelPanel( perspPanel, edit= True, camera= 'persp' )
     #Work view
     workPanel = mc.getPanel( withLabel= 'Top View' )
     pc.modelPanel( workPanel, edit= True, camera= 'persp' )
