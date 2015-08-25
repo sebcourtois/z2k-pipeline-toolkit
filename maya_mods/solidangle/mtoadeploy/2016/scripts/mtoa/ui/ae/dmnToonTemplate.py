@@ -31,6 +31,7 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('rim_toon_dark', label='Dark Color')
         self.addControl('rim_toon_coverage', label='Coverage')
         self.addControl('rim_toon_softness', label='Softness')
+        self.addControl('rim_incidence_falloff', label='Incidence Falloff')
         self.endLayout()
 		
         self.endLayout()
