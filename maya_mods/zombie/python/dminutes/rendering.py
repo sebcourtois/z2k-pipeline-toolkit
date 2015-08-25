@@ -89,22 +89,22 @@ def setArnoldRenderOption(outputFormat):
 
 
     #arnold Settings
-    
-    if outputFormat == "png":
-        mc.setAttr("defaultArnoldDriver.aiTranslator","png", type = "string")
-        mc.setAttr("defaultArnoldRenderOptions.aovMode", 0)
-        
-    elif outputFormat == "exr":
-        mc.setAttr("defaultArnoldDriver.aiTranslator","exr", type = "string")    
-        mc.setAttr("defaultArnoldDriver.exrCompression",3)#zip
-        mc.setAttr("defaultArnoldDriver.halfPrecision",1)
-        mc.setAttr("defaultArnoldDriver.autocrop",1)
-        mc.setAttr("defaultArnoldDriver.mergeAOVs",1)
-        mc.setAttr("defaultArnoldRenderOptions.aovMode",2)#batch only
+
+    #Image output settings
+    mc.setAttr("defaultArnoldDriver.aiTranslator","exr", type = "string")    
+    mc.setAttr("defaultArnoldDriver.exrCompression",3)#zip
+    mc.setAttr("defaultArnoldDriver.halfPrecision",1)
+    mc.setAttr("defaultArnoldDriver.autocrop",1)
+    mc.setAttr("defaultArnoldDriver.mergeAOVs",1)
+    mc.setAttr("defaultArnoldRenderOptions.aovMode",2)#batch only
+
+
+
+
 
     myAOVs = AOVInterface()
     #create aovs, type = rgb
-    aovNameList = ["dmn_incandescence","dmn_ambient", "dmn_diffuse", "dmn_lambert", "dmn_toon" ]
+    aovNameList = ["dmn_incandescence","dmn_ambient", "dmn_diffuse", "dmn_lambert", "dmn_toon", "dmn_rim_toon" ]
     for eachAovName in aovNameList: 
         if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
             myAOVs.addAOV( eachAovName, aovType=5)
@@ -121,7 +121,10 @@ def setArnoldRenderOption(outputFormat):
             myAOVs.addAOV( eachAovName, aovType=6)
                 
         
-    
+    if outputFormat == "png":
+        mc.setAttr("defaultArnoldDriver.aiTranslator","png", type = "string")
+        mc.setAttr("defaultArnoldRenderOptions.aovMode", 0)
+        
     
     if shadingMode == True:
         mc.setAttr("defaultArnoldRenderOptions.AASamples",4)
