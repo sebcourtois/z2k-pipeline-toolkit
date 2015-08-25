@@ -35,6 +35,7 @@ class prop3d(zombase.prop3d):
     private_path = osp.join(asset_lib.private_path, "{assetType}")
 
 class vehicle3d(zombase.vehicle3d):
+
     public_path = osp.join(asset_lib.public_path, "{assetType}")
     private_path = osp.join(asset_lib.private_path, "{assetType}")
 
@@ -44,6 +45,7 @@ class set3d(zombase.set3d):
     private_path = osp.join(asset_lib.private_path, "{assetType}")
 
 class environment3d(zombase.environment3d):
+
     public_path = osp.join(asset_lib.public_path, "{assetType}")
     private_path = osp.join(asset_lib.private_path, "{assetType}")
 
