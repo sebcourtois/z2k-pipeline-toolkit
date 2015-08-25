@@ -82,7 +82,7 @@ class Z2kToolkit(object):
     "ZOMB_TEXTURE_PATH",
     )
 
-    def __init__(self, envs):
+    def __init__(self, customEnvs):
 
         sDirName = "z2k-pipeline-toolkit"
         sCurDirPath = osp.dirname(osp.abspath(__file__))
@@ -92,19 +92,21 @@ class Z2kToolkit(object):
         self.rootPath = sRootPath
         self.dirName = sDirName
 
-        self.loadEnvs(envs)
+        self.loadEnvs(customEnvs)
 
-    def loadEnvs(self, envs):
+    def loadEnvs(self, customEnvs):
 
         print "Tools repository"
         print " - path          : {0}".format(self.rootPath)
         print " - configuration : {0}".format("Development" if self.isDev else "Production")
         print ""
 
-        print "Loading environments:"
+        print "\nLoading user-defined environments:"
 
-        for sVar, value in envs.iteritems():
+        for sVar, value in customEnvs.iteritems():
             updEnv(sVar, value, conflict="keep")
+
+        print "\nLoading toolkit environments:"
 
         updEnv("PYTHONPATH", osp.join(self.rootPath, "python"), conflict="add")
         updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"), conflict="add")

@@ -29,6 +29,7 @@ class asset_lib:
     private_path = '$PRIV_ZOMB_ASSET_PATH'#project.private_path + "asset"
 
     asset_types = (
+        "camera",
         "character3d",
         "prop3d",
         "vehicle3d",
@@ -187,8 +188,8 @@ class shot_lib:
     public_path = '$ZOMB_SHOT_PATH'
     private_path = '$PRIV_ZOMB_SHOT_PATH'#project.private_path + "shot"
 
-#    template_path = project.template_path
-#    template_dir = "shot_exemple"
+    template_path = project.template_path
+    template_dir = "shot_template"
 
     resource_tree = {
         "{sequence}":
@@ -197,7 +198,7 @@ class shot_lib:
                 {
                  "00_data -> data_dir":
                     {
-                     "{name}_previz.ma -> animatic_sound":None,
+                     "{name}_animatic.wav -> animatic_sound":None,
                      "{name}_animatic.mov -> animatic_capture":None,
                     },
                  "{step=01_previz} -> previz_dir":
