@@ -509,11 +509,14 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
     gets all the mesh transforms under de given inParent, an check that all the transforms values are set to 0 (1 for scales)
     logs infos in case inVerbose is true, freeze and reset the the transforms in case inConform is True.
     """
+    print ""
+    print "#### {:>7}: modeling.freezeResetTransforms(inParent = {}, inVerbose = {}, inConform = {})".format("Info",inParent, inVerbose, inConform)
     unFreezedTransfomList = []
     freezedTransfomList = []
     geoTransformList = miscUtils.getAllTransfomMeshes(inParent)
     for each in geoTransformList:
-        if mc.xform( each, ws=True, q=True,  ro=True)!=[0,0,0] or mc.xform( each, ws=True, q=True,  t=True)!=[0,0,0] or mc.xform( each, ws=True, q=True,  s=True)!=[1,1,1] or mc.xform( each, ws=True, q=True, rp=True)!=[0,0,0] or mc.xform( each, ws=True, q=True, sp=True)!=[0,0,0] or mc.xform( each, os=True, q=True, rp=True)!=[0,0,0] or mc.xform( each, os=True, q=True, sp=True)!=[0,0,0]:
+        if (mc.xform( each, os=True, q=True,  ro=True)!=[0,0,0] or mc.xform( each, os=True, q=True,  t=True)!=[0,0,0] or mc.xform( each, os=True, q=True,  s=True, r = True )!=[1,1,1] or 
+            mc.xform( each, os=True, q=True, rp=True)!=[0,0,0] or mc.xform( each, os=True, q=True, sp=True)!=[0,0,0]):
             if inVerbose == True and inConform == False:
                 unFreezedTransfomList.append(each)
                 print "#### {:>7}: {:^28} has unfreezed tranform values".format("Info", each)
@@ -525,10 +528,13 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
 
     if unFreezedTransfomList !=[] and inVerbose == True:
         mc.select(unFreezedTransfomList)
-        print "#### {:>7}: The unfreezed transforms have been selected".format("Info")
+        print "#### {:>7}: {} unfreezed transforms have been selected".format("Info", str(len(unFreezedTransfomList)))
 
-    if freezedTransfomList !=[]:
+    if freezedTransfomList != []:
         print "#### {:>7}: {} transforms have been freezed and reset".format("Info", len(freezedTransfomList))
+
+    if unFreezedTransfomList ==[] and inVerbose == True:
+        print "#### {:>7}: {} transforms checked successfully".format("Info", str(len(geoTransformList)))
 
     return unFreezedTransfomList if unFreezedTransfomList != [] else  None
 
