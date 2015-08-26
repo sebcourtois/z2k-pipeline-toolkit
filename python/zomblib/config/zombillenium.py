@@ -76,10 +76,10 @@ class character3d:
         {
         "ref -> ref_dir":
             {
-            "{name}_anim.ma -> anim_ref":None,
-            "{name}_modeling.ma -> modeling_ref":None,
-            "{name}_previz.ma -> previz_ref":None,
-            "{name}_render.ma -> render_ref":None,
+            "{name}_animRef.mb -> anim_ref":None,
+            "{name}_modelingRef.mb-> modeling_ref":None,
+            "{name}_previzRef.mb-> previz_ref":None,
+            "{name}_renderRef.mb-> render_ref":None,
             },
         "review -> review_dir":{},
         "script -> script_dir":{},
@@ -109,10 +109,10 @@ class prop3d:
         {
         "ref -> ref_dir":
             {
-            "{name}_anim.ma -> anim_ref":None,
-            "{name}_modeling.ma -> modeling_ref":None,
-            "{name}_previz.ma -> previz_ref":None,
-            "{name}_render.ma -> render_ref":None,
+            "{name}_animRef.mb -> anim_ref":None,
+            "{name}_modelingRef.mb -> modeling_ref":None,
+            "{name}_previzRef.mb -> previz_ref":None,
+            "{name}_renderRef.mb -> render_ref":None,
             },
         "review -> review_dir":{},
         #"script -> script_dir":{},
@@ -150,8 +150,8 @@ class set3d:
         {
         "ref -> ref_dir":
             {
-            "{name}_previz.ma -> previz_ref":None,
-            "{name}_master.ma -> master_ref":None,
+            "{name}_previzRef.mb-> previz_ref":None,
+            "{name}_masterRef.mb-> master_ref":None,
             },
         "review -> review_dir":{},
         #"script -> script_dir":{},
@@ -216,8 +216,8 @@ class shot_lib:
             },
         }
 
-    resources_conf = {
-    "previz_scene":{"produce":("previz_capture",), },
+    resources_settings = {
+    "previz_scene":{"outcome":("previz_capture",), },
     "previz_capture":{"editable":False},
     }
 
