@@ -198,7 +198,7 @@ class shot_lib:
                 {
                  "00_data -> data_dir":
                     {
-                     "{name}_animatic.wav -> animatic_sound":None,
+                     "{name}_sound.wav -> animatic_sound":None,
                      "{name}_animatic.mov -> animatic_capture":None,
                     },
                  "{step=01_previz} -> previz_dir":

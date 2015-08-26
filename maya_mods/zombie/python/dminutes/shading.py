@@ -144,14 +144,12 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
     out: outNoMapFileNodeList (list) : list of all the file nodes that need to be modified in order to get conform. 
     """ 
     print ""
-    print "#### info: runing shading.conformMapPath( inVerbose = {}, inConform = {}, inCopy = {}, inAuthorizedFormat = {} )".format(inVerbose , inConform , inCopy, inAuthorizedFormat)
+    print "#### info: runing shading.conformTexturePath( inVerbose = {}, inConform = {}, inCopy = {}, inAuthorizedFormat = {} )".format(inVerbose , inConform , inCopy, inAuthorizedFormat)
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
             finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
-            #finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH","asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
-            #finalMapdirExpand = miscUtils.pathJoin(os.environ["PRIV_ZOMB_TEXTURE_PATH"],"asset",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
             finalMapdirExpand = os.path.expandvars(finalMapdir)
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
