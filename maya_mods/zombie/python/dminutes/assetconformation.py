@@ -12,7 +12,7 @@ def onCheckInAsset():
 
 
 
-def checkGroupNamingConvention(printInfo = True):
+def checkGroupNamingConvention(printInfo = True, inParent = "*"):
     """
     get all the transform nodes that are not parent of a shape and make sure their name is conforme to the group naming convention 'grp_name_complement##' 
         - name and complement## together is a string of 16 alphanumeric characters
@@ -22,11 +22,11 @@ def checkGroupNamingConvention(printInfo = True):
     return list of groups names that are not conform 
     """
     wrongGroupNamingConvention = []
-    groupNamingConventionExceptionLong = ["|asset"]
+    groupNamingConventionExceptionLong = ["|asset", "|shot"]
     groupNamingConventionException = []
     allGroup = []
     
-    allTransform = mc.ls(":*",type = "transform", long = True)
+    allTransform = mc.ls(inParent,exactType = "transform", long = True)
     if allTransform is None: allTransform = []
     for eachTransform in allTransform:
         if mc.listRelatives(eachTransform, children = True, shapes = True) is None:

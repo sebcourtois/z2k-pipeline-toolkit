@@ -1,0 +1,37 @@
+# simple                    0x00079134
+
+
+[node dmnRimLight]
+    maya.name               STRING  "dmnRimLight"
+    maya.id                 INT     0x00079194
+    maya.classification     STRING  "light/filter"
+    maya.lights             STRING  "pointLight spotLight directionalLight aiSkyDomeLight aiMeshLight"
+
+    [attr Occluded]
+        maya.name           STRING  "Occluded"
+    [attr Samples]
+        maya.name           STRING  "Samples"
+    [attr MinDist]
+        maya.name           STRING  "MinDist"
+    [attr MaxDist]
+        maya.name           STRING  "MaxDist"
+    [attr Spread]
+        maya.name           STRING  "Spread"
+    [attr Falloff]
+        maya.name           STRING  "Falloff"
+	[attr HairParams]
+	    maya.name           STRING  "UseHairParams"
+	[attr HairOccluded]
+        maya.name           STRING  "Occluded"
+    [attr HairSamples]
+        maya.name           STRING  "Samples"
+    [attr HairMinDist]
+        maya.name           STRING  "MinDist"
+    [attr HairMaxDist]
+        maya.name           STRING  "MaxDist"
+    [attr HairSpread]
+        maya.name           STRING  "Spread"
+    [attr HairFalloff]
+        maya.name           STRING  "Falloff"
+
+

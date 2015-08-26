@@ -333,7 +333,7 @@ def rigSet(inRoot):
 
     
 
-def checkMeshNamingConvention(printInfo = True):
+def checkMeshNamingConvention(printInfo = True, inParent = "*"):
     """
     check all the meshes naming convention, '(geo|aux)_name_complement##' where 'name' and 'complement##' are strings of 24 alphanumeric characters
     only meshes of the main name space are taken into account, referenced meshes are therefore ignored.
@@ -341,10 +341,10 @@ def checkMeshNamingConvention(printInfo = True):
         - return (list) : wrongMeshNamingConvention, all the meshes with a bad naming convetion
     """
     wrongMeshNamingConvention = []
-    allTransMesh =  mc.listRelatives (mc.ls("*:",type = "mesh"), parent = True, fullPath = True, type = "transform")
-    if allTransMesh is None: allTransMesh = []
+    geoTransformList = miscUtils.getAllTransfomMeshes(inParent)
+    if geoTransformList is None: geoTransformList = []
     
-    for each in allTransMesh:
+    for each in geoTransformList:
         eachShort = each.split("|")[-1]
         if not (re.match('^(geo|aux)_[a-zA-Z0-9]{1,24}$', eachShort) or re.match('^(geo|aux)_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', eachShort)):
             wrongMeshNamingConvention.append(each)
@@ -362,15 +362,17 @@ def checkMeshNamingConvention(printInfo = True):
     return wrongMeshNamingConvention
     
 
-def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = False):
+def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = False, inParent = "*"):
     """
     This function, makes sure every mesh shape name is concistant with its transform name: "transformName+Shape"
     Only shapes of the main name space are taken into account, referenced shapes are therefore ignored
         - fixShapeName (boolean): fix invalid shapes names if True, only log info otherwise
         - return (list): the meshes list that still have an invalid shape name
     """
+    print ""
+    print "#### {:>7}: modeling.meshShapeNameConform(fixShapeName = {}, myTransMesh = {}, forceInfoOff = {}, inParent = {})".format("Info",fixShapeName, myTransMesh, forceInfoOff, inParent)
     if not myTransMesh:
-        myTransMesh =  mc.listRelatives (mc.ls("*:", type = "mesh"), parent = True, fullPath = True, type = "transform")
+        myTransMesh = miscUtils.getAllTransfomMeshes(inParent)
         if myTransMesh is None: myTransMesh = []
         checkAllScene = True
     else:
@@ -509,26 +511,32 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
     gets all the mesh transforms under de given inParent, an check that all the transforms values are set to 0 (1 for scales)
     logs infos in case inVerbose is true, freeze and reset the the transforms in case inConform is True.
     """
+    print ""
+    print "#### {:>7}: modeling.freezeResetTransforms(inParent = {}, inVerbose = {}, inConform = {})".format("Info",inParent, inVerbose, inConform)
     unFreezedTransfomList = []
     freezedTransfomList = []
     geoTransformList = miscUtils.getAllTransfomMeshes(inParent)
     for each in geoTransformList:
-        if mc.xform( each, ws=True, q=True,  ro=True)!=[0,0,0] or mc.xform( each, ws=True, q=True,  t=True)!=[0,0,0] or mc.xform( each, ws=True, q=True,  s=True)!=[1,1,1] or mc.xform( each, ws=True, q=True, rp=True)!=[0,0,0] or mc.xform( each, ws=True, q=True, sp=True)!=[0,0,0] or mc.xform( each, os=True, q=True, rp=True)!=[0,0,0] or mc.xform( each, os=True, q=True, sp=True)!=[0,0,0]:
+        if (mc.xform( each, os=True, q=True,  ro=True)!=[0,0,0] or mc.xform( each, os=True, q=True,  t=True)!=[0,0,0] or mc.xform( each, os=True, q=True,  s=True, r = True )!=[1,1,1] or 
+            mc.xform( each, os=True, q=True, rp=True)!=[0,0,0] or mc.xform( each, os=True, q=True, sp=True)!=[0,0,0]):
             if inVerbose == True and inConform == False:
                 unFreezedTransfomList.append(each)
-                print "#### {:>7}: {:^28} has unfreezed tranform values".format("Info", each)
+                print "#### {:>7}: {:^28} --> has unfreezed tranform values".format("Info", each)
             if inConform == True:
                 mc.makeIdentity (each ,apply= True, n=0, pn=1)
                 mc.makeIdentity (each ,apply= False, n=0, pn=1)
                 freezedTransfomList.append(each)
-                if inVerbose == True: print "#### {:>7}: {:^28} has been freezed and reset".format("Info", each)
+                if inVerbose == True: print "#### {:>7}: {:^28} --> has been freezed and reset".format("Info", each)
 
     if unFreezedTransfomList !=[] and inVerbose == True:
         mc.select(unFreezedTransfomList)
-        print "#### {:>7}: The unfreezed transforms have been selected".format("Info")
+        print "#### {:>7}: {} unfreezed transforms have been selected".format("Info", str(len(unFreezedTransfomList)))
 
-    if freezedTransfomList !=[]:
+    if freezedTransfomList != []:
         print "#### {:>7}: {} transforms have been freezed and reset".format("Info", len(freezedTransfomList))
+
+    if unFreezedTransfomList ==[] and inVerbose == True:
+        print "#### {:>7}: {} transforms checked successfully".format("Info", str(len(geoTransformList)))
 
     return unFreezedTransfomList if unFreezedTransfomList != [] else  None
 

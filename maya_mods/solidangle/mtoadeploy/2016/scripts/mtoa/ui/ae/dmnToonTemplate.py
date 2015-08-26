@@ -6,8 +6,6 @@ from mtoa.ui.ae.shaderTemplate import ShaderAETemplate
 
 class AEdmnToonTemplate(ShaderAETemplate):
 
-
-
     def setup(self):
         self.addSwatch()
         self.beginScrollLayout()
@@ -26,7 +24,16 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('toon_sphere_normals', label='Sphere Normals')
         self.addControl('toon_normal_map', label='Normal Map')
         self.addControl('toon_normal_map_weight', label='Normal Map Weight')
-
+		
+        self.beginLayout('Rim Toon', collapse=True)
+        self.addControl('rim_toon_weight', label='Rim Weight')
+        self.addControl('rim_toon_bright', label='Bright Color')
+        self.addControl('rim_toon_dark', label='Dark Color')
+        self.addControl('rim_toon_coverage', label='Coverage')
+        self.addControl('rim_toon_softness', label='Softness')
+        self.addControl('rim_incidence_falloff', label='Incidence Falloff')
+        self.endLayout()
+		
         self.endLayout()
 
         self.beginLayout('Diffuse', collapse=True)
