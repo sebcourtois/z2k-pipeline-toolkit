@@ -192,7 +192,7 @@ class SceneManager():
 
     def getPath(self, d_inEntity, s_inFileTag):
         #print 'getPath ' + str(d_inEntity)
-        print d_inEntity
+        #print d_inEntity
         lib = LIBS[d_inEntity['type']]
         if lib == "asset_lib":
             lib = d_inEntity['name'].split("_")[0]
@@ -292,7 +292,10 @@ class SceneManager():
             #print 'assetInfo["dbinfo"] ' + str(assetInfo['dbinfo'])
             #print 'assetInfo["localinfo"] ' + str(assetInfo['localinfo'])
             #print 'assetInfo["path"]' + str(assetInfo['path'])
-            if assetInfo['dbinfo'] != noneValue and assetInfo['dbinfo'] != assetInfo['localinfo']:
+            if assetInfo['dbinfo'] == noneValue:
+                #Asset that does not exist in shot, remove
+                mop.removeAsset(assetInfo['path'])
+            elif assetInfo['dbinfo'] != assetInfo['localinfo']:
                 if notFoundvalue in assetInfo['dbinfo']:
                     pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
                 else:

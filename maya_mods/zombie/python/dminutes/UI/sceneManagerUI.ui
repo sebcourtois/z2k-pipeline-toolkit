@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>606</width>
+    <width>572</width>
     <height>406</height>
    </rect>
   </property>
@@ -343,6 +343,9 @@
             </item>
             <item>
              <widget class="QPushButton" name="sm_updb_bt">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>Update DB from Scene</string>
               </property>
@@ -419,6 +422,13 @@
              <widget class="QPushButton" name="sm_edit_bt">
               <property name="text">
                <string>Edit</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="sm_saveWip_bt">
+              <property name="text">
+               <string>Save WIP</string>
               </property>
              </widget>
             </item>

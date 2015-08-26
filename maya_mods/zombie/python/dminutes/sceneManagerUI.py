@@ -91,6 +91,7 @@ def connectCallbacks():
     pc.button('sm_upscene_bt', edit=True, c=doUpdateScene)
     pc.button('sm_updb_bt', edit=True, c=doUpdateShotgun)
     pc.button('sm_capture_bt', edit=True, c=doCapture)
+    pc.button('sm_saveWip_bt', edit=True, c=doSaveWip)
 
     #davos
     pc.button('sm_edit_bt', edit=True, c=doEdit)
@@ -265,7 +266,10 @@ def doUpdateShotgun(*args):
 def doCapture(*args):
     SCENE_MANAGER.capture()
     doRefreshSceneInfo()
-    
+
+def doSaveWip(*args):
+    SCENE_MANAGER.saveIncrement()
+
 #davos
 def doEdit(*args):
     SCENE_MANAGER.edit()

@@ -83,6 +83,9 @@ def importAsset(s_inPath, s_inNS='', b_inRef=True):
     else:
         importedAsset = pc.system.importFile(s_inPath, namespace=s_inNS)
 
+def removeAsset(s_inPath):
+    mc.file(s_inPath, removeReference=True )
+
 def getAssetRoot(s_inNS):
     assetRoot = None
     deprecatedMessage = 'Asset root name is obsolete ({0})'
@@ -111,7 +114,7 @@ def getRoot(o_inObj):
     ns = o_inObj.namespace()
     obj = o_inObj
     objParent = obj.getParent()
-    while(objParent != None and o_inObj.namespace() == ns):
+    while(objParent != None and objParent.namespace() == ns):
         obj = objParent
         objParent = obj.getParent()
 
@@ -146,9 +149,12 @@ def reArrangeAssets():
     #We could also have local cameras (cam_animatic and/or cam_sq####_sh####)
     cams = pc.ls('cam_*:*', type='camera')
     for cam in cams:
+        #print "cam " + str(cam)
         camRoot = getRoot(cam)
+        #print "camRoot " + str(camRoot)
         camParent = camRoot.getParent()
         if camParent == None or camParent.name() != structure['cam']:
+            #print camRoot, structure['cam']
             pc.parent(camRoot, structure['cam'])
 
 #GLOBALS METHODS
@@ -195,51 +201,6 @@ def create_previz_scene(o_inSceneManager):
 
     init_scene_base(o_inSceneManager)
     init_previz_scene(o_inSceneManager)
-
-    #Import camera  "X:\asset\cam\cam_shot_default\cam_shot_default.ma"
-    #camDefaultPath = os.path.join(os.environ["ZOMB_ASSET_PATH"], 'cam', 'cam_shot_default', 'cam_shot_default.ma')
-    camDefaultPath = o_inSceneManager.context['damProject'].getPath('public', 'camera', 'scene', tokens={'name':'cam_shot_default'})
-
-    camName = 'cam_{0}'.format(o_inSceneManager.context['entity']['code'])
-
-    if len(pc.ls('{0}:asset'.format(camName))) == 0:
-        if os.path.isfile(camDefaultPath):
-            importAsset(camDefaultPath, camName, False)
-
-            camObjs = pc.ls('{0}:*'.format(camName), type='camera')
-            if len(camObjs) > 0:
-                perspPanel = mc.getPanel( withLabel= 'Persp View' )
-                pc.modelPanel( perspPanel, edit= True, camera=camObjs[0])
-            else:
-                pc.warning("Cannot find the imported camera !!")
-        else:
-            pc.warning('Default camera file cannot be found ({0})'.format(camDefaultPath))
-
-    #image plane "Y:\shot\...\00_data\sqXXXX_shXXXXa_animatic.mov"
-    imgPlanePath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_capture')
-    if os.path.isfile(imgPlanePath):
-        IMGP = createImgPlane()
-        pc.imagePlane(IMGP[0], edit=True, fileName=imgPlanePath)
-        #IMGP[0].fileName(imgPlanePath)
-    else:
-        pc.warning('Image plane file cannot be found ({0})'.format())
-
-    #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
-    soundPath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_sound')
-    if os.path.isfile(soundPath):
-        # --- Import Sound
-        # - Remove previous
-        pc.runtime.DeleteAllSounds()
-
-        # - Import current shot Sound
-        audio_shot = pc.sound( offset=101, file= soundPath, name = 'audio')
-
-        # - Show Sound in Timeline
-        aPlayBackSliderPython = pc.mel.eval('$tmpVar=$gPlayBackSlider')
-        pc.timeControl( aPlayBackSliderPython, e=True, sound=audio_shot, displaySound=True )
-
-    else:
-        pc.warning('Sound file cannot be found ({0})'.format(soundPath))
 
     reArrangeAssets()
 
@@ -316,6 +277,59 @@ def init_previz_scene(o_inSceneManager):
 
     pc.modelEditor( sidePanel, edit= True, allObjects= 0, imagePlane= True, grid= False )
 
+    #Import camera  "X:\asset\cam\cam_shot_default\cam_shot_default.ma"
+    
+    camDefaultPath = o_inSceneManager.context['damProject'].getPath('public', 'camera', 'scene', tokens={'name':'cam_shot_default'})
+
+    camName = 'cam_{0}'.format(o_inSceneManager.context['entity']['code'])
+
+    #remove any other shot camera
+    otherCams = pc.ls('cam_sq*sh*:*', type='camera')
+    for otherCam in otherCams:
+        if not camName in otherCam.namespace():
+            otherRoot = getRoot(otherCam)
+            pc.delete(otherRoot)
+
+    if len(pc.ls('{0}:asset'.format(camName))) == 0:
+        if os.path.isfile(camDefaultPath):
+            importAsset(camDefaultPath, camName, False)
+
+            camObjs = pc.ls('{0}:*'.format(camName), type='camera')
+            if len(camObjs) > 0:
+                perspPanel = mc.getPanel( withLabel= 'Persp View' )
+                pc.modelPanel( perspPanel, edit= True, camera=camObjs[0])
+            else:
+                pc.warning("Cannot find the imported camera !!")
+        else:
+            pc.warning('Default camera file cannot be found ({0})'.format(camDefaultPath))
+
+    #image plane "Y:\shot\...\00_data\sqXXXX_shXXXXa_animatic.mov"
+    imgPlanePath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_capture')
+    if os.path.isfile(imgPlanePath):
+        IMGP = createImgPlane()
+        pc.imagePlane(IMGP[0], edit=True, fileName=imgPlanePath)
+        #IMGP[0].fileName(imgPlanePath)
+    else:
+        pc.warning('Image plane file cannot be found ({0})'.format(imgPlanePath))
+
+    #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
+    soundPath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_sound')
+    if os.path.isfile(soundPath):
+        # --- Import Sound
+        # - Remove previous
+        pc.runtime.DeleteAllSounds()
+
+        # - Import current shot Sound
+        audio_shot = pc.sound( offset=101, file= soundPath, name = 'audio')
+
+        # - Show Sound in Timeline
+        aPlayBackSliderPython = pc.mel.eval('$tmpVar=$gPlayBackSlider')
+        pc.timeControl( aPlayBackSliderPython, e=True, sound=audio_shot, displaySound=True )
+
+    else:
+        pc.warning('Sound file cannot be found ({0})'.format(soundPath))
+
+    reArrangeAssets()
     print 'previz initialization done ! ({0})'.format(o_inSceneManager.context)
 
 COMMANDS = {
