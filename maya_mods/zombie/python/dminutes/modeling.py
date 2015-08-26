@@ -362,15 +362,17 @@ def checkMeshNamingConvention(printInfo = True, inParent = "*"):
     return wrongMeshNamingConvention
     
 
-def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = False):
+def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = False, inParent = "*"):
     """
     This function, makes sure every mesh shape name is concistant with its transform name: "transformName+Shape"
     Only shapes of the main name space are taken into account, referenced shapes are therefore ignored
         - fixShapeName (boolean): fix invalid shapes names if True, only log info otherwise
         - return (list): the meshes list that still have an invalid shape name
     """
+    print ""
+    print "#### {:>7}: modeling.meshShapeNameConform(fixShapeName = {}, myTransMesh = {}, forceInfoOff = {}, inParent = {})".format("Info",fixShapeName, forceInfoOff, inParent)
     if not myTransMesh:
-        myTransMesh =  mc.listRelatives (mc.ls("*:", type = "mesh"), parent = True, fullPath = True, type = "transform")
+        myTransMesh = miscUtils.getAllTransfomMeshes(inParent)
         if myTransMesh is None: myTransMesh = []
         checkAllScene = True
     else:
