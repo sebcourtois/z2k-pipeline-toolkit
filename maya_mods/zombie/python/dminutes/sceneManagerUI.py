@@ -90,6 +90,12 @@ def connectCallbacks():
     pc.button('sm_refreshScene_bt', edit=True, c=doRefreshSceneInfo)
     pc.button('sm_upscene_bt', edit=True, c=doUpdateScene)
     pc.button('sm_updb_bt', edit=True, c=doUpdateShotgun)
+    pc.button('sm_capture_bt', edit=True, c=doCapture)
+
+    #davos
+    pc.button('sm_edit_bt', edit=True, c=doEdit)
+    pc.button('sm_publish_bt', edit=True, c=doPublish)
+    pc.button('sm_createFolder_bt', edit=True, c=doCreateFolder)
 
     #action buttons
     buttonName = 'sm_init_bt'
@@ -160,6 +166,7 @@ def doTaskChanged(*args):
     
     for version in versions:
         VERSIONS[version['code']] = version
+        SCENE_MANAGER.context['version'] = version
 
     pc.textScrollList("sm_versions_lb", edit=True, removeAll=True)
     if len(versions) > 0:
@@ -230,17 +237,44 @@ def doRefreshSceneInfo(*args):
 
     gridContent = ["Scene", "Shotgun"]
 
+
+    lengths = [20,20]
+    for assetInfo in assetsInfo:
+        if len(assetInfo['localinfo']) > lengths[0]:
+            lengths[0] = len(assetInfo['localinfo'])
+
+        if len(assetInfo['dbinfo']) > lengths[1]:
+            lengths[1] = len(assetInfo['dbinfo'])    
+
+    formatting = " {0:<"+str(lengths[0])+"}| {1:<"+str(lengths[1])+"}"
+
     pc.textScrollList("sm_sceneInfo_lb", edit=True, removeAll=True)
-    pc.textScrollList("sm_sceneInfo_lb", edit=True, append=" {0:<50}| {1:<50}".format("SCENE", "DATABASE"))
+    pc.textScrollList("sm_sceneInfo_lb", edit=True, append=formatting.format("SCENE", "DATABASE"))
 
     for assetInfo in assetsInfo:
-        pc.textScrollList("sm_sceneInfo_lb", edit=True, append=" {0:<50}| {1:<50}".format(assetInfo['localinfo'], assetInfo['dbinfo']))
+        pc.textScrollList("sm_sceneInfo_lb", edit=True, append=formatting.format(assetInfo['localinfo'], assetInfo['dbinfo']))
 
 def doUpdateScene(*args):
     SCENE_MANAGER.updateScene()
+    doRefreshSceneInfo()
 
 def doUpdateShotgun(*args):
     SCENE_MANAGER.updateShotgun()
+    doRefreshSceneInfo()
+
+def doCapture(*args):
+    SCENE_MANAGER.capture()
+    doRefreshSceneInfo()
+    
+#davos
+def doEdit(*args):
+    SCENE_MANAGER.edit()
+
+def doPublish(*args):
+    SCENE_MANAGER.publish() 
+
+def doCreateFolder(*args):
+    SCENE_MANAGER.createFolder() 
 
 #action buttons
 def doInit(*args):
@@ -248,3 +282,4 @@ def doInit(*args):
 
 def doCreate(*args):
     SCENE_MANAGER.do('create')
+    doRefreshSceneInfo()

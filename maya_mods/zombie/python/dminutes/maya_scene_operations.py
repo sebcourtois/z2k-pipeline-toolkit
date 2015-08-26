@@ -19,10 +19,22 @@ def setSubdivPref(i_inSubDiv=0):
     pc.polyOptions(newPolymesh=True, smoothDrawType=i_inSubDiv)
 
 def getSceneContent(o_inSceneManager):
-    return []
+    sceneContent = []
+
+    #Collect references
+    refs = pc.listReferences(namespaces=True)
+    for ref in refs:
+        ns = ref[0]
+        sceneContent.append({'name':'_'.join(ns.split("_")[:-1]), 'path':ref[1]})
+
+    return sceneContent
 
 def createImgPlane():
     IMGP = None
+
+    IMGPs = pc.ls("cam_animatic:assetShape->imgPlane_animatic*")
+    if len(IMGPs) > 0:
+        IMGP = IMGPs[0]
 
     if IMGP != None:
         cam_animatic = pc.ls("cam_animatic:*")
@@ -50,7 +62,6 @@ def createImgPlane():
 
     #SET DE L'IMAGE PLANE
     pc.setAttr(IMGP[1].name()+".type",2)
-    #IMGP[1].fileName( Video_Path )
     pc.setAttr(IMGP[1].name()+".fit",1)
     pc.setAttr(IMGP[1].name()+".useFrameExtension",1)
     pc.setAttr(IMGP[1].name()+".frameOffset",-100)
@@ -186,12 +197,21 @@ def create_previz_scene(o_inSceneManager):
     init_previz_scene(o_inSceneManager)
 
     #Import camera  "X:\asset\cam\cam_shot_default\cam_shot_default.ma"
-    camDefaultPath = os.path.join(os.environ["ZOMBI_ASSET_DIR"], 'cam', 'cam_shot_default', 'cam_shot_default.ma')
+    #camDefaultPath = os.path.join(os.environ["ZOMB_ASSET_PATH"], 'cam', 'cam_shot_default', 'cam_shot_default.ma')
+    camDefaultPath = o_inSceneManager.context['damProject'].getPath('public', 'camera', 'scene', tokens={'name':'cam_shot_default'})
+
     camName = 'cam_{0}'.format(o_inSceneManager.context['entity']['code'])
 
     if len(pc.ls('{0}:asset'.format(camName))) == 0:
         if os.path.isfile(camDefaultPath):
             importAsset(camDefaultPath, camName, False)
+
+            camObjs = pc.ls('{0}:*'.format(camName), type='camera')
+            if len(camObjs) > 0:
+                perspPanel = mc.getPanel( withLabel= 'Persp View' )
+                pc.modelPanel( perspPanel, edit= True, camera=camObjs[0])
+            else:
+                pc.warning("Cannot find the imported camera !!")
         else:
             pc.warning('Default camera file cannot be found ({0})'.format(camDefaultPath))
 
@@ -199,20 +219,36 @@ def create_previz_scene(o_inSceneManager):
     imgPlanePath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_capture')
     if os.path.isfile(imgPlanePath):
         IMGP = createImgPlane()
-        IMGP[0].fileName(imgPlanePath)
+        pc.imagePlane(IMGP[0], edit=True, fileName=imgPlanePath)
+        #IMGP[0].fileName(imgPlanePath)
     else:
-        pc.warning('Image plane file cannot be found ({0})'.format(imgPlanePath))
+        pc.warning('Image plane file cannot be found ({0})'.format())
 
     #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
     soundPath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_sound')
     if os.path.isfile(soundPath):
-        pass
+        # --- Import Sound
+        # - Remove previous
+        pc.runtime.DeleteAllSounds()
+
+        # - Import current shot Sound
+        audio_shot = pc.sound( offset=101, file= soundPath, name = 'audio')
+
+        # - Show Sound in Timeline
+        aPlayBackSliderPython = pc.mel.eval('$tmpVar=$gPlayBackSlider')
+        pc.timeControl( aPlayBackSliderPython, e=True, sound=audio_shot, displaySound=True )
+
     else:
         pc.warning('Sound file cannot be found ({0})'.format(soundPath))
 
-    #lock previz, save v001 in private, here ?
-
     reArrangeAssets()
+
+    #lock previz, save v001 in private, here ?
+    privFile = o_inSceneManager.edit(onBase=True)
+
+    #save the created file on the private
+    pc.saveAs(privFile.absPath())
+
     print 'previz creation done ! ({0})'.format(o_inSceneManager)
 
 #Inits

@@ -76,10 +76,10 @@ class character3d:
         {
         "ref -> ref_dir":
             {
-            "{name}_anim.ma -> anim_ref":None,
-            "{name}_modeling.ma -> modeling_ref":None,
-            "{name}_previz.ma -> previz_ref":None,
-            "{name}_render.ma -> render_ref":None,
+            "{name}_anim.mb -> anim_ref":None,
+            "{name}_modeling.mb -> modeling_ref":None,
+            "{name}_previz.mb -> previz_ref":None,
+            "{name}_render.mb -> render_ref":None,
             },
         "review -> review_dir":{},
         "script -> script_dir":{},
@@ -109,10 +109,10 @@ class prop3d:
         {
         "ref -> ref_dir":
             {
-            "{name}_anim.ma -> anim_ref":None,
-            "{name}_modeling.ma -> modeling_ref":None,
-            "{name}_previz.ma -> previz_ref":None,
-            "{name}_render.ma -> render_ref":None,
+            "{name}_anim.mb -> anim_ref":None,
+            "{name}_modeling.mb -> modeling_ref":None,
+            "{name}_previz.mb -> previz_ref":None,
+            "{name}_render.mb -> render_ref":None,
             },
         "review -> review_dir":{},
         #"script -> script_dir":{},
@@ -150,8 +150,8 @@ class set3d:
         {
         "ref -> ref_dir":
             {
-            "{name}_previz.ma -> previz_ref":None,
-            "{name}_master.ma -> master_ref":None,
+            "{name}_previz.mb -> previz_ref":None,
+            "{name}_master.mb -> master_ref":None,
             },
         "review -> review_dir":{},
         #"script -> script_dir":{},
@@ -198,7 +198,7 @@ class shot_lib:
                 {
                  "00_data -> data_dir":
                     {
-                     "{name}_animatic.wav -> animatic_sound":None,
+                     "{name}_sound.wav -> animatic_sound":None,
                      "{name}_animatic.mov -> animatic_capture":None,
                     },
                  "{step=01_previz} -> previz_dir":

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>606</width>
-    <height>461</height>
+    <height>406</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -291,7 +291,7 @@
         <height>0</height>
        </size>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0">
+      <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0">
        <property name="spacing">
         <number>2</number>
        </property>
@@ -311,7 +311,13 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QListWidget" name="sm_sceneInfo_lb"/>
+           <widget class="QListWidget" name="sm_sceneInfo_lb">
+            <property name="font">
+             <font>
+              <family>Lucida Console</family>
+             </font>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QPushButton" name="sm_refreshScene_bt">
@@ -356,12 +362,12 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_9">
             <property name="topMargin">
-             <number>10</number>
+             <number>0</number>
             </property>
             <item>
              <widget class="QPushButton" name="sm_create_bt">
               <property name="text">
-               <string>CREATE</string>
+               <string>CREATE (overwrites scene)</string>
               </property>
              </widget>
             </item>
@@ -369,6 +375,57 @@
              <widget class="QPushButton" name="sm_init_bt">
               <property name="text">
                <string>Initialize</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_11">
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="sm_capture_bt">
+              <property name="text">
+               <string>Save and Capture</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_5">
+         <property name="title">
+          <string>Entity Operations</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_9">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_10">
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="sm_createFolder_bt">
+              <property name="text">
+               <string>Create folders</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="sm_edit_bt">
+              <property name="text">
+               <string>Edit</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="sm_publish_bt">
+              <property name="text">
+               <string>Publish</string>
               </property>
              </widget>
             </item>
