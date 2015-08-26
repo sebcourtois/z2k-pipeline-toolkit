@@ -370,7 +370,7 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
         - return (list): the meshes list that still have an invalid shape name
     """
     print ""
-    print "#### {:>7}: modeling.meshShapeNameConform(fixShapeName = {}, myTransMesh = {}, forceInfoOff = {}, inParent = {})".format("Info",fixShapeName, forceInfoOff, inParent)
+    print "#### {:>7}: modeling.meshShapeNameConform(fixShapeName = {}, myTransMesh = {}, forceInfoOff = {}, inParent = {})".format("Info",fixShapeName, myTransMesh, forceInfoOff, inParent)
     if not myTransMesh:
         myTransMesh = miscUtils.getAllTransfomMeshes(inParent)
         if myTransMesh is None: myTransMesh = []
@@ -521,12 +521,12 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
             mc.xform( each, os=True, q=True, rp=True)!=[0,0,0] or mc.xform( each, os=True, q=True, sp=True)!=[0,0,0]):
             if inVerbose == True and inConform == False:
                 unFreezedTransfomList.append(each)
-                print "#### {:>7}: {:^28} has unfreezed tranform values".format("Info", each)
+                print "#### {:>7}: {:^28} --> has unfreezed tranform values".format("Info", each)
             if inConform == True:
                 mc.makeIdentity (each ,apply= True, n=0, pn=1)
                 mc.makeIdentity (each ,apply= False, n=0, pn=1)
                 freezedTransfomList.append(each)
-                if inVerbose == True: print "#### {:>7}: {:^28} has been freezed and reset".format("Info", each)
+                if inVerbose == True: print "#### {:>7}: {:^28} --> has been freezed and reset".format("Info", each)
 
     if unFreezedTransfomList !=[] and inVerbose == True:
         mc.select(unFreezedTransfomList)
