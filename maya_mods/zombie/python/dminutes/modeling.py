@@ -333,7 +333,7 @@ def rigSet(inRoot):
 
     
 
-def checkMeshNamingConvention(printInfo = True):
+def checkMeshNamingConvention(printInfo = True, inParent = "*"):
     """
     check all the meshes naming convention, '(geo|aux)_name_complement##' where 'name' and 'complement##' are strings of 24 alphanumeric characters
     only meshes of the main name space are taken into account, referenced meshes are therefore ignored.
@@ -341,10 +341,10 @@ def checkMeshNamingConvention(printInfo = True):
         - return (list) : wrongMeshNamingConvention, all the meshes with a bad naming convetion
     """
     wrongMeshNamingConvention = []
-    allTransMesh =  mc.listRelatives (mc.ls("*:",type = "mesh"), parent = True, fullPath = True, type = "transform")
-    if allTransMesh is None: allTransMesh = []
+    geoTransformList = miscUtils.getAllTransfomMeshes(inParent)
+    if geoTransformList is None: geoTransformList = []
     
-    for each in allTransMesh:
+    for each in geoTransformList:
         eachShort = each.split("|")[-1]
         if not (re.match('^(geo|aux)_[a-zA-Z0-9]{1,24}$', eachShort) or re.match('^(geo|aux)_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', eachShort)):
             wrongMeshNamingConvention.append(each)
