@@ -1,5 +1,6 @@
 
 import sys
+import os
 
 from PySide.QtCore import Qt
 
@@ -31,8 +32,9 @@ def launch(argv):
         mainWin = MayaHookWindow()
         mainWin.show(dockable=False)
 
-        sProject = "zombtest" if inDevMode() else "zombillenium"
-        mainWin.setProject(sProject)
+        sProject = os.environ.get("DAVOS_INIT_PROJECT")
+        if sProject:
+            mainWin.setProject(sProject)
 
 if __name__ == "__main__":
     launch(sys.argv)

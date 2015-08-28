@@ -174,6 +174,7 @@ class Z2kToolkit(object):
         updEnv("PYTHONPATH", osp.join(self.rootPath, "python"), conflict="add")
         updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"), conflict="add")
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
+        updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
 
         for sVar in self.__class__.envsToPrivate:
 

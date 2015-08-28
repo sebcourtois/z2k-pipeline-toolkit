@@ -18,7 +18,7 @@ class MrcFile(DrcFile):
     def __init__(self, drcLib, absPathOrInfo=None, **kwargs):
         super(MrcFile, self).__init__(drcLib, absPathOrInfo, **kwargs)
 
-    def edit(self, **kwargs):
+    def edit(self, open_file=True):
 
         self.assertMayaVersion()
 
@@ -27,13 +27,14 @@ class MrcFile(DrcFile):
             self.restoreLockState()
             return None
 
-        result = saveFile(discard=True)
-        if result == '_cancelled_':
-            self.restoreLockState()
-            return None
+        if open_file:
 
-        sFilePath = privFile.absPath()
-        openFile(sFilePath, force=True)
+            result = saveFile(discard=True)
+            if result == '_cancelled_':
+                self.restoreLockState()
+                return None
+
+            openFile(privFile.absPath(), force=True)
 
         return privFile
 

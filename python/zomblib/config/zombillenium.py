@@ -217,8 +217,14 @@ class shot_lib:
         }
 
     resources_settings = {
-    "previz_scene":{"outcome":("previz_capture",), },
-    "previz_capture":{"editable":False},
+    "previz_scene":{"outcomes":("previz_capture",),
+                    "create_sg_version":True,
+                    "sg_tasks":("Previz 3D", "Tatask"),
+                    "sg_upload":"previz_capture"
+                    },
+    "previz_capture":{"editable":False,
+                      "sg_upload_args":{"field_name":"sg_uploaded_movie"},
+                      }
     }
 
 
