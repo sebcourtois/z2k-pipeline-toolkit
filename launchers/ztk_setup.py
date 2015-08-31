@@ -3,7 +3,7 @@ import os
 import os.path as osp
 import subprocess
 import argparse
-from shutil import make_archive
+from shutil import make_archive, ignore_patterns
 from datetime import datetime
 
 CREATE_NO_WINDOW = 0x8000000
@@ -72,6 +72,69 @@ def makePrivatePath(sPublicPath):
     sDirName = osp.basename(sPublicPath)
     return osp.join(sPrivZombPath, sDirName)
 
+def pathNorm(p):
+    return osp.normpath(p).replace("\\", "/")
+
+def pathJoin(*args):
+    try:
+        p = osp.join(*args)
+    except UnicodeDecodeError:
+        p = osp.join(*tuple(toUnicode(arg) for arg in args))
+
+    return pathNorm(p)
+
+def iterPaths(sRootDirPath, **kwargs):
+
+    if not osp.isdir(sRootDirPath):
+        raise ValueError, 'No such directory found: "{0}"'.format(sRootDirPath)
+
+    bFiles = kwargs.pop("files", True)
+    bDirs = kwargs.pop("dirs", True)
+    bRecursive = kwargs.pop("recursive", True)
+
+    ignoreDirsFunc = kwargs.get("ignoreDirs", None)
+    ignoreFilesFunc = kwargs.get("ignoreFiles", None)
+
+    filterFilesFunc = kwargs.get("filterFiles", None)
+
+    for sDirPath, sDirNames, sFileNames in os.walk(sRootDirPath):
+
+        if not bRecursive:
+            del sDirNames[:] # don't walk further
+
+        if ignoreDirsFunc is not None:
+            sIgnoredDirs = ignoreDirsFunc(sDirPath, sDirNames)
+            for sDir in sIgnoredDirs:
+                try: sDirNames.remove(sDir)
+                except ValueError: pass
+
+        if bDirs:
+            for sDir in sDirNames:
+                yield addEndSlash(pathJoin(sDirPath, sDir))
+
+        if bFiles:
+
+            bFilter = False
+            sFilterFiles = []
+            if filterFilesFunc is not None:
+                sFilterFiles = filterFilesFunc(sDirPath, sFileNames)
+                #print "sFilterFiles", sFilterFiles, sFileNames
+                bFilter = True
+
+            sIgnoredFiles = []
+            if ignoreFilesFunc is not None:
+                sIgnoredFiles = ignoreFilesFunc(sDirPath, sFileNames)
+                #print "sIgnoredFiles", sIgnoredFiles
+
+            for sFileName in sFileNames:
+
+                if bFilter and (sFileName not in sFilterFiles):
+                    continue
+
+                if sFileName in sIgnoredFiles:
+                    continue
+
+                yield pathJoin(sDirPath, sFileName)
 
 class Z2kToolkit(object):
 
@@ -111,6 +174,7 @@ class Z2kToolkit(object):
         updEnv("PYTHONPATH", osp.join(self.rootPath, "python"), conflict="add")
         updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"), conflict="add")
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
+        updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
 
         for sVar in self.__class__.envsToPrivate:
 
@@ -139,10 +203,27 @@ class Z2kToolkit(object):
         if repo == local_root:
             print "Source == Destination !"
         else:
+            sOutput = self.makeCopy(repo, local_root,
+                                    dryRun=False, summary=False)
 
-            print self.makeCopy(repo, local_root)
+            if not sOutput.strip():
+                print "\nNo changes !"
+                return
 
-            print "Zombie toolkit updated, use your local to launch applications ! ({0})".format(osp.join(local_root, "launchers"))
+            print "\n", sOutput
+
+            pathIter = iterPaths(local_root, dirs=False, files=True,
+                                 filterFiles=ignore_patterns("*.pyc"),
+                                 ignoreDirs=ignore_patterns(".*"))
+            n = 0
+            for p in pathIter:
+                if p.endswith(".pyc"):
+                    os.remove(p)
+                    n += 1
+
+            print "Deleted {} '.pyc' files".format(n)
+            print ("Zombie toolkit updated, use your local to launch applications ! ({0})"
+                   .format(osp.join(local_root, "launchers")))
 
     def release(self):
 
@@ -150,9 +231,10 @@ class Z2kToolkit(object):
             raise EnvironmentError("Sorry, you are not in DEV mode !")
 
         sDistroPath = self.releasePath()
-        sOutput = self.makeCopy(self.rootPath, sDistroPath, dryRun=True).strip()
-        if not sOutput:
-            print "No changes !"
+        sOutput = self.makeCopy(self.rootPath, sDistroPath,
+                                dryRun=True, summary=False)
+        if not sOutput.strip():
+            print "\nNo changes !"
             return
 
         if osp.exists(sDistroPath):
@@ -167,18 +249,24 @@ class Z2kToolkit(object):
 
         print self.makeCopy(self.rootPath, sDistroPath, dryRun=False)
 
-    def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False):
+    def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
 
         print "Updating Zombie toolkit: \n'{0}' -> '{1}'".format(sSrcRepoPath, sDestPath)
 
-        oscarPath = osp.join(sSrcRepoPath, "maya_mods", "Toonkit_module",
-                             "Maya2016", "Standalones", "OSCAR")
+        sOscarPath = osp.join(sSrcRepoPath, "maya_mods", "Toonkit_module",
+                              "Maya2016", "Standalones", "OSCAR")
 
-        sDryRun = "/L /NJS" if dryRun else ""
-        cmdLine = ("robocopy {} /S /NFL /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {} *.pyc .git* .*project"
-                    .format(sDryRun, sSrcRepoPath, sDestPath, oscarPath,
-                            "setup_*.bat" if not self.isDev else ""))
+        sDryRun = "/L" if dryRun else ""
+        sNoSummary = "/NJS" if not summary else ""
 
+        cmdLineFmt = "robocopy {} /S {} /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {} *.pyc .git* .*project"
+        cmdLine = cmdLineFmt.format(sDryRun,
+                                    sNoSummary,
+                                    sSrcRepoPath,
+                                    sDestPath,
+                                    sOscarPath,
+                                    "setup_*.bat" if not self.isDev else "")
+        #print cmdLine
         return runCmd(cmdLine)
 
     def releasePath(self):

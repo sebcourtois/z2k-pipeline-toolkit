@@ -14,7 +14,7 @@ ENVS = {
         "ZOMB_TOOL_PATH":"\\\\Diskstation\\Projects\\zomb\\tool",
 		"ZOMB_TEXTURE_PATH":"$ZOMB_ASSET_PATH",
 
-		"PRIV_ZOMB_PATH":'\\\\Diskstation\\Projects\\private\\${DAVOS_USER}\\zomb',
+		"PRIV_ZOMB_PATH":'\\\\Diskstation\\Projects\\private\\$DAVOS_USER\\zomb',
 		}
 
 try:

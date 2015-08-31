@@ -1,10 +1,11 @@
 
+import os.path as osp
 
 #import pymel.core as pm
 import pymel.versions as pmv
 
 from davos.core.drctypes import DrcDir, DrcFile
-from pytaya.core.system import saveFile, openFile
+from pytaya.core import system as myasys
 
 
 class MrcDir(DrcDir):
@@ -18,24 +19,26 @@ class MrcFile(DrcFile):
     def __init__(self, drcLib, absPathOrInfo=None, **kwargs):
         super(MrcFile, self).__init__(drcLib, absPathOrInfo, **kwargs)
 
-    def edit(self, **kwargs):
+    def edit(self, openFile=False):
 
         self.assertMayaVersion()
+        self.assertIsMayaScene()
 
-        privFile = DrcFile.edit(self)
-        if not privFile:
-            self.restoreLockState()
-            return None
+        privFile = DrcFile.edit(self, openFile=False)
 
-        result = saveFile(discard=True)
-        if result == '_cancelled_':
-            self.restoreLockState()
-            return None
-
-        sFilePath = privFile.absPath()
-        openFile(sFilePath, force=True)
+        if openFile and privFile:
+            privFile.mayaOpen(checkFile=False)
 
         return privFile
+
+    def assertIsMayaScene(self):
+
+        p = self.absPath()
+        _, sExt = osp.splitext(p)
+        if sExt not in (".ma", ".mb"):
+            raise AssertionError("Not a Maya Scene:\n'{}'".format(p))
+
+        return p
 
     def assertMayaVersion(self):
 
@@ -47,4 +50,21 @@ class MrcFile(DrcFile):
         if sMayaVersion != sMayaProjVersion:
             sMsg = ("{0} requires Maya {1}, but you're running Maya {2} !"
                     .format(proj, sMayaProjVersion, sMayaVersion))
-            raise EnvironmentError, sMsg
+            raise EnvironmentError(sMsg)
+
+    def mayaOpen(self, checkFile=True):
+
+        if checkFile:
+            assert self.isFile(), "File does NOT exists !"
+            self.assertIsMayaScene()
+
+        if self.isPublic():
+            return myasys.importFile(self.absPath(), newFile=True)
+        else:
+            result = myasys.saveFile(discard=True)
+            if result == '_cancelled_':
+                return None
+
+            return myasys.openFile(self.absPath(), force=True)
+
+

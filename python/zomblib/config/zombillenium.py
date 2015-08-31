@@ -19,8 +19,8 @@ class project:
 
     child_sections = libraries
 
-    shotgun_engine = "zomblib.shotgunengine.ShotgunEngine"
-    authenticator = ".authtypes.ShotgunAuth"
+    shotgun_class = "zomblib.shotgunengine.ShotgunEngine"
+    authenticator_class = ".authtypes.ShotgunAuth"
     #no_damas = True
 
 class asset_lib:
@@ -76,10 +76,10 @@ class character3d:
         {
         "ref -> ref_dir":
             {
-            "{name}_anim.ma -> anim_ref":None,
-            "{name}_modeling.ma -> modeling_ref":None,
-            "{name}_previz.ma -> previz_ref":None,
-            "{name}_render.ma -> render_ref":None,
+            "{name}_animRef.mb -> anim_ref":None,
+            "{name}_modelingRef.mb-> modeling_ref":None,
+            "{name}_previzRef.mb-> previz_ref":None,
+            "{name}_renderRef.mb-> render_ref":None,
             },
         "review -> review_dir":{},
         "script -> script_dir":{},
@@ -109,10 +109,10 @@ class prop3d:
         {
         "ref -> ref_dir":
             {
-            "{name}_anim.ma -> anim_ref":None,
-            "{name}_modeling.ma -> modeling_ref":None,
-            "{name}_previz.ma -> previz_ref":None,
-            "{name}_render.ma -> render_ref":None,
+            "{name}_animRef.mb -> anim_ref":None,
+            "{name}_modelingRef.mb -> modeling_ref":None,
+            "{name}_previzRef.mb -> previz_ref":None,
+            "{name}_renderRef.mb -> render_ref":None,
             },
         "review -> review_dir":{},
         #"script -> script_dir":{},
@@ -150,8 +150,8 @@ class set3d:
         {
         "ref -> ref_dir":
             {
-            "{name}_previz.ma -> previz_ref":None,
-            "{name}_master.ma -> master_ref":None,
+            "{name}_previzRef.mb-> previz_ref":None,
+            "{name}_masterRef.mb-> master_ref":None,
             },
         "review -> review_dir":{},
         #"script -> script_dir":{},
@@ -198,7 +198,7 @@ class shot_lib:
                 {
                  "00_data -> data_dir":
                     {
-                     "{name}_animatic.wav -> animatic_sound":None,
+                     "{name}_sound.wav -> animatic_sound":None,
                      "{name}_animatic.mov -> animatic_capture":None,
                     },
                  "{step=01_previz} -> previz_dir":
@@ -216,9 +216,15 @@ class shot_lib:
             },
         }
 
-    resources_conf = {
-    "previz_scene":{"produce":("previz_capture",), },
-    "previz_capture":{"editable":False},
+    resources_settings = {
+    "previz_scene":{"outcomes":("previz_capture",),
+                    "create_sg_version":True,
+                    "sg_tasks":("Previz 3D", "Tatask"),
+                    "sg_upload":"previz_capture"
+                    },
+    "previz_capture":{"editable":False,
+                      "sg_upload_args":{"field_name":"sg_uploaded_movie"},
+                      }
     }
 
 
