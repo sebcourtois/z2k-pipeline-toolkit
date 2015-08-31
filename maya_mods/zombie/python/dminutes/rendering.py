@@ -19,6 +19,7 @@ def setArnoldRenderOption(outputFormat):
     print "#### {:>7}: runing shading.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
 
     shadingMode = False
+    outputImageName = ""
 
     #define output directoy
     if mc.ls("|asset"):        
@@ -30,9 +31,9 @@ def setArnoldRenderOption(outputFormat):
             mc.workspace(fileRule=["images",outputFilePath])
             shadingMode = True
         else:
-            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+            print "#### Warning: you are not working in an 'asset' structure directory, output image name and path could not be automaticaly set"
     else :
-        raise ValueError("#### Error: no '|asset' could be found in this scene")
+        print "#### Warning: no '|asset' could be found in this scene, , output image name and path could not be automaticaly set"
         
 
     mmToIncheFactor = 0.0393700787401575

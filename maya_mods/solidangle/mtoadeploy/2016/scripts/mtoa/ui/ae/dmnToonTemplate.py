@@ -13,6 +13,44 @@ class AEdmnToonTemplate(ShaderAETemplate):
 
 
         self.addControl('output', label='Output')
+        self.addControl('opacity', label='Opacity')
+
+        self.beginLayout('Ambient', collapse=False)
+        self.addControl('ambient_color', label='Color')
+        self.addControl('ambient_intensity', label='Intensity')
+        self.addControl('ambient_tint', label='Tint')
+        self.endLayout()
+
+
+        self.beginLayout('Diffuse', collapse=False)
+        self.addControl('diffuse_color', label='Color')
+        self.addControl('diffuse_intensity', label='Intensity')
+        self.addControl('diffuse_tint', label='Tint')
+        self.endLayout()
+
+
+        self.beginLayout('Shadow Mask', collapse=False)
+        self.addControl('shadow_mask_weight', label='Weight')
+        self.addControl('shadow_mask', label='Mask')
+        self.addControl('shadow_mask_weight_01', label='Weight 1')
+        self.addControl('shadow_mask_01', label='Mask')
+        self.addControl('shadow_mask_weight_02', label='Weight 2')
+        self.addControl('shadow_mask_02', label='Mask')
+        self.addControl('shadow_mask_weight_03', label='Weight 3')
+        self.addControl('shadow_mask_03', label='Mask')
+        self.endLayout()
+
+
+        self.beginLayout('Masks', collapse=True)
+        self.addControl('dmn_mask00', label='dmn_mask00')
+        self.addControl('dmn_mask01', label='dmn_mask01')
+        self.addControl('dmn_mask02', label='dmn_mask02')
+        self.addControl('dmn_mask03', label='dmn_mask03')
+        self.addControl('dmn_mask04', label='dmn_mask04')
+        self.endLayout()
+
+        self.beginLayout('Advanced', collapse=True)
+
 
         self.beginLayout('Toon', collapse=True)
         self.addControl('toon_weight', label='Weight')
@@ -24,6 +62,7 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('toon_sphere_normals', label='Sphere Normals')
         self.addControl('toon_normal_map', label='Normal Map')
         self.addControl('toon_normal_map_weight', label='Normal Map Weight')
+        self.addControl('toon_as_float', label='As Float')
 		
         self.beginLayout('Rim Toon', collapse=True)
         self.addControl('rim_toon_weight', label='Rim Weight')
@@ -32,35 +71,15 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('rim_toon_coverage', label='Coverage')
         self.addControl('rim_toon_softness', label='Softness')
         self.addControl('rim_incidence_falloff', label='Incidence Falloff')
+        self.addControl('rim_toon_as_float', label='As Float')
         self.endLayout()
 		
-        self.endLayout()
-
-        self.beginLayout('Diffuse', collapse=True)
-        self.addControl('diffuse_color', label='Color')
-        self.addControl('diffuse_intensity', label='Intensity')
-        self.addControl('diffuse_tint', label='Tint')
-        self.endLayout()
-
-        self.beginLayout('Ambient', collapse=True)
-        self.addControl('ambient_color', label='Color')
-        self.addControl('ambient_intensity', label='Intensity')
-        self.addControl('ambient_tint', label='Tint')
-        self.endLayout()
-
-        self.beginLayout('Incandescence', collapse=True)
-        self.addControl('incandescent_color', label='Color')
-        self.addControl('incandescent_intensity', label='Intensity')
-        self.endLayout()
-
-        self.beginLayout('Shadow Mask', collapse=True)
-        self.addControl('shadow_mask_weight', label='Weight')
-        self.addControl('shadow_mask', label='Mask')
         self.endLayout()
 
         self.beginLayout('Lambert', collapse=True)
         self.addControl('lambert_weight', label='Weight')
         self.addControl('lambert_color', label='Color')
+        self.addControl('lambert_as_float', label='As Float')
         self.endLayout()
 
         self.beginLayout('Incidence', collapse=True)
@@ -71,7 +90,7 @@ class AEdmnToonTemplate(ShaderAETemplate):
 
         self.beginLayout('Occlusion', collapse=True)
         self.addControl('occlusion_weight', label='Weight')
-        self.addControl('ambient_occlusion', label='Ambient Occlusion')
+        self.addControl('ambient_beauty_mix', label='Ambient Beauty Mix')
         self.addControl('occlusion_black', label='Dark Color')
         self.addControl('occlusion_samples', label='Samples')
         self.addControl('occlusion_spread', label='Spread')
@@ -81,6 +100,7 @@ class AEdmnToonTemplate(ShaderAETemplate):
 		        
 
         self.endLayout()
+
 
         self.beginLayout('Contour', collapse=True)
         self.addControl('contour_weight', label='Weight')
@@ -127,25 +147,22 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.endLayout()
 
 
+
         self.beginLayout('AOVs', collapse=True)
         self.addControl('toon_AOV', label='Toon')
+        self.addControl('rim_toon_AOV', label='Rim Toon')
         self.addControl('shadow_mask_AOV', label='Shadow Mask')
         self.addControl('lambert_AOV', label='Lambert')
         self.addControl('diffuse_AOV', label='Diffuse')
         self.addControl('ambient_AOV', label='Ambient')
-        self.addControl('incandescence_AOV', label='Incandescence')
         self.addControl('incidence_AOV', label='Incidence')
         self.addControl('occlusion_AOV', label='Occlusion')
         self.addControl('contour_AOV', label='Contour')
         self.endLayout()
 
-        self.beginLayout('Masks', collapse=True)
-        self.addControl('dmn_mask00', label='dmn_mask00')
-        self.addControl('dmn_mask01', label='dmn_mask01')
-        self.addControl('dmn_mask02', label='dmn_mask02')
-        self.addControl('dmn_mask03', label='dmn_mask03')
-        self.addControl('dmn_mask04', label='dmn_mask04')
+
         self.endLayout()
+
 
         # include/call base class/node attributes
         pm.mel.AEdependNodeTemplate(self.nodeName)
