@@ -107,6 +107,18 @@ def getAssetRoot(s_inNS):
             if len(roots) > 0:
                 assetRoot = roots[0]
                 pc.warning(deprecatedMessage.format(assetRoot.name()))
+            else:
+                roots = pc.ls('{0}:{1}'.format(s_inNS, s_inNS.replace('Ref', '')))
+                if len(roots) > 0:
+                    assetRoot = roots[0]
+                    pc.warning(deprecatedMessage.format(assetRoot.name()))
+                else:
+                    #try with NS:NS except '_default' if found, for 'older' assets
+                    oldRootName = '{0}:{1}'.format(s_inNS, s_inNS.replace('_default', '').replace('Ref', ''))
+                    roots = pc.ls(oldRootName)
+                    if len(roots) > 0:
+                        assetRoot = roots[0]
+                        pc.warning(deprecatedMessage.format(assetRoot.name()))
 
     return assetRoot
 
@@ -207,10 +219,13 @@ def create_previz_scene(o_inSceneManager):
     #lock previz, save v001 in private, here ?
     privFile = o_inSceneManager.edit(onBase=True)
 
-    #save the created file on the private
-    pc.saveAs(privFile.absPath())
+    if privFile != None:
+        #save the created file on the private
+        pc.saveAs(privFile.absPath())
 
-    print 'previz creation done ! ({0})'.format(o_inSceneManager)
+        print 'previz creation done ! ({0})'.format(o_inSceneManager)
+    else:
+        print 'previz creation failed to Edit and save !'
 
 #Inits
 def init_shot_constants(o_inSceneManager):
@@ -290,18 +305,19 @@ def init_previz_scene(o_inSceneManager):
             otherRoot = getRoot(otherCam)
             pc.delete(otherRoot)
 
-    if len(pc.ls('{0}:asset'.format(camName))) == 0:
+    camObjs = pc.ls('{0}:*'.format(camName), type='camera')
+    if len(camObjs) == 0:
         if os.path.isfile(camDefaultPath):
             importAsset(camDefaultPath, camName, False)
-
             camObjs = pc.ls('{0}:*'.format(camName), type='camera')
-            if len(camObjs) > 0:
-                perspPanel = mc.getPanel( withLabel= 'Persp View' )
-                pc.modelPanel( perspPanel, edit= True, camera=camObjs[0])
-            else:
-                pc.warning("Cannot find the imported camera !!")
         else:
             pc.warning('Default camera file cannot be found ({0})'.format(camDefaultPath))
+
+    if len(camObjs) > 0:
+        perspPanel = mc.getPanel( withLabel= 'Persp View' )
+        pc.modelPanel( perspPanel, edit= True, camera=camObjs[0])
+    else:
+        pc.warning("Cannot find the shot camera {0} !!".format(camName))
 
     #image plane "Y:\shot\...\00_data\sqXXXX_shXXXXa_animatic.mov"
     imgPlanePath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_capture')
