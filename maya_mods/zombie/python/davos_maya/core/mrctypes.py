@@ -20,12 +20,12 @@ class MrcFile(DrcFile):
     def __init__(self, drcLib, absPathOrInfo=None, **kwargs):
         super(MrcFile, self).__init__(drcLib, absPathOrInfo, **kwargs)
 
-    def edit(self, openFile=False):
+    def edit(self, openFile=False, existing=""):
 
         self.assertMayaVersion()
         self.assertIsMayaScene()
 
-        privFile = DrcFile.edit(self, openFile=False)
+        privFile = DrcFile.edit(self, openFile=False, existing=existing)
 
         if openFile and privFile:
             privFile.mayaOpen(checkFile=False)
