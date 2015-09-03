@@ -26,7 +26,9 @@ def checkGroupNamingConvention(printInfo = True, inParent = "*"):
     groupNamingConventionException = []
     allGroup = []
     
-    allTransform = mc.ls(inParent,exactType = "transform", long = True)
+
+    allTransform = mc.listRelatives(inParent, allDescendents = True, fullPath = True, type = "transform")
+    allTransform = mc.ls(allTransform,exactType = "transform", long = True)
     if allTransform is None: allTransform = []
     for eachTransform in allTransform:
         if mc.listRelatives(eachTransform, children = True, shapes = True) is None:

@@ -13,7 +13,7 @@ def getAllTransfomMeshes(inParent = "*"):
     """ 
     oParent = mc.ls(inParent, l =True)
     if not oParent:
-        raise ValueError("#### error 'getMeshesWithSameName': No '"+str(inParent)+"' found")
+        raise ValueError("#### error 'getAllTransfomMeshes': No '"+str(inParent)+"' found")
     elif inParent != "*":
         oParent = oParent[0]
     else:
@@ -31,3 +31,6 @@ def pathJoin(*args):
 
 def normPath(p):
     return os.path.normpath(p).replace("\\",'/')
+
+
+
