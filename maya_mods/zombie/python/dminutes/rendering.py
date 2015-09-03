@@ -105,7 +105,7 @@ def setArnoldRenderOption(outputFormat):
 
     myAOVs = AOVInterface()
     #create aovs, type = rgb
-    aovNameList = ["dmn_incandescence","dmn_ambient", "dmn_diffuse","dmn_mask00","dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04" , "dmn_lambert", "dmn_toon", "dmn_rim_toon" ]
+    aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00","dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04" , "dmn_lambert", "dmn_toon", "dmn_rim_toon" ]
     for eachAovName in aovNameList: 
         if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
             myAOVs.addAOV( eachAovName, aovType=5)
