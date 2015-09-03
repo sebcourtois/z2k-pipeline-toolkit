@@ -1,77 +1,41 @@
 
 #import os.path as osp
 
-#from . import zombillenium as zombase
-from .zombillenium import *
+from . import zombillenium as zomb
+reload(zomb)
 
-project.damas_root_path = "zombtest/"
+class project(zomb.project):
+    damas_root_path = "zombtest/"
 
-#class project(zombase.project):
-#
-#    dir_name = "zombtest"
-#
-#    public_path = '//Diskstation/Projects/{}/'.format(dir_name)
-#    private_path = '//Diskstation/Projects/private/$DAVOS_USER/{}/'.format(dir_name)
-#    damas_root_path = "{}/".format(dir_name)
-#
-#
-#class asset_lib(zombase.asset_lib):
-#
-#    dir_name = "asset"
-#
-#    public_path = project.public_path + dir_name
-#    private_path = project.private_path + dir_name
-#
-#class camera(zombase.camera):
-#
-#    public_path = osp.join(asset_lib.public_path, "{assetType}")
-#    private_path = osp.join(asset_lib.private_path, "{assetType}")
-#
-#class character3d(zombase.character3d):
-#
-#    public_path = osp.join(asset_lib.public_path, "{assetType}")
-#    private_path = osp.join(asset_lib.private_path, "{assetType}")
-#
-#class prop3d(zombase.prop3d):
-#
-#    public_path = osp.join(asset_lib.public_path, "{assetType}")
-#    private_path = osp.join(asset_lib.private_path, "{assetType}")
-#
-#class vehicle3d(zombase.vehicle3d):
-#
-#    public_path = osp.join(asset_lib.public_path, "{assetType}")
-#    private_path = osp.join(asset_lib.private_path, "{assetType}")
-#
-#class set3d(zombase.set3d):
-#
-#    public_path = osp.join(asset_lib.public_path, "{assetType}")
-#    private_path = osp.join(asset_lib.private_path, "{assetType}")
-#
-#class environment3d(zombase.environment3d):
-#
-#    public_path = osp.join(asset_lib.public_path, "{assetType}")
-#    private_path = osp.join(asset_lib.private_path, "{assetType}")
-#
-#class fx_previz(zombase.fx_previz):
-#
-#    public_path = osp.join(asset_lib.public_path, "{assetType}")
-#    private_path = osp.join(asset_lib.private_path, "{assetType}")
-#
-#
-#class shot_lib(zombase.shot_lib):
-#
-#    dir_name = "shot"
-#
-#    public_path = project.public_path + dir_name
-#    private_path = project.private_path + dir_name
-#
-#
-#class output_lib(zombase.output_lib):
-#
-#    dir_name = "output"
-#
-#    public_path = project.public_path + dir_name
-#    private_path = project.private_path + dir_name
+class asset_lib(zomb.asset_lib):
+    pass
+
+class camera(zomb.camera):
+    pass
+
+class character3d(zomb.character3d):
+    pass
+
+class prop3d(zomb.prop3d):
+    pass
+
+class vehicle3d(zomb.vehicle3d):
+    pass
+
+class set3d(zomb.set3d):
+    pass
+
+class environment3d(zomb.environment3d):
+    pass
+
+class fx_previz(zomb.fx_previz):
+    pass
+
+class shot_lib(zomb.shot_lib):
+    pass
+
+class output_lib(zomb.output_lib):
+    pass
 
 
 

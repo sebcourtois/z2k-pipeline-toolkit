@@ -136,6 +136,21 @@ def iterPaths(sRootDirPath, **kwargs):
 
                 yield pathJoin(sDirPath, sFileName)
 
+def cleanUpPyc(sRootPath):
+
+    pathIter = iterPaths(sRootPath, dirs=False, files=True,
+                         filterFiles=ignore_patterns("*.pyc"),
+                         ignoreDirs=ignore_patterns(".*"))
+    n = 0
+    for p in pathIter:
+        if p.endswith(".pyc"):
+            os.remove(p)
+            n += 1
+
+    print "Deleted {} '.pyc' files".format(n)
+
+
+
 class Z2kToolkit(object):
 
     envsToPrivate = (
@@ -212,16 +227,8 @@ class Z2kToolkit(object):
 
             print "\n", sOutput
 
-            pathIter = iterPaths(local_root, dirs=False, files=True,
-                                 filterFiles=ignore_patterns("*.pyc"),
-                                 ignoreDirs=ignore_patterns(".*"))
-            n = 0
-            for p in pathIter:
-                if p.endswith(".pyc"):
-                    os.remove(p)
-                    n += 1
+            cleanUpPyc(local_root)
 
-            print "Deleted {} '.pyc' files".format(n)
             print ("Zombie toolkit updated, use your local to launch applications ! ({0})"
                    .format(osp.join(local_root, "launchers")))
 
@@ -241,6 +248,8 @@ class Z2kToolkit(object):
             sDate = datetime.now().strftime("%Y%m%d-%H%M")
             sZipPath = osp.join(sDistroPath + "_backups", self.dirName + "_" + sDate)
 
+            cleanUpPyc(sDistroPath)
+
             logger = initLogger()
             make_archive(sZipPath , "zip",
                          root_dir=osp.dirname(sDistroPath),
@@ -259,7 +268,7 @@ class Z2kToolkit(object):
         sDryRun = "/L" if dryRun else ""
         sNoSummary = "/NJS" if not summary else ""
 
-        cmdLineFmt = "robocopy {} /S {} /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {} *.pyc .git* .*project"
+        cmdLineFmt = "robocopy {} /S {} /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {} *.pyc .git* .*project Thumbs.db"
         cmdLine = cmdLineFmt.format(sDryRun,
                                     sNoSummary,
                                     sSrcRepoPath,
@@ -287,7 +296,7 @@ class Z2kToolkit(object):
 
         parser = argparse.ArgumentParser()
         parser.add_argument("command", choices=("install", "launch", "release"))
-        parser.add_argument("--update", "-u", type=int, default=1)
+        parser.add_argument("--update", "-upd", type=int, default=1)
 
         ns, args = parser.parse_known_args()
 

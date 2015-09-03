@@ -6,6 +6,7 @@ import pymel.versions as pmv
 
 from davos.core.drctypes import DrcDir, DrcFile
 from pytaya.core import system as myasys
+#from pytd.util.fsutils import pathSuffixed
 
 
 class MrcDir(DrcDir):
@@ -19,12 +20,12 @@ class MrcFile(DrcFile):
     def __init__(self, drcLib, absPathOrInfo=None, **kwargs):
         super(MrcFile, self).__init__(drcLib, absPathOrInfo, **kwargs)
 
-    def edit(self, openFile=False):
+    def edit(self, openFile=False, existing=""):
 
         self.assertMayaVersion()
         self.assertIsMayaScene()
 
-        privFile = DrcFile.edit(self, openFile=False)
+        privFile = DrcFile.edit(self, openFile=False, existing=existing)
 
         if openFile and privFile:
             privFile.mayaOpen(checkFile=False)
@@ -59,12 +60,13 @@ class MrcFile(DrcFile):
             self.assertIsMayaScene()
 
         if self.isPublic():
-            return myasys.importFile(self.absPath(), newFile=True)
+            sOpenSuffix = "".join((self.versionSuffix(), '-', 'temp'))
+            privFile, _ = self.copyToPrivateSpace(suffix=sOpenSuffix)
         else:
-            result = myasys.saveFile(discard=True)
-            if result == '_cancelled_':
-                return None
+            privFile = self
 
-            return myasys.openFile(self.absPath(), force=True)
+        result = myasys.saveScene(discard=True)
+        if result == '_cancelled_':
+            return
 
-
+        return myasys.openScene(privFile.absPath(), force=True)

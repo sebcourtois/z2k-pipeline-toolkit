@@ -19,8 +19,6 @@ noneValue = 'None !'
 notFoundvalue = 'Not found !'
 
 #FROM DAVOS !!!!
-#ASSET_TYPES = ('Character 3D', 'Character 2D', 'Vehicle 3D', 'Prop 3D', 'Set 3D', 'Set 2D', 'Environment', 'Reference')
-#ASSET_SUBTYPES = ('1-primaire', '2-secondaire', '3-tertiaire', '4-figurant')
 TASK_FILE_REL = {'previz 3D':'previz_scene'}
 LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
 FILE_SUFFIXES = {'Previz 3D':'_previz.ma'}
@@ -32,44 +30,36 @@ class SceneManager():
     def __init__(self, d_inContext=None):
         self.context={}
         self.projectname="zombillenium"
-        self.context['damProject'] = damproject.DamProject(self.projectname, libraryType=MrcLibrary)    
+        self.context['damProject'] = damproject.DamProject(self.projectname, libraryType=MrcLibrary)
 
         if self.context['damProject'] == None:
             pc.error("Cannot initialize project '{0}'".format(self.projectname))
 
+    #FROM DAVOS !!!!
+    def collapseVariables(self, s_inPath, encapsulation="${0}"):
+        variables = {}
+        for key, lib in self.context['damProject'].loadedLibraries.iteritems():
+            variable = lib.getVar('public_path').lstrip("$")
+            if not variable in variables:
+                variables[variable] = os.environ[variable]
+
+        for key, path in variables.iteritems():
+            alternatePath = path.replace("\\", "/")
+            if path in s_inPath:
+                return s_inPath.replace(path, encapsulation.format(key))
+            elif alternatePath in s_inPath:
+                return s_inPath.replace(alternatePath, encapsulation.format(key))
+
+                
+        return s_inPath
+
     def getTasks(self, b_inMyTasks=False):
-        filters =   [
-                        ['entity', 'is', self.context['entity']],
-                        ['step', 'is', self.context['step']]
-                    ]
+        userOrNone = self.context['damProject']._shotgundb.currentUser if b_inMyTasks else None
 
-        if b_inMyTasks:
-            filters.append(['sg_operators', 'contains', self.context['damProject']._shotgundb.currentUser])
-
-        """
-        {
-            "filter_operator": "any",
-            "filters": [
-                [ "sg_status_list", "is", "rdy"],
-                [ "sg_status_list", "is", "ip" ]
-            ]
-        }
-        """
-
-        fields = ['content', 'step', 'entity', 'project', 'sg_status_list', 'sg_operators']
-        tasks = self.context['damProject']._shotgundb.sg.find("Task", filters, fields)
-
-        return tasks
+        return self.context['damProject']._shotgundb.getTasks(self.context['entity'], self.context['step'], userOrNone)
 
     def getVersions(self):
-        filters =   [
-                        ['sg_task', 'is', self.context['task']]
-                    ]
-
-        fields = ['code', 'entity', 'sg_task']
-        versions = self.context['damProject']._shotgundb.sg.find("Version", filters, fields, [{'field_name':'code','direction':'asc'}])
-
-        return versions
+        return self.context['damProject']._shotgundb.getVersions(self.context['task'])
 
     def createFolder(self):
         nameKey = 'name'
@@ -261,7 +251,7 @@ class SceneManager():
                 #print 'Asset found {0} !'.format(assetOccurence['asset']['name'])
                 exists = True
             else:
-                pc.warning('Asset NOT found {0} !'.format(assetOccurence['asset']['name']))
+                pc.warning('Asset NOT found {0} ({1})!'.format(assetOccurence['asset']['name'], path))
 
             dbInfo = assetOccurence['asset']['name']
             if not exists:
@@ -294,12 +284,12 @@ class SceneManager():
             #print 'assetInfo["path"]' + str(assetInfo['path'])
             if assetInfo['dbinfo'] == noneValue:
                 #Asset that does not exist in shot, remove
-                mop.removeAsset(assetInfo['path'])
+                mop.removeAsset(self.collapseVariables(assetInfo['path']))
             elif assetInfo['dbinfo'] != assetInfo['localinfo']:
                 if notFoundvalue in assetInfo['dbinfo']:
                     pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
                 else:
-                    mop.importAsset(assetInfo['path'])
+                    mop.importAsset(self.collapseVariables(assetInfo['path']))
         
         mop.reArrangeAssets()
 
