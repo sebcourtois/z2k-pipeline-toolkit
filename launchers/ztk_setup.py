@@ -268,7 +268,7 @@ class Z2kToolkit(object):
         sDryRun = "/L" if dryRun else ""
         sNoSummary = "/NJS" if not summary else ""
 
-        cmdLineFmt = "robocopy {} /S {} /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {} *.pyc .git* .*project Thumbs.db"
+        cmdLineFmt = "robocopy {} /S {} /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {} *.pyc .git* .*project *.lic Thumbs.db"
         cmdLine = cmdLineFmt.format(sDryRun,
                                     sNoSummary,
                                     sSrcRepoPath,
