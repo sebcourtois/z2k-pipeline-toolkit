@@ -232,19 +232,19 @@ class Z2kToolkit(object):
             print ("Zombie toolkit updated, use your local to launch applications ! ({0})"
                    .format(osp.join(local_root, "launchers")))
 
-    def release(self):
+    def release(self, location="", archive=True):
 
         if not self.isDev:
             raise EnvironmentError("Sorry, you are not in DEV mode !")
 
-        sDistroPath = self.releasePath()
+        sDistroPath = self.releasePath(location)
         sOutput = self.makeCopy(self.rootPath, sDistroPath,
                                 dryRun=True, summary=False)
         if not sOutput.strip():
             print "\nNo changes !"
             return
 
-        if osp.exists(sDistroPath):
+        if archive and osp.exists(sDistroPath):
             sDate = datetime.now().strftime("%Y%m%d-%H%M")
             sZipPath = osp.join(sDistroPath + "_backups", self.dirName + "_" + sDate)
 
@@ -256,11 +256,18 @@ class Z2kToolkit(object):
                          base_dir=osp.join('.', osp.basename(sDistroPath)),
                          logger=logger, dry_run=False)
 
+        sOscarPath = osp.join(sDistroPath, "maya_mods", "Toonkit_module",
+                              "Maya2016", "Standalones", "OSCAR")
+
+        if not os.path.exists(sOscarPath):
+            os.makedirs(sOscarPath)
+
         print self.makeCopy(self.rootPath, sDistroPath, dryRun=False)
 
     def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
 
         print "Updating Zombie toolkit: \n'{0}' -> '{1}'".format(sSrcRepoPath, sDestPath)
+
 
         sOscarPath = osp.join(sSrcRepoPath, "maya_mods", "Toonkit_module",
                               "Maya2016", "Standalones", "OSCAR")
@@ -278,8 +285,14 @@ class Z2kToolkit(object):
         #print cmdLine
         return runCmd(cmdLine)
 
-    def releasePath(self):
-        return osp.join(os.environ["ZOMB_TOOL_PATH"], self.dirName)
+    def releasePath(self, location=""):
+
+        if location:
+            sReleaseLoc = location
+        else:
+            sReleaseLoc = os.environ["ZOMB_TOOL_PATH"]
+
+        return osp.join(sReleaseLoc, self.dirName)
 
     def launchCmd(self, args, update=True):
 
@@ -297,6 +310,8 @@ class Z2kToolkit(object):
         parser = argparse.ArgumentParser()
         parser.add_argument("command", choices=("install", "launch", "release"))
         parser.add_argument("--update", "-upd", type=int, default=1)
+        parser.add_argument("--archive", "-arc", type=int, default=1)
+        parser.add_argument("--location", "-loc", type=str, default="")
 
         ns, args = parser.parse_known_args()
 
@@ -308,7 +323,7 @@ class Z2kToolkit(object):
         if sCmd == "install":
             self.install()
         elif sCmd == "release":
-            self.release()
+            self.release(location=ns.location, archive=ns.archive)
 
 #if __name__ == "__main__":
 #    try:

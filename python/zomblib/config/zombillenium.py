@@ -88,8 +88,19 @@ class character3d:
         "{name}_modeling.ma -> modeling_scene":None,
         "{name}_previz.ma -> previz_scene":None,
         "{name}_render.ma -> render_scene":None,
+
+        "{name}_preview.jpg -> preview_image":None,
+
         },
     }
+
+#    resources_settings = {
+#    "modeling_scene":{"outcomes":("preview_image",),
+#                    "create_sg_version":True,
+#                    "sg_step":"Model Previz",
+#                    "upload_to_sg":"preview_image"
+#                    },
+#    }
 
 class prop3d:
 
