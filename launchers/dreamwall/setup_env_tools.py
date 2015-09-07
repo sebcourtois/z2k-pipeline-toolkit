@@ -11,7 +11,7 @@ ENVS = {
         "ZOMB_ASSET_PATH":"\\\\Diskstation\\Projects\\zomb\\asset",
         "ZOMB_SHOT_PATH":"\\\\Diskstation\\Projects\\zomb\\shot",
         "ZOMB_OUTPUT_PATH":"\\\\Diskstation\\Projects\\zomb\\output",
-        "ZOMB_TOOL_PATH":"\\\\Diskstation\\Projects\\zomb\\tool",
+        "ZOMB_TOOL_PATH":"Z:\\3D\\Z2K\\MOD\\04_Tools_Soft\\tool"
         "ZOMB_TEXTURE_PATH":"$ZOMB_ASSET_PATH",
 
         "PRIV_ZOMB_PATH":'\\\\Diskstation\\Projects\\private\\$DAVOS_USER\\zomb',
