@@ -89,7 +89,7 @@ def createSubdivSets():
 
     for eachGeo in existingGeo:
         if eachGeo not in geoInSet:
-            mc.sets(eachGeo, add="set_subdiv_init")
+            mc.sets(eachGeo, forceElement="set_subdiv_init")
             print "#### info: add geo to 'set_subdiv_init': "+eachGeo
 
      
