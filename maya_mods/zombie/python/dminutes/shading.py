@@ -298,5 +298,114 @@ def createLowResJpg(nodeList, lod = "4", jpgQuality = "70"):
         else:
             print "#### error: lowRes jpg creation is not possible, the following texture file do not exist: "+textureFileName_exp
             continue
+
+
+def previewShadingTree ( shadEngineList = [], verbose = True, preShadNodeType = "surfaceShader", matShadNodeType= "dmnToon", matTextureInput = ".diffuseColor", preTextureInput = ".outColor"):
+    """
+    from a ginven shading engine
+    """
+    if verbose == True: print ""
+    if verbose == True: print "#### {:>7}: runing shading.conformTexturePath( shadEngineList = [...], verbose = {}, preShadNodeType = {}, matShadNodeType = {}, matTextureInput = {}, preTextureInput ={})".format("Info", preShadNodeType, verbose, matShadNodeType, matTextureInput, preTextureInputz)
+
+
+    if shadEngineList == "all":
+        shadEngineList = mc.ls(":*",type = "shadingEngine")
+        shadEngineList.remove("initialParticleSE")
+        shadEngineList.remove("initialShadingGroup")
+        if not shadEngineList :
+            print "#### {:>7}: no shading engine to conform".format("info")
+            return
+
+    elif shadEngineList == "selection":
+        shadEngineList = mc.ls(selection = True,type = "shadingEngine")
+        if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
+        if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
+        if not shadEngineList : 
+            print "#### {:>7}: no shading engine selected".format("info")
+            return
+
+    if not isinstance(shadEngineList, (list,tuple,set)):
+        print "#### {:>7}: shadEngineList must be a list. shadEngineList: {}".format("Error", shadEngineList)
+        return
+    if shadEngineList == []: 
+        print "#### {:>7}: No shading engine to process, shadEngineList is empty".format("Error")
+        return
+
+    try:
+        mc.nodeType(preShadNodeType, isTypeName=True)
+    except:
+        print "#### {:>7}: the preview shading node type is unkowned: preShadNodeType= {}".format("Error", preShadNodeType)
+        return
+
+    try:
+        mc.nodeType(matShadNodeType, isTypeName=True)
+    except:
+        print "#### {:>7}: the render shading node type is unkowned: matShadNodeType= {}".format("Error", matShadNodeType)
+        return
+
+
+    correctShadEngine =[]
+    wrongShadEngine = []
+
+    for shadingEngine in shadEngineList:
+        if not re.match('^sgr_[a-zA-Z0-9]{1,24}$', shadingEngine):
+            wrongShadEngine.append((shadingEngine,"does not match naming convention 'sgr_materialName' where is composed of 24 alphanumeric characters maximum"))
+            continue
+
+        preShadNode =  mc.listConnections(shadingEngine+'.surfaceShader',connections = True)
+        matShadNode =  mc.listConnections(shadingEngine+'.aiSurfaceShader',connections = True)
+        materialName = shadingEngine.split("sgr_")[-1]
+
+        if not preShadNode:
+            preShadNode = mc.createNode( preShadNodeType , name='pre_'+materialName+'_'+preShadNodeType, skipSelect=True)
+        elif mc.nodeType(preShadNode[-1]) != preShadNodeType:
+            mc.delete(preShadNode[-1])
+            preShadNode = mc.createNode( preShadNodeType , name='pre_'+materialName+'_'+preShadNodeType, skipSelect=True)
+        else:
+            preShadNode = preShadNode[-1]
+
+        if not matShadNode or mc.nodeType(matShadNode[-1]) != matShadNodeType:
+            wrongShadEngine.append((shadingEngine,"the material shading node is missing or has a wrong type: "))
+            continue
+        else:
+            matShadNode = matShadNode[-1]
+
+
+        #get the input texture connection of the preview shading node 
+        preShadTextInputConnection = mc.listConnections (preShadNode+preTextureInput, source=True, destination=False)
+            if preShadTextInputConnection:
+                preShadTextInputConnection = preShadTextInputConnection[-1]
+                if mc.nodetype(preShadTextInputConnection) == "file"
+                    #test if the file node is also connected to the render node
+                    if mc.listConnections (preShadTextInputConnection+".outColor", source=False, destination=True, exactType= True, type=matShadNodeType):
+                        result = mc.duplicate(preShadTextInputConnection, upstreamNodes = True)[0]
+                        mc.connectAttr(result+".outColor", preShadNode+preTextureInput, force =True)
+                    else:
+                        continue
+                else:
+                    preShadTextInputValue = mc.getAttr(preShadNode+preTextureInput)
+                    
             
-            
+        for item in mc.listHistory (matShadNode):
+            if "dagNode" in mc.nodeType(item, inherited=True):
+                continue
+            if connectedToSeveralSG (item):
+                return
+            matShadNode_type = mc.nodeType(item)
+            if not re.match('mat_'+materialName+'_'+matShadNode_type+'[0-9]{0,3}$',matShadNode):
+                matShadNode = mc.rename(item,'mat_'+materialName+'_'+render_shader_type)
+        print "#### {:>7}: {:^28} tree has been conformed properly".format("info", each)
+
+    if  wrongShadEngine != []:
+        if selectWrongShadEngine == True: mc.select(clear = True)
+        for each in wrongShadEngine:
+            print "#### {:>7}: {:^28} {}".format("warning", each[0], each[1])
+            if selectWrongShadEngine == True: mc.select(each[0], ne = True, add = True)
+        print "####    info: problematics shading engines have been selected"
+    return wrongShadEngine if wrongShadEngine != [] else  None
+
+
+
+
+
+
