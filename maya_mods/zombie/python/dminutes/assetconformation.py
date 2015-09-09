@@ -1,6 +1,7 @@
 import maya.cmds as mc
 import re
 import string
+from dminutes import miscUtils
 
 
 def onCheckInAsset():
@@ -56,7 +57,7 @@ def checkGroupNamingConvention(printInfo = True, inParent = "*"):
 
 
 
-def createSubdivSets():
+def createSubdivSets(inParent = "*"):
     """
     This function creates a "set_subdiv_init" that gather all the "geo_*" objects found in the scene.
     and bunch of empty sets named "set_subdiv_X" (where X is a digit) are also created.
@@ -66,25 +67,39 @@ def createSubdivSets():
     """
     print ""
     print "#### info: exectute 'createSubdivsets()'"
-    subdivSets = mc.ls("set_*", type = "objectSet")
-    subdivPartitions = mc.ls("par_*", type = "partition")
-    existingGeo = mc.ls("geo_*", exactType = "transform")
+
+    existingGeo = miscUtils.getAllTransfomMeshes(inParent)
     subdivSetsInitList = ["set_subdiv_init","set_subdiv_0","set_subdiv_1","set_subdiv_2","set_subdiv_3"]
+
     if not existingGeo:
-        print "#### error: no 'geo_*' object could be foud in the scene"
+        print "#### error: no mesh transform object could be foud under "+inParent
         return
 
-
+    subdivPartitions = mc.ls("par_subdiv*", type = "partition")
     if "par_subdiv" not in subdivPartitions:
         mc.partition( name="par_subdiv")
 
+    if len(subdivPartitions)>1:
+        for each in subdivPartitions:
+            if each != "par_subdiv":
+               mc.delete(each)
+
+    subdivSets = mc.ls("set_subdiv_*", type = "objectSet")
+
+    #check that all the existing set are connected to the 'par_subdiv' partition
+    for eachSet in subdivSets:
+        if "par_subdiv" not in mc.listHistory(eachSet, future = True):
+            mc.partition( eachSet, add="par_subdiv")
+
+    #check that no init set is missing
     for eachSet in subdivSetsInitList:
         if eachSet not in subdivSets:
             print "#### info: creates: "+eachSet
             mc.sets(name=eachSet, empty=True)
             mc.partition( eachSet, add="par_subdiv")
 
-    geoInSet = mc.sets(subdivSets, query = True)
+    geoInSet = mc.ls(mc.sets(subdivSets, query = True), long=True)
+    #geoInSet = mc.sets(subdivSets, query = True)
     if geoInSet == None: geoInSet = []
 
     for eachGeo in existingGeo:
