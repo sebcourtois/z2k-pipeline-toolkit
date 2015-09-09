@@ -26,7 +26,9 @@ def checkGroupNamingConvention(printInfo = True, inParent = "*"):
     groupNamingConventionException = []
     allGroup = []
     
-    allTransform = mc.ls(inParent,exactType = "transform", long = True)
+
+    allTransform = mc.listRelatives(inParent, allDescendents = True, fullPath = True, type = "transform")
+    allTransform = mc.ls(allTransform,exactType = "transform", long = True)
     if allTransform is None: allTransform = []
     for eachTransform in allTransform:
         if mc.listRelatives(eachTransform, children = True, shapes = True) is None:
@@ -87,7 +89,7 @@ def createSubdivSets():
 
     for eachGeo in existingGeo:
         if eachGeo not in geoInSet:
-            mc.sets(eachGeo, add="set_subdiv_init")
+            mc.sets(eachGeo, forceElement="set_subdiv_init")
             print "#### info: add geo to 'set_subdiv_init': "+eachGeo
 
      

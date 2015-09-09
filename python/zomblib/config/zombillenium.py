@@ -88,8 +88,19 @@ class character3d:
         "{name}_modeling.ma -> modeling_scene":None,
         "{name}_previz.ma -> previz_scene":None,
         "{name}_render.ma -> render_scene":None,
+
+        "{name}_preview.jpg -> preview_image":None,
+
         },
     }
+
+#    resources_settings = {
+#    "modeling_scene":{"outcomes":("preview_image",),
+#                    "create_sg_version":True,
+#                    "sg_step":"Model Previz",
+#                    "upload_to_sg":"preview_image"
+#                    },
+#    }
 
 class prop3d:
 
@@ -219,12 +230,11 @@ class shot_lib:
     resources_settings = {
     "previz_scene":{"outcomes":("previz_capture",),
                     "create_sg_version":True,
-                    "sg_tasks":("Previz 3D", "Tatask"),
-                    "sg_upload":"previz_capture"
+                    "sg_step":"Previz 3D",
+                    "upload_to_sg":"previz_capture"
                     },
     "previz_capture":{"editable":False,
-                      "sg_upload_args":{"field_name":"sg_uploaded_movie"},
-                      }
+                      },
     }
 
 

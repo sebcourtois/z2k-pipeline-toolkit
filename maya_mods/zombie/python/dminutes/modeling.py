@@ -490,11 +490,11 @@ def geoGroupDeleteHistory():
     """
     gets all the mesh transformms under the '|asset|grp_geo', delete their history and delete any intermediate unconnected shape 
     """
-    geoTransformList = miscUtils.getAllTransfomMeshes(parent = "|asset|grp_geo")
+    geoTransformList = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
     mc.delete(geoTransformList,ch =True)
     print "#### info :'geoGroupDeleteHistory': deteted history on "+str(len(geoTransformList))+" geometries : "
     
-    geoShapeList = mc.ls(mc.listRelatives(grpGeo, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
+    geoShapeList = mc.ls(mc.listRelatives("|asset|grp_geo", allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
     deletedShapeList = []
     for eachGeoShape in geoShapeList:
         if mc.getAttr(eachGeoShape+".intermediateObject") == True:
