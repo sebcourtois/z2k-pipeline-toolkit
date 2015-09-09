@@ -68,7 +68,7 @@ def createSubdivSets():
     print "#### info: exectute 'createSubdivsets()'"
     subdivSets = mc.ls("set_*", type = "objectSet")
     subdivPartitions = mc.ls("par_*", type = "partition")
-    existingGeo = mc.ls("geo_*", type = "transform")
+    existingGeo = mc.ls("geo_*", exactType = "transform")
     subdivSetsInitList = ["set_subdiv_init","set_subdiv_0","set_subdiv_1","set_subdiv_2","set_subdiv_3"]
     if not existingGeo:
         print "#### error: no 'geo_*' object could be foud in the scene"
