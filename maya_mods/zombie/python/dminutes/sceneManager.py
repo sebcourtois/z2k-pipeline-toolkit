@@ -162,10 +162,10 @@ class SceneManager():
 
                 if path != None:
                     entry = self.context['damProject'].entryFromPath(path)
-                    if onBase:
-                        privFile = entry.__class__.__base__.edit(entry)
-                    else:
-                        privFile = entry.edit()
+                    privFile = entry.edit(openFile= not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
+
+                    if privFile is None:
+                        pc.warning('There was a problem with the edit !')
             else:
                 pc.warning('Given task "{0}" is unknown (choose from {1}) !'.format(TASK_FILE_REL.keys()))
         else:
