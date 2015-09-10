@@ -295,7 +295,7 @@ class Z2kToolkit(object):
     def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
 
         if not dryRun:
-            print "Updating Z2K toolkit: \n'{0}' -> '{1}'".format(sSrcRepoPath, sDestPath)
+            print "\nCopying Z2K Toolkit: \n'{0}' -> '{1}'".format(sSrcRepoPath, sDestPath)
 
         sOscarPath = osp.join(sSrcRepoPath, "maya_mods", "Toonkit_module",
                               "Maya2016", "Standalones", "OSCAR")
@@ -305,8 +305,8 @@ class Z2kToolkit(object):
 
         sExcludeFiles = ["*.pyc", ".git*", ".*project", "*.lic", "Thumbs.db",
                          "pull_all.bat"]
-        if self.isDev:
-            sExcludeFiles.extend(("setup_*.bat"))
+        if not self.isDev:
+            sExcludeFiles +=["setup_*.bat"]
         sExcludeFiles = " ".join(sExcludeFiles)
 
         cmdLineFmt = "robocopy {} /S {} /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {}"
@@ -316,7 +316,9 @@ class Z2kToolkit(object):
                                     sDestPath,
                                     sOscarPath,
                                     sExcludeFiles)
-        #print cmdLine
+        if (not dryRun) and self.isDev:
+            print cmdLine
+
         return runCmd(cmdLine)
 
     def releasePath(self, location=""):
