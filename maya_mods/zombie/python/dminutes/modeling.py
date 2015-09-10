@@ -5,7 +5,7 @@ import pymel.core.datatypes as dt
 import maya.cmds as mc
 import re
 import string
-import miscUtils
+from dminutes import miscUtils
 
 
 '''

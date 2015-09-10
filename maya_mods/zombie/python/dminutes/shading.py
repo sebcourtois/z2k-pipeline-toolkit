@@ -230,35 +230,56 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
 
 
 
-def createLowResJpg(nodeList, lod = "4", jpgQuality = "70"):
+def createPreviewJpg(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQuality = 70, update = False):
     """
     This function creates a low resolution jpg file given texture file.
     it also switch off the mipmap fitering, and set the given file node so it point toward this new low res jgp
      - nodeList : (list) a list of texture file node
-     - lod : (string) 0..19 of pyramid map, largest is 0
-     - jpgQuality : (string) 1...100 highest is 100
+     - lod : (int) 0..19 of pyramid map, largest is 0
+     - jpgQuality : (int) 1...100 highest is 100
     """
-    mentalRayBin = os.path.normpath(os.environ['MAYA_LOCATION'].replace("Maya","mentalrayForMaya")).replace("\\", "/")
-    imfCopyCommand = mentalRayBin+"/bin/imf_copy"
+
+
+
+    #open image/mentalray method
+    #mentalRayBin = os.path.normpath(os.environ['MAYA_LOCATION'].replace("Maya","mentalrayForMaya")).replace("\\", "/")
+    imfCopyCommand = miscUtils.normPath(os.environ["ZOMB_TOOL_PATH"])+"/binaries/imf_copy"
     tempDir = os.getenv ("TMPDIR")
     tempDir = tempDir.rstrip("/")
-    
     tempImageFormat = "tif"
-    
     if not os.path.isdir(tempDir):
         print "#### error: "+tempDir+" is not a valid directory"
         return
 
 
-    fileNodeList = []
-    for each in nodeList:
-        if mc.nodeType(each) == "file":
-            fileNodeList.append(each)
-    if not fileNodeList:
-        print "#### error: No node to process. Please specify at least one Node"
-    if not os.path.isdir(mentalRayBin):
-        print "#### error: could not find the following directory: "+mentalRayBin
+
+    if not isinstance(inputFilePathName,basestring):
+        print "#### {:>7}: 'inputFilePathName' is not a string".format("Error")
         return
+
+    if not isinstance(outputFilePathName,basestring):
+        print "#### {:>7}: 'outputFilePathName' is not a string".format("Error")
+        return
+
+
+    inputFilePathName_exp = os.path.expandvars(os.path.expandvars(inputFilePathName))
+    outputFilePathName_exp = os.path.expandvars(os.path.expandvars(outputFilePathName))
+    
+    if inputFilePathName == "" :
+        print "#### {:>7}: no 'inputFilePathName' given".format("Error")
+        return
+    elif not os.path.isfile(inputFilePathName_exp)¶:
+        print "#### {:>7}: Missing file : {} given".format("Error", inputFilePathName_exp)
+        return
+
+    if outputFilePathName == "" :
+        outputFilePathName = inputFilePathName.replace("."+path.split(".")[-1],".jpg")
+        outputFilePathName_exp = inputFilePathName_exp.replace("."+path.split(".")[-1],".jpg")
+    elif not os.path.isdir(os.path.split(outputFilePathName)[0])¶:
+        print "#### {:>7}: Missing directory : {} given".format("Error", os.path.split(outputFilePathName)
+        return
+        
+
 
     
     for eachFileNode in fileNodeList:
@@ -281,9 +302,9 @@ def createLowResJpg(nodeList, lod = "4", jpgQuality = "70"):
             image.getSize(widthPtr, heightPtr)
             width = util.getUint(widthPtr)
             height = util.getUint(heightPtr)
-            image.resize( width/2**int(lod), height/2**int(lod) )
+            image.resize( width/2**lod, height/2**lod )
             image.writeToFile( tempFile, tempImageFormat)
-            subprocess.call([imfCopyCommand, "-vq",jpgQuality, tempFile,lowResFileName_exp])
+            subprocess.call([imfCopyCommand, "-vq",str(jpgQuality), tempFile,lowResFileName_exp])
             os.remove(tempFile)
             
 
@@ -294,10 +315,10 @@ def createLowResJpg(nodeList, lod = "4", jpgQuality = "70"):
             
             statinfo_lowRes = os.stat(lowResFileName_exp)
             fastJpgImageSize = string.ljust(str(statinfo_lowRes.st_size/1024)+" Kb",10," ")
-            textureWidthLowRes = string.ljust(str(width/2**int(lod)),5," ")
-            textureHeightLowRes = string.ljust(str(height/2**int(lod)),5," ")
+            textureWidthLowRes = string.ljust(str(width/2**lod),5," ")
+            textureHeightLowRes = string.ljust(str(height/2**lod),5," ")
 
-            print "#### info: resize (LOD "+lod+") and convert to jpg (quality = "+jpgQuality+ ") and adjust '"+eachFileNode+"' file node attributes"
+            print "#### info: resize (LOD "+str(lod)+") and convert to jpg (quality = "+str(jpgQuality)+ ") and adjust '"+eachFileNode+"' file node attributes"
             print "#### info: "+textureFileName+"             -->  width: "+textureWidth+"  height: "+textureHeight+"  size: "+imageSize
             print "#### info: "+lowResFileName+"  -->  width: "+textureWidthLowRes+"  height: "+textureHeightLowRes+"  size: "+fastJpgImageSize
             mc.setAttr(eachFileNode+".filterType", 0)
