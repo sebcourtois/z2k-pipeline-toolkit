@@ -221,8 +221,10 @@ class Z2kToolkit(object):
 
             if sAppPath.endswith("maya2016/bin/maya.exe"):
 
-                updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"), conflict="add")
-                updEnv("Z2K_PYTHON_SITES", osp.join(self.pythonPath, "mayapy-2016"), conflict="add")
+                updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"),
+                       conflict="add")
+                updEnv("Z2K_PYTHON_SITES", osp.join(self.pythonPath, "mayapy-2016-site"),
+                       conflict="add")
 
             print ''
 
