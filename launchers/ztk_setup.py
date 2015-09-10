@@ -194,6 +194,7 @@ class Z2kToolkit(object):
         print "\nLoading common environments:"
 
         updEnv("PYTHONPATH", self.pythonPath, conflict="add")
+
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
         updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
 
@@ -221,7 +222,7 @@ class Z2kToolkit(object):
             if sAppPath.endswith("maya2016/bin/maya.exe"):
 
                 updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"), conflict="add")
-                updEnv("PYTHONPATH", osp.join(self.pythonPath, "mayapy-2016"), conflict="add")
+                updEnv("Z2K_PYTHON_SITES", osp.join(self.pythonPath, "mayapy-2016"), conflict="add")
 
             print ''
 
