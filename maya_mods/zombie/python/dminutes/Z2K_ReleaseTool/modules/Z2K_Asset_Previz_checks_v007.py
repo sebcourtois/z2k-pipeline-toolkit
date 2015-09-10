@@ -329,16 +329,19 @@ class AssetPrevizMod(object):
 
     def waiter (func,*args, **kwargs):
         def deco(self,*args, **kwargs):
+            result = True
             cmds.waitCursor( state=True )
             print "wait..."
             try:
                 print func
-                func(self,*args, **kwargs)
+                result = func(self,*args, **kwargs)
             except:
                 cmds.waitCursor( state=False )
             cmds.waitCursor( state=False )
             print "...wait"
-            
+            if not result:
+                cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
+
         return deco
 
 
@@ -978,6 +981,8 @@ class AssetPrevizMod(object):
         # --------------------------
 
         return [toReturnB,debugD]
+    
+
     # ---------------------------------------------------------------------------------------------------------
     #--------------------- Buttons functions ----------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
@@ -1003,6 +1008,7 @@ class AssetPrevizMod(object):
         print "*",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
         
+        return boolResult
 
     @waiter
     def btn_CleanScene(self,controlN,*args, **kwargs):
@@ -1035,6 +1041,7 @@ class AssetPrevizMod(object):
         print "*",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
         
+        return boolResult
         
     @waiter
     def btn_CleanObjects(self,controlN,*args, **kwargs):
@@ -1080,6 +1087,7 @@ class AssetPrevizMod(object):
         print "*",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
 
+        return boolResult
 
 
     def btn_clearAll(self,*args, **kwargs):
@@ -1137,7 +1145,7 @@ class AssetPrevizMod(object):
             parent = self.createWin()
 
         cmds.setParent(parent)
-        self.bigDadL = cmds.frameLayout(label=self.name, li=75, fn="boldLabelFont", lv=1)
+        self.bigDadL = cmds.frameLayout(label=self.name.center(80), fn="boldLabelFont", lv=1)
         self.layoutImportModule = cmds.columnLayout("layoutImportModule",adj=True)
         cmds.button("Clean_all",c= self.cleanAll,en=0)
 
@@ -1152,10 +1160,10 @@ class AssetPrevizMod(object):
         
         self.BValidationPBar = cmds.progressBar(maxValue=3,s=1 )
 
+        self.BDebugBoardF= cmds.frameLayout("DebugBoard",cll=True,cl=True)
+        self.BDebugBoard = cmds.scrollField(w=250,h=300,)
         
-        self.BDebugBoard = cmds.scrollField(w=250,h=300)
-        
-        
+        cmds.setParent("..")
         self.BClearAll = cmds.button("clear",c= self.btn_clearAll,)
         
 
@@ -1170,5 +1178,5 @@ class AssetPrevizMod(object):
 
 # --------------------- direct EXE -------------------
 
-Z2K_Pcheck = AssetPrevizMod()
-Z2K_Pcheck.insertLayout( parent="" )
+# Z2K_Pcheck = AssetPrevizMod()
+# Z2K_Pcheck.insertLayout( parent="" )

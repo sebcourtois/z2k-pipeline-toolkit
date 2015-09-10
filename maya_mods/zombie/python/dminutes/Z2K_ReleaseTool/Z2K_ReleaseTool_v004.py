@@ -217,9 +217,12 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         cmds.window(self.cf, e=True, sizeable=True, t=(self.cf + " : " + str(self.cf)))
         #BIG TAB ------------------------------------------------------------------------------------------------
         cmds.frameLayout(marginHeight=2, marginWidth=2,lv=0)
-
+        
         cmds.frameLayout("Bigframe", marginHeight=0, marginWidth=0, labelVisible=False, fn="tinyBoldLabelFont", cll=False)
         cmds.columnLayout(adjustableColumn=True)
+        basePath =  os.environ.get("MAYA_MODULE_PATH").split(";")[0]
+        aa= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/images/Z2K_previz_bgi.bmp"
+        cmds.image( image=aa )
         
         # cmds.frameLayout(lv=1, mh=5, mw=5,l="OPEN:",cll=1)
         
