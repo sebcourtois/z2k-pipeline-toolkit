@@ -1,4 +1,5 @@
 
+import sys
 import os
 import os.path as osp
 import subprocess
@@ -74,6 +75,9 @@ def makePrivatePath(sPublicPath):
 
 def pathNorm(p):
     return osp.normpath(p).replace("\\", "/")
+
+def normCase(p):
+    return osp.normcase(p).replace("\\", "/")
 
 def pathJoin(*args):
     try:
@@ -165,10 +169,13 @@ class Z2kToolkit(object):
         sDirName = "z2k-pipeline-toolkit"
         sCurDirPath = osp.dirname(osp.abspath(__file__))
         sRootPath = osp.join(sCurDirPath.split(sDirName)[0], sDirName)
+        if not osp.isdir(sRootPath):
+            raise EnvironmentError("No such directory: '{}'".format(sRootPath))
 
         self.isDev = osp.isdir(osp.join(sRootPath, ".git"))
         self.rootPath = sRootPath
         self.dirName = sDirName
+        self.pythonPath = osp.join(sRootPath, "python")
 
         self.loadEnvs(customEnvs)
 
@@ -184,10 +191,9 @@ class Z2kToolkit(object):
         for sVar, value in customEnvs.iteritems():
             updEnv(sVar, value, conflict="keep")
 
-        print "\nLoading toolkit environments:"
+        print "\nLoading common environments:"
 
-        updEnv("PYTHONPATH", osp.join(self.rootPath, "python"), conflict="add")
-        updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"), conflict="add")
+        updEnv("PYTHONPATH", self.pythonPath, conflict="add")
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
         updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
 
@@ -203,7 +209,21 @@ class Z2kToolkit(object):
             updEnv("PRIV_" + sVar, sPrivPath, conflict="keep")
 
         os.environ["DEV_MODE_ENV"] = str(int(self.isDev))
-        print ""
+
+    def loadAppEnvs(self, sAppPath):
+
+        sAppPath = normCase(sAppPath)
+
+        if sAppPath.endswith("maya.exe"):
+
+            print "\nLoading maya environments:"
+
+            if sAppPath.endswith("maya2016/bin/maya.exe"):
+
+                updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"), conflict="add")
+                updEnv("PYTHONPATH", osp.join(self.pythonPath, "mayapy-2016"), conflict="add")
+
+            print ''
 
     def install(self):
 
@@ -268,7 +288,6 @@ class Z2kToolkit(object):
 
         print "Updating Zombie toolkit: \n'{0}' -> '{1}'".format(sSrcRepoPath, sDestPath)
 
-
         sOscarPath = osp.join(sSrcRepoPath, "maya_mods", "Toonkit_module",
                               "Maya2016", "Standalones", "OSCAR")
 
@@ -295,6 +314,8 @@ class Z2kToolkit(object):
         return osp.join(sReleaseLoc, self.dirName)
 
     def launchCmd(self, args, update=True):
+
+        self.loadAppEnvs(args[0])
 
         if (not self.isDev) and update:
             self.install()

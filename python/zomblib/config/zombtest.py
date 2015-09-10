@@ -5,7 +5,7 @@ from . import zombillenium as zomb
 reload(zomb)
 
 class project(zomb.project):
-    damas_root_path = "zombtest/"
+    damas_root_path = "/zombtest/"
 
 class asset_lib(zomb.asset_lib):
     pass
