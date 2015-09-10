@@ -257,7 +257,8 @@ class AssetPrevizMod(object):
         "hardwareRenderGlobals","hardwareRenderingGlobals","defaultHardwareRenderGlobals","hyperGraphInfo",
         "hyperGraphLayout","ikSystem","characterPartition","char_aurelienPolo_wip_18_sceneConfigurationScriptNode",
         "char_aurelienPolo_wip_18_uiConfigurationScriptNode","sequenceManager1","strokeGlobals","time1","defaultViewColorManager",
-        "defaultColorMgtGlobals","defaultObjectSet","defaultTextureList1","lightList1","defaultObjectSet"],
+        "defaultColorMgtGlobals","defaultObjectSet","defaultTextureList1","lightList1","defaultObjectSet",
+        "sceneConfigurationScriptNode"],
         *args, **kwargs):
         """ Description: Return Node list base on specific type /excepted type filtered
                         If nothing it give evrething in scene
@@ -325,6 +326,20 @@ class AssetPrevizMod(object):
             # print to textLayout
             cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
             
+
+    def waiter (func,*args, **kwargs):
+        def deco(self,*args, **kwargs):
+            cmds.waitCursor( state=True )
+            print "wait..."
+            try:
+                print func
+                func(self,*args, **kwargs)
+            except:
+                cmds.waitCursor( state=False )
+            cmds.waitCursor( state=False )
+            print "...wait"
+            
+        return deco
 
 
     # cleaning/checking functions --------------------------------------------
@@ -966,7 +981,7 @@ class AssetPrevizMod(object):
     # ---------------------------------------------------------------------------------------------------------
     #--------------------- Buttons functions ----------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
-
+    @waiter
     def btn_checkStructure(self,controlN,*args, **kwargs):
         boolResult=True
 
@@ -989,7 +1004,7 @@ class AssetPrevizMod(object):
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
         
 
-
+    @waiter
     def btn_CleanScene(self,controlN,*args, **kwargs):
         boolResult=True
 
@@ -1021,7 +1036,7 @@ class AssetPrevizMod(object):
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
         
         
-
+    @waiter
     def btn_CleanObjects(self,controlN,*args, **kwargs):
         boolResult=True
 
@@ -1081,8 +1096,8 @@ class AssetPrevizMod(object):
     # -------------------------- interface functoin --------------------------------
     def colorBoolControl(self, controlL=[], boolL=[],labelL=[""], *args, **kwargs):
         # color the controlL depending on the given Bool
-        trueColor = [0,1,0]
-        falseColor = [1,0,0]
+        trueColor = [0,0.75,0]
+        falseColor = [0.75,0,0]
         for i,j,label in zip(controlL,boolL,labelL):
                 if j in [True,1]:
                     cmds.button(i, e=1, backgroundColor=trueColor, ebg=self.ebg)
@@ -1099,6 +1114,7 @@ class AssetPrevizMod(object):
                 cmds.progressBar(self.BValidationPBar,e=1,step=step,)
 
 
+    
     # ---------------------------------------------------------------------------------------------------
     #--------------------- GUI ----------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
@@ -1126,13 +1142,13 @@ class AssetPrevizMod(object):
         cmds.button("Clean_all",c= self.cleanAll,en=0)
 
         self.BcheckStructure = cmds.button("checkStructure", )
-        cmds.button(self.BcheckStructure,e=1,c= partial(self.btn_checkStructure,self.BcheckStructure))
+        cmds.button(self.BcheckStructure,e=1,c= partial( self.btn_checkStructure,self.BcheckStructure) )
 
         self.BCleanScene = cmds.button("CleanScene",)
-        cmds.button(self.BCleanScene,e=1,c= partial(self.btn_CleanScene,self.BCleanScene))
+        cmds.button(self.BCleanScene,e=1,c= partial( self.btn_CleanScene,self.BCleanScene))
 
         self.BCleanObjects = cmds.button("CleanObjects",)
-        cmds.button(self.BCleanObjects,e=1,c= partial(self.btn_CleanObjects,self.BCleanObjects))
+        cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects) )
         
         self.BValidationPBar = cmds.progressBar(maxValue=3,s=1 )
 

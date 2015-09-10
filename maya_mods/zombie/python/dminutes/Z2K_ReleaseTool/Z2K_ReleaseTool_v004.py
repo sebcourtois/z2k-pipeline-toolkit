@@ -25,9 +25,9 @@
 
 import os
 import maya.cmds as cmds
-import Z2K_WORKGROUP.lib.jipeLib_Z2K as Z2K
+import dminutes.jipeLib_Z2K as Z2K
 reload(Z2K)
-import Z2K_WORKGROUP.Z2K_Asset_Previz_checks_v007 as Z2K_PcheckD
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Asset_Previz_checks_v007 as Z2K_PcheckD
 reload(Z2K_PcheckD)
 print"zoo"
 Z2K_Pcheck = Z2K_PcheckD.AssetPrevizMod()
