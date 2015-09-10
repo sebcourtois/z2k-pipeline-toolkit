@@ -7,7 +7,7 @@ class project:
 
     #public_path = '//Diskstation/z2k/05_3D/{}/'.format(dir_name)
     private_path = '$PRIV_ZOMB_PATH/'
-    damas_root_path = "zomb/"
+    damas_root_path = "/zomb/"
 
     template_path = '$ZOMB_TOOL_PATH/template/'
 
