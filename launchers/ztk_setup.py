@@ -306,7 +306,7 @@ class Z2kToolkit(object):
         sExcludeFiles = ["*.pyc", ".git*", ".*project", "*.lic", "Thumbs.db",
                          "pull_all.bat"]
         if not self.isDev:
-            sExcludeFiles +=["setup_*.bat"]
+            sExcludeFiles += ["setup_*.bat"]
         sExcludeFiles = " ".join(sExcludeFiles)
 
         cmdLineFmt = "robocopy {} /S {} /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {}"
