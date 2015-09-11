@@ -166,15 +166,20 @@ class Z2kToolkit(object):
 
     def __init__(self, customEnvs):
 
-        sDirName = "z2k-pipeline-toolkit"
-        sCurDirPath = osp.dirname(osp.abspath(__file__))
-        sRootPath = osp.join(sCurDirPath.split(sDirName)[0], sDirName)
+        sBaseName = "z2k-pipeline-toolkit"
+        sCurDirPath = pathNorm(osp.dirname(osp.abspath(__file__)))
+
+        sRoot, sTail = sCurDirPath.split(sBaseName)
+        sDirName = sBaseName + sTail.split("/", 1)[0]
+
+        sRootPath = osp.join(sRoot, sDirName)
         if not osp.isdir(sRootPath):
             raise EnvironmentError("No such directory: '{}'".format(sRootPath))
 
         self.isDev = osp.isdir(osp.join(sRootPath, ".git"))
         self.rootPath = sRootPath
-        self.dirName = sDirName
+        #self.dirName = sDirName
+        self.baseName = sBaseName
         self.pythonPath = osp.join(sRootPath, "python")
 
         self.loadEnvs(customEnvs)
@@ -194,6 +199,7 @@ class Z2kToolkit(object):
         print "\nLoading common environments:"
 
         updEnv("PYTHONPATH", self.pythonPath, conflict="add")
+
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
         updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
 
@@ -220,8 +226,10 @@ class Z2kToolkit(object):
 
             if sAppPath.endswith("maya2016/bin/maya.exe"):
 
-                updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"), conflict="add")
-                updEnv("PYTHONPATH", osp.join(self.pythonPath, "mayapy-2016"), conflict="add")
+                updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"),
+                       conflict="add")
+                updEnv("Z2K_PYTHON_SITES", osp.join(self.pythonPath, "mayapy-2016-site"),
+                       conflict="add")
 
             print ''
 
@@ -233,7 +241,7 @@ class Z2kToolkit(object):
             print "Tools update from development environment !"
             repo = self.rootPath
 
-        local_root = osp.join(os.environ["USERPROFILE"], "zombillenium", self.dirName)
+        local_root = osp.join(os.environ["USERPROFILE"], "zombillenium", self.baseName)
 
         if repo == local_root:
             print "Source == Destination !"
@@ -266,7 +274,7 @@ class Z2kToolkit(object):
 
         if archive and osp.exists(sDistroPath):
             sDate = datetime.now().strftime("%Y%m%d-%H%M")
-            sZipPath = osp.join(sDistroPath + "_backups", self.dirName + "_" + sDate)
+            sZipPath = osp.join(sDistroPath + "_backups", self.baseName + "_" + sDate)
 
             cleanUpPyc(sDistroPath)
 
@@ -286,7 +294,8 @@ class Z2kToolkit(object):
 
     def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
 
-        print "Updating Zombie toolkit: \n'{0}' -> '{1}'".format(sSrcRepoPath, sDestPath)
+        if not dryRun:
+            print "\nCopying Z2K Toolkit: \n'{0}' -> '{1}'".format(sSrcRepoPath, sDestPath)
 
         sOscarPath = osp.join(sSrcRepoPath, "maya_mods", "Toonkit_module",
                               "Maya2016", "Standalones", "OSCAR")
@@ -294,14 +303,22 @@ class Z2kToolkit(object):
         sDryRun = "/L" if dryRun else ""
         sNoSummary = "/NJS" if not summary else ""
 
-        cmdLineFmt = "robocopy {} /S {} /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {} *.pyc .git* .*project *.lic Thumbs.db"
+        sExcludeFiles = ["*.pyc", ".git*", ".*project", "*.lic", "Thumbs.db",
+                         "pull_all.bat"]
+        if not self.isDev:
+            sExcludeFiles += ["setup_*.bat"]
+        sExcludeFiles = " ".join(sExcludeFiles)
+
+        cmdLineFmt = "robocopy {} /S {} /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {}"
         cmdLine = cmdLineFmt.format(sDryRun,
                                     sNoSummary,
                                     sSrcRepoPath,
                                     sDestPath,
                                     sOscarPath,
-                                    "setup_*.bat" if not self.isDev else "")
-        #print cmdLine
+                                    sExcludeFiles)
+        if (not dryRun) and self.isDev:
+            print cmdLine
+
         return runCmd(cmdLine)
 
     def releasePath(self, location=""):
@@ -311,7 +328,7 @@ class Z2kToolkit(object):
         else:
             sReleaseLoc = os.environ["ZOMB_TOOL_PATH"]
 
-        return osp.join(sReleaseLoc, self.dirName)
+        return osp.join(sReleaseLoc, self.baseName)
 
     def launchCmd(self, args, update=True):
 

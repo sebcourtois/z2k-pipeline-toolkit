@@ -32,5 +32,3 @@ def pathJoin(*args):
 def normPath(p):
     return os.path.normpath(p).replace("\\",'/')
 
-
-
