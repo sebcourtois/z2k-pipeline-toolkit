@@ -7,5 +7,6 @@
 <path>/${PROJECT_DIR_NAME}/python</path>
 <path>/${PROJECT_DIR_NAME}/python/pypeline-tool-devkit</path>
 <path>/${PROJECT_DIR_NAME}/python/davos-dev</path>
+<path>/${PROJECT_DIR_NAME}/launchers</path>
 </pydev_pathproperty>
 </pydev_project>

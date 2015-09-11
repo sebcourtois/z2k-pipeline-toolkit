@@ -1,5 +1,5 @@
 
-import sys
+#import sys
 import os
 import os.path as osp
 import subprocess
@@ -180,7 +180,7 @@ class Z2kToolkit(object):
 #        if (not dryRun) and self.isDev:
 #            print cmdLine
 
-        return runCmd(cmdLine)
+        return callCmd(cmdLine, catchStdout=True)
 
     def releasePath(self, location=""):
 
@@ -202,7 +202,7 @@ class Z2kToolkit(object):
 #        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 #        subprocess.call(cmdArgs, startupinfo=startupinfo)
 
-        print runCmd(cmdArgs)
+        return callCmd(cmdArgs)
 
     def runFromCmd(self):
 
@@ -226,21 +226,22 @@ class Z2kToolkit(object):
 
 CREATE_NO_WINDOW = 0x8000000
 
-def runCmd(cmd, shell=False, catchOutput=True, noCmdWindow=False):
+def callCmd(cmdArgs, catchStdout=False, shell=False, inData=None, noCmdWindow=False):
 
     iCreationFlags = CREATE_NO_WINDOW if noCmdWindow else 0
 
-    pipe = subprocess.Popen(cmd, shell=shell,
-                            stdout=subprocess.PIPE if catchOutput else None,
-                            stderr=subprocess.STDOUT if catchOutput else None,
+    pipe = subprocess.Popen(cmdArgs, shell=shell,
+                            stdout=subprocess.PIPE if catchStdout else None,
+                            stderr=subprocess.STDOUT if catchStdout else None,
                             creationflags=iCreationFlags)
-
-    stdOut, stdErr = pipe.communicate()
-    if stdErr and stdErr.strip():
-        print cmd
-        raise subprocess.CalledProcessError(stdErr)
-
-    return stdOut
+    if catchStdout:
+        outData, errData = pipe.communicate(inData)
+        if errData and errData.strip():
+            print cmdArgs
+            raise subprocess.CalledProcessError(errData)
+        return outData
+    else:
+        return pipe.wait()
 
 def initLogger():
 
@@ -300,12 +301,11 @@ def normCase(p):
     return osp.normcase(p).replace("\\", "/")
 
 def pathJoin(*args):
-    try:
-        p = osp.join(*args)
-    except UnicodeDecodeError:
-        p = osp.join(*tuple(toUnicode(arg) for arg in args))
-
+    p = osp.join(*args)
     return pathNorm(p)
+
+def addEndSlash(sDirPath):
+    return sDirPath if sDirPath.endswith("/") else sDirPath + "/"
 
 def iterPaths(sRootDirPath, **kwargs):
 
