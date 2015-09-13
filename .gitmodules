@@ -1,6 +1,3 @@
-[submodule "python/shotgun-python-api"]
-	path = python/shotgun-python-api
-	url = https://github.com/2Minutes/shotgun-python-api.git
 [submodule "python/davos-dev"]
 	path = python/davos-dev
 	url = https://github.com/2Minutes/davos-dev.git
