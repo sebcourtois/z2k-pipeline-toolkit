@@ -274,6 +274,11 @@ def imageResize(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQua
         if inStatInfo.st_mtime < outStatInfo.st_mtime:
             print "#### {:>7}: {}  -->  is up to date".format("Info", outputFilePathName)
             return
+        else:
+            os.remove(outputFilePathName_exp)
+    elif os.path.isfile(outputFilePathName_exp):
+        os.remove(outputFilePathName_exp)
+
         
     if openImageMentalRay == True:
         #open image/mentalray method
@@ -302,20 +307,21 @@ def imageResize(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQua
         image.resize( width/2**lod, height/2**lod )
         image.writeToFile( tempFile, tempImageFormat)
         subprocess.call([imfCopyCommand, "-vq",str(jpgQuality), tempFile,outputFilePathName_exp])
-        os.remove(tempFile)
-        
-        statinfo = os.stat(inputFilePathName_exp)
-        imageSize = string.ljust(str(statinfo.st_size/1024)+" Kb",10," ")
-        textureWidth = string.ljust(str(width),5," ")
-        textureHeight = string.ljust(str(height),5," ")
-        
-        statinfo_lowRes = os.stat(outputFilePathName_exp)
-        fastJpgImageSize = string.ljust(str(statinfo_lowRes.st_size/1024)+" Kb",10," ")
-        textureWidthLowRes = string.ljust(str(width/2**lod),5," ")
-        textureHeightLowRes = string.ljust(str(height/2**lod),5," ")
+        os.remove(tempFile)     
 
     else:
         print "--NA---"
+
+
+    statinfo = os.stat(inputFilePathName_exp)
+    imageSize = string.ljust(str(statinfo.st_size/1024)+" Kb",10," ")
+    textureWidth = string.ljust(str(width),5," ")
+    textureHeight = string.ljust(str(height),5," ")
+    
+    statinfo_lowRes = os.stat(outputFilePathName_exp)
+    fastJpgImageSize = string.ljust(str(statinfo_lowRes.st_size/1024)+" Kb",10," ")
+    textureWidthLowRes = string.ljust(str(width/2**lod),5," ")
+    textureHeightLowRes = string.ljust(str(height/2**lod),5," ")
 
     sz=str(max(len(inputFilePathName),len(outputFilePathName)))
     print "#### {:>7}: resize (LOD {}) and convert to jpg (quality = {})".format("Info", str(lod), str(jpgQuality))
@@ -539,6 +545,89 @@ def lowResJpgForPreview( verbose = True, checkOnly = True, inAuthorizedFormat=["
             mc.select(wrongFileNodeList)
             print "#### {:>7}: The wrong file nodes have been selected".format("Info")
     return wrongFileNodeList if wrongFileNodeList != [] else  None
+
+
+
+def arnoldMakeTx(inputFilePathName = "", outputFilePathName = "", updateOnly = False):
+    """
+    This function creates an arnold tx file
+
+    """
+
+    if not isinstance(inputFilePathName,basestring):
+        print "#### {:>7}: 'inputFilePathName' is not a string".format("Error")
+        return
+
+    if not isinstance(outputFilePathName,basestring):
+        print "#### {:>7}: 'outputFilePathName' is not a string".format("Error")
+        return
+
+    inputFilePathName_exp = os.path.expandvars(os.path.expandvars(inputFilePathName))
+    outputFilePathName_exp = os.path.expandvars(os.path.expandvars(outputFilePathName))
+    
+    if inputFilePathName == "" :
+        print "#### {:>7}: no 'inputFilePathName' given".format("Error")
+        return
+    elif not os.path.isfile(inputFilePathName_exp):
+        print "#### {:>7}: Missing file : {} given".format("Error", inputFilePathName_exp)
+        return
+
+    if outputFilePathName == "" :
+        outputFilePathName = inputFilePathName.replace(inputFilePathName.split(".")[-1],"tx")
+        outputFilePathName_exp = inputFilePathName_exp.replace(inputFilePathName.split(".")[-1],"tx")
+    elif not os.path.isdir(os.path.split(outputFilePathName)[0]):
+        print "#### {:>7}: Missing directory : {} given".format("Error", os.path.split(outputFilePathName))
+        return
+    elif not outputFilePathName.split(".")[-1] == "tx":
+        print "#### {:>7}: 'outputFilePathName'must be a '.tx' file: {}".format("Error", outputFilePathName)
+        return
+
+    if os.path.isfile(outputFilePathName_exp) and updateOnly == True:
+        inStatInfo = os.stat(inputFilePathName_exp)
+        outStatInfo = os.stat(outputFilePathName_exp)
+        if inStatInfo.st_mtime < outStatInfo.st_mtime:
+            print "#### {:>7}: {}  -->  is up to date".format("Info", outputFilePathName)
+            return
+        else:
+            os.remove(outputFilePathName_exp)
+    elif os.path.isfile(outputFilePathName_exp):
+        os.remove(outputFilePathName_exp)
+
+    renderDesc = os.environ["MAYA_RENDER_DESC_PATH"].split(":")
+    for each in renderDesc:
+        normedEach = os.path.normpath(each).replace("\\", "/")
+        if "/solidangle/mtoa/2016" in normedEach:
+            mtoaPath = normedEach
+            continue
+
+    maketxCommand = mtoaPath+"/bin/maketx"
+    subprocess.call([maketxCommand, "-u","--oiio", inputFilePathName_exp])   
+
+    image = om.MImage()
+    image.readFromFile(inputFilePathName_exp)
+    util = om.MScriptUtil()
+    widthUtil = om.MScriptUtil()
+    heightUtil = om.MScriptUtil()
+    widthPtr = widthUtil.asUintPtr()
+    heightPtr = heightUtil.asUintPtr()
+    image.getSize(widthPtr, heightPtr)
+    width = util.getUint(widthPtr)
+    height = util.getUint(heightPtr)
+
+    statinfo = os.stat(inputFilePathName_exp)
+    imageSize = string.ljust(str(statinfo.st_size/1024)+" Kb",10," ")
+    textureWidth = string.ljust(str(width),5," ")
+    textureHeight = string.ljust(str(height),5," ")
+    
+    statinfo_lowRes = os.stat(outputFilePathName_exp)
+    fastJpgImageSize = string.ljust(str(statinfo_lowRes.st_size/1024)+" Kb",10," ")
+    textureWidthTx = string.ljust(str(width),5," ")
+    textureHeightTx = string.ljust(str(height),5," ")
+
+    sz=str(max(len(inputFilePathName),len(outputFilePathName)))
+    print "#### {:>7}: generate arnold '.tx' mipmap texture file".format("Info")
+    print ("#### {:>7}: {:<"+sz+"}  -->  width: {}  height: {}  size: {}").format("Info", inputFilePathName, textureWidth, textureHeight, imageSize)
+    print ("#### {:>7}: {:<"+sz+"}  -->  width: {}  height: {}  size: {}").format("Info", outputFilePathName, textureWidthTx, textureHeightTx, fastJpgImageSize)
 
 
 
