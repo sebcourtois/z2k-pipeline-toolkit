@@ -5,5 +5,6 @@
 
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
 <path>/${PROJECT_DIR_NAME}/python/zomblib</path>
+<path>/${PROJECT_DIR_NAME}/maya_mods/zombie/python</path>
 </pydev_pathproperty>
 </pydev_project>

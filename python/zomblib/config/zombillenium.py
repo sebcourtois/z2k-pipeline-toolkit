@@ -9,6 +9,8 @@ class project:
     private_path = '$PRIV_ZOMB_PATH/'
     damas_root_path = "/zomb/"
 
+    private_path_envs = ("PRIV_ZOMB_PATH",)
+
     template_path = '$ZOMB_TOOL_PATH/template/'
 
     libraries = (
@@ -26,7 +28,10 @@ class project:
 class asset_lib:
 
     public_path = '$ZOMB_ASSET_PATH'
-    private_path = '$PRIV_ZOMB_ASSET_PATH'#project.private_path + "asset"
+    private_path = osp.join(project.private_path, "asset")
+
+    public_path_envars = ('ZOMB_ASSET_PATH', 'ZOMB_TEXTURE_PATH')
+    private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
     asset_types = (
         "camera",
@@ -197,7 +202,10 @@ class shot_lib:
     entity_class = "davos.core.damtypes.DamShot"
 
     public_path = '$ZOMB_SHOT_PATH'
-    private_path = '$PRIV_ZOMB_SHOT_PATH'#project.private_path + "shot"
+    private_path = osp.join(project.private_path, "shot")
+
+    public_path_envars = ('ZOMB_SHOT_PATH',)
+    private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
     template_path = project.template_path
     template_dir = "shot_template"
@@ -241,8 +249,9 @@ class shot_lib:
 class output_lib:
 
     public_path = '$ZOMB_OUTPUT_PATH'
-    private_path = '$PRIV_ZOMB_OUTPUT_PATH'#project.private_path + "output"
+    private_path = osp.join(project.private_path, "output")
 
-
+    public_path_envars = ('ZOMB_OUTPUT_PATH',)
+    private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
 

@@ -12,7 +12,6 @@ ENVS = {
 		"ZOMB_SHOT_PATH":"\\\\Diskstation\\Projects\\zombtest\\shot",
 		"ZOMB_OUTPUT_PATH":"\\\\Diskstation\\Projects\\zombtest\\output",
         "ZOMB_TOOL_PATH":"\\\\Diskstation\\Projects\\zomb\\tool",
-		"ZOMB_TEXTURE_PATH":"$ZOMB_ASSET_PATH",
 
 		"PRIV_ZOMB_PATH":'\\\\Diskstation\\Projects\\private\\$DAVOS_USER\\zombtest',
 		"DAVOS_INIT_PROJECT":"zombtest"
