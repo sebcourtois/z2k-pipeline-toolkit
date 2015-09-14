@@ -159,7 +159,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
             finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
-            finalMapdirExpand = os.path.expandvars(finalMapdir)
+            finalMapdirExpand = os.path.expandvars(os.path.expandvars(finalMapdir))
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
@@ -172,7 +172,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
     for eachFileNode in fileNodeList:
         wrongFileNode = False
         mapFilePath = mc.getAttr(eachFileNode+".fileTextureName")
-        mapFilePathExpand = os.path.expandvars(mapFilePath)
+        mapFilePathExpand = os.path.expandvars(os.path.expandvars(mapFilePath))
         mapPath = os.path.split(mapFilePath)[0]
         fileName = os.path.split(mapFilePath)[1]       
         finalMapFilePathExpanded = miscUtils.pathJoin(finalMapdirExpand,fileName)
@@ -230,28 +230,15 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
 
 
 
-def createPreviewJpg(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQuality = 70, update = False):
+def imageResize(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQuality = 90, updateOnly = False, openImageMentalRay = True):
     """
-    This function creates a low resolution jpg file given texture file.
+    This function creates a resized jpg image
     it also switch off the mipmap fitering, and set the given file node so it point toward this new low res jgp
-     - nodeList : (list) a list of texture file node
-     - lod : (int) 0..19 of pyramid map, largest is 0
+     - inputFilePathName : (string) an image to resize
+     - outputFilePathName : (string) a jpg image file path name
+     - lod : (int) 0..19 of pyramid map, largest is 0, width and height wil be divided by lod*lod
      - jpgQuality : (int) 1...100 highest is 100
     """
-
-
-
-    #open image/mentalray method
-    #mentalRayBin = os.path.normpath(os.environ['MAYA_LOCATION'].replace("Maya","mentalrayForMaya")).replace("\\", "/")
-    imfCopyCommand = miscUtils.normPath(os.environ["ZOMB_TOOL_PATH"])+"/binaries/imf_copy"
-    tempDir = os.getenv ("TMPDIR")
-    tempDir = tempDir.rstrip("/")
-    tempImageFormat = "tif"
-    if not os.path.isdir(tempDir):
-        print "#### error: "+tempDir+" is not a valid directory"
-        return
-
-
 
     if not isinstance(inputFilePathName,basestring):
         print "#### {:>7}: 'inputFilePathName' is not a string".format("Error")
@@ -261,73 +248,87 @@ def createPreviewJpg(inputFilePathName = "", outputFilePathName = "", lod = 4, j
         print "#### {:>7}: 'outputFilePathName' is not a string".format("Error")
         return
 
-
     inputFilePathName_exp = os.path.expandvars(os.path.expandvars(inputFilePathName))
     outputFilePathName_exp = os.path.expandvars(os.path.expandvars(outputFilePathName))
     
     if inputFilePathName == "" :
         print "#### {:>7}: no 'inputFilePathName' given".format("Error")
         return
-    elif not os.path.isfile(inputFilePathName_exp)¶:
+    elif not os.path.isfile(inputFilePathName_exp):
         print "#### {:>7}: Missing file : {} given".format("Error", inputFilePathName_exp)
         return
 
     if outputFilePathName == "" :
-        outputFilePathName = inputFilePathName.replace("."+path.split(".")[-1],".jpg")
-        outputFilePathName_exp = inputFilePathName_exp.replace("."+path.split(".")[-1],".jpg")
-    elif not os.path.isdir(os.path.split(outputFilePathName)[0])¶:
-        print "#### {:>7}: Missing directory : {} given".format("Error", os.path.split(outputFilePathName)
+        outputFilePathName = inputFilePathName.replace(inputFilePathName.split(".")[-1],"jpg")
+        outputFilePathName_exp = inputFilePathName_exp.replace(inputFilePathName.split(".")[-1],"jpg")
+    elif not os.path.isdir(os.path.split(outputFilePathName)[0]):
+        print "#### {:>7}: Missing directory : {} given".format("Error", os.path.split(outputFilePathName))
         return
-        
+    elif not outputFilePathName.split(".")[-1] == "jpg":
+        print "#### {:>7}: 'outputFilePathName'must be a '.jpg' file: {}".format("Error", outputFilePathName)
+        return
 
-
-    
-    for eachFileNode in fileNodeList:
-        textureFileName = mc.getAttr(eachFileNode+".fileTextureName")
-        textureFileName_exp  = pathExpand (textureFileName)
-        tempFile = textureFileName_exp.replace(os.path.dirname(textureFileName_exp),tempDir)+"."+tempImageFormat
-        lowResFileName  = textureFileName.split(".")[0]+"_lowRes"+textureFileName.replace(textureFileName.split(".")[0],"")+".jpg"
-        lowResFileName_exp = pathExpand (lowResFileName)
-        print "---------"
-        
-        if os.path.isfile(textureFileName_exp):
-            
-            image = om.MImage()
-            image.readFromFile(textureFileName_exp)
-            util = om.MScriptUtil()
-            widthUtil = om.MScriptUtil()
-            heightUtil = om.MScriptUtil()
-            widthPtr = widthUtil.asUintPtr()
-            heightPtr = heightUtil.asUintPtr()
-            image.getSize(widthPtr, heightPtr)
-            width = util.getUint(widthPtr)
-            height = util.getUint(heightPtr)
-            image.resize( width/2**lod, height/2**lod )
-            image.writeToFile( tempFile, tempImageFormat)
-            subprocess.call([imfCopyCommand, "-vq",str(jpgQuality), tempFile,lowResFileName_exp])
-            os.remove(tempFile)
-            
-
-            statinfo = os.stat(textureFileName_exp)
-            imageSize = string.ljust(str(statinfo.st_size/1024)+" Kb",10," ")
-            textureWidth = string.ljust(str(width),5," ")
-            textureHeight = string.ljust(str(height),5," ")
-            
-            statinfo_lowRes = os.stat(lowResFileName_exp)
-            fastJpgImageSize = string.ljust(str(statinfo_lowRes.st_size/1024)+" Kb",10," ")
-            textureWidthLowRes = string.ljust(str(width/2**lod),5," ")
-            textureHeightLowRes = string.ljust(str(height/2**lod),5," ")
-
-            print "#### info: resize (LOD "+str(lod)+") and convert to jpg (quality = "+str(jpgQuality)+ ") and adjust '"+eachFileNode+"' file node attributes"
-            print "#### info: "+textureFileName+"             -->  width: "+textureWidth+"  height: "+textureHeight+"  size: "+imageSize
-            print "#### info: "+lowResFileName+"  -->  width: "+textureWidthLowRes+"  height: "+textureHeightLowRes+"  size: "+fastJpgImageSize
-            mc.setAttr(eachFileNode+".filterType", 0)
-            mc.setAttr(eachFileNode+".preFilter", 0)
-            mc.setAttr(eachFileNode+".fileTextureName",lowResFileName, type = "string")
-
+    if os.path.isfile(outputFilePathName_exp) and updateOnly == True:
+        inStatInfo = os.stat(inputFilePathName_exp)
+        outStatInfo = os.stat(outputFilePathName_exp)
+        if inStatInfo.st_mtime < outStatInfo.st_mtime:
+            print "#### {:>7}: {}  -->  is up to date".format("Info", outputFilePathName)
+            return
         else:
-            print "#### error: lowRes jpg creation is not possible, the following texture file do not exist: "+textureFileName_exp
-            continue
+            os.remove(outputFilePathName_exp)
+    elif os.path.isfile(outputFilePathName_exp):
+        os.remove(outputFilePathName_exp)
+
+        
+    if openImageMentalRay == True:
+        #open image/mentalray method
+        #mentalRayBin = os.path.normpath(os.environ['MAYA_LOCATION'].replace("Maya","mentalrayForMaya")).replace("\\", "/")
+        #imfCopyCommand = miscUtils.normPath(os.environ["ZOMB_TOOL_PATH"])+"/binaries/imf_copy"
+        imfCopyCommand = "/Applications/Autodesk/mentalrayForMaya2016_old/bin/imf_copy"
+        tempDir = os.getenv ("TMPDIR")
+        tempDir = tempDir.rstrip("/")
+        tempImageFormat = "tga"
+        tempFile = inputFilePathName_exp.replace(os.path.dirname(inputFilePathName_exp),tempDir)+"."+tempImageFormat
+        if not os.path.isdir(tempDir):
+            print ""
+            print "#### error: "+tempDir+" is not a valid directory"
+            return
+        
+        image = om.MImage()
+        image.readFromFile(inputFilePathName_exp)
+        util = om.MScriptUtil()
+        widthUtil = om.MScriptUtil()
+        heightUtil = om.MScriptUtil()
+        widthPtr = widthUtil.asUintPtr()
+        heightPtr = heightUtil.asUintPtr()
+        image.getSize(widthPtr, heightPtr)
+        width = util.getUint(widthPtr)
+        height = util.getUint(heightPtr)
+        image.resize( width/2**lod, height/2**lod )
+        image.writeToFile( tempFile, tempImageFormat)
+        subprocess.call([imfCopyCommand, "-vq",str(jpgQuality), tempFile,outputFilePathName_exp])
+        os.remove(tempFile)     
+
+    else:
+        print "--NA---"
+
+
+    statinfo = os.stat(inputFilePathName_exp)
+    imageSize = string.ljust(str(statinfo.st_size/1024)+" Kb",10," ")
+    textureWidth = string.ljust(str(width),5," ")
+    textureHeight = string.ljust(str(height),5," ")
+    
+    statinfo_lowRes = os.stat(outputFilePathName_exp)
+    fastJpgImageSize = string.ljust(str(statinfo_lowRes.st_size/1024)+" Kb",10," ")
+    textureWidthLowRes = string.ljust(str(width/2**lod),5," ")
+    textureHeightLowRes = string.ljust(str(height/2**lod),5," ")
+
+    sz=str(max(len(inputFilePathName),len(outputFilePathName)))
+    print "#### {:>7}: resize (LOD {}) and convert to jpg (quality = {})".format("Info", str(lod), str(jpgQuality))
+    print ("#### {:>7}: {:<"+sz+"}  -->  width: {}  height: {}  size: {}").format("Info", inputFilePathName, textureWidth, textureHeight, imageSize)
+    print ("#### {:>7}: {:<"+sz+"}  -->  width: {}  height: {}  size: {}").format("Info", outputFilePathName, textureWidthLowRes, textureHeightLowRes, fastJpgImageSize)
+
+
 
 
 def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrongShadEngine = True, preShadNodeType = "surfaceShader", matShadNodeType= "dmnToon", matTextureInput = ".diffuseColor", preTextureInput = ".outColor"):
@@ -347,7 +348,7 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
 
 
     if shadEngineList == "all":
-        shadEngineList = mc.ls(":*",type = "shadingEngine")
+        shadEngineList = mc.ls("*",type = "shadingEngine")
         shadEngineList.remove("initialParticleSE")
         shadEngineList.remove("initialShadingGroup")
         if not shadEngineList :
@@ -363,8 +364,6 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
             return
     elif isinstance(shadEngineList, (basestring)):
             shadEngineList = [shadEngineList]
-
-
     if not isinstance(shadEngineList, (list,tuple,set)):
         print "#### {:>7}: shadEngineList must be a list. shadEngineList: {}".format("Error", shadEngineList)
         return
@@ -461,6 +460,284 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
             if selectWrongShadEngine == True: mc.select(each[0], ne = True, add = True)
         print "#### {:>7}: Problematics shading engines have been selected".format("Info")
     return wrongShadEngine if wrongShadEngine != [] else  None
+
+
+def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType = "surfaceShader", updateOnly=False):  
+    """
+    This script get a list of pre_* file node from the selection (fileNodeList = "selection") or 
+    from the entire scene (fileNodeList = "all") and generate a low resolution jpg file from the existing .tga file.
+    if a sgr_* shadingEngine node is selected, the script will consider all the 'pre_*' downstream nodes.
+    the file path is modified to point the .jpg once it has been created.
+        updateOnly: when True and a jpg already exists, last modificaton date of tga an jpg are compared to evaluate if the jpg needs to be generated again
+        preShadNodeType: the type of node the file node must be plugged in
+        verbose: allow the problematic file node to be selected at the end of the proccess
+    """ 
+    print ""
+    print "#### {:>7}: runing shading.lowResJpgForPreview( fileNodeList = {}, verbose = {}, preShadNodeType = {}, updateOnly={} )".format("Info", fileNodeList, verbose, preShadNodeType, updateOnly)
+    if mc.ls("|asset"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        if  mainFilePathElem[-4] == "asset":
+            finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            finalMapdirExpand = os.path.expandvars(os.path.expandvars(finalMapdir))
+        else:
+            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+    else :
+        raise ValueError("#### Error: no '|asset' could be found in this scene")
+
+    if fileNodeList == "all":
+        fileNodeList = mc.ls("pre_*",type ="file")
+    elif fileNodeList == "selection":
+        selectedFileList = mc.ls(selection = True, type ="file")
+        selectedShaEngList = mc.ls(selection = True, type ="shadingEngine")
+        fileNodeList=set()
+        for each in selectedShaEngList:
+            if re.match('^sgr_[a-zA-Z0-9]{1,24}$', each):
+                nodes = mc.ls(mc.listHistory (each), type = "file")
+                for eachNode in nodes:
+                    if re.match('^pre_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', eachNode):
+                        fileNodeList.add(eachNode)
+        for each in selectedFileList:
+            if re.match('^pre_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', each):
+                fileNodeList.add(each)
+
+    wrongFileNodeList = []    
+    for eachFileNode in fileNodeList:
+        print ""
+        print "#### {:>7}: Processing: '{}' ".format("Info", eachFileNode)
+        wrongFileNode = False
+        mapFilePath = mc.getAttr(eachFileNode+".fileTextureName")
+        mapFilePathExpand = os.path.expandvars(os.path.expandvars(mapFilePath))
+        tgaFilePath = mapFilePath.replace(mapFilePath.split(".")[-1],"tga") 
+        tgaFilePathExpand = mapFilePathExpand.replace(mapFilePathExpand.split(".")[-1],"tga")
+        jpgFilePath = mapFilePath.replace(mapFilePath.split(".")[-1],"jpg") 
+        jpgFilePathExpand = mapFilePathExpand.replace(mapFilePathExpand.split(".")[-1],"jpg")
+
+        mapPath = os.path.split(mapFilePath)[0]
+        fileName = os.path.split(mapFilePath)[1]       
+        finalMapFilePathExpanded = miscUtils.pathJoin(finalMapdirExpand,fileName)
+        finalMapFilePath = miscUtils.pathJoin(finalMapdir,fileName)
+
+        outNode = mc.listConnections (eachFileNode+".outColor", source=False, destination=True, connections = False)
+        if len(outNode)>1:
+            print "#### {:>7}: '{}' FileNode is connected to several shading node".format("Error",eachFileNode)
+            wrongFileNodeList.append(eachFileNode)
+            continue
+        elif len(outNode) == 0:
+            continue
+        elif mc.nodeType(outNode[0])!= preShadNodeType:
+            print "#### {:>7}: '{}' FileNode is connected not connected to a {} preview shading node".format("Error",eachFileNode, preShadNodeType)
+            wrongFileNodeList.append(eachFileNode)
+            continue
+        elif not "$PRIV_ZOMB_TEXTURE_PATH" in mapFilePath:
+            print "#### {:>7}: '{}' FileNode has wrong file path settings, must be defined with $PRIV_ZOMB_TEXTURE_PATH".format("Error",eachFileNode)
+            wrongFileNodeList.append(eachFileNode)
+            continue
+        elif not os.path.isfile(tgaFilePathExpand) and os.path.isfile(jpgFilePathExpand):
+            print "#### {:>7}: '{}' No '.tga' file could be found, '.jpg' is done already".format("Info", eachFileNode)
+        elif not os.path.isfile(mapFilePathExpand) and not os.path.isfile(tgaFilePathExpand):
+            print "#### {:>7}: '{}' Missing File  -->  {}".format("Error", eachFileNode, mapFilePathExpand)
+            wrongFileNodeList.append(eachFileNode)
+            continue
+        elif not(mapFilePath == tgaFilePath or mapFilePath == jpgFilePath): 
+            print "#### {:>7}: '{}' FileNode, wrong file format: '{}',  should be a jpg or tga".format("Error",eachFileNode,mapFilePath.split(".")[-1])
+            wrongFileNodeList.append(eachFileNode)
+            continue
+
+        imageResize(inputFilePathName = tgaFilePath, outputFilePathName = "", lod = 3, jpgQuality = 90, updateOnly = updateOnly, openImageMentalRay = True)
+
+        if mapFilePath != jpgFilePath: 
+            mc.setAttr(eachFileNode+".fileTextureName", jpgFilePath, type="string")
+            continue
+
+    if wrongFileNodeList: 
+        print ""
+        print "#### {:>7}: {} file node(s) cannot be processed".format("Warning",len(wrongFileNodeList))
+        if verbose == True: 
+            mc.select(wrongFileNodeList)
+            print "#### {:>7}: The wrong file nodes have been selected".format("Info")
+    return wrongFileNodeList if wrongFileNodeList != [] else  None
+
+
+
+def makeTxForArnold(inputFilePathName = "", outputFilePathName = "", updateOnly = False):
+    """
+    from a given image, this script generates an mipmap arnold tx file
+        inputFilePathName: the image path name to convert
+        outputFilePathName: the .tx image path name, if = "" the script will just replace the inputFilePathName extention to ".tx"
+        updateOnly: when True and a .tx already exists, last modificaton date of inputFilePathName and outputFilePathName are compared to evaluate if the .tx needs to be generated again
+    """
+
+    if not isinstance(inputFilePathName,basestring):
+        print "#### {:>7}: 'inputFilePathName' is not a string".format("Error")
+        return
+
+    if not isinstance(outputFilePathName,basestring):
+        print "#### {:>7}: 'outputFilePathName' is not a string".format("Error")
+        return
+
+    inputFilePathName_exp = os.path.expandvars(os.path.expandvars(inputFilePathName))
+    outputFilePathName_exp = os.path.expandvars(os.path.expandvars(outputFilePathName))
+    
+    if inputFilePathName == "" :
+        print "#### {:>7}: no 'inputFilePathName' given".format("Error")
+        return
+    elif not os.path.isfile(inputFilePathName_exp):
+        print "#### {:>7}: Missing file : {} given".format("Error", inputFilePathName_exp)
+        return
+
+    if outputFilePathName == "" :
+        outputFilePathName = inputFilePathName.replace(inputFilePathName.split(".")[-1],"tx")
+        outputFilePathName_exp = inputFilePathName_exp.replace(inputFilePathName.split(".")[-1],"tx")
+    elif not os.path.isdir(os.path.split(outputFilePathName)[0]):
+        print "#### {:>7}: Missing directory : {} given".format("Error", os.path.split(outputFilePathName))
+        return
+    elif not outputFilePathName.split(".")[-1] == "tx":
+        print "#### {:>7}: 'outputFilePathName'must be a '.tx' file: {}".format("Error", outputFilePathName)
+        return
+
+    if os.path.isfile(outputFilePathName_exp) and updateOnly == True:
+        inStatInfo = os.stat(inputFilePathName_exp)
+        outStatInfo = os.stat(outputFilePathName_exp)
+        if inStatInfo.st_mtime < outStatInfo.st_mtime:
+            print "#### {:>7}: {}  -->  is up to date".format("Info", outputFilePathName)
+            return
+        else:
+            os.remove(outputFilePathName_exp)
+    elif os.path.isfile(outputFilePathName_exp):
+        os.remove(outputFilePathName_exp)
+    #ARNOLD_MODULE_PATH
+    renderDesc = os.environ["MAYA_RENDER_DESC_PATH"].split(":")
+    mtoaPath = ""
+    for each in renderDesc:
+        normedEach = os.path.normpath(each).replace("\\", "/")
+        if "/solidangle/mtoa/2016" in normedEach:
+            mtoaPath = normedEach
+            continue
+    if mtoaPath == "":
+        print "#### {:>7}: 'could not find a valid solidangle path in 'MAYA_RENDER_DESC_PATH'".format("Error")
+        return
+    maketxCommand = mtoaPath+"/bin/maketx"
+    subprocess.call([maketxCommand, "-u","--oiio", inputFilePathName_exp])   
+
+    image = om.MImage()
+    image.readFromFile(inputFilePathName_exp)
+    util = om.MScriptUtil()
+    widthUtil = om.MScriptUtil()
+    heightUtil = om.MScriptUtil()
+    widthPtr = widthUtil.asUintPtr()
+    heightPtr = heightUtil.asUintPtr()
+    image.getSize(widthPtr, heightPtr)
+    width = util.getUint(widthPtr)
+    height = util.getUint(heightPtr)
+
+    statinfo = os.stat(inputFilePathName_exp)
+    imageSize = string.ljust(str(statinfo.st_size/1024)+" Kb",10," ")
+    textureWidth = string.ljust(str(width),5," ")
+    textureHeight = string.ljust(str(height),5," ")
+    
+    statinfo_lowRes = os.stat(outputFilePathName_exp)
+    fastJpgImageSize = string.ljust(str(statinfo_lowRes.st_size/1024)+" Kb",10," ")
+    textureWidthTx = string.ljust(str(width),5," ")
+    textureHeightTx = string.ljust(str(height),5," ")
+
+    sz=str(max(len(inputFilePathName),len(outputFilePathName)))
+    print "#### {:>7}: generate arnold '.tx' mipmap texture file".format("Info")
+    print ("#### {:>7}: {:<"+sz+"}  -->  width: {}  height: {}  size: {}").format("Info", inputFilePathName, textureWidth, textureHeight, imageSize)
+    print ("#### {:>7}: {:<"+sz+"}  -->  width: {}  height: {}  size: {}").format("Info", outputFilePathName, textureWidthTx, textureHeightTx, fastJpgImageSize)
+
+
+def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=False):    
+    """
+    This script get a list of mat_* file node from the selection (fileNodeList = "selection") or 
+    from the entire scene (fileNodeList = "all") and generate a low resolution jpg file from the existing .tga file.
+    if a sgr_* shadingEngine node is selected, the script will consider all the 'mat_*' downstream nodes.
+        updateOnly: when True and a .tx already exists, last modificaton date of inputFilePathName and outputFilePathName are compared to evaluate if the .tx needs to be generated again
+        verbose: allow the problematic file node to be selected at the end of the proccess
+    """ 
+    print ""
+    print "#### {:>7}: runing shading.mipMapForRender( fileNodeList = {}, verbose = {}, updateOnly={})".format("Info", fileNodeList, verbose, updateOnly)
+    if mc.ls("|asset"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        if  mainFilePathElem[-4] == "asset":
+            finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            finalMapdirExpand = os.path.expandvars(os.path.expandvars(finalMapdir))
+        else:
+            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+    else :
+        raise ValueError("#### Error: no '|asset' could be found in this scene")  
+
+    if not isinstance(fileNodeList,basestring):
+        print "#### {:>7}: 'fileNodeList' is not a string".format("Error")
+        return
+
+    if fileNodeList == "all":
+        fileNodeList = mc.ls("mat_*",type ="file")
+    elif fileNodeList == "selection":
+        selectedFileList = mc.ls(selection = True, type ="file")
+        selectedShaEngList = mc.ls(selection = True, type ="shadingEngine")
+        fileNodeList=set()
+        for each in selectedShaEngList:
+            if re.match('^sgr_[a-zA-Z0-9]{1,24}$', each):
+                nodes = mc.ls(mc.listHistory (each), type = "file")
+                for eachNode in nodes:
+                    if re.match('^pre_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', eachNode):
+                        fileNodeList.add(eachNode)
+        for each in selectedFileList:
+            if re.match('^pre_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', each):
+                fileNodeList.add(each)
+                
+
+    wrongFileNodeList = []
+    
+    for eachFileNode in fileNodeList:
+        print ""
+        print "#### {:>7}: Processing: '{}' ".format("Info", eachFileNode)
+        wrongFileNode = False
+        mapFilePath = mc.getAttr(eachFileNode+".fileTextureName")
+        mapFilePathExpand = os.path.expandvars(os.path.expandvars(mapFilePath))
+        tgaFilePath = mapFilePath.replace(mapFilePath.split(".")[-1],"tga") 
+        tgaFilePathExpand = mapFilePathExpand.replace(mapFilePathExpand.split(".")[-1],"tga")
+        mipMapFilePath = mapFilePath.replace(mapFilePath.split(".")[-1],"tx") 
+        mipMapFilePathExpand = mapFilePathExpand.replace(mapFilePathExpand.split(".")[-1],"tx")
+
+        mapPath = os.path.split(mapFilePath)[0]
+        fileName = os.path.split(mapFilePath)[1]       
+        finalMapFilePathExpanded = miscUtils.pathJoin(finalMapdirExpand,fileName)
+        finalMapFilePath = miscUtils.pathJoin(finalMapdir,fileName)
+
+        if mapFilePath != tgaFilePath: 
+            print "#### {:>7}: '{}' FileNode, wrong file format: '{}',  should be a tga".format("Error",eachFileNode,mapFilePath.split(".")[-1])
+            wrongFileNodeList.append(eachFileNode)
+            continue
+        elif not "$PRIV_ZOMB_TEXTURE_PATH" in mapFilePath:
+            print "#### {:>7}: '{}' FileNode has wrong file path settings, must be defined with $PRIV_ZOMB_TEXTURE_PATH".format("Error",eachFileNode)
+            wrongFileNodeList.append(eachFileNode)
+            continue
+        elif not os.path.isfile(tgaFilePathExpand) and os.path.isfile(mipMapFilePathExpand):
+            print "#### {:>7}: '{}' No '.tga' file could be found, '.tx' is done already".format("Info", eachFileNode)
+        elif not os.path.isfile(mapFilePathExpand) and not os.path.isfile(tgaFilePathExpand):
+            print "#### {:>7}: '{}' Missing File  -->  {}".format("Error", eachFileNode, mapFilePathExpand)
+            wrongFileNodeList.append(eachFileNode)
+            continue
+
+        makeTxForArnold(inputFilePathName = tgaFilePath, outputFilePathName = "", updateOnly = updateOnly)
+
+    if wrongFileNodeList: 
+        print ""
+        print "#### {:>7}: {} file node(s) cannot be processed".format("Warning",len(wrongFileNodeList))
+        if verbose == True: 
+            mc.select(wrongFileNodeList)
+            print "#### {:>7}: The wrong file nodes have been selected".format("Info")
+    return wrongFileNodeList if wrongFileNodeList != [] else  None
+
+
+
+
+
+
+
 
 
 
