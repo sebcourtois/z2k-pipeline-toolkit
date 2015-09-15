@@ -5,7 +5,7 @@ reload(shading)
 
 
 # Make a new window
-window = mc.window( title="Shading Toolbox", iconName='Shading',toolbox = True ,widthHeight=(260, 405), sizeable = False )
+window = mc.window( title="Shading Toolbox", iconName='Shading',toolbox = True ,widthHeight=(260, 435), sizeable = False )
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 mc.separator(style = 'none', h = 5  )
 
