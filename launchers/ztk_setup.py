@@ -44,28 +44,28 @@ class Z2kToolkit(object):
         print " - configuration : {0}".format("Development" if self.isDev else "Production")
         print ""
 
-        print "\nLoading user-defined environments:"
+        print "\nLoading site-defined environment:"
 
         for sVar, value in customEnvs.iteritems():
             updEnv(sVar, value, conflict="keep")
 
-        print "\nLoading common environments:"
+        print "\nLoading common environment:"
 
         updEnv("PYTHONPATH", self.pythonPath, conflict="add")
 
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
         updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
 
-        for sVar in self.__class__.envsToPrivate:
-
-            sPubPath = osp.expandvars(os.environ[sVar])
-            sPrivPath = makePrivatePath(sPubPath)
-
-            if osp.normcase(sPubPath) == osp.normcase(sPrivPath):
-                raise EnvironmentError("Same public and private path: {}='{}'"
-                                       .format(sVar, sPrivPath))
-
-            updEnv("PRIV_" + sVar, sPrivPath, conflict="keep")
+#        for sVar in self.__class__.envsToPrivate:
+#
+#            sPubPath = osp.expandvars(os.environ[sVar])
+#            sPrivPath = makePrivatePath(sPubPath)
+#
+#            if osp.normcase(sPubPath) == osp.normcase(sPrivPath):
+#                raise EnvironmentError("Same public and private path: {}='{}'"
+#                                       .format(sVar, sPrivPath))
+#
+#            updEnv("PRIV_" + sVar, sPrivPath, conflict="keep")
 
         os.environ["DEV_MODE_ENV"] = str(int(self.isDev))
 
@@ -75,7 +75,7 @@ class Z2kToolkit(object):
 
         if sAppPath.endswith("maya.exe"):
 
-            print "\nLoading maya environments:"
+            print "\nLoading maya environment:"
 
             if sAppPath.endswith("maya2016/bin/maya.exe"):
 
