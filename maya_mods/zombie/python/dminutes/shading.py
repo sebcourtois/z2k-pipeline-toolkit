@@ -188,7 +188,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         #tests if used path match the finalMapDir and if the texture exists
         elif mapPath == finalMapdir: 
             if os.path.isfile(mapFilePathExpand) == True:
-                if inVerbose == True: print "#### info: '{0:^24}' file and path corect :'{1}'".format(eachFileNode,mapFilePath)  
+                if inVerbose == True: print "#### info: '{0:^24}' file and path correct :'{1}'".format(eachFileNode,mapFilePath)  
                 continue
             else:
                 if inVerbose == True: print "#### warning: '{0:^24}' the file :'{1}' doesn't exist".format(eachFileNode,mapFilePath)       
@@ -283,8 +283,8 @@ def imageResize(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQua
     if openImageMentalRay == True:
         #open image/mentalray method
         #mentalRayBin = os.path.normpath(os.environ['MAYA_LOCATION'].replace("Maya","mentalrayForMaya")).replace("\\", "/")
-        #imfCopyCommand = miscUtils.normPath(os.environ["ZOMB_TOOL_PATH"])+"/binaries/imf_copy"
-        imfCopyCommand = "/Applications/Autodesk/mentalrayForMaya2016_old/bin/imf_copy"
+        imfCopyCommand = miscUtils.normPath(os.environ["ZOMB_TOOL_PATH"])+"/binaries/imf_copy"
+        #imfCopyCommand = "/Applications/Autodesk/mentalrayForMaya2016_old/bin/imf_copy"
         tempDir = os.getenv ("TMPDIR")
         tempDir = tempDir.rstrip("/")
         tempImageFormat = "tga"
@@ -449,8 +449,11 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
             if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: texture file node duplicated".format("Info", shadingEngine)
             conformShaderName(shadingEngine, selectWrongShadEngine = False, verbose = False )
         else:
-            mc.setAttr(preShadNode+preTextureInput, matShadTextInputValue[0], matShadTextInputValue[1],matShadTextInputValue[2], type = "double3")
-            if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: color value inherited".format("Info", shadingEngine)
+            try: 
+                mc.setAttr(preShadNode+preTextureInput, matShadTextInputValue[0], matShadTextInputValue[1],matShadTextInputValue[2], type = "double3")
+                if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: color value inherited".format("Info", shadingEngine)
+            except: 
+                if verbose == True: print "#### {:>7}: {:^28} Preview shader untouched: color value locked".format("Warning", shadingEngine)
 
 
     if  wrongShadEngine != [] and selectWrongShadEngine == True:
@@ -501,13 +504,15 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
             if re.match('^pre_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', each):
                 fileNodeList.add(each)
 
+    if len(fileNodeList) == 0:
+        print "#### {:>7}: nothing to process, please select  'pre_*' file nodes or 'sgr_*' shading engine nodes first".format("Warning")
+
     wrongFileNodeList = []    
     for eachFileNode in fileNodeList:
-        print ""
         print "#### {:>7}: Processing: '{}' ".format("Info", eachFileNode)
         wrongFileNode = False
-        mapFilePath = mc.getAttr(eachFileNode+".fileTextureName")
-        mapFilePathExpand = os.path.expandvars(os.path.expandvars(mapFilePath))
+        mapFilePath = miscUtils.normPath(mc.getAttr(eachFileNode+".fileTextureName"))
+        mapFilePathExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePath)))
         tgaFilePath = mapFilePath.replace(mapFilePath.split(".")[-1],"tga") 
         tgaFilePathExpand = mapFilePathExpand.replace(mapFilePathExpand.split(".")[-1],"tga")
         jpgFilePath = mapFilePath.replace(mapFilePath.split(".")[-1],"jpg") 
@@ -544,7 +549,12 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
             wrongFileNodeList.append(eachFileNode)
             continue
 
-        imageResize(inputFilePathName = tgaFilePath, outputFilePathName = "", lod = 3, jpgQuality = 90, updateOnly = updateOnly, openImageMentalRay = True)
+        if mainFilePathElem[-3] == "chr": 
+            LOD = 3
+        else:
+            LOD = 4
+
+        imageResize(inputFilePathName = tgaFilePath, outputFilePathName = "", lod = LOD, jpgQuality = 90, updateOnly = updateOnly, openImageMentalRay = True)
 
         if mapFilePath != jpgFilePath: 
             mc.setAttr(eachFileNode+".fileTextureName", jpgFilePath, type="string")
@@ -576,8 +586,9 @@ def makeTxForArnold(inputFilePathName = "", outputFilePathName = "", updateOnly 
         print "#### {:>7}: 'outputFilePathName' is not a string".format("Error")
         return
 
-    inputFilePathName_exp = os.path.expandvars(os.path.expandvars(inputFilePathName))
-    outputFilePathName_exp = os.path.expandvars(os.path.expandvars(outputFilePathName))
+    inputFilePathName_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(inputFilePathName)))
+    outputFilePathName_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePathName)))
+
     
     if inputFilePathName == "" :
         print "#### {:>7}: no 'inputFilePathName' given".format("Error")
@@ -611,7 +622,7 @@ def makeTxForArnold(inputFilePathName = "", outputFilePathName = "", updateOnly 
     mtoaPath = ""
     for each in renderDesc:
         normedEach = os.path.normpath(each).replace("\\", "/")
-        if "/solidangle/mtoa/2016" in normedEach:
+        if "/solidangle/mtoa" in normedEach:
             mtoaPath = normedEach
             continue
     if mtoaPath == "":
@@ -654,7 +665,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
     if a sgr_* shadingEngine node is selected, the script will consider all the 'mat_*' downstream nodes.
         updateOnly: when True and a .tx already exists, last modificaton date of inputFilePathName and outputFilePathName are compared to evaluate if the .tx needs to be generated again
         verbose: allow the problematic file node to be selected at the end of the proccess
-    """ 
+    """
     print ""
     print "#### {:>7}: runing shading.mipMapForRender( fileNodeList = {}, verbose = {}, updateOnly={})".format("Info", fileNodeList, verbose, updateOnly)
     if mc.ls("|asset"):        
@@ -680,23 +691,24 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
         fileNodeList=set()
         for each in selectedShaEngList:
             if re.match('^sgr_[a-zA-Z0-9]{1,24}$', each):
-                nodes = mc.ls(mc.listHistory (each), type = "file")
+                nodes = mc.ls(mc.listHistory (each), type = "file") + mc.ls(mc.listHistory (mc.listConnections (each+".aiSurfaceShader", source=True, destination=False, connections = False)), type = "file")
                 for eachNode in nodes:
-                    if re.match('^pre_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', eachNode):
+                    if re.match('^mat_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', eachNode):
                         fileNodeList.add(eachNode)
         for each in selectedFileList:
-            if re.match('^pre_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', each):
+            if re.match('^mat_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', each):
                 fileNodeList.add(each)
-                
+       
+    if len(fileNodeList) == 0:
+        print "#### {:>7}: nothing to process, please select  'mat_*' file nodes or 'sgr_*' shading engine nodes first".format("Warning")
 
     wrongFileNodeList = []
     
     for eachFileNode in fileNodeList:
-        print ""
         print "#### {:>7}: Processing: '{}' ".format("Info", eachFileNode)
         wrongFileNode = False
-        mapFilePath = mc.getAttr(eachFileNode+".fileTextureName")
-        mapFilePathExpand = os.path.expandvars(os.path.expandvars(mapFilePath))
+        mapFilePath = miscUtils.normPath(mc.getAttr(eachFileNode+".fileTextureName"))
+        mapFilePathExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePath)))
         tgaFilePath = mapFilePath.replace(mapFilePath.split(".")[-1],"tga") 
         tgaFilePathExpand = mapFilePathExpand.replace(mapFilePathExpand.split(".")[-1],"tga")
         mipMapFilePath = mapFilePath.replace(mapFilePath.split(".")[-1],"tx") 
