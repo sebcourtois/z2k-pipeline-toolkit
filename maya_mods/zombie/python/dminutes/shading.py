@@ -143,7 +143,7 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
 
 
 
-def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAuthorizedFormat=["jpg","tga"]):
+def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAuthorizedFormat=["jpg","tga"], returnMapPath = False):
     """
     checks all the unreferenced file nodes. 
     in : inVerbose (boolean) : log info if True
@@ -151,6 +151,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
          inCopy (boolean) : allow a copy of the texture to be made from the initial path to the final path before modifiying the path value 
          inAuthorizedFormat (list): a list of texture extention that are considered as correct
     out: outNoMapFileNodeList (list) : list of all the file nodes that need to be modified in order to get conform. 
+         outMapPathList (list)
     """ 
     print ""
     print "#### info: runing shading.conformTexturePath( inVerbose = {}, inConform = {}, inCopy = {}, inAuthorizedFormat = {} )".format(inVerbose , inConform , inCopy, inAuthorizedFormat)
@@ -158,8 +159,8 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
-            finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
-            finalMapdirExpand = os.path.expandvars(os.path.expandvars(finalMapdir))
+            finalMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
+            finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(finalMapdir)))
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
@@ -168,16 +169,16 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
 
     fileNodeList = mc.ls("*",type ="file")
     outWrongFileNodeList = []
+    outMapPathList = []
     
     for eachFileNode in fileNodeList:
         wrongFileNode = False
-        mapFilePath = mc.getAttr(eachFileNode+".fileTextureName")
-        mapFilePathExpand = os.path.expandvars(os.path.expandvars(mapFilePath))
+        mapFilePath = miscUtils.normPath(mc.getAttr(eachFileNode+".fileTextureName"))
+        mapFilePathExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePath)))
         mapPath = os.path.split(mapFilePath)[0]
         fileName = os.path.split(mapFilePath)[1]       
-        finalMapFilePathExpanded = miscUtils.pathJoin(finalMapdirExpand,fileName)
-        finalMapFilePath = miscUtils.pathJoin(finalMapdir,fileName)
-
+        finalMapFilePathExpanded = miscUtils.normPath(miscUtils.pathJoin(finalMapdirExpand,fileName))
+        finalMapFilePath = miscUtils.normPath(miscUtils.pathJoin(finalMapdir,fileName))
 
         #tests the texture extention
         mapExtention = (os.path.split(mapFilePath))[-1].split(".")[-1]
@@ -189,6 +190,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         elif mapPath == finalMapdir: 
             if os.path.isfile(mapFilePathExpand) == True:
                 if inVerbose == True: print "#### info: '{0:^24}' file and path correct :'{1}'".format(eachFileNode,mapFilePath)  
+                outMapPathList.append(mapFilePath)
                 continue
             else:
                 if inVerbose == True: print "#### warning: '{0:^24}' the file :'{1}' doesn't exist".format(eachFileNode,mapFilePath)       
@@ -226,7 +228,16 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         if inVerbose == True: 
             mc.select(outWrongFileNodeList)
             print "#### info: the wrong file nodes have been selected"
-    return outWrongFileNodeList if outWrongFileNodeList != [] else  None
+
+    if returnMapPath == False:
+        return outWrongFileNodeList if outWrongFileNodeList != [] else  None
+    elif returnMapPath == True and outWrongFileNodeList == []:
+        return outMapPathList if outMapPathList != [] else  None
+    else:
+        return None
+
+
+    
 
 
 
@@ -743,6 +754,46 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
             mc.select(wrongFileNodeList)
             print "#### {:>7}: The wrong file nodes have been selected".format("Info")
     return wrongFileNodeList if wrongFileNodeList != [] else  None
+
+
+
+def getTexturesToPublish ():
+    mapFilePathList = conformTexturePath(inVerbose = False, inConform = False, returnMapPath = True)
+
+    missingFiles = 0
+    filesToPublish = []
+
+    for mapFilePath in mapFilePathList:
+        fileExtention = mapFilePath.split(".")[-1]
+        filePath = mapFilePath.split(".")[0]
+        filePathTga_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(filePath+".tga")))
+        filePathPsd_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(filePath+".psd")))
+        filePathTx_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(filePath+".tx")))
+        filePathJpg_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(filePath+".jpg")))
+        if fileExtention == "tga":
+            if os.path.isfile(filePathTga_exp):
+                filesToPublish.append(filePathTga_exp)
+            else:
+                print "#### {:>7}: Missing file: {}".format("Error", filePathTga_exp)
+                missingFiles = missingFiles + 1
+                
+            if os.path.isfile(filePathPsd_exp):
+                filesToPublish.append(filePathPsd_exp)
+            else:
+                print "#### {:>7}: Missing file: {}".format("Error", filePathPsd_exp)
+                missingFiles = missingFiles + 1
+                
+            if os.path.isfile(filePathTx_exp):
+                filesToPublish.append(filePathTx_exp)
+            else:
+                print "#### {:>7}: Missing file: {}".format("Error", filePathTx_exp)
+                missingFiles = missingFiles + 1
+                
+            if os.path.isfile(filePathJpg_exp):
+                filesToPublish.append(filePathJpg_exp)
+    filesToPublishSet = set(filesToPublish)
+    for each in filesToPublishSet:
+        print each
 
 
 
