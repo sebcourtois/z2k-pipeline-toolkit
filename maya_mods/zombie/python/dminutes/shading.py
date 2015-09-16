@@ -57,6 +57,9 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
         shadEngineList = mc.ls(selection = True,type = "shadingEngine")
         if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
         if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
+        shadEngineListTemp = shadEngineList
+        for each in shadEngineListTemp:
+            if ":" in each: shadEngineList.remove(each) 
         if not shadEngineList : 
             print "#### {:>7}: no shading engine selected".format("Warning")
             return
@@ -120,7 +123,8 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
         mc.select(clear = True)
         for each in wrongShadEngine:
             print "#### {:>7}: {:^28} {}".format("warning", each[0], each[1])
-            if selectWrongShadEngine == True: mc.select(each[0], ne = True, add = True)
+            if selectWrongShadEngine == True: 
+                mc.select(each[0], ne = True, add = True)
         print "####    info: problematics shading engines have been selected"
     return wrongShadEngine if wrongShadEngine != [] else  None
 
@@ -370,6 +374,9 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         shadEngineList = mc.ls(selection = True,type = "shadingEngine")
         if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
         if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
+        shadEngineListTemp = shadEngineList
+        for each in shadEngineListTemp:
+            if ":" in each: shadEngineList.remove(each) 
         if not shadEngineList : 
             print "#### {:>7}: no shading engine selected".format("Warning")
             return
@@ -761,8 +768,8 @@ def getTexturesToPublish (verbose = True):
     mapFilePathList = conformTexturePath(inVerbose = False, inConform = False, returnMapPath = True)
 
     if not mapFilePathList:
-        print "#### {:>7}: One of the texture path is not conform, please run the conformTexturePath() procedure first".format("Error", filePathTga_exp)
-
+        print "#### {:>7}: One of the texture path is not conform, please run the conformTexturePath() procedure first".format("Error")
+        return
 
     missingFiles = 0
     filesToPublish = []
@@ -832,7 +839,8 @@ def getTexturesToPublish (verbose = True):
         print "#### {:>7}: {} file(s) of your working dir: '{}' is(are) not referenced in this scene:".format("Warning",len(unreferencedFileList), os.path.split(mapFilePath)[0])
         print "#### {:>7}: {}".format("Warning",unreferencedFileList)
 
-    if len(missingFiles) != 0:
+    if missingFiles != 0:
+        return 
 
 
 
