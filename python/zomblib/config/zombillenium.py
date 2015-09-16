@@ -22,8 +22,8 @@ class project:
     child_sections = libraries
 
     shotgun_class = "zomblib.shotgunengine.ShotgunEngine"
-    authenticator_class = ".authtypes.ShotgunAuth"
-    #no_damas = True
+    authenticator_class = ".authtypes.DualAuth"
+
 
 class asset_lib:
 
