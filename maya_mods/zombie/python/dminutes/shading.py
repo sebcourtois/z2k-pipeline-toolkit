@@ -757,8 +757,12 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
 
 
 
-def getTexturesToPublish ():
+def getTexturesToPublish (verbose = True):
     mapFilePathList = conformTexturePath(inVerbose = False, inConform = False, returnMapPath = True)
+
+    if not mapFilePathList:
+        print "#### {:>7}: One of the texture path is not conform, please run the conformTexturePath() procedure first".format("Error", filePathTga_exp)
+
 
     missingFiles = 0
     filesToPublish = []
@@ -791,10 +795,47 @@ def getTexturesToPublish ():
                 
             if os.path.isfile(filePathJpg_exp):
                 filesToPublish.append(filePathJpg_exp)
-    filesToPublish.sort()
+
+        if fileExtention == "jpg":
+            if os.path.isfile(filePathJpg_exp):
+                filesToPublish.append(filePathTga_exp)
+            else:
+                print "#### {:>7}: Missing file: {}".format("Error", filePathTga_exp)
+                missingFiles = missingFiles + 1
+
+            if os.path.isfile(filePathPsd_exp):
+                filesToPublish.append(filePathPsd_exp)
+            else:
+                print "#### {:>7}: Missing file: {}".format("Error", filePathPsd_exp)
+                missingFiles = missingFiles + 1
+
     filesToPublishSet = set(filesToPublish)
-    for each in filesToPublish:
-        print each
+    filesToPublish = list(filesToPublishSet)
+    filesToPublish.sort()
+
+    if verbose == True:
+        print "#### {:>7}: {} files to publish:".format("Info", len(filesToPublish))
+        for each in filesToPublish:
+            print each
+
+    unreferencedFileList = []
+    texturePath_exp = os.path.split(filePathTga_exp)[0]
+    dirContent = os.listdir(texturePath_exp)
+    print ""
+    for each in dirContent:
+        toIgnore =  ["Thumbs.db"]
+        eachFileName = miscUtils.normPath(os.path.join(texturePath_exp,each))
+        if eachFileName not in filesToPublish and os.path.isfile(eachFileName) and each not in toIgnore :
+            unreferencedFileList.append(each)
+
+    if unreferencedFileList :
+        print "#### {:>7}: {} file(s) of your working dir: '{}' is(are) not referenced in this scene:".format("Warning",len(unreferencedFileList), os.path.split(mapFilePath)[0])
+        print "#### {:>7}: {}".format("Warning",unreferencedFileList)
+
+    if len(missingFiles) != 0:
+
+
+
 
 
 
