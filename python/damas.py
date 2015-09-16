@@ -34,6 +34,8 @@ class http_connection(object) :
     def __init__(self, url) :
         #self.cj = cookielib.LWPCookieJar()
         self.serverURL = url
+        self.token = None
+        self.headers = {}
 
     def create(self, keys) :
         '''
@@ -42,6 +44,7 @@ class http_connection(object) :
         @returns {Hash} New node on success, false otherwise
         '''
         headers = {'content-type': 'application/json'}
+        headers.update(self.headers)
         r = requests.post(self.serverURL, data=json.dumps(keys), headers=headers, verify=False)
         if r.status_code == 201:
             return json.loads(r.text)
@@ -53,7 +56,7 @@ class http_connection(object) :
         @param {String} id_ the internal node index to search
         @returns {Hash} node or false on failure
         '''
-        r = requests.get(self.serverURL + '/' + id_, verify=False)
+        r = requests.get(self.serverURL + '/' + id_, headers=self.headers, verify=False)
         if r.status_code == 200:
             return json.loads(r.text)
         return None
@@ -68,6 +71,7 @@ class http_connection(object) :
         @returns {Hash} updated node or false on failure
         '''
         headers = {'content-type': 'application/json'}
+        headers.update(self.headers)
         r = requests.put(self.serverURL + '/' + id_, data=json.dumps(keys), headers=headers, verify=False)
         if r.status_code == 200:
             return json.loads(r.text)
@@ -79,7 +83,7 @@ class http_connection(object) :
         @param {String} id_ the internal node index to delete
         @returns {Boolean} True on success, False otherwise
         '''
-        r = requests.delete(self.serverURL + '/' + id_, verify=False)
+        r = requests.delete(self.serverURL + '/' + id_, headers=self.headers, verify=False)
         return r.status_code == 200
 
     def search(self, query) :
@@ -88,7 +92,7 @@ class http_connection(object) :
         @param {String} query string
         @returns {Array} array of element indexes or None if no element found
         '''
-        r = requests.get(self.serverURL + '/search/' + query, verify=False)
+        r = requests.get(self.serverURL + '/search/' + query, headers=self.headers, verify=False)
         if r.status_code == 200:
             return json.loads(r.text)
         return None
@@ -99,7 +103,7 @@ class http_connection(object) :
         @param {String} id_ the node index(es) to search
         @returns {Hash} node or false on failure
         '''
-        r = requests.get(self.serverURL + '/graph/' + id_, verify=False)
+        r = requests.get(self.serverURL + '/graph/' + id_, headers=self.headers, verify=False)
         if r.status_code == 200:
             return json.loads(r.text)
         return None
@@ -110,7 +114,7 @@ class http_connection(object) :
         @param {String} id_ the internal node index
         @returns {Boolean} True on success, False otherwise
         '''
-        r = requests.put(self.serverURL + '/lock/' + id_, verify=False)
+        r = requests.put(self.serverURL + '/lock/' + id_, headers=self.headers, verify=False)
         return r.status_code == 200
 
     def unlock(self, id_) :
@@ -119,5 +123,39 @@ class http_connection(object) :
         @param {String} id_ the internal node index
         @returns {Boolean} True on success, False otherwise
         '''
-        r = requests.put(self.serverURL + '/unlock/' + id_, verify=False)
+        r = requests.put(self.serverURL + '/unlock/' + id_, headers=self.headers, verify=False)
         return r.status_code == 200
+
+    # USERS AUTHENTICATION METHODS
+
+    def signIn(self, username, password) :
+        '''
+        @return {Boolean} True on success, False otherwise
+        '''
+        r = requests.post(self.serverURL + '/signIn', data={"username":username, "password":password}, verify=False)
+        if r.status_code == 200:
+            self.token = json.loads(r.text)
+            self.headers['Authorization'] = 'Bearer ' + self.token['token']
+            return True
+        return False
+        # opener = urllib2.build_opener( urllib2.HTTPCookieProcessor( self.cj ) )
+        # urllib2.install_opener( opener )
+        # try: a = urllib2.urlopen( self.serverURL + '/authentication.php?cmd=login&user=' + username + '&password=' + password )
+        # except: return False
+        # return json.loads( a.read() )
+
+    def signOut(self) :
+        '''
+        @return {Boolean} True on success, False otherwise
+        '''
+        self.token = None
+        del self.headers['Authorization']
+
+    def verify(self) :
+        '''
+        @return {dict} a dictionary containing username and userclass on success, None otherwise
+        '''
+        r = requests.get(self.serverURL + '/verify', headers=self.headers, verify=False)
+        if r.status_code == 200:
+            return True
+        return False
