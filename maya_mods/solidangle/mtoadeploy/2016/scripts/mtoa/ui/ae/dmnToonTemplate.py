@@ -11,10 +11,8 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.beginScrollLayout()
         self.addCustom('message', 'AEshaderTypeNew', 'AEshaderTypeReplace')
 
-
         self.addControl('output', label='Output')
-        self.addControl('opacity', label='Opacity')
-
+        
         self.beginLayout('Ambient', collapse=False)
         self.addControl('ambient_color', label='Color')
         self.addControl('ambient_intensity', label='Intensity')
@@ -40,6 +38,24 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('shadow_mask_03', label='Mask')
         self.endLayout()
 
+        self.beginLayout('Specular', collapse=True)
+        self.addControl('specular_weight', label='Weight')
+        self.addControl('specular_color', label='Color')
+        self.addControl('specular_roughness', label='Roughness')
+        self.endLayout()
+
+        self.beginLayout('Reflection', collapse=True)
+        self.addControl('reflection_weight', label='Weight')
+        self.addControl('reflection_color', label='Color')
+        self.addControl('reflection_roughness', label='Roughness')
+        self.endLayout()
+
+
+        self.beginLayout('Transparency', collapse=True)
+        self.addControl('opacity', label='Opacity')
+        self.addControl('refraction', label='Refraction')
+        self.addControl('ior', label='IOR')
+        self.endLayout()
 
         self.beginLayout('Masks', collapse=True)
         self.addControl('dmn_mask00', label='dmn_mask00')
@@ -64,6 +80,14 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('toon_normal_map_weight', label='Normal Map Weight')
         self.addControl('toon_as_float', label='As Float')
 		
+        self.beginLayout('Mid-tone', collapse=True)
+        self.addControl('toon_midtone', label='Enable Mid-tone')
+        self.addControl('toon_midtone_color', label='Color')
+        self.addControl('toon_midtone_coverage', label='Coverage')
+        self.addControl('toon_midtone_softness', label='Softness')
+        self.endLayout()
+		
+		
         self.beginLayout('Rim Toon', collapse=True)
         self.addControl('rim_toon_weight', label='Rim Weight')
         self.addControl('rim_toon_bright', label='Bright Color')
@@ -72,8 +96,10 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('rim_toon_softness', label='Softness')
         self.addControl('rim_incidence_falloff', label='Incidence Falloff')
         self.addControl('rim_toon_as_float', label='As Float')
+        self.addControl('rim_toon_premult_diffuse', label='Premult Diffuse in Beauty')
         self.endLayout()
 		
+
         self.endLayout()
 
         self.beginLayout('Lambert', collapse=True)
@@ -145,21 +171,6 @@ class AEdmnToonTemplate(ShaderAETemplate):
 
         self.addControl('contour_id', label='ID')
         self.endLayout()
-
-
-
-        self.beginLayout('AOVs', collapse=True)
-        self.addControl('toon_AOV', label='Toon')
-        self.addControl('rim_toon_AOV', label='Rim Toon')
-        self.addControl('shadow_mask_AOV', label='Shadow Mask')
-        self.addControl('lambert_AOV', label='Lambert')
-        self.addControl('diffuse_AOV', label='Diffuse')
-        self.addControl('ambient_AOV', label='Ambient')
-        self.addControl('incidence_AOV', label='Incidence')
-        self.addControl('occlusion_AOV', label='Occlusion')
-        self.addControl('contour_AOV', label='Contour')
-        self.endLayout()
-
 
         self.endLayout()
 
