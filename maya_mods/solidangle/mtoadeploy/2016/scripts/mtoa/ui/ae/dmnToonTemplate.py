@@ -42,9 +42,14 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('specular_weight', label='Weight')
         self.addControl('specular_color', label='Color')
         self.addControl('specular_roughness', label='Roughness')
-        self.addControl('specular_direct', label='Direct')
-        self.addControl('specular_indirect', label='Indirect')
         self.endLayout()
+
+        self.beginLayout('Reflection', collapse=True)
+        self.addControl('reflection_weight', label='Weight')
+        self.addControl('reflection_color', label='Color')
+        self.addControl('reflection_roughness', label='Roughness')
+        self.endLayout()
+
 
         self.beginLayout('Transparency', collapse=True)
         self.addControl('opacity', label='Opacity')
@@ -91,6 +96,7 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('rim_toon_softness', label='Softness')
         self.addControl('rim_incidence_falloff', label='Incidence Falloff')
         self.addControl('rim_toon_as_float', label='As Float')
+        self.addControl('rim_toon_premult_diffuse', label='Premult Diffuse in Beauty')
         self.endLayout()
 		
 
