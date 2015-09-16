@@ -3,7 +3,8 @@
 import os
 import os.path as osp
 
-DEV_MODE = True if os.environ.get("DEV_MODE_ENV", "") else False
+s = os.getenv("DEV_MODE_ENV", "0")
+DEV_MODE = eval(s) if s else False
 
 class project:
 
