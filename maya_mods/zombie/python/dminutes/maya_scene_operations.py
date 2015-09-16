@@ -31,7 +31,7 @@ def getSceneContent(o_inSceneManager):
     refs = pc.listReferences(namespaces=True)
     for ref in refs:
         ns = ref[0]
-        sceneContent.append({'name':'_'.join(ns.split("_")[:-1]), 'path':ref[1]})
+        sceneContent.append({'name':'_'.join(ns.split("_")[:-1]), 'path':str(ref[1])})
 
     return sceneContent
 
@@ -387,12 +387,29 @@ def init_previz_scene(o_inSceneManager):
 
     camName = 'cam_{0}'.format(o_inSceneManager.context['entity']['code'])
 
-    #remove any other shot camera
+    #rename any other shot camera
+    remainingCamera = None
+
     otherCams = pc.ls(CAMPATTERN, type='camera')
-    for otherCam in otherCams:
-        if not camName in otherCam.namespace():
-            otherRoot = getRoot(otherCam)
-            pc.delete(otherRoot)
+    camsLength = len(otherCams)
+    if camsLength > 0:
+        if camsLength > 1:#Delete cameras except first
+            for otherCam in otherCams:
+                if camsLength == 1:
+                    remainingCamera = otherCam
+                    break
+                if not camName in otherCam.namespace():
+                    oldNs = otherCam.namespace()
+                    otherRoot = getRoot(otherCam)
+                    pc.delete(otherRoot)
+                    pc.namespace(removeNamespace=oldNs, mergeNamespaceWithRoot=True)
+                    camsLength -= 1
+        else:
+            remainingCamera = otherCams[0]
+            
+        if remainingCamera != None and remainingCamera.namespace() != '{0}:'.format(camName):
+            #rename camera
+            pc.namespace(rename=(remainingCamera.namespace(), camName))
 
     camObjs = pc.ls('{0}:*'.format(camName), type='camera')
     if len(camObjs) == 0:
@@ -410,20 +427,20 @@ def init_previz_scene(o_inSceneManager):
 
     #image plane "Y:\shot\...\00_data\sqXXXX_shXXXXa_animatic.mov"
     imgPlanePath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_capture')
+    IMGP = createImgPlane()
+
     if os.path.isfile(imgPlanePath):
-        IMGP = createImgPlane()
         pc.imagePlane(IMGP[0], edit=True, fileName=imgPlanePath)
-        #IMGP[0].fileName(imgPlanePath)
     else:
         pc.warning('Image plane file cannot be found ({0})'.format(imgPlanePath))
+        pc.setAttr(IMGP[0] + ".imageName", imgPlanePath, type="string")
+        #pc.imagePlane(IMGP[0], edit=True, fileName="")
 
     #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
     soundPath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_sound')
+    pc.runtime.DeleteAllSounds()
     if os.path.isfile(soundPath):
         # --- Import Sound
-        # - Remove previous
-        pc.runtime.DeleteAllSounds()
-
         # - Import current shot Sound
         audio_shot = pc.sound( offset=101, file= soundPath, name = 'audio')
 

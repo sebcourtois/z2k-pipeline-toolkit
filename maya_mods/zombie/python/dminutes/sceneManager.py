@@ -122,7 +122,12 @@ class SceneManager():
 
             pc.setAttr(cams[0].name() + '.aspectRatio', 1.85)
 
-            #tkc.capture(capturePath, captureStart, captureEnd, 1280, 720, "textured", format="qt", compression="H.264", showFrameNumbers=False, ornaments=True, play=True, useCamera=cam)
+            #Detect if activePanel is an imageplane and change to 'modelPanel4' if True
+            curPanel = pc.playblast(activeEditor=True)
+            curCam = pc.modelEditor(curPanel, query=True, camera=True)
+            if len(pc.PyNode(curCam).getShape().getChildren() > 0):
+                pc.setFocus('modelPanel4')
+
             tkc.capture(capturePath, captureStart, captureEnd, 1280, 720, "shaded", format="qt", compression="H.264", ornaments=True,
                 useCamera='cam_sq6660_sh0010a:cam_shot_default', i_inFilmFit=1, i_inDisplayFilmGate=1,
                 i_inSafeAction=1, i_inSafeTitle=0, i_inGateMask=1, f_inMaskOpacity=1.0)
@@ -162,6 +167,10 @@ class SceneManager():
 
                 if path != None:
                     entry = self.context['damProject'].entryFromPath(path)
+                    if entry == None:
+                        result = pc.confirmDialog( title='Non existing entity', message='Entity does not exists, do yout want to create it ?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+                        pc.error("result " + result)
+                    
                     privFile = entry.edit(openFile= not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
 
                     if privFile is None:
@@ -275,7 +284,7 @@ class SceneManager():
 
         return assetsInfo
 
-    def updateScene(self):
+    def updateScene(self, addOnly=True):
         assetsInfo = self.getAssetsInfo()
 
         for assetInfo in assetsInfo:
@@ -283,8 +292,9 @@ class SceneManager():
             #print 'assetInfo["localinfo"] ' + str(assetInfo['localinfo'])
             #print 'assetInfo["path"]' + str(assetInfo['path'])
             if assetInfo['dbinfo'] == noneValue:
-                #Asset that does not exist in shot, remove
-                mop.removeAsset(self.collapseVariables(assetInfo['path']))
+                if not addOnly:
+                    #Asset that does not exist in shot, remove
+                    mop.removeAsset(self.collapseVariables(assetInfo['path']))
             elif assetInfo['dbinfo'] != assetInfo['localinfo']:
                 if notFoundvalue in assetInfo['dbinfo']:
                     pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
@@ -293,7 +303,7 @@ class SceneManager():
         
         mop.reArrangeAssets()
 
-    def updateShotgun(self):
+    def updateShotgun(self, addOnly=True):
         pass
 
     def do(self, s_inCmd):
