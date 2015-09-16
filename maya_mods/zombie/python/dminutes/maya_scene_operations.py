@@ -2,6 +2,12 @@ import pymel.core as pc
 import maya.cmds as mc
 import os
 
+CAMPATTERN = 'cam_sq*sh*:*'
+CAM_GLOBAL = 'ctrl_global'
+CAM_LOCAL = 'ctrl_local'
+CAM_DOLLY = 'ctrl_dolly'
+
+
 #0 as Maya CC, and 1 as OSD Uniform, 2 OSD adaptive
 def setSubdivPref(i_inSubDiv=0):
     attrValue = i_inSubDiv
@@ -169,6 +175,89 @@ def reArrangeAssets():
             #print camRoot, structure['cam']
             pc.parent(camRoot, structure['cam'])
 
+def getCameraRig():
+    camInfo = {}
+    cams = pc.ls(CAMPATTERN, type='camera')
+
+    if len(cams) == 0:
+        pc.error("Can't find camera matching pattern '{0}'".format(CAMPATTERN))
+
+    camInfo['Namespace'] = cams[0].namespace()
+
+    camInfo['Shape'] = cams[0]
+
+    camInfo['Transform'] = cams[0].getParent()
+
+    camRoot = getRoot(cams[0])
+    camInfo['Root'] = camRoot
+
+    if mc.objExists(camInfo['Namespace'] + CAM_GLOBAL):
+        camInfo['Global'] = pc.PyNode(camInfo['Namespace'] + CAM_GLOBAL)
+    else:
+        pc.error("Can't find global camera control with pattern '{0}'".format(camInfo['Namespace'] + CAM_GLOBAL))
+
+    if mc.objExists(camInfo['Namespace'] + CAM_LOCAL):
+        camInfo['Local'] = pc.PyNode(camInfo['Namespace'] + CAM_LOCAL)
+    else:
+        pc.error("Can't find local camera control with pattern '{0}'".format(camInfo['Namespace'] + CAM_LOCAL))
+
+    if mc.objExists(camInfo['Namespace'] + CAM_DOLLY):
+        camInfo['Dolly'] = pc.PyNode(camInfo['Namespace'] + CAM_DOLLY)
+    else:
+        pc.error("Can't find dolly camera control with pattern '{0}'".format(camInfo['Namespace'] + CAM_DOLLY))
+
+    return camInfo
+
+#Camera manipulation scripts
+def camCTRLReplace():
+    dCamInfo = getCameraRig()
+
+    vCamT = dCamInfo['Transform'].getTranslation(space='world')
+    vCamR = dCamInfo['Transform'].getRotation(space='world')
+    vCamS = dCamInfo['Transform'].getScale()
+
+    dCamInfo['Global'].setTranslation([vCamT[0],0,vCamT[2]], space='world')
+    dCamInfo['Global'].setRotation([0,vCamR[1],0], space='world')
+    dCamInfo['Local'].setTranslation(vCamT, space='world')
+    dCamInfo['Local'].setRotation([0,vCamR[1],0], space='world')
+    dCamInfo['Dolly'].setRotation(vCamR, space='world')
+    dCamInfo['Dolly'].setTranslation([0,0,0], space='object')
+
+    dCamInfo['Transform'].setTranslation([0,0,0], space='object')
+    dCamInfo['Transform'].setRotation([0,0,0], space='object')
+    dCamInfo['Transform'].setScale([1,1,1])
+
+def camKeyAll():
+    dCamInfo = getCameraRig()
+
+    mc.setKeyframe( dCamInfo['Global'].longName(), dCamInfo['Local'].longName(), dCamInfo['Dolly'].longName(), dCamInfo['Transform'].longName(), attribute=['translateX', 'translateY','translateZ', 'rotateX', 'rotateY', 'rotateZ'] )
+    mc.setKeyframe( dCamInfo['Shape'].longName(), attribute=['focalLength'] )
+
+def camRemKey():
+    dCamInfo = getCameraRig()
+
+    mc.cutKey( dCamInfo['Global'].longName(), dCamInfo['Local'].longName(), dCamInfo['Dolly'].longName(), dCamInfo['Transform'].longName(), attribute=['translateX', 'translateY','translateZ', 'rotateX', 'rotateY', 'rotateZ'] )
+    mc.cutKey( dCamInfo['Shape'].longName(), attribute=['focalLength'])
+    
+def camToZero():
+    dCamInfo = getCameraRig()
+
+    vCamT = dCamInfo['Transform'].getTranslation(space='world')
+    vCamR = dCamInfo['Transform'].getRotation(space='world')
+    vCamS = dCamInfo['Transform'].getScale()
+
+    dCamInfo['Global'].setTranslation([0,0,0], space='world')
+    dCamInfo['Global'].setRotation([0,0,0], space='world')
+    dCamInfo['Local'].setTranslation([0,0,0], space='world')
+    dCamInfo['Local'].setRotation([0,0,0], space='world')
+    dCamInfo['Dolly'].setRotation([0,0,0], space='world')
+    dCamInfo['Dolly'].setTranslation([0,0,0], space='world')
+
+    dCamInfo['Transform'].setTranslation(vCamT, space='world')
+    dCamInfo['Transform'].setRotation(vCamR, space='world')
+    dCamInfo['Transform'].setScale([1,1,1])
+
+
 #GLOBALS METHODS
 def canDo(s_inCommand, s_inTask):
     cmd = COMMANDS.get(s_inCommand)
@@ -299,7 +388,7 @@ def init_previz_scene(o_inSceneManager):
     camName = 'cam_{0}'.format(o_inSceneManager.context['entity']['code'])
 
     #remove any other shot camera
-    otherCams = pc.ls('cam_sq*sh*:*', type='camera')
+    otherCams = pc.ls(CAMPATTERN, type='camera')
     for otherCam in otherCams:
         if not camName in otherCam.namespace():
             otherRoot = getRoot(otherCam)
