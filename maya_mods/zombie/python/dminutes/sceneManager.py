@@ -125,7 +125,7 @@ class SceneManager():
             #Detect if activePanel is an imageplane and change to 'modelPanel4' if True
             curPanel = pc.playblast(activeEditor=True)
             curCam = pc.modelEditor(curPanel, query=True, camera=True)
-            if len(pc.PyNode(curCam).getShape().getChildren() > 0):
+            if len(pc.PyNode(curCam).getShape().getChildren()) > 0:
                 pc.setFocus('modelPanel4')
 
             tkc.capture(capturePath, captureStart, captureEnd, 1280, 720, "shaded", format="qt", compression="H.264", ornaments=True,
