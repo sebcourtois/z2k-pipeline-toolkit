@@ -238,7 +238,6 @@ def doRefreshSceneInfo(*args):
 
     gridContent = ["Scene", "Shotgun"]
 
-
     lengths = [20,20]
     for assetInfo in assetsInfo:
         if len(assetInfo['localinfo']) > lengths[0]:
@@ -256,11 +255,13 @@ def doRefreshSceneInfo(*args):
         pc.textScrollList("sm_sceneInfo_lb", edit=True, append=formatting.format(assetInfo['localinfo'], assetInfo['dbinfo']))
 
 def doUpdateScene(*args):
-    SCENE_MANAGER.updateScene()
+    addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
+    SCENE_MANAGER.updateScene(addOnly)
     doRefreshSceneInfo()
 
 def doUpdateShotgun(*args):
-    SCENE_MANAGER.updateShotgun()
+    addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
+    SCENE_MANAGER.updateShotgun(addOnly)
     doRefreshSceneInfo()
 
 def doCapture(*args):
@@ -273,9 +274,12 @@ def doSaveWip(*args):
 #davos
 def doEdit(*args):
     SCENE_MANAGER.edit()
+    doRefreshSceneInfo()
 
 def doPublish(*args):
-    SCENE_MANAGER.publish() 
+    SCENE_MANAGER.publish()
+    doTaskChanged()
+
 
 def doCreateFolder(*args):
     SCENE_MANAGER.createFolder() 
@@ -283,6 +287,7 @@ def doCreateFolder(*args):
 #action buttons
 def doInit(*args):
     SCENE_MANAGER.do('init')
+    doRefreshSceneInfo()
 
 def doCreate(*args):
     SCENE_MANAGER.do('create')

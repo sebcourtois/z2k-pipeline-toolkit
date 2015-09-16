@@ -122,7 +122,12 @@ class SceneManager():
 
             pc.setAttr(cams[0].name() + '.aspectRatio', 1.85)
 
-            #tkc.capture(capturePath, captureStart, captureEnd, 1280, 720, "textured", format="qt", compression="H.264", showFrameNumbers=False, ornaments=True, play=True, useCamera=cam)
+            #Detect if activePanel is an imageplane and change to 'modelPanel4' if True
+            curPanel = pc.playblast(activeEditor=True)
+            curCam = pc.modelEditor(curPanel, query=True, camera=True)
+            if len(pc.PyNode(curCam).getShape().getChildren()) > 0:
+                pc.setFocus('modelPanel4')
+
             tkc.capture(capturePath, captureStart, captureEnd, 1280, 720, "shaded", format="qt", compression="H.264", ornaments=True,
                 useCamera='cam_sq6660_sh0010a:cam_shot_default', i_inFilmFit=1, i_inDisplayFilmGate=1,
                 i_inSafeAction=1, i_inSafeTitle=0, i_inGateMask=1, f_inMaskOpacity=1.0)
@@ -162,10 +167,49 @@ class SceneManager():
 
                 if path != None:
                     entry = self.context['damProject'].entryFromPath(path)
-                    privFile = entry.edit(openFile= not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
+                    if entry == None:
+                        result = pc.confirmDialog( title='Non existing entity', message='Entity "{0}"" does not exists, do yout want to create it ?'.format(self.context['entity'][nameKey]), button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+                        if result == "Yes":
+                            self.createFolder()
+                            entry = self.context['damProject'].entryFromPath(path)
+                            if entry == None:
+                                pc.error("Problem editing the entity !")
+                        else:
+                            pc.warning('Edit cancelled by user !')
+                            return ''
+                    
+                    result = pc.confirmDialog( title='Edit options', message='Do you want to use current scene for this edit ?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+
+                    if result == "Yes":
+                        privFile = entry.edit(openFile=False, existing="keep")#existing values = choose, fail, keep, abort, overwrite
+
+                        rootPath, filename = os.path.split(privFile.absPath())
+                        vSplit = filename.split('.')
+                        if len(vSplit) != 3:
+                            pc.error("Unrecognized file pattern ! {0}".format(filename))
+
+                        version = vSplit[1]
+                        elements = os.listdir(rootPath)
+
+                        for element in elements:
+                            fullpath = os.path.join(rootPath, element)
+                            if vSplit[0] in element and os.path.isfile(fullpath):
+                                dSplit = element.split('.')
+                                if len(dSplit) == 3 and dSplit[1] > version:
+                                    version = dSplit[1]
+
+                        iversion = int(version) + 1
+
+                        newpath = os.path.join(rootPath, vSplit[0] + ".{0:03}.ma".format(iversion))
+                        mc.file(rename=newpath)
+                        mc.file(save=True)
+                    else:
+                        privFile = entry.edit(openFile= not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
 
                     if privFile is None:
                         pc.warning('There was a problem with the edit !')
+                    else:
+                        print "privFile " + str(privFile.absPath())
             else:
                 pc.warning('Given task "{0}" is unknown (choose from {1}) !'.format(TASK_FILE_REL.keys()))
         else:
@@ -275,7 +319,7 @@ class SceneManager():
 
         return assetsInfo
 
-    def updateScene(self):
+    def updateScene(self, addOnly=True):
         assetsInfo = self.getAssetsInfo()
 
         for assetInfo in assetsInfo:
@@ -283,8 +327,9 @@ class SceneManager():
             #print 'assetInfo["localinfo"] ' + str(assetInfo['localinfo'])
             #print 'assetInfo["path"]' + str(assetInfo['path'])
             if assetInfo['dbinfo'] == noneValue:
-                #Asset that does not exist in shot, remove
-                mop.removeAsset(self.collapseVariables(assetInfo['path']))
+                if not addOnly:
+                    #Asset that does not exist in shot, remove
+                    mop.removeAsset(self.collapseVariables(assetInfo['path']))
             elif assetInfo['dbinfo'] != assetInfo['localinfo']:
                 if notFoundvalue in assetInfo['dbinfo']:
                     pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
@@ -293,7 +338,7 @@ class SceneManager():
         
         mop.reArrangeAssets()
 
-    def updateShotgun(self):
+    def updateShotgun(self, addOnly=True):
         pass
 
     def do(self, s_inCmd):
