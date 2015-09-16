@@ -1,5 +1,9 @@
 
+
+import os
 import os.path as osp
+
+DEV_MODE = True if os.environ.get("DEV_MODE_ENV", "") else False
 
 class project:
 
@@ -7,11 +11,11 @@ class project:
 
     #public_path = '//Diskstation/z2k/05_3D/{}/'.format(dir_name)
     private_path = '$PRIV_ZOMB_PATH/'
+    template_path = '$ZOMB_TOOL_PATH/template/'
+
     damas_root_path = "/zomb/"
 
     private_path_envs = ("PRIV_ZOMB_PATH",)
-
-    template_path = '$ZOMB_TOOL_PATH/template/'
 
     libraries = (
         "asset_lib",
@@ -22,8 +26,13 @@ class project:
     child_sections = libraries
 
     shotgun_class = "zomblib.shotgunengine.ShotgunEngine"
-    authenticator_class = ".authtypes.DualAuth"
 
+    if DEV_MODE:
+        damas_server_addr = "https://62.210.104.42:8444"
+        authenticator_class = ".authtypes.DualAuth"
+    else:
+        authenticator_class = ".authtypes.ShotgunAuth"
+        damas_server_addr = "https://62.210.104.42:8443"
 
 class asset_lib:
 
