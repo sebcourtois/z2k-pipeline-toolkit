@@ -168,13 +168,48 @@ class SceneManager():
                 if path != None:
                     entry = self.context['damProject'].entryFromPath(path)
                     if entry == None:
-                        result = pc.confirmDialog( title='Non existing entity', message='Entity does not exists, do yout want to create it ?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No')
-                        pc.error("result " + result)
+                        result = pc.confirmDialog( title='Non existing entity', message='Entity "{0}"" does not exists, do yout want to create it ?'.format(self.context['entity'][nameKey]), button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+                        if result == "Yes":
+                            self.createFolder()
+                            entry = self.context['damProject'].entryFromPath(path)
+                            if entry == None:
+                                pc.error("Problem editing the entity !")
+                        else:
+                            pc.warning('Edit cancelled by user !')
+                            return ''
                     
-                    privFile = entry.edit(openFile= not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
+                    result = pc.confirmDialog( title='Edit options', message='Do you want to use current scene for this edit ?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+
+                    if result == "Yes":
+                        privFile = entry.edit(openFile=False, existing="keep")#existing values = choose, fail, keep, abort, overwrite
+
+                        rootPath, filename = os.path.split(privFile.absPath())
+                        vSplit = filename.split('.')
+                        if len(vSplit) != 3:
+                            pc.error("Unrecognized file pattern ! {0}".format(filename))
+
+                        version = vSplit[1]
+                        elements = os.listdir(rootPath)
+
+                        for element in elements:
+                            fullpath = os.path.join(rootPath, element)
+                            if vSplit[0] in element and os.path.isfile(fullpath):
+                                dSplit = element.split('.')
+                                if len(dSplit) == 3 and dSplit[1] > version:
+                                    version = dSplit[1]
+
+                        iversion = int(version) + 1
+
+                        newpath = os.path.join(rootPath, vSplit[0] + ".{0:03}.ma".format(iversion))
+                        mc.file(rename=newpath)
+                        mc.file(save=True)
+                    else:
+                        privFile = entry.edit(openFile= not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
 
                     if privFile is None:
                         pc.warning('There was a problem with the edit !')
+                    else:
+                        print "privFile " + str(privFile.absPath())
             else:
                 pc.warning('Given task "{0}" is unknown (choose from {1}) !'.format(TASK_FILE_REL.keys()))
         else:
