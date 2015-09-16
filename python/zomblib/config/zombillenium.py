@@ -16,7 +16,7 @@ class project:
 
     damas_root_path = "/zomb/"
 
-    private_path_envs = ("PRIV_ZOMB_PATH",)
+    private_path_envars = ("PRIV_ZOMB_PATH",)
 
     libraries = (
         "asset_lib",
