@@ -791,8 +791,9 @@ def getTexturesToPublish ():
                 
             if os.path.isfile(filePathJpg_exp):
                 filesToPublish.append(filePathJpg_exp)
+    filesToPublish.sort()
     filesToPublishSet = set(filesToPublish)
-    for each in filesToPublishSet:
+    for each in filesToPublish:
         print each
 
 
