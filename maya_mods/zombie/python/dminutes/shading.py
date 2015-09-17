@@ -155,7 +155,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
          inCopy (boolean) : allow a copy of the texture to be made from the initial path to the final path before modifiying the path value 
          inAuthorizedFormat (list): a list of texture extention that are considered as correct
     out: outNoMapFileNodeList (list) : list of all the file nodes that need to be modified in order to get conform. 
-         outMapPathList (list)
+         outMapPathForPublishList (list)
     """ 
     print ""
     print "#### info: runing shading.conformTexturePath( inVerbose = {}, inConform = {}, inCopy = {}, inAuthorizedFormat = {} )".format(inVerbose , inConform , inCopy, inAuthorizedFormat)
@@ -165,6 +165,8 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         if  mainFilePathElem[-4] == "asset":
             finalMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
             finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(finalMapdir)))
+            publicMapdir = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
+            publicMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(finalMapdir)))
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
@@ -173,7 +175,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
 
     fileNodeList = mc.ls("*",type ="file")
     outWrongFileNodeList = []
-    outMapPathList = []
+    outMapPathForPublishList = []
     
     for eachFileNode in fileNodeList:
         wrongFileNode = False
@@ -193,13 +195,24 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         #tests if used path match the finalMapDir and if the texture exists
         elif mapPath == finalMapdir: 
             if os.path.isfile(mapFilePathExpand) == True:
-                if inVerbose == True: print "#### info: '{0:^24}' file and path correct :'{1}'".format(eachFileNode,mapFilePath)  
-                outMapPathList.append(mapFilePath)
+                if inVerbose == True: print "#### Info: '{0:^24}' file and path correct :'{1}'".format(eachFileNode,mapFilePath)  
+                outMapPathForPublishList.append(mapFilePath)
                 continue
             else:
-                if inVerbose == True: print "#### warning: '{0:^24}' the file :'{1}' doesn't exist".format(eachFileNode,mapFilePath)       
+                if inVerbose == True: print "#### Warning: '{0:^24}' the file :'{1}' doesn't exist".format(eachFileNode,mapFilePath)       
                 outWrongFileNodeList.append(eachFileNode)
                 continue
+
+        #tests if used path match the finalMapDir and if the texture exists
+        elif mapPath == publicMapdir: 
+            if os.path.isfile(publicMapdirExpand) == True:
+                if inVerbose == True: print "#### Info: '{0:^24}' Published File :'{1}'".format(eachFileNode,mapFilePath)  
+                continue
+            else:
+                if inVerbose == True: print "#### Warning: '{0:^24}' the file :'{1}' doesn't exist".format(eachFileNode,mapFilePath)       
+                outWrongFileNodeList.append(eachFileNode)
+                continue
+
         #tests if the texture exists in the finalMapDir, and modify the path if inConform = True
         elif os.path.isfile(finalMapFilePathExpanded) is True:
             if inConform is True: 
@@ -207,7 +220,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
                 if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,finalMapFilePath)
                 continue
             else:
-                if inVerbose == True: print "#### warning: '{0:^24}' wrong path file :'{1}'".format(eachFileNode,mapFilePath)       
+                if inVerbose == True: print "#### Warning: '{0:^24}' wrong path file :'{1}'".format(eachFileNode,mapFilePath)       
                 outWrongFileNodeList.append(eachFileNode)
                 continue
         #tests if the texture file exists at the initial file path and copy it if required to the finalMapDir
@@ -231,12 +244,12 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         print "#### warning: {} file node(s) have wrong file path settings".format(len(outWrongFileNodeList))
         if inVerbose == True: 
             mc.select(outWrongFileNodeList)
-            print "#### info: the wrong file nodes have been selected"
+            print "#### Info: the wrong file nodes have been selected"
 
     if returnMapPath == False:
         return outWrongFileNodeList if outWrongFileNodeList != [] else  None
     elif returnMapPath == True and outWrongFileNodeList == []:
-        return outMapPathList if outMapPathList != [] else  None
+        return outMapPathForPublishList if outMapPathForPublishList != [] else  None
     else:
         return None
 
