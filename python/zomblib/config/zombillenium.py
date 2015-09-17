@@ -1,7 +1,7 @@
 
 
 import os
-import os.path as osp
+osp = os.path
 
 s = os.getenv("DEV_MODE_ENV", "0")
 DEV_MODE = eval(s) if s else False
@@ -27,13 +27,13 @@ class project:
     child_sections = libraries
 
     shotgun_class = "zomblib.shotgunengine.ShotgunEngine"
+    authenticator_class = ".authtypes.DualAuth"
 
     if DEV_MODE:
         damas_server_addr = "https://62.210.104.42:8444"
-        authenticator_class = ".authtypes.DualAuth"
     else:
-        authenticator_class = ".authtypes.ShotgunAuth"
         damas_server_addr = "https://62.210.104.42:8443"
+
 
 class asset_lib:
 

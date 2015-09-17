@@ -49,7 +49,14 @@ def buttonPublishTexturePrint(*args):
 	shading.getTexturesToPublish (verbose = True)
 
 # Make a new window
-window = mc.window( title="Shading Toolbox", iconName='Shading',toolbox = True ,widthHeight=(260, 495), sizeable = False )
+
+
+if mc.window( "shadingToolBox", exists = True ):
+    mc.deleteUI( "shadingToolBox", window=True)
+
+
+window = mc.window( "shadingToolBox", title="Shading Toolbox", iconName='Shading',toolbox = True ,widthHeight=(260, 495), sizeable = False )
+
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 mc.separator(style = 'none', h = 5  )
 
