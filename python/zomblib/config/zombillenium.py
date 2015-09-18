@@ -1,5 +1,10 @@
 
-import os.path as osp
+
+import os
+osp = os.path
+
+s = os.getenv("DEV_MODE_ENV", "0")
+DEV_MODE = eval(s) if s else False
 
 class project:
 
@@ -7,9 +12,11 @@ class project:
 
     #public_path = '//Diskstation/z2k/05_3D/{}/'.format(dir_name)
     private_path = '$PRIV_ZOMB_PATH/'
+    template_path = '$ZOMB_TOOL_PATH/template/'
+
     damas_root_path = "/zomb/"
 
-    template_path = '$ZOMB_TOOL_PATH/template/'
+    private_path_envars = ("PRIV_ZOMB_PATH",)
 
     libraries = (
         "asset_lib",
@@ -20,13 +27,21 @@ class project:
     child_sections = libraries
 
     shotgun_class = "zomblib.shotgunengine.ShotgunEngine"
-    authenticator_class = ".authtypes.ShotgunAuth"
-    #no_damas = True
+    authenticator_class = ".authtypes.DualAuth"
+
+    if DEV_MODE:
+        damas_server_addr = "https://62.210.104.42:8444"
+    else:
+        damas_server_addr = "https://62.210.104.42:8443"
+
 
 class asset_lib:
 
     public_path = '$ZOMB_ASSET_PATH'
-    private_path = '$PRIV_ZOMB_ASSET_PATH'#project.private_path + "asset"
+    private_path = osp.join(project.private_path, "asset")
+
+    public_path_envars = ('ZOMB_ASSET_PATH', 'ZOMB_TEXTURE_PATH')
+    private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
     asset_types = (
         "camera",
@@ -197,7 +212,10 @@ class shot_lib:
     entity_class = "davos.core.damtypes.DamShot"
 
     public_path = '$ZOMB_SHOT_PATH'
-    private_path = '$PRIV_ZOMB_SHOT_PATH'#project.private_path + "shot"
+    private_path = osp.join(project.private_path, "shot")
+
+    public_path_envars = ('ZOMB_SHOT_PATH',)
+    private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
     template_path = project.template_path
     template_dir = "shot_template"
@@ -241,8 +259,9 @@ class shot_lib:
 class output_lib:
 
     public_path = '$ZOMB_OUTPUT_PATH'
-    private_path = '$PRIV_ZOMB_OUTPUT_PATH'#project.private_path + "output"
+    private_path = osp.join(project.private_path, "output")
 
-
+    public_path_envars = ('ZOMB_OUTPUT_PATH',)
+    private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
 

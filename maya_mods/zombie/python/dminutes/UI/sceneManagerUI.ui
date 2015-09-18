@@ -351,6 +351,16 @@
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QCheckBox" name="sm_addOnly_bt">
+              <property name="text">
+               <string>Add only</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
          </layout>

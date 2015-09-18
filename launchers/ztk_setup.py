@@ -1,5 +1,5 @@
 
-import sys
+#import sys
 import os
 import os.path as osp
 import subprocess
@@ -7,20 +7,241 @@ import argparse
 from shutil import make_archive, ignore_patterns
 from datetime import datetime
 
+
+class Z2kToolkit(object):
+
+    envsToPrivate = (
+    "ZOMB_ASSET_PATH",
+    "ZOMB_SHOT_PATH",
+    "ZOMB_OUTPUT_PATH",
+    "ZOMB_TEXTURE_PATH",
+    )
+
+    def __init__(self, customEnvs):
+
+        sBaseName = "z2k-pipeline-toolkit"
+        sCurDirPath = pathNorm(osp.dirname(osp.abspath(__file__)))
+
+        sRoot, sTail = sCurDirPath.split(sBaseName)
+        sDirName = sBaseName + sTail.split("/", 1)[0]
+
+        sRootPath = osp.join(sRoot, sDirName)
+        if not osp.isdir(sRootPath):
+            raise EnvironmentError("No such directory: '{}'".format(sRootPath))
+
+        self.isDev = osp.isdir(osp.join(sRootPath, ".git"))
+        self.rootPath = sRootPath
+        #self.dirName = sDirName
+        self.baseName = sBaseName
+        self.pythonPath = osp.join(sRootPath, "python")
+
+        self.loadEnvs(customEnvs)
+
+    def loadEnvs(self, customEnvs):
+
+        print "Tools repository"
+        print " - path          : {0}".format(self.rootPath)
+        print " - configuration : {0}".format("Development" if self.isDev else "Production")
+        print ""
+
+        print "\nLoading site-defined environment:"
+
+        for sVar, value in customEnvs.iteritems():
+            updEnv(sVar, value, conflict="keep")
+
+        print "\nLoading common environment:"
+
+        updEnv("PYTHONPATH", self.pythonPath, conflict="add")
+
+        updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
+        updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
+
+#        for sVar in self.__class__.envsToPrivate:
+#
+#            sPubPath = osp.expandvars(os.environ[sVar])
+#            sPrivPath = makePrivatePath(sPubPath)
+#
+#            if osp.normcase(sPubPath) == osp.normcase(sPrivPath):
+#                raise EnvironmentError("Same public and private path: {}='{}'"
+#                                       .format(sVar, sPrivPath))
+#
+#            updEnv("PRIV_" + sVar, sPrivPath, conflict="keep")
+
+        os.environ["DEV_MODE_ENV"] = str(int(self.isDev))
+
+    def loadAppEnvs(self, sAppPath):
+
+        sAppPath = normCase(sAppPath)
+
+        if sAppPath.endswith("maya.exe"):
+
+            print "\nLoading maya environment:"
+
+            if sAppPath.endswith("maya2016/bin/maya.exe"):
+
+                updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"),
+                       conflict="add")
+                updEnv("Z2K_PYTHON_SITES", osp.join(self.pythonPath, "mayapy-2016-site"),
+                       conflict="add")
+
+            print ''
+
+    def install(self):
+
+        # tools update
+        repo = self.releasePath()
+        if self.isDev:
+            print "Tools update from development environment !"
+            repo = self.rootPath
+
+        local_root = osp.join(os.environ["USERPROFILE"], "zombillenium", self.baseName)
+
+        if repo == local_root:
+            print "Source == Destination !"
+        else:
+
+            sAction = "Updating" if osp.isdir(local_root) else "Installing"
+            print "\n{} Z2K Toolkit:\n'{}' -> '{}'".format(sAction, repo, local_root)
+
+            sOutput = self.makeCopy(repo, local_root,
+                                    dryRun=False, summary=False)
+
+            if not sOutput.strip():
+                print "\nNo changes !"
+                return
+
+            print "\n", sOutput
+
+            cleanUpPyc(local_root)
+
+            print ("Zombie toolkit updated, use your local to launch applications ! ({0})"
+                   .format(osp.join(local_root, "launchers")))
+
+    def release(self, location="", archive=True):
+
+        if not self.isDev:
+            raise EnvironmentError("Sorry, you are not in DEV mode !")
+
+
+
+        sDistroPath = self.releasePath(location)
+
+        sAction = "Updating" if osp.isdir(sDistroPath) else "Creating"
+        print "\n{} toolkit release:\n'{}' -> '{}'".format(sAction, self.rootPath, sDistroPath)
+
+        sOutput = self.makeCopy(self.rootPath, sDistroPath,
+                                dryRun=True, summary=False)
+        if not sOutput.strip():
+            print "\nNo changes !"
+            return
+
+        if archive and osp.exists(sDistroPath):
+            sDate = datetime.now().strftime("%Y%m%d-%H%M")
+            sZipPath = osp.join(sDistroPath + "_backups", self.baseName + "_" + sDate)
+
+            cleanUpPyc(sDistroPath)
+
+            logger = initLogger()
+            make_archive(sZipPath , "zip",
+                         root_dir=osp.dirname(sDistroPath),
+                         base_dir=osp.join('.', osp.basename(sDistroPath)),
+                         logger=logger, dry_run=False)
+
+        sOscarPath = osp.join(sDistroPath, "maya_mods", "Toonkit_module",
+                              "Maya2016", "Standalones", "OSCAR")
+
+        if not os.path.exists(sOscarPath):
+            os.makedirs(sOscarPath)
+
+        print self.makeCopy(self.rootPath, sDistroPath, dryRun=False)
+
+    def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
+
+        sOscarPath = osp.join(sSrcRepoPath, "maya_mods", "Toonkit_module",
+                              "Maya2016", "Standalones", "OSCAR")
+
+        sDryRun = "/L" if dryRun else ""
+        sNoSummary = "/NJS" if not summary else ""
+
+        sExcludeFiles = ["*.pyc", ".git*", ".*project", "*.lic", "Thumbs.db",
+                         "pull_all.bat"]
+        if not self.isDev:
+            sExcludeFiles += ["setup_*.bat"]
+        sExcludeFiles = " ".join(sExcludeFiles)
+
+        cmdLineFmt = "robocopy {} /S {} /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {}"
+        cmdLine = cmdLineFmt.format(sDryRun,
+                                    sNoSummary,
+                                    sSrcRepoPath,
+                                    sDestPath,
+                                    sOscarPath,
+                                    sExcludeFiles)
+
+#        if (not dryRun) and self.isDev:
+#            print cmdLine
+
+        return callCmd(cmdLine, catchStdout=True)
+
+    def releasePath(self, location=""):
+
+        if location:
+            sReleaseLoc = location
+        else:
+            sReleaseLoc = os.environ["ZOMB_TOOL_PATH"]
+
+        return osp.join(sReleaseLoc, self.baseName)
+
+    def launchCmd(self, cmdArgs, update=True):
+
+        self.loadAppEnvs(cmdArgs[0])
+
+        if (not self.isDev) and update:
+            self.install()
+
+#        startupinfo = subprocess.STARTUPINFO()
+#        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+#        subprocess.call(cmdArgs, startupinfo=startupinfo)
+
+        return callCmd(cmdArgs)
+
+    def runFromCmd(self):
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("command", choices=("install", "launch", "release"))
+        parser.add_argument("--update", "-upd", type=int, default=1)
+        parser.add_argument("--archive", "-arc", type=int, default=1)
+        parser.add_argument("--location", "-loc", type=str, default="")
+
+        ns, cmdArgs = parser.parse_known_args()
+
+        sCmd = ns.command
+        if sCmd == "launch":
+            self.launchCmd(cmdArgs, update=ns.update)
+            return
+
+        if sCmd == "install":
+            self.install()
+        elif sCmd == "release":
+            self.release(location=ns.location, archive=ns.archive)
+
 CREATE_NO_WINDOW = 0x8000000
 
-def runCmd(cmd, shell=False, catchOutput=True, noCmdWindow=False):
+def callCmd(cmdArgs, catchStdout=False, shell=False, inData=None, noCmdWindow=False):
 
     iCreationFlags = CREATE_NO_WINDOW if noCmdWindow else 0
 
-    pipe = subprocess.Popen(cmd, shell=shell,
-                            stdout=subprocess.PIPE if catchOutput else None,
-                            stderr=subprocess.STDOUT if catchOutput else None,
+    pipe = subprocess.Popen(cmdArgs, shell=shell,
+                            stdout=subprocess.PIPE if catchStdout else None,
+                            stderr=subprocess.STDOUT if catchStdout else None,
                             creationflags=iCreationFlags)
-
-    stdOut = pipe.communicate()[0]
-
-    return stdOut
+    if catchStdout:
+        outData, errData = pipe.communicate(inData)
+        if errData and errData.strip():
+            print cmdArgs
+            raise subprocess.CalledProcessError(errData)
+        return outData
+    else:
+        return pipe.wait()
 
 def initLogger():
 
@@ -80,12 +301,11 @@ def normCase(p):
     return osp.normcase(p).replace("\\", "/")
 
 def pathJoin(*args):
-    try:
-        p = osp.join(*args)
-    except UnicodeDecodeError:
-        p = osp.join(*tuple(toUnicode(arg) for arg in args))
-
+    p = osp.join(*args)
     return pathNorm(p)
+
+def addEndSlash(sDirPath):
+    return sDirPath if sDirPath.endswith("/") else sDirPath + "/"
 
 def iterPaths(sRootDirPath, **kwargs):
 
@@ -153,215 +373,6 @@ def cleanUpPyc(sRootPath):
 
     print "Deleted {} '.pyc' files".format(n)
 
-
-
-class Z2kToolkit(object):
-
-    envsToPrivate = (
-    "ZOMB_ASSET_PATH",
-    "ZOMB_SHOT_PATH",
-    "ZOMB_OUTPUT_PATH",
-    "ZOMB_TEXTURE_PATH",
-    )
-
-    def __init__(self, customEnvs):
-
-        sBaseName = "z2k-pipeline-toolkit"
-        sCurDirPath = pathNorm(osp.dirname(osp.abspath(__file__)))
-
-        sRoot, sTail = sCurDirPath.split(sBaseName)
-        sDirName = sBaseName + sTail.split("/", 1)[0]
-
-        sRootPath = osp.join(sRoot, sDirName)
-        if not osp.isdir(sRootPath):
-            raise EnvironmentError("No such directory: '{}'".format(sRootPath))
-
-        self.isDev = osp.isdir(osp.join(sRootPath, ".git"))
-        self.rootPath = sRootPath
-        #self.dirName = sDirName
-        self.baseName = sBaseName
-        self.pythonPath = osp.join(sRootPath, "python")
-
-        self.loadEnvs(customEnvs)
-
-    def loadEnvs(self, customEnvs):
-
-        print "Tools repository"
-        print " - path          : {0}".format(self.rootPath)
-        print " - configuration : {0}".format("Development" if self.isDev else "Production")
-        print ""
-
-        print "\nLoading user-defined environments:"
-
-        for sVar, value in customEnvs.iteritems():
-            updEnv(sVar, value, conflict="keep")
-
-        print "\nLoading common environments:"
-
-        updEnv("PYTHONPATH", self.pythonPath, conflict="add")
-
-        updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
-        updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
-
-        for sVar in self.__class__.envsToPrivate:
-
-            sPubPath = osp.expandvars(os.environ[sVar])
-            sPrivPath = makePrivatePath(sPubPath)
-
-            if osp.normcase(sPubPath) == osp.normcase(sPrivPath):
-                raise EnvironmentError("Same public and private path: {}='{}'"
-                                       .format(sVar, sPrivPath))
-
-            updEnv("PRIV_" + sVar, sPrivPath, conflict="keep")
-
-        os.environ["DEV_MODE_ENV"] = str(int(self.isDev))
-
-    def loadAppEnvs(self, sAppPath):
-
-        sAppPath = normCase(sAppPath)
-
-        if sAppPath.endswith("maya.exe"):
-
-            print "\nLoading maya environments:"
-
-            if sAppPath.endswith("maya2016/bin/maya.exe"):
-
-                updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"),
-                       conflict="add")
-                updEnv("Z2K_PYTHON_SITES", osp.join(self.pythonPath, "mayapy-2016-site"),
-                       conflict="add")
-
-            print ''
-
-    def install(self):
-
-        # tools update
-        repo = self.releasePath()
-        if self.isDev:
-            print "Tools update from development environment !"
-            repo = self.rootPath
-
-        local_root = osp.join(os.environ["USERPROFILE"], "zombillenium", self.baseName)
-
-        if repo == local_root:
-            print "Source == Destination !"
-        else:
-            sOutput = self.makeCopy(repo, local_root,
-                                    dryRun=False, summary=False)
-
-            if not sOutput.strip():
-                print "\nNo changes !"
-                return
-
-            print "\n", sOutput
-
-            cleanUpPyc(local_root)
-
-            print ("Zombie toolkit updated, use your local to launch applications ! ({0})"
-                   .format(osp.join(local_root, "launchers")))
-
-    def release(self, location="", archive=True):
-
-        if not self.isDev:
-            raise EnvironmentError("Sorry, you are not in DEV mode !")
-
-        sDistroPath = self.releasePath(location)
-        sOutput = self.makeCopy(self.rootPath, sDistroPath,
-                                dryRun=True, summary=False)
-        if not sOutput.strip():
-            print "\nNo changes !"
-            return
-
-        if archive and osp.exists(sDistroPath):
-            sDate = datetime.now().strftime("%Y%m%d-%H%M")
-            sZipPath = osp.join(sDistroPath + "_backups", self.baseName + "_" + sDate)
-
-            cleanUpPyc(sDistroPath)
-
-            logger = initLogger()
-            make_archive(sZipPath , "zip",
-                         root_dir=osp.dirname(sDistroPath),
-                         base_dir=osp.join('.', osp.basename(sDistroPath)),
-                         logger=logger, dry_run=False)
-
-        sOscarPath = osp.join(sDistroPath, "maya_mods", "Toonkit_module",
-                              "Maya2016", "Standalones", "OSCAR")
-
-        if not os.path.exists(sOscarPath):
-            os.makedirs(sOscarPath)
-
-        print self.makeCopy(self.rootPath, sDistroPath, dryRun=False)
-
-    def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
-
-        if not dryRun:
-            print "\nCopying Z2K Toolkit: \n'{0}' -> '{1}'".format(sSrcRepoPath, sDestPath)
-
-        sOscarPath = osp.join(sSrcRepoPath, "maya_mods", "Toonkit_module",
-                              "Maya2016", "Standalones", "OSCAR")
-
-        sDryRun = "/L" if dryRun else ""
-        sNoSummary = "/NJS" if not summary else ""
-
-        sExcludeFiles = ["*.pyc", ".git*", ".*project", "*.lic", "Thumbs.db",
-                         "pull_all.bat"]
-        if not self.isDev:
-            sExcludeFiles += ["setup_*.bat"]
-        sExcludeFiles = " ".join(sExcludeFiles)
-
-        cmdLineFmt = "robocopy {} /S {} /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {}"
-        cmdLine = cmdLineFmt.format(sDryRun,
-                                    sNoSummary,
-                                    sSrcRepoPath,
-                                    sDestPath,
-                                    sOscarPath,
-                                    sExcludeFiles)
-        if (not dryRun) and self.isDev:
-            print cmdLine
-
-        return runCmd(cmdLine)
-
-    def releasePath(self, location=""):
-
-        if location:
-            sReleaseLoc = location
-        else:
-            sReleaseLoc = os.environ["ZOMB_TOOL_PATH"]
-
-        return osp.join(sReleaseLoc, self.baseName)
-
-    def launchCmd(self, args, update=True):
-
-        self.loadAppEnvs(args[0])
-
-        if (not self.isDev) and update:
-            self.install()
-
-#        startupinfo = subprocess.STARTUPINFO()
-#        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-#        subprocess.call(args, startupinfo=startupinfo)
-
-        subprocess.call(args)#shell=self.isDev)
-
-    def runFromCmd(self):
-
-        parser = argparse.ArgumentParser()
-        parser.add_argument("command", choices=("install", "launch", "release"))
-        parser.add_argument("--update", "-upd", type=int, default=1)
-        parser.add_argument("--archive", "-arc", type=int, default=1)
-        parser.add_argument("--location", "-loc", type=str, default="")
-
-        ns, args = parser.parse_known_args()
-
-        sCmd = ns.command
-        if sCmd == "launch":
-            self.launchCmd(args, update=ns.update)
-            return
-
-        if sCmd == "install":
-            self.install()
-        elif sCmd == "release":
-            self.release(location=ns.location, archive=ns.archive)
 
 #if __name__ == "__main__":
 #    try:
