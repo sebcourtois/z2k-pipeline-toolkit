@@ -104,6 +104,7 @@ class AEaiStandardTemplate(ShaderAETemplate):
         self.addControl("Kt_color", label="Color")
         self.addControl("Kt", label="Weight")
         self.addControl("IOR", label="IOR")
+        self.addControl("dispersion_abbe", label="Dispersion Abbe Number")
         self.addControl("refraction_roughness", label="Roughness")
         self.addControl("Fresnel_use_IOR", changeCommand=self.checkFresnelUseIOR, label="Fresnel use IOR")
         self.addControl("transmittance", label="Transmittance")
@@ -144,7 +145,7 @@ class AEaiStandardTemplate(ShaderAETemplate):
         self.endLayout()
 
         self.addAOVLayout(aovReorder = ['direct_diffuse', 'indirect_diffuse', 'direct_specular', 'indirect_specular',
-                                        'reflection', 'refraction', 'refraction_opacity', 'emission', 'sss'])
+                                        'reflection', 'refraction', 'refraction_opacity', 'emission', 'sss', 'direct_sss', 'indirect_sss'])
 
         # include/call base class/node attributes
         pm.mel.AEdependNodeTemplate(self.nodeName)

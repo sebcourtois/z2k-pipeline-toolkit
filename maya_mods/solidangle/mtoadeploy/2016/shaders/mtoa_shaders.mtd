@@ -68,6 +68,13 @@
         aov.type                INT     0x05
     [attr aov_sss]
         aov.type                INT     0x05
+    [attr aov_direct_sss]
+        aov.type                INT     0x05
+    [attr aov_indirect_sss]
+        aov.type                INT     0x05
+    
+    
+
 
 [node volume_collector]
     maya.id    INT     0x00115D1F
@@ -77,7 +84,7 @@
 [node volume_sample_float]
 
     maya.id    INT     0x00115E51
-    maya.classification     STRING  "shader/surface"
+    maya.classification     STRING  "shader/volume"
     maya.swatch             BOOL    False
 
     [attr channel]
@@ -153,7 +160,7 @@
 
 [node volume_sample_rgb]
 maya.id                 INT     0x00115E52
-maya.classification     STRING  "shader/surface"
+maya.classification     STRING  "shader/volume"
 maya.swatch             BOOL    False
 
 [attr channel]
