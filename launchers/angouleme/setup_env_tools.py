@@ -13,7 +13,7 @@ ENVS = {
         "ZOMB_OUTPUT_PATH":"\\\\ZOMBILLENIUM\\zomb\\PRE-PROD\\output",
         "ZOMB_TOOL_PATH":"\\\\ZOMBILLENIUM\\zomb\\PRE-PROD\\tool",
 
-        "PRIV_ZOMB_PATH":'\\\\Diskstation\\Projects\\private\\$DAVOS_USER\\zomb',
+        "PRIV_ZOMB_PATH":'\\\\ZOMBIWALK\\Projects\\private\\$DAVOS_USER\\zomb',
         }
 
 try:
