@@ -90,6 +90,9 @@ class AEaiImageTemplate(ShaderAETemplate):
         self.addSeparator()
         self.addCustom('uvcoords', self.uvcoordsNew, self.uvcoordsReplace)
         
+        self.addControl("soffset", label="Offset U")
+        self.addControl("toffset", label="Offset V")
+        
         self.addControl("swrap", label="Wrap U")
         self.addControl("twrap", label="Wrap V")
         

@@ -10,7 +10,7 @@ class project:
 
     maya_version = 2016
 
-    #public_path = '//Diskstation/z2k/05_3D/{}/'.format(dir_name)
+    #public_path = '//ZOMBIWALK/z2k/05_3D/{}/'.format(dir_name)
     private_path = '$PRIV_ZOMB_PATH/'
     template_path = '$ZOMB_TOOL_PATH/template/'
 

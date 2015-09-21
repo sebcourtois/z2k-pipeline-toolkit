@@ -54,10 +54,19 @@ AiMsgSetMaxWarnings.argtypes = [c_int]
 #     int    --> tabs
 AtMsgCallBack = CFUNCTYPE(None, c_int, c_int, AtString, c_int)
 
-AiMsgSetCallback = ai.AiMsgSetCallback
-AiMsgSetCallback.argtypes = [AtMsgCallBack]
+_AiMsgSetCallback = ai.AiMsgSetCallback
+_AiMsgSetCallback.argtypes = [AtMsgCallBack]
 
-AiMsgResetCallback = ai.AiMsgResetCallback
+def AiMsgSetCallback(cb):
+    # keep a reference to avoid the callback getting garbage collected
+    ai.msg_callback_reference = cb
+    _AiMsgSetCallback(cb)
+
+_AiMsgResetCallback = ai.AiMsgResetCallback
+
+def AiMsgResetCallback():
+    ai.msg_callback_reference = None
+    _AiMsgResetCallback()
 
 def AiMsgInfo(format, *params):
     ai.AiMsgInfo(format, *params)

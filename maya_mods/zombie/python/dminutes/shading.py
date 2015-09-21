@@ -157,8 +157,9 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
     out: outNoMapFileNodeList (list) : list of all the file nodes that need to be modified in order to get conform. 
          outMapPathForPublishList (list)
     """ 
-    print ""
-    print "#### info: runing shading.conformTexturePath( inVerbose = {}, inConform = {}, inCopy = {}, inAuthorizedFormat = {} )".format(inVerbose , inConform , inCopy, inAuthorizedFormat)
+    if inVerbose == True: print ""
+    if inVerbose == True: print "#### info: runing shading.conformTexturePath( inVerbose = {}, inConform = {}, inCopy = {}, inAuthorizedFormat = {} )".format(inVerbose , inConform , inCopy, inAuthorizedFormat)
+
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
@@ -176,6 +177,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
     fileNodeList = mc.ls("*",type ="file")
     outWrongFileNodeList = []
     outMapPathForPublishList = []
+    if inVerbose == True: print "#### info: Expanded working directory: '{}'".format(finalMapdirExpand)
     
     for eachFileNode in fileNodeList:
         wrongFileNode = False
@@ -645,10 +647,16 @@ def makeTxForArnold(inputFilePathName = "", outputFilePathName = "", updateOnly 
             print "#### {:>7}: {}  -->  is up to date".format("Info", outputFilePathName)
             return
         else:
-            os.remove(outputFilePathName_exp)
+            try :
+                os.remove(outputFilePathName_exp)
+            except:
+                raise ValueError("#### Error: file is locked by your os, someone is accessing it: "+outputFilePathName_exp)
     elif os.path.isfile(outputFilePathName_exp):
-        os.remove(outputFilePathName_exp)
-    #ARNOLD_MODULE_PATH
+        try :
+            os.remove(outputFilePathName_exp)
+        except:
+            raise ValueError("#### Error: file is locked by your os, someone is accessing it: "+outputFilePathName_exp)
+
     renderDesc = os.environ["MAYA_RENDER_DESC_PATH"].split(":")
     mtoaPath = ""
     for each in renderDesc:

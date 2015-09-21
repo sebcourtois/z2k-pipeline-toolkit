@@ -20,7 +20,7 @@ class AEaiSkinTemplate(ShaderAETemplate):
 
     def setup(self):
         self.addSwatch()
-        
+       
         self.beginScrollLayout()
         
         self.addCustom('message', 'AEshaderTypeNew', 'AEshaderTypeReplace')
@@ -87,7 +87,7 @@ class AEaiSkinTemplate(ShaderAETemplate):
         
         self.endLayout()
 
-        self.addAOVLayout(aovReorder = ['specular', 'sheen', 'sss'])
+        self.addAOVLayout(aovReorder = ['specular', 'sheen', 'sss', 'direct_sss', 'indirect_sss'])
         
         # include/call base class/node attributes
         pm.mel.AEdependNodeTemplate(self.nodeName)

@@ -12,6 +12,7 @@ def ArnoldVolumeTypeChange(nodeName):
     pm.editorTemplate(dimControl=(nodeName, "filename", dim))
     pm.editorTemplate(dimControl=(nodeName, "grids", dim))
     pm.editorTemplate(dimControl=(nodeName, "frame", dim))
+    pm.editorTemplate(dimControl=(nodeName, "padding", dim))
     
     pm.editorTemplate(dimControl=(nodeName, "velocityGrids", dim))
     pm.editorTemplate(dimControl=(nodeName, "velocityScale", dim))
@@ -85,9 +86,10 @@ class AEaiVolumeTemplate(ShaderAETemplate):
         self.addControl('grids')
         self.addControl('frame')
         
-        self.addControl('stepSize')
+        self.addControl('padding')
         self.addControl('MinBoundingBox')
         self.addControl('MaxBoundingBox')
+        self.addControl('stepSize')
         self.addControl('loadAtInit')
         
         self.addSeparator()

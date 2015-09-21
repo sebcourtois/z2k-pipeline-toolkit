@@ -336,11 +336,11 @@ def createArnoldMenu():
         pm.menuItem('ArnoldUserGuide', label='User Guide', parent='ArnoldHelpMenu',
                     c=lambda *args: cmds.launch(webPage='https://support.solidangle.com/display/AFMUG/Arnold+for+Maya+User+Guide'))
 
-        pm.menuItem('ArnoldTutorials', label='Tutorials', parent='ArnoldHelpMenu',
-                    c=lambda *args: cmds.launch(webPage='https://support.solidangle.com/display/mayatut/Arnold+for+Maya+Tutorials'))
+        pm.menuItem('ArnoldTutorials', label='Common Workflows', parent='ArnoldHelpMenu',
+                    c=lambda *args: cmds.launch(webPage='https://support.solidangle.com/display/AFMUG/Common+Workflows'))
 
         pm.menuItem('ArnoldVideos', label='Videos', parent='ArnoldHelpMenu',
-                    c=lambda *args: cmds.launch(webPage='https://support.solidangle.com/display/AFMV/Arnold+for+Maya+Videos'))
+                    c=lambda *args: cmds.launch(webPage='https://support.solidangle.com/display/AFMUG/Video+Tutorials'))
 
         pm.menuItem(divider=1, parent='ArnoldHelpMenu')
 
