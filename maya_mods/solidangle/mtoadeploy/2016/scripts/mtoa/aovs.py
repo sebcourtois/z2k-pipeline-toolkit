@@ -19,6 +19,8 @@ BUILTIN_AOVS = (
                 ('mesh_light_beauty',   'rgb'),
                 ('volume',              'rgb'),
                 ('volume_opacity',      'rgb'),
+                ('volume_direct',       'rgb'),
+                ('volume_indirect',     'rgb'),
 #                ('A',       'float'),
 #                ('OBJECT',  'node'),
 #                ('SHADER',  'node'),
@@ -453,6 +455,13 @@ def createAliases(sg):
         return
     if sg.name() == "swatchShadingGroup":
         return
+        
+    if pm.hasAttr(sg, "attributeAliasList"):
+        alias_list = sg.attributeAliasList
+        if alias_list.exists() and alias_list.get() is None:
+            print "Shading Group %s with bad Attribute Alias list detected. Fixing!" % sg.name()
+            alias_list.delete()
+        
     aovList = getAOVs()
     sgAttr = sg.aiCustomAOVs
     for aov in aovList:
@@ -465,6 +474,8 @@ def createAliases(sg):
             at = sgAttr[i]
             at.aovName.set(aov.name)
        
+    if pm.referenceQuery(sg.name(), isNodeReferenced=True):
+        return
     for at in sgAttr:
         name = at.aovName.get()
         try:

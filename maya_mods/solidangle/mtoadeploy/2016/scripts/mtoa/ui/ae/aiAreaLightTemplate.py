@@ -118,7 +118,8 @@ class MeshLightTemplate(BaseAreaLightTemplate):
         self.addControl("aiSubdivType", label="Type")
         self.addControl("aiSubdivIterations", label="Iterations")
         self.addControl("aiSubdivAdaptiveMetric", label="Adaptive Metric")
-        self.addControl("aiSubdivPixelError", label="Pixel Error")
+        self.addControl("aiSubdivPixelError", label="Adaptative Error")
+        self.addControl("aiSubdivAdaptiveSpace", label="Adaptative Space")
         # TODO: add dicing camera UI
         self.addControl("aiSubdivDicingCamera", label="Dicing Camera")
         self.addControl("aiSubdivUvSmoothing", label="UV Smoothing")
