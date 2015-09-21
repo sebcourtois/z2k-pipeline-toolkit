@@ -10,7 +10,8 @@
 # Comment : wip
 #
 # TO DO:
-#       wip handle module import style
+#   wip handle module import style
+#   - Unlockink the edited file if not saved
 
 
 ########################################################
@@ -25,25 +26,35 @@
 
 import os
 import maya.cmds as cmds
-import dminutes.jipeLib_Z2K as Z2K
+
+# import dminutes.Z2K_ReleaseTool.Z2K_Asset_Previz_checks as Z2K_PcheckD
+# reload(Z2K_PcheckD)
+# import dminutes.Z2K_ReleaseTool._versions.Z2K_Asset_Previz_checks_v007 as Z2K_PcheckD
+# Z2K_Pcheck = Z2K_PcheckD.AssetPrevizMod()
+import dminutes.Z2K_wrapper as Z2K
 reload(Z2K)
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Asset_Previz_checks_v007 as Z2K_PcheckD
-reload(Z2K_PcheckD)
-print"zoo"
-Z2K_Pcheck = Z2K_PcheckD.AssetPrevizMod()
+import dminutes.jipeLib_Z2K as jpm
+reload(jpm)
+
+
 
 
 class Z2K_ReleaseTool (object):
     
     version = "_v0.04"            
     name = "Z2K_ReleaseTool" + str(version)
-    width = 250
+    
+    basePath =  os.environ.get("MAYA_MODULE_PATH").split(";")[0]
+    upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_RELEAZE_LOGO_A1.bmp"
+
+    baseAssetPath =  os.environ.get("ZOMB_ASSET_PATH")
+    print baseAssetPath
     def __init__(self, sourceAsset="", SourceAssetType="previz_scene", destinationAsset = "", destinationAssetType= "previz_ref", 
-                projConnectB= True,theProject="zombtest", *args, **kwargs):
+        projConnectB= True,theProject="zombtest", *args, **kwargs):
         print "__init__"
         self.cf = "Z2K_ReleaseTool"
 
-        self.assetL = self.getAssetL(theDir=r"P:/zombtest/asset/chr")
+        self.assetL = self.getAssetL(theDir=os.path.normpath(self.baseAssetPath)+os.sep+ "chr")
         self.sourceAsset = sourceAsset
         self.sourceAssetType = SourceAssetType
         self.destinationAsset = destinationAsset
@@ -63,33 +74,22 @@ class Z2K_ReleaseTool (object):
 
 
 
-    # ------------------------ JIPE_LIL Functions ------------------------------------
-    def jipeExec(self, filepath, mode="file", *args):  
-            # use : historyswitchmode() ,
-            print ("/" * 150 + "\n" + "/" * 150 + "\n")
-            try:
-                filetoread = open(filepath, 'rU')
-                scrtxt = filetoread.read()
-                print "*file*",scrtxt
-                ns = {}
-                if filepath.find (".mel") not in [False,-1] :
-                    print "MEL *******"
-                    mel.eval(scrtxt) in ns
-                
-                else :
-                    exec (scrtxt) in ns
-            except Exception as erreur:
-                print "ERREUR jipeExec() : ", type(erreur), erreur.args, erreur
+    # ------------------------ JIPE_LIB Functions ------------------------------------
+
 
 
 
     # ------------------------ OS/Z2K Functions ------------------------------------
-    def openAsset(self,sourceAsset="chr_aurelien_manteau",SourceAssetType="previz_scene",*args,**kwargs):
+    def openAsset(self,sourceAsset="chr_aurelien_manteau",SourceAssetType="previz_scene",readOnly=False,*args,**kwargs):
         curLeadAsset = sourceAsset
         
         path_public,path_private = Z2K.getPath(proj=self.proj, assetName=curLeadAsset,pathType=SourceAssetType)
-        path_private_toEditC = Z2K.editFile(proj=self.proj, Path_publish_public=path_public)
-        path_private_toEdit = path_private_toEditC.absPath()
+        if readOnly :
+            path_private_toEdit = Z2K.openFileReadOnly(proj=self.proj, Path_publish_public=path_public)
+        else:
+
+            path_private_toEditC = Z2K.editFile(proj=self.proj, Path_publish_public=path_public)
+            path_private_toEdit = path_private_toEditC.absPath()
         print "path_private_toEdit=", path_private_toEdit
 
         cmds.file(path_private_toEdit,open=True,f=True)
@@ -97,7 +97,7 @@ class Z2K_ReleaseTool (object):
         return path_private_toEdit
 
     def getAssetL (self,theDir=r"P:/zombtest/asset/chr",*args,**kwargs):
-
+        print "theDir=", theDir
         assetL = os.listdir(theDir)
 
         for a in assetL:
@@ -143,10 +143,10 @@ class Z2K_ReleaseTool (object):
 
 
 class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
+    layoutImportModule=""
     def __init__(self,sourceAsset,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject,*args, **kwargs):
         # self = Z2K_ReleaseTool
         Z2K_ReleaseTool.__init__(self,sourceAsset,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject)
-        
         # self.sourceAsset = sourceAsset
         # self.SourceAssetType = SourceAssetType
         # self.destinationAsset = destinationAsset
@@ -158,13 +158,13 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         print "theProject = ", self.proj
         print self.name,self.version
         self.cf = self.name + self.version
-
+        self.width = 300
 
 # --------------interface functions-----------------------------------------------
     def getInterfaceValues( self,*args,**kwargs):
         print "getInterfaceValues()"
-        self.sourceAsset = cmds.textField(self.BsourceAsset,q=1,text=True)
-        self.destinationAsset = cmds.textField(self.BdestinationAsset,q=1,text=True)
+        self.sourceAsset = cmds.textField(self.BsourceAsset, q=1,text=True)
+        self.destinationAsset = cmds.textField(self.BdestinationAsset, q=1,text=True)
 
         self.sourceAssetType = "previz_scene"
         self.destinationAssetType = "previz_ref"
@@ -189,15 +189,12 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
 
-    # def btn_check_Asset( self,*args,**kwargs):
-    #     print "btn_check_Asset()"
-    #     self.getInterfaceValues()
-    #     self.jipeExec ("C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/Z2K_WORKGROUP/Asset_Previz_checks_v001.py")
 
-    # def btn_clean_Asset( self,*args,**kwargs):
-    #     print "btn_clean_Asset()"
-    #     self.getInterfaceValues()
-    #     self.jipeExec ("C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/Z2K_WORKGROUP/Asset_Previz_checks_v001.py")
+    def btn_open_Asset_readOnly(self,*args, **kwargs):
+        print "btn_open_Asset_readOnly()"
+        self.getInterfaceValues()
+        self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=True)
+
 
     def btn_release_Asset( self,*args,**kwargs):
         print "btn_release_Asset()"
@@ -207,22 +204,29 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
 
 # --------------Window-----------------------------------------------
+    def deleteUIandpref(self,*args, **kwargs):
+        print "deleteUIandpref()"
+        cmds.deleteUI( self.dc)
+        # print cmds.windowPref( self.cf, q=True ,w=1)
+        # cmds.windowPref( self.cf, e=True ,w=100,h=100,te=10,le=10)
+        # print cmds.windowPref( self.cf, q=True ,w=1)
 
     def createWin(self,*args,**kwargs):
+        textF_w = 120
         # test si la windows exist / permet d'avoir plusieurs windows grace a var "cf" de la class
         if cmds.window(self.cf, q=True, exists=True):
             cmds.deleteUI(self.cf, window=True)
         #create la window et rename apres
-        self.cf = cmds.window(self.cf ,rtf=True, tlb=False, t=(self.cf + " : " + str(self.cf)), width=self.width)
-        cmds.window(self.cf, e=True, sizeable=True, t=(self.cf + " : " + str(self.cf)))
+        self.cf = cmds.window(self.cf ,rtf=True, tlb=True, t=(self.cf + " : " + str(self.cf)), width=self.width,)
+        cmds.window(self.cf, e=True, sizeable=True, t=(self.cf + " : " + str(self.cf)), h=50,w=50)
         #BIG TAB ------------------------------------------------------------------------------------------------
         cmds.frameLayout(marginHeight=2, marginWidth=2,lv=0)
         
         cmds.frameLayout("Bigframe", marginHeight=0, marginWidth=0, labelVisible=False, fn="tinyBoldLabelFont", cll=False)
-        cmds.columnLayout(adjustableColumn=True)
-        basePath =  os.environ.get("MAYA_MODULE_PATH").split(";")[0]
-        aa= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/images/Z2K_previz_bgi.bmp"
-        cmds.image( image=aa )
+        cmds.columnLayout(adjustableColumn=True,columnOffset= ["both",5],adj=True,)
+        cmds.columnLayout(adjustableColumn=True,)
+        cmds.image( image=self.upImg )
+        cmds.setParent("..")
         
         # cmds.frameLayout(lv=1, mh=5, mw=5,l="OPEN:",cll=1)
         
@@ -233,11 +237,11 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         cmds.optionMenu(self.BsourceAssetMenu ,e=True, value=self.sourceAsset)
 
         cmds.rowLayout(nc=4,adj=1,)
-        self.BsourceAsset = cmds.textField("sourceAssetName",text=self.sourceAsset,w=170)
+        self.BsourceAsset = cmds.textField("sourceAssetName",text=self.sourceAsset,w=textF_w)
         self.BsourceAssetType = cmds.textField("sourceAssetType",text=self.sourceAssetType, w=85)
-
-        cmds.setParent("..")
-        self.Bopen_Asset = cmds.button("OPEN ASSET",c= self.btn_open_Asset)
+        # cmds.setParent("..")
+        self.Bopen_Asset = cmds.button("EDIT ASSET",ann="EDIT ASSET",c= self.btn_open_Asset)
+        self.Bopen_Asset_ReadOnly = cmds.button("SEE",ann="SEE ASSET",c= self.btn_open_Asset_readOnly) 
         
         cmds.setParent("..")
         cmds.separator(  style='out' )
@@ -247,7 +251,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         self.layoutImportModule = cmds.frameLayout("layoutImportModule",lv=0)
         
         
-        Z2K_Pcheck.insertLayout(parent=self.layoutImportModule )
+        # Z2K_Pcheck.insertLayout(parent=self.layoutImportModule )
 
         # destination asset menu -------------------------------------------------------------------
         cmds.setParent("..")
@@ -259,26 +263,30 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
         
         cmds.rowLayout(nc=4,adj=1,)
-        self.BdestinationAsset = cmds.textField("destinationAssetName",text=self.destinationAsset,w=170)
+        self.BdestinationAsset = cmds.textField("destinationAssetName",text=self.destinationAsset,w=textF_w)
         self.BdestinationAssetType = cmds.textField("sourceAssetType",text=self.destinationAssetType, w=85)
-
-        cmds.setParent("..")
+        # cmds.setParent("..")
         self.Brelease_Asset  = cmds.button("RELEASE ASSET",c= self.btn_release_Asset)
         
         # show the window
-        cmds.showWindow(self.cf)
+        # cmds.showWindow(self.cf)
+        allowedAreas = ['right', 'left']
+        self.dc = self.cf+"_Dock"
+        if cmds.dockControl(self.dc, q=True, exists=True):
+            cmds.deleteUI(self.dc, )
+        self.dc=cmds.dockControl(self.dc, area='right', content=self.cf, allowedArea=allowedAreas,r=True,floating=1,cc=self.deleteUIandpref )
 
 
 
 
 
 
-Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene",
-                        destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
-                         projConnectB= True, theProject="zombtest")
+# Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene",
+#                         destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
+#                          projConnectB= True, theProject="zombtest")
 
 
-Z2K_ReleaseTool_GuiI.createWin()
+# Z2K_ReleaseTool_GuiI.createWin()
 
 
 
