@@ -444,7 +444,9 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
             preShadNode = preShadNode[-1]
 
         if not matShadNode or mc.nodeType(matShadNode[-1]) != matShadNodeType:
-            wrongShadEngine.append((shadingEngine,"The material shading node is missing or has a wrong type: "))
+            if verbose == True: print "#### {:>7}: {:^28} The material shading node is missing or has a wrong type,  ".format("Info", shadingEngine)
+            matShadNode = mc.shadingNode(matShadNodeType, asShader=True)
+            mc.connectAttr(matShadNode+".outColor", shadingEngine+'.aiSurfaceShader', force =True)
             continue
         else:
             matShadNode = matShadNode[-1]
