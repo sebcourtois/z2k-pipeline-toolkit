@@ -21,6 +21,10 @@ def setArnoldRenderOption(outputFormat):
     shadingMode = False
     outputImageName = ""
 
+    #creates a workspace named as the davos user en the maya project path and set it
+    miscutils.createUserWorkspace()
+
+
     #define output directoy
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
@@ -121,6 +125,7 @@ def setArnoldRenderOption(outputFormat):
     if shadingMode == True:
         mc.setAttr("defaultArnoldRenderOptions.AASamples",4)
         mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",0)
+        mc.setAttr("defaultArnoldRenderOptions.force_texture_cache_flush_after_render",1)
     else:
         mc.setAttr("defaultArnoldRenderOptions.AASamples",8)
         mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",1)
@@ -131,7 +136,6 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.sssBssrdfSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp",1)
     mc.setAttr("defaultArnoldRenderOptions.AASampleClamp",2.5)
-
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
     
 
