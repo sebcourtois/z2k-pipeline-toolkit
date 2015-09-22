@@ -25,7 +25,8 @@ CTRLS_SIZE = 1.0
 
 CTRL_SETNAME = "set_control"
 CACHE_SETNAME = "set_meshCache"
-GEOMETRIES_LAYERNAME = "layer_geometry"
+GEOMETRIES_LAYERNAME = "geometry"
+CTRLS_LAYERNAME = "control"
 
 DISPLAYS_CACHE_ATTRNAME = "rig_displays"
 
@@ -223,7 +224,8 @@ def createSetControlRecur(inGrp, inRoot, b_inRecursive=True):
     pc.parent(icon, inRoot)
     tkc.matchTRS(icon, inGrp)
     tkc.setNeutralPose(icon)
-    tkc.constrain(inGrp, icon, "Pose", inAdditionnalArg=True)
+    tkc.constrain(inGrp, icon, "Pose")
+    tkc.constrain(inGrp, icon, "Scaling")
 
     if isRootControl:
         global_srt = tkc.createCubeIcon(SPECNAMES['global_srt'], size=CTRLS_SIZE, scale=(2, 0.001, 2))
@@ -320,6 +322,11 @@ def rigSet(inRoot):
 
     pc.sets(groups, name=CACHE_SETNAME)
 
+    #Clean old layers
+    oldLayers = pc.ls("layer_*", type="displayLayer")
+    if len(oldLayers) > 0:
+        pc.delete(oldLayers)
+
     #Put all geometries in a layer, and set it to "reference"
     if pc.objExists(GEOMETRIES_LAYERNAME):
         pc.delete(GEOMETRIES_LAYERNAME)
@@ -328,10 +335,14 @@ def rigSet(inRoot):
     newLayer = pc.createDisplayLayer(name=GEOMETRIES_LAYERNAME)
     pc.setAttr(newLayer + ".displayType", 2)
 
+    #Put all controls in a layer
+    if pc.objExists(CTRLS_LAYERNAME):
+        pc.delete(CTRLS_LAYERNAME)
+
+    pc.select(ctrls)
+    newLayer = pc.createDisplayLayer(name=CTRLS_LAYERNAME, noRecurse=True)
+
     pc.select(clear=True)
-
-
-    
 
 def checkMeshNamingConvention(printInfo = True, inParent = "*"):
     """
