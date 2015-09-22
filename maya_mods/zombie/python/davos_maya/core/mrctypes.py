@@ -60,7 +60,7 @@ class MrcFile(DrcFile):
             self.assertIsMayaScene()
 
         if self.isPublic():
-            sOpenSuffix = "".join((self.versionSuffix(), '-', 'temp'))
+            sOpenSuffix = "".join((self.versionSuffix(), '-', 'readonly'))
             privFile, _ = self.copyToPrivateSpace(suffix=sOpenSuffix)
         else:
             privFile = self
