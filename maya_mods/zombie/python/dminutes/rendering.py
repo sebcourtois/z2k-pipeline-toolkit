@@ -22,7 +22,7 @@ def setArnoldRenderOption(outputFormat):
     outputImageName = ""
 
     #creates a workspace named as the davos user en the maya project path and set it
-    miscutils.createUserWorkspace()
+    miscUtils.createUserWorkspace()
 
 
     #define output directoy
