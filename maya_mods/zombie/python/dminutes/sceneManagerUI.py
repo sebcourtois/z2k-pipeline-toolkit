@@ -29,7 +29,7 @@ ACTION_BUTTONS = []
 def refreshContextUI():
     contextMatches = SCENE_MANAGER.refreshSceneContext()
 
-    pc.control('sm_switchContext_bt', edit=True, visible=not contextMatches)
+    pc.control('sm_switchContext_bt', edit=True, enable= not contextMatches)
 
     pc.control('sm_capture_bt', edit=True, enable=contextMatches)
     pc.control('sm_saveWip_bt', edit=True, enable=contextMatches)
@@ -37,10 +37,37 @@ def refreshContextUI():
 
 def setContextUI():
     SCENE_MANAGER.refreshSceneContext()
-    sceneEntry = SCENE_MANAGER.context('sceneEntry')
+    context = SCENE_MANAGER.getContextFromDavosData()
 
-    if sceneEntry != None:
-        print "Got scene entry : " + str(sceneEntry.getAllValues(True))
+    if context != None:
+        #print context
+        setOption("sm_step_dd", context["step"])
+
+        if "shot" in context:
+            setOption("sm_seq_dd", context["seq"])
+            setOption("sm_shot_dd", context["shot"])
+
+        return True
+
+    return False
+
+def setOption(s_inName, s_inValue):
+    items = pc.optionMenu(s_inName, query=True, itemListShort=True)
+    #print items
+    if not s_inName + "_" + s_inValue.replace(" ", "_") in items:
+        pc.error("Value does not exists or is not available for this user {0} ({1}) !!".format(s_inValue, s_inName))
+
+    if pc.optionMenu(s_inName, query=True, value=True) != s_inValue:
+        pc.optionMenu(s_inName, edit=True, value=s_inValue)
+
+        if s_inName == 'sm_step_dd':
+            doStepChanged()
+        elif s_inName == 'sm_categ_dd' or s_inName == 'sm_seq_dd':
+            doCategChanged()
+        elif s_inName == 'sm_asset_dd' or s_inName == 'sm_shot_dd':
+            doEntityChanged()
+        elif s_inName == 'sm_task_dd':
+            doTaskChanged()
 
 def refreshOptionMenu(s_inName, a_Items):
     items = pc.optionMenu(s_inName, query=True, itemListShort=True)
@@ -82,7 +109,14 @@ def initialize(d_inContext=None):
     if d_inContext != None:
         SCENE_MANAGER.init(d_inContext)
 
+    #Hide some controls
+    pc.control("fileStatusGroup", edit=True, visible=False)
+    pc.control("sm_createFolder_bt", edit=True, visible=False)
+    pc.control("sm_edit_bt", edit=True, visible=False)
+
     doStepChanged()
+
+    setContextUI()
 
 def updateButtons():
     for buttonName in ACTION_BUTTONS:
@@ -105,6 +139,8 @@ def connectCallbacks():
     pc.textScrollList('sm_versions_lb', edit=True, sc=doVersionChanged)
 
     #buttons
+    pc.button('sm_detect_bt', edit=True, c=doDetect)
+
     pc.button('sm_refreshScene_bt', edit=True, c=doRefreshSceneInfo)
     pc.button('sm_upscene_bt', edit=True, c=doUpdateScene)
     pc.button('sm_updb_bt', edit=True, c=doUpdateShotgun)
@@ -133,6 +169,7 @@ def doDisconnect(*args):
     sceneManagerUI()
 
 def doStepChanged(*args):
+    #print args
     step = pc.optionMenu("sm_step_dd", query=True, value=True)
     SCENE_MANAGER.context['step'] = None
 
@@ -145,7 +182,7 @@ def doStepChanged(*args):
     if SCENE_MANAGER.context['step'] == None:
         pc.error('Cannot get entity type from step {0} !'.format(step))
 
-    refreshStep()
+    refreshStep(*args)
 
 def doCategChanged(*args):
     categCtrlName = 'sm_seq_dd' if SCENE_MANAGER.context['step']['entity_type'] == 'Shot' else 'sm_categ_dd'
@@ -156,7 +193,7 @@ def doCategChanged(*args):
 
     refreshOptionMenu(entityCtrlName, sorted(CATEG_ITEMS[categ].keys()))
 
-    doEntityChanged()
+    doEntityChanged(*args)
 
 def doEntityChanged(*args):
     global TASKS
@@ -174,7 +211,7 @@ def doEntityChanged(*args):
 
     refreshOptionMenu('sm_task_dd', sorted(TASKS.keys()))
 
-    doTaskChanged()
+    doTaskChanged(*args)
 
 def doTaskChanged(*args):
     global VERSIONS
@@ -193,11 +230,11 @@ def doTaskChanged(*args):
     if len(versions) > 0:
         pc.textScrollList("sm_versions_lb", edit=True, append=sorted(VERSIONS.keys()))
 
-    doRefreshSceneInfo()
+    doRefreshSceneInfo(*args)
 
     doRefreshFileStatus()
 
-    doVersionChanged()
+    doVersionChanged(*args)
 
 def doRefreshFileStatus(*args):
     SCENE_MANAGER.refreshStatus()
@@ -249,7 +286,7 @@ def refreshStep(*args):
             CATEG_ITEMS[seqName][shot['code']] = shot
 
         refreshOptionMenu('sm_seq_dd', categ_names)
-        doCategChanged()
+        doCategChanged(*args)
 
     elif SCENE_MANAGER.context['step']['entity_type'] == 'Asset':
         pc.control('sm_asset_chooser_grp', edit=True, visible=True)
@@ -271,12 +308,15 @@ def refreshStep(*args):
             CATEG_ITEMS[asset['sg_asset_type']][asset['code']] = asset
 
         refreshOptionMenu('sm_categ_dd', categ_names)
-        doCategChanged()
+        doCategChanged(*args)
 
     else:
         pc.error('Unknown entity type {0} from step {1} !'.format(SCENE_MANAGER.context['entity_type'], step))
 
 #buttons
+def doDetect(*args):
+    setContextUI()
+
 def doRefreshSceneInfo(*args):
     assetsInfo = SCENE_MANAGER.getAssetsInfo()
 
@@ -310,18 +350,18 @@ def doUnlock(*args):
 def doUpdateScene(*args):
     addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
     SCENE_MANAGER.updateScene(addOnly)
-    doRefreshSceneInfo()
+    doRefreshSceneInfo(args)
 
 def doUpdateShotgun(*args):
     addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
     SCENE_MANAGER.updateShotgun(addOnly)
-    doRefreshSceneInfo()
+    doRefreshSceneInfo(args)
 
 def doCapture(*args):
     if SCENE_MANAGER.assert_isEditable():
         b_increment = pc.checkBox('sm_increment_bt', query=True, value=True)
         SCENE_MANAGER.capture(b_increment)
-        doRefreshSceneInfo()
+        doRefreshSceneInfo(args)
 
 def doSaveWip(*args):
     if SCENE_MANAGER.assert_isEditable():

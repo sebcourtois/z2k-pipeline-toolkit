@@ -31,6 +31,8 @@ def getSceneContent(o_inSceneManager):
     refs = pc.listReferences(namespaces=True)
     for ref in refs:
         ns = ref[0]
+        path = ref[1]
+
         sceneContent.append({'name':'_'.join(ns.split("_")[:-1]), 'path':str(ref[1])})
 
     return sceneContent
@@ -125,6 +127,17 @@ def getAssetRoot(s_inNS):
                     if len(roots) > 0:
                         assetRoot = roots[0]
                         pc.warning(deprecatedMessage.format(assetRoot.name()))
+                    else:
+                        #try with NS:NS - last "_"
+                        modifiedNS = "_".join(s_inNS.split("_")[:-1]) + "_previz"
+                        if "_default" in modifiedNS:
+                            modifiedNS = modifiedNS.replace('_default', '')
+
+                        oldRootName = '{0}:{1}'.format(s_inNS, modifiedNS)
+                        roots = pc.ls(oldRootName)
+                        if len(roots) > 0:
+                            assetRoot = roots[0]
+                            pc.warning(deprecatedMessage.format(assetRoot.name()))
 
     return assetRoot
 

@@ -236,7 +236,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="groupBox_6">
+        <widget class="QGroupBox" name="fileStatusGroup">
          <property name="title">
           <string>File Status</string>
          </property>
@@ -366,6 +366,13 @@
           <property name="margin">
            <number>0</number>
           </property>
+          <item>
+           <widget class="QPushButton" name="sm_detect_bt">
+            <property name="text">
+             <string>Detect context from scene</string>
+            </property>
+           </widget>
+          </item>
           <item>
            <widget class="QListWidget" name="sm_sceneInfo_lb">
             <property name="font">

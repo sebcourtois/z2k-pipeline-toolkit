@@ -15,13 +15,24 @@ import dminutes.maya_scene_operations as mop
 
 PROJECTNAME = "zombillenium"
 
-noneValue = 'None !'
-notFoundvalue = 'Not found !'
+noneValue = 'NONE'
+notFoundvalue = 'NOT FOUND'
 
 #FROM DAVOS !!!!
+STEP_FILE_REL = {'Previz 3D':'previz_scene'}
 TASK_FILE_REL = {'previz 3D':'previz_scene'}
+TASK_ASSET_REL = {'previz 3D':'previz_ref'}
 LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
 FILE_SUFFIXES = {'Previz 3D':'_previz.ma'}
+
+def getReversedDict(in_dict):
+    reverseDict = {}
+
+    for key in in_dict:
+        if not in_dict[key] in reverseDict:
+            reverseDict[in_dict[key]] = key
+
+    return reverseDict
 
 def pathNorm(p):
     return os.path.normpath(p).replace("\\", "/")
@@ -109,14 +120,38 @@ class SceneManager():
 
         return path
 
+    def getContextFromDavosData(self):
+        davosContext = {}
+        if not "resource" in self.context['sceneData'] or not "section" in self.context['sceneData'] or not "name" in self.context['sceneData']:
+            return None
+
+        if self.context['sceneData']["section"] == "shot_lib":
+            file_step_rel = getReversedDict(STEP_FILE_REL)
+            if self.context['sceneData']["resource"] in file_step_rel:
+                davosContext['step'] = file_step_rel[self.context['sceneData']["resource"]]
+
+            davosContext['seq'] = self.context['sceneData']["sequence"]
+            davosContext['shot'] = self.context['sceneData']["name"]
+
+        elif self.context['sceneData']["section"] == "asset_lib":
+            pc.warning("asset_lib section not managed yet !!")
+            return None
+        else:
+            pc.warning("Unknown section {0}".format(self.context['sceneData']["section"]))
+            return None
+
+        return davosContext
+
     def refreshSceneContext(self):
         self.context['sceneEntry'] = None
+        self.context['sceneData'] = {}
 
-        currentScene = os.path.abspath(mc.file(q=True, sn=True))
-        if currentScene != '':
-            entry = self.context['damProject'].entryFromPath(currentScene)
+        curScenePath = os.path.abspath(mc.file(q=True, sn=True))
+        if curScenePath != '':
+            entry = self.context['damProject'].entryFromPath(curScenePath)
             if entry != None:
                 self.context['sceneEntry'] = entry
+                self.context['sceneData'] = self.context['damProject'].dataFromPath(curScenePath)
 
         return self.contextIsMatching()
 
@@ -135,7 +170,9 @@ class SceneManager():
         message = ""
         
         if not self.refreshSceneContext():
-            message = "Your context does not match with current scene {0} => {1} !".format(os.path.basename(self.getEntry().absPath()), os.path.basename(self.context['sceneEntry'].getPublicFile().absPath()))
+            sceneEntry = self.context['sceneEntry']
+            entrymessage = os.path.basename(sceneEntry.getPublicFile().absPath()) if sceneEntry != None else "No entry !"
+            message = "Your context does not match with current scene {0} => {1} !".format(os.path.basename(self.getEntry().absPath()), entrymessage)
         
         if not self.isEditable():
             message = "Your entity is locked by {0} !".format(self.context['lock'])
@@ -364,7 +401,8 @@ class SceneManager():
                     if privFile is None:
                         pc.warning('There was a problem with the edit !')
                     else:
-                        print "privFile " + str(privFile.absPath())
+                        pass
+                        #print "privFile " + str(privFile.absPath())
             else:
                 pc.warning('Given task "{0}" is unknown (choose from {1}) !'.format(TASK_FILE_REL.keys()))
         else:
@@ -388,6 +426,9 @@ class SceneManager():
         content = self.context['damProject']._shotgundb.getShotAssets(self.context['entity']['code'])
         return content if content != None else []
 
+    def getFiletagFromPath(self, in_sPath):
+        return notFoundvalue
+
     def getAssetsInfo(self):
         sgAssets = self.getShotgunContent()
         sceneAssets = mop.getSceneContent(self)
@@ -396,12 +437,20 @@ class SceneManager():
 
         remainingAssets = list(sceneAssets)
 
+        #consider previz_ref as default
+        fileTag = "previz_ref"
+
+        if self.context['task']['content'] in TASK_ASSET_REL:
+            fileTag = TASK_ASSET_REL[self.context['task']['content']]
+        else:
+            pc.warning('Cannot detect file tag from task {0}, {1} used by default !!'.format(self.context['task']['content'], fileTag))
+
         for assetOccurence in sgAssets:
             occurences = assetOccurence['sg_occurences']
-            path = self.getPath(assetOccurence['asset'], 'previz_ref')
+            path = self.getPath(assetOccurence['asset'], fileTag)
             exists = False
 
-            #print '{0} time(s) {1} ({2}) with path {3}'.format(occurences, assetOccurence['asset']['name'], 'previz_ref', path)
+            #print '{0} time(s) {1} ({2}) with path {3}'.format(occurences, assetOccurence['asset']['name'], fileTag, path)
             if os.path.isfile(path):
                 #print 'Asset found {0} !'.format(assetOccurence['asset']['name'])
                 exists = True
@@ -411,13 +460,15 @@ class SceneManager():
             dbInfo = assetOccurence['asset']['name']
             if not exists:
                 dbInfo += ' ({0})'.format(notFoundvalue)
+            else:
+                dbInfo += " ("+fileTag+")"
 
             localInfo = noneValue
             foundSceneAsset = None
             for sceneAsset in remainingAssets:
                 if path == sceneAsset['path']:
                     foundSceneAsset = sceneAsset
-                    localInfo = sceneAsset['name']
+                    localInfo = sceneAsset['name'] + " ("+fileTag+")"
                     break
 
             if foundSceneAsset != None:
@@ -426,7 +477,8 @@ class SceneManager():
             assetsInfo.append({'name':assetOccurence['asset']['name'], 'localinfo':localInfo, 'dbinfo':dbInfo, 'path':path})
 
         for remainingAsset in remainingAssets:
-            assetsInfo.append({'name':remainingAsset['name'], 'localinfo':remainingAsset['name'], 'dbinfo':noneValue, 'path':remainingAsset['path']})
+            assetFullName = remainingAsset['name'] + " ("+self.getFiletagFromPath(remainingAsset['path'])+")"
+            assetsInfo.append({'name':remainingAsset['name'], 'localinfo':assetFullName, 'dbinfo':noneValue, 'path':remainingAsset['path']})
 
         return assetsInfo
 
@@ -445,7 +497,7 @@ class SceneManager():
                 if notFoundvalue in assetInfo['dbinfo']:
                     pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
                 else:
-                    mop.importAsset(self.collapseVariables(assetInfo['path']))
+                    mop.importAsset(self.collapseVariables(assetInfo['path']), assetInfo['name'] + "_1")
         
         mop.reArrangeAssets()
 
