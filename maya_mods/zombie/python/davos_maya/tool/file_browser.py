@@ -4,10 +4,9 @@ import os
 
 from PySide.QtCore import Qt
 
-from davos_maya.core.mrclibrary import MrcLibrary
 from davos.gui.assetbrowserwindow import AssetBrowserWindow
 
-from pytd.util.sysutils import inDevMode
+#from pytd.util.sysutils import inDevMode
 from pytaya.util.qtutils import getWindow
 
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
@@ -19,6 +18,20 @@ class MayaHookWindow(MayaQWidgetDockableMixin, AssetBrowserWindow):
     def __init__(self, parent=None):
         super(MayaHookWindow, self).__init__(parent=parent)
 
+
+def kill():
+
+    global mainWin
+
+    if mainWin:
+
+        mainWin.setAttribute(Qt.WA_DeleteOnClose, True)
+        mainWin.close()
+        mainWin = None
+
+        return True
+
+    return False
 
 def launch(argv):
 
