@@ -71,9 +71,9 @@ mc.text(label="Shader Names", align='center')
 mc.button( label='Comform All', c= buttonConformAllShaderName)
 mc.button( label='Comform Selection', c= buttonConformSelShaderName)
 
-#Conform Preview Shader
+#Conform Preview and arnold Shaders
 mc.separator(style = 'in', h = 5  )
-mc.text(label="Preview Shader", align='center')
+mc.text(label="Preview and Arnold Shaders", align='center')
 mc.button( label='Comform All', c = buttonConformAllPreviewShader)
 mc.button( label='Comform Selection', c = buttonConformSelPreviewShader)
 
