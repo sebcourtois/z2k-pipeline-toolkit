@@ -73,7 +73,7 @@ def createUserWorkspace():
             os.makedirs(normPath(os.path.join(projectPath,"renderData","fur","furAttrMap")))    
             pm.mel.setProject(projectPath)
     
-    print "#### Info: set project: "+projectPath
+    print "#### Info: set project: "+ davosUser
     pm.workspace( davosUser, openWorkspace = True )
 
         
