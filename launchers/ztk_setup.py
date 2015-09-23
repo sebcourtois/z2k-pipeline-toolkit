@@ -122,8 +122,6 @@ class Z2kToolkit(object):
         if not self.isDev:
             raise EnvironmentError("Sorry, you are not in DEV mode !")
 
-
-
         sDistroPath = self.releasePath(location)
 
         sAction = "Updating" if osp.isdir(sDistroPath) else "Creating"
@@ -157,6 +155,16 @@ class Z2kToolkit(object):
 
     def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
 
+        sMsg = ""
+        for p in (sSrcRepoPath, sDestPath):
+            if not osp.isdir(p):
+                sMsg += "\n    No such directory: '{}'".format(p)
+
+        if sMsg:
+            sMsg = "Cannot launch robocopy:" + sMsg
+            print sMsg
+            return False
+
         sOscarPath = osp.join(sSrcRepoPath, "maya_mods", "Toonkit_module",
                               "Maya2016", "Standalones", "OSCAR")
 
@@ -189,14 +197,34 @@ class Z2kToolkit(object):
         else:
             sReleaseLoc = os.environ["ZOMB_TOOL_PATH"]
 
+        if not osp.isdir(sReleaseLoc):
+            raise EnvironmentError("No such Release location: '{}'".format(sReleaseLoc))
+
         return osp.join(sReleaseLoc, self.baseName)
 
     def launchCmd(self, cmdArgs, update=True):
 
-        self.loadAppEnvs(cmdArgs[0])
+        sAppPath = cmdArgs[0]
+        sAppName = osp.basename(sAppPath)
 
-        if (not self.isDev) and update:
-            self.install()
+        try:
+            self.loadAppEnvs(sAppPath)
+
+            if (not self.isDev) and update:
+                self.install()
+
+        except Exception, err:
+
+            print ("\n\nFailed initializing '{}' environments: \n    {}"
+                   .format(sAppName, err))
+
+            res = ""
+            while res not in ("yes", "no"):
+                res = raw_input("\nContinue launching '{}' ? (yes/no)"
+                                .format(sAppName))
+
+            if res == "no":
+                raise
 
 #        startupinfo = subprocess.STARTUPINFO()
 #        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
