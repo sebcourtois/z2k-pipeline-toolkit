@@ -61,169 +61,6 @@ class SceneManager():
     def getVersions(self):
         return self.context['damProject']._shotgundb.getVersions(self.context['task'])
 
-    def createFolder(self):
-        nameKey = 'name'
-
-        if self.context['entity']['type'] == 'Shot':
-            nameKey = 'code'
-
-            damShot = DamShot(self.context['damProject'], name=self.context['entity'][nameKey])
-            damShot.createDirsAndFiles()
-
-    def saveIncrement(self, b_inForce=True):
-        currentScene = os.path.abspath(mc.file(q=True, sn=True))
-        if currentScene == '':
-            pc.error("Please save your scene as a valid private working scene (Edit if needed)")
-
-        matches = re.match(".*(v\d{3})\.(\d{3})\.ma", currentScene)
-        
-        if matches:
-            curVersion = int(matches.group(2))
-            curVersion += 1
-            newFileName = '{0}.{1:03}.ma'.format(currentScene.split('.')[0], curVersion)
-            if b_inForce or not os.path.isfile(newFileName):
-                return pc.saveAs(newFileName)
-        else:
-            pc.warning("Invalid file pattern !")
-        
-        return None
-
-    def capture(self):
-        global CAPTUREINFO
-
-        savedFile = self.saveIncrement(b_inForce=False)
-        if savedFile != None:
-
-            CAPTUREINFO['user'] = self.context['damProject']._shotgundb.currentUser['name']
-            #Infer capture path
-            scenePath = mc.file(q=True, sn=True)
-            CAPTUREINFO['scene'] = os.path.basename(scenePath)
-
-            capturePath = scenePath.replace(".ma", ".mov")
-
-            #Get start/end from shotgun
-            captureStart = 101
-            CAPTUREINFO['start'] = captureStart
-            duration = self.context['entity']['sg_cut_out'] - self.context['entity']['sg_cut_in']
-            captureEnd = captureStart + duration
-            CAPTUREINFO['end'] = captureEnd
-
-            #get camera
-            camName = 'cam_{0}'.format(self.context['entity']['code'])
-            cams = pc.ls(camName+":*", type='camera')
-
-            if len(cams) == 0:
-                pc.error("Cannot detect camera with pattern {0}".format(camName))
-
-            cam = cams[0].getParent()
-
-            CAPTUREINFO['cam'] = cams[0].name()
-            oldValues = createHUD()
-
-            pc.setAttr(cams[0].name() + '.aspectRatio', 1.85)
-
-            #Detect if activePanel is an imageplane and change to 'modelPanel4' if True
-            curPanel = pc.playblast(activeEditor=True)
-            curCam = pc.modelEditor(curPanel, query=True, camera=True)
-            if len(pc.PyNode(curCam).getShape().getChildren()) > 0:
-                pc.setFocus('modelPanel4')
-
-            tkc.capture(capturePath, captureStart, captureEnd, 1280, 720, "shaded", format="qt", compression="H.264", ornaments=True,
-                useCamera='cam_sq6660_sh0010a:cam_shot_default', i_inFilmFit=1, i_inDisplayFilmGate=1,
-                i_inSafeAction=1, i_inSafeTitle=0, i_inGateMask=1, f_inMaskOpacity=1.0)
-
-            restoreHUD(oldValues)
-
-            pc.setAttr(cams[0].name() + '.aspectRatio', 1.7778)
-
-    def edit(self, onBase=False):
-        privFile = None
-
-        lib = LIBS[self.context['entity']['type']]
-        if lib == "asset_lib":
-            lib =  self.context['entity']['sg_asset_type']
-
-        tokens = {}
-
-        nameKey = 'name'
-
-        if self.context['entity']['type'] == 'Shot':
-            nameKey = 'code'
-            tokens['name']=self.context['entity'][nameKey]
-            tokens['sequence']=self.context['entity']['sg_sequence']['name']
-        elif d_inEntity['type'] == 'Asset':
-            tokens['name']=self.context['entity'][nameKey]
-            tokens['assetType']=self.context['entity'][nameKey].split('_')[0]
-
-        if 'task' in self.context:
-            if self.context['task']['content'] in TASK_FILE_REL:
-                s_inFileTag = TASK_FILE_REL[self.context['task']['content']]
-
-                path = None
-                try:
-                    path = self.context['damProject'].getPath('public', lib, s_inFileTag, tokens=tokens)
-                except Exception, e:
-                    pc.warning('damProject.getPath failed : {0}'.format(e))
-
-                if path != None:
-                    entry = self.context['damProject'].entryFromPath(path)
-                    if entry == None:
-                        result = pc.confirmDialog( title='Non existing entity', message='Entity "{0}"" does not exists, do yout want to create it ?'.format(self.context['entity'][nameKey]), button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No')
-                        if result == "Yes":
-                            self.createFolder()
-                            entry = self.context['damProject'].entryFromPath(path)
-                            if entry == None:
-                                pc.error("Problem editing the entity !")
-                        else:
-                            pc.warning('Edit cancelled by user !')
-                            return ''
-                    
-                    result = pc.confirmDialog( title='Edit options', message='Do you want to use current scene for this edit ?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No')
-
-                    if result == "Yes":
-                        privFile = entry.edit(openFile=False, existing="keep")#existing values = choose, fail, keep, abort, overwrite
-
-                        rootPath, filename = os.path.split(privFile.absPath())
-                        vSplit = filename.split('.')
-                        if len(vSplit) != 3:
-                            pc.error("Unrecognized file pattern ! {0}".format(filename))
-
-                        version = vSplit[1]
-                        elements = os.listdir(rootPath)
-
-                        for element in elements:
-                            fullpath = os.path.join(rootPath, element)
-                            if vSplit[0] in element and os.path.isfile(fullpath):
-                                dSplit = element.split('.')
-                                if len(dSplit) == 3 and dSplit[1] > version:
-                                    version = dSplit[1]
-
-                        iversion = int(version) + 1
-
-                        newpath = os.path.join(rootPath, vSplit[0] + ".{0:03}.ma".format(iversion))
-                        mc.file(rename=newpath)
-                        mc.file(save=True)
-                    else:
-                        privFile = entry.edit(openFile= not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
-
-                    if privFile is None:
-                        pc.warning('There was a problem with the edit !')
-                    else:
-                        print "privFile " + str(privFile.absPath())
-            else:
-                pc.warning('Given task "{0}" is unknown (choose from {1}) !'.format(TASK_FILE_REL.keys()))
-        else:
-            pc.warning('No task given !')
-
-        return privFile
-
-    def publish(self):
-        currentScene = os.path.abspath(mc.file(q=True, sn=True))
-        if currentScene != '':
-            self.context['damProject'].publishEditedVersion(currentScene)
-        else:
-            pc.error("Please save your scene as a valid private working scene (Edit if needed)")
-
     def getPath(self, d_inEntity, s_inFileTag):
         #print 'getPath ' + str(d_inEntity)
         #print d_inEntity
@@ -271,6 +108,280 @@ class SceneManager():
             path = pathNorm(os.path.join(path, fileName))
 
         return path
+
+    def refreshSceneContext(self):
+        self.context['sceneEntry'] = None
+
+        currentScene = os.path.abspath(mc.file(q=True, sn=True))
+        if currentScene != '':
+            entry = self.context['damProject'].entryFromPath(currentScene)
+            if entry != None:
+                self.context['sceneEntry'] = entry
+
+        return self.contextIsMatching()
+
+    def contextIsMatching(self):
+        contextEntry = self.getEntry()
+
+        return contextEntry != None and self.context['sceneEntry'] != None and contextEntry.absPath() == self.context['sceneEntry'].getPublicFile().absPath()
+
+    def isEditable(self):
+        if self.context['lock'] != "Error":
+            return self.context['lock'] == "" or self.context['lock'] == self.context['damProject']._shotgundb.currentUser['login']
+
+        return False
+
+    def assert_isEditable(self):
+        message = ""
+        
+        if not self.refreshSceneContext():
+            message = "Your context does not match with current scene {0} => {1} !".format(os.path.basename(self.getEntry().absPath()), os.path.basename(self.context['sceneEntry'].getPublicFile().absPath()))
+        
+        if not self.isEditable():
+            message = "Your entity is locked by {0} !".format(self.context['lock'])
+
+        if message != "":
+            pc.confirmDialog(title='Entity not editable', message=message, button=['Ok'])
+            return False
+
+        return True
+
+    def refreshStatus(self, entry=None):
+        self.context['lock'] = "Error"
+
+        if entry == None:
+            entry = self.getEntry()
+
+        if entry != None:
+            self.context['lock'] = entry.getLockOwner()
+
+    def getEntry(self):
+        entry = None
+
+        lib = LIBS[self.context['entity']['type']]
+        if lib == "asset_lib":
+            lib =  self.context['entity']['sg_asset_type']
+
+        tokens = {}
+
+        nameKey = 'name'
+
+        if self.context['entity']['type'] == 'Shot':
+            nameKey = 'code'
+            tokens['name']=self.context['entity'][nameKey]
+            tokens['sequence']=self.context['entity']['sg_sequence']['name']
+        elif d_inEntity['type'] == 'Asset':
+            tokens['name']=self.context['entity'][nameKey]
+            tokens['assetType']=self.context['entity'][nameKey].split('_')[0]
+
+        if 'task' in self.context:
+            if self.context['task']['content'] in TASK_FILE_REL:
+                s_inFileTag = TASK_FILE_REL[self.context['task']['content']]
+
+                path = None
+                try:
+                    path = self.context['damProject'].getPath('public', lib, s_inFileTag, tokens=tokens)
+                except Exception, e:
+                    pc.warning('damProject.getPath failed : {0}'.format(e))
+
+                if path != None:
+                    entry = self.context['damProject'].entryFromPath(path)
+
+        return entry
+
+    def createFolder(self):
+        nameKey = 'name'
+
+        if self.context['entity']['type'] == 'Shot':
+            nameKey = 'code'
+
+            damShot = DamShot(self.context['damProject'], name=self.context['entity'][nameKey])
+            damShot.createDirsAndFiles()
+
+    def save(self, b_inForce=True):
+        entry = self.getEntry()
+
+        if entry == None:
+            pc.error("Cannot get entry for context {0}".format(self.context))
+
+        currentScene = os.path.abspath(mc.file(q=True, sn=True))
+        if currentScene == '':
+            pc.error("Please save your scene as a valid private working scene (Edit if needed)")
+
+        return pc.saveAs(currentScene, force=b_inForce)
+
+    def saveIncrement(self, b_inForce=True):
+        entry = self.getEntry()
+
+        if entry == None:
+            pc.error("Cannot get entry for context {0}".format(self.context))
+
+        currentScene = os.path.abspath(mc.file(q=True, sn=True))
+        if currentScene == '':
+            pc.error("Please save your scene as a valid private working scene (Edit if needed)")
+
+        matches = re.match(".*(v\d{3})\.(\d{3})\.ma", currentScene)
+        
+        if matches:
+            curVersion = int(matches.group(2))
+            curVersion += 1
+            newFileName = '{0}.{1:03}.ma'.format(currentScene.split('.')[0], curVersion)
+            if b_inForce or not os.path.isfile(newFileName):
+                return pc.saveAs(newFileName, force=b_inForce)
+            else:
+                pc.error("File already exists ({0})!".format(newFileName))
+        else:
+            pc.warning("Invalid file pattern !")
+        
+        return None
+
+    def capture(self, increment=True):
+        global CAPTUREINFO
+
+        savedFile = None
+
+        if increment:
+            savedFile = self.saveIncrement(b_inForce=False)
+        else:
+            savedFile = self.save(b_inForce=False)
+
+        if savedFile != None:
+
+            CAPTUREINFO['user'] = self.context['damProject']._shotgundb.currentUser['name']
+            #Infer capture path
+            scenePath = mc.file(q=True, sn=True)
+            CAPTUREINFO['scene'] = os.path.basename(scenePath)
+
+            capturePath = scenePath.replace(".ma", ".mov")
+
+            #Get start/end from shotgun
+            captureStart = 101
+            CAPTUREINFO['start'] = captureStart
+            duration = self.context['entity']['sg_cut_out'] - self.context['entity']['sg_cut_in']
+            captureEnd = captureStart + duration
+            CAPTUREINFO['end'] = captureEnd
+
+            #get camera
+            camName = 'cam_{0}'.format(self.context['entity']['code'])
+            cams = pc.ls(camName+":*", type='camera')
+
+            if len(cams) == 0:
+                pc.error("Cannot detect camera with pattern {0}".format(camName))
+
+            cam = cams[0].getParent()
+
+            CAPTUREINFO['cam'] = cams[0].name()
+            oldValues = createHUD()
+
+            pc.setAttr(cams[0].name() + '.aspectRatio', 1.85)
+
+            #Detect if activePanel is an imageplane and change to 'modelPanel4' if True
+            curPanel = pc.playblast(activeEditor=True)
+            curCam = pc.modelEditor(curPanel, query=True, camera=True)
+            if len(pc.PyNode(curCam).getShape().getChildren()) > 0:
+                pc.setFocus('modelPanel4')
+
+            tkc.capture(capturePath, captureStart, captureEnd, 1280, 720, "shaded", format="qt", compression="H.264", ornaments=True,
+                useCamera=cam, i_inFilmFit=1, i_inDisplayFilmGate=1, i_inSafeAction=1, i_inSafeTitle=0, i_inGateMask=1, f_inMaskOpacity=1.0, play=True)
+
+            restoreHUD(oldValues)
+
+            pc.setAttr(cams[0].name() + '.aspectRatio', 1.7778)
+
+    def edit(self, editInPlace=None, onBase=False):
+        privFile = None
+
+        lib = LIBS[self.context['entity']['type']]
+        if lib == "asset_lib":
+            lib =  self.context['entity']['sg_asset_type']
+
+        tokens = {}
+
+        nameKey = 'name'
+
+        if self.context['entity']['type'] == 'Shot':
+            nameKey = 'code'
+            tokens['name']=self.context['entity'][nameKey]
+            tokens['sequence']=self.context['entity']['sg_sequence']['name']
+        elif d_inEntity['type'] == 'Asset':
+            tokens['name']=self.context['entity'][nameKey]
+            tokens['assetType']=self.context['entity'][nameKey].split('_')[0]
+
+        if 'task' in self.context:
+            if self.context['task']['content'] in TASK_FILE_REL:
+                s_inFileTag = TASK_FILE_REL[self.context['task']['content']]
+
+                path = None
+                try:
+                    path = self.context['damProject'].getPath('public', lib, s_inFileTag, tokens=tokens)
+                except Exception, e:
+                    pc.warning('damProject.getPath failed : {0}'.format(e))
+
+                if path != None:
+                    entry = self.context['damProject'].entryFromPath(path)
+                    if entry == None:
+                        result = pc.confirmDialog( title='Non existing entity', message='Entity "{0}"" does not exists, do yout want to create it ?'.format(self.context['entity'][nameKey]), button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+                        if result == "Yes":
+                            self.createFolder()
+                            entry = self.context['damProject'].entryFromPath(path)
+                            if entry == None:
+                                pc.error("Problem editing the entity !")
+                        else:
+                            pc.warning('Edit cancelled by user !')
+                            return ''
+                    
+                    result = "Yes" if editInPlace else "No"
+
+                    if editInPlace == None:
+                        result = pc.confirmDialog( title='Edit options', message='Do you want to use current scene for this edit ?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+
+                    if result == "Yes":
+                        privFile = entry.edit(openFile=False, existing="keep")#existing values = choose, fail, keep, abort, overwrite
+
+                        rootPath, filename = os.path.split(privFile.absPath())
+                        vSplit = filename.split('.')
+                        if len(vSplit) != 3:
+                            pc.error("Unrecognized file pattern ! {0}".format(filename))
+
+                        version = vSplit[1]
+                        elements = os.listdir(rootPath)
+
+                        for element in elements:
+                            fullpath = os.path.join(rootPath, element)
+                            if vSplit[0] in element and os.path.isfile(fullpath):
+                                dSplit = element.split('.')
+                                if len(dSplit) == 3 and dSplit[1] > version:
+                                    version = dSplit[1]
+
+                        iversion = int(version) + 1
+
+                        newpath = os.path.join(rootPath, vSplit[0] + ".{0:03}.ma".format(iversion))
+                        mc.file(rename=newpath)
+                        mc.file(save=True)
+                    else:
+                        privFile = entry.edit(openFile= not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
+
+                    if privFile is None:
+                        pc.warning('There was a problem with the edit !')
+                    else:
+                        print "privFile " + str(privFile.absPath())
+            else:
+                pc.warning('Given task "{0}" is unknown (choose from {1}) !'.format(TASK_FILE_REL.keys()))
+        else:
+            pc.warning('No task given !')
+
+        return privFile
+
+    def publish(self):
+        currentScene = os.path.abspath(mc.file(q=True, sn=True))
+        if currentScene != '':
+            entry = self.context['damProject'].entryFromPath(currentScene)
+            if entry == None:
+                pc.error()
+
+            self.context['damProject'].publishEditedVersion(currentScene)
+        else:
+            pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
     def getShotgunContent(self):
         #print 'getShotgunContent ' + self.context['entity']['code']

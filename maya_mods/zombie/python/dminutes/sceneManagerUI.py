@@ -26,6 +26,22 @@ VERSIONS = {}
 
 ACTION_BUTTONS = []
 
+def refreshContextUI():
+    contextMatches = SCENE_MANAGER.refreshSceneContext()
+
+    pc.control('sm_switchContext_bt', edit=True, visible=not contextMatches)
+
+    pc.control('sm_capture_bt', edit=True, enable=contextMatches)
+    pc.control('sm_saveWip_bt', edit=True, enable=contextMatches)
+    pc.control('sm_publish_bt', edit=True, enable=contextMatches)
+
+def setContextUI():
+    SCENE_MANAGER.refreshSceneContext()
+    sceneEntry = SCENE_MANAGER.context('sceneEntry')
+
+    if sceneEntry != None:
+        print "Got scene entry : " + str(sceneEntry.getAllValues(True))
+
 def refreshOptionMenu(s_inName, a_Items):
     items = pc.optionMenu(s_inName, query=True, itemListShort=True)
     for item in items:
@@ -74,6 +90,8 @@ def updateButtons():
         enable = False if not 'task' in SCENE_MANAGER.context else mop.canDo(action, SCENE_MANAGER.context['task']['content']) == True
         pc.control(buttonName, edit=True, enable=enable)
 
+    refreshContextUI()
+
 #Callbacks management
 
 def connectCallbacks():
@@ -93,7 +111,10 @@ def connectCallbacks():
     pc.button('sm_capture_bt', edit=True, c=doCapture)
     pc.button('sm_saveWip_bt', edit=True, c=doSaveWip)
 
+    pc.button('sm_switchContext_bt', edit=True, c=doSwitchContext)
+
     #davos
+    pc.button('sm_unlock_bt', edit=True, c=doUnlock)
     pc.button('sm_edit_bt', edit=True, c=doEdit)
     pc.button('sm_publish_bt', edit=True, c=doPublish)
     pc.button('sm_createFolder_bt', edit=True, c=doCreateFolder)
@@ -103,9 +124,9 @@ def connectCallbacks():
     pc.button(buttonName, edit=True, c=doInit)
     ACTION_BUTTONS.append(buttonName)
 
-    buttonName = 'sm_create_bt'
-    pc.button(buttonName, edit=True, c=doCreate)
-    ACTION_BUTTONS.append(buttonName)
+    #buttonName = 'sm_create_bt'
+    #pc.button(buttonName, edit=True, c=doCreate)
+    #ACTION_BUTTONS.append(buttonName)
 
 def doDisconnect(*args):
     SG.logoutUser()
@@ -122,7 +143,6 @@ def doStepChanged(*args):
             break
     
     if SCENE_MANAGER.context['step'] == None:
-
         pc.error('Cannot get entity type from step {0} !'.format(step))
 
     refreshStep()
@@ -173,9 +193,33 @@ def doTaskChanged(*args):
     if len(versions) > 0:
         pc.textScrollList("sm_versions_lb", edit=True, append=sorted(VERSIONS.keys()))
 
+    doRefreshSceneInfo()
+
+    doRefreshFileStatus()
+
     doVersionChanged()
 
-    doRefreshSceneInfo()
+def doRefreshFileStatus(*args):
+    SCENE_MANAGER.refreshStatus()
+
+    pc.button('sm_unlock_bt', edit=True, enable=False)
+    statusText = "Unlocked"
+
+    if SCENE_MANAGER.context['lock'] != "":
+        if SCENE_MANAGER.context['lock'] == SG.currentUser['login']:
+            statusText = "Locked by Me"
+            pc.button('sm_unlock_bt', edit=True, enable=True)
+        else:
+            statusText = "Locked by {0}".format(SCENE_MANAGER.context['lock'])
+
+    pc.textField("sm_lock_tb", edit=True, text=statusText)
+
+    editable = SCENE_MANAGER.isEditable()
+
+    pc.button('sm_edit_bt', edit=True, enable=editable)
+    pc.button('sm_publish_bt', edit=True, enable=editable)
+    pc.button('sm_capture_bt', edit=True, enable=editable)
+    pc.button('sm_saveWip_bt', edit=True, enable=editable)
 
 def doVersionChanged(*args):
     updateButtons()
@@ -254,6 +298,15 @@ def doRefreshSceneInfo(*args):
     for assetInfo in assetsInfo:
         pc.textScrollList("sm_sceneInfo_lb", edit=True, append=formatting.format(assetInfo['localinfo'], assetInfo['dbinfo']))
 
+def doUnlock(*args):
+    entry = SCENE_MANAGER.getEntry()
+
+    if entry == None:
+        pc.error("Cannot get entry form context {0}".format(SCENE_MANAGER.context))
+
+    entry.setLocked(False)
+    doRefreshFileStatus()
+
 def doUpdateScene(*args):
     addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
     SCENE_MANAGER.updateScene(addOnly)
@@ -265,21 +318,37 @@ def doUpdateShotgun(*args):
     doRefreshSceneInfo()
 
 def doCapture(*args):
-    SCENE_MANAGER.capture()
-    doRefreshSceneInfo()
+    if SCENE_MANAGER.assert_isEditable():
+        b_increment = pc.checkBox('sm_increment_bt', query=True, value=True)
+        SCENE_MANAGER.capture(b_increment)
+        doRefreshSceneInfo()
 
 def doSaveWip(*args):
-    SCENE_MANAGER.saveIncrement()
+    if SCENE_MANAGER.assert_isEditable():
+        SCENE_MANAGER.saveIncrement()
+
+def doSwitchContext(*args):
+    if SCENE_MANAGER.refreshSceneContext():
+        pc.warning("Your context is already matching !!")
+        return
+
+    if not SCENE_MANAGER.isEditable():
+        pc.warning("Your entity is locked by {0}".format(SCENE_MANAGER.context["lock"]))
+        return
+
+    SCENE_MANAGER.edit(True)
 
 #davos
 def doEdit(*args):
-    SCENE_MANAGER.edit()
-    doRefreshSceneInfo()
+    if SCENE_MANAGER.assert_isEditable():
+        SCENE_MANAGER.edit(False)
+        doTaskChanged()
 
 def doPublish(*args):
-    SCENE_MANAGER.publish()
-    doTaskChanged()
-
+    if SCENE_MANAGER.assert_isEditable():
+        SCENE_MANAGER.publish()
+        doTaskChanged()
+        #doRefreshFileStatus()
 
 def doCreateFolder(*args):
     SCENE_MANAGER.createFolder() 
@@ -292,3 +361,4 @@ def doInit(*args):
 def doCreate(*args):
     SCENE_MANAGER.do('create')
     doRefreshSceneInfo()
+    doRefreshFileStatus()
