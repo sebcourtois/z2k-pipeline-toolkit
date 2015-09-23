@@ -174,11 +174,16 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         raise ValueError("#### Error: no '|asset' could be found in this scene")
         
 
+
     fileNodeList = mc.ls("*",type ="file")
     outWrongFileNodeList = []
     outMapPathForPublishList = []
     if inVerbose == True: print "#### info: Expanded working directory: '{}'".format(finalMapdirExpand)
-    
+
+    if inConform == True and inVerbose == True:
+        answer = mc.confirmDialog( title='Confirm', message='You are about to conform textures path of '+str(len(fileNodeList))+' file nodes, do you want to continue?', button=['Yes','Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel' )
+        if answer == "Cancel": return
+
     for eachFileNode in fileNodeList:
         wrongFileNode = False
         mapFilePath = miscUtils.normPath(mc.getAttr(eachFileNode+".fileTextureName"))
@@ -384,6 +389,8 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         if not shadEngineList :
             print "#### {:>7}: no shading engine to conform".format("Warning")
             return
+        answer = mc.confirmDialog( title='Confirm', message='You are about to conform '+str(len(shadEngineList))+' shading engines, do you want to continue?', button=['Yes','Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel' )
+        if answer == "Cancel": return
 
     elif shadEngineList == "selection":
         shadEngineList = mc.ls(selection = True,type = "shadingEngine")
@@ -444,7 +451,9 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
             preShadNode = preShadNode[-1]
 
         if not matShadNode or mc.nodeType(matShadNode[-1]) != matShadNodeType:
-            wrongShadEngine.append((shadingEngine,"The material shading node is missing or has a wrong type: "))
+            if verbose == True: print "#### {:>7}: {:^28} The material shading node is missing or has a wrong type,  ".format("Info", shadingEngine)
+            matShadNode = mc.shadingNode(matShadNodeType, asShader=True)
+            mc.connectAttr(matShadNode+".outColor", shadingEngine+'.aiSurfaceShader', force =True)
             continue
         else:
             matShadNode = matShadNode[-1]
@@ -523,6 +532,9 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
 
     if fileNodeList == "all":
         fileNodeList = mc.ls("pre_*",type ="file")
+        if updateOnly == False:
+            answer = mc.confirmDialog( title='Confirm', message='You are about to generate jpg for '+str(len(fileNodeList))+' file nodes, do you want to continue?', button=['Yes','Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel' )
+            if answer == "Cancel": return
     elif fileNodeList == "selection":
         selectedFileList = mc.ls(selection = True, type ="file")
         selectedShaEngList = mc.ls(selection = True, type ="shadingEngine")
@@ -536,6 +548,8 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
         for each in selectedFileList:
             if re.match('^pre_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', each):
                 fileNodeList.add(each)
+
+
 
     if len(fileNodeList) == 0:
         print "#### {:>7}: nothing to process, please select  'pre_*' file nodes or 'sgr_*' shading engine nodes first".format("Warning")
@@ -724,6 +738,9 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
 
     if fileNodeList == "all":
         fileNodeList = mc.ls("mat_*",type ="file")
+        if updateOnly == False:
+            answer = mc.confirmDialog( title='Confirm', message='You are about to generate jpg for '+str(len(fileNodeList))+' file nodes, do you want to continue?', button=['Yes','Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel' )
+            if answer == "Cancel": return
     elif fileNodeList == "selection":
         selectedFileList = mc.ls(selection = True, type ="file")
         selectedShaEngList = mc.ls(selection = True, type ="shadingEngine")
