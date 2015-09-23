@@ -11,7 +11,7 @@
 #
 # TO DO:
 #       x check BaseStructure
-#       WIP check group geo check for attrib of smooth: MANQUE LE VRAI SCRIPT PATH AUTO FIX ALEX SUBDIV
+#       x check group geo check for attrib of smooth: connect grp_geo smooth lvl2 to set_meshCache obj if pas existant
 #       x check Under_AssetStructure
 #       x Clean NameSpace
 #       x Delete unused Nodes 
@@ -44,9 +44,14 @@ import inspect
 
 
 
-class AssetPrevizMod(object):
+class checkModule(object):
     name = "AssetPreviz_Module"
     cf = name
+
+    basePath =  os.environ.get("MAYA_MODULE_PATH").split(";")[0]
+    upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_ANIM_LOGO_A3.bmp"
+
+
     def __init__(self,*args, **kwargs):
         print "init"
         self.ebg = True
@@ -168,7 +173,7 @@ class AssetPrevizMod(object):
 
         return [toReturnB,debugD]
 
-    def isConnected (self, node="", exceptionL=["nodeGraphEditorInfo","defaultRenderUtilityList"], *args, **kwargs):
+    def isConnected (self, node="", exceptionL=["nodeGraphEditorInfo","defaultRenderUtilityList","objectSet"], *args, **kwargs):
         toReturnB=True
         conL = []
         
@@ -258,7 +263,7 @@ class AssetPrevizMod(object):
         "hyperGraphLayout","ikSystem","characterPartition","char_aurelienPolo_wip_18_sceneConfigurationScriptNode",
         "char_aurelienPolo_wip_18_uiConfigurationScriptNode","sequenceManager1","strokeGlobals","time1","defaultViewColorManager",
         "defaultColorMgtGlobals","defaultObjectSet","defaultTextureList1","lightList1","defaultObjectSet",
-        "sceneConfigurationScriptNode"],
+        "sceneConfigurationScriptNode","uiConfigurationScriptNode"],
         *args, **kwargs):
         """ Description: Return Node list base on specific type /excepted type filtered
                         If nothing it give evrething in scene
@@ -283,7 +288,7 @@ class AssetPrevizMod(object):
                     for obj in filtered:
                         if not obj in mayaDefaultObjL:
                             testB = False
-                            if len(execptionTL):
+                            if len(execptionTL)>0:
                                 for ex in execptionTL:
                                     if  cmds.nodeType(obj) in  cmds.nodeType(ex, derived=exceptDerived, isTypeName=True,):
                                         # print "#######",cmds.nodeType(obj), "is bad"
@@ -297,14 +302,31 @@ class AssetPrevizMod(object):
 
         return toReturnL
 
-    
-    # ------------ printer
+    # decorators ---------------------------
     def Z2KprintDeco(func, *args, **kwargs):
         def deco(self,*args, **kwargs):
             # print u"Exécution de la fonction '%s'." % func.__name__
             func(self, toScrollF=self.BDebugBoard, toFile = self.DebugPrintFile,*args, **kwargs)
         return deco
 
+    def waiter (func,*args, **kwargs):
+        def deco(self,*args, **kwargs):
+            result = True
+            cmds.waitCursor( state=True )
+            print "wait..."
+            try:
+                print func
+                result = func(self,*args, **kwargs)
+            except:
+                cmds.waitCursor( state=False )
+            cmds.waitCursor( state=False )
+            print "...wait"
+            if not result:
+                cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
+
+        return deco
+
+    # ------------ printer
     @Z2KprintDeco
     def printF(self, text="",st="main",toScrollF="", toFile = "", openMode="a+", *args, **kwargs):
         stringToPrint=""
@@ -327,19 +349,7 @@ class AssetPrevizMod(object):
             cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
             
 
-    def waiter (func,*args, **kwargs):
-        def deco(self,*args, **kwargs):
-            cmds.waitCursor( state=True )
-            print "wait..."
-            try:
-                print func
-                func(self,*args, **kwargs)
-            except:
-                cmds.waitCursor( state=False )
-            cmds.waitCursor( state=False )
-            print "...wait"
-            
-        return deco
+    
 
 
     # cleaning/checking functions --------------------------------------------
@@ -448,7 +458,8 @@ class AssetPrevizMod(object):
         self.printF(toReturnB, st="r")
         for i,dico in debugD.iteritems():
             self.printF( i.ljust(10)+" : "+ str( dico["result"] ) )
-            self.printF("     -Found= " + str( dico.get("Found","")   ) )
+            if len(dico.get("Found",""))>0:
+                self.printF("     -Found= " + str( dico.get("Found","")   ) )
         # --------------------------
         
 
@@ -458,32 +469,89 @@ class AssetPrevizMod(object):
         """ check if the attrib of smooth are present
         """
         print("checkGrp_geo()")
-
+        toCreateL = []
         toReturnB = True
         if cmds.objExists(theGroup):
             print "{0}: ok".format(theGroup)
             for theAttr in theAttrL:
-                if cmds.objExists(theAttr):
-                    test = cmds.getAttr(theGroup+"."+ theAttr)
-                    print test
-                    if not test:
-                        toReturnB = False
-                    else:
-                        print "apply Alex auto Fix script subdiv"
-                else:
+                if not cmds.objExists(theGroup+"."+ theAttr):
                     toReturnB = False
+                    toCreateL.append(theGroup+"."+ theAttr)
+                else:
+                    toReturnB = True
+        else:
+            toReturnB = False
+            toCreateL =  theAttrL     
 
 
         # prints -------------------
         self.printF("checkGrp_geo()", st="t")
         self.printF(toReturnB, st="r")
+        if len(toCreateL):
+            self.printF("Missing AttribL={0}".format(toCreateL))
         # --------------------------
 
-        return [toReturnB]
+        return [toReturnB,toCreateL]
 
-    def cleanGrp_geo (self,*args, **kwargs):
+    def cleanGrp_geo (self, theGroup="asset|grp_geo",theAttrL= ["smoothLevel1","smoothLevel2"] ,assetType="previz", *args, **kwargs):
         print "cleanGrp_geo()"
+        
+        erroredL = []
+        createdL= []
+        toReturnB = True
+        if cmds.objExists(theGroup):
+            print "  theGroup=", theGroup
+            for theAttr in theAttrL:
+                print "    theAttr=", theAttr
+                if not cmds.objExists(theGroup+"."+ theAttr):
+                    print "     creating attr"
 
+                    try:
+                        print "creating attrib:",theAttr
+                        cmds.addAttr(theGroup, longName=theAttr, attributeType = "long", keyable=True, min = 0, max=2) 
+                        
+                        toReturnB = True
+                        createdL.append(theGroup+"."+theAttr)
+
+
+
+                    except Exception,err:
+                        print "bug"
+                        print "    ##",err,Exception
+                        toReturnB = False
+                        erroredL.append(theAttr)
+
+                else:
+                    print "      -Allready exists"
+                    toReturnB = True
+
+                # set smooth attr to 0
+                cmds.setAttr(theGroup+"."+theAttr,0)
+            
+            # connecting attrib
+            if assetType in ["previz"]:
+                for i in self.getSetContent(inSetL=["set_meshCache"]):
+                    print "*",i
+                    shapeL=cmds.listRelatives(i,s=1,ni=1)
+                    if shapeL:
+                        for shape in shapeL:
+                            print "    ",shape
+                            cmds.setAttr(shape+"."+"displaySmoothMesh",2)
+                            if not cmds.connectionInfo(shape + "."+"smoothLevel",isDestination=True):
+                                cmds.connectAttr(theGroup+"."+theAttrL[1], shape + "."+"smoothLevel", f=True)
+
+        else:
+            toReturnB = False
+        
+
+        # prints -------------------
+        self.printF("cleanGrp_geo()", st="t")
+        self.printF(toReturnB, st="r")
+        if len(createdL):
+
+            self.printF("created Attrib: {0}/{1}".format(len(createdL),len(theAttrL)) )
+        # --------------------------
+        return [toReturnB,createdL]
 
 
 
@@ -643,7 +711,7 @@ class AssetPrevizMod(object):
         
         toReturnB = True
         nodeL = self.NodeTypeScanner(execptionTL=execptionTL, specificTL=specificTL)
-        # print "*nodeL=", len(nodeL)
+        print "*nodeL=", len(nodeL)
         unconectedCL =[]
         # loop
         for node in nodeL:
@@ -651,7 +719,7 @@ class AssetPrevizMod(object):
                 # print "-","toDELETe:",node
                 unconectedCL.append(node)
 
-        # print "unconectedCL=", len(unconectedCL)
+        print "unconectedCL=", len(unconectedCL)
         
         # finally 
         errorL = []
@@ -706,6 +774,7 @@ class AssetPrevizMod(object):
             Return : BOOL,debugD
             Dependencies : cmds - cleanUnusedNode()
         """
+        print "cleanUnusedConstraint()"
         self.printF( "cleanUnusedConstraint()", st="t")
         toReturnB,debugD = self.cleanUnusedNode(execptionTL = [], specificTL=["constraint",], mode="delete")
 
@@ -721,7 +790,7 @@ class AssetPrevizMod(object):
 
         return toReturnB,debugD
 
-    # wip
+    # wip to make faster
     def CleanDisconnectedNodes(self,*args, **kwargs):
         """ Description: Delete All Un-connected non dag Nodes
             Return : BOOL,debugD
@@ -978,10 +1047,12 @@ class AssetPrevizMod(object):
         # --------------------------
 
         return [toReturnB,debugD]
+    
+
     # ---------------------------------------------------------------------------------------------------------
     #--------------------- Buttons functions ----------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
-    @waiter
+    # @waiter
     def btn_checkStructure(self,controlN,*args, **kwargs):
         boolResult=True
 
@@ -995,6 +1066,10 @@ class AssetPrevizMod(object):
         if not self.checkAssetStructure( assetgpN="asset", expectedL=["grp_rig","grp_geo"])[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
+
+        if not self.cleanGrp_geo(theGroup="asset|grp_geo", theAttrL=["smoothLevel1","smoothLevel2"])[0]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
         if not self.checkGrp_geo( )[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
@@ -1003,6 +1078,7 @@ class AssetPrevizMod(object):
         print "*",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
         
+        return boolResult
 
     @waiter
     def btn_CleanScene(self,controlN,*args, **kwargs):
@@ -1035,6 +1111,7 @@ class AssetPrevizMod(object):
         print "*",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
         
+        return boolResult
         
     @waiter
     def btn_CleanObjects(self,controlN,*args, **kwargs):
@@ -1080,6 +1157,7 @@ class AssetPrevizMod(object):
         print "*",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
 
+        return boolResult
 
 
     def btn_clearAll(self,*args, **kwargs):
@@ -1092,7 +1170,21 @@ class AssetPrevizMod(object):
         cmds.button(self.BcheckStructure, e=1, bgc= defCol)
         cmds.button(self.BCleanScene, e=1, bgc= defCol)
         cmds.button(self.BCleanObjects, e=1, bgc= defCol)
+        cmds.button(self.BCleanAll, e=1, bgc= defCol)
 
+
+    def cleanAll(self,*args, **kwargs):
+        print "cleanAll()"
+        boolResult = True
+        if not self.btn_CleanObjects(self.BcheckStructure):
+            boolResult = False
+        if not self.btn_CleanScene(self.BCleanScene):
+            boolResult = False
+        if not self.btn_checkStructure(self.BCleanObjects):
+            boolResult = False
+        # colors
+        print "*",boolResult
+        self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""])
     # -------------------------- interface functoin --------------------------------
     def colorBoolControl(self, controlL=[], boolL=[],labelL=[""], *args, **kwargs):
         # color the controlL depending on the given Bool
@@ -1137,9 +1229,11 @@ class AssetPrevizMod(object):
             parent = self.createWin()
 
         cmds.setParent(parent)
-        self.bigDadL = cmds.frameLayout(label=self.name, li=75, fn="boldLabelFont", lv=1)
+        self.bigDadL = cmds.frameLayout(label=self.name.center(50), fn="boldLabelFont", lv=0)
         self.layoutImportModule = cmds.columnLayout("layoutImportModule",adj=True)
-        cmds.button("Clean_all",c= self.cleanAll,en=0)
+        cmds.image(image=self.upImg)
+        cmds.columnLayout("layoutImportModule",columnOffset= ["both",2],adj=True,)
+        self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= self.cleanAll,en=1)
 
         self.BcheckStructure = cmds.button("checkStructure", )
         cmds.button(self.BcheckStructure,e=1,c= partial( self.btn_checkStructure,self.BcheckStructure) )
@@ -1152,10 +1246,10 @@ class AssetPrevizMod(object):
         
         self.BValidationPBar = cmds.progressBar(maxValue=3,s=1 )
 
+        self.BDebugBoardF= cmds.frameLayout("DebugBoard",cll=True,cl=True)
+        self.BDebugBoard = cmds.scrollField(w=250,h=300,)
         
-        self.BDebugBoard = cmds.scrollField(w=250,h=300)
-        
-        
+        cmds.setParent("..")
         self.BClearAll = cmds.button("clear",c= self.btn_clearAll,)
         
 
@@ -1163,12 +1257,11 @@ class AssetPrevizMod(object):
     #--------------------- EXEC -------------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
 
-    def cleanAll(self,*args, **kwargs):
-        print "cleanAll()"
+    
 
 
 
 # --------------------- direct EXE -------------------
 
-Z2K_Pcheck = AssetPrevizMod()
-Z2K_Pcheck.insertLayout( parent="" )
+# Z2K_Pcheck = checkModule()
+# Z2K_Pcheck.insertLayout( parent="" )
