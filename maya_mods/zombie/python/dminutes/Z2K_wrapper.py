@@ -26,6 +26,33 @@ def projConnect(theProject="zombtest",*args,**kwargs):
     print tab,"proj=", proj
     return proj
 
+def getDrcF (proj="", assetName="", pathType="previz_scene", *args, **kwargs):
+    print "getDrcF()"
+    tab= "    "
+    damAst = DamAsset(proj,name=assetName)
+    path_public = damAst.getPath("public", pathType)
+    print tab,"path_public=", path_public
+    drcF = proj.entryFromPath(path_public)
+    return drcF
+
+def getLock(drcF, *args, **kwargs):
+    print "getLock()"
+    tab= "    "
+    
+    # drcF = damAst.getResource("public,pathType") doesn't work
+    theLock = drcF.getLockOwner()
+
+    print tab, "theLock=",theLock
+    return theLock
+
+def unlock(drcF="", *args, **kwargs):
+    print "unlock()"
+    tab= "    "
+    drcF.setLocked(bLock=False)
+    
+
+
+
 def getPath(proj="", assetName="", pathType="previz_ref", *args, **kwargs):
     print "Z2K_getPath()"
     tab= "    "

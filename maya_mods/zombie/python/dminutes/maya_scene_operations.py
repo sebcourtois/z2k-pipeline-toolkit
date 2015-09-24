@@ -3,9 +3,9 @@ import maya.cmds as mc
 import os
 
 CAMPATTERN = 'cam_sq*sh*:*'
-CAM_GLOBAL = 'ctrl_global'
-CAM_LOCAL = 'ctrl_local'
-CAM_DOLLY = 'ctrl_dolly'
+CAM_GLOBAL = 'Global_SRT'
+CAM_LOCAL = 'Local_SRT'
+CAM_DOLLY = 'Dolly'
 
 
 #0 as Maya CC, and 1 as OSD Uniform, 2 OSD adaptive
@@ -31,6 +31,8 @@ def getSceneContent(o_inSceneManager):
     refs = pc.listReferences(namespaces=True)
     for ref in refs:
         ns = ref[0]
+        path = ref[1]
+
         sceneContent.append({'name':'_'.join(ns.split("_")[:-1]), 'path':str(ref[1])})
 
     return sceneContent
@@ -125,6 +127,17 @@ def getAssetRoot(s_inNS):
                     if len(roots) > 0:
                         assetRoot = roots[0]
                         pc.warning(deprecatedMessage.format(assetRoot.name()))
+                    else:
+                        #try with NS:NS - last "_"
+                        modifiedNS = "_".join(s_inNS.split("_")[:-1]) + "_previz"
+                        if "_default" in modifiedNS:
+                            modifiedNS = modifiedNS.replace('_default', '')
+
+                        oldRootName = '{0}:{1}'.format(s_inNS, modifiedNS)
+                        roots = pc.ls(oldRootName)
+                        if len(roots) > 0:
+                            assetRoot = roots[0]
+                            pc.warning(deprecatedMessage.format(assetRoot.name()))
 
     return assetRoot
 
@@ -281,19 +294,23 @@ def do(s_inCommand, s_inTask, o_inSceneManager):
 
     cmdCallable(o_inSceneManager)
 
-#Creates
-def create_scene_base(o_inSceneManager):
-    mc.file(force=True, new=True)
+def importSceneStructure(o_inSceneManager):
+    #Import only if does not exists...
+    if pc.objExists('shot'):
+        return
 
     #Import scene structure
     template_path = o_inSceneManager.context['damProject'].getPath('template', 'project')
     strucure_path = os.path.join(template_path, "{0}_layout_tree.ma".format(o_inSceneManager.context['entity']['type'].lower()))
-    #strucure_path = os.environ['ZOMBI_TOOL_PATH'] + "\\template\\{0}_layout_tree.ma".format(o_inSceneManager.context['entity']['type'].lower())
 
     if os.path.isfile(strucure_path):
         mc.file(strucure_path, i=True, rpr='')
     else:
         pc.warning("Base file structure not found for entity type : {0}".format(entity['type']))
+
+#Creates
+def create_scene_base(o_inSceneManager):
+    mc.file(force=True, new=True)
 
     print 'base creation done ! ({0})'.format(o_inSceneManager.context)
 
@@ -352,6 +369,8 @@ def init_scene_base(o_inSceneManager):
     #entity specific initialisation
     if o_inSceneManager.context['entity']['type'] == 'Shot':
         init_shot_constants(o_inSceneManager)
+
+    importSceneStructure(o_inSceneManager)
 
     print 'base initialization done ! ({0})'.format(o_inSceneManager.context)
 
