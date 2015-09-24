@@ -18,14 +18,15 @@
 
   Usage:
     import damas
-    project = damas.http_connection( "https://example.com/damas/server" )
+    project = damas.http_connection( "https://localhost/api/" )
     elem = project.search('id:element_id')
     print elem
 """
 
 import json
 import requests
-requests.packages.urllib3.disable_warnings()
+
+requests.packages.urllib3.disable_warnings() # remove certificate warning
 
 class http_connection(object) :
     '''
@@ -56,6 +57,8 @@ class http_connection(object) :
         @param {String} id_ the internal node index to search
         @returns {Hash} node or false on failure
         '''
+        if isinstance(id_, (tuple, list, set)):
+            id_ = ",".join(id_)
         r = requests.get(self.serverURL + '/' + id_, headers=self.headers, verify=False)
         if r.status_code == 200:
             return json.loads(r.text)
@@ -63,13 +66,15 @@ class http_connection(object) :
 
     def update(self, id_, keys) :
         '''
-        Modify a node. If an attribute with that name is already present in
+        Modify a node(s). If an attribute with that name is already present in
         the element, its value is changed to be that of the value parameter.
         Specifying a None value for a key will remove the key from the node
         @param {String} id_ Element index
         @param {Hash} keys to add and remove
         @returns {Hash} updated node or false on failure
         '''
+        if isinstance(id_, (tuple, list, set)):
+            id_ = ",".join(id_)
         headers = {'content-type': 'application/json'}
         headers.update(self.headers)
         r = requests.put(self.serverURL + '/' + id_, data=json.dumps(keys), headers=headers, verify=False)
@@ -83,6 +88,8 @@ class http_connection(object) :
         @param {String} id_ the internal node index to delete
         @returns {Boolean} True on success, False otherwise
         '''
+        if isinstance(id_, (tuple, list, set)):
+            id_ = ",".join(id_)
         r = requests.delete(self.serverURL + '/' + id_, headers=self.headers, verify=False)
         return r.status_code == 200
 
@@ -103,6 +110,8 @@ class http_connection(object) :
         @param {String} id_ the node index(es) to search
         @returns {Hash} node or false on failure
         '''
+        if isinstance(id_, (tuple, list, set)):
+            id_ = ",".join(id_)
         r = requests.get(self.serverURL + '/graph/' + id_, headers=self.headers, verify=False)
         if r.status_code == 200:
             return json.loads(r.text)

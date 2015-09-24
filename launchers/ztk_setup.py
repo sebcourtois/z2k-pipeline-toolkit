@@ -124,26 +124,34 @@ class Z2kToolkit(object):
 
         sDistroPath = self.releasePath(location)
 
-        sAction = "Updating" if osp.isdir(sDistroPath) else "Creating"
+        if osp.exists(sDistroPath):
+            bUpdating = True
+            sAction = "Updating"
+        else:
+            bUpdating = False
+            sAction = "Creating"
+            os.makedirs(sDistroPath)
+
         print "\n{} toolkit release:\n'{}' -> '{}'".format(sAction, self.rootPath, sDistroPath)
 
-        sOutput = self.makeCopy(self.rootPath, sDistroPath,
-                                dryRun=True, summary=False)
-        if not sOutput.strip():
-            print "\nNo changes !"
-            return
+        if bUpdating:
+            sOutput = self.makeCopy(self.rootPath, sDistroPath,
+                                    dryRun=True, summary=False)
+            if not sOutput.strip():
+                print "\nNo changes !"
+                return
 
-        if archive and osp.exists(sDistroPath):
-            sDate = datetime.now().strftime("%Y%m%d-%H%M")
-            sZipPath = osp.join(sDistroPath + "_backups", self.baseName + "_" + sDate)
+            if archive:
+                sDate = datetime.now().strftime("%Y%m%d-%H%M")
+                sZipPath = osp.join(sDistroPath + "_backups", self.baseName + "_" + sDate)
 
-            cleanUpPyc(sDistroPath)
+                cleanUpPyc(sDistroPath)
 
-            logger = initLogger()
-            make_archive(sZipPath , "zip",
-                         root_dir=osp.dirname(sDistroPath),
-                         base_dir=osp.join('.', osp.basename(sDistroPath)),
-                         logger=logger, dry_run=False)
+                logger = initLogger()
+                make_archive(sZipPath , "zip",
+                             root_dir=osp.dirname(sDistroPath),
+                             base_dir=osp.join('.', osp.basename(sDistroPath)),
+                             logger=logger, dry_run=False)
 
         sOscarPath = osp.join(sDistroPath, "maya_mods", "Toonkit_module",
                               "Maya2016", "Standalones", "OSCAR")
@@ -162,8 +170,7 @@ class Z2kToolkit(object):
 
         if sMsg:
             sMsg = "Cannot launch robocopy:" + sMsg
-            print sMsg
-            return False
+            raise RuntimeError(sMsg)
 
         sOscarPath = osp.join(sSrcRepoPath, "maya_mods", "Toonkit_module",
                               "Maya2016", "Standalones", "OSCAR")
