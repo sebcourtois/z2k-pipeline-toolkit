@@ -10,7 +10,9 @@ reload(Z2K_PcheckD)
 
 Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene",
                         destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
-                         projConnectB= True, theProject="zombtest")
+                        projConnectB= True, theProject="zombtest",
+                        theComment= "auto rock the casbah release !",
+                        debug=False )
 Z2K_ReleaseTool_GuiI.createWin()
 
 Z2K_Pcheck = Z2K_PcheckD.checkModule()
