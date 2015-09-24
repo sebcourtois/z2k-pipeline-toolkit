@@ -9,8 +9,11 @@ from functools import partial
 #conform texture path
 def buttonConformAllTexturePath(*args):
 	shading.conformTexturePath( inConform = True)
+def buttonHardPathAllTexturePath(*args):
+	shading.conformTexturePath( inConform = True, hardPath = True)
 def buttonPrintAllTexturePath(*args):
 	shading.conformTexturePath( inConform = False)
+
 
 #Conform Shader Names
 def buttonConformAllShaderName(*args):
@@ -55,7 +58,8 @@ if mc.window( "shadingToolBox", exists = True ):
     mc.deleteUI( "shadingToolBox", window=True)
 
 
-window = mc.window( "shadingToolBox", title="Shading Toolbox", iconName='Shading',toolbox = True ,widthHeight=(260, 495), sizeable = False )
+window = mc.window( "shadingToolBox", title="Shading Toolbox", iconName='Shading',toolbox = True, sizeable = False )
+mc.window(window, e = True, widthHeight=(260, 525))
 
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 mc.separator(style = 'none', h = 5  )
@@ -63,7 +67,10 @@ mc.separator(style = 'none', h = 5  )
 #conform texture path
 mc.text(label="File Texture Path", align='center')
 mc.button( label='Comform All', c= buttonConformAllTexturePath)
+mc.button( label='Hard Path All', c= buttonHardPathAllTexturePath)
 mc.button( label='Print All', c=  buttonPrintAllTexturePath)
+
+
 
 #Conform Shader Names
 mc.separator(style = 'in', h = 5  )
