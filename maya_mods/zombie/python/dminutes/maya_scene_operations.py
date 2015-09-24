@@ -3,9 +3,9 @@ import maya.cmds as mc
 import os
 
 CAMPATTERN = 'cam_sq*sh*:*'
-CAM_GLOBAL = 'ctrl_global'
-CAM_LOCAL = 'ctrl_local'
-CAM_DOLLY = 'ctrl_dolly'
+CAM_GLOBAL = 'Global_SRT'
+CAM_LOCAL = 'Local_SRT'
+CAM_DOLLY = 'Dolly'
 
 
 #0 as Maya CC, and 1 as OSD Uniform, 2 OSD adaptive
