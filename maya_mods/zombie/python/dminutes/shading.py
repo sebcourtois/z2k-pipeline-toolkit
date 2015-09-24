@@ -815,7 +815,7 @@ def getTexturesToPublish (verbose = True):
     print ""
     print "#### {:>7}: runing shading.getTexturesToPublish(verbose = {})".format("Info", verbose)
     if not mapFilePathList:
-        print "#### {:>7}: One of the texture path is not conform, please run the conformTexturePath() procedure first".format("Error")
+        print "#### {:>7}: One (or several) the texture path is not conform, please run the conformTexturePath() procedure first".format("Error")
         return
 
     finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePathList[0])))
