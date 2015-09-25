@@ -102,19 +102,23 @@ class Z2K_ReleaseTool (object):
             print "assetN=", assetN
             print "*",assetN.rsplit("_",1)[0]
             print "*",assetN.rsplit("_",1)[-1] + "_" + SourceAssetType.rsplit("_",1)[-1]
-            drcF=Z2K.getDrcF(proj=self.proj, assetName=assetN.rsplit("_",1)[0], pathType= self.sourceAssetType )
-            print "drcF=", drcF
-            theLock=Z2K.getLock(drcF)
-            print "theLock=", theLock
-            if len(theLock)>0:
-                booboo=cmds.confirmDialog(message="Current Asset : {0} \ris LOCKED by :'{1}' \rDo you want to UNLOCK it before loading?!".format(assetN,theLock),
-                                            messageAlign="center", defaultButton="YES", cancelButton="NO" , b="YES", button="NO",
-                                            icon="warning")
-                print "booboo=",booboo
-                if booboo in ["YES"]:
-                    Z2K.unlock(drcF)
-                else:
-                    print assetN + " not unlocked"
+            try:
+                drcF=Z2K.getDrcF(proj=self.proj, assetName=assetN.rsplit("_",1)[0], pathType= self.sourceAssetType )
+                print "drcF=", drcF
+                theLock=Z2K.getLock(drcF)
+                print "theLock=", theLock
+                if len(theLock)>0:
+                    booboo=cmds.confirmDialog(message="Current Asset : {0} \ris LOCKED by :'{1}' \rDo you want to UNLOCK it before loading?!".format(assetN,theLock),
+                                                messageAlign="center", defaultButton="YES", cancelButton="NO" , b="YES", button="NO",
+                                                icon="warning")
+                    print "booboo=",booboo
+                    if booboo in ["YES"]:
+                        Z2K.unlock(drcF)
+                    else:
+                        print assetN + " not unlocked"
+            except Exception,err:
+                print "the file in not really a nice clean Z2K file Dude!",err
+                
 
 
         #  opening asset

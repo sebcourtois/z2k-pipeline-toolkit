@@ -66,9 +66,17 @@ class Z2K_replaceWithCustomFile(object):
 
 
         # open the replacing file rename it and save it over the replaced
-        cmds.file( replacingSceneP, open=True, f=True)
-        newName = cmds.file (rename = self.currentSceneP)
-        cmds.file(save=True,f=True)
+        try:
+            cmds.undoInfo(openChunk=True)
+            cmds.file( replacingSceneP, open=True, f=True)
+            newName = cmds.file (rename = self.currentSceneP)
+            cmds.file(save=True,f=True)
+            cmds.undoInfo(closeChunk=True)
+        except Exception,err:
+            cmds.undoInfo(closeChunk=True)
+            print err
+
+
 # save replacingScene as currentScene in the private
 
 
@@ -107,7 +115,7 @@ class Z2K_replaceWithCustomFile_GUI(Z2K_replaceWithCustomFile):
 
     def btn_replaceScene(self,*args, **kwargs):
         print ("btn_replaceScene()")
-
+        self.currentSceneP,self.currentScene = self.getCurrentScene()
         self.replace(replacingSceneP= self.replacingSceneP)
 
     def createWin(self, *args,**kwargs):
@@ -139,7 +147,7 @@ class Z2K_replaceWithCustomFile_GUI(Z2K_replaceWithCustomFile):
         self.BgetFile = cmds.button("get file",c= self.btn_getFile,en=1)
 
         cmds.rowLayout(nc=2,adj=2,manage = 1)
-        cmds.text("FileName:")
+        cmds.text("Replacing File Name:")
         self.BFileName = cmds.textField()
         cmds.setParent("..")
         self.BreplaceScene = cmds.button("replace_current_Scene",c= self.btn_replaceScene)
