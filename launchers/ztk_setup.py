@@ -20,20 +20,20 @@ class Z2kToolkit(object):
     def __init__(self, customEnvs):
 
         sBaseName = "z2k-pipeline-toolkit"
-        sCurDirPath = pathNorm(osp.dirname(osp.abspath(__file__)))
+        sCurDirPath = normPath(osp.dirname(osp.abspath(__file__)))
 
         sRoot, sTail = sCurDirPath.split(sBaseName)
         sDirName = sBaseName + sTail.split("/", 1)[0]
 
-        sRootPath = osp.join(sRoot, sDirName)
+        sRootPath = pathJoin(sRoot, sDirName)
         if not osp.isdir(sRootPath):
             raise EnvironmentError("No such directory: '{}'".format(sRootPath))
 
-        self.isDev = osp.isdir(osp.join(sRootPath, ".git"))
+        self.isDev = osp.isdir(pathJoin(sRootPath, ".git"))
         self.rootPath = sRootPath
         #self.dirName = sDirName
         self.baseName = sBaseName
-        self.pythonPath = osp.join(sRootPath, "python")
+        self.pythonPath = pathJoin(sRootPath, "python")
 
         self.loadEnvs(customEnvs)
 
@@ -72,16 +72,18 @@ class Z2kToolkit(object):
     def loadAppEnvs(self, sAppPath):
 
         sAppPath = normCase(sAppPath)
+        sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
 
-        if sAppPath.endswith("maya.exe"):
+        if sAppName in ("maya", "mayabatch", "render", "mayapy"):
 
             print "\nLoading maya environment:"
 
-            if sAppPath.endswith("maya2016/bin/maya.exe"):
+            updEnv("MAYA_MODULE_PATH", pathJoin(self.rootPath, "maya_mods"),
+                   conflict="add")
 
-                updEnv("MAYA_MODULE_PATH", osp.join(self.rootPath, "maya_mods"),
-                       conflict="add")
-                updEnv("Z2K_PYTHON_SITES", osp.join(self.pythonPath, "mayapy-2016-site"),
+            if "maya2016" in sAppPath:
+
+                updEnv("Z2K_PYTHON_SITES", pathJoin(self.pythonPath, "mayapy-2016-site"),
                        conflict="add")
 
             print ''
@@ -94,7 +96,7 @@ class Z2kToolkit(object):
             print "Tools update from development environment !"
             repo = self.rootPath
 
-        local_root = osp.join(os.environ["USERPROFILE"], "zombillenium", self.baseName)
+        local_root = pathJoin(os.environ["USERPROFILE"], "zombillenium", self.baseName)
 
         if repo == local_root:
             print "Source == Destination !"
@@ -115,7 +117,7 @@ class Z2kToolkit(object):
             cleanUpPyc(local_root)
 
             print ("Zombie toolkit updated, use your local to launch applications ! ({0})"
-                   .format(osp.join(local_root, "launchers")))
+                   .format(pathJoin(local_root, "launchers")))
 
     def release(self, location="", archive=True):
 
@@ -143,17 +145,17 @@ class Z2kToolkit(object):
 
             if archive:
                 sDate = datetime.now().strftime("%Y%m%d-%H%M")
-                sZipPath = osp.join(sDistroPath + "_backups", self.baseName + "_" + sDate)
+                sZipPath = pathJoin(sDistroPath + "_backups", self.baseName + "_" + sDate)
 
                 cleanUpPyc(sDistroPath)
 
                 logger = initLogger()
                 make_archive(sZipPath , "zip",
                              root_dir=osp.dirname(sDistroPath),
-                             base_dir=osp.join('.', osp.basename(sDistroPath)),
+                             base_dir=pathJoin('.', osp.basename(sDistroPath)),
                              logger=logger, dry_run=False)
 
-        sOscarPath = osp.join(sDistroPath, "maya_mods", "Toonkit_module",
+        sOscarPath = pathJoin(sDistroPath, "maya_mods", "Toonkit_module",
                               "Maya2016", "Standalones", "OSCAR")
 
         if not os.path.exists(sOscarPath):
@@ -172,7 +174,7 @@ class Z2kToolkit(object):
             sMsg = "Cannot launch robocopy:" + sMsg
             raise RuntimeError(sMsg)
 
-        sOscarPath = osp.join(sSrcRepoPath, "maya_mods", "Toonkit_module",
+        sOscarPath = pathJoin(sSrcRepoPath, "maya_mods", "Toonkit_module",
                               "Maya2016", "Standalones", "OSCAR")
 
         sDryRun = "/L" if dryRun else ""
@@ -207,7 +209,7 @@ class Z2kToolkit(object):
         if not osp.isdir(sReleaseLoc):
             raise EnvironmentError("No such Release location: '{}'".format(sReleaseLoc))
 
-        return osp.join(sReleaseLoc, self.baseName)
+        return pathJoin(sReleaseLoc, self.baseName)
 
     def launchCmd(self, cmdArgs, update=True):
 
@@ -327,17 +329,16 @@ def makePrivatePath(sPublicPath):
 
     sPrivZombPath = os.environ["PRIV_ZOMB_PATH"]
     sDirName = osp.basename(sPublicPath)
-    return osp.join(sPrivZombPath, sDirName)
+    return pathJoin(sPrivZombPath, sDirName)
 
-def pathNorm(p):
+def normPath(p):
     return osp.normpath(p).replace("\\", "/")
 
 def normCase(p):
     return osp.normcase(p).replace("\\", "/")
 
 def pathJoin(*args):
-    p = osp.join(*args)
-    return pathNorm(p)
+    return normPath(osp.join(*args))
 
 def addEndSlash(sDirPath):
     return sDirPath if sDirPath.endswith("/") else sDirPath + "/"
