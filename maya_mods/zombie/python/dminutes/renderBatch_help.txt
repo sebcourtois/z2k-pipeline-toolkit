@@ -1,0 +1,337 @@
+
+####################################################
+####### RENDER HELP
+####################################################
+This is extracted from the "Render.exe -help" documentation, specific options for maya software and mentalay renderers have been removed 
+
+Usage: C:\Program Files\Autodesk\Maya2016\bin\Render.exe [options] filename
+       where "filename" is a Maya ASCII or a Maya binary file.
+
+Common options:
+  -help              Print help
+  -test              Print Mel commands but do not execute them
+  -verb              Print Mel commands before they are executed
+  -keepMel           Keep the temporary Mel file
+  -listRenderers     List all available renderers
+  -renderer string   Use this specific renderer
+  -r string          Same as -renderer
+  -proj string       Use this Maya project to load the file
+  -log string        Save output into the given file
+
+Specific options for renderer "default": Use the renderer stored in the Maya file
+
+General purpose flags:
+  -rd path                       Directory in which to store image file
+  -of string                     Output image file format. See the Render Settings window to find available formats
+  -im filename                   Image file output name
+
+Frame numbering options
+  -s float                       Starting frame for an animation sequence
+  -e float                       End frame for an animation sequence
+  -b float                       By frame (or step) for an animation sequence
+  -skipExistingFrames boolean    Skip frames that are already rendered (if true) or force rendering all frames (if false)
+  -pad int                       Number of digits in the output image frame file name extension
+  -rfs int                       Renumber Frame Start: number for the first image when renumbering frames
+  -rfb int                       Renumber Frame By (or step) used for renumbering frames
+  -fnc int                       File Name Convention: any of name, name.ext, ... See the
+        Render Settings window to find available options. Use namec and
+        namec.ext for Multi Frame Concatenated formats. As a shortcut,
+        numbers 1, 2, ... can also be used
+
+Camera options
+  -cam name                      Specify which camera to be rendered
+  -rgb boolean                   Turn RGB output on or off
+  -alpha boolean                 Turn Alpha output on or off
+  -depth boolean                 Turn Depth output on or off
+  -iip                           Ignore Image Planes. Turn off all image planes before rendering
+
+Resolution options
+  -x int                         Set X resolution of the final image
+  -y int                         Set Y resolution of the final image
+  -percentRes float              Renders the image using percent of the resolution
+  -ard float                     Device aspect ratio for the rendered image
+  -par float                     Pixel aspect ratio for the rendered image
+
+Render Layers and Passes:
+  -rl boolean|name(s)            Render each render layer separately
+  -rp boolean|name(s)            Render passes separately. 'all' will render all passes
+  -sel boolean|name(s)           Selects which objects, groups and/or sets to render
+  -l boolean|name(s)             Selects which display and render layers to render
+
+Mel callbacks
+  -preRender string              Mel code executed before rendering
+  -postRender string             Mel code executed after rendering
+  -preLayer string               Mel code executed before each render layer
+  -postLayer string              Mel code executed after each render layer
+  -preFrame string               Mel code executed before each frame
+  -postFrame string              Mel code executed after each frame
+  -pre string                    Obsolete flag
+  -post string                   Obsolete flag
+
+ *** Remember to place a space between option flags and their arguments. ***
+Any boolean flag will take the following values as TRUE: on, yes, true, or 1.
+Any boolean flag will take the following values as FALSE: off, no, false, or 0.
+
+    e.g. -s 1 -e 10 -x 512 -y 512 -cam persp -mr:v 5 file.
+
+
+	
+
+####################################################
+####### ARNOLD SPECIFIC RENDER HELP
+####################################################
+This is extracted from the "https://support.solidangle.com/display/AFMUG/Batch+Render+Flags" arnold online documentation 	
+	
+General Purpose Flags
+ -rd path	Directory in which to store output image files.
+ -im filename	Image file output name.
+ -rt int	Render type. (0 = render, 1 = export ass, 2 = export and kick)
+ -lic boolean	Turn licensing on or off.
+ 
+Frame Numbering Options
+ -s float	Starting frame for an animation sequence.
+ -e float	End frame for an animation sequence.
+ -b float	By frame (or step) for an animation sequence.
+ -pad int	Number of digits in the output image frame file name extension.
+ 
+Render Layers and Passes
+ -rl boolean|name(s)	Render each render layer separately.
+ -rp boolean|name(s)	Render passes separately. 'all' will render all passes.
+ -sel boolean|name(s)	Select which objects, groups and/or sets to render.
+ -l boolean|name(s)	Select which display and render layers to render.
+ 
+Camera Options
+ -cam name	Specify which camera will be rendered.
+ -rgb boolean	Turn RGB output on or off.
+ -alpha boolean	Turn Alpha output on or off.
+ -depth boolean	Turn Depth output on or off.
+ -iip	Ignore Image Planes. Turn off all image planes before rendering.
+ 
+Resolution Options
+ -x int	Set X resolution of the final image.
+ -y int	Set Y resolution of the final image.
+ -percentRes float	Renders the image using a percentage of the resolution.
+ -ard float	Device aspect ratio for the rendered image.
+ 
+Sampling Options
+ -ai:as int  	Camera samples (Anti-aliasing)
+ -ai:hs int 	Indirect Diffuse samples.
+ -ai:gs int	Indirect Specular samples.
+ -ai:rs int	Refraction samples.
+-ai:bssrdfs int  	Number of SSS samples.         
+ 
+Sample Clamping
+ -ai:cmpsv boolean	Enable sample clamping.
+ -ai:aovsc boolean	Sample clampling affects AOVs.
+ -ai:aasc float	Sample clamp value.
+ 
+Ray Depth Options
+ -ai:td int	Total depth.
+ -ai:dif int	Indirect Diffuse depth.
+ -ai:glo int	Indirect Specular depth.
+ -ai:rfl int	Reflection depth.
+ -ai:rfr int	Refraction depth.
+ -ai:atd int	Auto-transparency depth.
+ -ai:att float	Auto-transparency threshold.
+ 
+Motion Blur
+ -ai:mben boolean	Enable motion blur.
+ -ai:mbdf boolean	Enable object deformation motion blur.
+ -ai:mbrt int	Shutter Position
+ -ai:mbms int	Number of motion steps.
+-ai:mbfr int	Shutter Length.
+-ai:mbst int	Motion Start.
+-ai:mben int	Motion End.
+ 
+Lights
+ -ai:llth float	Low light threshold value.
+ -ai:ll int	Light linking mode. (0 - None, 1 - Maya Light Links)
+ -ai:sl int  	Shadow linking mode. (0 - None, 1 - Follows Light Linking, 2 - Maya Shadow Links)
+ 
+Subdivision
+ -ai:mxsb int	Maximum subdivision level.
+ 
+Render Settings
+ -ai:threads int	Set the number of threads.
+ -ai:bscn int	Bucket scanning. (0 - Top, 1 - Bottom, 2 - Left, 3 - Right, 4 - Random, 5 - Woven, 6 - Spiral, 7 - Hilbert)
+ -ai:bsz int	Bucket size.
+ -ai:bass boolean  	Export binary ASS files.
+ -ai:exbb boolean	Export bounding box in ASS files.
+ -ai:aerr boolean	Abort on error.
+ -ai:alf boolean	Abort on license fail.
+ -ai:slc boolean	Skip license check.
+ -ai:uopt string	User options string.
+ 
+Textures
+ -ai:txamm boolean	Enable auto-mipmap.
+ -ai:txaum boolean	Accept unmipped textures.
+ -ai:txaun boolean	Accept untiled textures.
+ -ai:txett boolean	Use existing tiled textures.
+ -ai:txat int	Auto-tile size.
+-ai:txmm float	Maximum texture cache memory in MB.
+-ai:txmof int	Maximum number of open textures.
+-ai:txpfs boolean	Per-file texture stats.
+-ai:txdb float	Texture blur for diffuse rays.
+-ai:txgb float	Texture blur for glossy rays.
+ 
+Feature Overrides
+-ai:fotx boolean	Ignore texture maps.
+-ai:fosh boolean	Ignore shaders.
+-ai:foat boolean	Ignore atmosphere shaders.
+-ai:folt boolean	Ignore lights.
+-ai:fosw boolean	Ignore shadows.
+-ai:fosd boolean	Ignore subdivision.
+-ai:fodp boolean	Ignore displacement mapping.
+-ai:fobp boolean	Ignore bump mapping.
+-ai:fosm boolean	Ignore smoothing of vertex normals.
+-ai:fomb boolean	Ignore motion blur.
+-ai:fosss boolean	Ignore SSS.
+-ai:fodof boolean	Ignore Depth of Field.
+ 
+Search Paths
+-ai:sppg string	Plugin search path.
+-ai:sppr string	Procedural search path.
+-ai:spsh string	Shader search path.
+-ai:sptx string	Texture search path.
+ 
+Logging
+-ai:lfn string	Log filename.
+-ai:lmw int	Maximum number of warnings.
+-ai:ltc int	Log to Console.
+-ai:ltf int	Log to File.
+-ai:lve int	Verbosity Level.
+ 
+Mel Callbacks
+-preRender string	add Mel code executed before rendering
+-postRender string	add Mel code executed after rendering
+-preLayer string	add Mel code executed before each render layer
+-postLayer string	add Mel code executed after each render layer
+-preFrame string	add Mel code executed before each frame
+-postFrame string	add Mel code executed after each frame
+-insertPreRender string	insert Mel code executed before rendering
+-insertPostRender string	insert Mel code executed after rendering
+-insertPreLayer string	insert Mel code executed before each render layer
+-insertPostLayer string	insert Mel code executed after each render layer
+-insertPreFrame string	insert Mel code executed before each frame
+-insertPostFrame string	insert Mel code executed after each frame
+ 
+Region Options
+-reg	Sets a custom rectangular region for rendering (xmin xmax ymin ymax). XY start at 0,0 in the top-left corner.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

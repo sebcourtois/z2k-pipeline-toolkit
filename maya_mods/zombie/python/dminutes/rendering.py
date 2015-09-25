@@ -3,6 +3,7 @@ from mtoa.aovs import AOVInterface
 
 import miscUtils
 import os
+import shutil
 
 
 
@@ -172,3 +173,45 @@ def setRenderOutputDir():
         print "#### Warning: no '|asset'or '|shot' group could be found in this scene, output image name and path cannot be automaticaly set"
     
     
+def createBatchRender():
+    """
+    this  script creates a renderbatch.bat file in the private maya working dir, all the variable are set properly
+    a 'renderBatch_help.txt' is also created to help on addind render options to the render command
+
+    """
+    try:
+        davosUser = os.environ["DAVOS_USER"]
+    except:
+        raise ValueError("#### Error: DAVOS_USER environement variable is not defined, please log to davos")
+    workingFile = mc.file(q=True, list = True)[0]
+    workingDir = os.path.dirname(workingFile)
+    renderBatch = miscUtils.normPath(os.path.join(workingDir,"renderBatch.bat"))
+    location = os.path.split(os.getcwd())[-1]
+    setupEnvTools = os.path.normpath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","launchers", location,"setup_env_tools.py"))
+    renderDesc = os.environ["MAYA_RENDER_DESC_PATH"]
+    renderCmd = os.path.normpath(os.path.join(os.environ["MAYA_LOCATION"],"bin","Render.exe"))
+    if os.path.isfile(renderBatch):
+        if os.path.isfile(renderBatch+".bak"): os.remove(renderBatch+".bak")
+        print "#### Info: old renderBatch.bat backuped: {}.bak".format(os.path.normpath(renderBatch))
+        os.rename(renderBatch, renderBatch+".bak")
+
+    renderBatch_obj = open(renderBatch, "w")
+    renderBatch_obj.write("set MAYA_RENDER_DESC_PATH="+renderDesc+"\n")
+    renderBatch_obj.write("set DAVOS_USER="+davosUser+"\n")
+    renderBatch_obj.write("set render="+renderCmd+"\n")
+    renderBatch_obj.write("\n")
+    renderBatch_obj.write('set option="-r arnold"\n')
+    workingFile = os.path.normpath(workingFile)
+    renderBatch_obj.write("set scene="+workingFile+"\n")
+    finalCommand = r'"C:\Python27\python.exe" "'+setupEnvTools+'" launch %render% %option% %scene%'
+    renderBatch_obj.write(finalCommand+"\n")
+    renderBatch_obj.write("\n")
+    renderBatch_obj.write("pause\n")
+    renderBatch_obj.close()
+    print "#### Info: renderBatch.bat created: {}".format(os.path.normpath(renderBatch))
+
+    renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","renderBatch_help.txt"))
+    renderBatchHelp_trg = miscUtils.normPath(os.path.join(workingDir,"renderBatch_help.txt"))
+    if not os.path.isfile(renderBatchHelp_trg):
+        shutil.copyfile(renderBatchHelp_src, renderBatchHelp_trg)
+        print "#### Info: renderBatch_help.txt created: {}".format(os.path.normpath(renderBatchHelp_trg))
