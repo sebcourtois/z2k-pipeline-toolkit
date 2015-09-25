@@ -919,18 +919,18 @@ class checkModule(object):
                         if len(toDeleteL)>1:
                             for i in toDeleteL:
                                 print tab,"**",skinCluster,i
-                                u=cmds.skinCluster(skinCluster,e=True,  ri=i, )
+                                try:
+                                    u=cmds.skinCluster(skinCluster,e=True,  ri=i, )
+                                except Exception,err:
+                                    print err
+                                    toReturnB=False
                             
                             outCount +=1
                             deletedDict[skinCluster]= toDeleteL
                         # turn on skinNode    
                         cmds.setAttr (skinCluster+".nodeState", 0)
-                else:
-                    toReturnB=False
-            
-        else:
-            print tab+"inObjL empty"
-            toReturnB=False
+                
+
 
         # prints -------------------
         self.printF("cleanUnusedInfluance()", st="t")
@@ -1080,7 +1080,7 @@ class checkModule(object):
     # ---------------------------------------------------------------------------------------------------------
     #--------------------- Buttons functions ----------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
-    # @waiter
+    @waiter
     def btn_checkStructure(self,controlN,*args, **kwargs):
         boolResult=True
 
@@ -1152,8 +1152,8 @@ class checkModule(object):
         controlObjL = self.getSetContent(inSetL=["set_control"] )
 
         # steps
-        if not self.isSkinned(inObjL= meshCacheObjL,verbose=True)[0] :
-            boolResult = False
+        # if not self.isSkinned(inObjL= meshCacheObjL,verbose=True)[0] :
+        #     boolResult = False
         self.pBar_upd(step= 1,)
         if not self.cleanUnusedInfluence(inObjL=meshCacheObjL)[0] :
             boolResult = False
@@ -1206,15 +1206,17 @@ class checkModule(object):
     def cleanAll(self,*args, **kwargs):
         print "cleanAll()"
         boolResult = True
-        if not self.btn_CleanObjects(self.BcheckStructure):
+        if not self.btn_checkStructure(self.BcheckStructure):
             boolResult = False
         if not self.btn_CleanScene(self.BCleanScene):
             boolResult = False
-        if not self.btn_checkStructure(self.BCleanObjects):
+        if not self.btn_CleanObjects(self.BCleanObjects):
             boolResult = False
+        
         # colors
         print "*",boolResult
         self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""])
+
     # -------------------------- interface functoin --------------------------------
     def colorBoolControl(self, controlL=[], boolL=[],labelL=[""], *args, **kwargs):
         # color the controlL depending on the given Bool

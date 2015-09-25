@@ -61,6 +61,7 @@ class Z2K_ReleaseTool (object):
         self.sourceAssetType = SourceAssetType
         self.destinationAsset = destinationAsset
         self.destinationAssetType = destinationAssetType
+        self.theProject = theProject
         print "**** projConnectB = ", projConnectB
         if projConnectB :
             self.proj=Z2K.projConnect(theProject=theProject)
@@ -184,7 +185,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         print "theProject = ", self.proj
         print self.name,self.version
         self.cf = self.name + self.version
-        self.dc = self.cf+"_Dock"
+        self.dc = self.cf+"_Dock" +"_" +self.theProject
         self.width = 315
 
 # --------------interface functions-----------------------------------------------
