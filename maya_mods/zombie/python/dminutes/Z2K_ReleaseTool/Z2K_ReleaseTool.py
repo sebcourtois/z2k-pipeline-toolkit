@@ -55,7 +55,7 @@ class Z2K_ReleaseTool (object):
         projConnectB= True,theProject="zombtest",theComment= "auto rock the casbah release !", debug=False, *args, **kwargs):
         print "__init__"
         
-        self.debug = debug
+        self.debug = True
         self.assetL = self.getAssetL(theDir=os.path.normpath(self.baseAssetPath)+os.sep+ "chr")
         self.sourceAsset = sourceAsset
         self.sourceAssetType = SourceAssetType
@@ -100,7 +100,9 @@ class Z2K_ReleaseTool (object):
         if len(sceneN)>0:
             assetN = os.path.normpath(sceneN).rsplit(os.sep,1)[-1].rsplit("-v",1)[0]
             print "assetN=", assetN
-            drcF=Z2K.getDrcF(proj=self.proj, assetName=assetN.rsplit("_",1)[0], pathType=assetN.rsplit("_",1)[-1] + "_" + SourceAssetType.rsplit("_",1)[-1] )
+            print "*",assetN.rsplit("_",1)[0]
+            print "*",assetN.rsplit("_",1)[-1] + "_" + SourceAssetType.rsplit("_",1)[-1]
+            drcF=Z2K.getDrcF(proj=self.proj, assetName=assetN.rsplit("_",1)[0], pathType= self.sourceAssetType )
             print "drcF=", drcF
             theLock=Z2K.getLock(drcF)
             print "theLock=", theLock
@@ -300,13 +302,16 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
 
         # layout import module SPACE -----------------------------------------------------------------
-        self.layoutImportModule = cmds.tabLayout(tabsVisible=0,borderStyle="full")
+        # self.layoutImportModule = cmds.tabLayout(tabsVisible=0,borderStyle="full")
         self.layoutImportModule = cmds.frameLayout(lv=0)
         
         # Z2K_Pcheck.insertLayout(parent=self.layoutImportModule )
 
+
+
+
         # destination asset menu -------------------------------------------------------------------
-        cmds.setParent("..")
+        # cmds.setParent("..")
         cmds.setParent("..")
 
         cmds.tabLayout(tabsVisible=0,borderStyle="full")

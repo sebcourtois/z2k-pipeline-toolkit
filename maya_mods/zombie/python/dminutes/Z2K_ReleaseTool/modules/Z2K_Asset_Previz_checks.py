@@ -1261,7 +1261,11 @@ class checkModule(object):
 
         cmds.setParent(parent)
         self.bigDadL = cmds.frameLayout(label=self.name.center(50), fn="boldLabelFont", lv=0)
+
         self.layoutImportModule = cmds.columnLayout("layoutImportModule",adj=True)
+        cmds.tabLayout(tabsVisible=0,borderStyle="full")
+        cmds.columnLayout("layoutModule",columnOffset= ["both",0],adj=True,)
+
         cmds.image(image=self.upImg)
         cmds.columnLayout("layoutImportModule",columnOffset= ["both",0],adj=True,)
         self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= self.cleanAll,en=1)
