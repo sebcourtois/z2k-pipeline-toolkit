@@ -177,7 +177,7 @@ def createBatchRender():
     """
     this  script creates a renderbatch.bat file in the private maya working dir, all the variable are set properly
     a 'renderBatch_help.txt' is also created to help on addind render options to the render command
-    
+
     """
     try:
         davosUser = os.environ["DAVOS_USER"]
@@ -192,7 +192,7 @@ def createBatchRender():
     renderCmd = os.path.normpath(os.path.join(os.environ["MAYA_LOCATION"],"bin","Render.exe"))
     if os.path.isfile(renderBatch):
         if os.path.isfile(renderBatch+".bak"): os.remove(renderBatch+".bak")
-        print "#### Info: old renderBatch.bat backuped: {}.bak".format( renderBatch)
+        print "#### Info: old renderBatch.bat backuped: {}.bak".format(os.path.normpath(renderBatch))
         os.rename(renderBatch, renderBatch+".bak")
 
     renderBatch_obj = open(renderBatch, "w")
@@ -200,17 +200,18 @@ def createBatchRender():
     renderBatch_obj.write("set DAVOS_USER="+davosUser+"\n")
     renderBatch_obj.write("set render="+renderCmd+"\n")
     renderBatch_obj.write("\n")
-    renderBatch_obj.write("set option=-r arnold\n")
+    renderBatch_obj.write('set option="-r arnold"\n')
     workingFile = os.path.normpath(workingFile)
     renderBatch_obj.write("set scene="+workingFile+"\n")
     finalCommand = r'"C:\Python27\python.exe" "'+setupEnvTools+'" launch %render% %option% %scene%'
     renderBatch_obj.write(finalCommand+"\n")
     renderBatch_obj.write("\n")
+    renderBatch_obj.write("pause\n")
     renderBatch_obj.close()
-    print "#### Info: renderBatch.bat created: {}".format(renderBatch)
+    print "#### Info: renderBatch.bat created: {}".format(os.path.normpath(renderBatch))
 
     renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","renderBatch_help.txt"))
     renderBatchHelp_trg = miscUtils.normPath(os.path.join(workingDir,"renderBatch_help.txt"))
     if not os.path.isfile(renderBatchHelp_trg):
         shutil.copyfile(renderBatchHelp_src, renderBatchHelp_trg)
-        print "#### Info: renderBatch_help.txt created: {}".format(renderBatchHelp_trg)
+        print "#### Info: renderBatch_help.txt created: {}".format(os.path.normpath(renderBatchHelp_trg))
