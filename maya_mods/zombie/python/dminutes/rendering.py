@@ -2,6 +2,7 @@ import maya.cmds as mc
 from mtoa.aovs import AOVInterface
 
 import miscUtils
+import os
 
 
 
@@ -18,27 +19,18 @@ def setArnoldRenderOption(outputFormat):
     print ""
     print "#### {:>7}: runing shading.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
 
-    shadingMode = False
-    outputImageName = ""
-
-    #creates a workspace named as the davos user en the maya project path and set it
-    miscUtils.createUserWorkspace()
 
 
-    #define output directoy
-    if mc.ls("|asset"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
-        mainFilePathElem = mainFilePath.split("/")
-        if  mainFilePathElem[-4] == "asset":
-            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"review")
-            outputImageName = mainFilePathElem[-2]
-            mc.workspace(fileRule=["images",outputFilePath])
-            shadingMode = True
-        else:
-            print "#### Warning: you are not working in an 'asset' structure directory, output image name and path could not be automaticaly set"
-    else :
-        print "#### Warning: no '|asset' could be found in this scene, , output image name and path could not be automaticaly set"
-        
+    if mc.ls("|asset") and (mc.file(q=True, list = True)[0].split("/")[-4]) == "asset":
+        shadingMode = True
+        print "#### info: Shading mode render options"
+    else:
+        shadingMode = False
+        print "#### info: Lighting mode render options"       
+
+
+    setRenderOutputDir()    
+
 
     mmToIncheFactor = 0.0393700787401575
     camApertureInche = 35 * mmToIncheFactor 
@@ -90,7 +82,7 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultRenderGlobals.putFrameBeforeExt",1)
     mc.setAttr("defaultRenderGlobals.extensionPadding",4)
     mc.setAttr("defaultRenderGlobals.currentRenderer","arnold", type = "string")
-    mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
+
 
 
     #arnold Settings
@@ -138,7 +130,45 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.AASampleClamp",2.5)
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
     
-
     print "#### info: render options are now production ready"
+
+
+
+def setRenderOutputDir():
+
+    outputImageName = ""
+
+    #creates a workspace named as the davos user en the maya project path and set it
+    miscUtils.createUserWorkspace()
+
+    mainFilePath = mc.file(q=True, list = True)[0]
+    mainFilePathElem = mainFilePath.split("/")
+
+    #define output directoy
+    if mc.ls("|asset"):        
+        if  mainFilePathElem[-4] == "asset":
+            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"review")
+            outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
+            outputImageName = mainFilePathElem[-2]
+            print "#### Info: Set render path: {}".format( outputFilePath_exp)
+            print "#### Info: Set image name:  {}".format( outputImageName)
+            mc.workspace(fileRule=["images",outputFilePath_exp])
+            mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
+        else:
+            print "#### Warning: you are not working in an 'asset' structure directory, output image name and path cannot not be automaticaly set"
+    elif mc.ls("|shot"):
+        print "#### Warning: this tool hass not been tested yet"
+        if  mainFilePathElem[-4] == "shot":
+            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_OUTPUT_PATH",mainFilePathElem[-3],mainFilePathElem[-2],mainFilePathElem[-1],"render")
+            outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
+            outputImageName = mainFilePathElem[-2]
+            print "#### Info: Set render path: {}".format( outputFilePath_exp)
+            print "#### Info: Set image name:  {}".format( outputImageName)
+            mc.workspace(fileRule=["images",outputFilePath_exp])
+            mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
+        else:
+            print "#### Warning: you are not working in an 'shot' structure directory, output image name and path cannot not be automaticaly set"
+    else:
+        print "#### Warning: no '|asset'or '|shot' group could be found in this scene, output image name and path cannot be automaticaly set"
     
     

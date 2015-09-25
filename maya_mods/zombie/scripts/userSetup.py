@@ -1,14 +1,17 @@
 
 
-# import os, sys
+import os, sys
 
-# import maya.cmds as mc
-import pymel.core as pm
 import pymel.mayautils
 
 def onStartup():
 
-	import stxScriptMenu
-	stxScriptMenu.install()
-		
-pymel.mayautils.executeDeferred( onStartup )
+	if os.path.normcase(sys.executable).endswith("maya.exe"):
+
+		import stxScriptMenu
+		stxScriptMenu.install()
+
+	from davos_maya.tool.davossetup import DavosSetup
+	DavosSetup().install()
+
+pymel.mayautils.executeDeferred(onStartup)
