@@ -66,6 +66,7 @@ class Z2K_replace_ASSET(object):
         print "    currentSceneP  =",self.currentSceneP
         print "    replacingSceneP=",replacingSceneP
 
+        outBool = False
         # check names
 
 
@@ -76,33 +77,37 @@ class Z2K_replace_ASSET(object):
             newName = cmds.file (rename = self.currentSceneP)
             cmds.file(save=True,f=True)
             cmds.undoInfo(closeChunk=True)
+            msg = str(newName)
+            icon = "information"
+            outBool = True
         except Exception,err:
+            outBool=False
             cmds.undoInfo(closeChunk=True)
-            cmds.confirmDialog(title="ERROR", message=err, messageAlign="center", icon="warning")
             # re-open old scene and re save
             cmds.file( self.currentSceneP, open=True, f=True)
             newName = cmds.file (rename = self.currentSceneP)
             cmds.file(save=True,f=True)
-            print err
+            msg = str(err)
+            icon = "warning"
+
+        return outBool,[msg,icon]
 
 
     def publishScene(self, pathType="scene_previz",comment="First_publish_test_RockTheCasbah", *args, **kwargs):
         print 'publishScene()'
+
         PublishedFile_absPath = "None"
         theAssetN,rawType = self.currentScene.rsplit("-v",1)[0].rsplit("_",1)
         print "  -theAssetN=", theAssetN
         print "  -rawType=", rawType
 
         # publishing for real
-        try: 
-            PublishedMrc = self.theProj.publishEditedVersion(self.currentSceneP, comment=comment, autoLock=True)[0]
-            print "PublishedMrc=", PublishedMrc
-            PublishedFile_absPath = PublishedMrc.absPath()
-            print "  -PublishedFile_absPath=", PublishedFile_absPath
-            cmds.confirmDialog(title= "PUBLISHED",message=PublishedFile_absPath, button="OK", messageAlign="center", icon="information" )
-        except Exception,err:
-            msg= str(err)
-            cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
+       
+        PublishedMrc = self.theProj.publishEditedVersion(self.currentSceneP, comment=comment, autoLock=True)[0]
+        print "PublishedMrc=", PublishedMrc
+        PublishedFile_absPath = PublishedMrc.absPath()
+        print "  -PublishedFile_absPath=", PublishedFile_absPath
+            
         
 
         return PublishedFile_absPath
@@ -149,13 +154,22 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
     def btn_replaceScene(self,*args, **kwargs):
         print ("btn_replaceScene()")
         self.currentSceneP,self.currentScene = self.getCurrentScene()
-        self.replace(replacingSceneP= self.replacingSceneP)
+        outBool,infoL = self.replace(replacingSceneP= self.replacingSceneP)
 
+        if not outBool:
+            cmds.confirmDialog(title="replace_Info", message=infoL[0], messageAlign="center", icon=infoL[1])
 
 
     def btn_publishScene(self,*args, **kwargs):
         print "btn_publishScene()"
-        self.publishScene(pathType="scene_previz")
+        try: 
+            PublishedFile_absPath = self.publishScene(pathType="scene_previz")
+            cmds.confirmDialog(title= "PUBLISH info",message="PUBLISH DONE :\r"+PublishedFile_absPath, button="OK", messageAlign="center", icon="information" )
+        
+        except Exception,err:
+            msg= str(err)
+            cmds.confirmDialog(title= "PUBLISH info",message= "ERROR : \r"+msg,button="OK", messageAlign="center", icon="warning")
+
 
 
 # -------------------------------------- interface -------------------------------------------
