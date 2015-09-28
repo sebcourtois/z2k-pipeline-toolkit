@@ -100,10 +100,10 @@ def publishFile(proj="", path_private_toPublish="",comment="test the cashbah mod
     print "Z2K_publishFile()" 
     tab= "    "
     sPrivPath = path_private_toPublish.absPath()
-    shortPublishedFileName= proj.publishEditedVersion(sPrivPath, comment="RockTheCashbah", autoLock=True)[0]
-    PublishedFile_absPath = shortPublishedFileName.absPath()
-    PublishedFile_shortName = shortPublishedFileName.fileName() 
-    # PublishedFile_Comment = shortPublishedFileName.comment()
+    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment="RockTheCashbah", autoLock=True)[0]
+    PublishedFile_absPath = PublishedMrc.absPath()
+    PublishedFile_shortName = PublishedMrc.fileName() 
+    # PublishedFile_Comment = PublishedMrc.comment()
     
     print tab,"DONE","->",PublishedFile_shortName
 
