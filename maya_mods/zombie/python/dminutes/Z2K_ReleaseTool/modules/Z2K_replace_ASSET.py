@@ -126,8 +126,12 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
         print self.name,self.version
         self.cf = self.name + self.version
         print "theProject=", self.theProject
+        self.pComment = "First_publish_RockTheCasbah"
 
-
+        
+    def getInterfaceValues(self,*args, **kwargs):
+        print getInterfaceValues()
+        self.pComment = cmds.textField(self.BComment,q=1,text=1)
 
 
     def btn_getFile(self,*args, **kwargs):
@@ -208,6 +212,8 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
         cmds.setParent("..")
         self.BreplaceScene = cmds.button("replace_current_Scene",c= self.btn_replaceScene)
         self.BPublishScene = cmds.button("PUBLISH",c= self.btn_publishScene)
+        cmds.text("Comment:",align="left",)
+        self.BComment = cmds.textField(text= self.pComment,font="obliqueLabelFont")
         cmds.setParent("..")
 
 
