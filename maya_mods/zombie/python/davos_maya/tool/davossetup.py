@@ -31,3 +31,8 @@ class DavosSetup(ToolSetup):
         ToolSetup.afterBuildingMenu(self)
 
         DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
+
+    def beforeReloading(self, *args):
+        ToolSetup.beforeReloading(self, *args)
+
+        file_browser.kill()

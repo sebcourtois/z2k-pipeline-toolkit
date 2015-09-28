@@ -110,10 +110,10 @@ class character3d:
     }
 
 #    resources_settings = {
-#    "modeling_scene":{"outcomes":("preview_image",),
+#    "previz_scene":{
 #                    "create_sg_version":True,
 #                    "sg_step":"Model Previz",
-#                    "upload_to_sg":"preview_image"
+#                    #"upload_to_sg":"preview_image"
 #                    },
 #    }
 
