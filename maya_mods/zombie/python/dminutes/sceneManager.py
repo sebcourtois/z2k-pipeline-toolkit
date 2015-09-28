@@ -9,6 +9,7 @@ from davos.core import damproject
 from davos.core.damtypes import DamShot
 
 from davos_maya.core import mrclibrary
+from davos.core.utils import versionFromName
 MrcLibrary = mrclibrary.MrcLibrary
 
 import dminutes.maya_scene_operations as mop
@@ -156,9 +157,26 @@ class SceneManager():
         return self.contextIsMatching()
 
     def contextIsMatching(self):
+        self.context['sceneState'] = ""
         contextEntry = self.getEntry()
 
-        return contextEntry != None and self.context['sceneEntry'] != None and contextEntry.absPath() == self.context['sceneEntry'].getPublicFile().absPath()
+        if contextEntry == None or self.context['sceneEntry'] == None:
+            self.context['sceneState'] = "Cannot autodetect context !"
+            return False
+
+        sceneEntryPath = self.context['sceneEntry'].getPublicFile().absPath()
+        if contextEntry.absPath() == sceneEntryPath:
+            iSrcVers = versionFromName(self.context['sceneEntry'].name)
+            iNxtVers = contextEntry.currentVersion + 1
+
+            if iSrcVers < iNxtVers:
+                self.context['sceneState'] = "Current scene version is obsolete ({0} => {1}) !".format(iSrcVers, iNxtVers)
+                return False
+
+            return True
+
+        self.context['sceneState'] = "Your context does not match with current scene ({0} => {1}) !".format(os.path.basename(contextEntry.absPath()), os.path.basename(sceneEntryPath))
+        return False
 
     def isEditable(self):
         if self.context['lock'] != "Error":
@@ -170,9 +188,7 @@ class SceneManager():
         message = ""
         
         if not self.refreshSceneContext():
-            sceneEntry = self.context['sceneEntry']
-            entrymessage = os.path.basename(sceneEntry.getPublicFile().absPath()) if sceneEntry != None else "No entry !"
-            message = "Your context does not match with current scene {0} => {1} !".format(os.path.basename(self.getEntry().absPath()), entrymessage)
+            message = self.context['sceneState']
         
         if not self.isEditable():
             message = "Your entity is locked by {0} !".format(self.context['lock'])
@@ -325,6 +341,8 @@ class SceneManager():
 
             pc.setAttr(cams[0].name() + '.aspectRatio', 1.7778)
 
+            os.system("start "+capturePath.replace("/", "\\"))
+
     def edit(self, editInPlace=None, onBase=False):
         privFile = None
 
@@ -417,7 +435,10 @@ class SceneManager():
             if entry == None:
                 pc.error()
 
-            self.context['damProject'].publishEditedVersion(currentScene)
+            rslt = self.context['damProject'].publishEditedVersion(currentScene)
+
+            if rslt != None:
+                pc.confirmDialog( title='Publish OK', message='{0} was published successfully'.format(rslt[0].name))
         else:
             pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
