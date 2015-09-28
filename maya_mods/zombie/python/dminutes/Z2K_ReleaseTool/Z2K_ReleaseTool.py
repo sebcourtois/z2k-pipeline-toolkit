@@ -42,7 +42,7 @@ reload(jpm)
 
 class Z2K_ReleaseTool (object):
     
-    version = "_v1.0"            
+    version = "_v010"            
     name = "Z2K_ReleaseTool"
     
 
@@ -55,7 +55,7 @@ class Z2K_ReleaseTool (object):
         projConnectB= True,theProject="zombtest",theComment= "auto rock the casbah release !", debug=False, *args, **kwargs):
         print "__init__"
         
-        self.debug = True
+        self.debug = debug
         self.assetL = self.getAssetL(theDir=os.path.normpath(self.baseAssetPath)+os.sep+ "chr")
         self.sourceAsset = sourceAsset
         self.sourceAssetType = SourceAssetType
@@ -157,6 +157,8 @@ class Z2K_ReleaseTool (object):
         # re open the publish file for checking
         cmds.file(os.path.normpath(exportedFileZ2K), open=True,f=True)
 
+        return exportedFileZ2K
+
 
 # Z2K_OpenA=Z2K_ReleaseTool(sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene",
 #                         destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
@@ -236,8 +238,13 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         print "btn_release_Asset()"
         self.getInterfaceValues()
         print "X",self.sourceAsset,"->",self.destinationAsset, self.sourceAssetType,"->",self.destinationAssetType
-        self.release_Asset( destinationAsset= self.destinationAsset ,destinationAssetType = self.destinationAssetType)
+        try :
+            exportedFileZ2K = self.release_Asset( destinationAsset= self.destinationAsset ,destinationAssetType = self.destinationAssetType)
+            cmds.confirmDialog(title= "ASSET RELEASE DONE",message= exportedFileZ2K,button="OK", messageAlign="center", icon="information")
 
+        except Exception,err:
+            msg= str(err)
+            cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
 
 # --------------Window-----------------------------------------------
     def deleteUIandpref(self,*args, **kwargs):
@@ -265,8 +272,8 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         if cmds.window(self.cf, q=True, exists=True):
             cmds.deleteUI(self.cf)
 
-        cmds.window(self.cf, rtf=True, tlb=True, t=(self.cf + " : " + str(self.cf)), width=self.width,)
-        cmds.window(self.cf, e=True, sizeable=True, t=(self.cf + " : " + str(self.cf)), h=50,w=50)
+        cmds.window(self.cf, rtf=True, tlb=True, t= self.cf, width=self.width,)
+        cmds.window(self.cf, e=True, sizeable=True, t= self.cf, h=50,w=50)
         #BIG TAB ------------------------------------------------------------------------------------------------
         cmds.frameLayout(marginHeight=2, marginWidth=2,lv=0)
         # cmds.tabLayout(tabsVisible=0,borderStyle="full")
