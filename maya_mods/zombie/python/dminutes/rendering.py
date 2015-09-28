@@ -148,13 +148,13 @@ def setRenderOutputDir():
     #define output directoy
     if mc.ls("|asset"):        
         if  mainFilePathElem[-4] == "asset":
-            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"review")
+            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"review",mainFilePathElem[-2])
             outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
             outputImageName = mainFilePathElem[-2]
-            print "#### Info: Set render path: {}".format( outputFilePath_exp)
-            print "#### Info: Set image name:  {}".format( outputImageName)
-            mc.workspace(fileRule=["images",outputFilePath_exp])
-            mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
+            print "#### Info: Set render path: {}".format( outputFilePath)
+            #print "#### Info: Set image name:  {}".format( outputImageName)
+            #mc.workspace(fileRule=["images",outputFilePath_exp])
+            mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputFilePath ,type = "string")
         else:
             print "#### Warning: you are not working in an 'asset' structure directory, output image name and path cannot not be automaticaly set"
     elif mc.ls("|shot"):

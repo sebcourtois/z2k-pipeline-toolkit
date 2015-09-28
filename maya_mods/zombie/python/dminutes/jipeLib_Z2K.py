@@ -28,7 +28,7 @@ def matchByXformMatrix(cursel=[], mode=0, *args, **kwargs):
         Dependencies : cmds - 
     ''' 
     print "matchByXformMatrix()"
-    if mode in [0,"first"]:
+    if mode in [0,"first "]:
         objMatched = cursel.pop(0)
         objMatchingL = cursel
         #print objMatched, "->", objMatchingL

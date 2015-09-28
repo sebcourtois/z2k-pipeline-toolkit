@@ -10,6 +10,7 @@
 # Comment : wip
 #
 # TO DO:
+#   - add cat chooser to the GUI, "set/env/char/prop"
 #   x handle module import style
 #   x Unlockink the edited file if not saved
 #   x Dockable
@@ -42,7 +43,7 @@ reload(jpm)
 
 class Z2K_ReleaseTool (object):
     
-    version = "_v1.0"            
+    version = "_v010"            
     name = "Z2K_ReleaseTool"
     
 
@@ -51,12 +52,13 @@ class Z2K_ReleaseTool (object):
 
     baseAssetPath =  os.environ.get("ZOMB_ASSET_PATH")
     print baseAssetPath
-    def __init__(self, sourceAsset="", SourceAssetType="previz_scene", destinationAsset = "", destinationAssetType= "previz_ref", 
+    def __init__(self, sourceAsset="", assetCat = "chr", SourceAssetType="previz_scene", destinationAsset = "", destinationAssetType= "previz_ref", 
         projConnectB= True,theProject="zombtest",theComment= "auto rock the casbah release !", debug=False, *args, **kwargs):
         print "__init__"
         
-        self.debug = True
-        self.assetL = self.getAssetL(theDir=os.path.normpath(self.baseAssetPath)+os.sep+ "chr")
+        self.debug = debug
+        self.assetCat = assetCat
+        self.assetL = self.getAssetL(theDir=os.path.normpath(self.baseAssetPath)+os.sep+ self.assetCat)
         self.sourceAsset = sourceAsset
         self.sourceAssetType = SourceAssetType
         self.destinationAsset = destinationAsset
@@ -157,6 +159,8 @@ class Z2K_ReleaseTool (object):
         # re open the publish file for checking
         cmds.file(os.path.normpath(exportedFileZ2K), open=True,f=True)
 
+        return exportedFileZ2K
+
 
 # Z2K_OpenA=Z2K_ReleaseTool(sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene",
 #                         destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
@@ -177,9 +181,9 @@ class Z2K_ReleaseTool (object):
 
 class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
     layoutImportModule=""
-    def __init__(self,sourceAsset,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject,*args, **kwargs):
+    def __init__(self, sourceAsset="", assetCat="", SourceAssetType="", destinationAsset="", destinationAssetType="", projConnectB="",theProject="",*args, **kwargs):
         # self = Z2K_ReleaseTool
-        Z2K_ReleaseTool.__init__(self,sourceAsset,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject)
+        Z2K_ReleaseTool.__init__(self,sourceAsset,assetCat,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject)
         # self.sourceAsset = sourceAsset
         # self.SourceAssetType = SourceAssetType
         # self.destinationAsset = destinationAsset
@@ -236,8 +240,13 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         print "btn_release_Asset()"
         self.getInterfaceValues()
         print "X",self.sourceAsset,"->",self.destinationAsset, self.sourceAssetType,"->",self.destinationAssetType
-        self.release_Asset( destinationAsset= self.destinationAsset ,destinationAssetType = self.destinationAssetType)
+        try :
+            exportedFileZ2K = self.release_Asset( destinationAsset= self.destinationAsset ,destinationAssetType = self.destinationAssetType)
+            cmds.confirmDialog(title= "ASSET RELEASE DONE",message= exportedFileZ2K,button="OK", messageAlign="center", icon="information")
 
+        except Exception,err:
+            msg= str(err)
+            cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
 
 # --------------Window-----------------------------------------------
     def deleteUIandpref(self,*args, **kwargs):
@@ -265,8 +274,8 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         if cmds.window(self.cf, q=True, exists=True):
             cmds.deleteUI(self.cf)
 
-        cmds.window(self.cf, rtf=True, tlb=True, t=(self.cf + " : " + str(self.cf)), width=self.width,)
-        cmds.window(self.cf, e=True, sizeable=True, t=(self.cf + " : " + str(self.cf)), h=50,w=50)
+        cmds.window(self.cf, rtf=True, tlb=True, t= self.cf, width=self.width,)
+        cmds.window(self.cf, e=True, sizeable=True, t= self.cf, h=50,w=50)
         #BIG TAB ------------------------------------------------------------------------------------------------
         cmds.frameLayout(marginHeight=2, marginWidth=2,lv=0)
         # cmds.tabLayout(tabsVisible=0,borderStyle="full")
@@ -285,7 +294,8 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         self.BsourceAssetMenu = cmds.optionMenu("Source_Asset_List", label='Source_Asset:', ann="", changeCommand=self.btn_sourceAssetMenu )
         for asset in sorted(self.assetL)  :
             cmds.menuItem( label=asset )
-        cmds.optionMenu(self.BsourceAssetMenu ,e=True, value=self.sourceAsset)
+        if self.sourceAsset  in self.assetL:
+            cmds.optionMenu(self.BsourceAssetMenu ,e=True, value=self.sourceAsset)
 
         # source advanced rowL
         self.sourceRowL = cmds.rowLayout(nc=4,adj=1, manage = 1)
@@ -325,12 +335,13 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         self.BdestinationAssetMenu = cmds.optionMenu("Destination_Asset_List", label='Destination_Asset:', ann="", changeCommand=self.btn_destinationAssetMenu )
         for asset in self.assetL  :
             cmds.menuItem( label=asset )
-        cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
+        if self.sourceAsset  in self.assetL:
+            cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
         
         # source advanced rowL
         # cmds.setParent("..")
 
-        self.destiRowL= cmds.rowLayout(nc=4,adj=1,manage=1)
+        self.destiRowL= cmds.rowLayout(nc=4, adj=1, manage=1)
         self.BdestinationAsset = cmds.textField("destinationAssetName",text=self.destinationAsset,w=textF_w,manage=1)
         self.BdestinationAssetType = cmds.textField("sourceAssetType",text=self.destinationAssetType, w=85,manage=1)
         
@@ -361,7 +372,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
         
 
-# Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene",
+# Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", assetCat = "chr", SourceAssetType="previz_scene",
 #                       destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
 #                       projConnectB= True, theProject="zombtest",debug=False,
 #                       theComment= "auto rock the casbah release !")
