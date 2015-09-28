@@ -10,6 +10,7 @@
 # Comment : wip
 #
 # TO DO:
+#   - add cat chooser to the GUI, "set/env/char/prop"
 #   x handle module import style
 #   x Unlockink the edited file if not saved
 #   x Dockable
@@ -340,7 +341,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         # source advanced rowL
         # cmds.setParent("..")
 
-        self.destiRowL= cmds.rowLayout(nc=4,adj=1,manage=1)
+        self.destiRowL= cmds.rowLayout(nc=4, adj=1, manage=1)
         self.BdestinationAsset = cmds.textField("destinationAssetName",text=self.destinationAsset,w=textF_w,manage=1)
         self.BdestinationAssetType = cmds.textField("sourceAssetType",text=self.destinationAssetType, w=85,manage=1)
         
