@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ########################################################
 # Name    : Z2K_ReleaseTool
-# Version : v006
+# Version : v100
 # Description : Create previz maya file in .mb with some cleaning script called inside
 # Comment : BASE SCRIPT OUT OF Z2K in v002
 # Author : Jean-Philippe Descoins
@@ -42,7 +42,7 @@ reload(jpm)
 
 class Z2K_ReleaseTool (object):
     
-    version = "_v006"            
+    version = "_v1.0"            
     name = "Z2K_ReleaseTool"
     
 
