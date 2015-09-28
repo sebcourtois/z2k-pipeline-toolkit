@@ -51,12 +51,13 @@ class Z2K_ReleaseTool (object):
 
     baseAssetPath =  os.environ.get("ZOMB_ASSET_PATH")
     print baseAssetPath
-    def __init__(self, sourceAsset="", SourceAssetType="previz_scene", destinationAsset = "", destinationAssetType= "previz_ref", 
+    def __init__(self, sourceAsset="", assetCat = "chr", SourceAssetType="previz_scene", destinationAsset = "", destinationAssetType= "previz_ref", 
         projConnectB= True,theProject="zombtest",theComment= "auto rock the casbah release !", debug=False, *args, **kwargs):
         print "__init__"
         
         self.debug = debug
-        self.assetL = self.getAssetL(theDir=os.path.normpath(self.baseAssetPath)+os.sep+ "chr")
+        self.assetCat = assetCat
+        self.assetL = self.getAssetL(theDir=os.path.normpath(self.baseAssetPath)+os.sep+ self.assetCat)
         self.sourceAsset = sourceAsset
         self.sourceAssetType = SourceAssetType
         self.destinationAsset = destinationAsset
@@ -179,9 +180,9 @@ class Z2K_ReleaseTool (object):
 
 class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
     layoutImportModule=""
-    def __init__(self,sourceAsset,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject,*args, **kwargs):
+    def __init__(self, sourceAsset="", assetCat="", SourceAssetType="", destinationAsset="", destinationAssetType="", projConnectB="",theProject="",*args, **kwargs):
         # self = Z2K_ReleaseTool
-        Z2K_ReleaseTool.__init__(self,sourceAsset,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject)
+        Z2K_ReleaseTool.__init__(self,sourceAsset,assetCat,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject)
         # self.sourceAsset = sourceAsset
         # self.SourceAssetType = SourceAssetType
         # self.destinationAsset = destinationAsset
@@ -292,7 +293,8 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         self.BsourceAssetMenu = cmds.optionMenu("Source_Asset_List", label='Source_Asset:', ann="", changeCommand=self.btn_sourceAssetMenu )
         for asset in sorted(self.assetL)  :
             cmds.menuItem( label=asset )
-        cmds.optionMenu(self.BsourceAssetMenu ,e=True, value=self.sourceAsset)
+        if self.sourceAsset  in self.assetL:
+            cmds.optionMenu(self.BsourceAssetMenu ,e=True, value=self.sourceAsset)
 
         # source advanced rowL
         self.sourceRowL = cmds.rowLayout(nc=4,adj=1, manage = 1)
@@ -332,7 +334,8 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         self.BdestinationAssetMenu = cmds.optionMenu("Destination_Asset_List", label='Destination_Asset:', ann="", changeCommand=self.btn_destinationAssetMenu )
         for asset in self.assetL  :
             cmds.menuItem( label=asset )
-        cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
+        if self.sourceAsset  in self.assetL:
+            cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
         
         # source advanced rowL
         # cmds.setParent("..")
@@ -368,7 +371,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
         
 
-# Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene",
+# Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", assetCat = "chr", SourceAssetType="previz_scene",
 #                       destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
 #                       projConnectB= True, theProject="zombtest",debug=False,
 #                       theComment= "auto rock the casbah release !")

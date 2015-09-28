@@ -11,7 +11,7 @@ import dminutes.Z2K_ReleaseTool.modules.Z2K_replaceWithCustomFile as Z2K_replace
 reload(Z2K_replace)
 
 
-Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene",
+Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", assetCat = "chr",
                         destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
                         projConnectB= True, theProject="zombtest",
                         theComment= "auto rock the casbah release !",

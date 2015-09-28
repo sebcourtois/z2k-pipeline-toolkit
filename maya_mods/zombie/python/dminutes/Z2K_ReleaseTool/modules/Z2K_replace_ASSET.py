@@ -164,7 +164,7 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
         if cmds.window(self.cf, q=True, exists=True):
             cmds.deleteUI(self.cf, window=True)
         #create la window et rename apres
-        self.cf = cmds.window(self.cf ,rtf=True, tlb=False, t=self.cf + " " +self.theProject)
+        self.cf = cmds.window(self.cf ,rtf=True, tlb=True, t=self.cf + " " +self.theProject)
         outputW = cmds.window(self.cf, e=True, sizeable=True, )
         
         # show window
@@ -180,6 +180,7 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
         cmds.setParent(parent)
         self.bigDadL = cmds.frameLayout(label=self.name.center(50), fn="boldLabelFont", lv=0)
         self.layoutImportModule = cmds.columnLayout("layoutImportModule",adj=True)
+        cmds.columnLayout(adjustableColumn=True, columnOffset= ["both",5],)
         cmds.tabLayout(tabsVisible=0,borderStyle="full")
         cmds.columnLayout("layoutModule",columnOffset= ["both",0],adj=True,)
 
