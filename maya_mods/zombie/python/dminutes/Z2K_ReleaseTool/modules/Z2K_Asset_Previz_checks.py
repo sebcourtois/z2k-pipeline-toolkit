@@ -355,6 +355,7 @@ class checkModule(object):
             if not result:
                 cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
 
+            return result
         return deco
 
     # ------------ printer -----------------
@@ -1103,7 +1104,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
         # colors
-        print "*",boolResult
+        print "*btn_checkStructure:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
         
         return boolResult
@@ -1136,7 +1137,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
                
         # colors
-        print "*",boolResult
+        print "*btn_CleanScene:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
         
         return boolResult
@@ -1184,7 +1185,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
         # colors
-        print "*",boolResult
+        print "*btn_CleanObjects:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
 
         return boolResult
@@ -1208,13 +1209,15 @@ class checkModule(object):
         boolResult = True
         if not self.btn_checkStructure(self.BcheckStructure):
             boolResult = False
+        print "*1",boolResult
         if not self.btn_CleanScene(self.BCleanScene):
             boolResult = False
+        print "*2",boolResult
         if not self.btn_CleanObjects(self.BCleanObjects):
             boolResult = False
         
         # colors
-        print "*",boolResult
+        print "*3",boolResult
         self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""])
 
     # -------------------------- interface functoin --------------------------------

@@ -74,6 +74,11 @@ class Z2K_replaceWithCustomFile(object):
             cmds.undoInfo(closeChunk=True)
         except Exception,err:
             cmds.undoInfo(closeChunk=True)
+            cmds.promptDialog("ERROR")
+            # re-open old scene and re save
+            cmds.file( self.currentSceneP, open=True, f=True)
+            newName = cmds.file (rename = self.currentSceneP)
+            cmds.file(save=True,f=True)
             print err
 
 
