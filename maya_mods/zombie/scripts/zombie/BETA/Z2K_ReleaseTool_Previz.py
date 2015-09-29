@@ -16,8 +16,9 @@ Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_mantea
                         destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
                         projConnectB= True, theProject=curproj,
                         theComment= "auto rock the casbah release !",
-                        debug=False )
+                        debug=False,
+                        )
 Z2K_ReleaseTool_GuiI.createWin()
 
-Z2K_Pcheck = Z2K_PcheckD.checkModule()
+Z2K_Pcheck = Z2K_PcheckD.checkModule(GUI=True )
 Z2K_Pcheck.insertLayout( parent=Z2K_ReleaseTool_GuiI.layoutImportModule )

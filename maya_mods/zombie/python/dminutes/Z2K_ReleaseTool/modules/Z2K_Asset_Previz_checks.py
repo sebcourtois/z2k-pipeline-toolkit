@@ -58,16 +58,23 @@ class checkModule(object):
     upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_PREVIZ_LOGO_A3.bmp"
 
 
-    def __init__(self,*args, **kwargs):
+    def __init__(self, GUI=True, *args, **kwargs):
         print "init"
+        self.GUI=GUI
         self.ebg = True
         self.DebugPrintFile =""
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
 
-
-    
-
+        # trickage pour le batch mode goret
+        print self.GUI
+        if self.GUI in [False,0]:
+            self.BcheckStructure=""
+            self.BCleanScene=""
+            self.BCleanObjects=""
+            self.BDebugBoardF=""
+            self.BCleanAll=""
+            self.BClearAll=""
 
     def jlistSets(self, *args,**kwargs):
         """
@@ -1105,7 +1112,7 @@ class checkModule(object):
     #--------------------- Buttons functions ----------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
     @waiter
-    def btn_checkStructure(self, controlN="", GUI=False,*args, **kwargs):
+    def btn_checkStructure(self, controlN="", *args, **kwargs):
         boolResult=True
 
         # set progress bar
@@ -1128,12 +1135,12 @@ class checkModule(object):
 
         # colors
         print "*btn_checkStructure:",boolResult
-        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], GUI=GUI)
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
         
         return boolResult
 
     @waiter
-    def btn_CleanScene(self, controlN="", GUI=False,*args, **kwargs):
+    def btn_CleanScene(self, controlN="", *args, **kwargs):
         boolResult=True
 
         # set progress bar
@@ -1164,12 +1171,12 @@ class checkModule(object):
                
         # colors
         print "*btn_CleanScene:",boolResult
-        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], GUI=GUI)
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
         
         return boolResult
         
     @waiter
-    def btn_CleanObjects(self, controlN="", GUI=False,*args, **kwargs):
+    def btn_CleanObjects(self, controlN="", *args, **kwargs):
         boolResult=True
 
         # set progress bar
@@ -1211,7 +1218,7 @@ class checkModule(object):
 
         # colors
         print "*btn_CleanObjects:",boolResult
-        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], GUI=GUI)
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
 
         return boolResult
 
@@ -1229,21 +1236,23 @@ class checkModule(object):
         cmds.button(self.BCleanAll, e=1, bgc= defCol)
 
 
-    def btn_cleanAll(self, GUI=False, *args, **kwargs):
+    def btn_cleanAll(self,  *args, **kwargs):
         print "btn_cleanAll()"
+        
+
         boolResult = True
-        if not self.btn_checkStructure(controlN=self.BcheckStructure, GUI=GUI):
+        if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
             boolResult = False
         print "*1",boolResult
-        if not self.btn_CleanScene(controlN=self.BCleanScene, GUI=GUI):
+        if not self.btn_CleanScene(controlN=self.BCleanScene, ):
             boolResult = False
         print "*2",boolResult
-        if not self.btn_CleanObjects(controlN=self.BCleanObjects, GUI=GUI):
+        if not self.btn_CleanObjects(controlN=self.BCleanObjects, ):
             boolResult = False
         
         # colors
         print "*3",boolResult
-        self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""],GUI=GUI)
+        self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""],)
         return boolResult
 
 
@@ -1269,9 +1278,9 @@ class checkModule(object):
         return outColor
 
     # -------------------------- interface function --------------------------------
-    def colorBoolControl(self, controlL=[], boolL=[],labelL=[""], GUI=False, *args, **kwargs):
+    def colorBoolControl(self, controlL=[], boolL=[],labelL=[""],  *args, **kwargs):
         # color the controlL depending on the given Bool
-        if GUI:
+        if self.GUI:
             for i,j,label in zip(controlL,boolL,labelL):
                     if j in [True,1]:
                         cmds.button(i, e=1, backgroundColor=self.trueColor, ebg=self.ebg)
@@ -1279,9 +1288,9 @@ class checkModule(object):
                         cmds.button(i, e=1, backgroundColor=self.falseColor, ebg=self.ebg)
 
 
-    def pBar_upd (self, step=0,maxValue=10,e=False,GUI=False, *args, **kwargs):
+    def pBar_upd (self, step=0,maxValue=10,e=False, *args, **kwargs):
         # print "pBar_upd()",step
-        if GUI:
+        if self.GUI:
             if e:
                 cmds.progressBar(self.BValidationPBar,e=1,maxValue=maxValue,progress=step)
             else:
@@ -1317,16 +1326,16 @@ class checkModule(object):
 
         cmds.image(image=self.upImg)
         cmds.columnLayout("layoutImportModule",columnOffset= ["both",0],adj=True,)
-        self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= partial(self.btn_cleanAll,True),en=1)
+        self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= partial(self.btn_cleanAll),en=1)
 
         self.BcheckStructure = cmds.button("checkStructure", )
-        cmds.button(self.BcheckStructure,e=1,c= partial( self.btn_checkStructure,self.BcheckStructure,True) )
+        cmds.button(self.BcheckStructure,e=1,c= partial( self.btn_checkStructure,self.BcheckStructure) )
 
         self.BCleanScene = cmds.button("CleanScene",)
-        cmds.button(self.BCleanScene,e=1,c= partial( self.btn_CleanScene,self.BCleanScene,True))
+        cmds.button(self.BCleanScene,e=1,c= partial( self.btn_CleanScene,self.BCleanScene))
 
         self.BCleanObjects = cmds.button("CleanObjects",)
-        cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects,True) )
+        cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects) )
         
         self.BValidationPBar = cmds.progressBar(maxValue=3,s=1 )
 
