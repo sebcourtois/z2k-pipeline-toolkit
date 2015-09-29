@@ -896,9 +896,18 @@ def getTexturesToPublish (verbose = True):
         return 
 
 
+def createShadingGroup():
 
 
-
+    transformMeshList =     miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
+    mc.confirmDialog( title='Confirm', message='You are about to create a new shading group for all the geo_ object in the scene, do you want to continue?', button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+    for each in transformMeshList:
+        #my_sgr = mc.shadingNode("shadingEngine", asShader=True, name=each.split("|")[-1].replace("geo_","sgr_"))
+        my_sgr = mc.sets(renderable=True,noSurfaceShader=True,empty=True, name=each.split("|")[-1].replace("geo_","sgr_"))
+        mc.sets(each,  forceElement=my_sgr)
+        #print each
+        #print my_sgr
+        #mc.sets(each,  forceElement= my_sgr)
 
 
 
