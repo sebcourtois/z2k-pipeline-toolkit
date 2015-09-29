@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 ################################################################
 # Name    : Z2K_replace_ASSET
-# Version : 001
+# Version : 002
 # Description : replace current scene with a custom selected file
 # Author : Jean-Philippe Descoins
 # Date : 2015_09_24
 # Comment : WIP
 # TO DO :
-#   - Add publish asset button
+#   x Add publish asset button
+#   x remember last path in get
 ################################################################
 #    ! Toute utilisation de ce se script sans autorisation     #
 #                         est interdite !                      #
@@ -31,12 +32,15 @@ class Z2K_replace_ASSET(object):
 
     name = "Z2K_replace_ASSET"
     version = "_v001"
+    OVcurDir = "Z2K_replace_ASSET_CurDir"
     def __init__(self, theProject="zombtest", replacingScene="",*args, **kwargs):
         print "init"
         self.theProject = theProject
         self.replacingScene = replacingScene
         self.currentSceneP,self.currentScene = self.getCurrentScene()
         self.theProj=Z2K.projConnect(theProject=self.theProject)
+
+        self.memorisedPath =self.getOV(var=self.OVcurDir)
 
     # ------------------------ jipe functions ---------------------------------
     def GetFileDialog(self, jtitle="Open File", OkButtName="Ok", jfileMode=1, jdialogStyle=1, jfileFilter="*", baseDir="c://",*args,**kwargs):
@@ -55,6 +59,32 @@ class Z2K_replace_ASSET(object):
         return filename[0]
 
 
+    def getOV(self, var="jipeTmpVar", *args, **kwargs):
+        mem =cmds.optionVar( q=var )
+        if not mem:
+            mem = "c:"
+        return mem
+
+    def setOV(self, var="jipeTmpVar",val=0, *args, **kwargs):
+        
+        print "var type = %s  %s" %( var, type(val) )
+        if isinstance(val,int):
+                cmds.optionVar( intValue=[ var, val])
+
+        elif isinstance(val,float):
+                cmds.optionVar( floatValue=[ var, val])
+                
+        # all rest go to str
+        elif isinstance(val,unicode):
+                cmds.optionVar( stringValue=[ var, val])
+
+        elif isinstance(val, str):
+                cmds.optionVar( stringValue=[ var, val])
+
+        else :
+            print "not registred"
+
+    # ----------------------------------- function ----------------------------------------------
     def getCurrentScene(self,*args, **kwargs):
         # get currentScene name
         currentSceneP,currentScene = cmds.file(q=1,sceneName=True),cmds.file(q=1,sceneName=True,shortName=True)
@@ -138,8 +168,8 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
         print ("btn_getFile()")
         outStr =""
         # open dialog box
-        theFileP = self.GetFileDialog(jtitle="Select replacing file", OkButtName="Ok", jfileMode=1, jdialogStyle=1, baseDir= self.currentScene)
-
+        theFileP = self.GetFileDialog(jtitle="Select replacing file", OkButtName="Ok", jfileMode=1, jdialogStyle=1, baseDir= self.memorisedPath )
+        self.setOV(var=self.OVcurDir, val=theFileP)
         if len(theFileP):
             theFileN =os.path.normpath( theFileP )
             print "*",theFileN.rsplit(".",1)[-1]

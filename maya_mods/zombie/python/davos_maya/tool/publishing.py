@@ -7,7 +7,7 @@ from pytaya.core import system as myasys
 from davos.core.damproject import DamProject
 
 
-def publishCurrentScene(*args):
+def publishCurrentScene(*args, **kwargs):
 
     sProject = os.environ["DAVOS_INIT_PROJECT"]
     proj = DamProject(sProject)
@@ -16,5 +16,5 @@ def publishCurrentScene(*args):
     if not sScenePath:
         raise RuntimeError("Could not save your current scene !")
 
-    proj.publishEditedVersion(sScenePath)
+    return proj.publishEditedVersion(sScenePath, **kwargs)
 

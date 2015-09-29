@@ -80,7 +80,7 @@ def openFileReadOnly(proj="",Path_publish_public="", *args, **kwargs):
 
     return privFile
 
-def editFile(proj="" ,Path_publish_public="", *args, **kwargs):
+def editFile(proj="" , Path_publish_public="", autoAction="overwrite", *args, **kwargs):
     print "Z2K_editFile()"
     tab= "    "
     if not os.path.exists(Path_publish_public):
@@ -89,7 +89,7 @@ def editFile(proj="" ,Path_publish_public="", *args, **kwargs):
         
     pubFile = proj.entryFromPath(Path_publish_public)
     # privFile = pubFile.__class__.__base__.edit(pubFile)
-    privFile = pubFile.edit(openFile=False)
+    privFile = pubFile.edit(openFile=False, existing=autoAction)
 
     print tab,"public_file_Version=",pubFile.currentVersion
     print tab,"private_file_Version=",privFile.currentVersion
@@ -108,3 +108,13 @@ def publishFile(proj="", path_private_toPublish="",comment="test the cashbah mod
     print tab,"DONE","->",PublishedFile_shortName
 
     return PublishedFile_absPath
+
+
+# WIP
+def publishEditedVersionSG(proj="", path_private_toPublish="", comment="test the cashbah moda foka!", 
+    SgTask="previzRig",
+    *args, **kwargs):
+    print "publishEditedVersionSG()" 
+    tab= "    "
+    sPrivPath = path_private_toPublish.absPath()
+    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment="RockTheCashbah", autoLock=True)[0]
