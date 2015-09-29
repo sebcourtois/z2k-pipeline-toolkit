@@ -15,12 +15,12 @@ For %%A in ("%1") do (
 if [%2]==[] (SET STARTTC="00:00:00") else (SET STARTTC=%2)
 if [%3]==[] (SET ENDTC="00:00:08.208") else (SET ENDTC=%3)
 if [%4]==[] (SET OUTNAME=%INNAME:.mov=_split.mov%) else (SET OUTNAME=%4)
-if [%5]==[] (SET OUTFOLDER=%INFOLDER%) else SET (OUTFOLDER=%5)
-
+if [%5]==[] (SET OUTFOLDER=%INFOLDER%) else (SET OUTFOLDER=%5)
 SET OUTPATH=%OUTFOLDER%%OUTNAME%
 
 ECHO "-------- VIDEO EXTRACTION ---------"
-call %FFMPEG% -i %1 -vcodec libx264 -acodec copy -ss %STARTTC% -to %ENDTC% -y %OUTPATH%
+REM OTHER OSSIBLE CODECS -vcodec mpeg4 -acodec copy
+call %FFMPEG% -i %1 -c:v libx264 -preset slow -acodec libmp3lame -ss %STARTTC% -to %ENDTC% -y %OUTPATH%
 
 ECHO "-------- AUDIO EXTRACTION ---------"
 SET AUDIOOUT=%OUTPATH:animatic.mov=sound.wav%
