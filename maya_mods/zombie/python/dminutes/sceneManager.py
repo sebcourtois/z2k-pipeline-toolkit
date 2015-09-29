@@ -217,13 +217,13 @@ class SceneManager():
 
         tokens = {}
 
-        nameKey = 'name'
+        nameKey = 'code'
 
         if self.context['entity']['type'] == 'Shot':
-            nameKey = 'code'
             tokens['name']=self.context['entity'][nameKey]
             tokens['sequence']=self.context['entity']['sg_sequence']['name']
-        elif d_inEntity['type'] == 'Asset':
+        elif self.context['entity']['type'] == 'Asset':
+            print self.context['entity']
             tokens['name']=self.context['entity'][nameKey]
             tokens['assetType']=self.context['entity'][nameKey].split('_')[0]
 
