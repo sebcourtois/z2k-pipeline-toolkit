@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ########################################################
 # Name    : Z2K_Asset_Previz_checks
-# Version : v007
+# Version : v008
 # Description : Create previz maya file in .mb with some cleaning one the leadAsset
 # Comment : BASE SCRIPT OUT OF Z2K in v002
 # Author : Jean-Philippe Descoins
@@ -10,8 +10,11 @@
 # Comment : wip
 #
 # TO DO:
-#       - check geometry all to zero
-#       - BUG check colorLum
+#       - separate interface from base class
+#       - add BigDaddy check
+#       x MentalRayCleanNodes (['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'])
+#       x check geometry all to zero
+#       x BUG check colorLum
 #       - check geometry modeling history
 #       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
 #       WIP Clean ref Nodes + exception arnold etc
@@ -63,24 +66,7 @@ class checkModule(object):
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
 
 
-    # ----------------------------------jipe general functions -------------------------------
-    def colorLighten(self, thecolor=[0,0,0], factor= 0.5, *args, **kwargs):
-        outColor = [ (1- x) * factor + x for x in thecolor ]
-        return outColor
-
-    def colorDarken(self, thecolor=[0,0,0], factor= 0.5, *args, **kwargs):
-        outColor = [ x * factor for x in thecolor ]
-        return outColor
-
-    def colorLum (self, thecolor=[0,0,0], factor= 0.5,  *args, **kwargs):
-        outColor = thecolor
-        if factor > 0 :
-            outColor = [ (1- x) * factor + x for x in thecolor ]
-
-        elif factor < 0 :
-            outColor = [ x * abs(1 + factor) for x in thecolor ]
-
-        return outColor
+    
 
 
     def jlistSets(self, *args,**kwargs):
@@ -359,8 +345,9 @@ class checkModule(object):
         return deco
 
     # ------------ printer -----------------
-    @Z2KprintDeco
-    def printF(self, text="",st="main",toScrollF="", toFile = "", openMode="a+", *args, **kwargs):
+    # @Z2KprintDeco
+    def printF(self, text="",st="main",toScrollF="", toFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Release_debug.txt",
+        openMode="a+", *args, **kwargs):
         stringToPrint=""
  
         text = str(object=text)
@@ -568,9 +555,12 @@ class checkModule(object):
                     if shapeL:
                         for shape in shapeL:
                             print "    ",shape
-                            cmds.setAttr(shape+"."+"displaySmoothMesh",2)
+                            # connect the attr if not connected
                             if not cmds.connectionInfo(shape + "."+"smoothLevel",isDestination=True):
                                 cmds.connectAttr(theGroup+"."+theAttrL[1], shape + "."+"smoothLevel", f=True)
+                            
+                            # set the display mesh preview option
+                            cmds.setAttr(shape+"."+"displaySmoothMesh",2)
 
         else:
             toReturnB = False
@@ -585,7 +575,34 @@ class checkModule(object):
         # --------------------------
         return [toReturnB,createdL]
 
+    def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'],*args, **kwargs):
+        print "cleanMentalRayNodes()"
+        tab = "    "
+        toReturnB = True
+        deletedL=[]
+        failL=[]
+        print tab,"toDeleteL=", toDeleteL
 
+        for i in toDeleteL:
+            if cmds.objExists(i):
+                try:
+                    cmds.lockNode(i, lock=False)
+                    cmds.delete(i)
+                    deletedL.append(i)
+                except:
+                    toReturnB=False
+                    failL.append(i)
+
+
+        # prints -------------------
+        self.printF("cleanMentalRayNodes()", st="t")
+        self.printF(toReturnB, st="r")
+        if len(failL):
+            self.printF( "failL= {0}".format( failL  ) )
+        # --------
+
+
+        return [toReturnB,failL]
 
     def cleanRefNodes(self, toDeleteL = ["UNKNOWN_REF_NODE","SHAREDREFERENCENODE","REFERENCE"],*args,**kwargs):
         print "cleanRefNodes()"
@@ -827,7 +844,7 @@ class checkModule(object):
 
         return [toReturnB,debugD]
 
-    def setSmoothness(self,inObjL=[], mode=0, *args,**kwargs):
+    def setSmoothness(self, inObjL=[], mode=0, *args,**kwargs):
         print "setSmoothness()"
         tab="    "
         toReturnB = True
@@ -838,7 +855,13 @@ class checkModule(object):
         for obj in inObjL:
             # print tab,obj
             try :
-                cmds.displaySmoothness( obj, polygonObject=mode )
+                shapeL=cmds.listRelatives(obj,s=1,ni=1)
+                if shapeL:
+                    for shape in shapeL:
+                        print "    ",shape
+                        # connect the attr if not connected
+                        if not cmds.connectionInfo(shape + "."+"smoothLevel",isDestination=True):
+                            cmds.displaySmoothness( obj, polygonObject=mode )
             except Exception,err:
                 toReturnB = False
                 debugD[obj]= err
@@ -1082,7 +1105,7 @@ class checkModule(object):
     #--------------------- Buttons functions ----------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
     @waiter
-    def btn_checkStructure(self,controlN,*args, **kwargs):
+    def btn_checkStructure(self, controlN="", GUI=False,*args, **kwargs):
         boolResult=True
 
         # set progress bar
@@ -1105,19 +1128,22 @@ class checkModule(object):
 
         # colors
         print "*btn_checkStructure:",boolResult
-        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], GUI=GUI)
         
         return boolResult
 
     @waiter
-    def btn_CleanScene(self,controlN,*args, **kwargs):
+    def btn_CleanScene(self, controlN="", GUI=False,*args, **kwargs):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=7, e=True)
+        self.pBar_upd(step=1, maxValue=8, e=True)
 
         # steps
         if not self.cleanRefNodes()[0]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+        if not self.cleanMentalRayNodes()[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
         if not self.remove_All_NS(NSexclusionL=[""], limit=100)[0]:
@@ -1138,12 +1164,12 @@ class checkModule(object):
                
         # colors
         print "*btn_CleanScene:",boolResult
-        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], GUI=GUI)
         
         return boolResult
         
     @waiter
-    def btn_CleanObjects(self,controlN,*args, **kwargs):
+    def btn_CleanObjects(self, controlN="", GUI=False,*args, **kwargs):
         boolResult=True
 
         # set progress bar
@@ -1168,7 +1194,6 @@ class checkModule(object):
         if not self.checkSRT(inObjL =meshCacheObjL, verbose=True)[0] :
             boolResult = False
         self.pBar_upd(step= 1,)
-        
         if not self.cleanKeys(inObjL=controlObjL,verbose=True)[0] :
             boolResult = False
         self.pBar_upd(step= 1,)
@@ -1186,12 +1211,12 @@ class checkModule(object):
 
         # colors
         print "*btn_CleanObjects:",boolResult
-        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], GUI=GUI)
 
         return boolResult
 
 
-    def btn_clearAll(self,*args, **kwargs):
+    def btn_clearAll(self, *args, **kwargs):
         print "btn_clearAll()"
 
         cmds.scrollField(self.BDebugBoard, e=1, clear=True)
@@ -1204,46 +1229,68 @@ class checkModule(object):
         cmds.button(self.BCleanAll, e=1, bgc= defCol)
 
 
-    def cleanAll(self,*args, **kwargs):
-        print "cleanAll()"
+    def btn_cleanAll(self, GUI=False, *args, **kwargs):
+        print "btn_cleanAll()"
         boolResult = True
-        if not self.btn_checkStructure(self.BcheckStructure):
+        if not self.btn_checkStructure(controlN=self.BcheckStructure, GUI=GUI):
             boolResult = False
         print "*1",boolResult
-        if not self.btn_CleanScene(self.BCleanScene):
+        if not self.btn_CleanScene(controlN=self.BCleanScene, GUI=GUI):
             boolResult = False
         print "*2",boolResult
-        if not self.btn_CleanObjects(self.BCleanObjects):
+        if not self.btn_CleanObjects(controlN=self.BCleanObjects, GUI=GUI):
             boolResult = False
         
         # colors
         print "*3",boolResult
-        self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""])
+        self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""],GUI=GUI)
+        return boolResult
 
-    # -------------------------- interface functoin --------------------------------
-    def colorBoolControl(self, controlL=[], boolL=[],labelL=[""], *args, **kwargs):
+
+   
+
+    # ----------------------------------jipe general functions -------------------------------
+    def colorLighten(self, thecolor=[0,0,0], factor= 0.5, *args, **kwargs):
+        outColor = [ (1- x) * factor + x for x in thecolor ]
+        return outColor
+
+    def colorDarken(self, thecolor=[0,0,0], factor= 0.5, *args, **kwargs):
+        outColor = [ x * factor for x in thecolor ]
+        return outColor
+
+    def colorLum (self, thecolor=[0,0,0], factor= 0.5,  *args, **kwargs):
+        outColor = thecolor
+        if factor > 0 :
+            outColor = [ (1- x) * factor + x for x in thecolor ]
+
+        elif factor < 0 :
+            outColor = [ x * abs(1 + factor) for x in thecolor ]
+
+        return outColor
+
+    # -------------------------- interface function --------------------------------
+    def colorBoolControl(self, controlL=[], boolL=[],labelL=[""], GUI=False, *args, **kwargs):
         # color the controlL depending on the given Bool
+        if GUI:
+            for i,j,label in zip(controlL,boolL,labelL):
+                    if j in [True,1]:
+                        cmds.button(i, e=1, backgroundColor=self.trueColor, ebg=self.ebg)
+                    else:
+                        cmds.button(i, e=1, backgroundColor=self.falseColor, ebg=self.ebg)
 
-        for i,j,label in zip(controlL,boolL,labelL):
-                if j in [True,1]:
-                    cmds.button(i, e=1, backgroundColor=self.trueColor, ebg=self.ebg)
-                else:
-                    cmds.button(i, e=1, backgroundColor=self.falseColor, ebg=self.ebg)
 
-
-    def pBar_upd (self, step=0,maxValue=10,e=False, *args, **kwargs):
+    def pBar_upd (self, step=0,maxValue=10,e=False,GUI=False, *args, **kwargs):
         # print "pBar_upd()",step
-        if e:
-            cmds.progressBar(self.BValidationPBar,e=1,maxValue=maxValue,progress=step)
-        else:
-            if step:
-                cmds.progressBar(self.BValidationPBar,e=1,step=step,)
+        if GUI:
+            if e:
+                cmds.progressBar(self.BValidationPBar,e=1,maxValue=maxValue,progress=step)
+            else:
+                if step:
+                    cmds.progressBar(self.BValidationPBar,e=1,step=step,)
 
 
-    
-    # ---------------------------------------------------------------------------------------------------
-    #--------------------- GUI ----------------------------------------------------------------------------
-    #----------------------------------------------------------------------------------------------------------
+
+    # ------------- Layout -------------------------------------------------------
     def createWin(self, *args,**kwargs):
         # test si la windows exist / permet d'avoir plusieurs windows grace a var "cf" de la class
         if cmds.window(self.cf, q=True, exists=True):
@@ -1264,23 +1311,22 @@ class checkModule(object):
 
         cmds.setParent(parent)
         self.bigDadL = cmds.frameLayout(label=self.name.center(50), fn="boldLabelFont", lv=0)
-
         self.layoutImportModule = cmds.columnLayout("layoutImportModule",adj=True)
         cmds.tabLayout(tabsVisible=0,borderStyle="full")
         cmds.columnLayout("layoutModule",columnOffset= ["both",0],adj=True,)
 
         cmds.image(image=self.upImg)
         cmds.columnLayout("layoutImportModule",columnOffset= ["both",0],adj=True,)
-        self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= self.cleanAll,en=1)
+        self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= partial(self.btn_cleanAll,True),en=1)
 
         self.BcheckStructure = cmds.button("checkStructure", )
-        cmds.button(self.BcheckStructure,e=1,c= partial( self.btn_checkStructure,self.BcheckStructure) )
+        cmds.button(self.BcheckStructure,e=1,c= partial( self.btn_checkStructure,self.BcheckStructure,True) )
 
         self.BCleanScene = cmds.button("CleanScene",)
-        cmds.button(self.BCleanScene,e=1,c= partial( self.btn_CleanScene,self.BCleanScene))
+        cmds.button(self.BCleanScene,e=1,c= partial( self.btn_CleanScene,self.BCleanScene,True))
 
         self.BCleanObjects = cmds.button("CleanObjects",)
-        cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects) )
+        cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects,True) )
         
         self.BValidationPBar = cmds.progressBar(maxValue=3,s=1 )
 
@@ -1289,17 +1335,12 @@ class checkModule(object):
         
         cmds.setParent("..")
         self.BClearAll = cmds.button("clear",c= self.btn_clearAll,)
+  
         
 
-    #----------------------------------------------------------------------------------------------------------
-    #--------------------- EXEC -------------------------------------------------------------------------------
-    #----------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------
+#--------------------- EXEC -------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------
 
     
 
-
-
-# --------------------- direct EXE -------------------
-
-# Z2K_Pcheck = checkModule()
-# Z2K_Pcheck.insertLayout( parent="" )

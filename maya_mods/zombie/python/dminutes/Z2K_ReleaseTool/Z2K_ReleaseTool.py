@@ -93,7 +93,7 @@ class Z2K_ReleaseTool (object):
         return assetL
 
 
-    def openAsset(self, sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", readOnly=False, *args,**kwargs):
+    def openAsset(self, sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", readOnly=False,autoUnlock=True, *args,**kwargs):
 
         # get char from mayascene
         assetN=""
@@ -110,14 +110,17 @@ class Z2K_ReleaseTool (object):
                 theLock=Z2K.getLock(drcF)
                 print "theLock=", theLock
                 if len(theLock)>0:
-                    booboo=cmds.confirmDialog(message="Current Asset : {0} \ris LOCKED by :'{1}' \rDo you want to UNLOCK it before loading?!".format(assetN,theLock),
-                                                messageAlign="center", defaultButton="YES", cancelButton="NO" , b="YES", button="NO",
-                                                icon="warning")
-                    print "booboo=",booboo
-                    if booboo in ["YES"]:
-                        Z2K.unlock(drcF)
+                    if not autoUnlock:
+                        # booboo=cmds.confirmDialog(message="Current Asset : {0} \ris LOCKED by :'{1}' \rDo you want to UNLOCK it before loading?!".format(assetN,theLock),
+                        #                             messageAlign="center", defaultButton="YES", cancelButton="NO" , b="YES", button="NO",
+                        #                             icon="warning")
+                        print "booboo=",booboo
+                        if booboo in ["YES"]:
+                            Z2K.unlock(drcF)
+                        else:
+                            print assetN + " not unlocked"
                     else:
-                        print assetN + " not unlocked"
+                        Z2K.unlock(drcF)
             except Exception,err:
                 print "the file in not really a nice clean Z2K file Dude!",err
                 
@@ -198,7 +201,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         self.dc = self.cf+"_Dock" +"_" +self.theProject
         self.width = 315
 
-# --------------interface functions-----------------------------------------------
+    # --------------interface functions-----------------------------------------------
     def getInterfaceValues( self,*args,**kwargs):
         print "getInterfaceValues()"
         self.sourceAsset = cmds.textField(self.BsourceAsset, q=1,text=True)
@@ -248,7 +251,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             msg= str(err)
             cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
 
-# --------------Window-----------------------------------------------
+    # --------------Window-----------------------------------------------
     def deleteUIandpref(self,*args, **kwargs):
         print "deleteUIandpref()"
         # if cmds.dockControl(self.dc, q=1,exists=True ):
