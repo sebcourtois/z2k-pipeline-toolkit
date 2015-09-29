@@ -248,7 +248,7 @@ class shot_lib:
     resources_settings = {
     "previz_scene":{"outcomes":("previz_capture",),
                     "create_sg_version":True,
-                    "sg_step":"Previz 3D",
+                    "sg_tasks":("previz 3D",),
                     "upload_to_sg":"previz_capture"
                     },
     "previz_capture":{"editable":False,

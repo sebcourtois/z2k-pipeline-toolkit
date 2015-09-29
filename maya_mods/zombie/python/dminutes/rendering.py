@@ -148,13 +148,13 @@ def setRenderOutputDir():
     #define output directoy
     if mc.ls("|asset"):        
         if  mainFilePathElem[-4] == "asset":
-            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"review")
+            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"review",mainFilePathElem[-2])
             outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
             outputImageName = mainFilePathElem[-2]
-            print "#### Info: Set render path: {}".format( outputFilePath_exp)
-            print "#### Info: Set image name:  {}".format( outputImageName)
-            mc.workspace(fileRule=["images",outputFilePath_exp])
-            mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
+            print "#### Info: Set render path: {}".format( outputFilePath)
+            #print "#### Info: Set image name:  {}".format( outputImageName)
+            #mc.workspace(fileRule=["images",outputFilePath_exp])
+            mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputFilePath_exp ,type = "string")
         else:
             print "#### Warning: you are not working in an 'asset' structure directory, output image name and path cannot not be automaticaly set"
     elif mc.ls("|shot"):
@@ -189,6 +189,7 @@ def createBatchRender():
     location = os.path.split(os.getcwd())[-1]
     setupEnvTools = os.path.normpath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","launchers", location,"setup_env_tools.py"))
     renderDesc = os.environ["MAYA_RENDER_DESC_PATH"]
+    plugIn = os.environ["MAYA_PLUG_IN_PATH"]
     renderCmd = os.path.normpath(os.path.join(os.environ["MAYA_LOCATION"],"bin","Render.exe"))
     if os.path.isfile(renderBatch):
         if os.path.isfile(renderBatch+".bak"): os.remove(renderBatch+".bak")
@@ -197,10 +198,11 @@ def createBatchRender():
 
     renderBatch_obj = open(renderBatch, "w")
     renderBatch_obj.write("set MAYA_RENDER_DESC_PATH="+renderDesc+"\n")
+    renderBatch_obj.write("set MAYA_PLUG_IN_PATH="+renderDesc+"\n")
     renderBatch_obj.write("set DAVOS_USER="+davosUser+"\n")
     renderBatch_obj.write("set render="+renderCmd+"\n")
     renderBatch_obj.write("\n")
-    renderBatch_obj.write('set option="-r arnold"\n')
+    renderBatch_obj.write('set option=-r arnold\n')
     workingFile = os.path.normpath(workingFile)
     renderBatch_obj.write("set scene="+workingFile+"\n")
     finalCommand = r'"C:\Python27\python.exe" "'+setupEnvTools+'" launch %render% %option% %scene%'

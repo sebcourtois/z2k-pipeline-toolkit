@@ -41,17 +41,23 @@ def setContextUI():
 
     if context != None:
         #print context
-        setOption("sm_step_dd", context["step"])
+        somethingChanged = False
+
+        somethingChanged |= setOption("sm_step_dd", context["step"])
 
         if "shot" in context:
-            setOption("sm_seq_dd", context["seq"])
-            setOption("sm_shot_dd", context["shot"])
+            somethingChanged |= setOption("sm_seq_dd", context["seq"])
+            somethingChanged |= setOption("sm_shot_dd", context["shot"])
+
+        if not somethingChanged:
+            refreshContextUI()
 
         return True
 
     return False
 
 def setOption(s_inName, s_inValue):
+    changed = False
     items = pc.optionMenu(s_inName, query=True, itemListShort=True)
     #print items
     if not s_inName + "_" + s_inValue.replace(" ", "_") in items:
@@ -59,7 +65,7 @@ def setOption(s_inName, s_inValue):
 
     if pc.optionMenu(s_inName, query=True, value=True) != s_inValue:
         pc.optionMenu(s_inName, edit=True, value=s_inValue)
-
+        changed = True
         if s_inName == 'sm_step_dd':
             doStepChanged()
         elif s_inName == 'sm_categ_dd' or s_inName == 'sm_seq_dd':
@@ -68,6 +74,8 @@ def setOption(s_inName, s_inValue):
             doEntityChanged()
         elif s_inName == 'sm_task_dd':
             doTaskChanged()
+
+    return changed
 
 def refreshOptionMenu(s_inName, a_Items):
     items = pc.optionMenu(s_inName, query=True, itemListShort=True)
@@ -362,33 +370,50 @@ def doCapture(*args):
         b_increment = pc.checkBox('sm_increment_bt', query=True, value=True)
         SCENE_MANAGER.capture(b_increment)
         doRefreshSceneInfo(args)
+    else:
+        doDetect(args)
 
 def doSaveWip(*args):
     if SCENE_MANAGER.assert_isEditable():
         SCENE_MANAGER.saveIncrement()
+    else:
+        doDetect(args)
 
 def doSwitchContext(*args):
     if SCENE_MANAGER.refreshSceneContext():
         pc.warning("Your context is already matching !!")
         return
 
+    if not SCENE_MANAGER.isEditable() and SCENE_MANAGER.context["lock"] == "Error":
+        #Maybe this is because folders does not exists ?
+        SCENE_MANAGER.createFolder()
+        doRefreshFileStatus()
+
     if not SCENE_MANAGER.isEditable():
         pc.warning("Your entity is locked by {0}".format(SCENE_MANAGER.context["lock"]))
         return
 
-    SCENE_MANAGER.edit(True)
+    if len(SCENE_MANAGER.getVersions()) == 0 or pc.confirmDialog(title="Entity override", message="Your entity already have published versions, are you sure you want to use current scene ?") == "Confirm":
+        SCENE_MANAGER.edit(True)
+        doTaskChanged()
+    else:
+        pc.warning("Switch context aborted !")
 
 #davos
 def doEdit(*args):
     if SCENE_MANAGER.assert_isEditable():
         SCENE_MANAGER.edit(False)
         doTaskChanged()
+    else:
+        doDetect(args)
 
 def doPublish(*args):
     if SCENE_MANAGER.assert_isEditable():
         SCENE_MANAGER.publish()
         doTaskChanged()
         #doRefreshFileStatus()
+    else:
+        doDetect(args)
 
 def doCreateFolder(*args):
     SCENE_MANAGER.createFolder() 

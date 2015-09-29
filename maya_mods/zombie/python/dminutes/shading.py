@@ -397,8 +397,9 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         if not shadEngineList :
             print "#### {:>7}: no shading engine to conform".format("Warning")
             return
-        answer = mc.confirmDialog( title='Confirm', message='You are about to conform '+str(len(shadEngineList))+' shading engines, do you want to continue?', button=['Yes','Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel' )
-        if answer == "Cancel": return
+        if verbose == True:
+            answer = mc.confirmDialog( title='Confirm', message='You are about to conform '+str(len(shadEngineList))+' shading engines, do you want to continue?', button=['Yes','Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel' )
+            if answer == "Cancel": return
 
     elif shadEngineList == "selection":
         shadEngineList = mc.ls(selection = True,type = "shadingEngine")
@@ -448,11 +449,13 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         #check the existence of the 'preShadNode', replace it, if it has a wrong type, create it doesn't exists
         if not preShadNode:
             preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
+            mc.setAttr(preShadNode+".outColor", 1, 1,1, type = "double3")
             mc.connectAttr(preShadNode+".outColor", shadingEngine+'.surfaceShader', force =True)
             if verbose == True: print "#### {:>7}: {:^28} Preview shader created: '{}'".format("Info", shadingEngine, preShadNodeType)
         elif mc.nodeType(preShadNode[-1]) != preShadNodeType:
             mc.delete(preShadNode[-1])
             preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
+            mc.setAttr(preShadNode+".outColor", 1, 1,1, type = "double3")
             mc.connectAttr(preShadNode+".outColor", shadingEngine+'.surfaceShader', force =True)
             if verbose == True: print "#### {:>7}: {:^28} Preview shader replaced: '{}'".format("Info", shadingEngine, preShadNodeType)
         else:
@@ -896,8 +899,24 @@ def getTexturesToPublish (verbose = True):
         return 
 
 
+def createShadingGroup():
+    """
+    This script creates a shading engine for each "geo_" object in the scene, and conform it
+    """
+    print ""
+    print "#### {:>7}: runing shading.createShadingGroup()"
 
+    transformMeshList =     miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
 
+    answer =  mc.confirmDialog( title='Confirm', message="You are about to create a new shading group for all the 'geo_' object in the scene, all the existing shaers will be disconnected. Do you want to continue?", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+    if answer == "Cancel": return
+
+    for each in transformMeshList:
+        my_sgr = mc.sets(renderable=True,noSurfaceShader=True,empty=True, name=each.split("|")[-1].replace("geo_","sgr_"))
+        mc.sets(each, forceElement=my_sgr)
+    print "#### {:>7}:  {} shading groups created, assigned and conformed".format("Info",len(transformMeshList))
+    conformPreviewShadingTree( shadEngineList = "all", verbose = False, selectWrongShadEngine = False)
+    conformShaderName(shadEngineList = "all", selectWrongShadEngine = False, verbose = False )
 
 
 
