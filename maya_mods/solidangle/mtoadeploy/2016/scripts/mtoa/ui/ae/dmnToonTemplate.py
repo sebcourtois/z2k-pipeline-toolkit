@@ -46,6 +46,7 @@ class AEdmnToonTemplate(ShaderAETemplate):
 
         self.beginLayout('Reflection', collapse=True)
         self.addControl('reflection_weight', label='Weight')
+        self.addControl('reflection_additive', label='Additive')
         self.addControl('reflection_color', label='Color')
         self.addControl('reflection_roughness', label='Roughness')
         self.endLayout()
@@ -63,6 +64,8 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('dmn_mask02', label='dmn_mask02')
         self.addControl('dmn_mask03', label='dmn_mask03')
         self.addControl('dmn_mask04', label='dmn_mask04')
+        self.addControl('dmn_mask05', label='dmn_mask05')
+        self.addControl('dmn_mask06', label='dmn_mask06')
         self.endLayout()
 
         self.beginLayout('Advanced', collapse=True)
@@ -99,6 +102,13 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('rim_toon_premult_diffuse', label='Premult Diffuse in Beauty')
         self.endLayout()
 		
+        self.beginLayout('Beauty Adjustments (for lighting dep)', collapse=True)
+        self.addControl('lgt_ambient_color', label='Ambient Color Mult.')
+        self.addControl('lgt_ambient_intensity', label='Ambient Mult.')
+        self.addControl('lgt_diffuse_color', label='Diffuse Color Mult.')
+        self.addControl('lgt_diffuse_intensity', label='Diffuse Mult.')
+        self.endLayout()
+
 
         self.endLayout()
 
