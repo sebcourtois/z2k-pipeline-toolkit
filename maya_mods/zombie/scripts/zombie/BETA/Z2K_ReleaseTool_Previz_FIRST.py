@@ -22,12 +22,12 @@ Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_mantea
 Z2K_ReleaseTool_GuiI.createWin()
 
 
-Z2K_replaceI = Z2K_replace.Z2K_replace_ASSET_GUI()
+Z2K_replaceI = Z2K_replace.Z2K_replace_ASSET_GUI(theProject=curproj,sourceSceneP="", replacingSceneP="")
 Z2K_replaceI.insertLayout( parent=Z2K_ReleaseTool_GuiI.layoutImportModule )
 
 
 
-Z2K_Pcheck = Z2K_PcheckD.checkModule()
+Z2K_Pcheck = Z2K_PcheckD.checkModule(GUI=True )
 Z2K_Pcheck.insertLayout( parent=Z2K_ReleaseTool_GuiI.layoutImportModule )
 
 

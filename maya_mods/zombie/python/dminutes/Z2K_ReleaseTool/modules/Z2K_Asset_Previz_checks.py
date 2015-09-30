@@ -1165,8 +1165,8 @@ class checkModule(object):
         if not self.cleanUnusedConstraint( mode="delete")[0]:
             boolResult = False 
         self.pBar_upd(step= 1,)
-        if not self.CleanDisconnectedNodes( mode="delete")[0]:
-            boolResult = False 
+        # if not self.CleanDisconnectedNodes( mode="delete")[0]:
+        #     boolResult = False 
         self.pBar_upd(step= 1,)
                
         # colors
@@ -1351,5 +1351,6 @@ class checkModule(object):
 #--------------------- EXEC -------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------
 
-    
+# Z2K_Pcheck = checkModule(GUI=True )
+# Z2K_Pcheck.insertLayout( parent="" )
 

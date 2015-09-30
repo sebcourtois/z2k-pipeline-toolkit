@@ -10,6 +10,7 @@
 # TO DO :
 #   x Add publish asset button
 #   x remember last path in get
+#   - add publish SG
 ################################################################
 #    ! Toute utilisation de ce se script sans autorisation     #
 #                         est interdite !                      #
@@ -33,11 +34,16 @@ class Z2K_replace_ASSET(object):
     name = "Z2K_replace_ASSET"
     version = "_v001"
     OVcurDir = "Z2K_replace_ASSET_CurDir"
-    def __init__(self, theProject="zombtest", replacingScene="",*args, **kwargs):
+    def __init__(self, theProject="zombtest",currentSceneP="", replacingSceneP="",*args, **kwargs):
         print "init"
         self.theProject = theProject
-        self.replacingScene = replacingScene
-        self.currentSceneP,self.currentScene = self.getCurrentScene()
+        self.replacingSceneP = replacingSceneP
+        self.currentSceneP = currentSceneP
+        if self.currentSceneP in [""]:
+            self.currentSceneP,self.currentScene = self.getCurrentScene()
+        else:
+            self.currentScene = os.normpath( self.currentSceneP).rsplit(os.sep,1)[-1]
+
         self.theProj=Z2K.projConnect(theProject=self.theProject)
 
         self.memorisedPath =self.getOV(var=self.OVcurDir)
@@ -91,10 +97,10 @@ class Z2K_replace_ASSET(object):
         print "currentScene=", currentScene
         return [currentSceneP,currentScene]
 
-    def replace(self, replacingSceneP="",*args, **kwargs):
+    def replace(self, currentSceneP="", replacingSceneP="",*args, **kwargs):
         print "replace()"
-        print "    currentSceneP  =",self.currentSceneP
-        print "    replacingSceneP=",replacingSceneP
+        print "    -currentSceneP  =",currentSceneP
+        print "    -replacingSceneP=", replacingSceneP
 
         outBool = False
         # check names
@@ -104,18 +110,19 @@ class Z2K_replace_ASSET(object):
         try:
             cmds.undoInfo(openChunk=True)
             cmds.file( replacingSceneP, open=True, f=True)
-            newName = cmds.file (rename = self.currentSceneP)
+            newName = cmds.file (rename = currentSceneP)
             cmds.file(save=True,f=True)
             cmds.undoInfo(closeChunk=True)
             msg = str(newName)
             icon = "information"
             outBool = True
         except Exception,err:
+            print "ERROR IN REPLACING FILE: re-open source file",err
             outBool=False
             cmds.undoInfo(closeChunk=True)
             # re-open old scene and re save
-            cmds.file( self.currentSceneP, open=True, f=True)
-            newName = cmds.file (rename = self.currentSceneP)
+            cmds.file( currentSceneP, open=True, f=True)
+            newName = cmds.file (rename = currentSceneP)
             cmds.file(save=True,f=True)
             msg = str(err)
             icon = "warning"
@@ -123,7 +130,7 @@ class Z2K_replace_ASSET(object):
         return outBool,[msg,icon]
 
 
-    def publishScene(self, pathType="scene_previz",comment="First_publish_test_RockTheCasbah", *args, **kwargs):
+    def publishScene(self, pathType="scene_previz", comment="First_publish_test_RockTheCasbah", sgTask="Rig", *args, **kwargs):
         print 'publishScene()'
 
         PublishedFile_absPath = "None"
@@ -133,7 +140,7 @@ class Z2K_replace_ASSET(object):
 
         # publishing for real
        
-        PublishedMrc = self.theProj.publishEditedVersion(self.currentSceneP, comment=comment, autoLock=True)[0]
+        PublishedMrc = self.theProj.publishEditedVersion(self.currentSceneP, comment=comment, autoLock=True,sgTask=sgTask)[0]
         print "PublishedMrc=", PublishedMrc
         PublishedFile_absPath = PublishedMrc.absPath()
         print "  -PublishedFile_absPath=", PublishedFile_absPath
@@ -150,8 +157,8 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
     upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_REPLACE_LOGO_A1.bmp"
 
 
-    def __init__(self, theProject="zombtest", replacingScene="",*args, **kwargs):
-        Z2K_replace_ASSET.__init__(self,theProject=theProject, replacingScene="")
+    def __init__(self, theProject="zombtest", currentSceneP="", replacingSceneP="",*args, **kwargs):
+        Z2K_replace_ASSET.__init__(self, theProject=theProject, currentSceneP=currentSceneP, replacingSceneP=replacingSceneP)
 
         print self.name,self.version
         self.cf = self.name + self.version
@@ -160,7 +167,7 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
 
         
     def getInterfaceValues(self,*args, **kwargs):
-        print getInterfaceValues()
+        print "getInterfaceValues()"
         self.pComment = cmds.textField(self.BComment,q=1,text=1)
 
 
@@ -188,7 +195,7 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
     def btn_replaceScene(self,*args, **kwargs):
         print ("btn_replaceScene()")
         self.currentSceneP,self.currentScene = self.getCurrentScene()
-        outBool,infoL = self.replace(replacingSceneP= self.replacingSceneP)
+        outBool,infoL = self.replace(currentSceneP=self.currentSceneP, replacingSceneP= self.replacingSceneP)
 
         if not outBool:
             cmds.confirmDialog(title="replace_Info", message=infoL[0], messageAlign="center", icon=infoL[1])
@@ -196,8 +203,9 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
 
     def btn_publishScene(self,*args, **kwargs):
         print "btn_publishScene()"
+        self.getInterfaceValues()
         try: 
-            PublishedFile_absPath = self.publishScene(pathType="scene_previz")
+            PublishedFile_absPath = self.publishScene(pathType="scene_previz", comment=self.pComment, sgTask="Rig")
             cmds.confirmDialog(title= "PUBLISH info",message="PUBLISH DONE :\r"+PublishedFile_absPath, button="OK", messageAlign="center", icon="information" )
         
         except Exception,err:
@@ -205,8 +213,8 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
             cmds.confirmDialog(title= "PUBLISH info",message= "ERROR : \r"+msg,button="OK", messageAlign="center", icon="warning")
 
 
-
-# -------------------------------------- interface -------------------------------------------
+    
+    # -------------------------------------- interface -------------------------------------------
     def createWin(self, *args,**kwargs):
         # test si la windows exist / permet d'avoir plusieurs windows grace a var "cf" de la class
         if cmds.window(self.cf, q=True, exists=True):
@@ -242,6 +250,8 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
         cmds.setParent("..")
         self.BreplaceScene = cmds.button("replace_current_Scene",c= self.btn_replaceScene)
         self.BPublishScene = cmds.button("PUBLISH",c= self.btn_publishScene)
+        
+
         cmds.text("Comment:",align="left",)
         self.BComment = cmds.textField(text= self.pComment,font="obliqueLabelFont")
         cmds.setParent("..")
