@@ -109,13 +109,13 @@ class character3d:
         },
     }
 
-#    resources_settings = {
-#    "previz_scene":{
-#                    "create_sg_version":True,
-#                    "sg_step":"Model Previz",
-#                    #"upload_to_sg":"preview_image"
-#                    },
-#    }
+    resources_settings = {
+    "previz_scene":{
+                    "create_sg_version":True,
+                    "sg_step":"Model Previz",
+                    #"upload_to_sg":"preview_image"
+                    },
+    }
 
 class prop3d:
 

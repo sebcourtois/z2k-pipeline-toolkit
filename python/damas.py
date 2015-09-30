@@ -26,7 +26,7 @@
 import json
 import requests
 
-#requests.packages.urllib3.disable_warnings() # remove certificate warning
+requests.packages.urllib3.disable_warnings() # remove certificate warning
 
 class http_connection(object) :
     '''
