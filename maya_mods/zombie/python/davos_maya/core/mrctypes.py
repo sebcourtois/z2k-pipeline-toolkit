@@ -22,7 +22,7 @@ class MrcFile(DrcFile):
 
     def edit(self, openFile=False, existing=""):
 
-        self.assertMayaVersion()
+        self.library.project.assertMayaVersion(pmv.current())
         self.assertIsMayaScene()
 
         privFile = DrcFile.edit(self, openFile=False, existing=existing)
@@ -40,18 +40,6 @@ class MrcFile(DrcFile):
             raise AssertionError("Not a Maya Scene:\n'{}'".format(p))
 
         return p
-
-    def assertMayaVersion(self):
-
-        proj = self.library.project
-
-        sMayaProjVersion = str(proj.getVar("project", "maya_version"))
-        sMayaVersion = pmv.flavor()
-
-        if sMayaVersion != sMayaProjVersion:
-            sMsg = ("{0} requires Maya {1}, but you're running Maya {2} !"
-                    .format(proj, sMayaProjVersion, sMayaVersion))
-            raise EnvironmentError(sMsg)
 
     def mayaOpen(self, checkFile=True):
 

@@ -1,9 +1,16 @@
 import sys
 import re
 import os
+import subprocess
+
+SHOT_FOLDER = "\\\\Zombiwalk\\Projects\\zombtest\\shot\\"
+SHOT_TEMPLATE = "{sequence}\\{sequence}_{shot}\\00_data"
 
 FPS = 24.0
 TC_SEPARATOR = ":"
+
+def getShotFolder(in_sSequence, in_sShot):
+	return SHOT_FOLDER + SHOT_TEMPLATE.format(sequence=in_sSequence, shot=in_sShot)
 
 def convertTcToSecondsTc(in_Tc, in_fps=FPS, in_iHoursOffset=0, in_iMinutesOffset=0, in_iSecondsOffset=0, in_iFramesOffset=0):
 	hours, minutes, seconds, frames = [int(val) for val in in_Tc.split(TC_SEPARATOR)]
@@ -88,7 +95,7 @@ def parseEdl(in_sEdlPath):
 		return shots
 
 	tcRegEx = re.compile("(\d{3})\s+GEN\s+V\s+C\s+\d{2}:\d{2}:\d{2}:\d{2}\s+\d{2}:\d{2}:\d{2}:\d{2}\s+(\d{2}:\d{2}:\d{2}:\d{2})\s+(\d{2}:\d{2}:\d{2}:\d{2})")
-	shotRegEx = re.compile(".*FROM CLIP NAME:  (S\d{3}[a-zA-Z]?)\s(P\d{3})")
+	shotRegEx = re.compile(".*FROM CLIP NAME:  (SQ\d{4}[a-zA-Z]?)\s\s(P\d{4}[a-zA-Z]?)")
 
 	fileLength = len(lines)
 
@@ -99,11 +106,12 @@ def parseEdl(in_sEdlPath):
 			if shotMatchObj:
 				shots.append({"index":matchObj.group(1).strip(), "sequence":shotMatchObj.group(1).strip(), "shot":shotMatchObj.group(2).strip(), "start":matchObj.group(2).strip(), "end":matchObj.group(3).strip()})
 			else:
-				print "Error reading shot info for line {0} ({1})".format(counter, lines[counter+1])
+				print "Error reading shot info for line {0} ({1})".format(counter, lines[counter+1].replace('\n', ''))
+				return None
 
 	return shots
 
-def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideName=None, doSplit=True, exportCsv=True, in_sShotSuffix="0a"):
+def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideName=None, doSplit=True, exportCsv=True, in_sShotSuffix="", in_bExportInShotFolders=True):
 	dirname, filename = os.path.split(os.path.abspath(__file__))
 	batFile = os.path.join(dirname, "split.bat")
 
@@ -111,27 +119,44 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
 
 	shots = parseEdl(in_sEdlPath)
 
-	csv = "{0},{1},{2},{3}\n".format('code', 'sg_cut_in', 'sg_cut_out', 'sg_cut_duration')
+	if shots is None:
+		print "Cannot read Edl correctly (see above) !"
+		return
 
+	csv = "{0},{1},{2},{3}\n".format('Shot Code', 'Cut In', 'Cut Out', 'Cut Duration')
+
+	lenShots = len(shots)
+	counter = 1
 	for shot in shots:
 		if in_sSeqFilter == None or shot["sequence"] == in_sSeqFilter:
-			sequenceCode = shot["sequence"].replace("S", "sq") + "0"
+			sequenceCode = shot["sequence"].replace("SQ", "sq")
 			if in_sSeqFilter != None and in_sSeqOverrideName != None:
 				sequenceCode = in_sSeqOverrideName
 
-			shotCode = shot["shot"].replace("P", "sh") + in_sShotSuffix
+			shotCode = shot["shot"].replace("P", "sh").replace("A", "a") + in_sShotSuffix
 
 			startseconds = convertTcToSeconds(shot["start"], in_iHoursOffset=-1)
 			endseconds = convertTcToSeconds(shot["end"], in_iHoursOffset=-1, in_iFramesOffset=-1)
 
 			csv += "{0},{1:.0f},{2:.0f},{3:.0f}\n".format(sequenceCode + "_" + shotCode, startseconds * FPS, endseconds * FPS, (endseconds - startseconds) * FPS + 1)
 
-			cmdLine = "{0} {1} {2} {3} {4}".format(batFile, in_sSourcePath, convertTcToSecondsTc(shot["start"], in_iHoursOffset=-1), convertTcToSecondsTc(shot["end"], in_iHoursOffset=-1, in_iFramesOffset=-1), sequenceCode + "_" + shotCode + "_animatic.mov")
+			cmdLine = "{0} {1} {2} {3} {4}".format(batFile, '{0}'.format(in_sSourcePath), convertTcToSecondsTc(shot["start"], in_iHoursOffset=-1), convertTcToSecondsTc(shot["end"], in_iHoursOffset=-1, in_iFramesOffset=-1), sequenceCode + "_" + shotCode + "_animatic.mov")
+
+			if in_bExportInShotFolders:
+				path = getShotFolder(sequenceCode, shotCode)
+				if not os.path.isdir(path):
+					os.makedirs(path)
+				cmdLine += " {0}\\".format(path)
 
 			if doSplit:
 				os.system(cmdLine)
 			else:
 				print cmdLine
+
+			percent = counter * 100 / lenShots
+			bar = ["-" for n in range(int(percent * .5))]
+			print "\nShot {0:04d}/{1:04d} {2:.0f}% |{3:<50}|".format(counter, lenShots, percent, "".join(bar))
+			counter += 1
 
 	if exportCsv:
 		outPath = in_sEdlPath.replace('.edl', '.csv')
@@ -154,7 +179,6 @@ if len(sys.argv) < 3:
 	print "Two arguments must be given (Source_video_path, edl_path) !"
 else:
 	args = list(sys.argv)
-	print args
 	args.pop(0)
-	print args
+	print "splitMovie" + ",".join(args)
 	splitMovie(*args)

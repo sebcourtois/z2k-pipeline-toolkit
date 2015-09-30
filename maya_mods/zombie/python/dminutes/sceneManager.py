@@ -1,3 +1,7 @@
+#------------------------------------------------------------------
+#               UI data and logic for sceneManagerUI.py
+#------------------------------------------------------------------
+
 import pymel.core as pc
 import maya.cmds as mc
 import tkMayaCore as tkc
@@ -22,11 +26,14 @@ notFoundvalue = 'NOT FOUND'
 #FROM DAVOS !!!!
 STEP_FILE_REL = {'Previz 3D':'previz_scene'}
 TASK_FILE_REL = {'previz 3D':'previz_scene'}
-TASK_ASSET_REL = {'previz 3D':'previz_ref'}
+TASK_ASSET_REL = {'previz 3D':'previz_ref', 'animation':'anim_ref'}
+
 LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
+
 FILE_SUFFIXES = {'Previz 3D':'_previz.ma'}
 
 def getReversedDict(in_dict):
+    """Get a copy of a dictionary key<=>value (Beware of identical values)"""
     reverseDict = {}
 
     for key in in_dict:
@@ -36,9 +43,11 @@ def getReversedDict(in_dict):
     return reverseDict
 
 def pathNorm(p):
+    """Normalize a path, in term of separator"""
     return os.path.normpath(p).replace("\\", "/")
 
 class SceneManager():
+    """Main Class to handle SceneManager Data and operations"""
     def __init__(self, d_inContext=None):
         self.context={}
         self.projectname="zombillenium"
@@ -49,6 +58,7 @@ class SceneManager():
 
     #FROM DAVOS !!!!
     def collapseVariables(self, s_inPath, encapsulation="${0}"):
+        """Format a path with environment variables visible (for asset referencing for instance)"""
         variables = {}
         for key, lib in self.context['damProject'].loadedLibraries.iteritems():
             variable = lib.getVar('public_path').lstrip("$")
@@ -74,6 +84,8 @@ class SceneManager():
         return self.context['damProject']._shotgundb.getVersions(self.context['task'])
 
     def getPath(self, d_inEntity, s_inFileTag):
+        """Get the path of an asset (for referencing), s_inFileTag stands for the 'ressource' in davos config (previz_scene, previz_ref...etc)"""
+
         #print 'getPath ' + str(d_inEntity)
         #print d_inEntity
         lib = LIBS[d_inEntity['type']]
@@ -101,6 +113,8 @@ class SceneManager():
         except Exception, e:
             pc.warning('damProject.getPath failed with {0}, {1}, {2} : {3}'.format(lib,s_inFileTag,tokens, e))
 
+        """
+        #This part was usefull when davos was not completely configured, should be pointless now
         if path == None and False:
             path = self.context['damProject'].getPath('public', lib, 'entity_dir', tokens=tokens)
             fileName = None
@@ -118,10 +132,12 @@ class SceneManager():
                 pc.error('Cannot get file name of {0} on {1}'.format(s_inFileTag, d_inEntity))
 
             path = pathNorm(os.path.join(path, fileName))
+        """
 
         return path
 
     def getContextFromDavosData(self):
+        """format davos data (contained in self.context['sceneData']) to match with UI Data to allow detection of current loaded scene"""
         davosContext = {}
         if not "resource" in self.context['sceneData'] or not "section" in self.context['sceneData'] or not "name" in self.context['sceneData']:
             return None
@@ -144,6 +160,7 @@ class SceneManager():
         return davosContext
 
     def refreshSceneContext(self):
+        """Retrieve the scene path and get davos data from it"""
         self.context['sceneEntry'] = None
         self.context['sceneData'] = {}
 
@@ -157,6 +174,7 @@ class SceneManager():
         return self.contextIsMatching()
 
     def contextIsMatching(self):
+        """Compare davos data with UI data, return True if they match"""
         self.context['sceneState'] = ""
         contextEntry = self.getEntry()
 
@@ -200,6 +218,7 @@ class SceneManager():
         return True
 
     def refreshStatus(self, entry=None):
+        """Refresh the 'lock' status"""
         self.context['lock'] = "Error"
 
         if entry == None:
@@ -209,6 +228,7 @@ class SceneManager():
             self.context['lock'] = entry.getLockOwner()
 
     def getEntry(self):
+        """Get davos entry from UI data"""
         entry = None
 
         lib = LIBS[self.context['entity']['type']]
@@ -448,9 +468,11 @@ class SceneManager():
         return content if content != None else []
 
     def getFiletagFromPath(self, in_sPath):
+        """Detect the filetag (resource) from an asset path, when we don't have the shotgun info, right now it'll just say 'NONE'"""
         return notFoundvalue
 
     def getAssetsInfo(self):
+        """Compare Shotgun shot<=>assets linking and scene content"""
         sgAssets = self.getShotgunContent()
         sceneAssets = mop.getSceneContent(self)
 
@@ -504,6 +526,7 @@ class SceneManager():
         return assetsInfo
 
     def updateScene(self, addOnly=True):
+        """Updates scene Assets from shotgun shot<=>assets linking"""
         assetsInfo = self.getAssetsInfo()
 
         for assetInfo in assetsInfo:
