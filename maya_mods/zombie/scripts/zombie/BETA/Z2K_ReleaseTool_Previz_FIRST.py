@@ -12,7 +12,7 @@ reload(Z2K_replace)
 
 # get zomb project
 curproj = os.environ.get("DAVOS_INIT_PROJECT")
-print curproj
+print "curproj=", curproj
 
 Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", assetCat = "chr",
                         destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
@@ -22,7 +22,7 @@ Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_mantea
 Z2K_ReleaseTool_GuiI.createWin()
 
 
-Z2K_replaceI = Z2K_replace.Z2K_replace_ASSET_GUI(theProject=curproj,sourceSceneP="", replacingSceneP="")
+Z2K_replaceI = Z2K_replace.Z2K_replace_ASSET_GUI(theProject=curproj, sourceSceneP="", replacingSceneP="")
 Z2K_replaceI.insertLayout( parent=Z2K_ReleaseTool_GuiI.layoutImportModule )
 
 
