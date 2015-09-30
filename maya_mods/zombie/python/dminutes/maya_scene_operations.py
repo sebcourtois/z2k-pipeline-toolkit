@@ -476,7 +476,7 @@ def init_previz_scene(o_inSceneManager):
 COMMANDS = {
     'create':{
         'BASE':create_scene_base,
-        'previz 3D':create_previz_scene
+        'previz 3D':create_previz_scene,
     },
     'init':{
         'BASE':init_scene_base,
