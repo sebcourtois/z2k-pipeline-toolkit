@@ -6,7 +6,7 @@ import pymel.mayautils
 
 def onStartup():
 
-	if os.path.normcase(sys.executable).endswith("maya.exe"):
+	if os.path.normcase(sys.executable).endswith("maya.exe") or os.path.normcase(sys.executable).endswith("Maya"):
 
 		import stxScriptMenu
 		stxScriptMenu.install()
