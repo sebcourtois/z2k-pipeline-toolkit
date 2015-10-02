@@ -34,6 +34,7 @@ class project:
     else:
         damas_server_addr = "https://62.210.104.42:8443/api"
 
+    editable_files = ("*.ma", "*.mb", "*.psd", "*.nk", "*.py")
 
 class asset_lib:
 
@@ -104,8 +105,7 @@ class character3d:
         "{name}_previz.ma -> previz_scene":None,
         "{name}_render.ma -> render_scene":None,
 
-        "{name}_preview.jpg -> preview_image":None,
-
+        #"{name}_preview.jpg -> preview_image":None,
         },
     }
 
@@ -251,8 +251,8 @@ class shot_lib:
                     "sg_tasks":("previz 3D",),
                     "upload_to_sg":"previz_capture"
                     },
-    "previz_capture":{"editable":False,
-                      },
+#    "previz_capture":{"editable":False,
+#                      },
     }
 
 
