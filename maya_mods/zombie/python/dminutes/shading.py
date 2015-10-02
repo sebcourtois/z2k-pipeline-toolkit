@@ -626,6 +626,10 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
         else:
             LOD = 4
 
+        if mainFilePathElem[-3] == "chr" and os.path.isfile(jpgFilePathExpand):
+            print "#### {:>7}: '{}' FileNode, jpg file: '{}',  already exists, can't replace it automaticaly on characters,please delete it manually first".format("Warning",eachFileNode,os.split.path(mapFilePath)[-1])
+            continue
+
         imageResize(inputFilePathName = tgaFilePath, outputFilePathName = "", lod = LOD, jpgQuality = 90, updateOnly = updateOnly, openImageMentalRay = True)
 
         if mapFilePath != jpgFilePath: 
