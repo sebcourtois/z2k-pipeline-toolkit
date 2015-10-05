@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ################################################################
-# Name    : Z2K_replace_ASSET
+# Name    : Z2K_ASSET_replacer
 # Version : 002
 # Description : replace current scene with a custom selected file
 # Author : Jean-Philippe Descoins
@@ -29,11 +29,11 @@ reload(Z2K)
 
 
 
-class Z2K_replace_ASSET(object):
+class Z2K_ASSET_replacer(object):
 
-    name = "Z2K_replace_ASSET"
+    name = "Z2K_ASSET_replacer"
     version = "_v001"
-    OVcurDir = "Z2K_replace_ASSET_CurDir"
+    OVcurDir = "Z2K_ASSET_replacer_CurDir"
     def __init__(self, theProject="zombtest",currentSceneP="", replacingSceneP="",*args, **kwargs):
         print "init"
         self.theProject = theProject
@@ -152,13 +152,13 @@ class Z2K_replace_ASSET(object):
 
 
 
-class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
+class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
     basePath =  os.environ.get("MAYA_MODULE_PATH").split(";")[0]
     upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_REPLACE_LOGO_A1.bmp"
 
 
     def __init__(self, theProject="zombtest", currentSceneP="", replacingSceneP="",*args, **kwargs):
-        Z2K_replace_ASSET.__init__(self, theProject=theProject, currentSceneP=currentSceneP, replacingSceneP=replacingSceneP)
+        Z2K_ASSET_replacer.__init__(self, theProject=theProject, currentSceneP=currentSceneP, replacingSceneP=replacingSceneP)
 
         print self.name,self.version
         self.cf = self.name + self.version
@@ -259,5 +259,5 @@ class Z2K_replace_ASSET_GUI(Z2K_replace_ASSET):
 
 
 # exec
-# Z2K_replace_ASSET_GUIA.insertLayout(parent="")
-# Z2K_replace_ASSET_GUIA = Z2K_replace_ASSET_GUI(replacingScene="")
+# Z2K_ASSET_replacer_GUIA.insertLayout(parent="")
+# Z2K_ASSET_replacer_GUIA = Z2K_ASSET_replacer_GUI(replacingScene="")

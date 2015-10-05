@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ########################################################
-# Name    : Z2K_Asset_Previz_checks
+# Name    : Z2K_Chr_Previz_checks
 # Version : v008
 # Description : Create previz maya file in .mb with some cleaning one the leadAsset
 # Comment : BASE SCRIPT OUT OF Z2K in v002
@@ -75,6 +75,63 @@ class checkModule(object):
             self.BDebugBoardF=""
             self.BCleanAll=""
             self.BClearAll=""
+
+
+
+
+    # decorators ---------------------------
+    def Z2KprintDeco(func, *args, **kwargs):
+        def deco(self,*args, **kwargs):
+            # print u"Exécution de la fonction '%s'." % func.__name__
+            func(self, toScrollF=self.BDebugBoard, toFile = self.DebugPrintFile,*args, **kwargs)
+        return deco
+
+    def waiter (func,*args, **kwargs):
+        def deco(self,*args, **kwargs):
+            result = True
+            cmds.waitCursor( state=True )
+            print "wait..."
+            try:
+                print func
+                result = func(self,*args, **kwargs)
+            except Exception,err:
+                print "#ERROR JP:",err
+                # cmds.waitCursor( state=False )
+            cmds.waitCursor( state=False )
+            print "...wait"
+            if not result:
+                cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
+
+            return result
+        return deco
+
+    # ------------ printer -----------------
+    @Z2KprintDeco
+    def printF(self, text="",st="main",toScrollF="", toFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Release_debug.txt",
+        openMode="a+", *args, **kwargs):
+        stringToPrint=""
+ 
+        text = str(object=text)
+        if st in ["title","t"]:
+            stringToPrint += "\n"+text.center(40, "-")+"\n"
+        if  st in ["main","m"]:
+            stringToPrint += "    "+text+"\n"
+        if st in ["result","r"]:
+            stringToPrint += " -RESULT: "+text.upper()+"\n"
+
+        if not toFile in [""] and not self.GUI:
+            # print the string to a file
+            with open(toFile, openMode) as f:
+                f.write( stringToPrint )
+
+        else:
+            # print to textLayout
+            cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
+            
+
+    
+
+
 
     def jlistSets(self, *args,**kwargs):
         """
@@ -232,30 +289,34 @@ class checkModule(object):
                 if cmds.objExists(obj):
                     # get underShapeL
                     underShapeL = cmds.listRelatives(obj, c=True, ni=True, shapes=True)
-                    print "  underShapeL: len=", len(underShapeL),underShapeL
-                    for shape in underShapeL:
-                        # print "shape=", shape
-                        # getting source objL
-                        attrib = shape +'.inMesh'
-                        if cmds.objExists(attrib):
-                            if cmds.connectionInfo(attrib, isDestination=True):
-                                sourceL = cmds.listConnections( attrib, d=False, s=True,p=False,shapes=True )
-                                if type(sourceL) is not list:
-                                    sourceL = [sourceL]
-                                
-                                # sourceL loop
-                                for source in sourceL:
-                                    if cmds.objectType(source) in ["skinCluster"]:
-                                        print tab,"OK :", source
-                                        outSkinClusterL.append(source)
-                                        outSkinnedObj.append(obj)
-                                    else:
-                                        pass
-                                        # print tab,"BAD : connectedTo  :", source
+                    if underShapeL:
+                        print "  underShapeL: len=", len(underShapeL),underShapeL
+                        for shape in underShapeL:
+                            # print "shape=", shape
+                            # getting source objL
+                            attrib = shape +'.inMesh'
+                            if cmds.objExists(attrib):
+                                if cmds.connectionInfo(attrib, isDestination=True):
+                                    sourceL = cmds.listConnections( attrib, d=False, s=True,p=False,shapes=True )
+                                    if type(sourceL) is not list:
+                                        sourceL = [sourceL]
+                                    
+                                    # sourceL loop
+                                    for source in sourceL:
+                                        if cmds.objectType(source) in ["skinCluster"]:
+                                            print tab,"OK :", source
+                                            outSkinClusterL.append(source)
+                                            outSkinnedObj.append(obj)
+                                        else:
+                                            pass
+                                            # print tab,"BAD : connectedTo  :", source
+                                else:
+                                    pass
+                                    # print tab,"BAD : noConnection :", shape
+                                    
                             else:
                                 pass
-                                # print tab,"BAD : noConnection :", shape
-                                
+                                # print tab,"BAD : noAttrib_inMesh :", shape
                         else:
                             pass
                             # print tab,"BAD : noAttrib_inMesh :", shape
@@ -325,57 +386,7 @@ class checkModule(object):
 
         return toReturnL
 
-    # decorators ---------------------------
-    def Z2KprintDeco(func, *args, **kwargs):
-        def deco(self,*args, **kwargs):
-            # print u"Exécution de la fonction '%s'." % func.__name__
-            func(self, toScrollF=self.BDebugBoard, toFile = self.DebugPrintFile,*args, **kwargs)
-        return deco
-
-    def waiter (func,*args, **kwargs):
-        def deco(self,*args, **kwargs):
-            result = True
-            cmds.waitCursor( state=True )
-            print "wait..."
-            try:
-                print func
-                result = func(self,*args, **kwargs)
-            except Exception,err:
-                print "#ERROR JP:",err
-                # cmds.waitCursor( state=False )
-            cmds.waitCursor( state=False )
-            print "...wait"
-            if not result:
-                cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
-
-            return result
-        return deco
-
-    # ------------ printer -----------------
-    # @Z2KprintDeco
-    def printF(self, text="",st="main",toScrollF="", toFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Release_debug.txt",
-        openMode="a+", *args, **kwargs):
-        stringToPrint=""
- 
-        text = str(object=text)
-        if st in ["title","t"]:
-            stringToPrint += "\n"+text.center(40, "-")+"\n"
-        if  st in ["main","m"]:
-            stringToPrint += "    "+text+"\n"
-        if st in ["result","r"]:
-            stringToPrint += " -RESULT: "+text.upper()+"\n"
-
-        if not toFile in [""]:
-            # print the string to a file
-            with open(toFile, openMode) as f:
-                f.write( stringToPrint )
-
-        else:
-            # print to textLayout
-            cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
-            
-
-    
+   
 
 
     # cleaning/checking functions --------------------------------------------
@@ -1281,6 +1292,7 @@ class checkModule(object):
     def colorBoolControl(self, controlL=[], boolL=[],labelL=[""],  *args, **kwargs):
         # color the controlL depending on the given Bool
         if self.GUI:
+            
             for i,j,label in zip(controlL,boolL,labelL):
                     if j in [True,1]:
                         cmds.button(i, e=1, backgroundColor=self.trueColor, ebg=self.ebg)

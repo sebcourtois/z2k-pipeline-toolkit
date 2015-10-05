@@ -4,15 +4,15 @@ import os
 import dminutes.Z2K_ReleaseTool.Z2K_ReleaseTool as z2kR
 reload (z2kR)
 
-# import dminutes.Z2K_ReleaseTool.modules.Z2K_Asset_Previz_checks as Z2K_PcheckD
-# reload(Z2K_PcheckD)
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Set_Previz_checks as Z2K_PcheckD
+reload(Z2K_PcheckD)
 
 # get zomb project
 curproj = os.environ.get("DAVOS_INIT_PROJECT")
 print curproj
 
-Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="env_RouteDuRhum", SourceAssetType="previz_scene",assetCat = "set",
-                        destinationAsset="env_RouteDuRhum", destinationAssetType= "previz_scene",
+Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="set_RouteDuRhum_default", SourceAssetType="previz_scene",assetCat = "set",
+                        destinationAsset="set_RouteDuRhum_default", destinationAssetType= "previz_ref",
                         projConnectB= True, theProject=curproj,
                         theComment= "auto rock the casbah release !",
                         debug=False )

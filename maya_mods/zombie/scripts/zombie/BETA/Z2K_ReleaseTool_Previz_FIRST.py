@@ -4,10 +4,10 @@ import os
 import dminutes.Z2K_ReleaseTool.Z2K_ReleaseTool as z2kR
 reload (z2kR)
 
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Asset_Previz_checks as Z2K_PcheckD
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Chr_Previz_checks as Z2K_PcheckD
 reload(Z2K_PcheckD)
 
-import dminutes.Z2K_ReleaseTool.modules.Z2K_replace_ASSET as Z2K_replace
+import dminutes.Z2K_ReleaseTool.modules.Z2K_ASSET_replacer as Z2K_replace
 reload(Z2K_replace)
 
 # get zomb project
@@ -22,7 +22,7 @@ Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_mantea
 Z2K_ReleaseTool_GuiI.createWin()
 
 
-Z2K_replaceI = Z2K_replace.Z2K_replace_ASSET_GUI(theProject=curproj, sourceSceneP="", replacingSceneP="")
+Z2K_replaceI = Z2K_replace.Z2K_ASSET_replacer_GUI(theProject=curproj, sourceSceneP="", replacingSceneP="")
 Z2K_replaceI.insertLayout( parent=Z2K_ReleaseTool_GuiI.layoutImportModule )
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ########################################################
-# Name    : Z2K_Asset_Previz_checks
+# Name    : Z2K_Set_Previz_checks
 # Version : v007
 # Description : Create previz maya file in .mb with some cleaning one the leadAsset
 # Comment : BASE SCRIPT OUT OF Z2K in v002
@@ -43,7 +43,7 @@ from functools import partial
 import inspect
 
 
-
+# TO UPDATE AND MAKE POINTING TO AssetEnv_Module
 class checkModule(object):
     name = "AssetPreviz_Module"
     cf = name
@@ -210,29 +210,33 @@ class checkModule(object):
                     # get underShapeL
                     underShapeL = cmds.listRelatives(obj, c=True, ni=True, shapes=True)
                     print "  underShapeL: len=", len(underShapeL),underShapeL
-                    for shape in underShapeL:
-                        # print "shape=", shape
-                        # getting source objL
-                        attrib = shape +'.inMesh'
-                        if cmds.objExists(attrib):
-                            if cmds.connectionInfo(attrib, isDestination=True):
-                                sourceL = cmds.listConnections( attrib, d=False, s=True,p=False,shapes=True )
-                                if type(sourceL) is not list:
-                                    sourceL = [sourceL]
-                                
-                                # sourceL loop
-                                for source in sourceL:
-                                    if cmds.objectType(source) in ["skinCluster"]:
-                                        print tab,"OK :", source
-                                        outSkinClusterL.append(source)
-                                        outSkinnedObj.append(obj)
-                                    else:
-                                        pass
-                                        # print tab,"BAD : connectedTo  :", source
+                    if len(underShapeL):
+                        for shape in underShapeL:
+                            # print "shape=", shape
+                            # getting source objL
+                            attrib = shape +'.inMesh'
+                            if cmds.objExists(attrib):
+                                if cmds.connectionInfo(attrib, isDestination=True):
+                                    sourceL = cmds.listConnections( attrib, d=False, s=True,p=False,shapes=True )
+                                    if type(sourceL) is not list:
+                                        sourceL = [sourceL]
+                                    
+                                    # sourceL loop
+                                    for source in sourceL:
+                                        if cmds.objectType(source) in ["skinCluster"]:
+                                            print tab,"OK :", source
+                                            outSkinClusterL.append(source)
+                                            outSkinnedObj.append(obj)
+                                        else:
+                                            pass
+                                            # print tab,"BAD : connectedTo  :", source
+                                else:
+                                    pass
+                                    # print tab,"BAD : noConnection :", shape
+                                    
                             else:
                                 pass
-                                # print tab,"BAD : noConnection :", shape
-                                
+                                # print tab,"BAD : noAttrib_inMesh :", shape
                         else:
                             pass
                             # print tab,"BAD : noAttrib_inMesh :", shape
@@ -339,7 +343,7 @@ class checkModule(object):
         if st in ["result","r"]:
             stringToPrint += " -RESULT: "+text.upper()+"\n"
 
-        if not toFile in [""]:
+        if not toFile in [""] and not self.GUI:
             # print the string to a file
             with open(toFile, openMode) as f:
                 f.write( stringToPrint )
