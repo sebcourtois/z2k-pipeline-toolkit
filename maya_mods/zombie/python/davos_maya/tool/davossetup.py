@@ -1,6 +1,7 @@
 
 import os
 import pymel.core as pm
+import pymel.util as pmu
 
 from davos.core.damproject import DamProject
 from pytaya.util.toolsetup import ToolSetup
@@ -31,3 +32,25 @@ class DavosSetup(ToolSetup):
         ToolSetup.afterBuildingMenu(self)
 
         DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
+        pmu.putEnv("DAVOS_FILE_CHECK", "1")
+
+    def beforeReloading(self, *args):
+        ToolSetup.beforeReloading(self, *args)
+
+        file_browser.kill()
+
+#    def onSceneOpened(self, *args):
+#        ToolSetup.onSceneOpened(self, *args)
+#
+#        if pmu.getEnv("DAVOS_FILE_CHECK", "1"):
+#            fncAst.checkCgsFileState(warnNotLocked=False)
+#        else:
+#            pmu.putEnv("DAVOS_FILE_CHECK", "1")
+#
+#    def onSceneSaved(self):
+#        ToolSetup.onSceneSaved(self)
+#
+#        if pmu.getEnv("DAVOS_FILE_CHECK", "1"):
+#            fncAst.checkCgsFileState(mandatory=False)
+#        else:
+#            pmu.putEnv("DAVOS_FILE_CHECK", "1")
