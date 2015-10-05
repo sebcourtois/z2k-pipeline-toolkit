@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ########################################################
-# Name    : Z2K_Asset_Previz_checks
+# Name    : Z2K_Chr_Anim_checks
 # Version : v007
 # Description : Create previz maya file in .mb with some cleaning one the leadAsset
 # Comment : BASE SCRIPT OUT OF Z2K in v002
@@ -43,7 +43,7 @@ from functools import partial
 import inspect
 
 
-# TO UPDATE AND MAKE POINTING TO AssetEnv_Module
+
 class checkModule(object):
     name = "AssetPreviz_Module"
     cf = name

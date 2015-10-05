@@ -10,12 +10,13 @@
 # Comment : wip
 #
 # TO DO:
-#   - add cat chooser to the GUI, "set/env/char/prop"
+#   x add cat chooser to the GUI, "set/env/char/prop"
 #   x handle module import style
 #   x Unlockink the edited file if not saved
 #   x Dockable
 #   x debug/advanced mode
 #   - add save debug file
+#   - add filter ability for big menu list
 ########################################################
 
 
@@ -45,7 +46,7 @@ class Z2K_ReleaseTool (object):
     
     version = "_v010"            
     name = "Z2K_ReleaseTool"
-    
+    categoryL = ["chr","prp", "set"]
 
     basePath = [x for x in os.environ.get("MAYA_MODULE_PATH").split(";") if "maya_mods" in x][0]
     upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_RELEAZE_LOGO_A1.bmp"
@@ -56,9 +57,9 @@ class Z2K_ReleaseTool (object):
         projConnectB= True,theProject="zombtest",theComment= "auto rock the casbah release !", debug=False, *args, **kwargs):
         print "__init__"
         
+
         self.debug = debug
         self.assetCat = assetCat
-        self.assetL = self.getAssetL(theDir=os.path.normpath(self.baseAssetPath)+os.sep+ self.assetCat)
         self.sourceAsset = sourceAsset
         self.sourceAssetType = SourceAssetType
         self.destinationAsset = destinationAsset
@@ -73,6 +74,7 @@ class Z2K_ReleaseTool (object):
 
         self.path_private_toEdit = ""
 
+        self.assetL = self.getAssetL( theDir=os.path.normpath(self.baseAssetPath ) , assetCat=self.assetCat )
 
         # self.createWin()
 
@@ -84,16 +86,21 @@ class Z2K_ReleaseTool (object):
 
 
     # ------------------------ OS/Z2K Functions ------------------------------------
-    def getAssetL (self,theDir=r"P:/zombtest/asset/chr",*args,**kwargs):
+    def getAssetL (self,theDir=r"P:/zombtest/asset/", assetCat="chr",*args,**kwargs):
+        theDir = os.path.normpath(theDir) + os.sep + assetCat
         print "theDir=", theDir
-        assetL = os.listdir(theDir)
+        if os.path.isdir(theDir):
+            assetL = sorted(os.listdir(theDir) )
+            if not len(assetL):
+                assetL=["Empty Folder"]
+            
+        else:
+            assetL=["Invalide folder"]
 
-        for a in assetL:
-            print 
         return assetL
 
 
-    def openAsset(self, sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", readOnly=False,autoUnlock=True, *args,**kwargs):
+    def openAsset(self, sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", readOnly=False, autoUnlock=True, *args,**kwargs):
 
         # get char from mayascene
         assetN=""
@@ -111,9 +118,9 @@ class Z2K_ReleaseTool (object):
                 print "theLock=", theLock
                 if len(theLock)>0:
                     if not autoUnlock:
-                        # booboo=cmds.confirmDialog(message="Current Asset : {0} \ris LOCKED by :'{1}' \rDo you want to UNLOCK it before loading?!".format(assetN,theLock),
-                        #                             messageAlign="center", defaultButton="YES", cancelButton="NO" , b="YES", button="NO",
-                        #                             icon="warning")
+                        booboo=cmds.confirmDialog(message="Current Asset : {0} \ris LOCKED by :'{1}' \rDo you want to UNLOCK it before loading?!".format(assetN,theLock),
+                                                    messageAlign="center", defaultButton="YES", cancelButton="NO" , b="YES", button="NO",
+                                                    icon="warning")
                         print "booboo=",booboo
                         if booboo in ["YES"]:
                             Z2K.unlock(drcF)
@@ -211,7 +218,28 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         self.destinationAssetType = cmds.textField(self.BdestinationAssetType, q=1,text=True)
 
         print self.sourceAsset,"->",self.destinationAsset, self.sourceAssetType,"->",self.destinationAssetType
+    
 
+    def refreshOptionMenu(self, theOptMenuL=[], inList=[], *args, **kwargs):
+        print "refreshOptionMenu()"
+        for theOptMenu in theOptMenuL:
+            items = cmds.optionMenu(theOptMenu, query=True, itemListShort=True)
+            for item in items:
+                cmds.deleteUI(item)
+
+            for item in inList:
+                cmds.menuItem(theOptMenu + "_" + item, label= item, parent=theOptMenu)
+
+
+
+    def btn_categoryMenu (self,*args, **kwargs):
+        print "btn_categoryMenu()"
+        self.assetCat = cmds.optionMenu(self.BcategoryMenu,q=1,v=1)
+        self.assetL = self.getAssetL(theDir=os.path.normpath(self.baseAssetPath ) , assetCat=self.assetCat)
+
+        # cascade
+        self.refreshOptionMenu(theOptMenuL=[self.BsourceAssetMenu,self.BdestinationAssetMenu], inList=self.assetL)
+        self.btn_sourceAssetMenu()
 
     def btn_sourceAssetMenu( self,*args,**kwargs):
         print "btn_assetMenu()"
@@ -228,7 +256,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
     def btn_open_Asset( self,*args,**kwargs):
         print "btn_open_Asset()"
         self.getInterfaceValues()
-        self.sourceAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType)
+        self.sourceAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,autoUnlock=False)
         cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
 
@@ -236,7 +264,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
     def btn_open_Asset_readOnly(self,*args, **kwargs):
         print "btn_open_Asset_readOnly()"
         self.getInterfaceValues()
-        self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=True)
+        self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=True,autoUnlock=False)
 
 
     def btn_release_Asset( self,*args,**kwargs):
@@ -290,10 +318,19 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         
         # cmds.frameLayout(lv=1, mh=5, mw=5,l="OPEN:",cll=1)
         
-        # source asset menu
+        
         cmds.tabLayout(tabsVisible=0,borderStyle="full")
         cmds.columnLayout(adj=1,rs=2)
+        
+        
+        # category menu
+        self.BcategoryMenu = cmds.optionMenu("categoy", label='Category:', ann="", changeCommand=self.btn_categoryMenu )
+        for cat in self.categoryL  :
+            cmds.menuItem( label=cat )
+        if self.assetCat  in self.categoryL:
+            cmds.optionMenu(self.BcategoryMenu ,e=True, value=self.assetCat)
 
+        # Source_Asset menu
         self.BsourceAssetMenu = cmds.optionMenu("Source_Asset_List", label='Source_Asset:', ann="", changeCommand=self.btn_sourceAssetMenu )
         for asset in sorted(self.assetL)  :
             cmds.menuItem( label=asset )
