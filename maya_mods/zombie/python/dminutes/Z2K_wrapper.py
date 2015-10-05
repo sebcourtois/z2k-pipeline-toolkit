@@ -80,7 +80,8 @@ def openFileReadOnly(proj="",Path_publish_public="", *args, **kwargs):
 
     return privFile
 
-def editFile(proj="" , Path_publish_public="", autoAction="overwrite", *args, **kwargs):
+# ATTENTION le comportement par default du edit est de faire un OVERWRITE dans le private
+def editFile(proj="" , Path_publish_public="", autoAction="overwrite", *args, **kwargs): #keep/
     print "Z2K_editFile()"
     tab= "    "
     if not os.path.exists(Path_publish_public):
@@ -110,11 +111,12 @@ def publishFile(proj="", path_private_toPublish="",comment="test the cashbah mod
     return PublishedFile_absPath
 
 
-# WIP
+# WIP ----------------------- ajout du SG publish
 def publishEditedVersionSG(proj="", path_private_toPublish="", comment="test the cashbah moda foka!", 
-    SgTask="previzRig",
+    sgTask="Rig",
     *args, **kwargs):
     print "publishEditedVersionSG()" 
     tab= "    "
     sPrivPath = path_private_toPublish.absPath()
-    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment="RockTheCashbah", autoLock=True)[0]
+    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment="RockTheCashbah", autoLock=True, sgTask=sgTask)[0]
+

@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ########################################################
-# Name    : Z2K_Asset_Previz_checks
-# Version : v007
+# Name    : Z2K_Chr_Previz_checks
+# Version : v008
 # Description : Create previz maya file in .mb with some cleaning one the leadAsset
 # Comment : BASE SCRIPT OUT OF Z2K in v002
 # Author : Jean-Philippe Descoins
@@ -10,12 +10,21 @@
 # Comment : wip
 #
 # TO DO:
+#       - separate interface from base class
+#       - add BigDaddy check
+#       x MentalRayCleanNodes (['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'])
+#       x check geometry all to zero
+#       x BUG check colorLum
+#       - check geometry modeling history
+#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
+#       WIP Clean ref Nodes + exception arnold etc
+#       ? Check UV smoothing/display paremeters
+#       ? delete mentalRayNode
 #       x check BaseStructure
 #       x check group geo check for attrib of smooth: connect grp_geo smooth lvl2 to set_meshCache obj if pas existant
 #       x check Under_AssetStructure
 #       x Clean NameSpace
 #       x Delete unused Nodes 
-#       WIP Clean ref Nodes + exception arnold etc
 #       x isSkinned
 #       x cleanUnusedInfluence
 #       x disableShapeOverrides
@@ -26,11 +35,8 @@
 #       x Reduce smooth display
 #       x delete unUsed animCurves
 #       x delete unsusedConstraints
-#       WIP Check if there is some keys on controlers and geometries
-#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
+#       x Check if there is some keys on controlers and geometries
 #       x show bool result
-#       - Check UV smoothing/display paremeters
-#       - delete mentalRayNode
 ########################################################
 
 
@@ -49,17 +55,84 @@ class checkModule(object):
     cf = name
 
     basePath =  os.environ.get("MAYA_MODULE_PATH").split(";")[0]
-    upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_ANIM_LOGO_A3.bmp"
+    upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_PREVIZ_LOGO_A3.bmp"
 
 
-    def __init__(self,*args, **kwargs):
+    def __init__(self, GUI=True, *args, **kwargs):
         print "init"
+        self.GUI=GUI
         self.ebg = True
         self.DebugPrintFile =""
+        self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
+        self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
+
+        # trickage pour le batch mode goret
+        print self.GUI
+        if self.GUI in [False,0]:
+            self.BcheckStructure=""
+            self.BCleanScene=""
+            self.BCleanObjects=""
+            self.BDebugBoardF=""
+            self.BCleanAll=""
+            self.BClearAll=""
+
+
+
+
+    # decorators ---------------------------
+    def Z2KprintDeco(func, *args, **kwargs):
+        def deco(self,*args, **kwargs):
+            # print u"Exécution de la fonction '%s'." % func.__name__
+            func(self, toScrollF=self.BDebugBoard, toFile = self.DebugPrintFile,*args, **kwargs)
+        return deco
+
+    def waiter (func,*args, **kwargs):
+        def deco(self,*args, **kwargs):
+            result = True
+            cmds.waitCursor( state=True )
+            print "wait..."
+            try:
+                print func
+                result = func(self,*args, **kwargs)
+            except Exception,err:
+                print "#ERROR JP:",err
+                # cmds.waitCursor( state=False )
+            cmds.waitCursor( state=False )
+            print "...wait"
+            if not result:
+                cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
+
+            return result
+        return deco
+
+    # ------------ printer -----------------
+    @Z2KprintDeco
+    def printF(self, text="",st="main",toScrollF="", toFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Release_debug.txt",
+        openMode="a+", *args, **kwargs):
+        stringToPrint=""
+ 
+        text = str(object=text)
+        if st in ["title","t"]:
+            stringToPrint += "\n"+text.center(40, "-")+"\n"
+        if  st in ["main","m"]:
+            stringToPrint += "    "+text+"\n"
+        if st in ["result","r"]:
+            stringToPrint += " -RESULT: "+text.upper()+"\n"
+
+        if not toFile in [""] and not self.GUI:
+            # print the string to a file
+            with open(toFile, openMode) as f:
+                f.write( stringToPrint )
+
+        else:
+            # print to textLayout
+            cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
+            
+
     
 
 
-    # ----------------------------------jipe general functions -------------------------------
+
     def jlistSets(self, *args,**kwargs):
         """
         description : wrapper of cmds.listSets() that return empty list []
@@ -159,17 +232,24 @@ class checkModule(object):
 
         toReturnB = False
         debugD ={}
-        if cmds.objExists(inObj):
-            if cmds.listConnections(inObj):
-                AttrL = cmds.listAttr(inObj,k=True)
-                if len(AttrL)>0:
-                    for attr in AttrL:
-                        attrN = inObj + "."+ attr
-                        if cmds.connectionInfo(attrN,isDestination=True):
-                            conL = cmds.listConnections(attrN,s=True,t="animCurve")
-                            # print "conL=", conL
-                            debugD[attrN] = conL
-                            toReturnB =True
+        if len(inObj) >0:
+            if cmds.objExists(inObj):
+                conL = cmds.listConnections(inObj)
+                # print "conL=", conL
+                if conL:
+                    if len(conL)>0 :
+                        # print"lengthed"
+                        attrL = cmds.listAttr(inObj,k=True)
+                        if attrL:
+                            if len(attrL)>0:
+                                for attr in attrL:
+                                    attrN = inObj + "."+ attr
+                                    if cmds.connectionInfo(attrN,isDestination=True):
+                                        conL = cmds.listConnections(attrN,s=True,t="animCurve")
+                                        # print "conL=", conL
+                                        debugD[attrN] = conL
+                                        toReturnB =True
+
 
         return [toReturnB,debugD]
 
@@ -209,30 +289,34 @@ class checkModule(object):
                 if cmds.objExists(obj):
                     # get underShapeL
                     underShapeL = cmds.listRelatives(obj, c=True, ni=True, shapes=True)
-                    print "  underShapeL: len=", len(underShapeL),underShapeL
-                    for shape in underShapeL:
-                        # print "shape=", shape
-                        # getting source objL
-                        attrib = shape +'.inMesh'
-                        if cmds.objExists(attrib):
-                            if cmds.connectionInfo(attrib, isDestination=True):
-                                sourceL = cmds.listConnections( attrib, d=False, s=True,p=False,shapes=True )
-                                if type(sourceL) is not list:
-                                    sourceL = [sourceL]
-                                
-                                # sourceL loop
-                                for source in sourceL:
-                                    if cmds.objectType(source) in ["skinCluster"]:
-                                        print tab,"OK :", source
-                                        outSkinClusterL.append(source)
-                                        outSkinnedObj.append(obj)
-                                    else:
-                                        pass
-                                        # print tab,"BAD : connectedTo  :", source
+                    if underShapeL:
+                        print "  underShapeL: len=", len(underShapeL),underShapeL
+                        for shape in underShapeL:
+                            # print "shape=", shape
+                            # getting source objL
+                            attrib = shape +'.inMesh'
+                            if cmds.objExists(attrib):
+                                if cmds.connectionInfo(attrib, isDestination=True):
+                                    sourceL = cmds.listConnections( attrib, d=False, s=True,p=False,shapes=True )
+                                    if type(sourceL) is not list:
+                                        sourceL = [sourceL]
+                                    
+                                    # sourceL loop
+                                    for source in sourceL:
+                                        if cmds.objectType(source) in ["skinCluster"]:
+                                            print tab,"OK :", source
+                                            outSkinClusterL.append(source)
+                                            outSkinnedObj.append(obj)
+                                        else:
+                                            pass
+                                            # print tab,"BAD : connectedTo  :", source
+                                else:
+                                    pass
+                                    # print tab,"BAD : noConnection :", shape
+                                    
                             else:
                                 pass
-                                # print tab,"BAD : noConnection :", shape
-                                
+                                # print tab,"BAD : noAttrib_inMesh :", shape
                         else:
                             pass
                             # print tab,"BAD : noAttrib_inMesh :", shape
@@ -302,54 +386,7 @@ class checkModule(object):
 
         return toReturnL
 
-    # decorators ---------------------------
-    def Z2KprintDeco(func, *args, **kwargs):
-        def deco(self,*args, **kwargs):
-            # print u"Exécution de la fonction '%s'." % func.__name__
-            func(self, toScrollF=self.BDebugBoard, toFile = self.DebugPrintFile,*args, **kwargs)
-        return deco
-
-    def waiter (func,*args, **kwargs):
-        def deco(self,*args, **kwargs):
-            result = True
-            cmds.waitCursor( state=True )
-            print "wait..."
-            try:
-                print func
-                result = func(self,*args, **kwargs)
-            except:
-                cmds.waitCursor( state=False )
-            cmds.waitCursor( state=False )
-            print "...wait"
-            if not result:
-                cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
-
-        return deco
-
-    # ------------ printer
-    @Z2KprintDeco
-    def printF(self, text="",st="main",toScrollF="", toFile = "", openMode="a+", *args, **kwargs):
-        stringToPrint=""
- 
-        text = str(object=text)
-        if st in ["title","t"]:
-            stringToPrint += "\n"+text.center(40, "-")+"\n"
-        if  st in ["main","m"]:
-            stringToPrint += "    "+text+"\n"
-        if st in ["result","r"]:
-            stringToPrint += " -RESULT: "+text.upper()+"\n"
-
-        if not toFile in [""]:
-            # print the string to a file
-            with open(toFile, openMode) as f:
-                f.write( stringToPrint )
-
-        else:
-            # print to textLayout
-            cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
-            
-
-    
+   
 
 
     # cleaning/checking functions --------------------------------------------
@@ -536,9 +573,12 @@ class checkModule(object):
                     if shapeL:
                         for shape in shapeL:
                             print "    ",shape
-                            cmds.setAttr(shape+"."+"displaySmoothMesh",2)
+                            # connect the attr if not connected
                             if not cmds.connectionInfo(shape + "."+"smoothLevel",isDestination=True):
                                 cmds.connectAttr(theGroup+"."+theAttrL[1], shape + "."+"smoothLevel", f=True)
+                            
+                            # set the display mesh preview option
+                            cmds.setAttr(shape+"."+"displaySmoothMesh",2)
 
         else:
             toReturnB = False
@@ -553,7 +593,34 @@ class checkModule(object):
         # --------------------------
         return [toReturnB,createdL]
 
+    def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'],*args, **kwargs):
+        print "cleanMentalRayNodes()"
+        tab = "    "
+        toReturnB = True
+        deletedL=[]
+        failL=[]
+        print tab,"toDeleteL=", toDeleteL
 
+        for i in toDeleteL:
+            if cmds.objExists(i):
+                try:
+                    cmds.lockNode(i, lock=False)
+                    cmds.delete(i)
+                    deletedL.append(i)
+                except:
+                    toReturnB=False
+                    failL.append(i)
+
+
+        # prints -------------------
+        self.printF("cleanMentalRayNodes()", st="t")
+        self.printF(toReturnB, st="r")
+        if len(failL):
+            self.printF( "failL= {0}".format( failL  ) )
+        # --------
+
+
+        return [toReturnB,failL]
 
     def cleanRefNodes(self, toDeleteL = ["UNKNOWN_REF_NODE","SHAREDREFERENCENODE","REFERENCE"],*args,**kwargs):
         print "cleanRefNodes()"
@@ -699,8 +766,6 @@ class checkModule(object):
         # --------------------------
         return [toReturnB]
 
-    
-
 
     def cleanUnusedNode(self, execptionTL = [], specificTL= [], mode = "delete",verbose=True, *args, **kwargs):
         """ Description: Test if nodes have connections based on type and excluded_type in all the scene and either delete/select/print it.
@@ -765,10 +830,6 @@ class checkModule(object):
         return [toReturnB,debugD]
     
 
-   
-    
-
-
     def cleanUnusedConstraint(self,mode = "delete",*args, **kwargs):
         """ Description: Delete All Un-connected Constraint
             Return : BOOL,debugD
@@ -801,7 +862,7 @@ class checkModule(object):
 
         return [toReturnB,debugD]
 
-    def setSmoothness(self,inObjL=[], mode=0, *args,**kwargs):
+    def setSmoothness(self, inObjL=[], mode=0, *args,**kwargs):
         print "setSmoothness()"
         tab="    "
         toReturnB = True
@@ -812,7 +873,13 @@ class checkModule(object):
         for obj in inObjL:
             # print tab,obj
             try :
-                cmds.displaySmoothness( obj, polygonObject=mode )
+                shapeL=cmds.listRelatives(obj,s=1,ni=1)
+                if shapeL:
+                    for shape in shapeL:
+                        print "    ",shape
+                        # connect the attr if not connected
+                        if not cmds.connectionInfo(shape + "."+"smoothLevel",isDestination=True):
+                            cmds.displaySmoothness( obj, polygonObject=mode )
             except Exception,err:
                 toReturnB = False
                 debugD[obj]= err
@@ -830,7 +897,7 @@ class checkModule(object):
         return [toReturnB,debugD]
 
     def disableShapeOverrides(self,inObjL=[],*args, **kwargs):
-        # desactivate Overide des geometry contenu dans le set "set_meshCache
+        # desactivate Overide des geometry contenu dans le set "set_meshCache"
         print "disableShapeOverrides()"
         tab = "   "
         toReturnB = True
@@ -839,7 +906,7 @@ class checkModule(object):
         for obj in inObjL:
             for attr in attrL:
                 try:
-                    cmds.setAttr (cmds.listRelatives(obj, c=True, ni=True, type="shape",fullPath=True)[0]+"."+ attr,0)
+                    cmds.setAttr (cmds.listRelatives(obj, c=True, ni=True, type="shape", fullPath=True)[0]+"."+ attr,0)
                 except Exception,err:
                     toReturnB = False
                     debugD[obj]= attr
@@ -857,7 +924,6 @@ class checkModule(object):
         return [toReturnB,debugD]
 
 
-    
 
     def cleanUnusedInfluence(self, inObjL="",*args,**kwargs):
         """ Description: Delete unused influance on given inObjL . Return Flase if some obj doesn't have a skinClust
@@ -895,18 +961,18 @@ class checkModule(object):
                         if len(toDeleteL)>1:
                             for i in toDeleteL:
                                 print tab,"**",skinCluster,i
-                                u=cmds.skinCluster(skinCluster,e=True,  ri=i, )
+                                try:
+                                    u=cmds.skinCluster(skinCluster,e=True,  ri=i, )
+                                except Exception,err:
+                                    print err
+                                    toReturnB=False
                             
                             outCount +=1
                             deletedDict[skinCluster]= toDeleteL
                         # turn on skinNode    
                         cmds.setAttr (skinCluster+".nodeState", 0)
-                else:
-                    toReturnB=False
-            
-        else:
-            print tab+"inObjL empty"
-            toReturnB=False
+                
+
 
         # prints -------------------
         self.printF("cleanUnusedInfluance()", st="t")
@@ -1003,11 +1069,13 @@ class checkModule(object):
         toReturnB = True
         debugD = {}
         for obj in inObjL:
-            test,debugL = self.isKeyed(obj)
+            # print "obj=", obj
+            test,debugL = self.isKeyed(inObj=obj)
+            # print "    *",test,debugL
             if test:
                 toReturnB = False
                 debugD[obj] = debugL
-
+                # print "    debugD=", debugL
         # prints -------------------
         if verbose:
             self.printF("checkKeys()", st="t")
@@ -1024,7 +1092,9 @@ class checkModule(object):
         toReturnB = True
         debugD = []
         cleanedL = []
-        oktest,debugD = self.checkKeys(inObjL, verbose=False)
+        print "inObjL=", inObjL
+        oktest, debugD = self.checkKeys(inObjL=inObjL, verbose=False)
+        print "cleanKeys(2)"
         if not oktest:
             for obj,j in debugD.iteritems():
                 for toDeleteL in j.values():
@@ -1052,8 +1122,8 @@ class checkModule(object):
     # ---------------------------------------------------------------------------------------------------------
     #--------------------- Buttons functions ----------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
-    # @waiter
-    def btn_checkStructure(self,controlN,*args, **kwargs):
+    @waiter
+    def btn_checkStructure(self, controlN="", *args, **kwargs):
         boolResult=True
 
         # set progress bar
@@ -1075,20 +1145,23 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
         # colors
-        print "*",boolResult
-        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
+        print "*btn_checkStructure:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
         
         return boolResult
 
     @waiter
-    def btn_CleanScene(self,controlN,*args, **kwargs):
+    def btn_CleanScene(self, controlN="", *args, **kwargs):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=7, e=True)
+        self.pBar_upd(step=1, maxValue=8, e=True)
 
         # steps
         if not self.cleanRefNodes()[0]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+        if not self.cleanMentalRayNodes()[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
         if not self.remove_All_NS(NSexclusionL=[""], limit=100)[0]:
@@ -1103,29 +1176,29 @@ class checkModule(object):
         if not self.cleanUnusedConstraint( mode="delete")[0]:
             boolResult = False 
         self.pBar_upd(step= 1,)
-        if not self.CleanDisconnectedNodes( mode="delete")[0]:
-            boolResult = False 
+        # if not self.CleanDisconnectedNodes( mode="delete")[0]:
+        #     boolResult = False 
         self.pBar_upd(step= 1,)
                
         # colors
-        print "*",boolResult
-        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
+        print "*btn_CleanScene:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
         
         return boolResult
         
     @waiter
-    def btn_CleanObjects(self,controlN,*args, **kwargs):
+    def btn_CleanObjects(self, controlN="", *args, **kwargs):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=9, e=True)
+        self.pBar_upd(step=1, maxValue=10, e=True)
 
         meshCacheObjL = self.getSetContent(inSetL=["set_meshCache"] )
         controlObjL = self.getSetContent(inSetL=["set_control"] )
 
         # steps
-        if not self.isSkinned(inObjL= meshCacheObjL,verbose=True)[0] :
-            boolResult = False
+        # if not self.isSkinned(inObjL= meshCacheObjL,verbose=True)[0] :
+        #     boolResult = False
         self.pBar_upd(step= 1,)
         if not self.cleanUnusedInfluence(inObjL=meshCacheObjL)[0] :
             boolResult = False
@@ -1136,8 +1209,9 @@ class checkModule(object):
         if not self.disableShapeOverrides(inObjL=meshCacheObjL)[0] :
             boolResult = False
         self.pBar_upd(step= 1,)
-
-        
+        if not self.checkSRT(inObjL =meshCacheObjL, verbose=True)[0] :
+            boolResult = False
+        self.pBar_upd(step= 1,)
         if not self.cleanKeys(inObjL=controlObjL,verbose=True)[0] :
             boolResult = False
         self.pBar_upd(step= 1,)
@@ -1154,13 +1228,13 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
         # colors
-        print "*",boolResult
-        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""])
+        print "*btn_CleanObjects:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
 
         return boolResult
 
 
-    def btn_clearAll(self,*args, **kwargs):
+    def btn_clearAll(self, *args, **kwargs):
         print "btn_clearAll()"
 
         cmds.scrollField(self.BDebugBoard, e=1, clear=True)
@@ -1173,43 +1247,71 @@ class checkModule(object):
         cmds.button(self.BCleanAll, e=1, bgc= defCol)
 
 
-    def cleanAll(self,*args, **kwargs):
-        print "cleanAll()"
+    def btn_cleanAll(self,  *args, **kwargs):
+        print "btn_cleanAll()"
+        
+
         boolResult = True
-        if not self.btn_CleanObjects(self.BcheckStructure):
+        if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
             boolResult = False
-        if not self.btn_CleanScene(self.BCleanScene):
+        print "*1",boolResult
+        if not self.btn_CleanScene(controlN=self.BCleanScene, ):
             boolResult = False
-        if not self.btn_checkStructure(self.BCleanObjects):
+        print "*2",boolResult
+        if not self.btn_CleanObjects(controlN=self.BCleanObjects, ):
             boolResult = False
+        
         # colors
-        print "*",boolResult
-        self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""])
-    # -------------------------- interface functoin --------------------------------
-    def colorBoolControl(self, controlL=[], boolL=[],labelL=[""], *args, **kwargs):
+        print "*3",boolResult
+        self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""],)
+        return boolResult
+
+
+   
+
+    # ----------------------------------jipe general functions -------------------------------
+    def colorLighten(self, thecolor=[0,0,0], factor= 0.5, *args, **kwargs):
+        outColor = [ (1- x) * factor + x for x in thecolor ]
+        return outColor
+
+    def colorDarken(self, thecolor=[0,0,0], factor= 0.5, *args, **kwargs):
+        outColor = [ x * factor for x in thecolor ]
+        return outColor
+
+    def colorLum (self, thecolor=[0,0,0], factor= 0.5,  *args, **kwargs):
+        outColor = thecolor
+        if factor > 0 :
+            outColor = [ (1- x) * factor + x for x in thecolor ]
+
+        elif factor < 0 :
+            outColor = [ x * abs(1 + factor) for x in thecolor ]
+
+        return outColor
+
+    # -------------------------- interface function --------------------------------
+    def colorBoolControl(self, controlL=[], boolL=[],labelL=[""],  *args, **kwargs):
         # color the controlL depending on the given Bool
-        trueColor = [0,0.75,0]
-        falseColor = [0.75,0,0]
-        for i,j,label in zip(controlL,boolL,labelL):
-                if j in [True,1]:
-                    cmds.button(i, e=1, backgroundColor=trueColor, ebg=self.ebg)
-                else:
-                    cmds.button(i, e=1, backgroundColor=falseColor, ebg=self.ebg)
+        if self.GUI:
+            
+            for i,j,label in zip(controlL,boolL,labelL):
+                    if j in [True,1]:
+                        cmds.button(i, e=1, backgroundColor=self.trueColor, ebg=self.ebg)
+                    else:
+                        cmds.button(i, e=1, backgroundColor=self.falseColor, ebg=self.ebg)
 
 
     def pBar_upd (self, step=0,maxValue=10,e=False, *args, **kwargs):
         # print "pBar_upd()",step
-        if e:
-            cmds.progressBar(self.BValidationPBar,e=1,maxValue=maxValue,progress=step)
-        else:
-            if step:
-                cmds.progressBar(self.BValidationPBar,e=1,step=step,)
+        if self.GUI:
+            if e:
+                cmds.progressBar(self.BValidationPBar,e=1,maxValue=maxValue,progress=step)
+            else:
+                if step:
+                    cmds.progressBar(self.BValidationPBar,e=1,step=step,)
 
 
-    
-    # ---------------------------------------------------------------------------------------------------
-    #--------------------- GUI ----------------------------------------------------------------------------
-    #----------------------------------------------------------------------------------------------------------
+
+    # ------------- Layout -------------------------------------------------------
     def createWin(self, *args,**kwargs):
         # test si la windows exist / permet d'avoir plusieurs windows grace a var "cf" de la class
         if cmds.window(self.cf, q=True, exists=True):
@@ -1231,9 +1333,12 @@ class checkModule(object):
         cmds.setParent(parent)
         self.bigDadL = cmds.frameLayout(label=self.name.center(50), fn="boldLabelFont", lv=0)
         self.layoutImportModule = cmds.columnLayout("layoutImportModule",adj=True)
+        cmds.tabLayout(tabsVisible=0,borderStyle="full")
+        cmds.columnLayout("layoutModule",columnOffset= ["both",0],adj=True,)
+
         cmds.image(image=self.upImg)
-        cmds.columnLayout("layoutImportModule",columnOffset= ["both",2],adj=True,)
-        self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= self.cleanAll,en=1)
+        cmds.columnLayout("layoutImportModule",columnOffset= ["both",0],adj=True,)
+        self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= partial(self.btn_cleanAll),en=1)
 
         self.BcheckStructure = cmds.button("checkStructure", )
         cmds.button(self.BcheckStructure,e=1,c= partial( self.btn_checkStructure,self.BcheckStructure) )
@@ -1251,17 +1356,13 @@ class checkModule(object):
         
         cmds.setParent("..")
         self.BClearAll = cmds.button("clear",c= self.btn_clearAll,)
+  
         
 
-    #----------------------------------------------------------------------------------------------------------
-    #--------------------- EXEC -------------------------------------------------------------------------------
-    #----------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------
+#--------------------- EXEC -------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------
 
-    
-
-
-
-# --------------------- direct EXE -------------------
-
-# Z2K_Pcheck = checkModule()
+# Z2K_Pcheck = checkModule(GUI=True )
 # Z2K_Pcheck.insertLayout( parent="" )
+
