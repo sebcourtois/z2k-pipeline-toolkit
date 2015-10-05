@@ -2,11 +2,12 @@ import pymel.core as pc
 import tkMayaCore as tkc
 import pymel.core.datatypes as dt
 
-import maya.cmds as mc
+import maya.cmds as cmds
 import re
 import string
 from dminutes import miscUtils
-
+import dminutes.jipeLib_Z2K as jpm
+reload(jpm)
 
 '''
 Temporary module to manage modeling
@@ -203,8 +204,8 @@ def cleanSet(inRoot):
     return
 
 def createSetControlRecur(inGrp, inRoot, b_inRecursive=True):
-    createdObjs = ([], [])
-
+    createdObjs = ([], [],[])
+    
     ctrlName = inGrp.name().replace("grp_", "ctrl_")
     icon = None
 
@@ -216,19 +217,20 @@ def createSetControlRecur(inGrp, inRoot, b_inRecursive=True):
 
         ctrlName = SPECNAMES[inGrp.name()]
         icon = tkc.createCubeIcon(ctrlName, size=CTRLS_SIZE, scale=(3, 0.001, 3))
-        tkc.setObjectColor(icon, [255, 128, 0, 0])
+        tkc.setObjectColor(icon, [255, 255, 0, 0])
     else:
         icon = tkc.createRingsIcon(ctrlName, size=CTRLS_SIZE)
-        tkc.setObjectColor(icon, [255, 255, 255, 0])
+        tkc.setObjectColor(icon, [255, 128, 255, 0])
     
     pc.parent(icon, inRoot)
     tkc.matchTRS(icon, inGrp)
     tkc.setNeutralPose(icon)
-    tkc.constrain(inGrp, icon, "Pose")
-    tkc.constrain(inGrp, icon, "Scaling")
+    createdObjs[2].append( tkc.constrain(inGrp, icon, "Pose") )
+    createdObjs[2].append( tkc.constrain(inGrp, icon, "Scaling") )
+
 
     if isRootControl:
-        global_srt = tkc.createCubeIcon(SPECNAMES['global_srt'], size=CTRLS_SIZE, scale=(2, 0.001, 2))
+        global_srt = tkc.createCubeIcon(SPECNAMES['global_srt'], size=CTRLS_SIZE, scale=(4, 0.001, 4))
         tkc.setObjectColor(global_srt, [255, 255, 0, 0])
         pc.parent(global_srt, inRoot)
         tkc.matchTRS(global_srt, inGrp)
@@ -236,10 +238,16 @@ def createSetControlRecur(inGrp, inRoot, b_inRecursive=True):
         tkc.parent(icon, global_srt)
         createdObjs[0].append(global_srt)
 
-        big_daddy = tkc.createCubeIcon(SPECNAMES['big_daddy'], size=CTRLS_SIZE, scale=(4, 0.001, 4))
-
-        pc.setAttr('{0}.visibility'.format(big_daddy.getShape().name()), False)
+        big_daddy = tkc.createCubeIcon(SPECNAMES['big_daddy'], size=CTRLS_SIZE, scale=(5, 0.001, 5))
         tkc.setObjectColor(big_daddy, [255, 255, 0, 0])
+        #connect vis
+        if not cmds.objExists( "grp_rig.SHOW_BIGDADDY"): 
+            cmds.addAttr("grp_rig", longName="SHOW_BIGDADDY", attributeType = "long",keyable=1,
+                                         min = 0,max=1) 
+            cmds.setAttr("grp_rig.SHOW_BIGDADDY",0)
+        big_daddyShape = big_daddy.getShape()
+        cmds.connectAttr("grp_rig.SHOW_BIGDADDY",big_daddyShape+".v",f=1)
+        # pc.setAttr('{0}.visibility'.format(big_daddy.getShape().name()), False)
         pc.parent(big_daddy, inRoot)
         tkc.matchTRS(big_daddy, inGrp)
         tkc.setNeutralPose(big_daddy)
@@ -264,6 +272,7 @@ def createSetControlRecur(inGrp, inRoot, b_inRecursive=True):
             subCreatedObjs = createSetControlRecur(grpChild, icon)
             createdObjs[0].extend(subCreatedObjs[0])
             createdObjs[1].extend(subCreatedObjs[1])
+            createdObjs[2].extend(subCreatedObjs[2])
 
     return createdObjs
 
@@ -288,7 +297,7 @@ def rigSet(inRoot):
     
     grp_rig = pc.group(name="grp_rig", empty=True, parent=inRoot)
     
-    ctrls, geos = createSetControlRecur(children[0], grp_rig)
+    ctrls, geos,cstL = createSetControlRecur(children[0], grp_rig)
 
     #We can try to reApply displays if saved
     if pc.attributeQuery(DISPLAYS_CACHE_ATTRNAME, node=inRoot, exists=True):
@@ -366,7 +375,7 @@ def checkMeshNamingConvention(printInfo = True, inParent = "*"):
             print "#### warning: 'checkMeshNamingConvention': '(geo|aux)_name_complement##' where name and complement## are strings of 24 alphanumeric characters"
             for each in wrongMeshNamingConvention:
                 print "#### warning: 'checkMeshNamingConvention': name not conform --> "+each
-            mc.select(wrongMeshNamingConvention, replace = True)
+            cmds.select(wrongMeshNamingConvention, replace = True)
         else:
             print "#### info: 'checkMeshNamingConvention': MESH naming convention is correct"                
             
@@ -391,7 +400,7 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
     renamedNumber = 0
     shapesToFix = []
     for each in myTransMesh:  
-        myShape = mc.listRelatives (each, children = True, fullPath = True, type = "shape")
+        myShape = cmds.listRelatives (each, children = True, fullPath = True, type = "shape")
         if len(myShape)!= 1:
             print "#### error:'meshShapeNameConform' no or multiple shapes found for :"+each
             break
@@ -399,7 +408,7 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
         myShapeCorrectName = each+"|"+each.split("|")[-1]+"Shape"
         if myShape != myShapeCorrectName and fixShapeName == True:
             if forceInfoOff is False: print "#### info: 'meshShapeNameConform': rename '"+myShape.split("|")[-1]+"' --> as --> '"+myShapeCorrectName.split("|")[-1]+"'"
-            mc.rename(myShape,each.split("|")[-1]+"Shape")
+            cmds.rename(myShape,each.split("|")[-1]+"Shape")
             renamedNumber = renamedNumber +1
         elif myShape != myShapeCorrectName and fixShapeName == False:
             print "#### warning: 'meshShapeNameConform': '"+each+"' has a wrong shape name: '"+myShape.split("|")[-1]+"' --> should be renamed as: --> '"+myShapeCorrectName.split("|")[-1]+"'"
@@ -465,7 +474,7 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
         while str(allTransMesh).count(newShortName+newDigit) > 0:
             newDigit = string.zfill(str(int(digit)+i), len(digit))
             i = i+1
-        mc.rename(myMesh,newShortName+newDigit)
+        cmds.rename(myMesh,newShortName+newDigit)
         print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+string.rstrip(myMesh,digit)+newDigit
         meshShapeNameConform(fixShapeName = True, myTransMesh = [string.rstrip(myMesh,digit)+newDigit], forceInfoOff = True )
         
@@ -475,7 +484,7 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
         while str(allTransMesh).count(shortName+digit) > 0:
             digit = str(int(digit)+1)
             i = i+1
-        myMeshNew = [mc.rename(myMesh,shortName+digit)]
+        myMeshNew = [cmds.rename(myMesh,shortName+digit)]
         print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+myMesh+digit
         meshShapeNameConform(fixShapeName = True, myTransMesh = myMeshNew, forceInfoOff = True)
 
@@ -502,17 +511,17 @@ def geoGroupDeleteHistory():
     gets all the mesh transformms under the '|asset|grp_geo', delete their history and delete any intermediate unconnected shape 
     """
     geoTransformList = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
-    mc.delete(geoTransformList,ch =True)
+    cmds.delete(geoTransformList,ch =True)
     print "#### info :'geoGroupDeleteHistory': deteted history on "+str(len(geoTransformList))+" geometries : "
     
-    geoShapeList = mc.ls(mc.listRelatives("|asset|grp_geo", allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
+    geoShapeList = cmds.ls(cmds.listRelatives("|asset|grp_geo", allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
     deletedShapeList = []
     for eachGeoShape in geoShapeList:
-        if mc.getAttr(eachGeoShape+".intermediateObject") == True:
-            if  len(mc.listHistory (eachGeoShape, lv=1)+ mc.listHistory (eachGeoShape,future = True, lv=1))>2:
+        if cmds.getAttr(eachGeoShape+".intermediateObject") == True:
+            if  len(cmds.listHistory (eachGeoShape, lv=1)+ cmds.listHistory (eachGeoShape,future = True, lv=1))>2:
                 print "#### warning :'geoGroupDeleteHistory': this intermediate mesh shape still has an history and cannot be deleted : "+eachGeoShape
             else:
-                mc.delete(eachGeoShape)
+                cmds.delete(eachGeoShape)
                 deletedShapeList.append(eachGeoShape)
             print "#### info :'geoGroupDeleteHistory': deteted "+str(len(deletedShapeList))+" intermediate(s) mesh shape : "
 
@@ -528,19 +537,19 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
     freezedTransfomList = []
     geoTransformList = miscUtils.getAllTransfomMeshes(inParent)
     for each in geoTransformList:
-        if (mc.xform( each, os=True, q=True,  ro=True)!=[0,0,0] or mc.xform( each, os=True, q=True,  t=True)!=[0,0,0] or mc.xform( each, os=True, q=True,  s=True, r = True )!=[1,1,1] or 
-            mc.xform( each, os=True, q=True, rp=True)!=[0,0,0] or mc.xform( each, os=True, q=True, sp=True)!=[0,0,0]):
+        if (cmds.xform( each, os=True, q=True,  ro=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  t=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  s=True, r = True )!=[1,1,1] or 
+            cmds.xform( each, os=True, q=True, rp=True)!=[0,0,0] or cmds.xform( each, os=True, q=True, sp=True)!=[0,0,0]):
             if inVerbose == True and inConform == False:
                 unFreezedTransfomList.append(each)
                 print "#### {:>7}: {:^28} --> has unfreezed tranform values".format("Info", each)
             if inConform == True:
-                mc.makeIdentity (each ,apply= True, n=0, pn=1)
-                mc.makeIdentity (each ,apply= False, n=0, pn=1)
+                cmds.makeIdentity (each ,apply= True, n=0, pn=1)
+                cmds.makeIdentity (each ,apply= False, n=0, pn=1)
                 freezedTransfomList.append(each)
                 if inVerbose == True: print "#### {:>7}: {:^28} --> has been freezed and reset".format("Info", each)
 
     if unFreezedTransfomList !=[] and inVerbose == True:
-        mc.select(unFreezedTransfomList)
+        cmds.select(unFreezedTransfomList)
         print "#### {:>7}: {} unfreezed transforms have been selected".format("Info", str(len(unFreezedTransfomList)))
 
     if freezedTransfomList != []:
@@ -551,5 +560,180 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
 
     return unFreezedTransfomList if unFreezedTransfomList != [] else  None
 
+
+
+# -------------------------- RIG SUPPLEMENT -------------------------------------------------------------------
+def createPropsControlRecur(inGrp, inRoot, b_inRecursive=True):
+    # print"createPropsControlRecur()"
+    createdObjs = ([], [],[])
+    
+    ctrlName = inGrp.name().replace("grp_", "ctrl_")
+    icon = None
+
+    isRootControl = False
+    
+    if inGrp.name() in SPECNAMES:
+        if inGrp.name() == 'grp_geo':
+            isRootControl = True
+
+        ctrlName = SPECNAMES[inGrp.name()]
+        icon = tkc.createCubeIcon(ctrlName, size=CTRLS_SIZE, scale=(3, 0.001, 3))
+        tkc.setObjectColor(icon, [255, 255, 0, 0])
+    else:
+        icon = tkc.createRingsIcon(ctrlName, size=CTRLS_SIZE)
+        tkc.setObjectColor(icon, [255, 128, 255, 0])
+    
+    pc.parent(icon, inRoot)
+    tkc.matchTRS(icon, inGrp)
+    tkc.setNeutralPose(icon)
+
+    # create DEF child of ctr
+    cmds.select(d=True)
+    defo = cmds.joint(n="DEF_"+inGrp,)
+    cmds.setAttr(defo + ".radius", 1)
+
+    #connect vis
+    if not cmds.objExists( "grp_rig.SHOW_DEF"): 
+        cmds.addAttr("grp_rig", longName="SHOW_DEF", attributeType = "long",keyable=1,
+                                     min = 0,max=1) 
+        cmds.setAttr("grp_rig.SHOW_DEF",0)
+    cmds.connectAttr("grp_rig.SHOW_DEF",defo+".v",f=1)
+    # parent
+    print inGrp,">",defo
+    cmds.parent(defo,icon.name())
+    # match position
+    jpm.matchByXformMatrix(cursel=[icon.name(),defo], mode=0)
+
+
+
+    if isRootControl:
+        global_srt = tkc.createCubeIcon(SPECNAMES['global_srt'], size=CTRLS_SIZE, scale=(4, 0.001, 4))
+        tkc.setObjectColor(global_srt, [255, 255, 0, 0])
+        pc.parent(global_srt, inRoot)
+        tkc.matchTRS(global_srt, inGrp)
+        tkc.setNeutralPose(global_srt)
+        tkc.parent(icon, global_srt)
+        createdObjs[0].append(global_srt)
+
+        big_daddy = tkc.createCubeIcon(SPECNAMES['big_daddy'], size=CTRLS_SIZE, scale=(5, 0.001, 5))
+        tkc.setObjectColor(big_daddy, [255, 255, 0, 0])
+        #connect vis
+        if not cmds.objExists( "grp_rig.SHOW_BIGDADDY"): 
+            cmds.addAttr("grp_rig", longName="SHOW_BIGDADDY", attributeType = "long",keyable=1,
+                                         min = 0,max=1) 
+            cmds.setAttr("grp_rig.SHOW_BIGDADDY",0)
+        big_daddyShape = big_daddy.getShape()
+        cmds.connectAttr("grp_rig.SHOW_BIGDADDY",big_daddyShape+".v",f=1)
+
+        # pc.setAttr('{0}.visibility'.format(big_daddy.getShape().name()), False)
+        pc.parent(big_daddy, inRoot)
+        tkc.matchTRS(big_daddy, inGrp)
+        tkc.setNeutralPose(big_daddy)
+        tkc.parent(global_srt, big_daddy)
+        createdObjs[0].append(big_daddy)
+
+    createdObjs[0].append(icon)
+    
+    if b_inRecursive:
+        children = tkc.getChildren(inGrp, False)
+        grpsChildren = []
+        for child in children:
+            shape = child.getShape()
+            if child.name()[:4] == "grp_" and shape == None:
+                grpsChildren.append(child) 
+            elif shape !=None and shape.type() == "mesh":
+                createdObjs[1].append(child)
+                # Skin the children geos
+                print "skin",child.name()
+                cmds.skinCluster( defo,child.name(), bindMethod=1, maximumInfluences=1, )
+            else:
+                pc.warning('Unmanaged object {}'.format(child.name()))
+
+        for grpChild in grpsChildren:
+            subCreatedObjs = createPropsControlRecur(grpChild, icon)
+            createdObjs[0].extend(subCreatedObjs[0])
+            createdObjs[1].extend(subCreatedObjs[1])
+            createdObjs[2].extend(subCreatedObjs[2])
+
+
+
+    return createdObjs
+
+
+def rigProps(inRoot):
+    children = tkc.getChildren(inRoot, False)
+    
+    valid = True
+    
+    if not "grp_geo" in [a.name() for a in children]:
+        pc.warning("Root is supposed to have at least one 'grp_geo' child !")
+        valid=False
+
+    for child in children:
+        if child.name() != "grp_geo" and child.name() != "grp_placeHolders" and child.name() != "grp_rig":
+            pc.warning("Unexpected asset root child {0} (expected 'grp_geo', and eventually 'grp_placeHolders' or 'grp_rig')".format( child.name() ) )
+            valid=False
+
+    if not valid:
+        return None
+    
+    cleanSet(inRoot)
+    
+    grp_rig = pc.group(name="grp_rig", empty=True, parent=inRoot)
+    
+    # -----------------------------------------------------------------
+    ctrls, geos,cstL = createPropsControlRecur(children[0], grp_rig)  # ////////////////////////////////////// convert to jipe_control_skined here it's csts
+    print "ctrls=", len(ctrls),ctrls
+    print "geos=", len(geos),geos
+    print "cstL=", len(cstL),  cstL
+    #-------------------------------------------------------------------------------
+
+    #-------------------------------------------------------------------------------
+    #We can try to reApply displays if saved
+    if pc.attributeQuery(DISPLAYS_CACHE_ATTRNAME, node=inRoot, exists=True):
+        try:
+            displaysDict = eval(pc.getAttr(inRoot.name() + "." + DISPLAYS_CACHE_ATTRNAME))
+            for ctrl in ctrls:
+                if ctrl.name() in displaysDict:
+                    display, color = displaysDict[ctrl.name()]
+                    tkc.setDisplay(ctrl, trs=display[0], size=display[1], select=False, displayName=display[2])
+                    realColor = tkc.getColorFromMayaColor(color)
+                    tkc.setObjectColor(ctrl, realColor)
+        except:
+            pc.warning('Cannot reapply displays !')
+
+    #Put all controls in a set
+    if pc.objExists(CTRL_SETNAME):
+        pc.delete(CTRL_SETNAME)
+
+    pc.sets(ctrls, name=CTRL_SETNAME)
+
+    #Put all geo in a set for caching /////////////////////// change to geometry only finding
+    if pc.objExists(CACHE_SETNAME):
+        pc.delete(CACHE_SETNAME)
+
+    pc.sets(geos, name=CACHE_SETNAME)
+
+    #Clean old layers ////////////////////////////////////////// mauvais moyen de cleaner les layer
+    oldLayers = pc.ls("layer_*", type="displayLayer")
+    if len(oldLayers) > 0:
+        pc.delete(oldLayers)
+
+    #Put all geometries in a layer, and set it to "reference"
+    if pc.objExists(GEOMETRIES_LAYERNAME):
+        pc.delete(GEOMETRIES_LAYERNAME)
+
+    pc.select(geos)
+    newLayer = pc.createDisplayLayer(name=GEOMETRIES_LAYERNAME) #///////// crado use of pc.select()
+    pc.setAttr(newLayer + ".displayType", 2)
+
+    #Put all controls in a layer
+    if pc.objExists(CTRLS_LAYERNAME):
+        pc.delete(CTRLS_LAYERNAME)
+
+    pc.select(ctrls)
+    newLayer = pc.createDisplayLayer(name=CTRLS_LAYERNAME, noRecurse=True) #///////// crado use of pc.select()
+
+    pc.select(clear=True)
 
 
