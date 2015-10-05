@@ -85,7 +85,6 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultRenderGlobals.currentRenderer","arnold", type = "string")
 
 
-
     #arnold Settings
 
     #Image output settings
@@ -95,8 +94,6 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldDriver.autocrop",1)
     mc.setAttr("defaultArnoldDriver.mergeAOVs",1)
     mc.setAttr("defaultArnoldRenderOptions.aovMode",2)#batch only
-
-
 
 
 
@@ -130,6 +127,7 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp",1)
     mc.setAttr("defaultArnoldRenderOptions.AASampleClamp",2.5)
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
+    mc.setAttr("defaultArnoldRenderOptions.skipLicenseCheck",1)
     
     print "#### info: render options are now production ready"
 
