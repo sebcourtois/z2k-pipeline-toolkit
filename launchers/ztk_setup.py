@@ -71,7 +71,7 @@ class Z2kToolkit(object):
 
     def loadAppEnvs(self, sAppPath):
 
-        sAppPath = normCase(sAppPath)
+        sAppPath = sAppPath.lower()
         sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
 
         if sAppName in ("maya", "mayabatch", "render", "mayapy"):
