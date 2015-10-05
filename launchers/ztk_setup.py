@@ -34,6 +34,7 @@ class Z2kToolkit(object):
         #self.dirName = sDirName
         self.baseName = sBaseName
         self.pythonPath = pathJoin(sRootPath, "python")
+        self.thirdPartyPath = pathJoin(sRootPath, "third-party")
 
         self.loadEnvs(customEnvs)
 
@@ -52,6 +53,14 @@ class Z2kToolkit(object):
         print "\nLoading common environment:"
 
         updEnv("PYTHONPATH", self.pythonPath, conflict="add")
+
+        p = pathJoin(self.pythonPath, "davos-dev")
+        updEnv("PYTHONPATH", p, conflict="add")
+
+        p = pathJoin(self.pythonPath, "pypeline-tool-devkit")
+        updEnv("PYTHONPATH", p, conflict="add")
+
+        updEnv("PYTHONPATH", self.thirdPartyPath, conflict="add")
 
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
         updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
@@ -83,7 +92,7 @@ class Z2kToolkit(object):
 
             if "maya2016" in sAppPath:
 
-                updEnv("Z2K_PYTHON_SITES", pathJoin(self.pythonPath, "mayapy-2016-site"),
+                updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "mayapy2016-site"),
                        conflict="add")
 
             print ''
