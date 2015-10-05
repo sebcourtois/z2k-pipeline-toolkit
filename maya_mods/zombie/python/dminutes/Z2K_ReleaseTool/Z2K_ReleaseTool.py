@@ -90,7 +90,7 @@ class Z2K_ReleaseTool (object):
         theDir = os.path.normpath(theDir) + os.sep + assetCat
         print "theDir=", theDir
         if os.path.isdir(theDir):
-            assetL = os.listdir(theDir)
+            assetL = sorted(os.listdir(theDir) )
             if not len(assetL):
                 assetL=["Empty Folder"]
             
@@ -100,7 +100,7 @@ class Z2K_ReleaseTool (object):
         return assetL
 
 
-    def openAsset(self, sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", readOnly=False,autoUnlock=True, *args,**kwargs):
+    def openAsset(self, sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", readOnly=False, autoUnlock=True, *args,**kwargs):
 
         # get char from mayascene
         assetN=""
@@ -118,9 +118,9 @@ class Z2K_ReleaseTool (object):
                 print "theLock=", theLock
                 if len(theLock)>0:
                     if not autoUnlock:
-                        # booboo=cmds.confirmDialog(message="Current Asset : {0} \ris LOCKED by :'{1}' \rDo you want to UNLOCK it before loading?!".format(assetN,theLock),
-                        #                             messageAlign="center", defaultButton="YES", cancelButton="NO" , b="YES", button="NO",
-                        #                             icon="warning")
+                        booboo=cmds.confirmDialog(message="Current Asset : {0} \ris LOCKED by :'{1}' \rDo you want to UNLOCK it before loading?!".format(assetN,theLock),
+                                                    messageAlign="center", defaultButton="YES", cancelButton="NO" , b="YES", button="NO",
+                                                    icon="warning")
                         print "booboo=",booboo
                         if booboo in ["YES"]:
                             Z2K.unlock(drcF)
@@ -256,7 +256,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
     def btn_open_Asset( self,*args,**kwargs):
         print "btn_open_Asset()"
         self.getInterfaceValues()
-        self.sourceAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType)
+        self.sourceAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,autoUnlock=False)
         cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
 
@@ -264,7 +264,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
     def btn_open_Asset_readOnly(self,*args, **kwargs):
         print "btn_open_Asset_readOnly()"
         self.getInterfaceValues()
-        self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=True)
+        self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=True,autoUnlock=False)
 
 
     def btn_release_Asset( self,*args,**kwargs):

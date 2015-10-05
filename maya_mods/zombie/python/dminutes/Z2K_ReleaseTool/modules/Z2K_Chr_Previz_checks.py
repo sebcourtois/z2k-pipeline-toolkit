@@ -62,17 +62,18 @@ class checkModule(object):
         print "init"
         self.GUI=GUI
         self.ebg = True
-        self.DebugPrintFile =""
+        self.DebugPrintFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Release_debug.txt"
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
 
         # trickage pour le batch mode goret
-        print self.GUI
+        print "GUI=",self.GUI
         if self.GUI in [False,0]:
             self.BcheckStructure=""
             self.BCleanScene=""
             self.BCleanObjects=""
             self.BDebugBoardF=""
+            self.BDebugBoard = ""
             self.BCleanAll=""
             self.BClearAll=""
 
@@ -83,7 +84,7 @@ class checkModule(object):
     def Z2KprintDeco(func, *args, **kwargs):
         def deco(self,*args, **kwargs):
             # print u"Exécution de la fonction '%s'." % func.__name__
-            func(self, toScrollF=self.BDebugBoard, toFile = self.DebugPrintFile,*args, **kwargs)
+            func(self, toScrollF=self.BDebugBoard, toFile = self.DebugPrintFile, *args, **kwargs)
         return deco
 
     def waiter (func,*args, **kwargs):
@@ -99,7 +100,8 @@ class checkModule(object):
                 # cmds.waitCursor( state=False )
             cmds.waitCursor( state=False )
             print "...wait"
-            if not result:
+            if not result and self.GUI:
+                print "try GUI ANYWAY MOTHER fOCKER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
                 cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
 
             return result
@@ -107,8 +109,9 @@ class checkModule(object):
 
     # ------------ printer -----------------
     @Z2KprintDeco
-    def printF(self, text="",st="main",toScrollF="", toFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Release_debug.txt",
+    def printF( self, text="", st="main", toScrollF="", toFile = "",
         openMode="a+", *args, **kwargs):
+        # print "printF()",self.GUI,toFile
         stringToPrint=""
  
         text = str(object=text)
@@ -123,11 +126,12 @@ class checkModule(object):
             # print the string to a file
             with open(toFile, openMode) as f:
                 f.write( stringToPrint )
+                print stringToPrint
 
         else:
             # print to textLayout
             cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
-            
+            print stringToPrint
 
     
 
