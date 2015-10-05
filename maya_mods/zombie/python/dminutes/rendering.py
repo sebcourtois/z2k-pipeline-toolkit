@@ -103,7 +103,9 @@ def setArnoldRenderOption(outputFormat):
     aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon"]
     for eachAovName in aovNameList: 
         if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
-            myAOVs.addAOV( eachAovName, aovType=5)
+            myAOVs.addAOV( eachAovName, aovType='rgb')
+    if not mc.ls("Z", type = "aiAOV"):
+        myAOVs.addAOV( "Z", aovType='float')
 
                 
         
