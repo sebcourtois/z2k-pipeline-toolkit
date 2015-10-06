@@ -185,7 +185,10 @@ def createBatchRender():
         raise ValueError("#### Error: DAVOS_USER environement variable is not defined, please log to davos")
     workingFile = mc.file(q=True, list = True)[0]
     workingDir = os.path.dirname(workingFile)
-    renderBatch = miscUtils.normPath(os.path.join(workingDir,"renderBatch.bat"))
+    renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","renderBatch_help.txt"))
+    renderBatchHelp_trg = miscUtils.normPath(os.path.join(workingDir,"renderBatch_help.txt"))
+    renderBatch_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","renderBatch.bat"))
+    renderBatch_trg = miscUtils.normPath(os.path.join(workingDir,"renderBatch.bat"))
     setupEnvTools = os.path.normpath(os.path.join(os.environ["Z2K_LAUNCH_SCRIPT"]))
     renderDesc = os.environ["MAYA_RENDER_DESC_PATH"]
     mayaPlugInPath = os.environ["MAYA_PLUG_IN_PATH"]
@@ -196,12 +199,17 @@ def createBatchRender():
 
     renderCmd = os.path.normpath(os.path.join(os.environ["MAYA_LOCATION"],"bin","Render.exe"))
     renderCmd = '"{}"'.format(renderCmd)
-    if os.path.isfile(renderBatch):
-        if os.path.isfile(renderBatch+".bak"): os.remove(renderBatch+".bak")
-        print "#### Info: old renderBatch.bat backuped: {}.bak".format(os.path.normpath(renderBatch))
-        os.rename(renderBatch, renderBatch+".bak")
+    if os.path.isfile(renderBatch_trg):
+        if os.path.isfile(renderBatch_trg+".bak"): os.remove(renderBatch_trg+".bak")
+        print "#### Info: old renderBatch.bat backuped: {}.bak".format(os.path.normpath(renderBatch_trg))
+        os.rename(renderBatch_trg, renderBatch_trg+".bak")
+    if not os.path.isfile(renderBatchHelp_trg):
+        shutil.copyfile(renderBatchHelp_src, renderBatchHelp_trg)
+        print "#### Info: renderBatch_help.txt created: {}".format(os.path.normpath(renderBatchHelp_trg))
 
-    renderBatch_obj = open(renderBatch, "w")
+    shutil.copyfile(renderBatch_src, renderBatch_trg)
+
+    renderBatch_obj = open(renderBatch_trg, "w")
     renderBatch_obj.write("rem #### User Info ####\n")
     renderBatch_obj.write("rem set MAYA_RENDER_DESC_PATH="+renderDesc+"\n")
     renderBatch_obj.write("rem set ARNOLD_PLUGIN_PATH="+arnoldPluginPath+"\n")
@@ -221,10 +229,7 @@ def createBatchRender():
     renderBatch_obj.write("\n")
     renderBatch_obj.write("pause\n")
     renderBatch_obj.close()
-    print "#### Info: renderBatch.bat created: {}".format(os.path.normpath(renderBatch))
+    print "#### Info: renderBatch.bat created: {}".format(os.path.normpath(renderBatch_trg))
 
-    renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","renderBatch_help.txt"))
-    renderBatchHelp_trg = miscUtils.normPath(os.path.join(workingDir,"renderBatch_help.txt"))
-    if not os.path.isfile(renderBatchHelp_trg):
-        shutil.copyfile(renderBatchHelp_src, renderBatchHelp_trg)
-        print "#### Info: renderBatch_help.txt created: {}".format(os.path.normpath(renderBatchHelp_trg))
+
+
