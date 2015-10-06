@@ -276,6 +276,10 @@ def install(*args):
 
     global MAYA_WIN_NAME, MENU_CMD_FORMAT
 
+    if pm.about(batch=True):
+        pm.displayInfo("Can't install stxScriptMenus in bacth mode !")
+        return
+
     remove()
 
     MAYA_WIN_NAME = pm.mel.eval('$tempMelVar=$gMainWindow')
