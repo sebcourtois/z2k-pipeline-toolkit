@@ -77,7 +77,7 @@ class Z2kToolkit(object):
         sAppPath = sAppPath.lower()
         sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
 
-        # initializing a DamProject to have project's environ loaded
+        # initializing an empty DamProject to have project's environ loaded
         from davos.core.damproject import DamProject
         DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
 
