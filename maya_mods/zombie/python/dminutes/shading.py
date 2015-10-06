@@ -203,6 +203,19 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
                     mc.setAttr(eachFileNode+".fileTextureName", finalMapFilePathExpanded, type = "string")
                     if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,finalMapFilePathExpanded)
                 else:
+                    if ".1001." in os.path.split(mapFilePath)[-1] and mapFilePath.split(".")[-1] == "jpg":
+                        if inVerbose == True: print "#### Warning: '{0:^24}' udim not allowed for jpg:'{1}'".format(eachFileNode,mapFilePath)       
+                        outWrongFileNodeList.append(eachFileNode)
+                        continue
+
+                    elif ".1001." in os.path.split(mapFilePath)[-1]:
+                        udimNb = 1002
+                        while udimNb < 1010:
+                            udimMapFilePath = mapFilePath.replace(".1001.","."+str(udimNb)+".")
+                            udimMapFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(udimMapFilePath)))
+                            if os.path.isfile(udimMapFilePath_exp) == True:
+                                outMapPathForPublishList.append(udimMapFilePath)
+                            udimNb=udimNb+1
                     if inVerbose == True: print "#### Info: '{0:^24}' file and path correct :'{1}'".format(eachFileNode,mapFilePath)  
                     outMapPathForPublishList.append(mapFilePath)
                 continue
@@ -541,6 +554,8 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
     else :
         raise ValueError("#### Error: no '|asset' could be found in this scene")
 
+    conformShaderName("all", selectWrongShadEngine = False, verbose = False )
+
     if fileNodeList == "all":
         fileNodeList = mc.ls("pre_*",type ="file")
         if updateOnly == False:
@@ -559,7 +574,6 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
         for each in selectedFileList:
             if re.match('^pre_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', each):
                 fileNodeList.add(each)
-
 
 
     if len(fileNodeList) == 0:
@@ -612,6 +626,10 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
         else:
             LOD = 4
 
+        if mainFilePathElem[-3] == "chr" and os.path.isfile(jpgFilePathExpand):
+            print "#### {:>7}: '{}' FileNode, jpg file: '{}',  already exists, can't replace it automaticaly on characters,please delete it manually first".format("Warning",eachFileNode,os.split.path(mapFilePath)[-1])
+            continue
+
         imageResize(inputFilePathName = tgaFilePath, outputFilePathName = "", lod = LOD, jpgQuality = 90, updateOnly = updateOnly, openImageMentalRay = True)
 
         if mapFilePath != jpgFilePath: 
@@ -657,7 +675,7 @@ def makeTxForArnold(inputFilePathName = "", outputFilePathName = "", updateOnly 
 
     if outputFilePathName == "" :
         outputFilePathName = inputFilePathName.replace(inputFilePathName.split(".")[-1],"tx")
-        outputFilePathName_exp = inputFilePathName_exp.replace(inputFilePathName.split(".")[-1],"tx")
+        outputFilePathName_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePathName)))
     elif not os.path.isdir(os.path.split(outputFilePathName)[0]):
         print "#### {:>7}: Missing directory : {} given".format("Error", os.path.split(outputFilePathName))
         return
@@ -747,6 +765,8 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
         print "#### {:>7}: 'fileNodeList' is not a string".format("Error")
         return
 
+    conformShaderName("all", selectWrongShadEngine = False, verbose = False )
+
     if fileNodeList == "all":
         fileNodeList = mc.ls("mat_*",type ="file")
         if updateOnly == False:
@@ -803,6 +823,15 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
 
         makeTxForArnold(inputFilePathName = tgaFilePath, outputFilePathName = "", updateOnly = updateOnly)
 
+        if ".1001." in os.path.split(tgaFilePath)[-1]:
+            udimNb = 1002
+            while udimNb < 1010:
+                udimMapFilePath = tgaFilePath.replace(".1001.","."+str(udimNb)+".")
+                udimMapFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(udimMapFilePath)))
+                if os.path.isfile(udimMapFilePath_exp) == True:
+                    makeTxForArnold(inputFilePathName = udimMapFilePath, outputFilePathName = "", updateOnly = updateOnly)
+                udimNb=udimNb+1
+
     if wrongFileNodeList: 
         print ""
         print "#### {:>7}: {} file node(s) cannot be processed".format("Warning",len(wrongFileNodeList))
@@ -821,7 +850,7 @@ def getTexturesToPublish (verbose = True):
         print "#### {:>7}: One (or several) the texture path is not conform, please run the conformTexturePath() procedure first".format("Error")
         return
 
-    finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePathList[0])))
+    finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(os.path.split(mapFilePathList[0])[0])))
     print "#### {:>7}: Expanded working directory: '{}'".format("Info",os.path.normpath(finalMapdirExpand))
 
     missingFiles = 0
@@ -829,7 +858,7 @@ def getTexturesToPublish (verbose = True):
 
     for mapFilePath in mapFilePathList:
         fileExtention = mapFilePath.split(".")[-1]
-        filePath = mapFilePath.split(".")[0]
+        filePath = mapFilePath.rstrip("."+fileExtention)
         filePathTga_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(filePath+".tga")))
         filePathPsd_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(filePath+".psd")))
         filePathTx_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(filePath+".tx")))
@@ -843,9 +872,19 @@ def getTexturesToPublish (verbose = True):
                 
             if os.path.isfile(filePathPsd_exp):
                 filesToPublish.append(filePathPsd_exp)
+            # esle if the texture file is not a _col file, continue (not reported as missing)
             elif os.path.split(mapFilePath)[-1].split(".")[0].split("_")[-1] != "col":
                 continue
-                #print "#### {:>7}: File not found, skipping: {}".format("Info", filePathPsd_exp)
+            # else if the texture file has udim number, continue (not reported as missing)
+            elif len(os.path.split(mapFilePath)[-1].split("."))==3:
+                try:
+                    udimNb = int(fileName.split(".")[-2])
+                except:
+                    udimNb = 0
+                    pass        
+                if 1001 < udimNb < 1011:
+                    continue
+        
             else:
                 print "#### {:>7}: Missing file: {}".format("Error", filePathPsd_exp)
                 missingFiles = missingFiles + 1
@@ -886,7 +925,7 @@ def getTexturesToPublish (verbose = True):
     dirContent = os.listdir(texturePath_exp)
 
     for each in dirContent:
-        toIgnore =  ["Thumbs.db"]
+        toIgnore =  ["Thumbs.db",".DS_Store"]
         eachFileName = miscUtils.normPath(os.path.join(texturePath_exp,each))
         if eachFileName not in filesToPublish and os.path.isfile(eachFileName) and each not in toIgnore :
             unreferencedFileList.append(each)
@@ -896,6 +935,7 @@ def getTexturesToPublish (verbose = True):
         print "#### {:>7}: {}".format("Warning",unreferencedFileList)
 
     if missingFiles != 0:
+        print "#### {:>7}: Missing file(s): {}".format("Error",missingFiles)
         return 
 
 
