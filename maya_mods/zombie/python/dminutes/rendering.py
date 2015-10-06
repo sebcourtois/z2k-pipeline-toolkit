@@ -186,23 +186,34 @@ def createBatchRender():
     workingFile = mc.file(q=True, list = True)[0]
     workingDir = os.path.dirname(workingFile)
     renderBatch = miscUtils.normPath(os.path.join(workingDir,"renderBatch.bat"))
-    location = os.path.split(os.getcwd())[-1]
-    setupEnvTools = os.path.normpath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","launchers", location,"setup_env_tools.py"))
+    setupEnvTools = os.path.normpath(os.path.join(os.environ["Z2K_LAUNCH_SCRIPT"]))
     renderDesc = os.environ["MAYA_RENDER_DESC_PATH"]
-    plugIn = os.environ["MAYA_PLUG_IN_PATH"]
+    mayaPlugInPath = os.environ["MAYA_PLUG_IN_PATH"]
+    arnoldPluginPath = os.environ["ARNOLD_PLUGIN_PATH"]
+
+    zombToolsPath = os.environ["ZOMB_TOOL_PATH"]
+    arnoldToolPath = os.path.normpath(zombToolsPath+"/z2k-pipeline-toolkit/maya_mods/solidangle/mtoadeploy/2016")
+
     renderCmd = os.path.normpath(os.path.join(os.environ["MAYA_LOCATION"],"bin","Render.exe"))
+    renderCmd = '"{}"'.format(renderCmd)
     if os.path.isfile(renderBatch):
         if os.path.isfile(renderBatch+".bak"): os.remove(renderBatch+".bak")
         print "#### Info: old renderBatch.bat backuped: {}.bak".format(os.path.normpath(renderBatch))
         os.rename(renderBatch, renderBatch+".bak")
 
     renderBatch_obj = open(renderBatch, "w")
-    renderBatch_obj.write("set MAYA_RENDER_DESC_PATH="+renderDesc+"\n")
-    renderBatch_obj.write("set MAYA_PLUG_IN_PATH="+renderDesc+"\n")
-    renderBatch_obj.write("set DAVOS_USER="+davosUser+"\n")
+    renderBatch_obj.write("rem #### User Info ####\n")
+    renderBatch_obj.write("rem set MAYA_RENDER_DESC_PATH="+renderDesc+"\n")
+    renderBatch_obj.write("rem set ARNOLD_PLUGIN_PATH="+arnoldPluginPath+"\n")
+    renderBatch_obj.write("rem set MAYA_PLUG_IN_PATH="+mayaPlugInPath+"\n")
+    renderBatch_obj.write("rem ###################\n\n")
+
     renderBatch_obj.write("set render="+renderCmd+"\n")
-    renderBatch_obj.write("\n")
-    renderBatch_obj.write('set option=-r arnold\n')
+    renderBatch_obj.write("set MAYA_RENDER_DESC_PATH="+arnoldToolPath+"\n\n")
+    
+    renderBatch_obj.write("set DAVOS_USER="+davosUser+"\n\n")
+
+    renderBatch_obj.write('set option=-r arnold -lic on\n')
     workingFile = os.path.normpath(workingFile)
     renderBatch_obj.write("set scene="+workingFile+"\n")
     finalCommand = r'"C:\Python27\python.exe" "'+setupEnvTools+'" launch %render% %option% %scene%'
