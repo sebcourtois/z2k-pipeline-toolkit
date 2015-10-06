@@ -41,7 +41,7 @@ class MrcFile(DrcFile):
 
         return p
 
-    def mayaOpen(self, checkFile=True):
+    def mayaOpen(self, checkFile=True, **kwargs):
 
         if checkFile:
             assert self.isFile(), "File does NOT exists !"
@@ -49,7 +49,7 @@ class MrcFile(DrcFile):
 
         if self.isPublic():
             sOpenSuffix = "".join((self.versionSuffix(), '-', 'readonly'))
-            privFile, _ = self.copyToPrivateSpace(suffix=sOpenSuffix)
+            privFile, _ = self.copyToPrivateSpace(suffix=sOpenSuffix, **kwargs)
         else:
             privFile = self
 
