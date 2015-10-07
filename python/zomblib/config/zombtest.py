@@ -16,6 +16,9 @@ class camera(zomb.camera):
 class character3d(zomb.character3d):
     pass
 
+class character2d(zomb.character2d):
+    pass
+
 class prop3d(zomb.prop3d):
     pass
 

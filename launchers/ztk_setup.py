@@ -43,7 +43,6 @@ class Z2kToolkit(object):
         for sVar, value in customEnvs.iteritems():
             updEnv(sVar, value, conflict="keep")
 
-
         print "\nLoading toolkit environment:"
 
         updEnv("PYTHONPATH", self.pythonPath, conflict="add")
@@ -70,10 +69,7 @@ class Z2kToolkit(object):
         sAppPath = sAppPath.lower()
         sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
 
-        # initializing an empty DamProject to have project's environ loaded
-        from davos.core.damproject import DamProject
-        proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
-        proj.loadEnviron()
+        print "\n----------------", sAppPath
 
         if sAppName in ("maya", "mayabatch", "render", "mayapy"):
 
@@ -88,6 +84,11 @@ class Z2kToolkit(object):
                        conflict="add")
 
             print ''
+
+#        # initializing an empty DamProject to have project's environ loaded
+#        from davos.core.damproject import DamProject
+#        proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
+#        proj.loadEnviron()
 
     def install(self):
 

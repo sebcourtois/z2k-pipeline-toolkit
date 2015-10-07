@@ -142,13 +142,10 @@ class camera(object):
         },
     }
 
-class character3d(object):
+class charbase(object):
 
     entity_class = "davos.core.damtypes.DamAsset"
 
-    prefix = "chr"
-    aliases = (prefix, "Character 3D",)
-    assetType = prefix
     template_dir = "asset_chr"
 
     public_path = join(asset_lib.public_path, "{assetType}")
@@ -184,6 +181,18 @@ class character3d(object):
                     #"upload_to_sg":"preview_image"
                     },
     }
+
+class character3d(charbase):
+
+    prefix = "chr"
+    aliases = (prefix, "Character 3D",)
+    assetType = prefix
+
+class character2d(charbase):
+
+    prefix = "c2d"
+    aliases = (prefix, "Character 2D",)
+    assetType = prefix
 
 class prop3d(object):
 
