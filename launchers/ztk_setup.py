@@ -92,21 +92,26 @@ class Z2kToolkit(object):
     def install(self):
 
         # tools update
-        repo = self.releasePath()
+        sReleasePath = self.releasePath()
         if self.isDev:
             print "Tools update from development environment !"
-            repo = self.rootPath
+            sReleasePath = self.rootPath
 
-        local_root = pathJoin(os.environ["USERPROFILE"], "zombillenium", self.baseName)
+        sInstallPath = pathJoin(os.environ["USERPROFILE"], "zombillenium", self.baseName)
 
-        if repo == local_root:
+        if sReleasePath == sInstallPath:
             print "Source == Destination !"
         else:
 
-            sAction = "Updating" if osp.isdir(local_root) else "Installing"
-            print "\n{} Z2K Toolkit:\n'{}' -> '{}'".format(sAction, repo, local_root)
+            sAction = "Installing"
+            if osp.exists(sInstallPath):
+                sAction = "Updating"
+            else:
+                os.makedirs(sInstallPath)
 
-            sOutput = self.makeCopy(repo, local_root,
+            print "\n{} Z2K Toolkit:\n'{}' -> '{}'".format(sAction, sReleasePath, sInstallPath)
+
+            sOutput = self.makeCopy(sReleasePath, sInstallPath,
                                     dryRun=False, summary=False)
 
             if not sOutput.strip():
@@ -115,10 +120,10 @@ class Z2kToolkit(object):
 
             print "\n", sOutput
 
-            cleanUpPyc(local_root)
+            cleanUpPyc(sInstallPath)
 
             print ("Zombie toolkit updated, use your local to launch applications ! ({0})"
-                   .format(pathJoin(local_root, "launchers")))
+                   .format(pathJoin(sInstallPath, "launchers")))
 
     def release(self, location="", archive=True):
 
