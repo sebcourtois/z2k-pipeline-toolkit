@@ -140,7 +140,7 @@ def setRenderOutputDir():
     outputImageName = ""
 
     #creates a workspace named as the davos user en the maya project path and set it
-    miscUtils.createUserWorkspace()
+    #miscUtils.createUserWorkspace()
 
     mainFilePath = mc.file(q=True, list = True)[0]
     mainFilePathElem = mainFilePath.split("/")
