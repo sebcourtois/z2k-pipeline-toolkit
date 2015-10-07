@@ -63,9 +63,11 @@ class camera:
     prefix = "cam"
     aliases = (prefix, "Camera",)
     assetType = prefix
+    template_dir = "asset_cam"
 
     public_path = osp.join(asset_lib.public_path, "{assetType}")
     private_path = osp.join(asset_lib.private_path, "{assetType}")
+    template_path = project.template_path
 
     resource_tree = {
     "{name} -> entity_dir":

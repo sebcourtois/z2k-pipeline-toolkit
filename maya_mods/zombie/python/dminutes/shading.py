@@ -129,21 +129,50 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
     return wrongShadEngine if wrongShadEngine != [] else  None
 
 
-def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
+def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", remove = False):
     """
     reference a camera for shading purpose. This tools is not to use for shot bulding.
         cameraName (string): the camera name you want to reference
         fileType(string): specify if the '.ma' or '.mb' file is to reference
     """
+    if mc.ls("|asset"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        if  mainFilePathElem[-4] == "asset":
+            finalMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
+            finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(finalMapdir)))
+            publicMapdir = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
+            publicMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(finalMapdir)))
+        else:
+            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+    else :
+        raise ValueError("#### Error: no '|asset' could be found in this scene")
+
+
     zombie_asset_dir =  os.environ["ZOMB_ASSET_PATH"]
     shading_cam_filename =  os.path.join("$ZOMB_ASSET_PATH", "cam",cameraName,cameraName+fileType)
     
-    
-    if cameraName in  str(mc.file(query=True, list=True, reference = True)):
-        print "#### info 'referenceShadingCamera': a camera '"+cameraName+"' is already referenced in this scene, operation canceled"
+    if remove == False:
+        if cameraName in  str(mc.file(query=True, list=True, reference = True)):
+            print "#### info 'referenceShadingCamera': a camera '"+cameraName+"' is already referenced in this scene, operation canceled"
+        else:
+            mc.currentTime(1)
+            mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
+            mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
+            mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False)
+            mc.orientConstraint( 'cam_shading_default00:crv_trunAround','|asset',name = "asset2crvTrurnAround_orientConstraint")
     else:
-        mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False)
-              
+        if cameraName in  str(mc.file(query=True, list=True, reference = True)):
+            mc.currentTime(1)
+            for each in  mc.file(query=True, list=True, reference = True):
+                if cameraName in each:
+                    mc.file(each, removeReference = True)
+                    mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
+                    mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
+                    print "#### info 'referenceShadingCamera': remove camera '"+cameraName+""
+        else:
+            print "#### info 'referenceShadingCamera': no '"+cameraName+"to remove"
+
 
 
 
