@@ -10,7 +10,7 @@
 # TO DO :
 #   x Add publish asset button
 #   x remember last path in get
-#   - add publish SG
+#   x add publish SG
 ################################################################
 #    ! Toute utilisation de ce se script sans autorisation     #
 #                         est interdite !                      #

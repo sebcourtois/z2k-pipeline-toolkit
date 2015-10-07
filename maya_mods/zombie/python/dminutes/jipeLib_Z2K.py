@@ -52,3 +52,6 @@ def matchByXformMatrix(cursel=[], mode=0, *args, **kwargs):
                     # print "scale",val
             # print "Matrix setted"
         return True
+
+
+

@@ -10,6 +10,7 @@
 # Comment : wip
 #
 # TO DO:
+#   - add type chooser (previz_ref/anim_ref/previz_scene/anim_scene) et enlevé le ref c est de toute facon pour le release
 #   x add cat chooser to the GUI, "set/env/char/prop"
 #   x handle module import style
 #   x Unlockink the edited file if not saved
