@@ -64,16 +64,18 @@ def getPath(proj="", assetName="", pathType="previz_ref", *args, **kwargs):
 
     return path_public,path_private
 
-def openFileReadOnly(proj="",Path_publish_public="", *args, **kwargs):
+def openFileReadOnly(proj="",Path_publish_public="", autoAction="overwrite", *args, **kwargs):
     print "openFileReadOnly()"
     tab= "    "
     if not os.path.exists(Path_publish_public):
         with open(Path_publish_public, 'w') as f:
             f.write('')
         
+    #pubFile is a MrcFile
     pubFile = proj.entryFromPath(Path_publish_public)
     # privFile = pubFile.__class__.__base__.edit(pubFile)
-    privFile = pubFile.mayaOpen()
+    print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!pubFile=", pubFile
+    privFile = pubFile.mayaOpen(existing=autoAction)
 
     print tab,"public_file_Version=",pubFile.currentVersion
     print tab, "privFile=",privFile
@@ -81,7 +83,7 @@ def openFileReadOnly(proj="",Path_publish_public="", *args, **kwargs):
     return privFile
 
 # ATTENTION le comportement par default du edit est de faire un OVERWRITE dans le private
-def editFile(proj="" , Path_publish_public="", autoAction="overwrite", *args, **kwargs): #keep/
+def editFile(proj="" , Path_publish_public="", autoAction="overwrite", *args, **kwargs): #"keep"/ "" / "overwrite"
     print "Z2K_editFile()"
     tab= "    "
     if not os.path.exists(Path_publish_public):
@@ -117,6 +119,7 @@ def publishEditedVersionSG(proj="", path_private_toPublish="", comment="test the
     *args, **kwargs):
     print "publishEditedVersionSG()" 
     tab= "    "
-    sPrivPath = path_private_toPublish.absPath()
-    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment="RockTheCashbah", autoLock=True, sgTask=sgTask)[0]
 
+    sPrivPath = path_private_toPublish
+    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment=comment, autoLock=True, sgTask=sgTask)[0]
+    return PublishedMrc.absPath()
