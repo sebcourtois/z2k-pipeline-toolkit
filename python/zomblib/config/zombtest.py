@@ -1,11 +1,11 @@
 
 #import os.path as osp
 
-from . import zombillenium as zomb
-reload(zomb)
+from zomblib.config import zombillenium as zomb
 
 class project(zomb.project):
-    damas_root_path = "/zombtest/"
+    dir_name = "zombtest"
+    damas_root_path = "/{}/".format(dir_name)
 
 class asset_lib(zomb.asset_lib):
     pass

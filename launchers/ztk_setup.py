@@ -10,13 +10,6 @@ from datetime import datetime
 
 class Z2kToolkit(object):
 
-    envsToPrivate = (
-    "ZOMB_ASSET_PATH",
-    "ZOMB_SHOT_PATH",
-    "ZOMB_OUTPUT_PATH",
-    "ZOMB_TEXTURE_PATH",
-    )
-
     def __init__(self, customEnvs):
 
         sBaseName = "z2k-pipeline-toolkit"
@@ -79,7 +72,8 @@ class Z2kToolkit(object):
 
         # initializing an empty DamProject to have project's environ loaded
         from davos.core.damproject import DamProject
-        DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
+        proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
+        proj.loadEnviron()
 
         if sAppName in ("maya", "mayabatch", "render", "mayapy"):
 
@@ -224,10 +218,11 @@ class Z2kToolkit(object):
         sAppName = osp.basename(sAppPath)
 
         try:
-            self.loadAppEnvs(sAppPath)
 
             if (not self.isDev) and update:
                 self.install()
+
+            self.loadAppEnvs(sAppPath)
 
         except Exception, err:
 
@@ -336,7 +331,7 @@ def updEnv(sVar, in_value, conflict='replace'):
 
 def makePrivatePath(sPublicPath):
 
-    sPrivZombPath = os.environ["PRIV_ZOMB_PATH"]
+    sPrivZombPath = os.environ["ZOMB_PRIVATE_LOC"]
     sDirName = osp.basename(sPublicPath)
     return pathJoin(sPrivZombPath, sDirName)
 

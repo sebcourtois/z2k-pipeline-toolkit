@@ -8,12 +8,12 @@ from ztk_setup import Z2kToolkit
 
 # Common envs, may be different for each studio
 ENVS = {
-		"ZOMB_ASSET_PATH":"\\\\ZOMBIWALK\\Projects\\zomb\\asset",
-		"ZOMB_SHOT_PATH":"\\\\ZOMBIWALK\\Projects\\zomb\\shot",
-		"ZOMB_OUTPUT_PATH":"\\\\ZOMBIWALK\\Projects\\zomb\\output",
-        "ZOMB_TOOL_PATH":"\\\\ZOMBIWALK\\Projects\\zomb\\tool",
+		"ZOMB_ASSET_LOC":"\\\\ZOMBIWALK\\Projects",
+		"ZOMB_SHOT_LOC":"\\\\ZOMBIWALK\\Projects",
+		"ZOMB_OUTPUT_LOC":"\\\\ZOMBIWALK\\Projects",
+		"ZOMB_PRIVATE_LOC":"\\\\ZOMBIWALK\\Projects",
 
-		"PRIV_ZOMB_PATH":'\\\\ZOMBIWALK\\Projects\\private\\$DAVOS_USER\\zomb',
+		"ZOMB_TOOL_PATH":"\\\\ZOMBIWALK\\Projects\\zomb\\tool",
 		}
 
 try:
