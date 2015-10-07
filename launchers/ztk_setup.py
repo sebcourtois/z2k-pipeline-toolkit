@@ -1,5 +1,5 @@
 
-#import sys
+import sys
 import os
 import os.path as osp
 import subprocess
@@ -50,31 +50,25 @@ class Z2kToolkit(object):
         for sVar, value in customEnvs.iteritems():
             updEnv(sVar, value, conflict="keep")
 
-        print "\nLoading common environment:"
+
+        print "\nLoading toolkit environment:"
 
         updEnv("PYTHONPATH", self.pythonPath, conflict="add")
+        sys.path.append(self.pythonPath)
 
-        p = pathJoin(self.pythonPath, "davos-dev")
-        updEnv("PYTHONPATH", p, conflict="add")
+        sDavosPath = pathJoin(self.pythonPath, "davos-dev")
+        updEnv("PYTHONPATH", sDavosPath, conflict="add")
+        sys.path.append(sDavosPath)
 
-        p = pathJoin(self.pythonPath, "pypeline-tool-devkit")
-        updEnv("PYTHONPATH", p, conflict="add")
+        sPytdPath = pathJoin(self.pythonPath, "pypeline-tool-devkit")
+        updEnv("PYTHONPATH", sPytdPath, conflict="add")
+        sys.path.append(sPytdPath)
 
         updEnv("PYTHONPATH", self.thirdPartyPath, conflict="add")
+        sys.path.append(self.thirdPartyPath)
 
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
         updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
-
-#        for sVar in self.__class__.envsToPrivate:
-#
-#            sPubPath = osp.expandvars(os.environ[sVar])
-#            sPrivPath = makePrivatePath(sPubPath)
-#
-#            if osp.normcase(sPubPath) == osp.normcase(sPrivPath):
-#                raise EnvironmentError("Same public and private path: {}='{}'"
-#                                       .format(sVar, sPrivPath))
-#
-#            updEnv("PRIV_" + sVar, sPrivPath, conflict="keep")
 
         os.environ["DEV_MODE_ENV"] = str(int(self.isDev))
 
@@ -82,6 +76,10 @@ class Z2kToolkit(object):
 
         sAppPath = sAppPath.lower()
         sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
+
+        # initializing an empty DamProject to have project's environ loaded
+        from davos.core.damproject import DamProject
+        DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
 
         if sAppName in ("maya", "mayabatch", "render", "mayapy"):
 
@@ -251,6 +249,8 @@ class Z2kToolkit(object):
         return callCmd(cmdArgs)
 
     def runFromCmd(self):
+
+        updEnv("Z2K_LAUNCH_SCRIPT", osp.normpath(sys.argv[0]))
 
         parser = argparse.ArgumentParser()
         parser.add_argument("command", choices=("install", "launch", "release"))
