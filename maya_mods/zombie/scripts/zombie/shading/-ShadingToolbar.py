@@ -3,7 +3,23 @@ import maya.cmds as mc
 from dminutes import shading
 reload(shading)
 
+from dminutes import rendering
+reload(rendering)
+
 from functools import partial
+
+
+#default shading camera
+def buttonDefaultShadingCamGet(*args):
+	shading.referenceShadingCamera()
+def buttonDefaultShadingCamRemove(*args):
+	shading.referenceShadingCamera( remove=True)
+
+#Render Settings
+def buttonSetRenderOption(*args):
+	rendering.setArnoldRenderOption("png")
+def buttonSetRenderOutput(*args):
+	rendering.setRenderOutputDir()
 
 
 #conform texture path
@@ -59,33 +75,51 @@ if mc.window( "shadingToolBox", exists = True ):
 
 
 window = mc.window( "shadingToolBox", title="Shading Toolbox", iconName='Shading',toolbox = True, sizeable = False )
-mc.window(window, e = True, widthHeight=(260, 525))
+mc.window(window, e = True, widthHeight=(260, 625))
 
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
-mc.separator(style = 'none', h = 5  )
+
+# shading camera
+mc.separator(style = 'none', h = 1  )
+mc.text(label="Default Shading Camera", align='center')
+mc.flowLayout( )
+mc.button( label='Get', recomputeSize = False, width = 125, c= buttonDefaultShadingCamGet )
+mc.button( label='Remove', recomputeSize = False, width = 125, c= buttonDefaultShadingCamRemove )
+mc.setParent( '..' )
+
+#Render Settings
+mc.separator(style = 'in', h = 5  )
+mc.text(label="Render Settings", align='center')
+mc.flowLayout( )
+mc.button( label='Render Options', recomputeSize = False, width = 125, c= buttonSetRenderOption )
+mc.button( label='Output Dir', recomputeSize = False, width = 125, c= buttonSetRenderOutput )
+mc.setParent( '..' )
 
 #conform texture path
+mc.separator(style = 'in', h = 5  )
 mc.text(label="File Texture Path", align='center')
 mc.button( label='Comform All', c= buttonConformAllTexturePath)
 mc.button( label='Hard Path All', c= buttonHardPathAllTexturePath)
 mc.button( label='Print All', c=  buttonPrintAllTexturePath)
 
-
-
 #Conform Shader Names
-mc.separator(style = 'in', h = 5  )
-mc.text(label="Shader Names", align='center')
-mc.button( label='Comform All', c= buttonConformAllShaderName)
-mc.button( label='Comform Selection', c= buttonConformSelShaderName)
+mc.separator(style = 'in', h = 5 )
+mc.text(label="Conform Shader Name", align='center')
+mc.flowLayout( )
+mc.button( label='All', recomputeSize = False, width = 125, c= buttonConformAllShaderName)
+mc.button( label='Selection', recomputeSize = False, width = 125, c= buttonConformSelShaderName)
+mc.setParent( '..' )
 
-#Conform Preview and arnold Shaders
+#Conform Shader Structure
 mc.separator(style = 'in', h = 5  )
-mc.text(label="Preview and Arnold Shaders", align='center')
-mc.button( label='Comform All', c = buttonConformAllPreviewShader)
-mc.button( label='Comform Selection', c = buttonConformSelPreviewShader)
+mc.text(label="Conform Shader Structure", align='center')
+mc.flowLayout( )
+mc.button( label='All', recomputeSize = False, width = 125, c = buttonConformAllPreviewShader)
+mc.button( label='Selection', recomputeSize = False, width = 125, c = buttonConformSelPreviewShader)
+mc.setParent( '..' )
 
 #Low Res .jpg
-mc.separator(style = 'in', h = 10  )
+mc.separator(style = 'in', h = 5  )
 mc.text(label="Low Res .jpg", align='center')
 mc.flowLayout( )
 mc.button( label='Generate All', recomputeSize = False, width = 125, c= buttonJpgGenerateAll )
@@ -97,7 +131,7 @@ mc.button( label='Update Selection',  recomputeSize = False, width = 125, c= but
 mc.setParent( '..' )
 
 #Arnold .tx
-mc.separator(style = 'in', h = 10  )
+mc.separator(style = 'in', h = 5  )
 mc.text(label="Arnold .tx", align='center')
 mc.flowLayout( )
 mc.button( label='Generate All', recomputeSize = False, width = 125, c= buttonTxGenerateAll )
@@ -109,7 +143,7 @@ mc.button( label='Update Selection',  recomputeSize = False, width = 125, c= but
 mc.setParent( '..' )
 
 #publish textures files
-mc.separator(style = 'in', h = 10  )
+mc.separator(style = 'in', h = 5  )
 mc.text(label="publish textures files", align='center')
 mc.button( label='Print',  c= buttonPublishTexturePrint )
 

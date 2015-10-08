@@ -10,6 +10,7 @@
 # Comment : wip
 #
 # TO DO:
+#       - add auto remove camera if is camera du pipe
 #       - separate interface from base class
 #       - add BigDaddy check
 #       x MentalRayCleanNodes (['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'])
