@@ -5,12 +5,17 @@ import pymel.util as pmu
 
 from davos.core.damproject import DamProject
 from pytaya.util.toolsetup import ToolSetup
-#from pytd.gui.dialogs import confirmDialog
 #from pytd.util.sysutils import toStr
 
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
 
+
+def loadProject():
+
+    bBatchMode = pm.about(batch=True)
+    proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=bBatchMode)
+    proj.loadEnviron()
 
 class DavosSetup(ToolSetup):
 
@@ -28,20 +33,12 @@ class DavosSetup(ToolSetup):
 
         ToolSetup.populateMenu(self)
 
-    def beforeBuildingMenu(self):
-        bBatchMode = pm.about(batch=True)
-        proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=bBatchMode)
-        proj.loadEnviron()
-
-        return ToolSetup.beforeBuildingMenu(self)
-
     def afterBuildingMenu(self):
         ToolSetup.afterBuildingMenu(self)
         pmu.putEnv("DAVOS_FILE_CHECK", "1")
 
     def beforeReloading(self, *args):
         ToolSetup.beforeReloading(self, *args)
-
         file_browser.kill()
 
 #    def onSceneOpened(self, *args):

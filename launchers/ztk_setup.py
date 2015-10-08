@@ -1,5 +1,6 @@
 
 import sys
+import site
 import os
 import os.path as osp
 import subprocess
@@ -59,6 +60,10 @@ class Z2kToolkit(object):
         updEnv("PYTHONPATH", self.thirdPartyPath, conflict="add")
         sys.path.append(self.thirdPartyPath)
 
+        #python site so PySide is found and DamProject can be instantiated
+        sPy27SitePath = pathJoin(self.thirdPartyPath, "_python27_site")
+        site.addsitedir(sPy27SitePath)
+
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
         updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
 
@@ -69,26 +74,31 @@ class Z2kToolkit(object):
         sAppPath = sAppPath.lower()
         sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
 
-        print "\n----------------", sAppPath
+        #print "\n----------------", sAppPath
 
         if sAppName in ("maya", "mayabatch", "render", "mayapy"):
 
-            print "\nLoading maya environment:"
+            print "\nLoading Maya environment:"
 
             updEnv("MAYA_MODULE_PATH", pathJoin(self.rootPath, "maya_mods"),
                    conflict="add")
 
             if "maya2016" in sAppPath:
 
-                updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "mayapy2016-site"),
+                updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_mayapy2016_site"),
                        conflict="add")
 
-            print ''
+        elif sAppName in("python", "pythonw"):
 
-#        # initializing an empty DamProject to have project's environ loaded
-#        from davos.core.damproject import DamProject
-#        proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
-#        proj.loadEnviron()
+            print "\nLoading Python environment:"
+
+            updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
+                   conflict="add")
+
+        # initializing an empty DamProject to have project's environ loaded
+        from davos.core.damproject import DamProject
+        proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
+        proj.loadEnviron()
 
     def install(self):
 
@@ -224,24 +234,18 @@ class Z2kToolkit(object):
         sAppName = osp.basename(sAppPath)
 
         try:
-
             if (not self.isDev) and update:
                 self.install()
-
-            self.loadAppEnvs(sAppPath)
-
         except Exception, err:
+            print ("\n\n!!!!!!! Failed updating toolkit: {}".format(err))
+            if raw_input("\nPress enter to continue...") == "raise": raise
 
-            print ("\n\nFailed initializing '{}' environments: \n    {}"
+        try:
+            self.loadAppEnvs(sAppPath)
+        except Exception, err:
+            print ("\n\n!!!!!!! Failed loading '{}' environments: {}"
                    .format(sAppName, err))
-
-            res = ""
-            while res not in ("yes", "no"):
-                res = raw_input("\nContinue launching '{}' ? (yes/no)"
-                                .format(sAppName))
-
-            if res == "no":
-                raise
+            if raw_input("\nPress enter to continue...") == "raise": raise
 
 #        startupinfo = subprocess.STARTUPINFO()
 #        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -418,7 +422,6 @@ def cleanUpPyc(sRootPath):
             n += 1
 
     print "Deleted {} '.pyc' files".format(n)
-
 
 #if __name__ == "__main__":
 #    try:
