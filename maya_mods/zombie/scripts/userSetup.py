@@ -1,4 +1,5 @@
 
+print "Executing Z2K Toolkit's userSetup..."
 
 import pymel.mayautils
 
