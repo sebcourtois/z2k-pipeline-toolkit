@@ -10,6 +10,7 @@
 # Comment : wip
 #
 # TO DO:
+#       - add check for BigDaddy et BigDaddy_NeutralPose
 #       - add auto remove camera if is camera du pipe
 #       - separate interface from base class
 #       - add BigDaddy check
@@ -415,6 +416,7 @@ class checkModule(object):
         baseObjL = ["asset",]
         baseSetL = ["set_meshCache","set_control"]
         baseLayerL = ["control","geometry"]
+        baseCTRL = ["BigDaddy","BigDaddy_NeutralPose","Global_SRT","Local_SRT","Global_SRT_NeutralPose","Local_SRT_NeutralPose"]
         AllBaseObj = baseLayerL + baseObjL + baseSetL
         print tab+"AllBaseObj=", AllBaseObj
         topObjL = list(set(cmds.ls(assemblies=True,) ) - set(baseExcludeL) )
@@ -451,14 +453,32 @@ class checkModule(object):
         else:
             debugD["topSetL"]["result"] = "OK"
         
+
+
         # Layers test
-        debugD["layerL"] = {}
-        if not sorted(baseLayerL) == sorted(layerL):
-            debugD["layerL"]["result"] = "PAS CONFORME"
-            debugD["layerL"]["Found"] = layerL
-            toReturnB= False
-        else:
-            debugD["layerL"]["result"] = "OK"
+        # debugD["layerL"] = {}
+        # if not sorted(baseLayerL) == sorted(layerL):
+        #     debugD["layerL"]["result"] = "PAS CONFORME"
+        #     debugD["layerL"]["Found"] = layerL
+        #     toReturnB= False
+        # else:
+        #     debugD["layerL"]["result"] = "OK"
+
+        # Layers test
+
+
+        # baseCTRL test
+        debugD["baseCTRL"] = {}
+        test= "OK"
+        notFoundL=[]
+        for i in baseCTRL:
+            if not cmds.objExists(i):
+                toReturnB= False
+                test= "PAS CONFORME"
+                notFoundL.append(i)
+
+        debugD["baseCTRL"]["result"] = test
+        debugD["baseCTRL"]["NOT_Found"] = notFoundL
 
         # prints -------------------
         self.printF("checkBaseStructure()", st="t")
@@ -466,7 +486,13 @@ class checkModule(object):
         for i,dico in debugD.iteritems():
             toPrint=""
             if not dico["result"] in ["OK"]:
-                toPrint = str(i).ljust(15)+": "+ str( dico["result"]+"    Found="+ str(dico.get("Found","")))
+                toPrintA = "BAD"
+                if len(dico.get("Found",""))>0:
+                    toPrintA = "     -Found= " + str( dico.get("Found","")   )
+                if len(dico.get("NOT_Found",""))>0:
+                    toPrintA = "     -NOT_Found= " + str( dico.get("NOT_Found","")   )
+
+                toPrint = i.ljust(15)+": "+ str( dico["result"]+toPrintA)
             else:
                 toPrint = i.ljust(15)+": "+ str( dico["result"] )
             self.printF( toPrint )

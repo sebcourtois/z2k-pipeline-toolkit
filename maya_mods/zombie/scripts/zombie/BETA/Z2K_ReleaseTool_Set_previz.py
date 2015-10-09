@@ -18,5 +18,5 @@ Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="set_RouteDuRhum_def
                         debug=False )
 Z2K_ReleaseTool_GuiI.createWin()
 
-# Z2K_Pcheck = Z2K_PcheckD.checkModule()
-# Z2K_Pcheck.insertLayout( parent=Z2K_ReleaseTool_GuiI.layoutImportModule )
+Z2K_Pcheck = Z2K_PcheckD.checkModule()
+Z2K_Pcheck.insertLayout( parent=Z2K_ReleaseTool_GuiI.layoutImportModule )
