@@ -1,5 +1,6 @@
 
 import sys
+import site
 import os
 import os.path as osp
 import subprocess
@@ -9,13 +10,6 @@ from datetime import datetime
 
 
 class Z2kToolkit(object):
-
-    envsToPrivate = (
-    "ZOMB_ASSET_PATH",
-    "ZOMB_SHOT_PATH",
-    "ZOMB_OUTPUT_PATH",
-    "ZOMB_TEXTURE_PATH",
-    )
 
     def __init__(self, customEnvs):
 
@@ -50,7 +44,6 @@ class Z2kToolkit(object):
         for sVar, value in customEnvs.iteritems():
             updEnv(sVar, value, conflict="keep")
 
-
         print "\nLoading toolkit environment:"
 
         updEnv("PYTHONPATH", self.pythonPath, conflict="add")
@@ -67,6 +60,10 @@ class Z2kToolkit(object):
         updEnv("PYTHONPATH", self.thirdPartyPath, conflict="add")
         sys.path.append(self.thirdPartyPath)
 
+        #python site so PySide is found and DamProject can be instantiated
+        sPy27SitePath = pathJoin(self.thirdPartyPath, "_python27_site")
+        site.addsitedir(sPy27SitePath)
+
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
         updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
 
@@ -77,42 +74,55 @@ class Z2kToolkit(object):
         sAppPath = sAppPath.lower()
         sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
 
-        # initializing an empty DamProject to have project's environ loaded
-        from davos.core.damproject import DamProject
-        DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
+        #print "\n----------------", sAppPath
 
         if sAppName in ("maya", "mayabatch", "render", "mayapy"):
 
-            print "\nLoading maya environment:"
+            print "\nLoading Maya environment:"
 
             updEnv("MAYA_MODULE_PATH", pathJoin(self.rootPath, "maya_mods"),
                    conflict="add")
 
             if "maya2016" in sAppPath:
 
-                updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "mayapy2016-site"),
+                updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_mayapy2016_site"),
                        conflict="add")
 
-            print ''
+        elif sAppName in("python", "pythonw"):
+
+            print "\nLoading Python environment:"
+
+            updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
+                   conflict="add")
+
+        # initializing an empty DamProject to have project's environ loaded
+        from davos.core.damproject import DamProject
+        proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
+        proj.loadEnviron()
 
     def install(self):
 
         # tools update
-        repo = self.releasePath()
+        sReleasePath = self.releasePath()
         if self.isDev:
             print "Tools update from development environment !"
-            repo = self.rootPath
+            sReleasePath = self.rootPath
 
-        local_root = pathJoin(os.environ["USERPROFILE"], "zombillenium", self.baseName)
+        sInstallPath = pathJoin(os.environ["USERPROFILE"], "zombillenium", self.baseName)
 
-        if repo == local_root:
+        if sReleasePath == sInstallPath:
             print "Source == Destination !"
         else:
 
-            sAction = "Updating" if osp.isdir(local_root) else "Installing"
-            print "\n{} Z2K Toolkit:\n'{}' -> '{}'".format(sAction, repo, local_root)
+            sAction = "Installing"
+            if osp.exists(sInstallPath):
+                sAction = "Updating"
+            else:
+                os.makedirs(sInstallPath)
 
-            sOutput = self.makeCopy(repo, local_root,
+            print "\n{} Z2K Toolkit:\n'{}' -> '{}'".format(sAction, sReleasePath, sInstallPath)
+
+            sOutput = self.makeCopy(sReleasePath, sInstallPath,
                                     dryRun=False, summary=False)
 
             if not sOutput.strip():
@@ -121,10 +131,10 @@ class Z2kToolkit(object):
 
             print "\n", sOutput
 
-            cleanUpPyc(local_root)
+            cleanUpPyc(sInstallPath)
 
             print ("Zombie toolkit updated, use your local to launch applications ! ({0})"
-                   .format(pathJoin(local_root, "launchers")))
+                   .format(pathJoin(sInstallPath, "launchers")))
 
     def release(self, location="", archive=True):
 
@@ -224,23 +234,18 @@ class Z2kToolkit(object):
         sAppName = osp.basename(sAppPath)
 
         try:
-            self.loadAppEnvs(sAppPath)
-
             if (not self.isDev) and update:
                 self.install()
-
         except Exception, err:
+            print ("\n\n!!!!!!! Failed updating toolkit: {}".format(err))
+            if raw_input("\nPress enter to continue...") == "raise": raise
 
-            print ("\n\nFailed initializing '{}' environments: \n    {}"
+        try:
+            self.loadAppEnvs(sAppPath)
+        except Exception, err:
+            print ("\n\n!!!!!!! Failed loading '{}' environments: {}"
                    .format(sAppName, err))
-
-            res = ""
-            while res not in ("yes", "no"):
-                res = raw_input("\nContinue launching '{}' ? (yes/no)"
-                                .format(sAppName))
-
-            if res == "no":
-                raise
+            if raw_input("\nPress enter to continue...") == "raise": raise
 
 #        startupinfo = subprocess.STARTUPINFO()
 #        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -336,7 +341,7 @@ def updEnv(sVar, in_value, conflict='replace'):
 
 def makePrivatePath(sPublicPath):
 
-    sPrivZombPath = os.environ["PRIV_ZOMB_PATH"]
+    sPrivZombPath = os.environ["ZOMB_PRIVATE_LOC"]
     sDirName = osp.basename(sPublicPath)
     return pathJoin(sPrivZombPath, sDirName)
 
@@ -417,7 +422,6 @@ def cleanUpPyc(sRootPath):
             n += 1
 
     print "Deleted {} '.pyc' files".format(n)
-
 
 #if __name__ == "__main__":
 #    try:

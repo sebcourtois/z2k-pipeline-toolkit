@@ -12,11 +12,11 @@ Thumbs.db
 # alex
 launchers/alex
 
-
 /maya_mods/solidangle/mtoadeploy/2016/docs
 /python/zomblib/config/zombseb.py
 /launchers/seb
 /maya_mods/solidangle/mtoadeploy/2016/bin/*.lic
-
 /maya_mods/zombie/python/dminutes/Z2K_ReleaseTool/_versions
-Thumbs.db
+/third-party/_python27_site/pysideuic
+/third-party/_python27_site/PySide
+/third-party/_python27_site/PySide-1.2.0-py2.7.egg-info
