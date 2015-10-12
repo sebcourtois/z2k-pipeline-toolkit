@@ -8,17 +8,17 @@ from ztk_setup import Z2kToolkit
 
 # Common envs, may be different for each studio
 ENVS = {
-		"ZOMB_ASSET_LOC":"\\\\ZOMBIWALK\\Projects",
-		"ZOMB_SHOT_LOC":"\\\\ZOMBIWALK\\Projects",
-		"ZOMB_OUTPUT_LOC":"\\\\ZOMBIWALK\\Projects",
-		"ZOMB_PRIVATE_LOC":"\\\\ZOMBIWALK\\Projects",
+        "ZOMB_ASSET_LOC":"\\\\ZOMBIWALK\\Projects",
+        "ZOMB_SHOT_LOC":"\\\\ZOMBIWALK\\Projects",
+        "ZOMB_OUTPUT_LOC":"\\\\ZOMBIWALK\\Projects",
+        "ZOMB_PRIVATE_LOC":"\\\\ZOMBIWALK\\Projects",
 
-		"ZOMB_TOOL_PATH":"\\\\ZOMBIWALK\\Projects\\zomb\\tool",
-		"DAVOS_INIT_PROJECT":"zombtest"
-		}
+        "ZOMB_TOOL_PATH":"\\\\ZOMBIWALK\\Z2K_RnD\\tool",
+        "DAVOS_INIT_PROJECT":"zombtest",
+        }
 
 try:
-	Z2kToolkit(ENVS).runFromCmd()
+    Z2kToolkit(ENVS).runFromCmd()
 except:
     os.environ["PYTHONINSPECT"] = "1"
     raise
