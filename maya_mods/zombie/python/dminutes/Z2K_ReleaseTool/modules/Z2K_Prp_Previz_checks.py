@@ -10,15 +10,16 @@
 # Comment : wip
 #
 # TO DO:
-#       - add check for BigDaddy et BigDaddy_NeutralPose
+#       - clean obj button have to be grayed if checkStructure not done (setSmoothness need good structure)
 #       - add auto remove camera if is camera du pipe
+#       x add check for BigDaddy et BigDaddy_NeutralPose and base CTR
 #       - separate interface from base class
 #       - add BigDaddy check
+#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
 #       x MentalRayCleanNodes (['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'])
 #       x check geometry all to zero
 #       x BUG check colorLum
 #       - check geometry modeling history
-#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
 #       WIP Clean ref Nodes + exception arnold etc
 #       ? Check UV smoothing/display paremeters
 #       ? delete mentalRayNode
@@ -64,7 +65,7 @@ class checkModule(object):
         print "init"
         self.GUI=GUI
         self.ebg = True
-        self.DebugPrintFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Release_debug.txt"
+        self.DebugPrintFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Prp_01_Release_debug.txt"
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
 
@@ -278,7 +279,62 @@ class checkModule(object):
 
         return [toReturnB,conL]
 
-    def isSkinned(self, inObjL=[], verbose=False, *args, **kwargs):
+
+    def isSkinned(self, inObjL=[], verbose=False, printOut = False,*args,**kwargs):
+        ''' Description : Get the list of the SlinClusters of the selected mesh
+                Return : List of skinClusters
+                Dependencies : cmds - 
+        '''                 
+        toReturnB = False
+        outSkinClusterL=[]
+        outSkinnedObj = []
+        tab = "    "
+        if len(inObjL):
+            for obj in inObjL:
+                print "    obj =", obj
+                skinClusterList = []
+                history = cmds.listHistory(obj, il=2)
+                print "    history = ", history
+                if history not in [None,"None"]:
+                    for node in history:
+                        if cmds.nodeType(node) == "skinCluster":
+                            skinClusterList.append(node)
+                            outSkinClusterL.append(node)
+                            outSkinnedObj.append(obj)
+                else :
+                    print "#Error# getSkinCluster(): No History stack"
+                    toReturnB = False
+
+                if len(skinClusterList) < 1:
+                    shapes = cmds.listRelatives(obj, s=True)
+                    for shape in shapes:
+                        history = cmds.listHistory(shape)
+                        for node in history:
+                            if cmds.nodeType(node) == "skinCluster":
+                                skinClusterList.append(node)
+                                outSkinClusterL.append(node)
+                
+        
+
+        debugL = list(set(inObjL) - set(outSkinnedObj))
+        if len(outSkinClusterL) >= len(inObjL):
+            toReturnB = True
+
+        print tab,"Total obj = {0} / {1}".format(len(outSkinClusterL),len(inObjL) )
+
+        if verbose :
+            # prints -------------------
+            self.printF("isSkinned()", st="t")
+            self.printF(toReturnB, st="r")
+            self.printF("skinned_object = {0} / {1}".format(len(outSkinClusterL),len(inObjL) ) )
+            for i in debugL:
+                self.printF("    No skin on: {0}".format(i) )
+            # --------------------------
+
+
+        return [toReturnB,outSkinClusterL]
+
+    def isSkinned_old(self, inObjL=[], verbose=False, *args, **kwargs):
         """ Description: test if a skincluster is attached to the obj in inObjL
             Return : BOOL
             Dependencies : cmds - 
@@ -739,9 +795,9 @@ class checkModule(object):
             if lay not in FilterL:
                 cmds.delete(lay)
 
-    def createDiplayLayer (self,  n="default_Name", inObjL=[], displayType=0, hideOnPlayback=0,enableOverride=True, *args, **kwargs):
-        # createDiplayLayer( state = {0:Normal state, 1:Templated, 2:Reference}
-        print "createDiplayLayer(%s,%s,%s)" % (n,displayType,hideOnPlayback)
+    def createDisplayLayer (self,  n="default_Name", inObjL=[], displayType=0, hideOnPlayback=0,enableOverride=True, *args, **kwargs):
+        # createDisplayLayer( state = {0:Normal state, 1:Templated, 2:Reference}
+        print "createDisplayLayer(%s,%s,%s)" % (n,displayType,hideOnPlayback)
 
         # create layer if doesn't exist
         if not cmds.objExists(n):
@@ -759,7 +815,7 @@ class checkModule(object):
         """ Description: Clean the display Layers by rebuilding it with the content of the corresponding sets 
                             setL <-> layerL
             Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
-            Dependencies : cmds - createDiplayLayer() - delete_displayLayer()
+            Dependencies : cmds - createDisplayLayer() - delete_displayLayer()
         """
         
         tab = "    "
@@ -780,7 +836,7 @@ class checkModule(object):
             if cmds.objExists(theSet):
                 inObjL = cmds.listConnections( theSet+".dagSetMembers",source=1)
                 if inObjL:
-                    self.createDiplayLayer ( n=paramL[0], inObjL=inObjL, displayType=paramL[1], hideOnPlayback=paramL[2])
+                    self.createDisplayLayer ( n=paramL[0], inObjL=inObjL, displayType=paramL[1], hideOnPlayback=paramL[2])
                     debugL.append(theSet + " :DONE")
                 else:
                     toReturnB= False

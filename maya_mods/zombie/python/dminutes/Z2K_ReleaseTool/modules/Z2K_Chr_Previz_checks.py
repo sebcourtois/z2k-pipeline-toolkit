@@ -278,61 +278,45 @@ class checkModule(object):
 
         return [toReturnB,conL]
 
-    def isSkinned(self, inObjL=[], verbose=False, *args, **kwargs):
-        """ Description: test if a skincluster is attached to the obj in inObjL
-            Return : BOOL
-            Dependencies : cmds - 
-        """
-        print "isSkinned()"
+    def isSkinned(self, inObjL=[], verbose=False, printOut = False,*args,**kwargs):
+        ''' Description : Get the list of the SlinClusters of the selected mesh
+                Return : List of skinClusters
+                Dependencies : cmds - 
+        '''                 
         toReturnB = False
-        tab = "    "
-        outSkinClusterL = []
+        outSkinClusterL=[]
         outSkinnedObj = []
-        debugL = []
-        if len(inObjL)>0:
+        tab = "    "
+        if len(inObjL):
             for obj in inObjL:
-                print "   ",obj
-                if cmds.objExists(obj):
-                    # get underShapeL
-                    underShapeL = cmds.listRelatives(obj, c=True, ni=True, shapes=True)
-                    if underShapeL:
-                        print "  underShapeL: len=", len(underShapeL),underShapeL
-                        for shape in underShapeL:
-                            # print "shape=", shape
-                            # getting source objL
-                            attrib = shape +'.inMesh'
-                            if cmds.objExists(attrib):
-                                if cmds.connectionInfo(attrib, isDestination=True):
-                                    sourceL = cmds.listConnections( attrib, d=False, s=True,p=False,shapes=True )
-                                    if type(sourceL) is not list:
-                                        sourceL = [sourceL]
-                                    
-                                    # sourceL loop
-                                    for source in sourceL:
-                                        if cmds.objectType(source) in ["skinCluster"]:
-                                            print tab,"OK :", source
-                                            outSkinClusterL.append(source)
-                                            outSkinnedObj.append(obj)
-                                        else:
-                                            pass
-                                            # print tab,"BAD : connectedTo  :", source
-                                else:
-                                    pass
-                                    # print tab,"BAD : noConnection :", shape
-                                    
-                            else:
-                                pass
-                                # print tab,"BAD : noAttrib_inMesh :", shape
-                        else:
-                            pass
-                            # print tab,"BAD : noAttrib_inMesh :", shape
-                            
+                print "    obj =", obj
+                skinClusterList = []
+                history = cmds.listHistory(obj, il=2)
+                print "    history = ", history
+                if history not in [None,"None"]:
+                    for node in history:
+                        if cmds.nodeType(node) == "skinCluster":
+                            skinClusterList.append(node)
+                            outSkinClusterL.append(node)
+                            outSkinnedObj.append(obj)
+                else :
+                    print "#Error# getSkinCluster(): No History stack"
+                    toReturnB = False
+
+                if len(skinClusterList) < 1:
+                    shapes = cmds.listRelatives(obj, s=True)
+                    for shape in shapes:
+                        history = cmds.listHistory(shape)
+                        for node in history:
+                            if cmds.nodeType(node) == "skinCluster":
+                                skinClusterList.append(node)
+                                outSkinClusterL.append(node)
                 
+        
 
         debugL = list(set(inObjL) - set(outSkinnedObj))
-        if len(outSkinClusterL) > 0 :
-            if len(outSkinClusterL) >= len(inObjL):
-                toReturnB = True
+        if len(outSkinClusterL) >= len(inObjL):
+            toReturnB = True
 
         print tab,"Total obj = {0} / {1}".format(len(outSkinClusterL),len(inObjL) )
 
@@ -344,6 +328,7 @@ class checkModule(object):
             for i in debugL:
                 self.printF("    No skin on: {0}".format(i) )
             # --------------------------
+
 
         return [toReturnB,outSkinClusterL]
 

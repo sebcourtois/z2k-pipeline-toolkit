@@ -227,6 +227,13 @@ class prop3d(object):
         },
     }
 
+    resources_settings = {
+    "previz_scene":{
+                    "create_sg_version":True,
+                    "sg_step":"Model Previz",
+                    },
+    }
+
 class vehicle3d(prop3d):
 
     entity_class = "davos.core.damtypes.DamAsset"
@@ -262,6 +269,13 @@ class set3d(object):
         "{name}_previz.ma -> previz_scene":None,
         "{name}_master.ma -> master_scene":None,
         },
+    }
+
+    resources_settings = {
+    "previz_scene":{
+                    "create_sg_version":True,
+                    "sg_step":"Model Previz",
+                    },
     }
 
 class environment3d(set3d):
