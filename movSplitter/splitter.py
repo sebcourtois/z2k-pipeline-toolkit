@@ -3,7 +3,7 @@ import re
 import os
 import subprocess
 
-SHOT_FOLDER = "\\\\Zombiwalk\\Projects\\zombtest\\shot\\"
+SHOT_FOLDER = "\\\\Zombiwalk\\Projects\\zomb\\shot\\"
 SHOT_TEMPLATE = "{sequence}\\{sequence}_{shot}\\00_data"
 
 FPS = 24.0

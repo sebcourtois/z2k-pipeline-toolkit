@@ -11,8 +11,4 @@ Prerequisites:
 
 Usage:
 ----------------------
-Simple way : Drag-Drop a ".mov" on "splitAll.bat"
-
-
-How the system works :
-----------------------
+Drag-Drop a ".mov" on "splitAll.bat", you'll be asked if you want to restrict the split to a sequence, if so, type the sequence name : as it appears in the edl (S0010 for instance)
