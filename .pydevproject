@@ -8,6 +8,7 @@
 <path>/${PROJECT_DIR_NAME}/python/pypeline-tool-devkit</path>
 <path>/${PROJECT_DIR_NAME}/maya_mods/zombie/python</path>
 <path>/${PROJECT_DIR_NAME}/maya_mods/zombie/scripts</path>
+<path>/${PROJECT_DIR_NAME}/python</path>
 <path>/${PROJECT_DIR_NAME}/launchers</path>
 </pydev_pathproperty>
 </pydev_project>

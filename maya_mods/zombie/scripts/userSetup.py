@@ -1,15 +1,13 @@
 
-
-import os, sys
+print "Executing Z2K Toolkit's userSetup..."
 
 import pymel.mayautils
 
 def onStartup():
 
-	if os.path.normcase(sys.executable).endswith("maya.exe"):
 
-		import stxScriptMenu
-		stxScriptMenu.install()
+	import stxScriptMenu
+	stxScriptMenu.install()
 
 	from davos_maya.tool.davossetup import DavosSetup
 	DavosSetup().install()

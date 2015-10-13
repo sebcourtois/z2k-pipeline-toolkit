@@ -129,21 +129,58 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
     return wrongShadEngine if wrongShadEngine != [] else  None
 
 
-def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma"):
+def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", remove = False):
     """
     reference a camera for shading purpose. This tools is not to use for shot bulding.
         cameraName (string): the camera name you want to reference
         fileType(string): specify if the '.ma' or '.mb' file is to reference
     """
+    if mc.ls("|asset"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        if  mainFilePathElem[-4] == "asset":
+            finalMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
+            finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(finalMapdir)))
+            publicMapdir = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
+            publicMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(finalMapdir)))
+        else:
+            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+    else :
+        raise ValueError("#### Error: no '|asset' could be found in this scene")
+
+
     zombie_asset_dir =  os.environ["ZOMB_ASSET_PATH"]
     shading_cam_filename =  os.path.join("$ZOMB_ASSET_PATH", "cam",cameraName,cameraName+fileType)
     
-    
-    if cameraName in  str(mc.file(query=True, list=True, reference = True)):
-        print "#### info 'referenceShadingCamera': a camera '"+cameraName+"' is already referenced in this scene, operation canceled"
+    if remove == False:
+        if cameraName in  str(mc.file(query=True, list=True, reference = True)):
+            print "#### info 'referenceShadingCamera': a camera '"+cameraName+"' is already referenced in this scene, operation canceled"
+        else:
+            mc.currentTime(1)
+            mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
+            mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
+            mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False)
+            mc.orientConstraint( cameraName+'00:crv_trunAround','|asset',name = "asset2crvTrurnAround_orientConstraint")
+        if not mc.listConnections('defaultArnoldRenderOptions.background',connections = False):
+            myAiRaySwitch = mc.shadingNode("aiRaySwitch", asShader=True)
+            mc.setAttr(myAiRaySwitch+".camera", 0.5,0.5,0.5, type = "double3")
+            mc.connectAttr(myAiRaySwitch+".message", 'defaultArnoldRenderOptions.background', force =True)
     else:
-        mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False)
-              
+        if "cam_shading_" in  str(mc.file(query=True, list=True, reference = True)):
+            mc.currentTime(1)
+            for each in  mc.file(query=True, list=True, reference = True):
+                if "cam_shading_" in each:
+                    mc.file(each, removeReference = True)
+                    mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
+                    mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
+                    print "#### info 'referenceShadingCamera': remove camera '"+each+""
+        else:
+            print "#### info 'referenceShadingCamera': no 'cam_shading_*' to remove"
+        try:    
+            mc.delete(mc.listConnections('defaultArnoldRenderOptions.background',connections = False))
+        except:
+            pass
+
 
 
 
@@ -203,6 +240,19 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
                     mc.setAttr(eachFileNode+".fileTextureName", finalMapFilePathExpanded, type = "string")
                     if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,finalMapFilePathExpanded)
                 else:
+                    if ".1001." in os.path.split(mapFilePath)[-1] and mapFilePath.split(".")[-1] == "jpg":
+                        if inVerbose == True: print "#### Warning: '{0:^24}' udim not allowed for jpg:'{1}'".format(eachFileNode,mapFilePath)       
+                        outWrongFileNodeList.append(eachFileNode)
+                        continue
+
+                    elif ".1001." in os.path.split(mapFilePath)[-1]:
+                        udimNb = 1002
+                        while udimNb < 1010:
+                            udimMapFilePath = mapFilePath.replace(".1001.","."+str(udimNb)+".")
+                            udimMapFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(udimMapFilePath)))
+                            if os.path.isfile(udimMapFilePath_exp) == True:
+                                outMapPathForPublishList.append(udimMapFilePath)
+                            udimNb=udimNb+1
                     if inVerbose == True: print "#### Info: '{0:^24}' file and path correct :'{1}'".format(eachFileNode,mapFilePath)  
                     outMapPathForPublishList.append(mapFilePath)
                 continue
@@ -541,6 +591,8 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
     else :
         raise ValueError("#### Error: no '|asset' could be found in this scene")
 
+    conformShaderName("all", selectWrongShadEngine = False, verbose = False )
+
     if fileNodeList == "all":
         fileNodeList = mc.ls("pre_*",type ="file")
         if updateOnly == False:
@@ -559,7 +611,6 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
         for each in selectedFileList:
             if re.match('^pre_[a-zA-Z0-9]{1,24}_[a-zA-Z0-9]{1,24}$', each):
                 fileNodeList.add(each)
-
 
 
     if len(fileNodeList) == 0:
@@ -612,6 +663,10 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
         else:
             LOD = 4
 
+        if mainFilePathElem[-3] == "chr" and os.path.isfile(jpgFilePathExpand):
+            print "#### {:>7}: '{}' FileNode, jpg file: '{}',  already exists, can't replace it automaticaly on characters,please delete it manually first".format("Warning",eachFileNode,os.split.path(mapFilePath)[-1])
+            continue
+
         imageResize(inputFilePathName = tgaFilePath, outputFilePathName = "", lod = LOD, jpgQuality = 90, updateOnly = updateOnly, openImageMentalRay = True)
 
         if mapFilePath != jpgFilePath: 
@@ -657,7 +712,7 @@ def makeTxForArnold(inputFilePathName = "", outputFilePathName = "", updateOnly 
 
     if outputFilePathName == "" :
         outputFilePathName = inputFilePathName.replace(inputFilePathName.split(".")[-1],"tx")
-        outputFilePathName_exp = inputFilePathName_exp.replace(inputFilePathName.split(".")[-1],"tx")
+        outputFilePathName_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePathName)))
     elif not os.path.isdir(os.path.split(outputFilePathName)[0]):
         print "#### {:>7}: Missing directory : {} given".format("Error", os.path.split(outputFilePathName))
         return
@@ -747,10 +802,12 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
         print "#### {:>7}: 'fileNodeList' is not a string".format("Error")
         return
 
+    conformShaderName("all", selectWrongShadEngine = False, verbose = False )
+
     if fileNodeList == "all":
         fileNodeList = mc.ls("mat_*",type ="file")
         if updateOnly == False:
-            answer = mc.confirmDialog( title='Confirm', message='You are about to generate jpg for '+str(len(fileNodeList))+' file nodes, do you want to continue?', button=['Yes','Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel' )
+            answer = mc.confirmDialog( title='Confirm', message='You are about to generate .tx for '+str(len(fileNodeList))+' file nodes, do you want to continue?', button=['Yes','Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel' )
             if answer == "Cancel": return
     elif fileNodeList == "selection":
         selectedFileList = mc.ls(selection = True, type ="file")
@@ -803,6 +860,15 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
 
         makeTxForArnold(inputFilePathName = tgaFilePath, outputFilePathName = "", updateOnly = updateOnly)
 
+        if ".1001." in os.path.split(tgaFilePath)[-1]:
+            udimNb = 1002
+            while udimNb < 1100:
+                udimMapFilePath = tgaFilePath.replace(".1001.","."+str(udimNb)+".")
+                udimMapFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(udimMapFilePath)))
+                if os.path.isfile(udimMapFilePath_exp) == True:
+                    makeTxForArnold(inputFilePathName = udimMapFilePath, outputFilePathName = "", updateOnly = updateOnly)
+                udimNb=udimNb+1
+
     if wrongFileNodeList: 
         print ""
         print "#### {:>7}: {} file node(s) cannot be processed".format("Warning",len(wrongFileNodeList))
@@ -821,7 +887,7 @@ def getTexturesToPublish (verbose = True):
         print "#### {:>7}: One (or several) the texture path is not conform, please run the conformTexturePath() procedure first".format("Error")
         return
 
-    finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePathList[0])))
+    finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(os.path.split(mapFilePathList[0])[0])))
     print "#### {:>7}: Expanded working directory: '{}'".format("Info",os.path.normpath(finalMapdirExpand))
 
     missingFiles = 0
@@ -829,7 +895,7 @@ def getTexturesToPublish (verbose = True):
 
     for mapFilePath in mapFilePathList:
         fileExtention = mapFilePath.split(".")[-1]
-        filePath = mapFilePath.split(".")[0]
+        filePath = mapFilePath.rstrip("."+fileExtention)
         filePathTga_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(filePath+".tga")))
         filePathPsd_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(filePath+".psd")))
         filePathTx_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(filePath+".tx")))
@@ -843,9 +909,19 @@ def getTexturesToPublish (verbose = True):
                 
             if os.path.isfile(filePathPsd_exp):
                 filesToPublish.append(filePathPsd_exp)
+            # esle if the texture file is not a _col file, continue (not reported as missing)
             elif os.path.split(mapFilePath)[-1].split(".")[0].split("_")[-1] != "col":
                 continue
-                #print "#### {:>7}: File not found, skipping: {}".format("Info", filePathPsd_exp)
+            # else if the texture file has udim number, continue (not reported as missing)
+            elif len(os.path.split(mapFilePath)[-1].split("."))==3:
+                try:
+                    udimNb = int(fileName.split(".")[-2])
+                except:
+                    udimNb = 0
+                    pass        
+                if 1001 < udimNb < 1011:
+                    continue
+        
             else:
                 print "#### {:>7}: Missing file: {}".format("Error", filePathPsd_exp)
                 missingFiles = missingFiles + 1
@@ -886,7 +962,7 @@ def getTexturesToPublish (verbose = True):
     dirContent = os.listdir(texturePath_exp)
 
     for each in dirContent:
-        toIgnore =  ["Thumbs.db"]
+        toIgnore =  ["Thumbs.db",".DS_Store"]
         eachFileName = miscUtils.normPath(os.path.join(texturePath_exp,each))
         if eachFileName not in filesToPublish and os.path.isfile(eachFileName) and each not in toIgnore :
             unreferencedFileList.append(each)
@@ -896,6 +972,7 @@ def getTexturesToPublish (verbose = True):
         print "#### {:>7}: {}".format("Warning",unreferencedFileList)
 
     if missingFiles != 0:
+        print "#### {:>7}: Missing file(s): {}".format("Error",missingFiles)
         return 
 
 

@@ -4,6 +4,7 @@ from mtoa.aovs import AOVInterface
 import miscUtils
 import os
 import shutil
+import maya.mel
 
 
 
@@ -18,7 +19,7 @@ def setArnoldRenderOption(outputFormat):
     """
 
     print ""
-    print "#### {:>7}: runing shading.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
+    print "#### {:>7}: runing rendering.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
 
 
 
@@ -68,8 +69,12 @@ def setArnoldRenderOption(outputFormat):
     ### Maya settings 
     mc.setAttr("defaultResolution.pixelAspect",1)
     mc.setAttr("defaultResolution.deviceAspectRatio",aspectRatio)
-    mc.setAttr("defaultResolution.width",1920)
-    mc.setAttr("defaultResolution.height",1920/aspectRatio)
+    if aspectRatio != 1:
+        mc.setAttr("defaultResolution.width",1920)
+        mc.setAttr("defaultResolution.height",1920/aspectRatio)
+    else:
+        mc.setAttr("defaultResolution.width",1080)
+        mc.setAttr("defaultResolution.height",1080)
     mc.colorManagementPrefs(e=True, cmEnabled=False)
 
     animationStartTime =  mc.playbackOptions( animationStartTime = True , q= True)
@@ -84,11 +89,14 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultRenderGlobals.extensionPadding",4)
     mc.setAttr("defaultRenderGlobals.currentRenderer","arnold", type = "string")
 
-
+    maya.mel.eval('setMayaSoftwareFrameExt(3,0)')
 
     #arnold Settings
 
     #Image output settings
+    mc.setAttr("defaultArnoldDriver.aiTranslator","png", type = "string")
+    mc.setAttr("defaultArnoldDriver.pngFormat",0)
+
     mc.setAttr("defaultArnoldDriver.aiTranslator","exr", type = "string")    
     mc.setAttr("defaultArnoldDriver.exrCompression",3)#zip
     mc.setAttr("defaultArnoldDriver.halfPrecision",1)
@@ -98,15 +106,15 @@ def setArnoldRenderOption(outputFormat):
 
 
 
-
-
     myAOVs = AOVInterface()
     #create aovs, type = rgb
     #unUsedAovNameList = [ "dmn_lambert", "dmn_toon", "dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour"  ],"dmn_rimToon_na1_na2"
-    aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon"]
+    aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon"]
     for eachAovName in aovNameList: 
         if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
-            myAOVs.addAOV( eachAovName, aovType=5)
+            myAOVs.addAOV( eachAovName, aovType='rgb')
+    if not 'aiAOV_Z' in mc.ls( type = "aiAOV"):
+        myAOVs.addAOV( "Z", aovType='float')
 
                 
         
@@ -130,6 +138,7 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp",1)
     mc.setAttr("defaultArnoldRenderOptions.AASampleClamp",2.5)
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
+    mc.setAttr("defaultArnoldRenderOptions.skipLicenseCheck",1)
     
     print "#### info: render options are now production ready"
 
@@ -140,7 +149,7 @@ def setRenderOutputDir():
     outputImageName = ""
 
     #creates a workspace named as the davos user en the maya project path and set it
-    miscUtils.createUserWorkspace()
+    #miscUtils.createUserWorkspace()
 
     mainFilePath = mc.file(q=True, list = True)[0]
     mainFilePathElem = mainFilePath.split("/")
@@ -185,35 +194,53 @@ def createBatchRender():
         raise ValueError("#### Error: DAVOS_USER environement variable is not defined, please log to davos")
     workingFile = mc.file(q=True, list = True)[0]
     workingDir = os.path.dirname(workingFile)
-    renderBatch = miscUtils.normPath(os.path.join(workingDir,"renderBatch.bat"))
-    location = os.path.split(os.getcwd())[-1]
-    setupEnvTools = os.path.normpath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","launchers", location,"setup_env_tools.py"))
+    renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","renderBatch_help.txt"))
+    renderBatchHelp_trg = miscUtils.normPath(os.path.join(workingDir,"renderBatch_help.txt"))
+    renderBatch_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","renderBatch.bat"))
+    renderBatch_trg = miscUtils.normPath(os.path.join(workingDir,"renderBatch.bat"))
+    setupEnvTools = os.path.normpath(os.path.join(os.environ["Z2K_LAUNCH_SCRIPT"]))
+    location = miscUtils.normPath(setupEnvTools).split("/")[-2]
+    setupEnvToolsNetwork = os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","launchers",location,"setup_env_tools.py")
     renderDesc = os.environ["MAYA_RENDER_DESC_PATH"]
-    plugIn = os.environ["MAYA_PLUG_IN_PATH"]
-    renderCmd = os.path.normpath(os.path.join(os.environ["MAYA_LOCATION"],"bin","Render.exe"))
-    if os.path.isfile(renderBatch):
-        if os.path.isfile(renderBatch+".bak"): os.remove(renderBatch+".bak")
-        print "#### Info: old renderBatch.bat backuped: {}.bak".format(os.path.normpath(renderBatch))
-        os.rename(renderBatch, renderBatch+".bak")
+    mayaPlugInPath = os.environ["MAYA_PLUG_IN_PATH"]
+    arnoldPluginPath = os.environ["ARNOLD_PLUGIN_PATH"]
 
-    renderBatch_obj = open(renderBatch, "w")
-    renderBatch_obj.write("set MAYA_RENDER_DESC_PATH="+renderDesc+"\n")
-    renderBatch_obj.write("set MAYA_PLUG_IN_PATH="+renderDesc+"\n")
-    renderBatch_obj.write("set DAVOS_USER="+davosUser+"\n")
+    zombToolsPath = os.environ["ZOMB_TOOL_PATH"]
+    arnoldToolPath = os.path.normpath(zombToolsPath+"/z2k-pipeline-toolkit/maya_mods/solidangle/mtoadeploy/2016")
+
+    renderCmd = os.path.normpath(os.path.join(os.environ["MAYA_LOCATION"],"bin","Render.exe"))
+    renderCmd = '"{}"'.format(renderCmd)
+    if os.path.isfile(renderBatch_trg):
+        if os.path.isfile(renderBatch_trg+".bak"): os.remove(renderBatch_trg+".bak")
+        print "#### Info: old renderBatch.bat backuped: {}.bak".format(os.path.normpath(renderBatch_trg))
+        os.rename(renderBatch_trg, renderBatch_trg+".bak")
+    if not os.path.isfile(renderBatchHelp_trg):
+        shutil.copyfile(renderBatchHelp_src, renderBatchHelp_trg)
+        print "#### Info: renderBatch_help.txt created: {}".format(os.path.normpath(renderBatchHelp_trg))
+
+    shutil.copyfile(renderBatch_src, renderBatch_trg)
+
+    renderBatch_obj = open(renderBatch_trg, "w")
+    renderBatch_obj.write("rem #### User Info ####\n")
+    renderBatch_obj.write("rem set MAYA_RENDER_DESC_PATH="+renderDesc+"\n")
+    renderBatch_obj.write("rem set ARNOLD_PLUGIN_PATH="+arnoldPluginPath+"\n")
+    renderBatch_obj.write("rem set MAYA_PLUG_IN_PATH="+mayaPlugInPath+"\n")
+    renderBatch_obj.write("rem ###################\n\n")
+
     renderBatch_obj.write("set render="+renderCmd+"\n")
-    renderBatch_obj.write("\n")
-    renderBatch_obj.write('set option=-r arnold\n')
+    renderBatch_obj.write("set MAYA_RENDER_DESC_PATH="+arnoldToolPath+"\n\n")
+    
+    renderBatch_obj.write("set DAVOS_USER="+davosUser+"\n\n")
+
+    renderBatch_obj.write('set option=-r arnold -lic on\n')
     workingFile = os.path.normpath(workingFile)
     renderBatch_obj.write("set scene="+workingFile+"\n")
-    finalCommand = r'"C:\Python27\python.exe" "'+setupEnvTools+'" launch %render% %option% %scene%'
+    finalCommand = r'"C:\Python27\python.exe" "'+setupEnvToolsNetwork+'" launch %render% %option% %scene%'
     renderBatch_obj.write(finalCommand+"\n")
     renderBatch_obj.write("\n")
     renderBatch_obj.write("pause\n")
     renderBatch_obj.close()
-    print "#### Info: renderBatch.bat created: {}".format(os.path.normpath(renderBatch))
+    print "#### Info: renderBatch.bat created: {}".format(os.path.normpath(renderBatch_trg))
 
-    renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","renderBatch_help.txt"))
-    renderBatchHelp_trg = miscUtils.normPath(os.path.join(workingDir,"renderBatch_help.txt"))
-    if not os.path.isfile(renderBatchHelp_trg):
-        shutil.copyfile(renderBatchHelp_src, renderBatchHelp_trg)
-        print "#### Info: renderBatch_help.txt created: {}".format(os.path.normpath(renderBatchHelp_trg))
+
+

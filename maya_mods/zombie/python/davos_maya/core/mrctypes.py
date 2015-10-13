@@ -22,7 +22,7 @@ class MrcFile(DrcFile):
 
     def edit(self, openFile=False, existing=""):
 
-        self.assertMayaVersion()
+        self.library.project.assertMayaVersion(pmv.current())
         self.assertIsMayaScene()
 
         privFile = DrcFile.edit(self, openFile=False, existing=existing)
@@ -41,19 +41,7 @@ class MrcFile(DrcFile):
 
         return p
 
-    def assertMayaVersion(self):
-
-        proj = self.library.project
-
-        sMayaProjVersion = str(proj.getVar("project", "maya_version"))
-        sMayaVersion = pmv.flavor()
-
-        if sMayaVersion != sMayaProjVersion:
-            sMsg = ("{0} requires Maya {1}, but you're running Maya {2} !"
-                    .format(proj, sMayaProjVersion, sMayaVersion))
-            raise EnvironmentError(sMsg)
-
-    def mayaOpen(self, checkFile=True):
+    def mayaOpen(self, checkFile=True, **kwargs):
 
         if checkFile:
             assert self.isFile(), "File does NOT exists !"
@@ -61,7 +49,7 @@ class MrcFile(DrcFile):
 
         if self.isPublic():
             sOpenSuffix = "".join((self.versionSuffix(), '-', 'readonly'))
-            privFile, _ = self.copyToPrivateSpace(suffix=sOpenSuffix)
+            privFile, _ = self.copyToPrivateSpace(suffix=sOpenSuffix, **kwargs)
         else:
             privFile = self
 
