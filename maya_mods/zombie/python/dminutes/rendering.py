@@ -4,6 +4,7 @@ from mtoa.aovs import AOVInterface
 import miscUtils
 import os
 import shutil
+import maya.mel
 
 
 
@@ -18,7 +19,7 @@ def setArnoldRenderOption(outputFormat):
     """
 
     print ""
-    print "#### {:>7}: runing shading.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
+    print "#### {:>7}: runing rendering.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
 
 
 
@@ -68,8 +69,12 @@ def setArnoldRenderOption(outputFormat):
     ### Maya settings 
     mc.setAttr("defaultResolution.pixelAspect",1)
     mc.setAttr("defaultResolution.deviceAspectRatio",aspectRatio)
-    mc.setAttr("defaultResolution.width",1920)
-    mc.setAttr("defaultResolution.height",1920/aspectRatio)
+    if aspectRatio != 1:
+        mc.setAttr("defaultResolution.width",1920)
+        mc.setAttr("defaultResolution.height",1920/aspectRatio)
+    else:
+        mc.setAttr("defaultResolution.width",1080)
+        mc.setAttr("defaultResolution.height",1080)
     mc.colorManagementPrefs(e=True, cmEnabled=False)
 
     animationStartTime =  mc.playbackOptions( animationStartTime = True , q= True)
@@ -84,10 +89,14 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultRenderGlobals.extensionPadding",4)
     mc.setAttr("defaultRenderGlobals.currentRenderer","arnold", type = "string")
 
+    maya.mel.eval('setMayaSoftwareFrameExt(3,0)')
 
     #arnold Settings
 
     #Image output settings
+    mc.setAttr("defaultArnoldDriver.aiTranslator","png", type = "string")
+    mc.setAttr("defaultArnoldDriver.pngFormat",0)
+
     mc.setAttr("defaultArnoldDriver.aiTranslator","exr", type = "string")    
     mc.setAttr("defaultArnoldDriver.exrCompression",3)#zip
     mc.setAttr("defaultArnoldDriver.halfPrecision",1)
@@ -100,11 +109,11 @@ def setArnoldRenderOption(outputFormat):
     myAOVs = AOVInterface()
     #create aovs, type = rgb
     #unUsedAovNameList = [ "dmn_lambert", "dmn_toon", "dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour"  ],"dmn_rimToon_na1_na2"
-    aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon"]
+    aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon"]
     for eachAovName in aovNameList: 
         if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
             myAOVs.addAOV( eachAovName, aovType='rgb')
-    if not mc.ls("Z", type = "aiAOV"):
+    if not 'aiAOV_Z' in mc.ls( type = "aiAOV"):
         myAOVs.addAOV( "Z", aovType='float')
 
                 
@@ -190,6 +199,8 @@ def createBatchRender():
     renderBatch_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","renderBatch.bat"))
     renderBatch_trg = miscUtils.normPath(os.path.join(workingDir,"renderBatch.bat"))
     setupEnvTools = os.path.normpath(os.path.join(os.environ["Z2K_LAUNCH_SCRIPT"]))
+    location = miscUtils.normPath(setupEnvTools).split("/")[-2]
+    setupEnvToolsNetwork = os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","launchers",location,"setup_env_tools.py")
     renderDesc = os.environ["MAYA_RENDER_DESC_PATH"]
     mayaPlugInPath = os.environ["MAYA_PLUG_IN_PATH"]
     arnoldPluginPath = os.environ["ARNOLD_PLUGIN_PATH"]
@@ -224,7 +235,7 @@ def createBatchRender():
     renderBatch_obj.write('set option=-r arnold -lic on\n')
     workingFile = os.path.normpath(workingFile)
     renderBatch_obj.write("set scene="+workingFile+"\n")
-    finalCommand = r'"C:\Python27\python.exe" "'+setupEnvTools+'" launch %render% %option% %scene%'
+    finalCommand = r'"C:\Python27\python.exe" "'+setupEnvToolsNetwork+'" launch %render% %option% %scene%'
     renderBatch_obj.write(finalCommand+"\n")
     renderBatch_obj.write("\n")
     renderBatch_obj.write("pause\n")

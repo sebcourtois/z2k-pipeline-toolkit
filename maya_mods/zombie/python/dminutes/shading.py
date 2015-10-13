@@ -161,6 +161,10 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
             mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
             mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False)
             mc.orientConstraint( cameraName+'00:crv_trunAround','|asset',name = "asset2crvTrurnAround_orientConstraint")
+        if not mc.listConnections('defaultArnoldRenderOptions.background',connections = False):
+            myAiRaySwitch = mc.shadingNode("aiRaySwitch", asShader=True)
+            mc.setAttr(myAiRaySwitch+".camera", 0.5,0.5,0.5, type = "double3")
+            mc.connectAttr(myAiRaySwitch+".message", 'defaultArnoldRenderOptions.background', force =True)
     else:
         if "cam_shading_" in  str(mc.file(query=True, list=True, reference = True)):
             mc.currentTime(1)
@@ -172,6 +176,10 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
                     print "#### info 'referenceShadingCamera': remove camera '"+each+""
         else:
             print "#### info 'referenceShadingCamera': no 'cam_shading_*' to remove"
+        try:    
+            mc.delete(mc.listConnections('defaultArnoldRenderOptions.background',connections = False))
+        except:
+            pass
 
 
 
