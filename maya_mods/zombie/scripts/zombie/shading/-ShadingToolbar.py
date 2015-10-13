@@ -9,9 +9,11 @@ reload(rendering)
 from functools import partial
 
 
-#default shading camera
+#shading camera
 def buttonDefaultShadingCamGet(*args):
 	shading.referenceShadingCamera()
+def buttonCharacterShadingCamGet(*args):
+	shading.referenceShadingCamera(cameraName = "cam_shading_character")
 def buttonDefaultShadingCamRemove(*args):
 	shading.referenceShadingCamera( remove=True)
 
@@ -81,10 +83,13 @@ mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True
 
 # shading camera
 mc.separator(style = 'none', h = 1  )
-mc.text(label="Default Shading Camera", align='center')
+mc.text(label="Shading Camera", align='center')
 mc.flowLayout( )
-mc.button( label='Get', recomputeSize = False, width = 125, c= buttonDefaultShadingCamGet )
-mc.button( label='Remove', recomputeSize = False, width = 125, c= buttonDefaultShadingCamRemove )
+mc.button( label='Default', recomputeSize = False, width = 125, c= buttonDefaultShadingCamGet )
+mc.button( label='Characters', recomputeSize = False, width = 125, c= buttonCharacterShadingCamGet )
+mc.setParent( '..' )
+mc.flowLayout()
+mc.button( label='Remove', recomputeSize = False, width = 250, c= buttonDefaultShadingCamRemove )
 mc.setParent( '..' )
 
 #Render Settings
