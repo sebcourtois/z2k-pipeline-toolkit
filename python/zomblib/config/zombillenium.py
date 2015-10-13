@@ -131,6 +131,10 @@ class asset_lib(object):
                       "sg_step":"Model HD", },
     }
 
+    dependency_types = {
+    "texture_dep":{"location":"texture_dir", "checksum":True}
+    }
+
 class camera(object):
 
     prefix = "cam"
