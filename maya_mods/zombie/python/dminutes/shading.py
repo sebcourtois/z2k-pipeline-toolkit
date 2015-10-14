@@ -160,18 +160,26 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
             mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
             mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
             mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False)
-            mc.orientConstraint( 'cam_shading_default00:crv_trunAround','|asset',name = "asset2crvTrurnAround_orientConstraint")
+            mc.orientConstraint( cameraName+'00:crv_trunAround','|asset',name = "asset2crvTrurnAround_orientConstraint")
+        if not mc.listConnections('defaultArnoldRenderOptions.background',connections = False):
+            myAiRaySwitch = mc.shadingNode("aiRaySwitch", asShader=True)
+            mc.setAttr(myAiRaySwitch+".camera", 0.5,0.5,0.5, type = "double3")
+            mc.connectAttr(myAiRaySwitch+".message", 'defaultArnoldRenderOptions.background', force =True)
     else:
-        if cameraName in  str(mc.file(query=True, list=True, reference = True)):
+        if "cam_shading_" in  str(mc.file(query=True, list=True, reference = True)):
             mc.currentTime(1)
             for each in  mc.file(query=True, list=True, reference = True):
-                if cameraName in each:
+                if "cam_shading_" in each:
                     mc.file(each, removeReference = True)
                     mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
                     mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
-                    print "#### info 'referenceShadingCamera': remove camera '"+cameraName+""
+                    print "#### info 'referenceShadingCamera': remove camera '"+each+""
         else:
-            print "#### info 'referenceShadingCamera': no '"+cameraName+"to remove"
+            print "#### info 'referenceShadingCamera': no 'cam_shading_*' to remove"
+        try:    
+            mc.delete(mc.listConnections('defaultArnoldRenderOptions.background',connections = False))
+        except:
+            pass
 
 
 
@@ -799,7 +807,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
     if fileNodeList == "all":
         fileNodeList = mc.ls("mat_*",type ="file")
         if updateOnly == False:
-            answer = mc.confirmDialog( title='Confirm', message='You are about to generate jpg for '+str(len(fileNodeList))+' file nodes, do you want to continue?', button=['Yes','Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel' )
+            answer = mc.confirmDialog( title='Confirm', message='You are about to generate .tx for '+str(len(fileNodeList))+' file nodes, do you want to continue?', button=['Yes','Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel' )
             if answer == "Cancel": return
     elif fileNodeList == "selection":
         selectedFileList = mc.ls(selection = True, type ="file")
@@ -854,7 +862,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
 
         if ".1001." in os.path.split(tgaFilePath)[-1]:
             udimNb = 1002
-            while udimNb < 1010:
+            while udimNb < 1100:
                 udimMapFilePath = tgaFilePath.replace(".1001.","."+str(udimNb)+".")
                 udimMapFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(udimMapFilePath)))
                 if os.path.isfile(udimMapFilePath_exp) == True:

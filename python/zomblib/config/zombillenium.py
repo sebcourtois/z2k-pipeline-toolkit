@@ -65,13 +65,13 @@ class shot_lib(object):
                      "{name}_sound.wav -> animatic_sound":None,
                      "{name}_animatic.mov -> animatic_capture":None,
                     },
-                 "{step=01_previz} -> previz_dir":
+                 "{step:01_previz} -> previz_dir":
                     {
                      "export -> previz_export_dir":{},
                      "{name}_previz.ma -> previz_scene":None,
                      "{name}_previz.mov -> previz_capture":None,
                     },
-                 "{step=02_layout} -> layout_dir":
+                 "{step:02_layout} -> layout_dir":
                     {
                      "{name}_layout.ma -> layout_scene":None,
                      "{name}_layout.mov -> layout_capture":None,
@@ -124,6 +124,17 @@ class asset_lib(object):
 
     entity_dir = "{assetType}/{name}"
 
+    resources_settings = {
+    "previz_scene":{"create_sg_version":True,
+                    "sg_step":"Model Previz", },
+    "modeling_scene":{"create_sg_version":True,
+                      "sg_step":"Model HD", },
+    }
+
+    dependency_types = {
+    "texture_dep":{"location":"texture_dir", "checksum":True}
+    }
+
 class camera(object):
 
     prefix = "cam"
@@ -174,13 +185,7 @@ class charbase(object):
         },
     }
 
-    resources_settings = {
-    "previz_scene":{
-                    "create_sg_version":True,
-                    "sg_step":"Model Previz",
-                    #"upload_to_sg":"preview_image"
-                    },
-    }
+    resources_settings = asset_lib.resources_settings
 
 class character3d(charbase):
 
@@ -227,12 +232,7 @@ class prop3d(object):
         },
     }
 
-    resources_settings = {
-    "previz_scene":{
-                    "create_sg_version":True,
-                    "sg_step":"Model Previz",
-                    },
-    }
+    resources_settings = asset_lib.resources_settings
 
 class vehicle3d(prop3d):
 
@@ -272,10 +272,10 @@ class set3d(object):
     }
 
     resources_settings = {
-    "previz_scene":{
-                    "create_sg_version":True,
-                    "sg_step":"Model Previz",
-                    },
+    "previz_scene":{"create_sg_version":True,
+                    "sg_step":"Model Previz", },
+    "master_scene":{"create_sg_version":True,
+                      "sg_step":"Model HD", },
     }
 
 class environment3d(set3d):

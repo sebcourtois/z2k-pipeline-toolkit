@@ -11,7 +11,7 @@ from datetime import datetime
 
 class Z2kToolkit(object):
 
-    def __init__(self, customEnvs):
+    def __init__(self, customEnvs=None):
 
         sBaseName = "z2k-pipeline-toolkit"
         sCurDirPath = normPath(osp.dirname(osp.abspath(__file__)))
@@ -30,9 +30,11 @@ class Z2kToolkit(object):
         self.pythonPath = pathJoin(sRootPath, "python")
         self.thirdPartyPath = pathJoin(sRootPath, "third-party")
 
-        self.loadEnvs(customEnvs)
+        self.customEnvs = customEnvs
+        if customEnvs:
+            self.loadEnvs(customEnvs)
 
-    def loadEnvs(self, customEnvs):
+    def loadEnvs(self, customEnvs, replace=False):
 
         print "Tools repository"
         print " - path          : {0}".format(self.rootPath)
@@ -41,8 +43,10 @@ class Z2kToolkit(object):
 
         print "\nLoading site-defined environment:"
 
+        sConflictMode = "replace" if replace else "keep"
+
         for sVar, value in customEnvs.iteritems():
-            updEnv(sVar, value, conflict="keep")
+            updEnv(sVar, value, conflict=sConflictMode)
 
         print "\nLoading toolkit environment:"
 
@@ -64,8 +68,8 @@ class Z2kToolkit(object):
         sPy27SitePath = pathJoin(self.thirdPartyPath, "_python27_site")
         site.addsitedir(sPy27SitePath)
 
-        updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict="keep")
-        updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict="keep")
+        updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict=sConflictMode)
+        updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict=sConflictMode)
 
         os.environ["DEV_MODE_ENV"] = str(int(self.isDev))
 
@@ -102,6 +106,8 @@ class Z2kToolkit(object):
 
     def install(self):
 
+        bBeenUpdated = False
+
         # tools update
         sReleasePath = self.releasePath()
         if self.isDev:
@@ -113,28 +119,29 @@ class Z2kToolkit(object):
         if sReleasePath == sInstallPath:
             print "Source == Destination !"
         else:
-
             sAction = "Installing"
             if osp.exists(sInstallPath):
                 sAction = "Updating"
+                bBeenUpdated = True
             else:
                 os.makedirs(sInstallPath)
 
             print "\n{} Z2K Toolkit:\n'{}' -> '{}'".format(sAction, sReleasePath, sInstallPath)
 
             sOutput = self.makeCopy(sReleasePath, sInstallPath,
-                                    dryRun=False, summary=False)
-
+                                    dryRun=True, summary=False)
             if not sOutput.strip():
                 print "\nNo changes !"
-                return
+                return False
 
-            print "\n", sOutput
+            self.makeCopy(sReleasePath, sInstallPath)
 
             cleanUpPyc(sInstallPath)
 
             print ("Zombie toolkit updated, use your local to launch applications ! ({0})"
                    .format(pathJoin(sInstallPath, "launchers")))
+
+        return bBeenUpdated
 
     def release(self, location="", archive=True):
 
@@ -178,7 +185,7 @@ class Z2kToolkit(object):
         if not os.path.exists(sOscarPath):
             os.makedirs(sOscarPath)
 
-        print self.makeCopy(self.rootPath, sDistroPath, dryRun=False)
+        self.makeCopy(self.rootPath, sDistroPath)
 
     def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
 
@@ -198,12 +205,13 @@ class Z2kToolkit(object):
         sNoSummary = "/NJS" if not summary else ""
 
         sExcludeFiles = ["*.pyc", ".git*", ".*project", "*.lic", "Thumbs.db",
-                         "pull_all.bat"]
+                         "pull_all.bat", "azer ertiubh kjg.txt"]
         if not self.isDev:
             sExcludeFiles += ["setup_*.bat"]
-        sExcludeFiles = " ".join(sExcludeFiles)
 
-        cmdLineFmt = "robocopy {} /S {} /NDL /NJH /MIR *.* {} {} /XD {} .git tests /XF {}"
+        sExcludeFiles = '" "'.join(sExcludeFiles)
+
+        cmdLineFmt = 'robocopy {0} /FFT /S {1} /NDL /NJH /MIR *.* "{2}" "{3}" /XD "{4}" .git tests /XF "{5}"'
         cmdLine = cmdLineFmt.format(sDryRun,
                                     sNoSummary,
                                     sSrcRepoPath,
@@ -211,10 +219,10 @@ class Z2kToolkit(object):
                                     sOscarPath,
                                     sExcludeFiles)
 
-#        if (not dryRun) and self.isDev:
-#            print cmdLine
+        if (not dryRun) and self.isDev:
+            print cmdLine
 
-        return callCmd(cmdLine, catchStdout=True)
+        return callCmd(cmdLine, catchStdout=dryRun)
 
     def releasePath(self, location=""):
 
@@ -228,17 +236,10 @@ class Z2kToolkit(object):
 
         return pathJoin(sReleaseLoc, self.baseName)
 
-    def launchCmd(self, cmdArgs, update=True):
+    def launchCmd(self, cmdArgs):
 
         sAppPath = cmdArgs[0]
         sAppName = osp.basename(sAppPath)
-
-        try:
-            if (not self.isDev) and update:
-                self.install()
-        except Exception, err:
-            print ("\n\n!!!!!!! Failed updating toolkit: {}".format(err))
-            if raw_input("\nPress enter to continue...") == "raise": raise
 
         try:
             self.loadAppEnvs(sAppPath)
@@ -262,12 +263,37 @@ class Z2kToolkit(object):
         parser.add_argument("--update", "-upd", type=int, default=1)
         parser.add_argument("--archive", "-arc", type=int, default=1)
         parser.add_argument("--location", "-loc", type=str, default="")
+        parser.add_argument("--renew", "-rnw", type=int, default=0)
 
         ns, cmdArgs = parser.parse_known_args()
 
         sCmd = ns.command
         if sCmd == "launch":
-            self.launchCmd(cmdArgs, update=ns.update)
+            if ns.update:
+                bBeenUpdated = False
+                try:
+                    if (not self.isDev):
+                        bBeenUpdated = self.install()
+                except Exception, err:
+                    print ("\n\n!!!!!!! Failed updating toolkit: {}".format(err))
+                    if raw_input("\nPress enter to continue...") == "raise": raise
+
+                #print "bBeenUpdated", bBeenUpdated
+                if bBeenUpdated:
+                    msg = """
+#===============================================================================
+# Tools updated so let's relaunch...
+#===============================================================================
+                        """
+                    cmdArgs = [sys.executable] + sys.argv + ["-upd", "0", "-rnw", "1"]
+                    print msg
+                    subprocess.call(cmdArgs, shell=True)
+                    return
+
+            if ns.renew:
+                self.loadEnvs(self.customEnvs, replace=True)
+
+            self.launchCmd(cmdArgs)
             return
 
         if sCmd == "install":
