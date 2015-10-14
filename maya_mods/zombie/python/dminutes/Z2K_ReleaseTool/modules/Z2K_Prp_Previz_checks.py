@@ -334,74 +334,7 @@ class checkModule(object):
 
         return [toReturnB,outSkinClusterL]
 
-    def isSkinned_old(self, inObjL=[], verbose=False, *args, **kwargs):
-        """ Description: test if a skincluster is attached to the obj in inObjL
-            Return : BOOL
-            Dependencies : cmds - 
-        """
-        print "isSkinned()"
-        toReturnB = False
-        tab = "    "
-        outSkinClusterL = []
-        outSkinnedObj = []
-        debugL = []
-        if len(inObjL)>0:
-            for obj in inObjL:
-                print "   ",obj
-                if cmds.objExists(obj):
-                    # get underShapeL
-                    underShapeL = cmds.listRelatives(obj, c=True, ni=True, shapes=True)
-                    if underShapeL:
-                        print "  underShapeL: len=", len(underShapeL),underShapeL
-                        for shape in underShapeL:
-                            # print "shape=", shape
-                            # getting source objL
-                            attrib = shape +'.inMesh'
-                            if cmds.objExists(attrib):
-                                if cmds.connectionInfo(attrib, isDestination=True):
-                                    sourceL = cmds.listConnections( attrib, d=False, s=True,p=False,shapes=True )
-                                    if type(sourceL) is not list:
-                                        sourceL = [sourceL]
-                                    
-                                    # sourceL loop
-                                    for source in sourceL:
-                                        if cmds.objectType(source) in ["skinCluster"]:
-                                            print tab,"OK :", source
-                                            outSkinClusterL.append(source)
-                                            outSkinnedObj.append(obj)
-                                        else:
-                                            pass
-                                            # print tab,"BAD : connectedTo  :", source
-                                else:
-                                    pass
-                                    # print tab,"BAD : noConnection :", shape
-                                    
-                            else:
-                                pass
-                                # print tab,"BAD : noAttrib_inMesh :", shape
-                        else:
-                            pass
-                            # print tab,"BAD : noAttrib_inMesh :", shape
-                            
-                
-
-        debugL = list(set(inObjL) - set(outSkinnedObj))
-        if len(outSkinClusterL) > 0 :
-            if len(outSkinClusterL) >= len(inObjL):
-                toReturnB = True
-
-        print tab,"Total obj = {0} / {1}".format(len(outSkinClusterL),len(inObjL) )
-
-        if verbose :
-            # prints -------------------
-            self.printF("isSkinned()", st="t")
-            self.printF(toReturnB, st="r")
-            self.printF("skinned_object = {0} / {1}".format(len(outSkinClusterL),len(inObjL) ) )
-            for i in debugL:
-                self.printF("    No skin on: {0}".format(i) )
-            # --------------------------
-
-        return [toReturnB,outSkinClusterL]
+    
 
     def NodeTypeScanner(self,execptionTL = [], exceptDerived= True, specificTL=[], specificDerived=False,
         mayaDefaultObjL=["characterPartition","defaultLightList1","dynController1","globalCacheControl",
@@ -468,7 +401,7 @@ class checkModule(object):
 
         # check if asset gp and set here
 
-        baseExcludeL = ["persp","top","front","side","defaultCreaseDataSet","defaultLayer"]
+        baseExcludeL = ["persp","top","front","side","left","back","bottom","defaultCreaseDataSet","defaultLayer"]
         baseObjL = ["asset",]
         baseSetL = ["set_meshCache","set_control"]
         baseLayerL = ["control","geometry"]
@@ -511,16 +444,14 @@ class checkModule(object):
         
 
 
-        # Layers test
-        # debugD["layerL"] = {}
-        # if not sorted(baseLayerL) == sorted(layerL):
-        #     debugD["layerL"]["result"] = "PAS CONFORME"
-        #     debugD["layerL"]["Found"] = layerL
-        #     toReturnB= False
-        # else:
-        #     debugD["layerL"]["result"] = "OK"
-
-        # Layers test
+       # Layers test
+        debugD["layerL"] = {}
+        if not sorted(baseLayerL) == sorted(layerL):
+            debugD["layerL"]["result"] = "PAS CONFORME"
+            debugD["layerL"]["Found"] = layerL
+            toReturnB= False
+        else:
+            debugD["layerL"]["result"] = "OK"
 
 
         # baseCTRL test
@@ -681,7 +612,12 @@ class checkModule(object):
         # --------------------------
         return [toReturnB,createdL]
 
-    def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'],*args, **kwargs):
+     def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',
+        'Draft','DraftMotionBlur','DraftRapidMotion','Preview','PreviewCaustics','PreviewFinalGather','PreviewGlobalIllum',
+        'PreviewImrRayTracyOff','PreviewImrRayTracyOn','PreviewMotionblur','PreviewRapidMotion','Production','ProductionFineTrace',
+        'ProductionMotionblur','ProductionRapidFur','ProductionRapidHair','ProductionRapidMotion',
+        ],
+        *args, **kwargs):
         print "cleanMentalRayNodes()"
         tab = "    "
         toReturnB = True
@@ -703,6 +639,10 @@ class checkModule(object):
         # prints -------------------
         self.printF("cleanMentalRayNodes()", st="t")
         self.printF(toReturnB, st="r")
+        self.printF( "objectDeleted={0}/{1}".format( len(deletedL),len(toDeleteL)  ) )
+        for i in deletedL:
+            self.printF("- deleted: {0}".format(i))
+
         if len(failL):
             self.printF( "failL= {0}".format( failL  ) )
         # --------
@@ -1453,4 +1393,3 @@ class checkModule(object):
 
 # Z2K_Pcheck = checkModule(GUI=True )
 # Z2K_Pcheck.insertLayout( parent="" )
-

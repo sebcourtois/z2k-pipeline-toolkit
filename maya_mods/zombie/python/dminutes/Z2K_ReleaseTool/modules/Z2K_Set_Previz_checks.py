@@ -10,16 +10,15 @@
 # Comment : wip
 #
 # TO DO:
-#       - clean obj button have to be grayed if checkStructure not done (setSmoothness need good structure)
+#       - add check for BigDaddy et BigDaddy_NeutralPose
 #       - add auto remove camera if is camera du pipe
-#       x add check for BigDaddy et BigDaddy_NeutralPose and base CTR
 #       - separate interface from base class
 #       - add BigDaddy check
-#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
 #       x MentalRayCleanNodes (['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'])
 #       x check geometry all to zero
 #       x BUG check colorLum
 #       - check geometry modeling history
+#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
 #       WIP Clean ref Nodes + exception arnold etc
 #       ? Check UV smoothing/display paremeters
 #       ? delete mentalRayNode
@@ -41,7 +40,7 @@
 #       x Check if there is some keys on controlers and geometries
 #       x show bool result
 ########################################################
-# WIP
+# DERIVED SIMPLIFIED FRO CHAR PREVIZ CHECK
 
 
 
@@ -65,7 +64,7 @@ class checkModule(object):
         print "init"
         self.GUI=GUI
         self.ebg = True
-        self.DebugPrintFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Set_01_Release_debug.txt"
+        self.DebugPrintFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Release_debug.txt"
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
 
@@ -279,7 +278,6 @@ class checkModule(object):
 
         return [toReturnB,conL]
 
-
     def isSkinned(self, inObjL=[], verbose=False, printOut = False,*args,**kwargs):
         ''' Description : Get the list of the SlinClusters of the selected mesh
                 Return : List of skinClusters
@@ -331,75 +329,6 @@ class checkModule(object):
                 self.printF("    No skin on: {0}".format(i) )
             # --------------------------
 
-
-        return [toReturnB,outSkinClusterL]
-
-    def isSkinned_old(self, inObjL=[], verbose=False, *args, **kwargs):
-        """ Description: test if a skincluster is attached to the obj in inObjL
-            Return : BOOL
-            Dependencies : cmds - 
-        """
-        print "isSkinned()"
-        toReturnB = False
-        tab = "    "
-        outSkinClusterL = []
-        outSkinnedObj = []
-        debugL = []
-        if len(inObjL)>0:
-            for obj in inObjL:
-                print "   ",obj
-                if cmds.objExists(obj):
-                    # get underShapeL
-                    underShapeL = cmds.listRelatives(obj, c=True, ni=True, shapes=True)
-                    if underShapeL:
-                        print "  underShapeL: len=", len(underShapeL),underShapeL
-                        for shape in underShapeL:
-                            # print "shape=", shape
-                            # getting source objL
-                            attrib = shape +'.inMesh'
-                            if cmds.objExists(attrib):
-                                if cmds.connectionInfo(attrib, isDestination=True):
-                                    sourceL = cmds.listConnections( attrib, d=False, s=True,p=False,shapes=True )
-                                    if type(sourceL) is not list:
-                                        sourceL = [sourceL]
-                                    
-                                    # sourceL loop
-                                    for source in sourceL:
-                                        if cmds.objectType(source) in ["skinCluster"]:
-                                            print tab,"OK :", source
-                                            outSkinClusterL.append(source)
-                                            outSkinnedObj.append(obj)
-                                        else:
-                                            pass
-                                            # print tab,"BAD : connectedTo  :", source
-                                else:
-                                    pass
-                                    # print tab,"BAD : noConnection :", shape
-                                    
-                            else:
-                                pass
-                                # print tab,"BAD : noAttrib_inMesh :", shape
-                        else:
-                            pass
-                            # print tab,"BAD : noAttrib_inMesh :", shape
-                            
-                
-
-        debugL = list(set(inObjL) - set(outSkinnedObj))
-        if len(outSkinClusterL) > 0 :
-            if len(outSkinClusterL) >= len(inObjL):
-                toReturnB = True
-
-        print tab,"Total obj = {0} / {1}".format(len(outSkinClusterL),len(inObjL) )
-
-        if verbose :
-            # prints -------------------
-            self.printF("isSkinned()", st="t")
-            self.printF(toReturnB, st="r")
-            self.printF("skinned_object = {0} / {1}".format(len(outSkinClusterL),len(inObjL) ) )
-            for i in debugL:
-                self.printF("    No skin on: {0}".format(i) )
-            # --------------------------
 
         return [toReturnB,outSkinClusterL]
 
@@ -468,7 +397,7 @@ class checkModule(object):
 
         # check if asset gp and set here
 
-        baseExcludeL = ["persp","top","front","side","defaultCreaseDataSet","defaultLayer"]
+        baseExcludeL = ["persp","top","front","side","left","back","bottom","defaultCreaseDataSet","defaultLayer"]
         baseObjL = ["asset",]
         baseSetL = ["set_meshCache","set_control"]
         baseLayerL = ["control","geometry"]
@@ -512,15 +441,13 @@ class checkModule(object):
 
 
         # Layers test
-        # debugD["layerL"] = {}
-        # if not sorted(baseLayerL) == sorted(layerL):
-        #     debugD["layerL"]["result"] = "PAS CONFORME"
-        #     debugD["layerL"]["Found"] = layerL
-        #     toReturnB= False
-        # else:
-        #     debugD["layerL"]["result"] = "OK"
-
-        # Layers test
+        debugD["layerL"] = {}
+        if not sorted(baseLayerL) == sorted(layerL):
+            debugD["layerL"]["result"] = "PAS CONFORME"
+            debugD["layerL"]["Found"] = layerL
+            toReturnB= False
+        else:
+            debugD["layerL"]["result"] = "OK"
 
 
         # baseCTRL test
@@ -584,7 +511,6 @@ class checkModule(object):
             self.printF( i.ljust(10)+" : "+ str( dico["result"] ) )
             if len(dico.get("Found",""))>0:
                 self.printF("     -Found= " + str( dico.get("Found","")   ) )
-
         # --------------------------
         
 
@@ -681,7 +607,12 @@ class checkModule(object):
         # --------------------------
         return [toReturnB,createdL]
 
-    def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'],*args, **kwargs):
+    def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',
+        'Draft','DraftMotionBlur','DraftRapidMotion','Preview','PreviewCaustics','PreviewFinalGather','PreviewGlobalIllum',
+        'PreviewImrRayTracyOff','PreviewImrRayTracyOn','PreviewMotionblur','PreviewRapidMotion','Production','ProductionFineTrace',
+        'ProductionMotionblur','ProductionRapidFur','ProductionRapidHair','ProductionRapidMotion',
+        ],
+        *args, **kwargs):
         print "cleanMentalRayNodes()"
         tab = "    "
         toReturnB = True
@@ -703,6 +634,10 @@ class checkModule(object):
         # prints -------------------
         self.printF("cleanMentalRayNodes()", st="t")
         self.printF(toReturnB, st="r")
+        self.printF( "objectDeleted={0}/{1}".format( len(deletedL),len(toDeleteL)  ) )
+        for i in deletedL:
+            self.printF("- deleted: {0}".format(i))
+
         if len(failL):
             self.printF( "failL= {0}".format( failL  ) )
         # --------
@@ -795,9 +730,9 @@ class checkModule(object):
             if lay not in FilterL:
                 cmds.delete(lay)
 
-    def createDisplayLayer (self,  n="default_Name", inObjL=[], displayType=0, hideOnPlayback=0,enableOverride=True, *args, **kwargs):
-        # createDisplayLayer( state = {0:Normal state, 1:Templated, 2:Reference}
-        print "createDisplayLayer(%s,%s,%s)" % (n,displayType,hideOnPlayback)
+    def createDiplayLayer (self,  n="default_Name", inObjL=[], displayType=0, hideOnPlayback=0,enableOverride=True, *args, **kwargs):
+        # createDiplayLayer( state = {0:Normal state, 1:Templated, 2:Reference}
+        print "createDiplayLayer(%s,%s,%s)" % (n,displayType,hideOnPlayback)
 
         # create layer if doesn't exist
         if not cmds.objExists(n):
@@ -815,7 +750,7 @@ class checkModule(object):
         """ Description: Clean the display Layers by rebuilding it with the content of the corresponding sets 
                             setL <-> layerL
             Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
-            Dependencies : cmds - createDisplayLayer() - delete_displayLayer()
+            Dependencies : cmds - createDiplayLayer() - delete_displayLayer()
         """
         
         tab = "    "
@@ -836,7 +771,7 @@ class checkModule(object):
             if cmds.objExists(theSet):
                 inObjL = cmds.listConnections( theSet+".dagSetMembers",source=1)
                 if inObjL:
-                    self.createDisplayLayer ( n=paramL[0], inObjL=inObjL, displayType=paramL[1], hideOnPlayback=paramL[2])
+                    self.createDiplayLayer ( n=paramL[0], inObjL=inObjL, displayType=paramL[1], hideOnPlayback=paramL[2])
                     debugL.append(theSet + " :DONE")
                 else:
                     toReturnB= False
@@ -1215,22 +1150,22 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=4, e=True)
+        self.pBar_upd(step=1, maxValue=2, e=True)
 
         # steps
         if not self.checkBaseStructure()[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
-        if not self.checkAssetStructure( assetgpN="asset", expectedL=["grp_rig","grp_geo","grp_placeHolders"])[0]:
+        if not self.checkAssetStructure( )[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
 
-        if not self.cleanGrp_geo(theGroup="asset|grp_geo", theAttrL=["smoothLevel1","smoothLevel2"])[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.checkGrp_geo( )[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        # if not self.cleanGrp_geo(theGroup="asset|grp_geo", theAttrL=["smoothLevel1","smoothLevel2"])[0]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+        # if not self.checkGrp_geo( )[0]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
 
         # colors
         print "*btn_checkStructure:",boolResult
@@ -1243,7 +1178,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=8, e=True)
+        self.pBar_upd(step=1, maxValue=6, e=True)
 
         # steps
         if not self.cleanRefNodes()[0]:
@@ -1255,18 +1190,18 @@ class checkModule(object):
         if not self.remove_All_NS(NSexclusionL=[""], limit=100)[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
-        if not self.cleanDisplayLayerWithSet(setL=["set_meshCache","set_control"],layerL=["geometry","control"])[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        # if not self.cleanDisplayLayerWithSet(setL=["set_meshCache","set_control"],layerL=["geometry","control"])[0]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
         if not self.cleanUnUsedAnimCurves( mode="delete")[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
         if not self.cleanUnusedConstraint( mode="delete")[0]:
             boolResult = False 
         self.pBar_upd(step= 1,)
-        if not self.CleanDisconnectedNodes( mode="delete")[0]:
-            boolResult = False 
-        self.pBar_upd(step= 1,)
+        # if not self.CleanDisconnectedNodes( mode="delete")[0]:
+        #     boolResult = False 
+        # self.pBar_upd(step= 1,)
                
         # colors
         print "*btn_CleanScene:",boolResult
@@ -1279,27 +1214,27 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=10, e=True)
+        self.pBar_upd(step=1, maxValue=5, e=True)
 
         meshCacheObjL = self.getSetContent(inSetL=["set_meshCache"] )
         controlObjL = self.getSetContent(inSetL=["set_control"] )
 
         # steps
-        if not self.isSkinned(inObjL= meshCacheObjL,verbose=True)[0] :
-            boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.cleanUnusedInfluence(inObjL=meshCacheObjL)[0] :
-            boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.setSmoothness(inObjL=meshCacheObjL,mode=0)[0] :
-            boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.disableShapeOverrides(inObjL=meshCacheObjL)[0] :
-            boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.checkSRT(inObjL =meshCacheObjL, verbose=True)[0] :
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        # if not self.isSkinned(inObjL= meshCacheObjL,verbose=True)[0] :
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+        # if not self.cleanUnusedInfluence(inObjL=meshCacheObjL)[0] :
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+        # if not self.setSmoothness(inObjL=meshCacheObjL,mode=0)[0] :
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+        # if not self.disableShapeOverrides(inObjL=meshCacheObjL)[0] :
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+        # if not self.checkSRT(inObjL =meshCacheObjL, verbose=True)[0] :
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
         if not self.cleanKeys(inObjL=controlObjL,verbose=True)[0] :
             boolResult = False
         self.pBar_upd(step= 1,)
@@ -1453,4 +1388,3 @@ class checkModule(object):
 
 # Z2K_Pcheck = checkModule(GUI=True )
 # Z2K_Pcheck.insertLayout( parent="" )
-

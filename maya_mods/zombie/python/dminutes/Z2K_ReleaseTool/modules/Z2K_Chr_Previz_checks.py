@@ -10,10 +10,10 @@
 # Comment : wip
 #
 # TO DO:
-#       - add check for BigDaddy et BigDaddy_NeutralPose
+#       - add simple check layers (geometry / control) to check structure
+#       x add check for BigDaddy et BigDaddy_NeutralPose
 #       - add auto remove camera if is camera du pipe
 #       - separate interface from base class
-#       - add BigDaddy check
 #       x MentalRayCleanNodes (['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'])
 #       x check geometry all to zero
 #       x BUG check colorLum
@@ -397,7 +397,7 @@ class checkModule(object):
 
         # check if asset gp and set here
 
-        baseExcludeL = ["persp","top","front","side","defaultCreaseDataSet","defaultLayer"]
+        baseExcludeL = ["persp","top","front","side","left","back","bottom","defaultCreaseDataSet","defaultLayer"]
         baseObjL = ["asset",]
         baseSetL = ["set_meshCache","set_control"]
         baseLayerL = ["control","geometry"]
@@ -441,15 +441,15 @@ class checkModule(object):
 
 
         # Layers test
-        # debugD["layerL"] = {}
-        # if not sorted(baseLayerL) == sorted(layerL):
-        #     debugD["layerL"]["result"] = "PAS CONFORME"
-        #     debugD["layerL"]["Found"] = layerL
-        #     toReturnB= False
-        # else:
-        #     debugD["layerL"]["result"] = "OK"
+        debugD["layerL"] = {}
+        if not sorted(baseLayerL) == sorted(layerL):
+            debugD["layerL"]["result"] = "PAS CONFORME"
+            debugD["layerL"]["Found"] = layerL
+            toReturnB= False
+        else:
+            debugD["layerL"]["result"] = "OK"
 
-        # Layers test
+        
 
 
         # baseCTRL test
@@ -609,7 +609,12 @@ class checkModule(object):
         # --------------------------
         return [toReturnB,createdL]
 
-    def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'],*args, **kwargs):
+    def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',
+        'Draft','DraftMotionBlur','DraftRapidMotion','Preview','PreviewCaustics','PreviewFinalGather','PreviewGlobalIllum',
+        'PreviewImrRayTracyOff','PreviewImrRayTracyOn','PreviewMotionblur','PreviewRapidMotion','Production','ProductionFineTrace',
+        'ProductionMotionblur','ProductionRapidFur','ProductionRapidHair','ProductionRapidMotion',
+        ],
+        *args, **kwargs):
         print "cleanMentalRayNodes()"
         tab = "    "
         toReturnB = True
@@ -631,6 +636,10 @@ class checkModule(object):
         # prints -------------------
         self.printF("cleanMentalRayNodes()", st="t")
         self.printF(toReturnB, st="r")
+        self.printF( "objectDeleted={0}/{1}".format( len(deletedL),len(toDeleteL)  ) )
+        for i in deletedL:
+            self.printF("- deleted: {0}".format(i))
+
         if len(failL):
             self.printF( "failL= {0}".format( failL  ) )
         # --------
@@ -845,7 +854,6 @@ class checkModule(object):
 
         return [toReturnB,debugD]
     
-
     def cleanUnusedConstraint(self,mode = "delete",*args, **kwargs):
         """ Description: Delete All Un-connected Constraint
             Return : BOOL,debugD
@@ -1381,4 +1389,3 @@ class checkModule(object):
 
 # Z2K_Pcheck = checkModule(GUI=True )
 # Z2K_Pcheck.insertLayout( parent="" )
-

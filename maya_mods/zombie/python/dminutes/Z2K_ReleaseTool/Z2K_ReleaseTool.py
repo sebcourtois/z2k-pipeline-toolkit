@@ -10,6 +10,7 @@
 # Comment : wip
 #
 # TO DO:
+#   x add seeRef 
 #   - add type chooser (previz_ref/anim_ref/previz_scene/anim_scene) et enlevé le ref c est de toute facon pour le release
 #   x add cat chooser to the GUI, "set/env/char/prop"
 #   x handle module import style
@@ -18,6 +19,7 @@
 #   x debug/advanced mode
 #   - add save debug file
 #   - add filter ability for big menu list
+#   - ass see REF button
 ########################################################
 
 
@@ -101,7 +103,7 @@ class Z2K_ReleaseTool (object):
         return assetL
 
 
-    def openAsset(self, sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", readOnly=False, autoUnlock=True, *args,**kwargs):
+    def openAsset(self, sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", readOnly=False, autoUnlock=True, seeRef=False, *args,**kwargs):
 
         # get char from mayascene
         assetN=""
@@ -135,16 +137,25 @@ class Z2K_ReleaseTool (object):
 
 
         #  opening asset
+        if seeRef:
+            SourceAssetType = SourceAssetType.rsplit("_",1)[0] + "_ref"
+            
         path_public,path_private = Z2K.getPath(proj=self.proj, assetName=sourceAsset,pathType=SourceAssetType)
-        if readOnly :
-            path_private_toEdit = Z2K.openFileReadOnly(proj=self.proj, Path_publish_public=path_public)
+        if os.path.isfile(path_public):
+
+            if readOnly :
+                print "/readOnly"
+                path_private_toEdit = Z2K.openFileReadOnly(proj=self.proj, Path_publish_public=path_public)
+            else:
+                print "/edit"
+                path_private_toEditC = Z2K.editFile(proj=self.proj, Path_publish_public=path_public)
+                path_private_toEdit = path_private_toEditC.absPath()
+            print "path_private_toEdit=", path_private_toEdit
+
+        
+            cmds.file(path_private_toEdit,open=True,f=True)
         else:
-
-            path_private_toEditC = Z2K.editFile(proj=self.proj, Path_publish_public=path_public)
-            path_private_toEdit = path_private_toEditC.absPath()
-        print "path_private_toEdit=", path_private_toEdit
-
-        cmds.file(path_private_toEdit,open=True,f=True)
+            raise IOError("Tout le monde n'aime pas le boudin, mais cette scene n'existe pas!")
 
         return path_private_toEdit
 
@@ -257,7 +268,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
     def btn_open_Asset( self,*args,**kwargs):
         print "btn_open_Asset()"
         self.getInterfaceValues()
-        self.sourceAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,autoUnlock=False)
+        self.sourceAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=False,autoUnlock=False, seeRef=False)
         cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
 
@@ -265,8 +276,16 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
     def btn_open_Asset_readOnly(self,*args, **kwargs):
         print "btn_open_Asset_readOnly()"
         self.getInterfaceValues()
-        self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=True,autoUnlock=False)
+        self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=True,autoUnlock=False, seeRef=False)
+        cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
+        cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
 
+    def btn_see_Ref(self,*args, **kwargs):
+        print "btn_see_Ref()"
+        self.getInterfaceValues()
+        self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=True,autoUnlock=False, seeRef=True)
+        cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
+        cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
 
     def btn_release_Asset( self,*args,**kwargs):
         print "btn_release_Asset()"
@@ -279,6 +298,9 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         except Exception,err:
             msg= str(err)
             cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
+
+    
+
 
     # --------------Window-----------------------------------------------
     def deleteUIandpref(self,*args, **kwargs):
@@ -344,9 +366,11 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         self.BsourceAssetType = cmds.textField("sourceAssetType",text=self.sourceAssetType, w=85,manage=1)
         cmds.setParent("..")
         
-        cmds.rowLayout(nc=4,adj=1,manage = 1)
-        self.Bopen_Asset = cmds.button("EDIT ASSET",ann="EDIT ASSET",c= self.btn_open_Asset,w=round(self.width/2)-10)
-        self.Bopen_Asset_ReadOnly = cmds.button("SEE ASSET",ann="SEE ASSET",c= self.btn_open_Asset_readOnly,w=round(self.width/2)-10) 
+        cmds.rowLayout(nc=4,adj=3,manage = 1)
+        self.Bopen_Asset = cmds.button("EDIT ASSET",ann="EDIT ASSET",c= self.btn_open_Asset,w=round(self.width/3)-10)
+        self.Bopen_Asset_ReadOnly = cmds.button("SEE ASSET",ann="SEE ASSET",c= self.btn_open_Asset_readOnly,w=round(self.width/3)-10) 
+        self.Bsee_Ref_ReadOnly = cmds.button("SEE REF",ann="SEE REF",c= self.btn_see_Ref,w=round(self.width/3)-10,enable=1) 
+
         cmds.setParent("..")
         
         cmds.setParent("..")
