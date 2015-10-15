@@ -5,6 +5,7 @@ import os
 import string 
 import subprocess
 import miscUtils
+import modeling
 
 
 def connectedToSeveralSG(myNode = ""):
@@ -987,9 +988,16 @@ def createShadingGroup():
 
     answer =  mc.confirmDialog( title='Confirm', message="You are about to create a new shading group for all the 'geo_' object in the scene, all the existing shaers will be disconnected. Do you want to continue?", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
     if answer == "Cancel": return
+    wrongGeoList = modeling.checkMeshNamingConvention()
+    if wrongGeoList: raise ValueError("#### Error: 'geo_' wrong naming convention")
 
     for each in transformMeshList:
-        my_sgr = mc.sets(renderable=True,noSurfaceShader=True,empty=True, name=each.split("|")[-1].replace("geo_","sgr_"))
+        myName = each.split("|")[-1].lstrip("geo_")
+        mynameSplit = myName.split("_")
+        if len(mynameSplit)==2:
+            myName = mynameSplit[0]+mynameSplit[1].capitalize()
+        myName = "sgr_"+myName
+        my_sgr = mc.sets(renderable=True,noSurfaceShader=True,empty=True, name=)
         mc.sets(each, forceElement=my_sgr)
     print "#### {:>7}:  {} shading groups created, assigned and conformed".format("Info",len(transformMeshList))
     conformPreviewShadingTree( shadEngineList = "all", verbose = False, selectWrongShadEngine = False)
