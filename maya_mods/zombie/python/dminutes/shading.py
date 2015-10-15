@@ -987,9 +987,11 @@ def createShadingGroup():
     transformMeshList =     miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
 
     answer =  mc.confirmDialog( title='Confirm', message="You are about to create a new shading group for all the 'geo_' object in the scene, all the existing shaers will be disconnected. Do you want to continue?", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
-    if answer == "Cancel": return
+    if answer == "Cancel": 
+        return
     wrongGeoList = modeling.checkMeshNamingConvention()
-    if wrongGeoList: raise ValueError("#### Error: 'geo_' wrong naming convention")
+    if wrongGeoList:
+        raise ValueError("#### Error: 'geo_' wrong naming convention")
 
     for each in transformMeshList:
         myName = each.split("|")[-1].lstrip("geo_")
@@ -997,7 +999,7 @@ def createShadingGroup():
         if len(mynameSplit)==2:
             myName = mynameSplit[0]+mynameSplit[1].capitalize()
         myName = "sgr_"+myName
-        my_sgr = mc.sets(renderable=True,noSurfaceShader=True,empty=True, name=)
+        my_sgr = mc.sets(renderable=True,noSurfaceShader=True,empty=True, name=myName)
         mc.sets(each, forceElement=my_sgr)
     print "#### {:>7}:  {} shading groups created, assigned and conformed".format("Info",len(transformMeshList))
     conformPreviewShadingTree( shadEngineList = "all", verbose = False, selectWrongShadEngine = False)
