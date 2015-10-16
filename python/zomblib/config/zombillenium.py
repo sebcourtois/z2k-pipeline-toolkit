@@ -26,6 +26,7 @@ class project(object):
         "asset_lib",
         "shot_lib",
         "output_lib",
+        "misc_lib",
         )
 
     child_sections = libraries
@@ -100,6 +101,15 @@ class output_lib(object):
     public_path_envars = ('ZOMB_OUTPUT_PATH',)
     private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
+
+class misc_lib(object):
+
+    dir_name = "misc"
+    public_path = join(expand('$ZOMB_MISC_LOC'), "{proj.dir_name}", dir_name)
+    private_path = join(project.private_path, dir_name)
+
+    public_path_envars = ('ZOMB_MISC_PATH',)
+    private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
 class asset_lib(object):
 

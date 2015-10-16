@@ -71,7 +71,8 @@ class Z2kToolkit(object):
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict=sConflictMode)
         updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict=sConflictMode)
 
-        os.environ["DEV_MODE_ENV"] = str(int(self.isDev))
+        if "DEV_MODE_ENV" not in os.environ:
+            os.environ["DEV_MODE_ENV"] = str(int(self.isDev))
 
     def loadAppEnvs(self, sAppPath):
 
