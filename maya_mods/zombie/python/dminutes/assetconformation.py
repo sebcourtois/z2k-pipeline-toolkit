@@ -66,7 +66,7 @@ def createSubdivSets():
     """
     print ""
     print "#### info: exectute 'createSubdivsets()'"
-    subdivSets = mc.ls("set_*", type = "objectSet")
+    subdivSets = mc.ls("set_subdiv_*", type = "objectSet")
     subdivPartitions = mc.ls("par_*", type = "partition")
     existingGeo = mc.ls("geo_*", type = "transform")
     subdivSetsInitList = ["set_subdiv_init","set_subdiv_0","set_subdiv_1","set_subdiv_2","set_subdiv_3"]
