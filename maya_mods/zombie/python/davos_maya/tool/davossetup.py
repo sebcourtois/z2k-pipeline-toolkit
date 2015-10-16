@@ -36,10 +36,15 @@ class DavosSetup(ToolSetup):
     def afterBuildingMenu(self):
         ToolSetup.afterBuildingMenu(self)
         pmu.putEnv("DAVOS_FILE_CHECK", "1")
+        pm.colorManagementPrefs(e=True, cmEnabled=False)
 
     def beforeReloading(self, *args):
-        ToolSetup.beforeReloading(self, *args)
         file_browser.kill()
+        ToolSetup.beforeReloading(self, *args)
+
+    def onPreFileNewOrOpened(self, *args):
+        ToolSetup.onPreFileNewOrOpened(self, *args)
+        pm.colorManagementPrefs(e=True, cmEnabled=False)
 
 #    def onSceneOpened(self, *args):
 #        ToolSetup.onSceneOpened(self, *args)

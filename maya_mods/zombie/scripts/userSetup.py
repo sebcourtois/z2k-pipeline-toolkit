@@ -5,7 +5,6 @@ import pymel.mayautils
 
 def onStartup():
 
-
 	import stxScriptMenu
 	stxScriptMenu.install()
 

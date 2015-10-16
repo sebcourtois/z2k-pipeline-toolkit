@@ -126,9 +126,9 @@ class asset_lib(object):
 
     resources_settings = {
     "previz_scene":{"create_sg_version":True,
-                    "sg_step":"Model Previz", },
+                    "sg_steps":("Model Previz",), },
     "modeling_scene":{"create_sg_version":True,
-                      "sg_step":"Model HD", },
+                      "sg_steps":("Model HD", "Surfacing"), },
     }
 
     dependency_types = {
@@ -186,12 +186,15 @@ class charbase(object):
     }
 
     resources_settings = asset_lib.resources_settings
+    dependency_types = asset_lib.dependency_types
 
 class character3d(charbase):
 
     prefix = "chr"
     aliases = (prefix, "Character 3D",)
     assetType = prefix
+
+
 
 class character2d(charbase):
 
@@ -273,9 +276,9 @@ class set3d(object):
 
     resources_settings = {
     "previz_scene":{"create_sg_version":True,
-                    "sg_step":"Model Previz", },
+                    "sg_steps":("Model Previz",), },
     "master_scene":{"create_sg_version":True,
-                      "sg_step":"Model HD", },
+                    "sg_steps":("Model HD", "Surfacing"), },
     }
 
 class environment3d(set3d):
