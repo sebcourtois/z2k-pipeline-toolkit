@@ -164,6 +164,7 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
         if not mc.listConnections('defaultArnoldRenderOptions.background',connections = False):
             myAiRaySwitch = mc.shadingNode("aiRaySwitch", asShader=True)
             mc.setAttr(myAiRaySwitch+".camera", 0.5,0.5,0.5, type = "double3")
+            mc.setAttr(myAiRaySwitch+".refraction", 0.5,0.5,0.5, type = "double3")
             mc.connectAttr(myAiRaySwitch+".message", 'defaultArnoldRenderOptions.background', force =True)
     else:
         if "cam_shading_" in  str(mc.file(query=True, list=True, reference = True)):
