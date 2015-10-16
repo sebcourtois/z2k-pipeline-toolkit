@@ -40,6 +40,6 @@ class shot_lib(zomb.shot_lib):
 class output_lib(zomb.output_lib):
     pass
 
-
-
+class misc_lib(zomb.misc_lib):
+    pass
 
