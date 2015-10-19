@@ -10,6 +10,7 @@
 # Comment : wip
 #
 # TO DO:
+#   - add comment from version.
 #   x add seeRef 
 #   - add type chooser (previz_ref/anim_ref/previz_scene/anim_scene) et enlevé le ref c est de toute facon pour le release
 #   x add cat chooser to the GUI, "set/env/char/prop"

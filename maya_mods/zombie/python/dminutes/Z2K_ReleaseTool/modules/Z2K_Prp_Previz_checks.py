@@ -10,6 +10,11 @@
 # Comment : wip
 #
 # TO DO:
+#       - if set_subdiv_* exists - apply setSubdiv else delete setSubdiv() 
+#                   from dminutes import assetconformation
+#                   reload(assetconformation)
+#                   assetconformation.setSubdiv()
+
 #       - clean obj button have to be grayed if checkStructure not done (setSmoothness need good structure)
 #       - add auto remove camera if is camera du pipe
 #       x add check for BigDaddy et BigDaddy_NeutralPose and base CTR
@@ -51,6 +56,8 @@ import maya.mel as mel
 from functools import partial
 import inspect
 
+import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
+reload(Batch_CONFIG)
 from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
 
 print "DEBUGFILE=", DEBUGFILE

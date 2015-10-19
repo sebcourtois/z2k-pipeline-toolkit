@@ -1,6 +1,9 @@
 import sys,os
 import dminutes.Z2K_ReleaseTool.modules.Z2K_ASSET_replacer as Z2K_replaceA
 reload(Z2K_replaceA)
+
+import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
+reload(Batch_CONFIG)
 from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
 
 print "DEBUGFILE=", DEBUGFILE
