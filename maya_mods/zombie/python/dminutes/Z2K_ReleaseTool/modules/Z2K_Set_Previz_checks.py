@@ -49,8 +49,11 @@ import maya.cmds as cmds
 import maya.mel as mel
 from functools import partial
 import inspect
+from dminutes.Batchator.bin.ROOTPATH import *
 
+from dminutes.Batchator.bin.ROOTPATH import *
 
+print "DEBUGFILE=", DEBUGFILE
 
 class checkModule(object):
     name = "AssetPreviz_Module"
@@ -64,7 +67,7 @@ class checkModule(object):
         print "init"
         self.GUI=GUI
         self.ebg = True
-        self.DebugPrintFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Release_debug.txt"
+        self.DebugPrintFile = DEBUGFILE
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
 
@@ -494,7 +497,7 @@ class checkModule(object):
             childL = cmds.listRelatives(assetgpN,  c=True)
             print tab,expect_str, childL
             debugD[expect_str] = {}
-            if sorted(expectedL) == sorted(childL):
+            if  sorted(childL) in [ sorted(expectedL), sorted( expectedL[:-1] ) ] :
                 toReturnB = True
                 debugD[ expect_str ]["result"] = "OK"
                 print tab, toReturnB

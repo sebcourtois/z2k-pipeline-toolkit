@@ -50,6 +50,10 @@ import maya.mel as mel
 from functools import partial
 import inspect
 
+from dminutes.Batchator.bin.ROOTPATH import *
+
+print "DEBUGFILE=", DEBUGFILE
+
 
 
 class checkModule(object):
@@ -64,7 +68,7 @@ class checkModule(object):
         print "init"
         self.GUI=GUI
         self.ebg = True
-        self.DebugPrintFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Release_debug.txt"
+        self.DebugPrintFile = DEBUGFILE
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
 
@@ -522,6 +526,7 @@ class checkModule(object):
         """ check if the attrib of smooth are present
         """
         print("checkGrp_geo()")
+        # OLD PERIMED
         toCreateL = []
         toReturnB = True
         if cmds.objExists(theGroup):
@@ -548,7 +553,7 @@ class checkModule(object):
 
     def cleanGrp_geo (self, theGroup="asset|grp_geo",theAttrL= ["smoothLevel1","smoothLevel2"] ,assetType="previz", *args, **kwargs):
         print "cleanGrp_geo()"
-        
+        # OLD PERIMED
         erroredL = []
         createdL= []
         toReturnB = True
@@ -1151,7 +1156,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=4, e=True)
+        self.pBar_upd(step=1, maxValue=2, e=True)
 
         # steps
         if not self.checkBaseStructure()[0]:
@@ -1161,12 +1166,12 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
-        if not self.cleanGrp_geo(theGroup="asset|grp_geo", theAttrL=["smoothLevel1","smoothLevel2"])[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.checkGrp_geo( )[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        # if not self.cleanGrp_geo(theGroup="asset|grp_geo", theAttrL=["smoothLevel1","smoothLevel2"])[0]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+        # if not self.checkGrp_geo( )[0]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
 
         # colors
         print "*btn_checkStructure:",boolResult

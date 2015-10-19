@@ -51,6 +51,10 @@ import maya.mel as mel
 from functools import partial
 import inspect
 
+from dminutes.Batchator.bin.ROOTPATH import *
+
+print "DEBUGFILE=", DEBUGFILE
+
 
 
 class checkModule(object):
@@ -65,7 +69,7 @@ class checkModule(object):
         print "init"
         self.GUI=GUI
         self.ebg = True
-        self.DebugPrintFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Prp_01_Release_debug.txt"
+        self.DebugPrintFile = DEBUGFILE
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
 
@@ -612,7 +616,7 @@ class checkModule(object):
         # --------------------------
         return [toReturnB,createdL]
 
-     def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',
+    def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',
         'Draft','DraftMotionBlur','DraftRapidMotion','Preview','PreviewCaustics','PreviewFinalGather','PreviewGlobalIllum',
         'PreviewImrRayTracyOff','PreviewImrRayTracyOn','PreviewMotionblur','PreviewRapidMotion','Production','ProductionFineTrace',
         'ProductionMotionblur','ProductionRapidFur','ProductionRapidHair','ProductionRapidMotion',
