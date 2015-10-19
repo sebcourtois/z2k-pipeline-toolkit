@@ -14,7 +14,7 @@ ENVS = {
         "ZOMB_MISC_LOC":"\\\\ZOMBIWALK\\Projects",
         "ZOMB_PRIVATE_LOC":"\\\\ZOMBIWALK\\Projects",
 
-        "ZOMB_TOOL_PATH":"\\\\ZOMBIWALK\\Z2K_RnD\\tool",
+        "ZOMB_TOOL_PATH":"\\\\ZOMBIWALK\\Z2K_RnD\\tooltest",
         "DAVOS_INIT_PROJECT":"zombtest",
         }
 
