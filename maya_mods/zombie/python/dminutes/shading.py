@@ -257,7 +257,6 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
                             udimNb=udimNb+1
                     if inVerbose == True: print "#### Info: '{0:^24}' file and path correct :'{1}'".format(eachFileNode,mapFilePath)  
                     outMapPathForPublishList.append(mapFilePath)
-                    outFileNodeForPublishList.append(eachFileNode)
                 continue
             else:
                 if inVerbose == True: print "#### Warning: '{0:^24}' the file :'{1}' doesn't exist".format(eachFileNode,mapFilePath)       
@@ -313,10 +312,9 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         if inVerbose == True: 
             mc.select(outWrongFileNodeList)
             print "#### Info: the wrong file nodes have been selected"
-
-    if returnMapPath == False:
+    if not returnMapPath:
         return outWrongFileNodeList if outWrongFileNodeList else  None
-    elif returnMapPath and outWrongFileNodeList:
+    elif returnMapPath and (not outWrongFileNodeList):
         return outMapPathForPublishList if outMapPathForPublishList else  None
     else:
         return None
@@ -884,7 +882,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
 
 def getTexturesToPublish (verbose = True):
     mapFilePathList = conformTexturePath(inVerbose = False, inConform = False, returnMapPath = True)
-    print ""
+    print "mapFilePathList "+str(mapFilePathList)
     print "#### {:>7}: runing shading.getTexturesToPublish(verbose = {})".format("Info", verbose)
     if not mapFilePathList:
         print "#### {:>7}: One (or several) the texture path is not conform, please run the conformTexturePath() procedure first".format("Error")
