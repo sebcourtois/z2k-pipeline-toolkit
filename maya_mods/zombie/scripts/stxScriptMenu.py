@@ -389,9 +389,29 @@ def addMenuItems(sItemDirPath, parentMenu, oMenuConf, **kwargs):
                             dividerLabel=sMenuLabel, bld=True, enable=False)
 
     for sScriptName, sScriptPath, sSourceType in sMenuItemParamsList:
-        sMenuLabel = labelify(sScriptName)
+
         sCmd = MENU_CMD_FORMAT.format(sScriptPath, sSourceType, sScriptName)
-        pm.menuItem(parent=parentMenu, label=sMenuLabel, command=sCmd, ann=sScriptPath)
+        sFullName = parentMenu.name() + "|" + sScriptName
+
+        sItemName = sScriptName
+        sItemLabel = labelify(sScriptName)
+        if pm.menuItem(sFullName, q=True, exists=True):
+            for i in xrange(1, 10):
+                sNameExt = "_" + str(i)
+                sFullName += sNameExt
+                if not pm.menuItem(sFullName, q=True, exists=True):
+                    sItemName += sNameExt
+                    if "/scripts/" in sScriptPath.lower():
+                        p = re.split("/scripts/", sScriptPath,
+                                             flags=re.IGNORECASE)[0]
+                        sLabelExt = " ( {} )".format(ospath.basename(p))
+                    else:
+                        sLabelExt = " ( {} )".format(i)
+                    sItemLabel += sLabelExt
+                    break
+
+        pm.menuItem(sItemName, parent=parentMenu, label=sItemLabel,
+                    command=sCmd, ann=sScriptPath)
 
     for sDirName in sDirNameList:
         sNextDirPath = pathJoin(sItemDirPath, sDirName)
