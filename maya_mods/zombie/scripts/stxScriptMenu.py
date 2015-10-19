@@ -35,7 +35,7 @@ CREATED_MENUS = []
 sExcludeDirs = ["pymel"]
 
 DEFAULT_SECTION = {
-"menu_priority": "1",
+"menu_order": "1",
 }
 
 #===============================================================================
@@ -230,7 +230,8 @@ def iterBuildMenuArgs():
 
         sScriptsPath = normpath(sScriptsPath)
 
-        if (sScriptsPath == sProjectPath) or ("Autodesk" in sScriptsPath) or (sScriptsPath in visitedPathList):
+        if ((sScriptsPath == sProjectPath) or ("Autodesk" in sScriptsPath)
+            or (sScriptsPath in visitedPathList)):
             continue
 
         if bPrintPathWalk:
@@ -265,7 +266,7 @@ def iterBuildMenuArgs():
                 sMenuCfgFile = pathJoin(sCurDirPath, sFileNames[i])
                 oMenuConf.read(sMenuCfgFile)
 
-                iPriority = oMenuConf.getint("general", "menu_priority")
+                iPriority = oMenuConf.getint("general", "menu_order")
 
                 yield iPriority, sCurDirPath, oMenuConf
 
@@ -285,8 +286,13 @@ def install(*args):
     MAYA_WIN_NAME = pm.mel.eval('$tempMelVar=$gMainWindow')
     MENU_CMD_FORMAT = makeImportString(__name__) + "stxScriptMenu.execScript('{0}', '{1}', '{2}')"
 
-    for _, sMenuDirPath, oMenuConf in sorted(iterBuildMenuArgs(), key=lambda x: x[0], reverse=True):
+    for _, sMenuDirPath, oMenuConf in sorted(iterBuildMenuArgs(), key=lambda x: x[0]):
         buildMenu(sMenuDirPath, oMenuConf)
+
+    for uiScriptMenu in CREATED_MENUS:
+        #Create the 'Rebuild This Menu' menu item
+        pm.menuItem(divider=True, parent=uiScriptMenu)
+        pm.menuItem(parent=uiScriptMenu, label="Rebuild", command=install)
 
 def buildMenu(sMenuDirPath, oMenuConf):
 
@@ -301,21 +307,18 @@ def buildMenu(sMenuDirPath, oMenuConf):
 
     #If the MEL menu already exists, delete it
     if pm.menu(sMenuName, q=True, exists=True):
-        pm.warning ('Menu already exists: "{0}"'.format(sMenuLabel))
-        return False
+        print "merging '{}' menu from '{}'".format(sMenuLabel, sMenuDirPath)
+        uiScriptMenu = pm.uitypes.PyUI(sMenuName)
+    else:
+        print "creating '{}' menu from '{}'".format(sMenuLabel, sMenuDirPath)
 
-    print 'creating "{0}" menu from "{1}"'.format(sMenuLabel, sMenuDirPath)
-
-    #Create the MEL menu
-    uiScriptMenu = pm.menu(sMenuName, parent=MAYA_WIN_NAME, tearOff=True, aob=True, label=sMenuLabel)
-    CREATED_MENUS.append(uiScriptMenu)
+        #Create the MEL menu
+        uiScriptMenu = pm.menu(sMenuName, parent=MAYA_WIN_NAME, tearOff=True,
+                               aob=True, label=sMenuLabel)
+        CREATED_MENUS.append(uiScriptMenu)
 
     #Call the proc that will build the menu
     addMenuItems(sMenuDirPath, uiScriptMenu, oMenuConf)
-
-    #Create the 'Rebuild This Menu' menu item
-    pm.menuItem(divider=True, parent=uiScriptMenu)
-    pm.menuItem(parent=uiScriptMenu, label="Rebuild", command=install)
 
     #print '"{0}" menu created successfully.'.format( uiScriptMenu )
 
@@ -365,21 +368,30 @@ def addMenuItems(sItemDirPath, parentMenu, oMenuConf, **kwargs):
 
     if bSubMenu:
 
-        sMenuLabel = labelify(ospath.basename(sItemDirPath))
+        sMenuName = ospath.basename(sItemDirPath)
+        sMenuLabel = labelify(sMenuName)
+        sFullName = parentMenu.name() + "|" + sMenuName
 
         if isinstance(parentMenu, pm.ui.Menu):
-            parentMenu = pm.menuItem(parent=parentMenu
-                                    , subMenu=True
-                                    , tearOff=True
-                                    , allowOptionBoxes=False
-                                    , label=sMenuLabel)
+
+            if pm.menuItem(sFullName, q=True, exists=True):
+                parentMenu = pm.ui.CommandMenuItem(sFullName)
+            else:
+                parentMenu = pm.menuItem(sMenuName,
+                                         parent=parentMenu,
+                                         subMenu=True,
+                                         tearOff=True,
+                                         allowOptionBoxes=False,
+                                         label=sMenuLabel)
         else:
-            pm.menuItem(divider=True, parent=parentMenu, label=sMenuLabel, bld=True, enable=False)
+            if not pm.menuItem(sFullName, q=True, exists=True):
+                pm.menuItem(sMenuName, divider=True, parent=parentMenu,
+                            dividerLabel=sMenuLabel, bld=True, enable=False)
 
     for sScriptName, sScriptPath, sSourceType in sMenuItemParamsList:
         sMenuLabel = labelify(sScriptName)
         sCmd = MENU_CMD_FORMAT.format(sScriptPath, sSourceType, sScriptName)
-        pm.menuItem(parent=parentMenu, label=sMenuLabel, command=sCmd)
+        pm.menuItem(parent=parentMenu, label=sMenuLabel, command=sCmd, ann=sScriptPath)
 
     for sDirName in sDirNameList:
         sNextDirPath = pathJoin(sItemDirPath, sDirName)
