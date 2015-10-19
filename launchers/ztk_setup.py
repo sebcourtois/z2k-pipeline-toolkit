@@ -160,13 +160,16 @@ class Z2kToolkit(object):
             os.makedirs(sDistroPath)
 
         print "\n{} toolkit release:\n'{}' -> '{}'".format(sAction, self.rootPath, sDistroPath)
+        res = raw_input("Continue ? (yes/no)")
+        if res == "no":
+            return False
 
         if bUpdating:
             sOutput = self.makeCopy(self.rootPath, sDistroPath,
                                     dryRun=True, summary=False)
             if not sOutput.strip():
                 print "\nNo changes !"
-                return
+                return True
 
             if archive:
                 sDate = datetime.now().strftime("%Y%m%d-%H%M")
@@ -186,7 +189,7 @@ class Z2kToolkit(object):
         if not os.path.exists(sOscarPath):
             os.makedirs(sOscarPath)
 
-        self.makeCopy(self.rootPath, sDistroPath)
+        return self.makeCopy(self.rootPath, sDistroPath)
 
     def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
 
