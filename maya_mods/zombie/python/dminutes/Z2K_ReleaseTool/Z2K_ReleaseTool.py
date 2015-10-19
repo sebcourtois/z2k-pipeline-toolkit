@@ -49,7 +49,7 @@ class Z2K_ReleaseTool (object):
     
     version = "_v010"            
     name = "Z2K_ReleaseTool"
-    categoryL = ["chr","prp", "set"]
+    categoryL = ["chr","prp", "set","c2d","env","vhl","cam"]
 
     basePath = [x for x in os.environ.get("MAYA_MODULE_PATH").split(";") if "maya_mods" in x][0]
     upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_RELEAZE_LOGO_A1.bmp"

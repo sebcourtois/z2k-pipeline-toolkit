@@ -130,7 +130,7 @@ class Z2K_ASSET_replacer(object):
         return outBool,[msg,icon]
 
 
-    def publishScene(self, pathType="scene_previz", comment="First_publish_test_RockTheCasbah", sgTask="Rig", *args, **kwargs):
+    def publishScene(self, pathType="scene_previz", comment="Auto_Release_rockTheCasbah", sgTask="Rig", *args, **kwargs):
         print 'publishScene()'
 
         PublishedFile_absPath = "None"
@@ -157,14 +157,14 @@ class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
     upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_REPLACE_LOGO_A1.bmp"
 
 
-    def __init__(self, theProject="zombtest", currentSceneP="", replacingSceneP="",*args, **kwargs):
+    def __init__(self, theProject="zombtest", currentSceneP="", replacingSceneP="",sgTask="sgTask",*args, **kwargs):
         Z2K_ASSET_replacer.__init__(self, theProject=theProject, currentSceneP=currentSceneP, replacingSceneP=replacingSceneP)
 
         print self.name,self.version
         self.cf = self.name + self.version
         print "theProject=", self.theProject
-        self.pComment = "First_publish_RockTheCasbah"
-
+        self.pComment = "Auto_Release_rockTheCasbah"
+        self.sgTask = sgTask
         
     def getInterfaceValues(self,*args, **kwargs):
         print "getInterfaceValues()"
@@ -205,7 +205,7 @@ class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
         print "btn_publishScene()"
         self.getInterfaceValues()
         try: 
-            PublishedFile_absPath = self.publishScene(pathType="scene_previz", comment=self.pComment, sgTask="Rig")
+            PublishedFile_absPath = self.publishScene(pathType="scene_previz", comment=self.pComment, sgTask=self.sgTask)
             cmds.confirmDialog(title= "PUBLISH info",message="PUBLISH DONE :\r"+PublishedFile_absPath, button="OK", messageAlign="center", icon="information" )
         
         except Exception,err:
@@ -251,8 +251,11 @@ class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
         self.BreplaceScene = cmds.button("replace_current_Scene",c= self.btn_replaceScene)
         self.BPublishScene = cmds.button("PUBLISH",c= self.btn_publishScene)
         
-
+        cmds.separator()
+        cmds.text("ShotGun Task: {0}".format(self.sgTask),align="left",)
+        cmds.rowLayout(nc=2,adj=2)
         cmds.text("Comment:",align="left",)
+        
         self.BComment = cmds.textField(text= self.pComment,font="obliqueLabelFont")
         cmds.setParent("..")
 
