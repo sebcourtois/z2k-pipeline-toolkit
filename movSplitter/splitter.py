@@ -76,7 +76,7 @@ def convertTcToSeconds(in_Tc, in_fps=FPS, in_iHoursOffset=0, in_iMinutesOffset=0
 
 	return hours * 3600 + minutes * 60 + seconds + frames/FPS
 
-def parseEdl(in_sEdlPath):
+def parseEdl(in_sEdlPath, in_sSeqFilter=None):
 	f = None
 	lines = []
 	shots = []
@@ -96,6 +96,8 @@ def parseEdl(in_sEdlPath):
 
 	tcRegEx = re.compile("(\d{3})\s+GEN\s+V\s+C\s+\d{2}:\d{2}:\d{2}:\d{2}\s+\d{2}:\d{2}:\d{2}:\d{2}\s+(\d{2}:\d{2}:\d{2}:\d{2})\s+(\d{2}:\d{2}:\d{2}:\d{2})")
 	shotRegEx = re.compile(".*FROM CLIP NAME:  (SQ\d{4}[a-zA-Z]?)\s\s(P\d{4}[a-zA-Z]?)")
+	seqRegEx = re.compile(".*FROM CLIP NAME:  (SQ\d{4}[a-zA-Z]?)")
+	
 
 	fileLength = len(lines)
 
@@ -103,12 +105,16 @@ def parseEdl(in_sEdlPath):
 		matchObj = tcRegEx.match(lines[counter])
 		if matchObj:
 			shotMatchObj = shotRegEx.match(lines[counter+1])
+			
 			if shotMatchObj:
 				shots.append({"index":matchObj.group(1).strip(), "sequence":shotMatchObj.group(1).strip(), "shot":shotMatchObj.group(2).strip(), "start":matchObj.group(2).strip(), "end":matchObj.group(3).strip()})
 			else:
-				print "Error reading shot info for line {0} ({1})".format(counter, lines[counter+1].replace('\n', ''))
-				return None
-
+				seqMatchObj = seqRegEx.match(lines[counter+1])
+				if seqMatchObj:
+					shots.append({"index":matchObj.group(1).strip(), "sequence":seqMatchObj.group(1).strip(), "shot":'P0000A', "start":matchObj.group(2).strip(), "end":matchObj.group(3).strip()})
+				else:
+					print "Error reading shot info for line {0} ({1})".format(counter, lines[counter+1].replace('\n', ''))
+					return None
 	return shots
 
 def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideName=None, doSplit=True, exportCsv=True, in_sShotSuffix="", in_bExportInShotFolders=True):
@@ -128,17 +134,14 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
 	lenShots = len(shots)
 	counter = 1
 	for shot in shots:
+		sequenceCode = shot["sequence"].replace("SQ", "sq")
+		shotCode = shot["shot"].replace("P", "sh").replace("A", "a") + in_sShotSuffix
+		startseconds = convertTcToSeconds(shot["start"], in_iHoursOffset=-1)
+		endseconds = convertTcToSeconds(shot["end"], in_iHoursOffset=-1, in_iFramesOffset=-1)
 		if in_sSeqFilter == None or shot["sequence"] == in_sSeqFilter:
-			sequenceCode = shot["sequence"].replace("SQ", "sq")
+			
 			if in_sSeqFilter != None and in_sSeqOverrideName != None:
 				sequenceCode = in_sSeqOverrideName
-
-			shotCode = shot["shot"].replace("P", "sh").replace("A", "a") + in_sShotSuffix
-
-			startseconds = convertTcToSeconds(shot["start"], in_iHoursOffset=-1)
-			endseconds = convertTcToSeconds(shot["end"], in_iHoursOffset=-1, in_iFramesOffset=-1)
-
-			csv += "{0},{1:.0f},{2:.0f},{3:.0f}\n".format(sequenceCode + "_" + shotCode, startseconds * FPS, endseconds * FPS, (endseconds - startseconds) * FPS + 1)
 
 			cmdLine = "{0} {1} {2} {3} {4}".format(batFile, '{0}'.format(in_sSourcePath), convertTcToSecondsTc(shot["start"], in_iHoursOffset=-1), convertTcToSecondsTc(shot["end"], in_iHoursOffset=-1, in_iFramesOffset=-1), sequenceCode + "_" + shotCode + "_animatic.mov")
 
@@ -157,7 +160,7 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
 			bar = ["-" for n in range(int(percent * .5))]
 			print "\nShot {0:04d}/{1:04d} {2:.0f}% |{3:<50}|".format(counter, lenShots, percent, "".join(bar))
 			counter += 1
-
+		csv += "{0},{1:.0f},{2:.0f},{3:.0f}\n".format(sequenceCode + "_" + shotCode, startseconds * FPS, endseconds * FPS, (endseconds - startseconds) * FPS + 1)
 	if exportCsv:
 		outPath = in_sEdlPath.replace('.edl', '.csv')
 

@@ -71,7 +71,8 @@ class Z2kToolkit(object):
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict=sConflictMode)
         updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict=sConflictMode)
 
-        os.environ["DEV_MODE_ENV"] = str(int(self.isDev))
+        if "DEV_MODE_ENV" not in os.environ:
+            os.environ["DEV_MODE_ENV"] = str(int(self.isDev))
 
     def loadAppEnvs(self, sAppPath):
 
@@ -159,13 +160,16 @@ class Z2kToolkit(object):
             os.makedirs(sDistroPath)
 
         print "\n{} toolkit release:\n'{}' -> '{}'".format(sAction, self.rootPath, sDistroPath)
+        res = raw_input("Continue ? (yes/no)")
+        if res == "no":
+            return False
 
         if bUpdating:
             sOutput = self.makeCopy(self.rootPath, sDistroPath,
                                     dryRun=True, summary=False)
             if not sOutput.strip():
                 print "\nNo changes !"
-                return
+                return True
 
             if archive:
                 sDate = datetime.now().strftime("%Y%m%d-%H%M")
@@ -185,7 +189,7 @@ class Z2kToolkit(object):
         if not os.path.exists(sOscarPath):
             os.makedirs(sOscarPath)
 
-        self.makeCopy(self.rootPath, sDistroPath)
+        return self.makeCopy(self.rootPath, sDistroPath)
 
     def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
 
@@ -258,17 +262,33 @@ class Z2kToolkit(object):
 
         updEnv("Z2K_LAUNCH_SCRIPT", osp.normpath(sys.argv[0]))
 
-        parser = argparse.ArgumentParser()
-        parser.add_argument("command", choices=("install", "launch", "release"))
-        parser.add_argument("--update", "-upd", type=int, default=1)
-        parser.add_argument("--archive", "-arc", type=int, default=1)
-        parser.add_argument("--location", "-loc", type=str, default="")
-        parser.add_argument("--renew", "-rnw", type=int, default=0)
+        cmdArgs = sys.argv[1:]
+        sCmd = ""
+        sCmdList = ("install", "launch", "release")
+        if len(sys.argv) > 2:
+            sCmd = sys.argv[1]
+            if sCmd == "launch":
+                cmdArgs = sys.argv[1:2]
+                c = 2
+                for arg in sys.argv[2:]:
+                    if ("/" in arg) or ("\\" in arg):
+                        break
+                    cmdArgs.append(arg)
+                    c += 1
 
-        ns, cmdArgs = parser.parse_known_args()
+                launchArgs = sys.argv[c:]
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("command", choices=sCmdList)
+
+        ns = parser.parse_args(cmdArgs if not sCmd else [sCmd])
 
         sCmd = ns.command
         if sCmd == "launch":
+            parser.add_argument("--update", "-u", type=int, default=1)
+            parser.add_argument("--renew", "-r", type=int, default=0)
+            ns = parser.parse_args(cmdArgs, ns)
+
             if ns.update:
                 bBeenUpdated = False
                 try:
@@ -285,20 +305,26 @@ class Z2kToolkit(object):
 # Tools updated so let's relaunch...
 #===============================================================================
                         """
-                    cmdArgs = [sys.executable] + sys.argv + ["-upd", "0", "-rnw", "1"]
+                    relaunchArgs = [sys.executable] + sys.argv + ["-u", "0", "-r", "1"]
                     print msg
-                    subprocess.call(cmdArgs, shell=True)
+                    subprocess.call(relaunchArgs, shell=True)
                     return
 
             if ns.renew:
                 self.loadEnvs(self.customEnvs, replace=True)
 
-            self.launchCmd(cmdArgs)
+            self.launchCmd(launchArgs)
+
             return
 
         if sCmd == "install":
             self.install()
+
         elif sCmd == "release":
+            parser.add_argument("--archive", "-a", type=int, default=1)
+            parser.add_argument("--location", "-l", type=str, default="")
+            ns = parser.parse_args(cmdArgs, ns)
+
             self.release(location=ns.location, archive=ns.archive)
 
 CREATE_NO_WINDOW = 0x8000000
