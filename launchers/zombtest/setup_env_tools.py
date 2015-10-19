@@ -16,6 +16,8 @@ ENVS = {
 
         "ZOMB_TOOL_PATH":"\\\\ZOMBIWALK\\Z2K_RnD\\tooltest",
         "DAVOS_INIT_PROJECT":"zombtest",
+
+        "MAYA_MODULE_PATH":r"\\ZOMBIWALK\Z2K_RnD\maya_mods"
         }
 
 try:
