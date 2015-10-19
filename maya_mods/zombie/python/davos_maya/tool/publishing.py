@@ -72,7 +72,7 @@ def publishCurrentScene(*args, **kwargs):
     if not sgTaskInfo:
         bSgVersion = False
 
-    publishSceneDependencies(proj, sCurScnPath, comment=sComment)
+    #publishSceneDependencies(proj, sCurScnPath, comment=sComment)
 
     sSavedScnPath = myasys.saveScene(confirm=False)
     if not sSavedScnPath:
