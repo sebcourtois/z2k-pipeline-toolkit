@@ -1,451 +1,0 @@
-@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_gamin3_visiteurD @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/jp/ENVOI/ANGOULEME/151016_chr_previz_check/chr_gamin3_visiteurD_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/48
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/48
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/48
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/48
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/37
-     error on: 0/37
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/37
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/37
-     error on: 0/37
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/37
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:chr_gamin3_visiteurDRELEASING SCENE:chr_gamin3_visiteurDUNLOCKING SCENE:chr_gamin3_visiteurD@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_gamine_visiteurE @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/jp/ENVOI/ANGOULEME/151016_chr_previz_check/chr_gamine_visiteurE_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/50
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/50
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/50
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/50
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/38
-     error on: 0/38
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/38
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/38
-     error on: 0/38
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/38
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:chr_gamine_visiteurERELEASING SCENE:chr_gamine_visiteurEUNLOCKING SCENE:chr_gamine_visiteurE@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_sirius_blousonRouge @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/jp/ENVOI/ANGOULEME/151016_chr_previz_check/chr_sirius_blousonRouge_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/44
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/44
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/44
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/44
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/34
-     error on: 0/34
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/34
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/34
-     error on: 0/34
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/34
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:chr_sirius_blousonRougeRELEASING SCENE:chr_sirius_blousonRougeUNLOCKING SCENE:chr_sirius_blousonRouge@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_sirius_blouson @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/jp/ENVOI/ANGOULEME/151016_chr_previz_check/chr_sirius_blouson_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/44
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/44
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/44
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/44
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/34
-     error on: 0/34
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/34
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/34
-     error on: 0/34
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/34
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:chr_sirius_blousonRELEASING SCENE:chr_sirius_blousonUNLOCKING SCENE:chr_sirius_blouson@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_sirius_lambdaMarron @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/jp/ENVOI/ANGOULEME/151016_chr_previz_check/chr_sirius_lambdaMarron_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/44
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/44
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/44
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/44
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/34
-     error on: 0/34
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/34
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/34
-     error on: 0/34
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/34
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:chr_sirius_lambdaMarronRELEASING SCENE:chr_sirius_lambdaMarronUNLOCKING SCENE:chr_sirius_lambdaMarron@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_sirius_lambda @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/jp/ENVOI/ANGOULEME/151016_chr_previz_check/chr_sirius_lambda_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/44
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/44
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/44
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/44
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/34
-     error on: 0/34
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/34
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/34
-     error on: 0/34
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/34
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:chr_sirius_lambdaRELEASING SCENE:chr_sirius_lambdaUNLOCKING SCENE:chr_sirius_lambda@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ @ FINAL_RESULT = 6 / 6   -published: 6    -released:6 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@* chr_gamin3_visiteurD        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/chr/chr_gamin3_visiteurD/chr_gamin3_visiteurD_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/chr/chr_gamin3_visiteurD/ref/chr_gamin3_visiteurD_previzRef-v001.000.mb* chr_gamine_visiteurE        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/chr/chr_gamine_visiteurE/chr_gamine_visiteurE_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/chr/chr_gamine_visiteurE/ref/chr_gamine_visiteurE_previzRef-v001.000.mb* chr_sirius_blouson        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/chr/chr_sirius_blouson/chr_sirius_blouson_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/chr/chr_sirius_blouson/ref/chr_sirius_blouson_previzRef-v001.000.mb* chr_sirius_blousonRouge        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/chr/chr_sirius_blousonRouge/chr_sirius_blousonRouge_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/chr/chr_sirius_blousonRouge/ref/chr_sirius_blousonRouge_previzRef-v001.000.mb* chr_sirius_lambda        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/chr/chr_sirius_lambda/chr_sirius_lambda_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/chr/chr_sirius_lambda/ref/chr_sirius_lambda_previzRef-v001.000.mb* chr_sirius_lambdaMarron        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/chr/chr_sirius_lambdaMarron/chr_sirius_lambdaMarron_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/chr/chr_sirius_lambdaMarron/ref/chr_sirius_lambdaMarron_previzRef-v001.000.mb @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ - failL:0 -[]- publishedL:6 -['chr_gamin3_visiteurD', 'chr_gamine_visiteurE', 'chr_sirius_blousonRouge', 'chr_sirius_blouson', 'chr_sirius_lambdaMarron', 'chr_sirius_lambda']- releasedL:6 -['chr_gamin3_visiteurD', 'chr_gamine_visiteurE', 'chr_sirius_blousonRouge', 'chr_sirius_blouson', 'chr_sirius_lambdaMarron', 'chr_sirius_lambda']

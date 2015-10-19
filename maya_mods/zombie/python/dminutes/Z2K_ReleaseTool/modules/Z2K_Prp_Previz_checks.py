@@ -51,7 +51,7 @@ import maya.mel as mel
 from functools import partial
 import inspect
 
-from dminutes.Batchator.bin.ROOTPATH import *
+from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
 
 print "DEBUGFILE=", DEBUGFILE
 
@@ -1159,22 +1159,22 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=4, e=True)
+        self.pBar_upd(step=1, maxValue=2, e=True)
 
         # steps
         if not self.checkBaseStructure()[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
-        if not self.checkAssetStructure( assetgpN="asset", expectedL=["grp_rig","grp_geo"])[0]:
+        if not self.checkAssetStructure( )[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
 
-        if not self.cleanGrp_geo(theGroup="asset|grp_geo", theAttrL=["smoothLevel1","smoothLevel2"])[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.checkGrp_geo( )[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        # if not self.cleanGrp_geo(theGroup="asset|grp_geo", theAttrL=["smoothLevel1","smoothLevel2"])[0]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+        # if not self.checkGrp_geo( )[0]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
 
         # colors
         print "*btn_checkStructure:",boolResult
