@@ -27,7 +27,7 @@ import dminutes.Z2K_wrapper as Z2K
 reload(Z2K)
 
 
-
+ICONPATH = "/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_REPLACE_LOGO_A1.bmp"
 
 class Z2K_ASSET_replacer(object):
 
@@ -154,7 +154,7 @@ class Z2K_ASSET_replacer(object):
 
 class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
     basePath =  os.environ.get("MAYA_MODULE_PATH").split(";")[0]
-    upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_REPLACE_LOGO_A1.bmp"
+    upImg= basePath + ICONPATH
 
 
     def __init__(self, theProject="zombtest", currentSceneP="", replacingSceneP="",sgTask="sgTask",*args, **kwargs):

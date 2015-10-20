@@ -24,6 +24,7 @@
 # x convert to class to integrate the debug file path inside it
 # wip clean launch
 # x add publish inside batch
+# - clean and separate the publish and release process
 # - think about gui
 # - 
 # ----------------------------------------------------------------------------------------
@@ -175,6 +176,8 @@ import maya.cmds as cmds
 import maya.mel as mel
 
 
+import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
+reload(Batch_CONFIG)
 from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
 
 print "DEBUGFILE=", DEBUGFILE

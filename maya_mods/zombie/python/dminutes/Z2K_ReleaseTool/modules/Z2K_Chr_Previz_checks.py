@@ -50,8 +50,8 @@ import maya.mel as mel
 from functools import partial
 import inspect
 
-import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as tmp
-reload(tmp)
+import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
+reload(Batch_CONFIG)
 from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
 
 print "DEBUGFILE=", DEBUGFILE

@@ -1,1388 +1,0 @@
-@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_barExt_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_barExt_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/8
-     error on: 0/8
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/8
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/8
-     error on: 0/8
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/8
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_barExt_defaultRELEASING SCENE:set_barExt_defaultUNLOCKING SCENE:set_barExt_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_barInt_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_barInt_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/22
-     error on: 0/22
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/22
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/22
-     error on: 0/22
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/22
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_barInt_defaultRELEASING SCENE:set_barInt_defaultUNLOCKING SCENE:set_barInt_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_cimetiere_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_cimetiere_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/92
-     error on: 0/92
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/92
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/92
-     error on: 0/92
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/92
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_cimetiere_defaultRELEASING SCENE:set_cimetiere_defaultUNLOCKING SCENE:set_cimetiere_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_eglise_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_eglise_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/4
-     error on: 0/4
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/4
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/4
-     error on: 0/4
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/4
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_eglise_defaultRELEASING SCENE:set_eglise_defaultUNLOCKING SCENE:set_eglise_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_lotissementBarEst_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_lotissementBarEst_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/8
-     error on: 0/8
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/8
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/8
-     error on: 0/8
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/8
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_lotissementBarEst_defaultRELEASING SCENE:set_lotissementBarEst_defaultUNLOCKING SCENE:set_lotissementBarEst_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_lotissementBarNord_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_lotissementBarNord_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/6
-     error on: 0/6
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/6
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/6
-     error on: 0/6
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/6
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_lotissementBarNord_defaultRELEASING SCENE:set_lotissementBarNord_defaultUNLOCKING SCENE:set_lotissementBarNord_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_lotissementBarOuest_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_lotissementBarOuest_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/97
-     error on: 0/97
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/97
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/97
-     error on: 0/97
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/97
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_lotissementBarOuest_defaultRELEASING SCENE:set_lotissementBarOuest_defaultUNLOCKING SCENE:set_lotissementBarOuest_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_lotissementBarSud_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_lotissementBarSud_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/19
-     error on: 0/19
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/19
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/19
-     error on: 0/19
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/19
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_lotissementBarSud_defaultRELEASING SCENE:set_lotissementBarSud_defaultUNLOCKING SCENE:set_lotissementBarSud_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_lotissementPensionEst_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_lotissementPensionEst_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/11
-     error on: 0/11
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/11
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/11
-     error on: 0/11
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/11
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_lotissementPensionEst_defaultRELEASING SCENE:set_lotissementPensionEst_defaultUNLOCKING SCENE:set_lotissementPensionEst_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_lotissementPensionOuest_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_lotissementPensionOuest_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/36
-     error on: 0/36
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/36
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/36
-     error on: 0/36
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/36
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_lotissementPensionOuest_defaultRELEASING SCENE:set_lotissementPensionOuest_defaultUNLOCKING SCENE:set_lotissementPensionOuest_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_lotissementSortieVillage_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_lotissementSortieVillage_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/16
-     error on: 0/16
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/16
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/16
-     error on: 0/16
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/16
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_lotissementSortieVillage_defaultRELEASING SCENE:set_lotissementSortieVillage_defaultUNLOCKING SCENE:set_lotissementSortieVillage_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank01_LBE @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank01_LBE_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/4
-     error on: 0/4
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/4
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/4
-     error on: 0/4
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/4
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank01_LBERELEASING SCENE:set_maisonBank01_LBEUNLOCKING SCENE:set_maisonBank01_LBE@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank01_LBN @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank01_LBN_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/4
-     error on: 0/4
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/4
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/4
-     error on: 0/4
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/4
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank01_LBNRELEASING SCENE:set_maisonBank01_LBNUNLOCKING SCENE:set_maisonBank01_LBN@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank01_LBO @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank01_LBO_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/22
-     error on: 0/22
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/22
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/22
-     error on: 0/22
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/22
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank01_LBORELEASING SCENE:set_maisonBank01_LBOUNLOCKING SCENE:set_maisonBank01_LBO@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank01_LPE @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank01_LPE_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/5
-     error on: 0/5
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/5
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/5
-     error on: 0/5
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/5
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank01_LPERELEASING SCENE:set_maisonBank01_LPEUNLOCKING SCENE:set_maisonBank01_LPE@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank02_LBE @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank02_LBE_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/4
-     error on: 0/4
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/4
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/4
-     error on: 0/4
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/4
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank02_LBERELEASING SCENE:set_maisonBank02_LBEUNLOCKING SCENE:set_maisonBank02_LBE@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank02_LBN @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank02_LBN_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/4
-     error on: 0/4
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/4
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/4
-     error on: 0/4
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/4
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank02_LBNRELEASING SCENE:set_maisonBank02_LBNUNLOCKING SCENE:set_maisonBank02_LBN@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank02_LPE @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank02_LPE_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/5
-     error on: 0/5
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/5
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/5
-     error on: 0/5
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/5
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank02_LPERELEASING SCENE:set_maisonBank02_LPEUNLOCKING SCENE:set_maisonBank02_LPE@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank03_LBE @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank03_LBE_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/4
-     error on: 0/4
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/4
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/4
-     error on: 0/4
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/4
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank03_LBERELEASING SCENE:set_maisonBank03_LBEUNLOCKING SCENE:set_maisonBank03_LBE@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank03_LBN @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank03_LBN_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/4
-     error on: 0/4
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/4
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/4
-     error on: 0/4
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/4
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank03_LBNRELEASING SCENE:set_maisonBank03_LBNUNLOCKING SCENE:set_maisonBank03_LBN@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank03_LPE @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank03_LPE_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/4
-     error on: 0/4
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/4
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/4
-     error on: 0/4
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/4
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank03_LPERELEASING SCENE:set_maisonBank03_LPEUNLOCKING SCENE:set_maisonBank03_LPE@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank04_LBE @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank04_LBE_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/4
-     error on: 0/4
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/4
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/4
-     error on: 0/4
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/4
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank04_LBERELEASING SCENE:set_maisonBank04_LBEUNLOCKING SCENE:set_maisonBank04_LBE@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank04_LPE @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank04_LPE_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/5
-     error on: 0/5
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/5
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/5
-     error on: 0/5
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/5
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank04_LPERELEASING SCENE:set_maisonBank04_LPEUNLOCKING SCENE:set_maisonBank04_LPE@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_maisonBank05_LPE @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_maisonBank05_LPE_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/4
-     error on: 0/4
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/4
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/4
-     error on: 0/4
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/4
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_maisonBank05_LPERELEASING SCENE:set_maisonBank05_LPEUNLOCKING SCENE:set_maisonBank05_LPE@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_pensionClasse_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_pensionClasse_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/119
-     error on: 0/119
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/119
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/119
-     error on: 0/119
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/119
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_pensionClasse_defaultRELEASING SCENE:set_pensionClasse_defaultUNLOCKING SCENE:set_pensionClasse_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: set_pensionExt_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.py@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=//Zombiwalk/z2k/06_PARTAGE/julien/ENVOIS/20151015_SetsVillagePreviz/FINAL SET/set_pensionExt_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Set_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo - grp_placeHolders : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/18
-     error on: 0/18
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/18
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/18
-     error on: 0/18
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/18
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************PUBLISHING SCENE:set_pensionExt_defaultRELEASING SCENE:set_pensionExt_defaultUNLOCKING SCENE:set_pensionExt_default@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ @ FINAL_RESULT = 26 / 26   -published: 26    -released:26 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@* set_barExt_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_barExt_default/set_barExt_default_previz-v002.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_barExt_default/ref/set_barExt_default_previzRef-v002.000.mb* set_barInt_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_barInt_default/set_barInt_default_previz-v002.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_barInt_default/ref/set_barInt_default_previzRef-v002.000.mb* set_cimetiere_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_cimetiere_default/set_cimetiere_default_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_cimetiere_default/ref/set_cimetiere_default_previzRef-v001.000.mb* set_eglise_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_eglise_default/set_eglise_default_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_eglise_default/ref/set_eglise_default_previzRef-v001.000.mb* set_lotissementBarEst_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementBarEst_default/set_lotissementBarEst_default_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementBarEst_default/ref/set_lotissementBarEst_default_previzRef-v001.000.mb* set_lotissementBarNord_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementBarNord_default/set_lotissementBarNord_default_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementBarNord_default/ref/set_lotissementBarNord_default_previzRef-v001.000.mb* set_lotissementBarOuest_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementBarOuest_default/set_lotissementBarOuest_default_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementBarOuest_default/ref/set_lotissementBarOuest_default_previzRef-v001.000.mb* set_lotissementBarSud_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementBarSud_default/set_lotissementBarSud_default_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementBarSud_default/ref/set_lotissementBarSud_default_previzRef-v001.000.mb* set_lotissementPensionEst_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementPensionEst_default/set_lotissementPensionEst_default_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementPensionEst_default/ref/set_lotissementPensionEst_default_previzRef-v001.000.mb* set_lotissementPensionOuest_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementPensionOuest_default/set_lotissementPensionOuest_default_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementPensionOuest_default/ref/set_lotissementPensionOuest_default_previzRef-v001.000.mb* set_lotissementSortieVillage_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementSortieVillage_default/set_lotissementSortieVillage_default_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_lotissementSortieVillage_default/ref/set_lotissementSortieVillage_default_previzRef-v001.000.mb* set_maisonBank01_LBE        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank01_LBE/set_maisonBank01_LBE_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank01_LBE/ref/set_maisonBank01_LBE_previzRef-v001.000.mb* set_maisonBank01_LBN        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank01_LBN/set_maisonBank01_LBN_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank01_LBN/ref/set_maisonBank01_LBN_previzRef-v001.000.mb* set_maisonBank01_LBO        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank01_LBO/set_maisonBank01_LBO_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank01_LBO/ref/set_maisonBank01_LBO_previzRef-v001.000.mb* set_maisonBank01_LPE        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank01_LPE/set_maisonBank01_LPE_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank01_LPE/ref/set_maisonBank01_LPE_previzRef-v001.000.mb* set_maisonBank02_LBE        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank02_LBE/set_maisonBank02_LBE_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank02_LBE/ref/set_maisonBank02_LBE_previzRef-v001.000.mb* set_maisonBank02_LBN        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank02_LBN/set_maisonBank02_LBN_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank02_LBN/ref/set_maisonBank02_LBN_previzRef-v001.000.mb* set_maisonBank02_LPE        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank02_LPE/set_maisonBank02_LPE_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank02_LPE/ref/set_maisonBank02_LPE_previzRef-v001.000.mb* set_maisonBank03_LBE        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank03_LBE/set_maisonBank03_LBE_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank03_LBE/ref/set_maisonBank03_LBE_previzRef-v001.000.mb* set_maisonBank03_LBN        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank03_LBN/set_maisonBank03_LBN_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank03_LBN/ref/set_maisonBank03_LBN_previzRef-v001.000.mb* set_maisonBank03_LPE        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank03_LPE/set_maisonBank03_LPE_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank03_LPE/ref/set_maisonBank03_LPE_previzRef-v001.000.mb* set_maisonBank04_LBE        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank04_LBE/set_maisonBank04_LBE_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank04_LBE/ref/set_maisonBank04_LBE_previzRef-v001.000.mb* set_maisonBank04_LPE        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank04_LPE/set_maisonBank04_LPE_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank04_LPE/ref/set_maisonBank04_LPE_previzRef-v001.000.mb* set_maisonBank05_LPE        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank05_LPE/set_maisonBank05_LPE_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_maisonBank05_LPE/ref/set_maisonBank05_LPE_previzRef-v001.000.mb* set_pensionClasse_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_pensionClasse_default/set_pensionClasse_default_previz-v002.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_pensionClasse_default/ref/set_pensionClasse_default_previzRef-v002.000.mb* set_pensionExt_default        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/testProject.py', 'C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/scripts/Set_previz_check_batch.py']    preRelease_detail    = []    published            = True    published_file       = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_pensionExt_default/set_pensionExt_default_previz-v001.000.ma    released             = True    released_file        = //ZOMBIWALK/Projects/private/jipe/zomb/asset/set/set_pensionExt_default/ref/set_pensionExt_default_previzRef-v001.000.mb @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ - failL:0 -[]- publishedL:26 -['set_barExt_default', 'set_barInt_default', 'set_cimetiere_default', 'set_eglise_default', 'set_lotissementBarEst_default', 'set_lotissementBarNord_default', 'set_lotissementBarOuest_default', 'set_lotissementBarSud_default', 'set_lotissementPensionEst_default', 'set_lotissementPensionOuest_default', 'set_lotissementSortieVillage_default', 'set_maisonBank01_LBE', 'set_maisonBank01_LBN', 'set_maisonBank01_LBO', 'set_maisonBank01_LPE', 'set_maisonBank02_LBE', 'set_maisonBank02_LBN', 'set_maisonBank02_LPE', 'set_maisonBank03_LBE', 'set_maisonBank03_LBN', 'set_maisonBank03_LPE', 'set_maisonBank04_LBE', 'set_maisonBank04_LPE', 'set_maisonBank05_LPE', 'set_pensionClasse_default', 'set_pensionExt_default']- releasedL:26 -['set_barExt_default', 'set_barInt_default', 'set_cimetiere_default', 'set_eglise_default', 'set_lotissementBarEst_default', 'set_lotissementBarNord_default', 'set_lotissementBarOuest_default', 'set_lotissementBarSud_default', 'set_lotissementPensionEst_default', 'set_lotissementPensionOuest_default', 'set_lotissementSortieVillage_default', 'set_maisonBank01_LBE', 'set_maisonBank01_LBN', 'set_maisonBank01_LBO', 'set_maisonBank01_LPE', 'set_maisonBank02_LBE', 'set_maisonBank02_LBN', 'set_maisonBank02_LPE', 'set_maisonBank03_LBE', 'set_maisonBank03_LBN', 'set_maisonBank03_LPE', 'set_maisonBank04_LBE', 'set_maisonBank04_LPE', 'set_maisonBank05_LPE', 'set_pensionClasse_default', 'set_pensionExt_default']
