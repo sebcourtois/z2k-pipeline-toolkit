@@ -13,7 +13,7 @@ ENVS = {
         "ZOMB_MISC_LOC":"\\\\lv7000_fileserver\\Zombidamas",
         "ZOMB_PRIVATE_LOC":"\\\\lv7000_fileserver\\Zombidamas",
 
-        "ZOMB_TOOL_PATH":"\\\\\lv7000_fileserver\\Zombidamas\\zomb\\tool",
+        "ZOMB_TOOL_PATH":"\\\\lv7000_fileserver\\Zombidamas\\zomb\\tool",
 
         }
 
