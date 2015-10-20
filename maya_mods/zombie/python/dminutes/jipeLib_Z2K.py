@@ -16,10 +16,47 @@
 #                                                              #
 #                 © Jean-Philippe Descoins                     #
 ################################################################
+import os
 import maya.cmds as cmds
 
-# printF is in each script
+# Z2K base general functions -----------------
+def getBasePath(*args, **kwargs):
+    """
+    recupere le path de base des modules
+    """
+    basePath = ""
+    allModL = os.environ.get("MAYA_MODULE_PATH").split(";")
+    for p in allModL:
+        if "/z2k-pipeline-toolkit/maya_mods" in p:
+            basePath = p + "/"
+    return basePath
 
+# printer 
+def printF( text="", st="main", toScrollF="", toFile = "", GUI= True,
+        openMode="a+", *args, **kwargs):
+        # print "printF()",GUI,toFile
+        stringToPrint=""
+ 
+        text = str(object=text)
+        if st in ["title","t"]:
+            stringToPrint += "\n"+text.center(40, "-")+"\n"
+        if  st in ["main","m"]:
+            stringToPrint += "    "+text+"\n"
+        if st in ["result","r"]:
+            stringToPrint += " -RESULT: "+text.upper()+"\n"
+
+        if not toFile in [""] and not GUI:
+            # print the string to a file
+            with open(toFile, openMode) as f:
+                f.write( stringToPrint )
+                print stringToPrint
+
+        else:
+            # print to textLayout
+            cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
+            print stringToPrint
+
+# 3D maya functions ---------------------------
 def matchByXformMatrix(cursel=[], mode=0, *args, **kwargs):
     ''' Description : Match SRT in world cursel objects to the first one
                     mode : - 0/first = the first object is the reference
@@ -159,214 +196,7 @@ def getSel(*args, **kwargs):
 
 
 #♠--------------------- CHECK FUNCTION ------------------------------
-def NodeTypeScanner(execptionTL = [], exceptDerived= True, specificTL=[], specificDerived=False,
-        mayaDefaultObjL=["characterPartition","defaultLightList1","dynController1","globalCacheControl",
-        "hardwareRenderGlobals","hardwareRenderingGlobals","defaultHardwareRenderGlobals","hyperGraphInfo",
-        "hyperGraphLayout","ikSystem","characterPartition","char_aurelienPolo_wip_18_sceneConfigurationScriptNode",
-        "char_aurelienPolo_wip_18_uiConfigurationScriptNode","sequenceManager1","strokeGlobals","time1","defaultViewColorManager",
-        "defaultColorMgtGlobals","defaultObjectSet","defaultTextureList1","lightList1","defaultObjectSet",
-        "sceneConfigurationScriptNode","uiConfigurationScriptNode"],
-        *args, **kwargs):
-        """ Description: Return Node list base on specific type /excepted type filtered
-                        If nothing it give evrething in scene
-                        basic type herited coulb be "dagNode" / "transform" /
-            Return : LIST
-            Dependencies : cmds - 
-        """
 
-        theTypeL =[]
-        allTypeL = cmds.ls(nodeTypes=1)
-        toReturnL = []
-        if not len(specificTL) >0:
-                theTypeL = allTypeL
-        else:
-            theTypeL = specificTL
-
-        for typ in theTypeL:
-            # print "****",typ
-            if len(theTypeL)>0:
-                filtered = [x for x in cmds.ls(type=typ) if  x not in mayaDefaultObjL ]
-                if len(filtered)>0:
-                    for obj in filtered:
-                        if not obj in mayaDefaultObjL:
-                            testB = False
-                            if len(execptionTL)>0:
-                                for ex in execptionTL:
-                                    if  cmds.nodeType(obj) in  cmds.nodeType(ex, derived=exceptDerived, isTypeName=True,):
-                                        # print "#######",cmds.nodeType(obj), "is bad"
-                                        testB = True
-                                        break
-                                if not testB:
-                                    toReturnL.append(obj)
-                                        
-                            else:
-                                toReturnL.append(obj)
-
-        return toReturnL
-
-
-def isKeyed ( inObj, *args, **kwargs):
-        """ Description: Check if the given object'keyable attrib are effictively keyed
-            Return : [BOOL,DebugList]
-            Dependencies : cmds - isConnected() -
-        """
-
-        toReturnB = False
-        debugD ={}
-        if cmds.objExists(inObj):
-            if cmds.listConnections(inObj):
-                AttrL = cmds.listAttr(inObj,k=True)
-                if len(AttrL)>0:
-                    for attr in AttrL:
-                        attrN = inObj + "."+ attr
-                        if cmds.connectionInfo(attrN,isDestination=True):
-                            conL = cmds.listConnections(attrN,s=True,t="animCurve")
-                            # print "conL=", conL
-                            debugD[attrN] = conL
-                            toReturnB =True
-
-        return [toReturnB,debugD]
-
-def isConnected ( node="", exceptionL=["nodeGraphEditorInfo","defaultRenderUtilityList","objectSet"], *args, **kwargs):
-        toReturnB=True
-        conL = []
-        
-        # print "///",node
-        if cmds.listConnections(node):
-            for i in cmds.listConnections(node):
-                # print "    " +node + " <-> "+ i
-                if not i in [node]:
-                    if cmds.objectType(i) not in exceptionL:
-                        conL.append(i)
-
-            if len (conL) == 0:
-                toReturnB= False
-        else:
-            toReturnB= False
-
-        return [toReturnB,conL]
-
-def isSkinned( inObjL=[], verbose=False, printOut = False,*args,**kwargs):
-        ''' Description : Get the list of the SlinClusters of the selected mesh
-                Return : List of skinClusters
-                Dependencies : cmds - 
-        '''                 
-        toReturnB = False
-        outSkinClusterL=[]
-        outSkinnedObj = []
-        tab = "    "
-        if len(inObjL):
-            for obj in inObjL:
-                print "    obj =", obj
-                skinClusterList = []
-                history = cmds.listHistory(obj, il=2)
-                print "    history = ", history
-                if history not in [None,"None"]:
-                    for node in history:
-                        if cmds.nodeType(node) == "skinCluster":
-                            skinClusterList.append(node)
-                            outSkinClusterL.append(node)
-                            outSkinnedObj.append(obj)
-                else :
-                    print "#Error# getSkinCluster(): No History stack"
-                    toReturnB = False
-
-                if len(skinClusterList) < 1:
-                    shapes = cmds.listRelatives(obj, s=True)
-                    for shape in shapes:
-                        history = cmds.listHistory(shape)
-                        for node in history:
-                            if cmds.nodeType(node) == "skinCluster":
-                                skinClusterList.append(node)
-                                outSkinClusterL.append(node)
-                
-        
-
-        debugL = list(set(inObjL) - set(outSkinnedObj))
-        if len(outSkinClusterL) >= len(inObjL):
-            toReturnB = True
-
-        print tab,"Total obj = {0} / {1}".format(len(outSkinClusterL),len(inObjL) )
-
-        if verbose :
-            # prints -------------------
-            printF("isSkinned()", st="t")
-            printF(toReturnB, st="r")
-            printF("skinned_object = {0} / {1}".format(len(outSkinClusterL),len(inObjL) ) )
-            for i in debugL:
-                printF("    No skin on: {0}".format(i) )
-            # --------------------------
-
-
-        return [toReturnB,outSkinClusterL]
-
-def checkSRT ( inObjL=[], verbose=False,*args,**kwargs):
-        # print "checkSRT()"
-        tab= "    "
-        toReturnB = True
-        debugD = {}
-        tmpDict ={}
-
-        attribD =   {"translateX":0.0, "translateY":0.0, "translateZ":0.0,
-                      "rotateX":0.0, "rotateY":0.0, "rotateZ":0.0,
-                      "scaleX":1.0, "scaleY":1.0, "scaleZ":1.0,
-                    }
-
-        for obj in inObjL:
-            badassResult = False
-            errAttrL= []
-            for i,j in attribD.iteritems():
-                if not round(cmds.getAttr(obj+"."+i),3) == round(j,3):
-                    # print tab + obj
-                    # print tab+"    err:",i, round(cmds.getAttr(obj+"."+i),3), "<>",j
-                    toReturnB = False
-                    badassResult = True
-                    errAttrL.append(i)
-                    
-            if badassResult:
-                debugD[obj]= errAttrL
-
-
-        # print tab,"DONE", toReturnB,debugD
-
-        if verbose:
-            # prints -------------------
-            printF("checkSRT()", st="t")
-            printF(toReturnB, st="r")
-            printF ( " not zero total: {0}/{1}".format( len(debugD.keys()),len(inObjL), ) )
-            for i,j in debugD.iteritems():
-
-                printF ( "    - {0} : {1}".format( i.ljust(15), " ".join(j) ) )
-            # --------------------------
-
-
-        # print "toReturnB=",toReturnB
-        return [toReturnB,debugD]
-
-
-
-def checkKeys(inObjL=[],verbose=False, *args, **kwargs):
-
-        toReturnB = True
-        debugD = {}
-        for obj in inObjL:
-            # print "obj=", obj
-            test,debugL = isKeyed(inObj=obj)
-            # print "    *",test,debugL
-            if test:
-                toReturnB = False
-                debugD[obj] = debugL
-                # print "    debugD=", debugL
-        # prints -------------------
-        if verbose:
-            printF("checkKeys()", st="t")
-            printF(toReturnB, st="r")
-            printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(inObjL), ) )
-            for i,j in debugD.iteritems():
-                printF ( "     - {0}: {1}".format( i.ljust(15),j.keys() ) )
-        # --------------------------
-        # print "##",debugD
-        return [toReturnB,debugD]
 
 
 
@@ -655,32 +485,6 @@ def cleanUnUsedAnimCurves( mode = "delete", *args, **kwargs):
 
 
 
- # decorators ---------------------------
-def Z2KprintDeco(func, *args, **kwargs):
-        def deco(*args, **kwargs):
-            # print u"Exécution de la fonction '%s'." % func.__name__
-            func( toScrollF=BDebugBoard, toFile = DebugPrintFile, *args, **kwargs)
-        return deco
-
-def waiter (func,*args, **kwargs):
-        def deco(*args, **kwargs):
-            result = True
-            cmds.waitCursor( state=True )
-            print "wait..."
-            try:
-                print func
-                result = func(*args, **kwargs)
-            except Exception,err:
-                print "#ERROR JP:",err
-                # cmds.waitCursor( state=False )
-            cmds.waitCursor( state=False )
-            print "...wait"
-            if not result and GUI:
-                print "try GUI ANYWAY MOTHER fOCKER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-                cmds.frameLayout(BDebugBoardF,e=1,cll=True,cl=0)
-
-            return result
-        return deco
 
 
 
@@ -690,32 +494,3 @@ def waiter (func,*args, **kwargs):
 
 
 
-
-
-
-
-# ------------ printer -----------------
-@Z2KprintDeco
-def printF(  text="", st="main", toScrollF="", toFile = "", GUI = False,
-        openMode="a+", *args, **kwargs):
-        # print "printF()",GUI,toFile
-        stringToPrint=""
- 
-        text = str(object=text)
-        if st in ["title","t"]:
-            stringToPrint += "\n"+text.center(40, "-")+"\n"
-        if  st in ["main","m"]:
-            stringToPrint += "    "+text+"\n"
-        if st in ["result","r"]:
-            stringToPrint += " -RESULT: "+text.upper()+"\n"
-
-        if not toFile in [""] :
-            # print the string to a file
-            with open(toFile, openMode) as f:
-                f.write( stringToPrint )
-                print stringToPrint
-
-        if not GUI :
-            # print to textLayout
-            cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
-            print stringToPrint

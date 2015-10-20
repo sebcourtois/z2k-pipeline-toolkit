@@ -25,9 +25,11 @@ import sys,os
 import maya.cmds as cmds
 import dminutes.Z2K_wrapper as Z2K
 reload(Z2K)
+import dminutes.jipeLib_Z2K as jpZ
+reload(jpZ)
 
 
-ICONPATH = "/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_REPLACE_LOGO_A1.bmp"
+ICONPATH = "zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_REPLACE_LOGO_A1.bmp"
 
 class Z2K_ASSET_replacer(object):
 
@@ -153,7 +155,7 @@ class Z2K_ASSET_replacer(object):
 
 
 class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
-    basePath =  os.environ.get("MAYA_MODULE_PATH").split(";")[0]
+    basePath = jpZ.getBasePath()
     upImg= basePath + ICONPATH
 
 
