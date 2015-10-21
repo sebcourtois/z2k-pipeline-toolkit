@@ -156,7 +156,12 @@ def reArrangeAssets():
     structure = {
         'cam':'grp_camera',
         'chr':'grp_character',
-        'set':'grp_set'
+        'set':'grp_set',
+        'prp':'grp_prop',
+        'env':'grp_environment',
+        'c2d':'grp_character2D',
+        'vhl':'grp_vehicule',
+        
     }
 
     #Collect references

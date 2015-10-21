@@ -3,6 +3,10 @@ DEBUGFILE_PREVIZ_CHR='C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python
 DEBUGFILE_PREVIZ_PRP='C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/debug/Previz_Prp_Release_debug.txt'
 DEBUGFILE_PREVIZ_SET='C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/debug/Previz_Set_Release_debug.txt'
 DEBUGFILE= DEBUGFILE_PREVIZ_CHR
+
+# GUI
+Z2K_ICONPATH = "zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/"
+
 # don't forget the final "/" and put them all in the right direction : "/"
 BATCH_SOURCEFOLDER = "Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19B/chr/"
 
