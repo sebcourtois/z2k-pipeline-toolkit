@@ -6,6 +6,9 @@ reload(shading)
 from dminutes import rendering
 reload(rendering)
 
+from dminutes import assetconformation
+reload(assetconformation)
+
 from functools import partial
 
 
@@ -38,6 +41,11 @@ def buttonConformAllShaderName(*args):
 	shading.conformShaderName(shadEngineList = 'all')
 def buttonConformSelShaderName(*args):
 	shading.conformShaderName(shadEngineList = 'selection')
+
+
+#Conform Shader Masks
+def buttonConformShaderMasks(*args):
+	assetconformation.setShadingMask(selectFailingNodes = True, verbose = True, gui = True)
 
 #Conform Preview Shader
 def buttonConformAllPreviewShader(*args):
@@ -77,7 +85,7 @@ if mc.window( "shadingToolBox", exists = True ):
 
 
 window = mc.window( "shadingToolBox", title="Shading Toolbox", iconName='Shading',toolbox = True, sizeable = False )
-mc.window(window, e = True, widthHeight=(260, 625))
+mc.window(window, e = True, widthHeight=(260, 650))
 
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 
@@ -114,6 +122,14 @@ mc.flowLayout( )
 mc.button( label='All', recomputeSize = False, width = 125, c= buttonConformAllShaderName)
 mc.button( label='Selection', recomputeSize = False, width = 125, c= buttonConformSelShaderName)
 mc.setParent( '..' )
+
+#Conform Shader Amsks
+mc.separator(style = 'in', h = 5 )
+mc.text(label="Conform Masks", align='center')
+mc.button( label='All', recomputeSize = False, width = 250, c= buttonConformShaderMasks)
+
+
+
 
 #Conform Shader Structure
 mc.separator(style = 'in', h = 5  )
