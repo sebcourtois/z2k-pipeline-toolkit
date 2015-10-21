@@ -564,7 +564,7 @@ class SceneManager():
             # get_File_By_DAVOS methodes
             drcFile = self.context["damProject"].entryFromPath(assetInfo['path'])
             The_ASSET_PATH = drcFile.envPath()
-            print "* The_ASSET_PATH=", The_ASSET_PATH
+            # print "* The_ASSET_PATH=", The_ASSET_PATH
             if assetInfo['dbinfo'] == noneValue:
                 if not addOnly:
                     #Asset that does not exist in shot, remove

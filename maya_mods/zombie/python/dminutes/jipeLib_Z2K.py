@@ -20,7 +20,7 @@ import os
 import maya.cmds as cmds
 
 # Z2K base general functions -----------------
-def getBasePath(*args, **kwargs):
+def getBaseModPath(*args, **kwargs):
     """
     recupere le path de base des modules
     """
@@ -31,7 +31,39 @@ def getBasePath(*args, **kwargs):
             basePath = p + "/"
     return basePath
 
-# printer 
+# ------------------------ OS/Z2K Functions ------------------------------------
+def getAssetL (assetCat="chr",*args,**kwargs):
+    """ Description: return the asset list filtered by category (chr/prp/set/env/c2d...)
+        Return : [LIST]
+        Dependencies : cmds - 
+    """
+    
+    theDir = os.path.normpath( os.environ.get("ZOMB_ASSET_PATH")) + os.sep + assetCat
+    print "theDir=", theDir
+    if os.path.isdir(theDir):
+        assetL = sorted(os.listdir(theDir) )
+        if not len(assetL):
+            assetL=["Empty Folder"]
+        
+    else:
+        assetL=["Invalide folder"]
+
+    return assetL
+
+def getCatL (*args,**kwargs):
+    theDir = os.environ.get("ZOMB_ASSET_PATH")
+    print "theDir=", theDir
+    if os.path.isdir(theDir):
+        assetL = sorted(os.listdir(theDir) )
+        if not len(assetL):
+            assetL=["Empty Folder"]
+        
+    else:
+        assetL=["Invalide folder"]
+
+    return assetL
+
+# printer  -------------------------------------------------------
 def printF( text="", st="main", toScrollF="", toFile = "", GUI= True,
         openMode="a+", *args, **kwargs):
         # print "printF()",GUI,toFile
@@ -55,6 +87,31 @@ def printF( text="", st="main", toScrollF="", toFile = "", GUI= True,
             # print to textLayout
             cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
             print stringToPrint
+
+# decorator generique ----------------------------
+def waiter (func,*args, **kwargs):
+
+    def deco(self,*args, **kwargs):
+        result = True
+        cmds.waitCursor( state=True )
+        print "wait..."
+        print"tarace"
+        try:
+            print func
+            result = func(self,*args, **kwargs)
+        except Exception,err:
+            print "#ERROR in waiter():",err
+
+            # cmds.waitCursor( state=False )
+        
+        cmds.waitCursor( state=False )
+        print "...wait"
+        if not result and self.GUI:
+            print "try GUI ANYWAY MOTHER fOCKER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
+
+        return result
+    return deco
 
 # 3D maya functions ---------------------------
 def matchByXformMatrix(cursel=[], mode=0, *args, **kwargs):
@@ -89,11 +146,6 @@ def matchByXformMatrix(cursel=[], mode=0, *args, **kwargs):
                     # print "scale",val
             # print "Matrix setted"
         return True
-
-
-
-
-
 
 
 
@@ -197,11 +249,55 @@ def getSel(*args, **kwargs):
 
 #♠--------------------- CHECK FUNCTION ------------------------------
 
+def isKeyed ( inObj, *args, **kwargs):
+        """ Description: Check if the given object'keyable attrib are effictively keyed
+            Return : [BOOL,DebugList]
+            Dependencies : cmds - isConnected() -
+        """
+
+        toReturnB = False
+        debugD ={}
+        if len(inObj) >0:
+            if cmds.objExists(inObj):
+                conL = cmds.listConnections(inObj)
+                # print "conL=", conL
+                if conL:
+                    if len(conL)>0 :
+                        # print"lengthed"
+                        attrL = cmds.listAttr(inObj,k=True)
+                        if attrL:
+                            if len(attrL)>0:
+                                for attr in attrL:
+                                    attrN = inObj + "."+ attr
+                                    if cmds.connectionInfo(attrN,isDestination=True):
+                                        conL = cmds.listConnections(attrN,s=True,t="animCurve")
+                                        # print "conL=", conL
+                                        debugD[attrN] = conL
+                                        toReturnB =True
+
+
+        return [toReturnB,debugD]
 
 
 
+def isConnected ( node="", exceptionL=["nodeGraphEditorInfo","defaultRenderUtilityList","objectSet"], *args, **kwargs):
+        toReturnB=True
+        conL = []
+        
+        # print "///",node
+        if cmds.listConnections(node):
+            for i in cmds.listConnections(node):
+                # print "    " +node + " <-> "+ i
+                if not i in [node]:
+                    if cmds.objectType(i) not in exceptionL:
+                        conL.append(i)
 
+            if len (conL) == 0:
+                toReturnB= False
+        else:
+            toReturnB= False
 
+        return [toReturnB,conL]
 
 
 
@@ -293,177 +389,6 @@ def cleanKeys( inObjL=[],verbose=True, *args, **kwargs):
         return [toReturnB,debugD]
 
 
-
-def cleanUnusedInfluence( inObjL="",*args,**kwargs):
-        """ Description: Delete unused influance on given inObjL . Return Flase if some obj doesn't have a skinClust
-            Return : [BOOL,deletedDict{skinCluster:DeletedInfluenceL}]
-            Dependencies : cmds - isSkinned() - 
-        """
-        print "cleanUnusedInfluance()"
-
-        # to convert to real python code with cmds.skinCluster(theSkincluster, removeUnusedInfluence=True)
-        tab = "    "
-        toReturnB=True
-        deletedDict = {}
-        outCount = 0
-        totalSkinClusterL= []
-        if len(inObjL)>0:
-            for obj in inObjL:
-                isSkinned,skinClusterL = isSkinned(inObjL=[obj])
-                totalSkinClusterL.extend(skinClusterL)
-                print tab,obj,isSkinned,skinClusterL
-                if isSkinned in [True,1]:
-                    for skinCluster in (skinClusterL):
-                        print tab,skinCluster
-
-                        # get def list all and the unsused w
-                        defL = cmds.skinCluster(skinCluster,q=1,  inf=True)
-                        wDefL = cmds.skinCluster(skinCluster,q=1,  wi=True)
-                        toDeleteL = list(set(defL)-set(wDefL))
-                        print tab,"toDeleteL=", toDeleteL
-
-                        # turn of the skinNode for faster exec
-                        baseSkinNState = cmds.getAttr (skinCluster +".nodeState")
-                        cmds.setAttr (skinCluster+".nodeState", 1)
-
-                        # removing loop
-                        if len(toDeleteL)>1:
-                            for i in toDeleteL:
-                                print tab,"**",skinCluster,i
-                                try:
-                                    u=cmds.skinCluster(skinCluster,e=True,  ri=i, )
-                                except Exception,err:
-                                    print err
-                                    toReturnB=False
-                            
-                            outCount +=1
-                            deletedDict[skinCluster]= toDeleteL
-                        # turn on skinNode    
-                        cmds.setAttr (skinCluster+".nodeState", 0)
-                
-
-
-        # prints -------------------
-        printF("cleanUnusedInfluance()", st="t")
-        printF(toReturnB, st="r")
-        printF ( "total cleaned skinCluster: {0}/{1}".format(outCount, len(totalSkinClusterL) ) )
-        for i,j in deletedDict.iteritems():
-            printF ( "influance Deleted on {0}: {1}".format( i.ljust(15),j ) )
-        # --------------------------
-
-
-        return [toReturnB,deletedDict]
-
-
-
-
-def cleanUnusedNode( execptionTL = [], specificTL= [], mode = "delete",verbose=True, *args, **kwargs):
-        """ Description: Test if nodes have connections based on type and excluded_type in all the scene and either delete/select/print it.
-                        mode = "delete" / "select" / "print"
-            Return : [BOOL,Dict]
-            Dependencies : cmds - NodeTypeScanner()
-        """
-        
-        toReturnB = True
-        nodeL = NodeTypeScanner(execptionTL=execptionTL, specificTL=specificTL)
-        print "*nodeL=", len(nodeL)
-        unconectedCL =[]
-        # loop
-        for node in nodeL:
-            if not isConnected(node=node)[0]:
-                # print "-","toDELETe:",node
-                unconectedCL.append(node)
-
-        print "unconectedCL=", len(unconectedCL)
-        
-        # finally 
-        errorL = []
-        deletedL =[]
-        debugD = {}
-        if mode in ["delete"]:
-            if len(unconectedCL):
-                for node in unconectedCL:
-                    try:
-                        if not cmds.lockNode(node, q=1)[0]:
-                            print "try deleting",node,cmds.lockNode(node,q=1)[0]
-                            cmds.delete (node)
-                            deletedL.append(node)
-                    except Exception,err:
-                        errorL.append(node)
-                        # print "ERROR on {0} : {1}".format(node,err)
-            if len(errorL)>0:
-                toReturnB = False
-                debugD["Errored"] = errorL
-
-        if mode in ["select"]:
-            cmds.select (unconectedCL) 
-
-        if mode in ["print"]:
-            pass
-
-
-        # prints -------------------
-        if verbose:
-            printF(toReturnB, st="r")
-            printF("errorL:")
-            for i in errorL:
-                printF("    -{0} error".format(i))
-            printF("total errored = {0}".format(len(errorL)))
-            
-            printF("deleteL:")
-            for i in deletedL:
-                printF("    -{0} deleted".format(i))
-            printF("total deleted = {0}".format(len(deletedL)))
-        # --------------------------
-
-
-        return [toReturnB,debugD]
-
-
-
-# wip to make faster
-def CleanDisconnectedNodes(*args, **kwargs):
-        """ Description: Delete All Un-connected non dag Nodes
-            Return : BOOL,debugD
-            Dependencies : cmds - cleanUnusedNode()
-        """
-        printF( "CleanDisconnectedNodes()", st="t")
-        toReturnB,debugD = cleanUnusedNode(execptionTL = ["dagNode"], specificTL=[], mode="delete")
-
-        return [toReturnB,debugD]
-
-
-def cleanUnUsedAnimCurves( mode = "delete", *args, **kwargs):
-        """ Description: Delete All Un-connected Anim_Curves
-            Return : BOOL,debugD
-            Dependencies : cmds - cleanUnusedNode()
-        """
-        printF( "cleanUnUsedAnimCurves()", st="t")
-        toReturnB,debugD = cleanUnusedNode(execptionTL = [], specificTL=["animCurve"], mode="delete")
-
-        return toReturnB,debugD
-
-
-def cleanUnusedConstraint(mode = "delete",*args, **kwargs):
-        """ Description: Delete All Un-connected Constraint
-            Return : BOOL,debugD
-            Dependencies : cmds - cleanUnusedNode()
-        """
-        print "cleanUnusedConstraint()"
-        printF( "cleanUnusedConstraint()", st="t")
-        toReturnB,debugD = cleanUnusedNode(execptionTL = [], specificTL=["constraint",], mode="delete")
-
-        return [toReturnB,debugD]
-
-def cleanUnUsedAnimCurves( mode = "delete", *args, **kwargs):
-        """ Description: Delete All Un-connected Anim_Curves
-            Return : BOOL,debugD
-            Dependencies : cmds - cleanUnusedNode()
-        """
-        printF( "cleanUnUsedAnimCurves()", st="t")
-        toReturnB,debugD = cleanUnusedNode(execptionTL = [], specificTL=["animCurve"], mode="delete")
-
-        return toReturnB,debugD
 
 
 
