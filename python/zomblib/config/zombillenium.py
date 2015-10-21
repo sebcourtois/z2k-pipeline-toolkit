@@ -123,6 +123,7 @@ class asset_lib(object):
     asset_types = (
         "camera",
         "character3d",
+        "character2d",
         "prop3d",
         "vehicle3d",
         "set3d",
