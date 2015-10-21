@@ -312,11 +312,10 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         if inVerbose == True: 
             mc.select(outWrongFileNodeList)
             print "#### Info: the wrong file nodes have been selected"
-
-    if returnMapPath == False:
-        return outWrongFileNodeList if outWrongFileNodeList != [] else  None
-    elif returnMapPath == True and outWrongFileNodeList == []:
-        return outMapPathForPublishList if outMapPathForPublishList != [] else  None
+    if not returnMapPath:
+        return outWrongFileNodeList if outWrongFileNodeList else  None
+    elif returnMapPath and (not outWrongFileNodeList):
+        return outMapPathForPublishList if outMapPathForPublishList else  None
     else:
         return None
 
@@ -345,7 +344,7 @@ def imageResize(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQua
 
     inputFilePathName_exp = os.path.expandvars(os.path.expandvars(inputFilePathName))
     outputFilePathName_exp = os.path.expandvars(os.path.expandvars(outputFilePathName))
-    
+
     if inputFilePathName == "" :
         print "#### {:>7}: no 'inputFilePathName' given".format("Error")
         return
@@ -366,7 +365,7 @@ def imageResize(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQua
     if os.path.isfile(outputFilePathName_exp) and updateOnly == True:
         inStatInfo = os.stat(inputFilePathName_exp)
         outStatInfo = os.stat(outputFilePathName_exp)
-        if inStatInfo.st_mtime < outStatInfo.st_mtime:
+        if inStatInfo.st_mtime <= outStatInfo.st_ctime:
             print "#### {:>7}: {}  -->  is up to date".format("Info", outputFilePathName)
             return
         else:
@@ -666,7 +665,7 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
             LOD = 4
 
         if mainFilePathElem[-3] == "chr" and os.path.isfile(jpgFilePathExpand):
-            print "#### {:>7}: '{}' FileNode, jpg file: '{}',  already exists, can't replace it automaticaly on characters,please delete it manually first".format("Warning",eachFileNode,os.split.path(mapFilePath)[-1])
+            print "#### {:>7}: '{}' FileNode, jpg file: '{}',  already exists, can't replace it automaticaly on characters,please delete it manually first".format("Warning",eachFileNode,os.path.split(mapFilePath)[-1])
             continue
 
         imageResize(inputFilePathName = tgaFilePath, outputFilePathName = "", lod = LOD, jpgQuality = 90, updateOnly = updateOnly, openImageMentalRay = True)
@@ -725,7 +724,7 @@ def makeTxForArnold(inputFilePathName = "", outputFilePathName = "", updateOnly 
     if os.path.isfile(outputFilePathName_exp) and updateOnly == True:
         inStatInfo = os.stat(inputFilePathName_exp)
         outStatInfo = os.stat(outputFilePathName_exp)
-        if inStatInfo.st_mtime < outStatInfo.st_mtime:
+        if inStatInfo.st_mtime <= outStatInfo.st_ctime:
             print "#### {:>7}: {}  -->  is up to date".format("Info", outputFilePathName)
             return
         else:
@@ -883,7 +882,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
 
 def getTexturesToPublish (verbose = True):
     mapFilePathList = conformTexturePath(inVerbose = False, inConform = False, returnMapPath = True)
-    print ""
+    print "mapFilePathList "+str(mapFilePathList)
     print "#### {:>7}: runing shading.getTexturesToPublish(verbose = {})".format("Info", verbose)
     if not mapFilePathList:
         print "#### {:>7}: One (or several) the texture path is not conform, please run the conformTexturePath() procedure first".format("Error")
@@ -923,7 +922,6 @@ def getTexturesToPublish (verbose = True):
                     pass        
                 if 1001 < udimNb < 1011:
                     continue
-        
             else:
                 print "#### {:>7}: Missing file: {}".format("Error", filePathPsd_exp)
                 missingFiles = missingFiles + 1
@@ -946,6 +944,9 @@ def getTexturesToPublish (verbose = True):
 
             if os.path.isfile(filePathPsd_exp):
                 filesToPublish.append(filePathPsd_exp)
+            # esle if the texture file is not a _col file, continue (not reported as missing)
+            elif os.path.split(mapFilePath)[-1].split(".")[0].split("_")[-1] != "col":
+                continue
             else:
                 print "#### {:>7}: Missing file: {}".format("Error", filePathPsd_exp)
                 missingFiles = missingFiles + 1

@@ -1,901 +1,0 @@
-@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_ado_garsA @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.pyTEST_PROJECT()curproj=zombillenium@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19/chr/chr_ado_garsA_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/48
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/48
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/48
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/48
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/37
-     error on: 0/37
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/37
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/37
-     error on: 0/37
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/37
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************UNLOCKING SCENE:chr_ado_garsA@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_cerbere_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.pyTEST_PROJECT()curproj=zombillenium@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19/chr/chr_cerbere_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/72
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/72
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/72
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/72
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/53
-     error on: 0/53
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/53
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/53
-     error on: 0/53
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/53
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************UNLOCKING SCENE:chr_cerbere_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_cyclopette_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.pyTEST_PROJECT()curproj=zombillenium@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19/chr/chr_cyclopette_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/46
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/46
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/46
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/46
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/36
-     error on: 0/36
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/36
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/36
-     error on: 0/36
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/36
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************UNLOCKING SCENE:chr_cyclopette_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_femmeFaty_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.pyTEST_PROJECT()curproj=zombillenium@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19/chr/chr_femmeFaty_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: FALSE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : PAS CONFORME     -Found= [u'control', u'geometry1']
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/50
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/50
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/50
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/50
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/38
-     error on: 0/38
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/38
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/38
-     error on: 0/38
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/38
-@---->result=False********************************************************************************    preRelease_RESULT= False********************************************************************************UNLOCKING SCENE:chr_femmeFaty_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_femmeFaty_fantome @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.pyTEST_PROJECT()curproj=zombillenium@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19/chr/chr_femmeFaty_fantome_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/50
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/50
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/50
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/50
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/38
-     error on: 0/38
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/38
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/38
-     error on: 0/38
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/38
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************UNLOCKING SCENE:chr_femmeFaty_fantome@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_femmeFaty_visiteurA @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.pyTEST_PROJECT()curproj=zombillenium@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19/chr/chr_femmeFaty_visiteurA_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/50
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/50
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/50
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/50
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/38
-     error on: 0/38
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/38
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/38
-     error on: 0/38
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/38
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************UNLOCKING SCENE:chr_femmeFaty_visiteurA@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_femmeFaty_visiteurB @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.pyTEST_PROJECT()curproj=zombillenium@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19/chr/chr_femmeFaty_visiteurB_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/50
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/50
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/50
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/50
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/38
-     error on: 0/38
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/38
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/38
-     error on: 0/38
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/38
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************UNLOCKING SCENE:chr_femmeFaty_visiteurB@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_gretchen_adulteSorciere @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.pyTEST_PROJECT()curproj=zombillenium@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19/chr/chr_gretchen_adulteSorciere_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/50
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/50
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/50
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/50
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/38
-     error on: 0/38
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/38
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/38
-     error on: 0/38
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/38
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************UNLOCKING SCENE:chr_gretchen_adulteSorciere@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_gretchen_adulte @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.pyTEST_PROJECT()curproj=zombillenium@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19/chr/chr_gretchen_adulte_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/48
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/48
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/48
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/48
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/37
-     error on: 0/37
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/37
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/37
-     error on: 0/37
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/37
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************UNLOCKING SCENE:chr_gretchen_adulte@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_homme60aine_visiteurA @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.pyTEST_PROJECT()curproj=zombillenium@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19/chr/chr_homme60aine_visiteurA_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/52
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/52
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/52
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/52
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/38
-     error on: 0/38
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/38
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/38
-     error on: 0/38
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/38
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************UNLOCKING SCENE:chr_homme60aine_visiteurA@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_sirius_default @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.pyTEST_PROJECT()curproj=zombillenium@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19/chr/chr_sirius_default_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/44
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/44
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/44
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/44
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/34
-     error on: 0/34
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/34
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/34
-     error on: 0/34
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/34
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************UNLOCKING SCENE:chr_sirius_default@@@@@@@@@@@@@@@@@@@@@@ OPENED: chr_zombie1_figE @@@@@@@@@@@@@@@@@@@@@@@@@@@@----------------------------------------@ scriptName= testProject.pyTEST_PROJECT()curproj=zombillenium@---->result=True----------------------------------------@ scriptName= replaceAsset_batch_v001.pyreplacingSceneP=Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_19/chr/chr_zombie1_figE_previz.ma    Replaced@---->result=True********************************************************************************    prePublish SCRIPTS RESULT= True****************************************************************************************************************************************************************----------------------------------------@ scriptName= Chr_previz_check_batch.py
-----------checkBaseStructure()----------
- -RESULT: TRUE
-    topSetL        : OK
-    topObjL        : OK
-    baseCTRL       : OK
-    layerL         : OK
-
----------checkAssetStructure()----------
- -RESULT: TRUE
-    grp_rig - grp_geo : OK
-
-------------cleanRefNodes()-------------
- -RESULT: TRUE
-    objectDeleted=0/0
-
----------cleanMentalRayNodes()----------
- -RESULT: TRUE
-    objectDeleted=0/21
-
-------------remove_All_NS()-------------
- -RESULT: TRUE
-
--------cleanDisplayLayerWithSet()-------
- -RESULT: TRUE
-    set_control :DONE
-    set_meshCache :DONE
-
---------cleanUnUsedAnimCurves()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
---------cleanUnusedConstraint()---------
- -RESULT: TRUE
-    errorL:
-    total errored = 0
-    deleteL:
-    total deleted = 0
-
----------cleanUnusedInfluance()---------
- -RESULT: TRUE
-    total cleaned skinCluster: 0/50
-
-------------setSmoothness()-------------
- -RESULT: TRUE
-     error on: 0/50
-
---------disableShapeOverrides()---------
- -RESULT: TRUE
-     error on: 0/50
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/50
-
---------------cleanKeys()---------------
- -RESULT: TRUE
-     Cleaned : 0/38
-     error on: 0/38
-
---------------checkKeys()---------------
- -RESULT: TRUE
-     error on: 0/38
-
----------------resetSRT()---------------
- -RESULT: TRUE
-     Reseted : 0/38
-     error on: 0/38
-
----------------checkSRT()---------------
- -RESULT: TRUE
-     not zero total: 0/38
-@---->result=True********************************************************************************    preRelease_RESULT= True********************************************************************************UNLOCKING SCENE:chr_zombie1_figE@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ @ FINAL_RESULT = 11 / 12   -published: 0    -released:0 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@* chr_ado_garsA        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py', 'C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []* chr_cerbere_default        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py', 'C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []* chr_cyclopette_default        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py', 'C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []* chr_femmeFaty_default        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py = False        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py', 'C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = False    preRelease_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []* chr_femmeFaty_fantome        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py', 'C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []* chr_femmeFaty_visiteurA        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py', 'C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []* chr_femmeFaty_visiteurB        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py', 'C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []* chr_gretchen_adulte        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py', 'C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []* chr_gretchen_adulteSorciere        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py', 'C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []* chr_homme60aine_visiteurA        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py', 'C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []* chr_sirius_default        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py', 'C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py']    preRelease_detail    = []* chr_zombie1_figE        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py = True        -C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py = True    Opened               = True    lock_state           = UNLOCKED    prePublish_RESULT    = True    prePublish_RESULT_detail = []    prePublish_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py', 'C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py']    preRelease_RESULT    = True    preRelease_ScriptL   = ['C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Chr_previz_check_batch.py']    preRelease_detail    = [] @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ - failL:1 -['chr_femmeFaty_default']- publishedL:0 -[]- releasedL:0 -[]

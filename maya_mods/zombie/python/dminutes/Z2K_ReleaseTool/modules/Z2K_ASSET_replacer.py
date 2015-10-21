@@ -3,11 +3,12 @@
 ################################################################
 # Name    : Z2K_ASSET_replacer
 # Version : 002
-# Description : replace current scene with a custom selected file
+# Description : replace current scene with a custom selected file : ORIENTER POUR LES PREVIZ_ASSET
 # Author : Jean-Philippe Descoins
 # Date : 2015_09_24
 # Comment : WIP
 # TO DO :
+#   x add save before publish action
 #   x Add publish asset button
 #   x remember last path in get
 #   x add publish SG
@@ -25,7 +26,12 @@ import sys,os
 import maya.cmds as cmds
 import dminutes.Z2K_wrapper as Z2K
 reload(Z2K)
-
+import dminutes.jipeLib_Z2K as jpZ
+reload(jpZ)
+import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
+reload(Batch_CONFIG)
+from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
+print "DEBUGFILE=", DEBUGFILE
 
 
 
@@ -34,6 +40,8 @@ class Z2K_ASSET_replacer(object):
     name = "Z2K_ASSET_replacer"
     version = "_v001"
     OVcurDir = "Z2K_ASSET_replacer_CurDir"
+    
+
     def __init__(self, theProject="zombtest",currentSceneP="", replacingSceneP="",*args, **kwargs):
         print "init"
         self.theProject = theProject
@@ -139,7 +147,8 @@ class Z2K_ASSET_replacer(object):
         print "  -rawType=", rawType
 
         # publishing for real
-       
+        cmds.file(rename= cmds.file(q=1,sceneName=1) )
+        cmds.file(save=True)
         PublishedMrc = self.theProj.publishEditedVersion(self.currentSceneP, comment=comment, autoLock=True,sgTask=sgTask)[0]
         print "PublishedMrc=", PublishedMrc
         PublishedFile_absPath = PublishedMrc.absPath()
@@ -147,14 +156,15 @@ class Z2K_ASSET_replacer(object):
             
         
 
-        return PublishedFile_absPath
+        # return PublishedFile_absPath
 # save replacingScene as currentScene in the private
 
 
 
 class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
-    basePath =  os.environ.get("MAYA_MODULE_PATH").split(";")[0]
-    upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_REPLACE_LOGO_A1.bmp"
+    basePath = jpZ.getBaseModPath()
+    ICONPATH = Z2K_ICONPATH+ "Z2K_REPLACE_LOGO_A1.bmp"
+    upImg= basePath + ICONPATH
 
 
     def __init__(self, theProject="zombtest", currentSceneP="", replacingSceneP="",sgTask="sgTask",*args, **kwargs):
