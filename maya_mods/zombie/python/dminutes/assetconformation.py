@@ -1,6 +1,8 @@
 import maya.cmds as mc
 import re
 import string
+import dminutes.jipeLib_Z2K as jpZ
+reload (jpZ)
 
 
 def onCheckInAsset():
@@ -160,4 +162,178 @@ def previewSubdiv(enable = True, filter = ""):
                 print "#### info: '"+eachGeoGroup.split("|")[-1]+"' subdiv preview --> "+ str(enable)
                 for eachAttr in smoothLevelAttrList:
                     mc.setAttr(eachGeoGroup+"."+eachAttr, enable * int(eachAttr[-1]))
+
+def setShadingMask(selectFailingNodes = False, verbose = True, gui = True):
+    if verbose == True: print ""
+    if verbose == True: print "#### {:>7}: running setShadingMask(selectFailingNodes = {}, verbose = {} )".format("info",selectFailingNodes, verbose)
+
+    dmnMask00_R = ["chr_"]
+    dmnMask00_G = ["prp_"]
+    dmnMask00_B = ["vhl_"]
+
+    dmnMask01_R = ["set_"]
+    dmnMask01_G = ["env_"]
+    dmnMask01_B = ["c2d_"]
+
+    dmnMask02_R = ["chr_aton_","chr_barman_","chr_gamin2_","chr_femmeFaty_"]
+    dmnMask02_G = ["chr_aurelien_","chr_actionnaire1_","chr_jose_", "chr_gamin1_"]
+    dmnMask02_B = ["chr_gretchen_","chr_actionnaire2_","chr_zombie1_","chr_gamin3_"]
+
+    dmnMask03_R = ["chr_francis_","chr_actionnaire3_","chr_maitresse_"]
+    dmnMask03_G = ["chr_chauvesouris_","chr_actionnaire5_","chr_dick_"]
+    dmnMask03_B = ["chr_blaise_","chr_miranda_","chr_penelope_"]
+
+    dmnMask04_R = ["chr_cerbere_","chr_cyclopette_","chr_sylvain_"]
+    dmnMask04_G = ["chr_steven_","chr_dolores_","chr_ado18aine_"]
+    dmnMask04_B = ["chr_sirius_","chr_femme_","chr_ado_","chr_gamine_"]
+
+    dmnMask05_R = []# visages, decor custom
+    dmnMask05_G = []# yeux, decor custom
+    dmnMask05_B = []# bouches, decor custom
+
+    dmnMask06_R = []# shading custom
+    dmnMask06_G = []# shading custom
+    dmnMask06_B = []# shading custom
+
+    dmnMask00 = [0,0,0]
+    dmnMask01 = [0,0,0]
+    dmnMask02 = [0,0,0]
+    dmnMask03 = [0,0,0]
+    dmnMask04 = [0,0,0]
+
+    failingNodes = []
+    succedingNodes = []
+
+    if mc.ls("|asset"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        if  mainFilePathElem[-4] != "asset":
+            if gui:
+                raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+            else:
+                tx= "#### Error: you are not working in an 'asset' structure directory"
+                jpZ.printF( text=tx, st="main",  toFile = "", GUI= 0)
+    else :
+        if gui:
+            raise ValueError("#### Error: no '|asset' could be found in this scene")
+
+    assetName =  mainFilePathElem[-2]
+
+    for each in dmnMask00_R:
+        if each in assetName: dmnMask00[0]=1
+    for each in dmnMask00_G:
+        if each in assetName: dmnMask00[1]=1
+    for each in dmnMask00_B:
+        if each in assetName: dmnMask00[2]=1
+
+    for each in dmnMask01_R:
+        if each in assetName: dmnMask01[0]=1
+    for each in dmnMask01_G:
+        if each in assetName: dmnMask01[1]=1
+    for each in dmnMask01_B:
+        if each in assetName: dmnMask01[2]=1
+
+    for each in dmnMask02_R:
+        if each in assetName: dmnMask02[0]=1
+    for each in dmnMask02_G:
+        if each in assetName: dmnMask02[1]=1
+    for each in dmnMask02_B:
+        if each in assetName: dmnMask02[2]=1
+
+    for each in dmnMask03_R:
+        if each in assetName: dmnMask03[0]=1
+    for each in dmnMask03_G:
+        if each in assetName: dmnMask03[1]=1
+    for each in dmnMask03_B:
+        if each in assetName: dmnMask03[2]=1
+
+    for each in dmnMask04_R:
+        if each in assetName: dmnMask04[0]=1
+    for each in dmnMask04_G:
+        if each in assetName: dmnMask04[1]=1
+    for each in dmnMask04_B:
+        if each in assetName: dmnMask04[2]=1
+
+
+    dmnToonList = mc.ls(type="dmnToon")
+    if verbose == True: 
+        print "#### {:>7}: {} dmnToon nodes to process ".format("Info",len(dmnToonList))
+        print "#### {:>7}: 'dmnMask00' set to -->  {} ".format("Info", dmnMask00)
+        print "#### {:>7}: 'dmnMask01' set to -->  {} ".format("Info", dmnMask01)
+        print "#### {:>7}: 'dmnMask02' set to -->  {} ".format("Info", dmnMask02)
+        print "#### {:>7}: 'dmnMask03' set to -->  {} ".format("Info", dmnMask03)
+        print "#### {:>7}: 'dmnMask04' set to -->  {} ".format("Info", dmnMask04)
+
+    for each in dmnToonList:
+        maskNumber = 5
+
+        if not mc.listConnections(each+".dmnMask00",connections = True):
+            if mc.getAttr(each+".dmnMask00", lock = True): 
+                mc.setAttr(each+".dmnMask00", lock = False)
+                print "#### {:>7}: '{}.dmnMask00' has been unlocked".format("Warning", each)
+            mc.setAttr (each+".dmnMask00", dmnMask00[0], dmnMask00[1], dmnMask00[2], type="double3")
+            maskNumber = maskNumber - 1
+        else:
+            print "#### {:>7}: '{}.dmnMask00' is already connected, can't change value".format("Error", each)
+
+        if not mc.listConnections(each+".dmnMask01",connections = True):
+            if mc.getAttr(each+".dmnMask01", lock = True): 
+                mc.setAttr(each+".dmnMask01", lock = False)
+                print "#### {:>7}: '{}.dmnMask01' has been unlocked".format("Warning", each)
+            mc.setAttr (each+".dmnMask01", dmnMask01[0], dmnMask01[1], dmnMask01[2], type="double3")
+            maskNumber = maskNumber - 1
+        else:
+            print "#### {:>7}: '{}.dmnMask01' is already connected, can't change value".format("Error", each)
+
+        if not mc.listConnections(each+".dmnMask02",connections = True):
+            if mc.getAttr(each+".dmnMask02", lock = True): 
+                mc.setAttr(each+".dmnMask02", lock = False)
+                print "#### {:>7}: '{}.dmnMask02' has been unlocked".format("Warning", each)
+            mc.setAttr (each+".dmnMask02", dmnMask02[0], dmnMask02[1], dmnMask02[2], type="double3")
+            maskNumber = maskNumber - 1
+        else:
+            print "#### {:>7}: '{}.dmnMask02' is already connected, can't change value".format("Error", each)
+
+        if not mc.listConnections(each+".dmnMask03",connections = True):
+            if mc.getAttr(each+".dmnMask03", lock = True): 
+                mc.setAttr(each+".dmnMask03", lock = False)
+                print "#### {:>7}: '{}.dmnMask03' has been unlocked".format("Warning", each)
+            mc.setAttr (each+".dmnMask03", dmnMask03[0], dmnMask03[1], dmnMask03[2], type="double3")
+            maskNumber = maskNumber - 1
+        else:
+            print "#### {:>7}: '{}.dmnMask03' is already connected, can't change value".format("Error", each)
+
+        if not mc.listConnections(each+".dmnMask04",connections = True):
+            if mc.getAttr(each+".dmnMask04", lock = True): 
+                mc.setAttr(each+".dmnMask04", lock = False)
+                print "#### {:>7}: '{}.dmnMask04' has been unlocked".format("Warning", each)
+            mc.setAttr (each+".dmnMask04", dmnMask04[0], dmnMask04[1], dmnMask04[2], type="double3")
+            maskNumber = maskNumber - 1
+        else:
+            print "#### {:>7}: '{}.dmnMask04' is already connected, can't change value".format("Error", each)
+
+        if maskNumber == 0:
+            succedingNodes.append(each)
+        else:
+            failingNodes.append(each)
+
+    if len(succedingNodes) > 0 :
+        print "#### {:>7}: {} dmnToon nodes masks have been set succesfully ".format("Info",len(succedingNodes))
+    else:
+        succedingNodes = None
+
+    if len(failingNodes) > 0 :
+        if SelectFailingNodes == True: 
+            mc.select(failingNodes)
+        if gui:
+            raise ValueError("#### {:>7}: {} dmnToon nodes masks cannot be set: {}".format("Error",len(failingNodes), failingNodes))
+    else:
+        failingNodes = None
+
+    return failingNodes
+
+
+
+
+
 
