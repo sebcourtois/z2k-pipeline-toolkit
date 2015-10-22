@@ -18,8 +18,8 @@ SGTASK= "Rig_Previz" # wip not in use "Rig Auto"
 THECOMMENT= "Auto_Release_rockTheCasbah" #"Auto_Release_rockTheCasbah !","First_publish_RockTheCasbah"
 OPENINMAYA= 1 
 READONLY= 0
-PUBLISHMAYAFILE= 1
-RELEASEMAYAFILE= 1
+PUBLISHMAYAFILE= 0
+RELEASEMAYAFILE= 0
 UNLOCKFILE= 1
 PREPUBLISH_PYSCRIPTL = [
 "C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py",
