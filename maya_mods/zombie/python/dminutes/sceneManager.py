@@ -17,6 +17,8 @@ from davos.core.utils import versionFromName
 MrcLibrary = mrclibrary.MrcLibrary
 
 import dminutes.maya_scene_operations as mop
+import dminutes.jipeLib_Z2K as jpZ
+reload(jpZ)
 
 PROJECTNAME = "zombillenium"
 
@@ -284,7 +286,34 @@ class SceneManager():
 
         return pc.saveAs(currentScene, force=b_inForce)
 
+    # def saveIncrement(self, b_inForce=True):
+    #     # old 
+    #     entry = self.getEntry()
+
+    #     if entry == None:
+    #         pc.error("Cannot get entry for context {0}".format(self.context))
+
+    #     currentScene = os.path.abspath(mc.file(q=True, sn=True))
+    #     if currentScene == '':
+    #         pc.error("Please save your scene as a valid private working scene (Edit if needed)")
+
+    #     matches = re.match(".*(v\d{3})\.(\d{3})\.ma", currentScene)
+        
+    #     if matches:
+    #         curVersion = int(matches.group(2))
+    #         curVersion += 1
+    #         newFileName = '{0}.{1:03}.ma'.format(currentScene.split('.')[0], curVersion)
+    #         if b_inForce or not os.path.isfile(newFileName):
+    #             return pc.saveAs(newFileName, force=b_inForce)
+    #         else:
+    #             pc.error("File already exists ({0})!".format(newFileName))
+    #     else:
+    #         pc.warning("Invalid file pattern !")
+        
+    #     return None
+
     def saveIncrement(self, b_inForce=True):
+        # new incrementing system based on the last versoin present in the folder 
         entry = self.getEntry()
 
         if entry == None:
@@ -297,9 +326,9 @@ class SceneManager():
         matches = re.match(".*(v\d{3})\.(\d{3})\.ma", currentScene)
         
         if matches:
-            curVersion = int(matches.group(2))
-            curVersion += 1
-            newFileName = '{0}.{1:03}.ma'.format(currentScene.split('.')[0], curVersion)
+            print "currentScene=", currentScene
+            newFileName = jpZ.createIncrementedFilePath(filePath=currentScene,vSep= ".", extSep=".ma", digits=3,)
+
             if b_inForce or not os.path.isfile(newFileName):
                 return pc.saveAs(newFileName, force=b_inForce)
             else:
@@ -308,6 +337,7 @@ class SceneManager():
             pc.warning("Invalid file pattern !")
         
         return None
+
 
     def capture(self, increment=True):
         global CAPTUREINFO

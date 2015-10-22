@@ -19,7 +19,69 @@
 import os
 import maya.cmds as cmds
 
+
+# general function 
+def createIncrementedFilePath( filePath="", vSep= "_v",extSep=".ma", digits=3, *args, **kwargs):
+    """ Description: return incremented File path starting with the last version present in the 
+        folder of the given file.
+        first split the extension of the file
+        then search the version by le right side and split the first instance of it
+        Work ideally with folder with the only correctly versionned files.
+        Return : string of the versioned filePath
+        Dependencies :  os
+    """
+    
+    print "createVersionIncrementedPath(%s)" %filePath
+    NotFoundBool = True
+    filePath = os.path.normpath(filePath)
+    
+    # get last version in folder
+    theDir,theFile = filePath.rsplit(os.sep,1)[0],filePath.rsplit(os.sep,1)[1].rsplit(extSep,1)[0]
+    fullDirContentL =[f.rsplit(extSep,1)[0] for f in os.listdir( os.path.normpath(filePath).rsplit(os.sep,1)[0] ) if  extSep in f]
+    print fullDirContentL
+    # list all files with the same base name
+    # ############################################################ checker si le repertoire est avec au moins 1 fichier
+    ConcernedFileL= []
+    if len(fullDirContentL)>0:
+        # get concernedFiles
+        for f in fullDirContentL:
+            print "\t",( theFile.rsplit(extSep,1)[0] ).rsplit(vSep,1)[0].upper() ," / ",  f.upper()
+
+            if theFile.rsplit(vSep,1)[0].upper() in [  f.rsplit(vSep,1)[0].upper() ] and len(theFile) == len(f):
+                ConcernedFileL.append(f)
+            
+        print "ConcernedFileL = %s" %( ConcernedFileL )
+        
+        if len(ConcernedFileL)>0:
+            NotFoundBool = False
+            lastv = theDir + os.sep + sorted(ConcernedFileL, key=lambda member: member.lower() )[-1]
+            print "lastv = %s" %( lastv )
+            outPath = lastv
+        else :
+            NotFoundBool = True
+
+    # set the default Versionning
+    if NotFoundBool in [True,1]:
+        outPath =  theDir + os.sep + theFile
+
+
+    # finally oparate the versionning
+    bazPath,curVer =  outPath.rsplit(vSep, 1)
+
+    curVer = str(int(curVer)+1).zfill(digits)
+    filePath = bazPath + vSep + curVer + extSep
+    print "\t filePath=",filePath
+
+
+    print "\t return: %s" % filePath
+    return filePath
+
+
+
+
 # Z2K base general functions -----------------
+
+
 def getBaseModPath(*args, **kwargs):
     """
     recupere le path de base des modules
