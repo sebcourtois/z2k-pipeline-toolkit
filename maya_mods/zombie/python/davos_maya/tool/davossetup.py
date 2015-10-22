@@ -3,9 +3,14 @@ import os
 import pymel.core as pm
 import pymel.util as pmu
 
+from functools import partial
+
 from davos.core.damproject import DamProject
 from pytaya.util.toolsetup import ToolSetup
+from pytaya.util import qtutils as  myaqt
 #from pytd.util.sysutils import toStr
+
+from davos.tools import create_dirs_n_files
 
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
@@ -16,6 +21,10 @@ def loadProject():
     bBatchMode = pm.about(batch=True)
     proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=bBatchMode)
     proj.loadEnviron()
+
+def doCreateFolders(sEntiType, *args):
+    create_dirs_n_files.launch(sEntiType, dryRun=False,
+                               dialogParent=myaqt.mayaMainWindow())
 
 class DavosSetup(ToolSetup):
 
@@ -29,7 +38,11 @@ class DavosSetup(ToolSetup):
 
         with self.menu:
             pm.menuItem(label="Asset Browser", c=file_browser.launch)
+            pm.menuItem(divider=True)
             pm.menuItem(label="Publish...", c=publishing.publishCurrentScene)
+            with pm.subMenuItem(label="Create Folders", to=False):
+                pm.menuItem(label="Assets...", c=partial(doCreateFolders, "asset"))
+                pm.menuItem(label="Shots...", c=partial(doCreateFolders, "shot"))
 
         ToolSetup.populateMenu(self)
 

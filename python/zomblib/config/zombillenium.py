@@ -111,6 +111,8 @@ class misc_lib(object):
     public_path_envars = ('ZOMB_MISC_PATH',)
     private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
+    free_publish = True
+
 class asset_lib(object):
 
     dir_name = "asset"
