@@ -488,3 +488,24 @@ COMMANDS = {
         'previz 3D':init_previz_scene
     }
 }
+
+
+
+def exportCam(sceneName="",*args, **kwargs):
+    """ Description: export la camera du given shot
+        Return : BOOL
+        Dependencies : cmds - 
+    """
+
+    
+
+    # get camera_group
+
+    # check if valid
+
+    # export to specified data folder
+
+    # return
+
+    
+    
