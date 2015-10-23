@@ -13,10 +13,10 @@ from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 
 mainWin = None
 
-class MayaHookWindow(MayaQWidgetDockableMixin, AssetBrowserWindow):
+class MayaAssetBrowserWindow(MayaQWidgetDockableMixin, AssetBrowserWindow):
 
     def __init__(self, parent=None):
-        super(MayaHookWindow, self).__init__(parent=parent)
+        super(MayaAssetBrowserWindow, self).__init__(parent=parent)
 
 
 def kill():
@@ -42,7 +42,7 @@ def launch(argv):
         mainWin.showNormal()
         #mainWin.raise_()
     else:
-        mainWin = MayaHookWindow()
+        mainWin = MayaAssetBrowserWindow()
         mainWin.show(dockable=False)
 
         sProject = os.environ.get("DAVOS_INIT_PROJECT")

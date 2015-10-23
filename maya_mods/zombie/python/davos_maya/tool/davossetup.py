@@ -14,7 +14,8 @@ from davos.tools import create_dirs_n_files
 
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
-
+from davos_maya.tool import dependency_scan
+from pytd.util.sysutils import inDevMode
 
 def loadProject():
 
@@ -25,6 +26,9 @@ def loadProject():
 def doCreateFolders(sEntiType, *args):
     create_dirs_n_files.launch(sEntiType, dryRun=False,
                                dialogParent=myaqt.mayaMainWindow())
+
+def doDependencyScan(*args):
+    dependency_scan.launch()
 
 class DavosSetup(ToolSetup):
 
@@ -39,10 +43,12 @@ class DavosSetup(ToolSetup):
         with self.menu:
             pm.menuItem(label="Asset Browser", c=file_browser.launch)
             pm.menuItem(divider=True)
-            pm.menuItem(label="Publish...", c=publishing.publishCurrentScene)
             with pm.subMenuItem(label="Create Folders", to=False):
                 pm.menuItem(label="Assets...", c=partial(doCreateFolders, "asset"))
                 pm.menuItem(label="Shots...", c=partial(doCreateFolders, "shot"))
+            if inDevMode():
+                pm.menuItem(label="Scan Dependencies...", c=doDependencyScan)
+            pm.menuItem(label="Publish...", c=publishing.publishCurrentScene)
 
         ToolSetup.populateMenu(self)
 

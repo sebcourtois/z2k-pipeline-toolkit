@@ -1,5 +1,4 @@
 
-import os.path as osp
 
 import pymel.core as pm
 
@@ -11,55 +10,6 @@ from pytd.gui.dialogs import confirmDialog
 #from pytd.util.logutils import logMsg
 from pytaya.core.general import lsNodes
 from pytd.util.fsutils import pathResolve
-
-
-def scanTextureDependency(proj, sCurScnPath):
-
-    damAst = proj.entityFromPath(sCurScnPath, fail=True)
-    privTexDir = damAst.getResource("private", "texture_dir")
-    sPrivTexDirPath = privTexDir.absPath()
-    sAllowTexTypes = proj.getVar("project", "allowed_texture_formats")
-
-    fileNodeList = lsNodes("*", type='file', not_rn=True)
-    scanResults = []
-
-    for fileNode in fileNodeList:
-
-        sErrorList = []
-
-        p = fileNode.getAttr("fileTextureName")
-        if not p:
-            continue
-
-        sAbsTexPath = pathResolve(p)
-
-        if not osp.isfile(sAbsTexPath):
-            msg = "No such file: '{}'.".format(sAbsTexPath)
-            sErrorList.append(('FileNotFound', msg))
-            continue
-
-        sDirPath, sFilename = osp.split(sAbsTexPath)
-        sBaseName, sExt = osp.split(sFilename)
-        if sExt not in sAllowTexTypes:
-            msg = ("Bad texture format: '{}'. Only accepts: '{}'."
-                   .format(sExt, "' '".join(sAllowTexTypes)))
-            sErrorList.append(('BadTextureFormat', msg))
-
-        if sDirPath != sPrivTexDirPath:
-            sErrorList.append('BadLocation')
-
-        privFile = None
-        err = None
-
-        try:
-            privFile = proj.entryFromPath(sAbsTexPath, space="private", fail=True)
-        except Exception, err:
-            pass
-
-        resultDct = {"path":sAbsTexPath, "drcFile":privFile, "error":err,
-                     "fileNode":fileNode}
-
-        scanResults.append(resultDct)
 
 def publishSceneDependencies(proj, sCurScnPath, **kwargs):
 
@@ -111,6 +61,7 @@ def publishCurrentScene(*args, **kwargs):
         raise ValueError("Invalid scene name: '{}'".format(sCurScnPath))
 
     proj = DamProject.fromPath(sCurScnPath, fail=True)
+
     _, curPubFile = proj.assertEditedVersion(sCurScnPath)
 
     bSgVersion = True
