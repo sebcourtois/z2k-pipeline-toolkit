@@ -147,8 +147,11 @@ class Z2K_ASSET_replacer(object):
         print "  -rawType=", rawType
 
         # publishing for real
+        print "*",cmds.file(q=1,sceneName=1)
         cmds.file(rename= cmds.file(q=1,sceneName=1) )
         cmds.file(save=True)
+        print "*",cmds.file(q=1,sceneName=1)
+        print "*self.currentSceneP",self.currentSceneP
         PublishedMrc = self.theProj.publishEditedVersion(self.currentSceneP, comment=comment, autoLock=True,sgTask=sgTask)[0]
         print "PublishedMrc=", PublishedMrc
         PublishedFile_absPath = PublishedMrc.absPath()
@@ -156,8 +159,8 @@ class Z2K_ASSET_replacer(object):
             
         
 
-        # return PublishedFile_absPath
-# save replacingScene as currentScene in the private
+        return PublishedFile_absPath
+
 
 
 
@@ -167,11 +170,12 @@ class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
     upImg= basePath + ICONPATH
 
 
-    def __init__(self, theProject="zombtest", currentSceneP="", replacingSceneP="",sgTask="sgTask",*args, **kwargs):
+    def __init__(self, theProject="zombtest", currentSceneP="", replacingSceneP="",sgTask="sgTask",enable_publish_GUI=False,*args, **kwargs):
         Z2K_ASSET_replacer.__init__(self, theProject=theProject, currentSceneP=currentSceneP, replacingSceneP=replacingSceneP)
 
         print self.name,self.version
         self.cf = self.name + self.version
+        self.enable_publish_GUI = enable_publish_GUI 
         print "theProject=", self.theProject
         self.pComment = "Auto_Release_rockTheCasbah"
         self.sgTask = sgTask
@@ -231,7 +235,7 @@ class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
             cmds.deleteUI(self.cf, window=True)
         #create la window et rename apres
         self.cf = cmds.window(self.cf ,rtf=True, tlb=True, t=self.cf + " " +self.theProject)
-        outputW = cmds.window(self.cf, e=True, sizeable=True, )
+        outputW = cmds.window(self.cf, e=True, sizeable=True,w= 322,h=102 )
         
         # show window
         cmds.showWindow(self.cf)
@@ -258,16 +262,19 @@ class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
         self.BFileName = cmds.textField()
         self.BgetFile = cmds.button("Get",c= self.btn_getFile,en=1)
         cmds.setParent("..")
+        
         self.BreplaceScene = cmds.button("replace_current_Scene",c= self.btn_replaceScene)
-        self.BPublishScene = cmds.button("PUBLISH",c= self.btn_publishScene)
+        self.BPublishScene = cmds.button("PUBLISH",c= self.btn_publishScene,vis=self.enable_publish_GUI)
         
         cmds.separator()
-        cmds.text("ShotGun Task: {0}".format(self.sgTask),align="left",)
-        cmds.rowLayout(nc=2,adj=2)
-        cmds.text("Comment:",align="left",)
+        cmds.text("ShotGun Task: {0}".format(self.sgTask),align="left",vis=self.enable_publish_GUI)
+        cmds.rowLayout(nc=2,adj=2,vis=self.enable_publish_GUI)
+        cmds.text("Comment:",align="left",vis=self.enable_publish_GUI)
         
-        self.BComment = cmds.textField(text= self.pComment,font="obliqueLabelFont")
+        self.BComment = cmds.textField(text= self.pComment,font="obliqueLabelFont",vis=self.enable_publish_GUI)
         cmds.setParent("..")
+        print "width=",cmds.window(parent,q=1,w=1)
+        print "height=",cmds.window(parent,q=1,h=1)
 
 
 
