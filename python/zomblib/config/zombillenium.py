@@ -39,8 +39,8 @@ class project(object):
     else:
         damas_server_addr = "https://62.210.104.42:8443/api"
 
-    editable_files = ("*.ma", "*.mb", "*.psd", "*.nk", "*.py")
-
+    editable_file_patterns = ("*.ma", "*.mb", "*.psd", "*.nk", "*.py")
+    allowed_texture_formats = (".tga", ".jpg")
 
 class shot_lib(object):
 
@@ -65,6 +65,7 @@ class shot_lib(object):
                     {
                      "{name}_sound.wav -> animatic_sound":None,
                      "{name}_animatic.mov -> animatic_capture":None,
+                     "{name}_camera.ma -> camera_scene":None,
                     },
                  "{step:01_previz} -> previz_dir":
                     {
@@ -110,6 +111,8 @@ class misc_lib(object):
 
     public_path_envars = ('ZOMB_MISC_PATH',)
     private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
+
+    free_publish = True
 
 class asset_lib(object):
 
