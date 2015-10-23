@@ -340,6 +340,8 @@ class SceneManager():
 
 
     def capture(self, increment=True):
+        # BUG pas de son alors que son present dans la scene
+        # BUG first frame decalee dupliquee dans les fichier output
         global CAPTUREINFO
 
         savedFile = None
@@ -667,3 +669,16 @@ def restoreHUD(oldValues=None):
         for k, v in oldValues.iteritems():
             if k in headsUps:
                 pc.headsUpDisplay(k, edit=True, visible=v)
+
+
+def deleteHUD(*args, **kwargs):
+    # FUNCTION QUI SEMBLE MANQUER, a ajouter quelque part apres le playblast
+    # actuellement il y a un bug qui fait que t'as des script qui tournent en permanence dans la scene, et qui plante si
+    # ce n'est pas une scene zombie avec une belle camera
+    headsUps = cmds.headsUpDisplay(listHeadsUpDisplays=True)
+    for i in headsUps:
+        if "HUD_ZOMB" in i:
+            print i
+            cmds.headsUpDisplay(i,rem=True)
+
+

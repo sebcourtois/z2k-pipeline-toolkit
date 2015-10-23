@@ -126,7 +126,7 @@ def getCatL (*args,**kwargs):
     return assetL
 
 # printer  -------------------------------------------------------
-def printF( text="", st="main", toScrollF="", toFile = "", GUI= True,
+def printF( text="", st="main", toScrollF="", toFile = "", inc=False, GUI= True,
         openMode="a+", *args, **kwargs):
         # print "printF()",GUI,toFile
         stringToPrint=""
