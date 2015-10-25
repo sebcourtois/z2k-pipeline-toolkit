@@ -4,7 +4,7 @@ import os.path as osp
 import pymel.core as pm
 
 from davos.core.damproject import DamProject
-from pytd.gui.dialogs import SimpleTreeDialog
+from pytd.gui.dialogs import QuickTreeDialog
 #from pytd.util.logutils import logMsg
 from pytaya.core.general import lsNodes
 from pytd.util.fsutils import pathResolve, normCase
@@ -14,10 +14,10 @@ from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 
 mainWin = None
 
-class MayaSimpleTreeDialog(MayaQWidgetDockableMixin, SimpleTreeDialog):
+class MayaQuickTreeDialog(MayaQWidgetDockableMixin, QuickTreeDialog):
 
     def __init__(self, parent=None):
-        super(MayaSimpleTreeDialog, self).__init__(parent=parent)
+        super(MayaQuickTreeDialog, self).__init__(parent=parent)
 
 def scanTextureDependency(damAst):
 
