@@ -4,9 +4,6 @@ import os.path as osp
 from PySide import QtGui
 from PySide.QtCore import Qt
 
-import PIL.Image
-pilimage = PIL.Image
-
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 import pymel.core as pm
 
@@ -181,6 +178,10 @@ def scanTextureDependency():
                     sBuddyFileList.append(sBuddyPath)
 
             if bExists:
+
+                import PIL.Image
+                pilimage = PIL.Image
+
                 try:
                     tgaImg = pilimage.open(sAbsTexPath)
                     tileInfo = tgaImg.tile[0]

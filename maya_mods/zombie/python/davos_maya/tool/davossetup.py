@@ -14,7 +14,6 @@ from davos.tools import create_dirs_n_files
 
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
-from davos_maya.tool import dependency_scan
 from pytd.util.sysutils import inDevMode
 
 def loadProject():
@@ -28,6 +27,7 @@ def doCreateFolders(sEntiType, *args):
                                dialogParent=myaqt.mayaMainWindow())
 
 def doDependencyScan(*args):
+    from davos_maya.tool import dependency_scan
     dependency_scan.launch()
 
 class DavosSetup(ToolSetup):
