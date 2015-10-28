@@ -5,7 +5,7 @@ import os
 import string 
 import subprocess
 import miscUtils
-#import modeling
+import modeling
 
 
 def connectedToSeveralSG(myNode = ""):
