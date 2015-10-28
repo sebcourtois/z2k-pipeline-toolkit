@@ -1,11 +1,10 @@
 
-import os
+
 import pymel.core as pm
 import pymel.util as pmu
 
 from functools import partial
 
-from davos.core.damproject import DamProject
 from pytaya.util.toolsetup import ToolSetup
 from pytaya.util import qtutils as  myaqt
 #from pytd.util.sysutils import toStr
@@ -15,12 +14,6 @@ from davos.tools import create_dirs_n_files
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
 from pytd.util.sysutils import inDevMode
-
-def loadProject():
-
-    bBatchMode = pm.about(batch=True)
-    proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=bBatchMode)
-    proj.loadEnviron()
 
 def doCreateFolders(sEntiType, *args):
     create_dirs_n_files.launch(sEntiType, dryRun=False,

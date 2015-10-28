@@ -4,6 +4,9 @@ import os.path as osp
 from PySide import QtGui
 from PySide.QtCore import Qt
 
+import PIL.Image
+pilimage = PIL.Image
+
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 import pymel.core as pm
 
@@ -17,8 +20,7 @@ from pytd.util.strutils import labelify, assertChars
 from pytd.util.qtutils import setWaitCursor
 from pytd.util.sysutils import argToTuple, toStr
 
-from davos.core.damproject import DamProject
-
+from .general import entityFromScene
 
 mainWin = None
 
@@ -57,14 +59,13 @@ class DependencyTree(QuickTree):
     def __init__(self, parent):
         super(DependencyTree, self).__init__(parent)
 
+        self.itemClass = DependencyTreeItem
+
         QT_STYLE = QtGui.QStyleFactory.create("WindowsVista")
         self.setStyle(QT_STYLE)
         self.setAlternatingRowColors(True)
 
-        self.itemClass = DependencyTreeItem
-        self.itemClicked.connect(self.onItemClicked)
-
-    def onItemClicked(self, item):
+    def _onItemClicked(self, item):
         userData = item.data(0, Qt.UserRole)
         if userData:
             wrappedNodes = argToTuple(userData)
@@ -85,17 +86,132 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
 
     def refresh(self):
         self.treeWidget.clear()
-        setupTreeData(self.treeWidget, scanTextureDependency())
+        self.setupTreeData(scanTextureDependency(entityFromScene()))
+
+    def setupTreeData(self, scanResults):
+
+        treeWidget = self.treeWidget
+
+        sHeaderList = ["Files", "Summary", "Infos"]
+        treeWidget.setHeaderLabels(sHeaderList)
+
+        sFoundSeverities = set()
+        sFileGrpItems = set()
+        treeData = []
+        for result in scanResults:
+
+            fileNodes = result["file_nodes"]
+            if fileNodes:
+
+                sFileNodeNames = tuple(n.name()for n in fileNodes)
+
+                wrappedNodes = []
+                fileNodeTreeData = {}
+                for fileNode in fileNodes:
+
+                    sNodeName = fileNode.name()
+
+                    wrappedNode = WrappedNode(fileNode)
+                    wrappedNodes.append(wrappedNode)
+
+                    itemData = {"texts": [sNodeName, "", fileNode.getAttr("fileTextureName")],
+                                "roles":{Qt.UserRole:(0, wrappedNode)},
+                                "type":NODE_ITEM_TYPE
+                                }
+                    fileNodeTreeData[sNodeName] = itemData
+
+                numNodes = len(fileNodes)
+                sNumNodes = "{} {}".format(numNodes, "nodes" if numNodes > 1 else "node")
+
+            sAbsTexPath = result["abs_path"]
+            sFilename = osp.basename(sAbsTexPath)
+
+            issueList = result["issues"]
+            if issueList:
+                for sIssueCode, sSeverity, sMsg in issueList:
+
+                    sFoundSeverities.add(sSeverity)
+
+                    sSeverityTitle = (sSeverity + 's').upper()
+
+                    sItemPath = pathJoin(sSeverityTitle, labelify(sIssueCode))
+                    sFileGrpItems.add(sItemPath)
+                    sItemPath = pathJoin(sItemPath, sFilename)
+
+                    itemData = {"path": sItemPath,
+                                "texts": [sFilename, sNumNodes, sMsg.strip('.')],
+                                "roles":{Qt.UserRole:(0, wrappedNodes)},
+                                "type":FILE_ITEM_TYPE
+                                }
+                    treeData.append(itemData)
+
+                    for sNodeName in sFileNodeNames:
+                        itemData = fileNodeTreeData[sNodeName].copy()
+                        itemData["path"] = pathJoin(sItemPath, sNodeName)
+                        treeData.append(itemData)
+            else:
+                sSeverity = "info"
+                sFoundSeverities.add(sSeverity)
+
+                sSeverityTitle = (sSeverity + 's').upper()
+                sItemPath = pathJoin(sSeverityTitle, sFilename)
+                sFileGrpItems.add(sSeverityTitle)
+
+                sBuddyFileList = result["buddy_files"]
+
+                sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
+                sMsg = ", ".join(sExtList) + " found" if sBuddyFileList else ""
+
+                itemData = {"path": sItemPath,
+                            "texts": [sFilename, sNumNodes, sMsg],
+                            "roles":{Qt.UserRole:(0, wrappedNodes)},
+                            }
+                treeData.append(itemData)
+
+                for sPath in sBuddyFileList:
+
+                    sFilename = osp.basename(sPath)
+                    itemData = {"path": pathJoin(sItemPath, sFilename),
+                                "texts": [sFilename, "", ""],
+                                "roles":{Qt.ForegroundRole:(0, QtGui.QBrush(Qt.green))},
+                                }
+                    treeData.append(itemData)
+
+                for sNodeName in sFileNodeNames:
+                    itemData = fileNodeTreeData[sNodeName].copy()
+                    itemData["path"] = pathJoin(sItemPath, sNodeName)
+                    treeData.append(itemData)
+
+        numCol = treeWidget.columnCount()
+        for sSeverity, qtcolor in (("info", Qt.green), ("warning", Qt.yellow), ("error", Qt.red)):
+
+            if sSeverity not in sFoundSeverities:
+                continue
+
+            color = QtGui.QColor(qtcolor)
+            color.setAlpha(35)
+
+            itemData = {"path": (sSeverity + 's').upper(),
+                        #"texts": [sFilename, sNumNodes, sMsg],
+                        "roles":{#Qt.ForegroundRole:(0, QtGui.QBrush(qtcolor)),
+                                 Qt.BackgroundRole:(xrange(numCol), QtGui.QBrush(color)), },
+                        }
+            treeData.insert(0, itemData)
+
+        treeWidget.createTree(treeData)
+
+        c = sHeaderList.index("Summary")
+        for sItemPath in sFileGrpItems:
+            item = treeWidget.itemFromPath(sItemPath)
+            item.setText(c, "{} files".format(item.childCount()))
+            #item.setExpanded(True)
+
+        for i in xrange(treeWidget.topLevelItemCount()):
+            item = treeWidget.topLevelItem(i)
+            item.setExpanded(True)
 
 @setWaitCursor
-def scanTextureDependency():
-
-    sCurScnPath = pm.sceneName()
-    if not sCurScnPath:
-        raise ValueError("Invalid scene name: '{}'".format(sCurScnPath))
-
-    proj = DamProject.fromPath(sCurScnPath, fail=True)
-    damAst = proj.entityFromPath(sCurScnPath, fail=True)
+def scanTextureDependency(damAst):
 
     proj = damAst.project
     sAstName = damAst.name
@@ -179,9 +295,6 @@ def scanTextureDependency():
 
             if bExists:
 
-                import PIL.Image
-                pilimage = PIL.Image
-
                 try:
                     tgaImg = pilimage.open(sAbsTexPath)
                     tileInfo = tgaImg.tile[0]
@@ -217,133 +330,14 @@ def scanTextureDependency():
 
     return scanResults
 
-def setupTreeData(treeWidget, scanResults):
-
-    sHeaderList = ["Files", "Summary", "Infos"]
-    treeWidget.setHeaderLabels(sHeaderList)
-
-    sFoundSeverities = set()
-    sFileGrpItems = set()
-    treeData = []
-    for result in scanResults:
-
-        fileNodes = result["file_nodes"]
-        if fileNodes:
-
-            sFileNodeNames = tuple(n.name()for n in fileNodes)
-
-            wrappedNodes = []
-            fileNodeTreeData = {}
-            for fileNode in fileNodes:
-
-                sNodeName = fileNode.name()
-
-                wrappedNode = WrappedNode(fileNode)
-                wrappedNodes.append(wrappedNode)
-
-                itemData = {"texts": [sNodeName, "", fileNode.getAttr("fileTextureName")],
-                            "roles":{Qt.UserRole:(0, wrappedNode)},
-                            "type":NODE_ITEM_TYPE
-                            }
-                fileNodeTreeData[sNodeName] = itemData
-
-            numNodes = len(fileNodes)
-            sNumNodes = "{} {}".format(numNodes, "nodes" if numNodes > 1 else "node")
-
-        sAbsTexPath = result["abs_path"]
-        sFilename = osp.basename(sAbsTexPath)
-
-        issueList = result["issues"]
-        if issueList:
-
-            for sIssueCode, sSeverity, sMsg in issueList:
-
-                sFoundSeverities.add(sSeverity)
-
-                sSeverityTitle = (sSeverity + 's').upper()
-
-                sItemPath = pathJoin(sSeverityTitle, labelify(sIssueCode))
-                sFileGrpItems.add(sItemPath)
-                sItemPath = pathJoin(sItemPath, sFilename)
-
-                itemData = {"path": sItemPath,
-                            "texts": [sFilename, sNumNodes, sMsg.strip('.')],
-                            "roles":{Qt.UserRole:(0, wrappedNodes)},
-                            "type":FILE_ITEM_TYPE
-                            }
-                treeData.append(itemData)
-
-                for sNodeName in sFileNodeNames:
-                    itemData = fileNodeTreeData[sNodeName].copy()
-                    itemData["path"] = pathJoin(sItemPath, sNodeName)
-                    treeData.append(itemData)
-        else:
-            sSeverity = "info"
-            sFoundSeverities.add(sSeverity)
-
-            sSeverityTitle = (sSeverity + 's').upper()
-            sItemPath = pathJoin(sSeverityTitle, sFilename)
-            sFileGrpItems.add(sSeverityTitle)
-
-            sBuddyFileList = result["buddy_files"]
-
-            sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
-            sMsg = ", ".join(sExtList) + " found" if sBuddyFileList else ""
-
-            itemData = {"path": sItemPath,
-                        "texts": [sFilename, sNumNodes, sMsg],
-                        "roles":{Qt.UserRole:(0, wrappedNodes)},
-                        }
-            treeData.append(itemData)
-
-            for sPath in sBuddyFileList:
-
-                sFilename = osp.basename(sPath)
-                itemData = {"path": pathJoin(sItemPath, sFilename),
-                            "texts": [sFilename, "", ""],
-                            "roles":{Qt.ForegroundRole:(0, QtGui.QBrush(Qt.green))},
-                            }
-                treeData.append(itemData)
-
-            for sNodeName in sFileNodeNames:
-                itemData = fileNodeTreeData[sNodeName].copy()
-                itemData["path"] = pathJoin(sItemPath, sNodeName)
-                treeData.append(itemData)
-
-    numCol = treeWidget.columnCount()
-    for sSeverity, qtcolor in (("info", Qt.green), ("warning", Qt.yellow), ("error", Qt.red)):
-
-        if sSeverity not in sFoundSeverities:
-            continue
-
-        color = QtGui.QColor(qtcolor)
-        color.setAlpha(35)
-
-        itemData = {"path": (sSeverity + 's').upper(),
-                    #"texts": [sFilename, sNumNodes, sMsg],
-                    "roles":{#Qt.ForegroundRole:(0, QtGui.QBrush(qtcolor)),
-                             Qt.BackgroundRole:(xrange(numCol), QtGui.QBrush(color)), },
-                    }
-        treeData.insert(0, itemData)
-
-    treeWidget.createTree(treeData)
-
-    c = sHeaderList.index("Summary")
-    for sItemPath in sFileGrpItems:
-        item = treeWidget.itemFromPath(sItemPath)
-        item.setText(c, "{} files".format(item.childCount()))
-        #item.setExpanded(True)
-
-    for i in xrange(treeWidget.topLevelItemCount()):
-        item = treeWidget.topLevelItem(i)
-        item.setExpanded(True)
-
 def launch():
+
+    damEntity = entityFromScene()
 
     dlg = DependencyTreeDialog()
     dlg.show()
 
-    setupTreeData(dlg.treeWidget, scanTextureDependency())
+    dlg.setupTreeData(scanTextureDependency(damEntity))
 
 #    dlg.close()
 #    dlg.exec_()

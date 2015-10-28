@@ -11,6 +11,8 @@ from pytd.gui.dialogs import confirmDialog
 from pytaya.core.general import lsNodes
 from pytd.util.fsutils import pathResolve
 
+from .general import entityFromScene
+
 def publishSceneDependencies(proj, sCurScnPath, **kwargs):
 
     fileNodeList = lsNodes("*", type='file', not_rn=True)
@@ -57,10 +59,8 @@ def publishSceneDependencies(proj, sCurScnPath, **kwargs):
 def publishCurrentScene(*args, **kwargs):
 
     sCurScnPath = pm.sceneName()
-    if not sCurScnPath:
-        raise ValueError("Invalid scene name: '{}'".format(sCurScnPath))
-
-    proj = DamProject.fromPath(sCurScnPath, fail=True)
+    damEntity = entityFromScene(sCurScnPath)
+    proj = damEntity.project
 
     _, curPubFile = proj.assertEditedVersion(sCurScnPath)
 
