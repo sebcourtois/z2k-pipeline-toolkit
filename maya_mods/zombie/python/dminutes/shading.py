@@ -5,7 +5,7 @@ import os
 import string 
 import subprocess
 import miscUtils
-import modeling
+#import modeling
 
 
 def connectedToSeveralSG(myNode = ""):
@@ -25,7 +25,7 @@ def connectedToSeveralSG(myNode = ""):
 
 
 
-def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True, verbose = True ):
+def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True, verbose = True, gui = True ):
     """
     shadEngineList : selection, all
     conform the shading tree attached to the selected shading engine , or all the shading trees , depending on the shadEngineList value.
@@ -118,15 +118,17 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
                 render_shader_type = mc.nodeType(item)
                 if not re.match('mat_'+materialName+'_'+render_shader_type+'[0-9]{0,3}$',render_shader):
                     render_shader = mc.rename(item,'mat_'+materialName+'_'+render_shader_type)
-        if verbose == True: print "#### {:>7}: {:^28} tree has been conformed properly".format("Info", each)
+            if verbose == True: print "#### {:>7}: {:^28} tree has been conformed properly".format("Info", each)
 
     if  wrongShadEngine != [] and selectWrongShadEngine == True:
         mc.select(clear = True)
         for each in wrongShadEngine:
-            print "#### {:>7}: {:^28} {}".format("warning", each[0], each[1])
+            print "#### {:>7}: {:^28} {}".format("Error", each[0], each[1])
             if selectWrongShadEngine == True: 
                 mc.select(each[0], ne = True, add = True)
-        print "####    info: problematics shading engines have been selected"
+        print "#### {:>7}: Problematics shading engines have been selected".format("Error")
+        if gui == True:
+            mc.confirmDialog( title = 'Shader Name Error', message = 'Some shaders are not conform, please read the log to get more information', button = ['Ok'], defaultButton = 'Ok' )
     return wrongShadEngine if wrongShadEngine != [] else  None
 
 
@@ -425,7 +427,7 @@ def imageResize(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQua
 
 
 
-def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrongShadEngine = True, preShadNodeType = "lambert", matShadNodeType= "dmnToon", matTextureInput = ".outColor", preTextureInput = ".color"):
+def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrongShadEngine = True, preShadNodeType = "lambert", matShadNodeType= "dmnToon", matTextureInput = ".outColor", preTextureInput = ".color", gui = True):
     """
     from a ginven shading engine
     this script assumes the shading tree has 2 different parts:
@@ -474,13 +476,13 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
     try:
         mc.nodeType(preShadNodeType, isTypeName=True)
     except:
-        print "#### {:>7}: the preview shading node type is unkowned: preShadNodeType= {}".format("Error", preShadNodeType)
+        print "#### {:>7}: the preview shading node type is unkowned: preShadNodeType = {}".format("Error", preShadNodeType)
         return
 
     try:
         mc.nodeType(matShadNodeType, isTypeName=True)
     except:
-        print "#### {:>7}: the render shading node type is unkowned: matShadNodeType= {}".format("Error", matShadNodeType)
+        print "#### {:>7}: the render shading node type is unkowned: matShadNodeType = {}".format("Error", matShadNodeType)
         return
 
 
@@ -590,9 +592,11 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
     if  wrongShadEngine != [] and selectWrongShadEngine == True:
         mc.select(clear = True)
         for each in wrongShadEngine:
-            print "#### {:>7}: {:^28} {}".format("Warning", each[0], each[1])
+            print "#### {:>7}: {:^28} {}".format("Error", each[0], each[1])
             if selectWrongShadEngine == True: mc.select(each[0], ne = True, add = True)
-        print "#### {:>7}: Problematics shading engines have been selected".format("Info")
+        print "#### {:>7}: Problematics shading engines have been selected".format("Error")
+        if gui == True:
+            mc.confirmDialog( title='Shader structure Error', message='Some shaders are not conform, please read the log to get more information', button=['Ok'], defaultButton='Ok' )
     return wrongShadEngine if wrongShadEngine != [] else  None
 
 
