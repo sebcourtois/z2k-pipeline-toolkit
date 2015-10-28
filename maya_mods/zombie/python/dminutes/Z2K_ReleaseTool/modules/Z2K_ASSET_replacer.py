@@ -3,11 +3,12 @@
 ################################################################
 # Name    : Z2K_ASSET_replacer
 # Version : 002
-# Description : replace current scene with a custom selected file
+# Description : replace current scene with a custom selected file : ORIENTER POUR LES PREVIZ_ASSET
 # Author : Jean-Philippe Descoins
 # Date : 2015_09_24
 # Comment : WIP
 # TO DO :
+#   x add save before publish action
 #   x Add publish asset button
 #   x remember last path in get
 #   x add publish SG
@@ -25,7 +26,12 @@ import sys,os
 import maya.cmds as cmds
 import dminutes.Z2K_wrapper as Z2K
 reload(Z2K)
-
+import dminutes.jipeLib_Z2K as jpZ
+reload(jpZ)
+import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
+reload(Batch_CONFIG)
+from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
+print "DEBUGFILE=", DEBUGFILE
 
 
 
@@ -34,6 +40,8 @@ class Z2K_ASSET_replacer(object):
     name = "Z2K_ASSET_replacer"
     version = "_v001"
     OVcurDir = "Z2K_ASSET_replacer_CurDir"
+    
+
     def __init__(self, theProject="zombtest",currentSceneP="", replacingSceneP="",*args, **kwargs):
         print "init"
         self.theProject = theProject
@@ -130,7 +138,7 @@ class Z2K_ASSET_replacer(object):
         return outBool,[msg,icon]
 
 
-    def publishScene(self, pathType="scene_previz", comment="First_publish_test_RockTheCasbah", sgTask="Rig", *args, **kwargs):
+    def publishScene(self, pathType="scene_previz", comment="Auto_Release_rockTheCasbah", sgTask="Rig", *args, **kwargs):
         print 'publishScene()'
 
         PublishedFile_absPath = "None"
@@ -139,7 +147,11 @@ class Z2K_ASSET_replacer(object):
         print "  -rawType=", rawType
 
         # publishing for real
-       
+        print "*",cmds.file(q=1,sceneName=1)
+        cmds.file(rename= cmds.file(q=1,sceneName=1) )
+        cmds.file(save=True)
+        print "*",cmds.file(q=1,sceneName=1)
+        print "*self.currentSceneP",self.currentSceneP
         PublishedMrc = self.theProj.publishEditedVersion(self.currentSceneP, comment=comment, autoLock=True,sgTask=sgTask)[0]
         print "PublishedMrc=", PublishedMrc
         PublishedFile_absPath = PublishedMrc.absPath()
@@ -148,23 +160,25 @@ class Z2K_ASSET_replacer(object):
         
 
         return PublishedFile_absPath
-# save replacingScene as currentScene in the private
+
 
 
 
 class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
-    basePath =  os.environ.get("MAYA_MODULE_PATH").split(";")[0]
-    upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_REPLACE_LOGO_A1.bmp"
+    basePath = jpZ.getBaseModPath()
+    ICONPATH = Z2K_ICONPATH+ "Z2K_REPLACE_LOGO_A1.bmp"
+    upImg= basePath + ICONPATH
 
 
-    def __init__(self, theProject="zombtest", currentSceneP="", replacingSceneP="",*args, **kwargs):
+    def __init__(self, theProject="zombtest", currentSceneP="", replacingSceneP="",sgTask="sgTask",enable_publish_GUI=False,*args, **kwargs):
         Z2K_ASSET_replacer.__init__(self, theProject=theProject, currentSceneP=currentSceneP, replacingSceneP=replacingSceneP)
 
         print self.name,self.version
         self.cf = self.name + self.version
+        self.enable_publish_GUI = enable_publish_GUI 
         print "theProject=", self.theProject
-        self.pComment = "First_publish_RockTheCasbah"
-
+        self.pComment = "Auto_Release_rockTheCasbah"
+        self.sgTask = sgTask
         
     def getInterfaceValues(self,*args, **kwargs):
         print "getInterfaceValues()"
@@ -205,7 +219,7 @@ class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
         print "btn_publishScene()"
         self.getInterfaceValues()
         try: 
-            PublishedFile_absPath = self.publishScene(pathType="scene_previz", comment=self.pComment, sgTask="Rig")
+            PublishedFile_absPath = self.publishScene(pathType="scene_previz", comment=self.pComment, sgTask=self.sgTask)
             cmds.confirmDialog(title= "PUBLISH info",message="PUBLISH DONE :\r"+PublishedFile_absPath, button="OK", messageAlign="center", icon="information" )
         
         except Exception,err:
@@ -221,7 +235,7 @@ class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
             cmds.deleteUI(self.cf, window=True)
         #create la window et rename apres
         self.cf = cmds.window(self.cf ,rtf=True, tlb=True, t=self.cf + " " +self.theProject)
-        outputW = cmds.window(self.cf, e=True, sizeable=True, )
+        outputW = cmds.window(self.cf, e=True, sizeable=True,w= 322,h=102 )
         
         # show window
         cmds.showWindow(self.cf)
@@ -248,13 +262,19 @@ class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
         self.BFileName = cmds.textField()
         self.BgetFile = cmds.button("Get",c= self.btn_getFile,en=1)
         cmds.setParent("..")
-        self.BreplaceScene = cmds.button("replace_current_Scene",c= self.btn_replaceScene)
-        self.BPublishScene = cmds.button("PUBLISH",c= self.btn_publishScene)
         
-
-        cmds.text("Comment:",align="left",)
-        self.BComment = cmds.textField(text= self.pComment,font="obliqueLabelFont")
+        self.BreplaceScene = cmds.button("replace_current_Scene",c= self.btn_replaceScene)
+        self.BPublishScene = cmds.button("PUBLISH",c= self.btn_publishScene,vis=self.enable_publish_GUI)
+        
+        cmds.separator()
+        cmds.text("ShotGun Task: {0}".format(self.sgTask),align="left",vis=self.enable_publish_GUI)
+        cmds.rowLayout(nc=2,adj=2,vis=self.enable_publish_GUI)
+        cmds.text("Comment:",align="left",vis=self.enable_publish_GUI)
+        
+        self.BComment = cmds.textField(text= self.pComment,font="obliqueLabelFont",vis=self.enable_publish_GUI)
         cmds.setParent("..")
+        print "width=",cmds.window(parent,q=1,w=1)
+        print "height=",cmds.window(parent,q=1,h=1)
 
 
 

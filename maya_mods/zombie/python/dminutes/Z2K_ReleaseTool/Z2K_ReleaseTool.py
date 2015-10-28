@@ -10,7 +10,9 @@
 # Comment : wip
 #
 # TO DO:
+#   - add comment from version.
 #   x add seeRef 
+#   - Make it contextual (add mode contextual)
 #   - add type chooser (previz_ref/anim_ref/previz_scene/anim_scene) et enlevé le ref c est de toute facon pour le release
 #   x add cat chooser to the GUI, "set/env/char/prop"
 #   x handle module import style
@@ -39,23 +41,21 @@ import maya.cmds as cmds
 # Z2K_Pcheck = Z2K_PcheckD.AssetPrevizMod()
 import dminutes.Z2K_wrapper as Z2K
 reload(Z2K)
-import dminutes.jipeLib_Z2K as jpm
-reload(jpm)
 
-
+import dminutes.jipeLib_Z2K as jpZ
+reload(jpZ)
+import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
+reload(Batch_CONFIG)
+from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
+print "DEBUGFILE=", DEBUGFILE
 
 
 class Z2K_ReleaseTool (object):
     
     version = "_v010"            
     name = "Z2K_ReleaseTool"
-    categoryL = ["chr","prp", "set"]
+    categoryL = jpZ.getCatL()
 
-    basePath = [x for x in os.environ.get("MAYA_MODULE_PATH").split(";") if "maya_mods" in x][0]
-    upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_RELEAZE_LOGO_A1.bmp"
-
-    baseAssetPath =  os.environ.get("ZOMB_ASSET_PATH")
-    print baseAssetPath
     def __init__(self, sourceAsset="", assetCat = "chr", SourceAssetType="previz_scene", destinationAsset = "", destinationAssetType= "previz_ref", 
         projConnectB= True,theProject="zombtest",theComment= "auto rock the casbah release !", debug=False, *args, **kwargs):
         print "__init__"
@@ -77,30 +77,13 @@ class Z2K_ReleaseTool (object):
 
         self.path_private_toEdit = ""
 
-        self.assetL = self.getAssetL( theDir=os.path.normpath(self.baseAssetPath ) , assetCat=self.assetCat )
+        self.assetL = jpZ.getAssetL ( assetCat=self.assetCat )
 
         # self.createWin()
 
 
 
     # ------------------------ JIPE_LIB Functions ------------------------------------
-
-
-
-
-    # ------------------------ OS/Z2K Functions ------------------------------------
-    def getAssetL (self,theDir=r"P:/zombtest/asset/", assetCat="chr",*args,**kwargs):
-        theDir = os.path.normpath(theDir) + os.sep + assetCat
-        print "theDir=", theDir
-        if os.path.isdir(theDir):
-            assetL = sorted(os.listdir(theDir) )
-            if not len(assetL):
-                assetL=["Empty Folder"]
-            
-        else:
-            assetL=["Invalide folder"]
-
-        return assetL
 
 
     def openAsset(self, sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", readOnly=False, autoUnlock=True, seeRef=False, *args,**kwargs):
@@ -189,8 +172,6 @@ class Z2K_ReleaseTool (object):
 #                          projConnectB= 1,)
 
 
-
-
 ##########################################################################################################
 #                                          _____        _   _        _  
 #                                         /  ___|      | | | |      | | 
@@ -203,6 +184,12 @@ class Z2K_ReleaseTool (object):
 
 class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
     layoutImportModule=""
+
+    basePath = jpZ.getBaseModPath()
+    ICONPATH = Z2K_ICONPATH + "Z2K_RELEAZE_LOGO_A1.bmp"
+    upImg= basePath + ICONPATH
+        
+    
     def __init__(self, sourceAsset="", assetCat="", SourceAssetType="", destinationAsset="", destinationAssetType="", projConnectB="",theProject="",*args, **kwargs):
         # self = Z2K_ReleaseTool
         Z2K_ReleaseTool.__init__(self,sourceAsset,assetCat,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject)
@@ -231,7 +218,6 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
         print self.sourceAsset,"->",self.destinationAsset, self.sourceAssetType,"->",self.destinationAssetType
     
-
     def refreshOptionMenu(self, theOptMenuL=[], inList=[], *args, **kwargs):
         print "refreshOptionMenu()"
         for theOptMenu in theOptMenuL:
@@ -242,12 +228,10 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             for item in inList:
                 cmds.menuItem(theOptMenu + "_" + item, label= item, parent=theOptMenu)
 
-
-
     def btn_categoryMenu (self,*args, **kwargs):
         print "btn_categoryMenu()"
         self.assetCat = cmds.optionMenu(self.BcategoryMenu,q=1,v=1)
-        self.assetL = self.getAssetL(theDir=os.path.normpath(self.baseAssetPath ) , assetCat=self.assetCat)
+        self.assetL = jpZ.getAssetL( assetCat=self.assetCat)
 
         # cascade
         self.refreshOptionMenu(theOptMenuL=[self.BsourceAssetMenu,self.BdestinationAssetMenu], inList=self.assetL)
@@ -271,7 +255,6 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         self.sourceAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=False,autoUnlock=False, seeRef=False)
         cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
-
 
     def btn_open_Asset_readOnly(self,*args, **kwargs):
         print "btn_open_Asset_readOnly()"
@@ -300,8 +283,6 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
 
     
-
-
     # --------------Window-----------------------------------------------
     def deleteUIandpref(self,*args, **kwargs):
         print "deleteUIandpref()"

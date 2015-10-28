@@ -4,6 +4,7 @@
 
 import pymel.core as pc
 import maya.cmds as mc
+
 import tkMayaCore as tkc
 
 import os
@@ -17,6 +18,8 @@ from davos.core.utils import versionFromName
 MrcLibrary = mrclibrary.MrcLibrary
 
 import dminutes.maya_scene_operations as mop
+import dminutes.jipeLib_Z2K as jpZ
+reload(jpZ)
 
 PROJECTNAME = "zombillenium"
 
@@ -63,6 +66,7 @@ class SceneManager():
         for key, lib in self.context['damProject'].loadedLibraries.iteritems():
             variable = lib.getVar('public_path').lstrip("$")
             if not variable in variables:
+                print "variable=", variable
                 variables[variable] = os.environ[variable]
 
         for key, path in variables.iteritems():
@@ -283,7 +287,34 @@ class SceneManager():
 
         return pc.saveAs(currentScene, force=b_inForce)
 
+    # def saveIncrement(self, b_inForce=True):
+    #     # old 
+    #     entry = self.getEntry()
+
+    #     if entry == None:
+    #         pc.error("Cannot get entry for context {0}".format(self.context))
+
+    #     currentScene = os.path.abspath(mc.file(q=True, sn=True))
+    #     if currentScene == '':
+    #         pc.error("Please save your scene as a valid private working scene (Edit if needed)")
+
+    #     matches = re.match(".*(v\d{3})\.(\d{3})\.ma", currentScene)
+        
+    #     if matches:
+    #         curVersion = int(matches.group(2))
+    #         curVersion += 1
+    #         newFileName = '{0}.{1:03}.ma'.format(currentScene.split('.')[0], curVersion)
+    #         if b_inForce or not os.path.isfile(newFileName):
+    #             return pc.saveAs(newFileName, force=b_inForce)
+    #         else:
+    #             pc.error("File already exists ({0})!".format(newFileName))
+    #     else:
+    #         pc.warning("Invalid file pattern !")
+        
+    #     return None
+
     def saveIncrement(self, b_inForce=True):
+        # new incrementing system based on the last versoin present in the folder 
         entry = self.getEntry()
 
         if entry == None:
@@ -296,9 +327,9 @@ class SceneManager():
         matches = re.match(".*(v\d{3})\.(\d{3})\.ma", currentScene)
         
         if matches:
-            curVersion = int(matches.group(2))
-            curVersion += 1
-            newFileName = '{0}.{1:03}.ma'.format(currentScene.split('.')[0], curVersion)
+            print "currentScene=", currentScene
+            newFileName = jpZ.createIncrementedFilePath(filePath=currentScene,vSep= ".", extSep=".ma", digits=3,)
+
             if b_inForce or not os.path.isfile(newFileName):
                 return pc.saveAs(newFileName, force=b_inForce)
             else:
@@ -308,7 +339,10 @@ class SceneManager():
         
         return None
 
+
     def capture(self, increment=True):
+        # BUG pas de son alors que son present dans la scene
+        # BUG first frame decalee dupliquee dans les fichier output
         global CAPTUREINFO
 
         savedFile = None
@@ -492,32 +526,36 @@ class SceneManager():
             occurences = assetOccurence['sg_occurences']
             path = self.getPath(assetOccurence['asset'], fileTag)
             exists = False
+            print "*path=", path
+            print '{0} time(s) {1} ({2}) with path {3}'.format(occurences, assetOccurence['asset']['name'], fileTag, path)
+            if path:
+                if os.path.isfile(path):
+                    #print 'Asset found {0} !'.format(assetOccurence['asset']['name'])
+                    exists = True
+                else:
+                    pc.warning('Asset NOT found {0} ({1})!'.format(assetOccurence['asset']['name'], path))
 
-            #print '{0} time(s) {1} ({2}) with path {3}'.format(occurences, assetOccurence['asset']['name'], fileTag, path)
-            if os.path.isfile(path):
-                #print 'Asset found {0} !'.format(assetOccurence['asset']['name'])
-                exists = True
+                dbInfo = assetOccurence['asset']['name']
+                if not exists:
+                    dbInfo += ' ({0})'.format(notFoundvalue)
+                else:
+                    dbInfo += " ("+fileTag+")"
+
+                localInfo = noneValue
+                foundSceneAsset = None
+                for sceneAsset in remainingAssets:
+                    if path == sceneAsset['path']:
+                        foundSceneAsset = sceneAsset
+                        localInfo = sceneAsset['name'] + " ("+fileTag+")"
+                        break
+
+                if foundSceneAsset != None:
+                    remainingAssets.remove(foundSceneAsset)
+
+                assetsInfo.append({'name':assetOccurence['asset']['name'], 'localinfo':localInfo, 'dbinfo':dbInfo, 'path':path})
+            
             else:
-                pc.warning('Asset NOT found {0} ({1})!'.format(assetOccurence['asset']['name'], path))
-
-            dbInfo = assetOccurence['asset']['name']
-            if not exists:
-                dbInfo += ' ({0})'.format(notFoundvalue)
-            else:
-                dbInfo += " ("+fileTag+")"
-
-            localInfo = noneValue
-            foundSceneAsset = None
-            for sceneAsset in remainingAssets:
-                if path == sceneAsset['path']:
-                    foundSceneAsset = sceneAsset
-                    localInfo = sceneAsset['name'] + " ("+fileTag+")"
-                    break
-
-            if foundSceneAsset != None:
-                remainingAssets.remove(foundSceneAsset)
-
-            assetsInfo.append({'name':assetOccurence['asset']['name'], 'localinfo':localInfo, 'dbinfo':dbInfo, 'path':path})
+                pc.warning('PATH= NONE  -> Asset NOT found {0} ({1})!'.format(assetOccurence['asset']['name'], path))
 
         for remainingAsset in remainingAssets:
             assetFullName = remainingAsset['name'] + " ("+self.getFiletagFromPath(remainingAsset['path'])+")"
@@ -525,25 +563,54 @@ class SceneManager():
 
         return assetsInfo
 
+    # BASE FUNCTION (NOT WORKING)
+    # def updateScene(self, addOnly=True):
+    #     """Updates scene Assets from shotgun shot<=>assets linking"""
+    #     assetsInfo = self.getAssetsInfo()
+
+    #     for assetInfo in assetsInfo:
+    #         #print 'assetInfo["dbinfo"] ' + str(assetInfo['dbinfo'])
+    #         #print 'assetInfo["localinfo"] ' + str(assetInfo['localinfo'])
+    #         #print 'assetInfo["path"]' + str(assetInfo['path'])
+    #         if assetInfo['dbinfo'] == noneValue:
+    #             if not addOnly:
+    #                 #Asset that does not exist in shot, remove
+    #                 mop.removeAsset(self.collapseVariables(assetInfo['path']))
+    #         elif assetInfo['dbinfo'] != assetInfo['localinfo']:
+    #             if notFoundvalue in assetInfo['dbinfo']:
+    #                 pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
+    #             else:
+    #                 mop.importAsset(self.collapseVariables(assetInfo['path']), assetInfo['name'] + "_1")
+        
+    #     mop.reArrangeAssets()
+
     def updateScene(self, addOnly=True):
         """Updates scene Assets from shotgun shot<=>assets linking"""
+        # WIP CORRECTION collapseVariables (ERROR)
         assetsInfo = self.getAssetsInfo()
 
         for assetInfo in assetsInfo:
-            #print 'assetInfo["dbinfo"] ' + str(assetInfo['dbinfo'])
-            #print 'assetInfo["localinfo"] ' + str(assetInfo['localinfo'])
-            #print 'assetInfo["path"]' + str(assetInfo['path'])
+            # print '**          assetInfo["dbinfo"] ' + str(assetInfo['dbinfo'])
+            # print '**          assetInfo["localinfo"] ' + str(assetInfo['localinfo'])
+            # print '**          assetInfo["path"]' + str(assetInfo['path'])
+
+            # get_File_By_DAVOS methodes
+            drcFile = self.context["damProject"].entryFromPath(assetInfo['path'])
+            The_ASSET_PATH = drcFile.envPath()
+            # print "* The_ASSET_PATH=", The_ASSET_PATH
             if assetInfo['dbinfo'] == noneValue:
                 if not addOnly:
                     #Asset that does not exist in shot, remove
-                    mop.removeAsset(self.collapseVariables(assetInfo['path']))
+                    mop.removeAsset(The_ASSET_PATH)
             elif assetInfo['dbinfo'] != assetInfo['localinfo']:
                 if notFoundvalue in assetInfo['dbinfo']:
                     pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
                 else:
-                    mop.importAsset(self.collapseVariables(assetInfo['path']), assetInfo['name'] + "_1")
+                    mop.importAsset(The_ASSET_PATH, assetInfo['name'] + "_1")
         
         mop.reArrangeAssets()
+
+
 
     def updateShotgun(self, addOnly=True):
         pass
@@ -573,6 +640,7 @@ def endFrameInfo():
     return CAPTUREINFO['end']
 
 def createHUD():
+    deleteHUD()
     headsUps = pc.headsUpDisplay(listHeadsUpDisplays=True)
 
     headUpsValues = {}
@@ -603,3 +671,16 @@ def restoreHUD(oldValues=None):
         for k, v in oldValues.iteritems():
             if k in headsUps:
                 pc.headsUpDisplay(k, edit=True, visible=v)
+
+
+def deleteHUD(*args, **kwargs):
+    # FUNCTION QUI SEMBLE MANQUER, a ajouter quelque part apres le playblast
+    # actuellement il y a un bug qui fait que t'as des script qui tournent en permanence dans la scene, et qui plante si
+    # ce n'est pas une scene zombie avec une belle camera
+    headsUps = mc.headsUpDisplay(listHeadsUpDisplays=True)
+    for i in headsUps:
+        if "HUD_ZOMB" in i:
+            print i
+            mc.headsUpDisplay(i,rem=True)
+
+

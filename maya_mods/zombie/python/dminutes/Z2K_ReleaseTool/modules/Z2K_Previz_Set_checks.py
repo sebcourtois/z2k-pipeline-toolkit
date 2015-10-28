@@ -10,10 +10,10 @@
 # Comment : wip
 #
 # TO DO:
-#       - add simple check layers (geometry / control) to check structure
-#       x add check for BigDaddy et BigDaddy_NeutralPose
+#       - add check for BigDaddy et BigDaddy_NeutralPose
 #       - add auto remove camera if is camera du pipe
 #       - separate interface from base class
+#       - add BigDaddy check
 #       x MentalRayCleanNodes (['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'])
 #       x check geometry all to zero
 #       x BUG check colorLum
@@ -40,7 +40,7 @@
 #       x Check if there is some keys on controlers and geometries
 #       x show bool result
 ########################################################
-
+# DERIVED SIMPLIFIED FRO CHAR PREVIZ CHECK
 
 
 
@@ -50,7 +50,11 @@ import maya.mel as mel
 from functools import partial
 import inspect
 
+import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
+reload(Batch_CONFIG)
+from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
 
+print "DEBUGFILE=", DEBUGFILE
 
 class checkModule(object):
     name = "AssetPreviz_Module"
@@ -64,7 +68,7 @@ class checkModule(object):
         print "init"
         self.GUI=GUI
         self.ebg = True
-        self.DebugPrintFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Release_debug.txt"
+        self.DebugPrintFile = DEBUGFILE
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
 
@@ -449,8 +453,6 @@ class checkModule(object):
         else:
             debugD["layerL"]["result"] = "OK"
 
-        
-
 
         # baseCTRL test
         debugD["baseCTRL"] = {}
@@ -486,7 +488,7 @@ class checkModule(object):
         print "toReturnB=", toReturnB
         return toReturnB,debugD
 
-    def checkAssetStructure(self, assetgpN="asset", expectedL=["grp_rig","grp_geo"],*args,**kwargs):
+    def checkAssetStructure(self, assetgpN="asset", expectedL=["grp_rig","grp_geo","grp_placeHolders"],*args,**kwargs):
         print "checkAssetStructure()"
         toReturnB = False
         debugD = {}
@@ -496,7 +498,7 @@ class checkModule(object):
             childL = cmds.listRelatives(assetgpN,  c=True)
             print tab,expect_str, childL
             debugD[expect_str] = {}
-            if sorted(expectedL) == sorted(childL):
+            if  sorted(childL) in [ sorted(expectedL), sorted( expectedL[:-1] ) ] :
                 toReturnB = True
                 debugD[ expect_str ]["result"] = "OK"
                 print tab, toReturnB
@@ -854,6 +856,7 @@ class checkModule(object):
 
         return [toReturnB,debugD]
     
+
     def cleanUnusedConstraint(self,mode = "delete",*args, **kwargs):
         """ Description: Delete All Un-connected Constraint
             Return : BOOL,debugD
@@ -1151,22 +1154,22 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=4, e=True)
+        self.pBar_upd(step=1, maxValue=2, e=True)
 
         # steps
         if not self.checkBaseStructure()[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
-        if not self.checkAssetStructure( assetgpN="asset", expectedL=["grp_rig","grp_geo"])[0]:
+        if not self.checkAssetStructure( )[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
 
-        if not self.cleanGrp_geo(theGroup="asset|grp_geo", theAttrL=["smoothLevel1","smoothLevel2"])[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.checkGrp_geo( )[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        # if not self.cleanGrp_geo(theGroup="asset|grp_geo", theAttrL=["smoothLevel1","smoothLevel2"])[0]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+        # if not self.checkGrp_geo( )[0]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
 
         # colors
         print "*btn_checkStructure:",boolResult
@@ -1179,7 +1182,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=8, e=True)
+        self.pBar_upd(step=1, maxValue=6, e=True)
 
         # steps
         if not self.cleanRefNodes()[0]:
@@ -1191,9 +1194,9 @@ class checkModule(object):
         if not self.remove_All_NS(NSexclusionL=[""], limit=100)[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
-        if not self.cleanDisplayLayerWithSet(setL=["set_meshCache","set_control"],layerL=["geometry","control"])[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        # if not self.cleanDisplayLayerWithSet(setL=["set_meshCache","set_control"],layerL=["geometry","control"])[0]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
         if not self.cleanUnUsedAnimCurves( mode="delete")[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
@@ -1202,7 +1205,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
         # if not self.CleanDisconnectedNodes( mode="delete")[0]:
         #     boolResult = False 
-        self.pBar_upd(step= 1,)
+        # self.pBar_upd(step= 1,)
                
         # colors
         print "*btn_CleanScene:",boolResult
@@ -1215,7 +1218,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=10, e=True)
+        self.pBar_upd(step=1, maxValue=5, e=True)
 
         meshCacheObjL = self.getSetContent(inSetL=["set_meshCache"] )
         controlObjL = self.getSetContent(inSetL=["set_control"] )
@@ -1223,19 +1226,19 @@ class checkModule(object):
         # steps
         # if not self.isSkinned(inObjL= meshCacheObjL,verbose=True)[0] :
         #     boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.cleanUnusedInfluence(inObjL=meshCacheObjL)[0] :
-            boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.setSmoothness(inObjL=meshCacheObjL,mode=0)[0] :
-            boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.disableShapeOverrides(inObjL=meshCacheObjL)[0] :
-            boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.checkSRT(inObjL =meshCacheObjL, verbose=True)[0] :
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        # self.pBar_upd(step= 1,)
+        # if not self.cleanUnusedInfluence(inObjL=meshCacheObjL)[0] :
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+        # if not self.setSmoothness(inObjL=meshCacheObjL,mode=0)[0] :
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+        # if not self.disableShapeOverrides(inObjL=meshCacheObjL)[0] :
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+        # if not self.checkSRT(inObjL =meshCacheObjL, verbose=True)[0] :
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
         if not self.cleanKeys(inObjL=controlObjL,verbose=True)[0] :
             boolResult = False
         self.pBar_upd(step= 1,)

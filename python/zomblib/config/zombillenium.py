@@ -26,6 +26,7 @@ class project(object):
         "asset_lib",
         "shot_lib",
         "output_lib",
+        "misc_lib",
         )
 
     child_sections = libraries
@@ -38,8 +39,8 @@ class project(object):
     else:
         damas_server_addr = "https://62.210.104.42:8443/api"
 
-    editable_files = ("*.ma", "*.mb", "*.psd", "*.nk", "*.py")
-
+    editable_file_patterns = ("*.ma", "*.mb", "*.psd", "*.nk", "*.py")
+    allowed_texture_formats = (".tga", ".jpg")
 
 class shot_lib(object):
 
@@ -64,6 +65,7 @@ class shot_lib(object):
                     {
                      "{name}_sound.wav -> animatic_sound":None,
                      "{name}_animatic.mov -> animatic_capture":None,
+                     "{name}_camera.ma -> camera_scene":None,
                     },
                  "{step:01_previz} -> previz_dir":
                     {
@@ -101,6 +103,17 @@ class output_lib(object):
     private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
 
+class misc_lib(object):
+
+    dir_name = "misc"
+    public_path = join(expand('$ZOMB_MISC_LOC'), "{proj.dir_name}", dir_name)
+    private_path = join(project.private_path, dir_name)
+
+    public_path_envars = ('ZOMB_MISC_PATH',)
+    private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
+
+    free_publish = True
+
 class asset_lib(object):
 
     dir_name = "asset"
@@ -113,6 +126,7 @@ class asset_lib(object):
     asset_types = (
         "camera",
         "character3d",
+        "character2d",
         "prop3d",
         "vehicle3d",
         "set3d",
@@ -126,9 +140,9 @@ class asset_lib(object):
 
     resources_settings = {
     "previz_scene":{"create_sg_version":True,
-                    "sg_step":"Model Previz", },
+                    "sg_steps":("Model Previz",), },
     "modeling_scene":{"create_sg_version":True,
-                      "sg_step":"Model HD", },
+                      "sg_steps":("Model HD", "Surfacing"), },
     }
 
     dependency_types = {
@@ -186,12 +200,15 @@ class charbase(object):
     }
 
     resources_settings = asset_lib.resources_settings
+    dependency_types = asset_lib.dependency_types
 
 class character3d(charbase):
 
     prefix = "chr"
     aliases = (prefix, "Character 3D",)
     assetType = prefix
+
+
 
 class character2d(charbase):
 
@@ -273,9 +290,9 @@ class set3d(object):
 
     resources_settings = {
     "previz_scene":{"create_sg_version":True,
-                    "sg_step":"Model Previz", },
+                    "sg_steps":("Model Previz",), },
     "master_scene":{"create_sg_version":True,
-                      "sg_step":"Model HD", },
+                    "sg_steps":("Model HD", "Surfacing"), },
     }
 
 class environment3d(set3d):

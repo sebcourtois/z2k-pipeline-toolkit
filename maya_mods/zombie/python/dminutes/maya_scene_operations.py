@@ -156,7 +156,12 @@ def reArrangeAssets():
     structure = {
         'cam':'grp_camera',
         'chr':'grp_character',
-        'set':'grp_set'
+        'set':'grp_set',
+        'prp':'grp_prop',
+        'env':'grp_environment',
+        'c2d':'grp_character2D',
+        'vhl':'grp_vehicule',
+        
     }
 
     #Collect references
@@ -483,3 +488,24 @@ COMMANDS = {
         'previz 3D':init_previz_scene
     }
 }
+
+
+
+def exportCam(sceneName="",*args, **kwargs):
+    """ Description: export la camera du given shot
+        Return : BOOL
+        Dependencies : cmds - 
+    """
+
+    
+
+    # get camera_group
+
+    # check if valid
+
+    # export to specified data folder
+
+    # return
+
+    
+    

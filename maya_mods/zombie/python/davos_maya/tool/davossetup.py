@@ -1,21 +1,27 @@
 
-import os
+
 import pymel.core as pm
 import pymel.util as pmu
 
-from davos.core.damproject import DamProject
+from functools import partial
+
 from pytaya.util.toolsetup import ToolSetup
+from pytaya.util import qtutils as  myaqt
 #from pytd.util.sysutils import toStr
+
+from davos.tools import create_dirs_n_files
 
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
+from pytd.util.sysutils import inDevMode
 
+def doCreateFolders(sEntiType, *args):
+    create_dirs_n_files.launch(sEntiType, dryRun=False,
+                               dialogParent=myaqt.mayaMainWindow())
 
-def loadProject():
-
-    bBatchMode = pm.about(batch=True)
-    proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=bBatchMode)
-    proj.loadEnviron()
+def doDependencyScan(*args):
+    from davos_maya.tool import dependency_scan
+    dependency_scan.launch()
 
 class DavosSetup(ToolSetup):
 
@@ -29,6 +35,12 @@ class DavosSetup(ToolSetup):
 
         with self.menu:
             pm.menuItem(label="Asset Browser", c=file_browser.launch)
+            pm.menuItem(divider=True)
+            with pm.subMenuItem(label="Create Folders", to=False):
+                pm.menuItem(label="Assets...", c=partial(doCreateFolders, "asset"))
+                pm.menuItem(label="Shots...", c=partial(doCreateFolders, "shot"))
+            if inDevMode():
+                pm.menuItem(label="Scan Dependencies...", c=doDependencyScan)
             pm.menuItem(label="Publish...", c=publishing.publishCurrentScene)
 
         ToolSetup.populateMenu(self)
@@ -36,10 +48,15 @@ class DavosSetup(ToolSetup):
     def afterBuildingMenu(self):
         ToolSetup.afterBuildingMenu(self)
         pmu.putEnv("DAVOS_FILE_CHECK", "1")
+        pm.colorManagementPrefs(e=True, cmEnabled=False)
 
     def beforeReloading(self, *args):
-        ToolSetup.beforeReloading(self, *args)
         file_browser.kill()
+        ToolSetup.beforeReloading(self, *args)
+
+    def onPreFileNewOrOpened(self, *args):
+        ToolSetup.onPreFileNewOrOpened(self, *args)
+        pm.colorManagementPrefs(e=True, cmEnabled=False)
 
 #    def onSceneOpened(self, *args):
 #        ToolSetup.onSceneOpened(self, *args)

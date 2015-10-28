@@ -10,16 +10,15 @@
 # Comment : wip
 #
 # TO DO:
-#       - clean obj button have to be grayed if checkStructure not done (setSmoothness need good structure)
+#       - add simple check layers (geometry / control) to check structure
+#       x add check for BigDaddy et BigDaddy_NeutralPose
 #       - add auto remove camera if is camera du pipe
-#       x add check for BigDaddy et BigDaddy_NeutralPose and base CTR
 #       - separate interface from base class
-#       - add BigDaddy check
-#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
 #       x MentalRayCleanNodes (['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'])
 #       x check geometry all to zero
 #       x BUG check colorLum
 #       - check geometry modeling history
+#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
 #       WIP Clean ref Nodes + exception arnold etc
 #       ? Check UV smoothing/display paremeters
 #       ? delete mentalRayNode
@@ -51,6 +50,12 @@ import maya.mel as mel
 from functools import partial
 import inspect
 
+import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
+reload(Batch_CONFIG)
+from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
+
+print "DEBUGFILE=", DEBUGFILE
+
 
 
 class checkModule(object):
@@ -65,7 +70,7 @@ class checkModule(object):
         print "init"
         self.GUI=GUI
         self.ebg = True
-        self.DebugPrintFile = "C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/RIG_WORKGROUP/tools/batchator_Z2K/Prp_01_Release_debug.txt"
+        self.DebugPrintFile = DEBUGFILE
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
 
@@ -279,7 +284,6 @@ class checkModule(object):
 
         return [toReturnB,conL]
 
-
     def isSkinned(self, inObjL=[], verbose=False, printOut = False,*args,**kwargs):
         ''' Description : Get the list of the SlinClusters of the selected mesh
                 Return : List of skinClusters
@@ -333,8 +337,6 @@ class checkModule(object):
 
 
         return [toReturnB,outSkinClusterL]
-
-    
 
     def NodeTypeScanner(self,execptionTL = [], exceptDerived= True, specificTL=[], specificDerived=False,
         mayaDefaultObjL=["characterPartition","defaultLightList1","dynController1","globalCacheControl",
@@ -444,7 +446,7 @@ class checkModule(object):
         
 
 
-       # Layers test
+        # Layers test
         debugD["layerL"] = {}
         if not sorted(baseLayerL) == sorted(layerL):
             debugD["layerL"]["result"] = "PAS CONFORME"
@@ -452,6 +454,8 @@ class checkModule(object):
             toReturnB= False
         else:
             debugD["layerL"]["result"] = "OK"
+
+        
 
 
         # baseCTRL test
@@ -515,7 +519,6 @@ class checkModule(object):
             self.printF( i.ljust(10)+" : "+ str( dico["result"] ) )
             if len(dico.get("Found",""))>0:
                 self.printF("     -Found= " + str( dico.get("Found","")   ) )
-
         # --------------------------
         
 
@@ -525,6 +528,7 @@ class checkModule(object):
         """ check if the attrib of smooth are present
         """
         print("checkGrp_geo()")
+        # OLD PERIMED
         toCreateL = []
         toReturnB = True
         if cmds.objExists(theGroup):
@@ -551,7 +555,7 @@ class checkModule(object):
 
     def cleanGrp_geo (self, theGroup="asset|grp_geo",theAttrL= ["smoothLevel1","smoothLevel2"] ,assetType="previz", *args, **kwargs):
         print "cleanGrp_geo()"
-        
+        # OLD PERIMED
         erroredL = []
         createdL= []
         toReturnB = True
@@ -612,7 +616,7 @@ class checkModule(object):
         # --------------------------
         return [toReturnB,createdL]
 
-     def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',
+    def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',
         'Draft','DraftMotionBlur','DraftRapidMotion','Preview','PreviewCaustics','PreviewFinalGather','PreviewGlobalIllum',
         'PreviewImrRayTracyOff','PreviewImrRayTracyOn','PreviewMotionblur','PreviewRapidMotion','Production','ProductionFineTrace',
         'ProductionMotionblur','ProductionRapidFur','ProductionRapidHair','ProductionRapidMotion',
@@ -735,9 +739,9 @@ class checkModule(object):
             if lay not in FilterL:
                 cmds.delete(lay)
 
-    def createDisplayLayer (self,  n="default_Name", inObjL=[], displayType=0, hideOnPlayback=0,enableOverride=True, *args, **kwargs):
-        # createDisplayLayer( state = {0:Normal state, 1:Templated, 2:Reference}
-        print "createDisplayLayer(%s,%s,%s)" % (n,displayType,hideOnPlayback)
+    def createDiplayLayer (self,  n="default_Name", inObjL=[], displayType=0, hideOnPlayback=0,enableOverride=True, *args, **kwargs):
+        # createDiplayLayer( state = {0:Normal state, 1:Templated, 2:Reference}
+        print "createDiplayLayer(%s,%s,%s)" % (n,displayType,hideOnPlayback)
 
         # create layer if doesn't exist
         if not cmds.objExists(n):
@@ -755,7 +759,7 @@ class checkModule(object):
         """ Description: Clean the display Layers by rebuilding it with the content of the corresponding sets 
                             setL <-> layerL
             Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
-            Dependencies : cmds - createDisplayLayer() - delete_displayLayer()
+            Dependencies : cmds - createDiplayLayer() - delete_displayLayer()
         """
         
         tab = "    "
@@ -776,7 +780,7 @@ class checkModule(object):
             if cmds.objExists(theSet):
                 inObjL = cmds.listConnections( theSet+".dagSetMembers",source=1)
                 if inObjL:
-                    self.createDisplayLayer ( n=paramL[0], inObjL=inObjL, displayType=paramL[1], hideOnPlayback=paramL[2])
+                    self.createDiplayLayer ( n=paramL[0], inObjL=inObjL, displayType=paramL[1], hideOnPlayback=paramL[2])
                     debugL.append(theSet + " :DONE")
                 else:
                     toReturnB= False
@@ -857,7 +861,6 @@ class checkModule(object):
 
         return [toReturnB,debugD]
     
-
     def cleanUnusedConstraint(self,mode = "delete",*args, **kwargs):
         """ Description: Delete All Un-connected Constraint
             Return : BOOL,debugD
@@ -1155,22 +1158,22 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=4, e=True)
+        self.pBar_upd(step=1, maxValue=2, e=True)
 
         # steps
         if not self.checkBaseStructure()[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
-        if not self.checkAssetStructure( assetgpN="asset", expectedL=["grp_rig","grp_geo"])[0]:
+        if not self.checkAssetStructure( )[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
 
-        if not self.cleanGrp_geo(theGroup="asset|grp_geo", theAttrL=["smoothLevel1","smoothLevel2"])[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
-        if not self.checkGrp_geo( )[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        # if not self.cleanGrp_geo(theGroup="asset|grp_geo", theAttrL=["smoothLevel1","smoothLevel2"])[0]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+        # if not self.checkGrp_geo( )[0]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
 
         # colors
         print "*btn_checkStructure:",boolResult
@@ -1204,8 +1207,8 @@ class checkModule(object):
         if not self.cleanUnusedConstraint( mode="delete")[0]:
             boolResult = False 
         self.pBar_upd(step= 1,)
-        if not self.CleanDisconnectedNodes( mode="delete")[0]:
-            boolResult = False 
+        # if not self.CleanDisconnectedNodes( mode="delete")[0]:
+        #     boolResult = False 
         self.pBar_upd(step= 1,)
                
         # colors
@@ -1225,8 +1228,8 @@ class checkModule(object):
         controlObjL = self.getSetContent(inSetL=["set_control"] )
 
         # steps
-        if not self.isSkinned(inObjL= meshCacheObjL,verbose=True)[0] :
-            boolResult = False
+        # if not self.isSkinned(inObjL= meshCacheObjL,verbose=True)[0] :
+        #     boolResult = False
         self.pBar_upd(step= 1,)
         if not self.cleanUnusedInfluence(inObjL=meshCacheObjL)[0] :
             boolResult = False

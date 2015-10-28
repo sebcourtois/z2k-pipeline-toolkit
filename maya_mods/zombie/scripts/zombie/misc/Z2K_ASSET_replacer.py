@@ -11,7 +11,7 @@ curproj = os.environ.get("DAVOS_INIT_PROJECT")
 print curproj
 
 
-Z2K_replaceI = Z2K_replace.Z2K_ASSET_replacer_GUI(theProject=curproj,sourceSceneP="", replacingSceneP="")
+Z2K_replaceI = Z2K_replace.Z2K_ASSET_replacer_GUI(theProject=curproj,sourceSceneP="", replacingSceneP="",sgTask="Rig_Previz",enable_publish_GUI=False,)
 Z2K_replaceI.insertLayout( parent="")
 
 
