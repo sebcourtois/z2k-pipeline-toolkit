@@ -4,6 +4,7 @@
 
 import pymel.core as pc
 import maya.cmds as mc
+
 import tkMayaCore as tkc
 
 import os
@@ -676,10 +677,10 @@ def deleteHUD(*args, **kwargs):
     # FUNCTION QUI SEMBLE MANQUER, a ajouter quelque part apres le playblast
     # actuellement il y a un bug qui fait que t'as des script qui tournent en permanence dans la scene, et qui plante si
     # ce n'est pas une scene zombie avec une belle camera
-    headsUps = cmds.headsUpDisplay(listHeadsUpDisplays=True)
+    headsUps = mc.headsUpDisplay(listHeadsUpDisplays=True)
     for i in headsUps:
         if "HUD_ZOMB" in i:
             print i
-            cmds.headsUpDisplay(i,rem=True)
+            mc.headsUpDisplay(i,rem=True)
 
 
