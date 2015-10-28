@@ -639,6 +639,7 @@ def endFrameInfo():
     return CAPTUREINFO['end']
 
 def createHUD():
+    deleteHUD()
     headsUps = pc.headsUpDisplay(listHeadsUpDisplays=True)
 
     headUpsValues = {}

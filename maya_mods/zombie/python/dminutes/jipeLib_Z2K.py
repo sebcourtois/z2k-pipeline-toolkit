@@ -80,8 +80,6 @@ def createIncrementedFilePath( filePath="", vSep= "_v",extSep=".ma", digits=3, *
 
 
 # Z2K base general functions -----------------
-
-
 def getBaseModPath(*args, **kwargs):
     """
     recupere le path de base des modules
@@ -124,6 +122,18 @@ def getCatL (*args,**kwargs):
         assetL=["Invalide folder"]
 
     return assetL
+
+
+def getShotName(*args, **kwargs):
+    print "getShotName()"
+    # get shot name
+    currentSceneP,currentScene = cmds.file(q=1,sceneName=True),cmds.file(q=1,sceneName=True,shortName=True)
+    shotName = currentScene.rsplit("_",1)[0]
+    print "shotName=", shotName
+    if shotName[:2]+shotName[6:9] in ["sq_sh"]:
+        return shotName
+    else:
+        return "BAD SCENE NAME"
 
 # printer  -------------------------------------------------------
 def printF( text="", st="main", toScrollF="", toFile = "", inc=False, GUI= True,

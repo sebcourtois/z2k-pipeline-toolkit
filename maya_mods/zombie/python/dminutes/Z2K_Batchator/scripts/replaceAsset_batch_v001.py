@@ -35,7 +35,7 @@ try:
         replacingScene="",
         )
 
-
+    printF("Z2KR.currentSceneP={0}".format(Z2KR.currentSceneP) )
     if sourceFolder[-1] not in ["/"]:
         sourceFolder = sourceFolder + "/"
     replacingSceneP =sourceFolder + os.path.normpath(Z2KR.currentSceneP).rsplit(os.sep,1)[1].rsplit("-v",1)[0] +".ma"
