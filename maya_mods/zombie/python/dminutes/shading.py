@@ -18,7 +18,7 @@ def connectedToSeveralSG(myNode = ""):
         if mc.nodeType(item) == "shadingEngine":
             upStreamShadingGroupList.append(item)
     if len(upStreamShadingGroupList) >1:
-        print "####    error: '"+myNode+"' is connected to several shading groups  -->   "+str(upStreamShadingGroupList)
+        #print "####    error: '"+myNode+"' is connected to several shading groups  -->   "+str(upStreamShadingGroupList)
         return True
     else:
         return False
@@ -102,22 +102,24 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
                 continue
 
             for item in mc.listHistory (preview_shader):
+                materialParticule = str(materialName)
                 if "dagNode" in mc.nodeType(item, inherited=True):
                     continue
                 if connectedToSeveralSG (item):
-                    return
+                    materialParticule = "shared"
                 preview_shader_type = mc.nodeType(item)
-                if not re.match('pre_'+materialName+'_'+preview_shader_type+'[0-9]{0,3}$',preview_shader):
-                    preview_shader = mc.rename(item,'pre_'+materialName+'_'+preview_shader_type)
+                if not re.match('pre_'+materialParticule+'_'+preview_shader_type+'[0-9]{0,3}$',preview_shader):
+                    preview_shader = mc.rename(item,'pre_'+materialParticule+'_'+preview_shader_type)
                 
             for item in mc.listHistory (render_shader):
+                materialParticule = str(materialName)
                 if "dagNode" in mc.nodeType(item, inherited=True):
                     continue
                 if connectedToSeveralSG (item):
-                    return
+                    materialParticule = "shared"
                 render_shader_type = mc.nodeType(item)
-                if not re.match('mat_'+materialName+'_'+render_shader_type+'[0-9]{0,3}$',render_shader):
-                    render_shader = mc.rename(item,'mat_'+materialName+'_'+render_shader_type)
+                if not re.match('mat_'+materialParticule+'_'+render_shader_type+'[0-9]{0,3}$',render_shader):
+                    render_shader = mc.rename(item,'mat_'+materialParticule+'_'+render_shader_type)
             if verbose == True: print "#### {:>7}: {:^28} tree has been conformed properly".format("Info", each)
 
     if  wrongShadEngine != [] and selectWrongShadEngine == True:
