@@ -425,7 +425,7 @@ def imageResize(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQua
 
 
 
-def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrongShadEngine = True, preShadNodeType = "surfaceShader", matShadNodeType= "dmnToon", matTextureInput = ".diffuseColor", preTextureInput = ".outColor"):
+def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrongShadEngine = True, preShadNodeType = "lambert", matShadNodeType= "dmnToon", matTextureInput = ".outColor", preTextureInput = ".color"):
     """
     from a ginven shading engine
     this script assumes the shading tree has 2 different parts:
@@ -500,14 +500,41 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         #check the existence of the 'preShadNode', replace it, if it has a wrong type, create it doesn't exists
         if not preShadNode:
             preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
-            mc.setAttr(preShadNode+".outColor", 1, 1,1, type = "double3")
-            mc.connectAttr(preShadNode+".outColor", shadingEngine+'.surfaceShader', force =True)
+            mc.setAttr(preShadNode+preTextureInput, 1, 1,1, type = "double3")
+            mc.setAttr(preShadNode+'.diffuse', 0.1)
+            mc.setAttr(preShadNode+'.ambientColor', 0.9, 0.9, 0.9, type = "double3")
+            mc.connectAttr(preShadNode+'.outColor', shadingEngine+'.surfaceShader', force =True)
             if verbose == True: print "#### {:>7}: {:^28} Preview shader created: '{}'".format("Info", shadingEngine, preShadNodeType)
         elif mc.nodeType(preShadNode[-1]) != preShadNodeType:
-            mc.delete(preShadNode[-1])
-            preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
-            mc.setAttr(preShadNode+".outColor", 1, 1,1, type = "double3")
-            mc.connectAttr(preShadNode+".outColor", shadingEngine+'.surfaceShader', force =True)
+            if mc.nodeType(preShadNode[-1]) == "surfaceShader":
+                surfShadColValue = mc.getAttr(preShadNode[-1]+'.outColor')
+                surfShadTrsValue = mc.getAttr(preShadNode[-1]+'.outTransparency')
+                try:
+                    surfShadColConnect = mc.listConnections(preShadNode[-1]+'.outColor',connections = False, destination = False, source =True, plugs = True)[-1]
+                except:
+                    surfShadColConnect = None
+                try:
+                    surfShadTrsConnect = mc.listConnections(preShadNode[-1]+'.outTransparency',connections = False, destination = False, source =True, plugs = True)[-1]
+                except:
+                    surfShadTrsConnect = None
+                mc.delete(preShadNode[-1])
+                preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
+                mc.setAttr(preShadNode+'.diffuse', 0.1)
+                mc.setAttr(preShadNode+'.ambientColor', 0.9, 0.9 ,0.9, type = "double3")
+                mc.setAttr(preShadNode+preTextureInput, surfShadColValue[0][0], surfShadColValue[0][1], surfShadColValue[0][2], type = "double3")
+                mc.setAttr(preShadNode+'.transparency', surfShadTrsValue[0][0], surfShadTrsValue[0][1], surfShadTrsValue[0][2], type = "double3")
+                mc.connectAttr(preShadNode+'.outColor', shadingEngine+'.surfaceShader', force =True)
+                if surfShadColConnect: 
+                    mc.connectAttr(surfShadColConnect, preShadNode+preTextureInput, force =True)
+                if surfShadTrsConnect: 
+                    mc.connectAttr(surfShadTrsConnect, preShadNode+'.transparency', force =True)
+            else:
+                mc.delete(preShadNode[-1])
+                preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
+                mc.setAttr(preShadNode+'.diffuse', 0.1)
+                mc.setAttr(preShadNode+'.ambientColor', 0.9, 0.9, 0.9, type = "double3")
+                mc.setAttr(preShadNode+preTextureInput, 1, 1,1, type = "double3")
+                mc.connectAttr(preShadNode+'.outColor', shadingEngine+'.surfaceShader', force =True)
             if verbose == True: print "#### {:>7}: {:^28} Preview shader replaced: '{}'".format("Info", shadingEngine, preShadNodeType)
         else:
             preShadNode = preShadNode[-1]
