@@ -525,6 +525,10 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
                 preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
                 mc.setAttr(preShadNode+'.diffuse', 0.1)
                 mc.setAttr(preShadNode+'.ambientColor', 0.9, 0.9 ,0.9, type = "double3")
+                print surfShadColValue[0][0] 
+                print surfShadColValue[0][1]
+                print surfShadColValue[0][2]
+                print preShadNode+preTextureInput
                 mc.setAttr(preShadNode+preTextureInput, surfShadColValue[0][0], surfShadColValue[0][1], surfShadColValue[0][2], type = "double3")
                 mc.setAttr(preShadNode+'.transparency', surfShadTrsValue[0][0], surfShadTrsValue[0][1], surfShadTrsValue[0][2], type = "double3")
                 mc.connectAttr(preShadNode+'.outColor', shadingEngine+'.surfaceShader', force =True)
@@ -583,7 +587,8 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
             mc.connectAttr(result+".outColor", preShadNode+preTextureInput, force =True)
             if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: texture file node duplicated".format("Info", shadingEngine)
             conformShaderName(shadingEngine, selectWrongShadEngine = False, verbose = False )
-        else:
+            #if the color is black replace it with the color from the render shader
+        elif  mc.getAttr(preShadNode+preTextureInput)[0][0]+mc.getAttr(preShadNode+preTextureInput)[0][1]+mc.getAttr(preShadNode+preTextureInput)[0][2] == 0:
             try: 
                 mc.setAttr(preShadNode+preTextureInput, matShadTextInputValue[0], matShadTextInputValue[1],matShadTextInputValue[2], type = "double3")
                 if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: color value inherited".format("Info", shadingEngine)
