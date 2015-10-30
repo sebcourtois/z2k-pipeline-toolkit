@@ -182,6 +182,7 @@ def setRenderOutputDir(gui = True):
             print "#### Info: Set render path: {}".format( outputFilePath)
             print "#### Info: Set image name:  {}".format( outputImageName)
             mc.workspace(fileRule=["images",outputFilePath_exp])
+            mc.workspace( saveWorkspace = True)
             mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
             #mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputFilePath_exp ,type = "string")
             mc.file(save = True)
@@ -197,7 +198,7 @@ def setRenderOutputDir(gui = True):
             print "#### Info: Set image name:  {}".format( outputImageName)
             mc.workspace(fileRule=["images",outputFilePath_exp])
             mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
-            mc.file(save = True)
+            #mc.file(save = True)
         else:
             print "#### Warning: you are not working in an 'shot' structure directory, output image name and path cannot not be automaticaly set"
     else:
