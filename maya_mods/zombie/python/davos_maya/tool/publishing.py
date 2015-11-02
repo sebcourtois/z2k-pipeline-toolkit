@@ -1,5 +1,8 @@
 
 
+import subprocess
+from tempfile import NamedTemporaryFile
+
 import pymel.core as pm
 
 #from pytd.util.logutils import logMsg
@@ -10,19 +13,21 @@ from pytaya.core import system as myasys
 #from pytaya.core.general import lsNodes
 #from pytd.util.fsutils import pathResolve
 
+from davos.tools import publish_dependencies
+
 from .general import entityFromScene
 from davos_maya.tool import dependency_scan
-from pytd.util.logutils import logMsg
 from pytd.util.sysutils import inDevMode
 
-def publishSceneDependencies(damEntity, sCurScnPath, scanResults, **kwargs):
+def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
-    bDryRun = kwargs.pop("dryRun", False)
+    bDryRun = kwargs.pop("dryRun", True)
 
     proj = damEntity.project
 
     sTexPathList = []
     fileNodesList = []
+    sBuddyFileList = []
     for result in scanResults:
 
         if not result["publish_ok"]:
@@ -32,12 +37,13 @@ def publishSceneDependencies(damEntity, sCurScnPath, scanResults, **kwargs):
         if fileNodes:
             sTexPathList.append(result["abs_path"])
             fileNodesList.append(fileNodes)
+            sBuddyFileList.extend(result["buddy_files"])
 
     if sTexPathList:
         publishedFileItems = proj.publishDependencies("texture_dep",
-                                                      sCurScnPath,
+                                                      damEntity,
                                                       sTexPathList,
-                                                      entity=damEntity,
+                                                      sComment,
                                                       dryRun=bDryRun,
                                                       **kwargs)
         pubFiles = (f for f, _ in publishedFileItems)
@@ -47,18 +53,40 @@ def publishSceneDependencies(damEntity, sCurScnPath, scanResults, **kwargs):
         for fileNodes, pubFile in zip(fileNodesList, pubFiles):
             sEnvPath = pubFile.envPath("ZOMB_TEXTURE_PATH")
             print sEnvPath
-            for fn in fileNodes:
+            for n in fileNodes:
 
-                sNodeName = fn.name()
+                sNodeName = n.name()
                 if sNodeName in sUpdNodeList:
                     continue
 
                 if not bDryRun:
-                    fn.setAttr("fileTextureName", sEnvPath)
+                    n.setAttr("fileTextureName", sEnvPath)
 
                 sUpdNodeList.append(sNodeName)
                 print "    ", sNodeName
             print ""
+
+
+    if not sBuddyFileList:
+        return
+
+    with NamedTemporaryFile(suffix=".txt", delete=False) as tmpFile:
+        tmpFile.write("\n".join(sBuddyFileList))
+
+    p = publish_dependencies.__file__
+    sCmdArgs = [r"C:\Python27\python.exe",
+                p[:-1]if p.endswith("c") else p,
+                proj.name, "texture_dep",
+                damEntity.sgEntityType.lower(),
+                damEntity.name,
+                tmpFile.name,
+                sComment,
+                "--dryRun", str(int(bDryRun)),
+                ]
+
+    subprocess.Popen(sCmdArgs)
+
+    return (not bDryRun)
 
 def publishCurrentScene(*args, **kwargs):
 
@@ -71,7 +99,7 @@ def publishCurrentScene(*args, **kwargs):
     if inDevMode():
         scanResults = dependency_scan.launch(damEntity, modal=True)
         if scanResults is None:
-            logMsg("Canceled", warning=True)
+            pm.displayInfo("Canceled")
             return
 
     bSgVersion = True
@@ -86,7 +114,8 @@ def publishCurrentScene(*args, **kwargs):
         bSgVersion = False
 
     if inDevMode():
-        publishSceneDependencies(damEntity, sCurScnPath, scanResults, comment=sComment)
+        if not publishSceneDependencies(damEntity, scanResults, sComment):
+            return
 
     sSavedScnPath = myasys.saveScene(confirm=False)
     if not sSavedScnPath:
@@ -98,5 +127,8 @@ def publishCurrentScene(*args, **kwargs):
                                     sgTask=sgTaskInfo,
                                     withSgVersion=bSgVersion,
                                      **kwargs)
+
+    pm.displayInfo("Publishing done !")
+
     return res
 

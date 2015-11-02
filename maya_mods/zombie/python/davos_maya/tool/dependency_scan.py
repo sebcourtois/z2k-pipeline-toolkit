@@ -219,7 +219,6 @@ def scanTextureDependency(damAst):
 
     proj = damAst.project
     sAstName = damAst.name
-    #privTexDir = damAst.getResource("private", "texture_dir")
     sPrivTexDirPath = damAst.getPath("private", "texture_dir")
     sAllowTexTypes = proj.getVar("project", "allowed_texture_formats")
 
@@ -272,7 +271,6 @@ def scanTextureDependency(damAst):
             else:
                 fileNodeDct[sNormTexPath] = [fileNode]
 
-
             if bUvTileOn and (not bUdim):
                 sMsg = "Only UDIM (Mari) accepted"
                 scanLogDct.setdefault("error", []).append(('BadUvTilingMode', sMsg))
@@ -285,7 +283,7 @@ def scanTextureDependency(damAst):
                 sFoundFileList.append(normCase(sTexAbsPath))
                 drcFile = proj.entryFromPath(sTexAbsPath, dbNode=False)
                 #print drcFile, drcFile.absPath()
-                if drcFile.isPublic():
+                if drcFile and drcFile.isPublic():
                     scanLogDct.setdefault("info", []).append(('AlreadyPublished', sTexAbsPath))
 
                     resultDct = {"abs_path":sTexAbsPath,
@@ -387,7 +385,7 @@ def scanTextureDependency(damAst):
                         tgaImg.close()
 
             bPublish = False
-            if bExists and drcFile.isPrivate() and ("error" not in scanLogDct.keys()):
+            if bExists and drcFile and drcFile.isPrivate() and ("error" not in scanLogDct.keys()):
                 publishCount += 1
                 bPublish = True
 
@@ -457,7 +455,7 @@ def launch(damEntity=None, modal=False):
     err = None
     if "error" in scanResults[-1]["scan_severities"]:
 
-        err = RuntimeError("Please, fix the following erros and retry publising.")
+        err = RuntimeError("Please, fix the following erros and retry publishing.")
 
         buttonBox.removeButton(okBtn)
         btn = buttonBox.button(QtGui.QDialogButtonBox.Cancel)
