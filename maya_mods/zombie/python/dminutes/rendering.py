@@ -197,6 +197,7 @@ def setRenderOutputDir(gui = True):
             print "#### Info: Set render path: {}".format( outputFilePath_exp)
             print "#### Info: Set image name:  {}".format( outputImageName)
             mc.workspace(fileRule=["images",outputFilePath_exp])
+            mc.workspace( saveWorkspace = True)
             mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
             #mc.file(save = True)
         else:
