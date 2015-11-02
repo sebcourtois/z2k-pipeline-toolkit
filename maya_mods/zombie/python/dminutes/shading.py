@@ -18,14 +18,14 @@ def connectedToSeveralSG(myNode = ""):
         if mc.nodeType(item) == "shadingEngine":
             upStreamShadingGroupList.append(item)
     if len(upStreamShadingGroupList) >1:
-        print "####    error: '"+myNode+"' is connected to several shading groups  -->   "+str(upStreamShadingGroupList)
+        #print "####    error: '"+myNode+"' is connected to several shading groups  -->   "+str(upStreamShadingGroupList)
         return True
     else:
         return False
 
 
 
-def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True, verbose = True ):
+def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True, verbose = True, gui = True ):
     """
     shadEngineList : selection, all
     conform the shading tree attached to the selected shading engine , or all the shading trees , depending on the shadEngineList value.
@@ -102,31 +102,35 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
                 continue
 
             for item in mc.listHistory (preview_shader):
+                materialParticule = str(materialName)
                 if "dagNode" in mc.nodeType(item, inherited=True):
                     continue
                 if connectedToSeveralSG (item):
-                    return
+                    materialParticule = "shared"
                 preview_shader_type = mc.nodeType(item)
-                if not re.match('pre_'+materialName+'_'+preview_shader_type+'[0-9]{0,3}$',preview_shader):
-                    preview_shader = mc.rename(item,'pre_'+materialName+'_'+preview_shader_type)
+                if not re.match('pre_'+materialParticule+'_'+preview_shader_type+'[0-9]{0,3}$',preview_shader):
+                    preview_shader = mc.rename(item,'pre_'+materialParticule+'_'+preview_shader_type)
                 
             for item in mc.listHistory (render_shader):
+                materialParticule = str(materialName)
                 if "dagNode" in mc.nodeType(item, inherited=True):
                     continue
                 if connectedToSeveralSG (item):
-                    return
+                    materialParticule = "shared"
                 render_shader_type = mc.nodeType(item)
-                if not re.match('mat_'+materialName+'_'+render_shader_type+'[0-9]{0,3}$',render_shader):
-                    render_shader = mc.rename(item,'mat_'+materialName+'_'+render_shader_type)
-        if verbose == True: print "#### {:>7}: {:^28} tree has been conformed properly".format("Info", each)
+                if not re.match('mat_'+materialParticule+'_'+render_shader_type+'[0-9]{0,3}$',render_shader):
+                    render_shader = mc.rename(item,'mat_'+materialParticule+'_'+render_shader_type)
+            if verbose == True: print "#### {:>7}: {:^28} tree has been conformed properly".format("Info", each)
 
     if  wrongShadEngine != [] and selectWrongShadEngine == True:
         mc.select(clear = True)
         for each in wrongShadEngine:
-            print "#### {:>7}: {:^28} {}".format("warning", each[0], each[1])
+            print "#### {:>7}: {:^28} {}".format("Error", each[0], each[1])
             if selectWrongShadEngine == True: 
                 mc.select(each[0], ne = True, add = True)
-        print "####    info: problematics shading engines have been selected"
+        print "#### {:>7}: Problematics shading engines have been selected".format("Error")
+        if gui == True:
+            mc.confirmDialog( title = 'Shader Name Error', message = 'Some shaders are not conform, please read the log to get more information', button = ['Ok'], defaultButton = 'Ok' )
     return wrongShadEngine if wrongShadEngine != [] else  None
 
 
@@ -425,7 +429,7 @@ def imageResize(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQua
 
 
 
-def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrongShadEngine = True, preShadNodeType = "surfaceShader", matShadNodeType= "dmnToon", matTextureInput = ".diffuseColor", preTextureInput = ".outColor"):
+def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrongShadEngine = True, preShadNodeType = "lambert", matShadNodeType= "dmnToon", matTextureInput = ".outColor", preTextureInput = ".color", gui = True):
     """
     from a ginven shading engine
     this script assumes the shading tree has 2 different parts:
@@ -474,13 +478,13 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
     try:
         mc.nodeType(preShadNodeType, isTypeName=True)
     except:
-        print "#### {:>7}: the preview shading node type is unkowned: preShadNodeType= {}".format("Error", preShadNodeType)
+        print "#### {:>7}: the preview shading node type is unkowned: preShadNodeType = {}".format("Error", preShadNodeType)
         return
 
     try:
         mc.nodeType(matShadNodeType, isTypeName=True)
     except:
-        print "#### {:>7}: the render shading node type is unkowned: matShadNodeType= {}".format("Error", matShadNodeType)
+        print "#### {:>7}: the render shading node type is unkowned: matShadNodeType = {}".format("Error", matShadNodeType)
         return
 
 
@@ -500,14 +504,45 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         #check the existence of the 'preShadNode', replace it, if it has a wrong type, create it doesn't exists
         if not preShadNode:
             preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
-            mc.setAttr(preShadNode+".outColor", 1, 1,1, type = "double3")
-            mc.connectAttr(preShadNode+".outColor", shadingEngine+'.surfaceShader', force =True)
+            mc.setAttr(preShadNode+preTextureInput, 1, 1,1, type = "double3")
+            mc.setAttr(preShadNode+'.diffuse', 0.1)
+            mc.setAttr(preShadNode+'.ambientColor', 0.9, 0.9, 0.9, type = "double3")
+            mc.connectAttr(preShadNode+'.outColor', shadingEngine+'.surfaceShader', force =True)
             if verbose == True: print "#### {:>7}: {:^28} Preview shader created: '{}'".format("Info", shadingEngine, preShadNodeType)
         elif mc.nodeType(preShadNode[-1]) != preShadNodeType:
-            mc.delete(preShadNode[-1])
-            preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
-            mc.setAttr(preShadNode+".outColor", 1, 1,1, type = "double3")
-            mc.connectAttr(preShadNode+".outColor", shadingEngine+'.surfaceShader', force =True)
+            if mc.nodeType(preShadNode[-1]) == "surfaceShader":
+                surfShadColValue = mc.getAttr(preShadNode[-1]+'.outColor')
+                surfShadTrsValue = mc.getAttr(preShadNode[-1]+'.outTransparency')
+                try:
+                    surfShadColConnect = mc.listConnections(preShadNode[-1]+'.outColor',connections = False, destination = False, source =True, plugs = True)[-1]
+                except:
+                    surfShadColConnect = None
+                try:
+                    surfShadTrsConnect = mc.listConnections(preShadNode[-1]+'.outTransparency',connections = False, destination = False, source =True, plugs = True)[-1]
+                except:
+                    surfShadTrsConnect = None
+                mc.delete(preShadNode[-1])
+                preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
+                mc.setAttr(preShadNode+'.diffuse', 0.1)
+                mc.setAttr(preShadNode+'.ambientColor', 0.9, 0.9 ,0.9, type = "double3")
+                print surfShadColValue[0][0] 
+                print surfShadColValue[0][1]
+                print surfShadColValue[0][2]
+                print preShadNode+preTextureInput
+                mc.setAttr(preShadNode+preTextureInput, surfShadColValue[0][0], surfShadColValue[0][1], surfShadColValue[0][2], type = "double3")
+                mc.setAttr(preShadNode+'.transparency', surfShadTrsValue[0][0], surfShadTrsValue[0][1], surfShadTrsValue[0][2], type = "double3")
+                mc.connectAttr(preShadNode+'.outColor', shadingEngine+'.surfaceShader', force =True)
+                if surfShadColConnect: 
+                    mc.connectAttr(surfShadColConnect, preShadNode+preTextureInput, force =True)
+                if surfShadTrsConnect: 
+                    mc.connectAttr(surfShadTrsConnect, preShadNode+'.transparency', force =True)
+            else:
+                mc.delete(preShadNode[-1])
+                preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
+                mc.setAttr(preShadNode+'.diffuse', 0.1)
+                mc.setAttr(preShadNode+'.ambientColor', 0.9, 0.9, 0.9, type = "double3")
+                mc.setAttr(preShadNode+preTextureInput, 1, 1,1, type = "double3")
+                mc.connectAttr(preShadNode+'.outColor', shadingEngine+'.surfaceShader', force =True)
             if verbose == True: print "#### {:>7}: {:^28} Preview shader replaced: '{}'".format("Info", shadingEngine, preShadNodeType)
         else:
             preShadNode = preShadNode[-1]
@@ -552,7 +587,8 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
             mc.connectAttr(result+".outColor", preShadNode+preTextureInput, force =True)
             if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: texture file node duplicated".format("Info", shadingEngine)
             conformShaderName(shadingEngine, selectWrongShadEngine = False, verbose = False )
-        else:
+            #if the color is black replace it with the color from the render shader
+        elif  mc.getAttr(preShadNode+preTextureInput)[0][0]+mc.getAttr(preShadNode+preTextureInput)[0][1]+mc.getAttr(preShadNode+preTextureInput)[0][2] == 0:
             try: 
                 mc.setAttr(preShadNode+preTextureInput, matShadTextInputValue[0], matShadTextInputValue[1],matShadTextInputValue[2], type = "double3")
                 if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: color value inherited".format("Info", shadingEngine)
@@ -563,9 +599,11 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
     if  wrongShadEngine != [] and selectWrongShadEngine == True:
         mc.select(clear = True)
         for each in wrongShadEngine:
-            print "#### {:>7}: {:^28} {}".format("Warning", each[0], each[1])
+            print "#### {:>7}: {:^28} {}".format("Error", each[0], each[1])
             if selectWrongShadEngine == True: mc.select(each[0], ne = True, add = True)
-        print "#### {:>7}: Problematics shading engines have been selected".format("Info")
+        print "#### {:>7}: Problematics shading engines have been selected".format("Error")
+        if gui == True:
+            mc.confirmDialog( title='Shader structure Error', message='Some shaders are not conform, please read the log to get more information', button=['Ok'], defaultButton='Ok' )
     return wrongShadEngine if wrongShadEngine != [] else  None
 
 
