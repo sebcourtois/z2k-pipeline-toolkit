@@ -48,13 +48,13 @@ class MrcFile(DrcFile):
             self.assertIsMayaScene()
 
         if self.isPublic():
-            sOpenSuffix = "".join((self.versionSuffix(), '-', 'readonly'))
+            sOpenSuffix = "".join((self.versionSuffix(self.currentVersion), '-', 'readonly'))
             privFile, _ = self.copyToPrivateSpace(suffix=sOpenSuffix, **kwargs)
         else:
             privFile = self
 
         result = myasys.saveScene(discard=True)
-        if result == '_cancelled_':
+        if not result:
             return
 
         return myasys.openScene(privFile.absPath(), force=True)

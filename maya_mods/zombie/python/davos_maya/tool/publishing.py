@@ -5,56 +5,60 @@ import pymel.core as pm
 #from pytd.util.logutils import logMsg
 from pytaya.core import system as myasys
 
-from davos.core.damproject import DamProject
-from pytd.gui.dialogs import confirmDialog
+#from pytd.gui.dialogs import confirmDialog
 #from pytd.util.logutils import logMsg
-from pytaya.core.general import lsNodes
-from pytd.util.fsutils import pathResolve
+#from pytaya.core.general import lsNodes
+#from pytd.util.fsutils import pathResolve
 
 from .general import entityFromScene
+from davos_maya.tool import dependency_scan
+from pytd.util.logutils import logMsg
+from pytd.util.sysutils import inDevMode
 
-def publishSceneDependencies(proj, sCurScnPath, **kwargs):
+def publishSceneDependencies(damEntity, sCurScnPath, scanResults, **kwargs):
 
-    fileNodeList = lsNodes("*", type='file', not_rn=True)
-    fileTexItems = []
-    for fileNode in fileNodeList:
+    bDryRun = kwargs.pop("dryRun", False)
 
-        p = fileNode.getAttr("fileTextureName")
-        if not p:
+    proj = damEntity.project
+
+    sTexPathList = []
+    fileNodesList = []
+    for result in scanResults:
+
+        if not result["publish_ok"]:
             continue
 
-        sAbsPath = pathResolve(p)
-        privFile = proj.entryFromPath(sAbsPath)
-        if not privFile:
-            continue
+        fileNodes = result["file_nodes"]
+        if fileNodes:
+            sTexPathList.append(result["abs_path"])
+            fileNodesList.append(fileNodes)
 
-        if privFile.isPublic():
-            continue
-
-        fileTexItems.append((fileNode, privFile))
-
-    sTexPathList = tuple(f.absPath() for _, f in fileTexItems)
     if sTexPathList:
-
-        sConfirm = confirmDialog(title="QUESTION !",
-                                 message="Publish Textures ?",
-                                 button=("Yes", "No"),
-                                 defaultButton="No",
-                                 cancelButton="No",
-                                 dismissString="No",
-                                 icon="question",
-                                )
-        if sConfirm == "No":
-            return
-
-        publishedFileItems = proj.publishDependencies("texture_dep", sCurScnPath,
-                                                      sTexPathList, **kwargs)
-
-        fileNodes = (n for n, _ in fileTexItems)
+        publishedFileItems = proj.publishDependencies("texture_dep",
+                                                      sCurScnPath,
+                                                      sTexPathList,
+                                                      entity=damEntity,
+                                                      dryRun=bDryRun,
+                                                      **kwargs)
         pubFiles = (f for f, _ in publishedFileItems)
 
-        for fileNode, pubFile in zip(fileNodes, pubFiles):
-            fileNode.setAttr("fileTextureName", pubFile.envPath())
+        sUpdNodeList = []
+
+        for fileNodes, pubFile in zip(fileNodesList, pubFiles):
+            sEnvPath = pubFile.envPath("ZOMB_TEXTURE_PATH")
+            print sEnvPath
+            for fn in fileNodes:
+
+                sNodeName = fn.name()
+                if sNodeName in sUpdNodeList:
+                    continue
+
+                if not bDryRun:
+                    fn.setAttr("fileTextureName", sEnvPath)
+
+                sUpdNodeList.append(sNodeName)
+                print "    ", sNodeName
+            print ""
 
 def publishCurrentScene(*args, **kwargs):
 
@@ -63,6 +67,12 @@ def publishCurrentScene(*args, **kwargs):
     proj = damEntity.project
 
     _, curPubFile = proj.assertEditedVersion(sCurScnPath)
+
+    if inDevMode():
+        scanResults = dependency_scan.launch(damEntity, modal=True)
+        if scanResults is None:
+            logMsg("Canceled", warning=True)
+            return
 
     bSgVersion = True
     try:
@@ -75,7 +85,8 @@ def publishCurrentScene(*args, **kwargs):
     if not sgTaskInfo:
         bSgVersion = False
 
-    #publishSceneDependencies(proj, sCurScnPath, comment=sComment)
+    if inDevMode():
+        publishSceneDependencies(damEntity, sCurScnPath, scanResults, comment=sComment)
 
     sSavedScnPath = myasys.saveScene(confirm=False)
     if not sSavedScnPath:
