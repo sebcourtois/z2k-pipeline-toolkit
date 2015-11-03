@@ -116,9 +116,11 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
             fileNodes = result["file_nodes"]
             sFileNodeNames = tuple(n.name()for n in fileNodes)
 
-            if fileNodes:
+            wrappedNodes = []
+            numNodes = 0
+            sNumNodes = ""
 
-                wrappedNodes = []
+            if fileNodes:
                 fileNodeTreeData = {}
                 for fileNode in fileNodes:
 
@@ -213,6 +215,7 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
             item.setExpanded(True)
 
 UDIM_MODE = 3
+UDIM_RGX = r"\.1\d{3}\."
 
 @setWaitCursor
 def scanTextureDependency(damAst):
@@ -251,7 +254,7 @@ def scanTextureDependency(damAst):
 
         sTexAbsPathList = (sTexAbsPath,)
         if bUdim and drcFile:
-            sFilename = re.sub(r"\.1\d{3}\.", ".1*.", osp.basename(sTexAbsPath))
+            sFilename = re.sub(UDIM_RGX, ".1*.", osp.basename(sTexAbsPath))
             sDirPath = drcFile.parentDir().absPath()
             sTexAbsPathList = sorted(iterPaths(sDirPath, dirs=False,
                                              recursive=False,
@@ -300,7 +303,12 @@ def scanTextureDependency(damAst):
             sDirPath, sFilename = osp.split(sTexAbsPath)
             sBasePath, sExt = osp.splitext(sTexAbsPath)
             if bUdim:
-                sBasePath, sTiling = sBasePath.rsplit('.', 1)
+                if len(re.findall(UDIM_RGX, sFilename)) != 1:
+                    sMsg = "Must match 'name.1###.ext' pattern"
+                    scanLogDct.setdefault("error", []).append(('BadUDIMFilename', sMsg))
+                else:
+                    sBasePath, sTiling = sBasePath.rsplit('.', 1)
+
             sBaseName = osp.basename(sBasePath)
 
             if sExt.lower() not in sAllowTexTypes:
@@ -322,15 +330,15 @@ def scanTextureDependency(damAst):
                     sMsg = toStr(e)
                 else:
                     sNameParts = sBaseName.split("_")
-                    if len(sNameParts) < 3:
-                        sMsg = "Must have at least 3 parts: tex_subject_channel"
+                    if len(sNameParts) != 3:
+                        sMsg = "Must have 3 parts: tex_textureSubject_channel"
                     elif sNameParts[0] != "tex":
                         sMsg = ("Must start with 'tex_'")
                     else:
                         sChannel = sNameParts[-1]
-                        if len(sChannel) not in (3, 4):
-                            sMsg = ("Channel name can only have 3 or 4 characters, got '{}'"
-                                    .format(sChannel))
+                        if len(sChannel) != 3:
+                            sMsg = ("Channel can only have 3 characters, got {} in '{}'"
+                                    .format(len(sChannel), sChannel))
             if sMsg:
                 scanLogDct.setdefault("error", []).append(('BadFilename', sMsg))
                 sMsg = ""
@@ -390,11 +398,24 @@ def scanTextureDependency(damAst):
                 if drcFile.isPrivate():
 
                     bUpToDate = True
+                    bOldPrivFile = False
                     pubFile = drcFile.getPublicFile()
                     if pubFile:
                         bUpToDate = pubFile.isUpToDate()
+                        if drcFile.fsMtime < pubFile.dbMtime:
+                            bOldPrivFile = True
+                            sFmt = "%Y-%m-%d %H:%M"
+                            sCurTime = drcFile.fsMtime.strftime(sFmt)
+                            sPubTime = pubFile.dbMtime.strftime(sFmt)
 
-                    if bUpToDate:
+                    if bOldPrivFile:
+                        sMsg = ("File is OBSOLETE: \n yours: {}\npublic: {}"
+                                .format(sCurTime, sPubTime))
+                        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
+                    elif not bUpToDate:
+                        sMsg = "Public file is OUT OF SYNC"
+                        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
+                    else:
                         publishCount += 1
                         bPublish = True
 
@@ -403,9 +424,6 @@ def scanTextureDependency(damAst):
                                 if sBuddyFileList else "")
 
                         scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
-                    else:
-                        sMsg = "Public file is OUT OF SYNC."
-                        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
 
             resultDct = {"abs_path":sTexAbsPath,
                          "scan_log":scanLogDct,
@@ -416,20 +434,21 @@ def scanTextureDependency(damAst):
                          }
             addResult(resultDct)
 
-    #lookking for unused files in texture direcotry
-    sTexDirFileSet = set(normCase(p) for p in iterPaths(sPrivTexDirPath, dirs=False,
-                                                        recursive=False))
-    sUnusedFileSet = sTexDirFileSet - set(normCase(p) for p in sFoundFileList)
-    if sUnusedFileSet:
-        sAllSeveritySet.add("warning")
+    #looking for unused files in texture direcotry
+    sTexDirFileList = sorted(iterPaths(sPrivTexDirPath, dirs=False, recursive=False))
 
-    for p in sorted(sUnusedFileSet):
+    numUnused = 0
+    for p in sTexDirFileList:
+
+        if normCase(p) in sFoundFileList:
+            continue
 
         sExt = osp.splitext(p)[-1]
         if sExt.lower() not in sAllowTexTypes:
             continue
 
         scanLogDct = {"warning":[("UnusedPrivateFiles", p)]}
+
         resultDct = {"abs_path":p,
                      "scan_log":scanLogDct,
                      "file_nodes":[],
@@ -438,6 +457,11 @@ def scanTextureDependency(damAst):
                      "drc_file":None,
                      }
         addResult(resultDct)
+
+        numUnused += 1
+
+    if numUnused:
+        sAllSeveritySet.add("warning")
 
     resultDct["scan_severities"] = sAllSeveritySet
     resultDct["publish_count"] = publishCount
@@ -475,7 +499,8 @@ def launch(damEntity=None, modal=False):
         btn.setText("Close")
 
     else:
-        okBtn.setText("Publish")
+        if modal:
+            okBtn.setText("Publish")
 
     dialog.show()
     dialog.setupTreeData(scanResults)

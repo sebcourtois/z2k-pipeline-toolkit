@@ -49,26 +49,35 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
         pubFiles = (f for f, _ in publishedFileItems)
 
         sUpdNodeList = []
+        sMsgFmt = u"\nChanging {}: \nfrom '{}'\nto   '{}'"
 
         for fileNodes, pubFile in zip(fileNodesList, pubFiles):
-            sEnvPath = pubFile.envPath("ZOMB_TEXTURE_PATH")
-            print sEnvPath
-            for n in fileNodes:
 
-                sNodeName = n.name()
+            sEnvPath = pubFile.envPath("ZOMB_TEXTURE_PATH")
+
+            for fileNode in fileNodes:
+
+                sNodeName = fileNode.name()
                 if sNodeName in sUpdNodeList:
                     continue
 
+                sMsg = (sMsgFmt.format(fileNode, fileNode.getAttr("fileTextureName"),
+                                       sEnvPath))
+                print sMsg
+
                 if not bDryRun:
-                    n.setAttr("fileTextureName", sEnvPath)
+                    fileNode.setAttr("fileTextureName", sEnvPath)
 
                 sUpdNodeList.append(sNodeName)
-                print "    ", sNodeName
-            print ""
-
 
     if not sBuddyFileList:
         return
+
+    sMsg = """
+Opening a new process to publish associated files: .psd, .tx, etc...
+DO NOT CLOSE THE WINDOW BEFORE IT FINISHES !!!
+"""
+    pm.displayWarning(sMsg)
 
     with NamedTemporaryFile(suffix=".txt", delete=False) as tmpFile:
         tmpFile.write("\n".join(sBuddyFileList))
@@ -96,11 +105,10 @@ def publishCurrentScene(*args, **kwargs):
 
     _, curPubFile = proj.assertEditedVersion(sCurScnPath)
 
-    if inDevMode():
-        scanResults = dependency_scan.launch(damEntity, modal=True)
-        if scanResults is None:
-            pm.displayInfo("Canceled.")
-            return
+    scanResults = dependency_scan.launch(damEntity, modal=True)
+    if scanResults is None:
+        pm.displayInfo("Canceled !")
+        return
 
     bSgVersion = True
     try:
@@ -113,9 +121,8 @@ def publishCurrentScene(*args, **kwargs):
     if not sgTaskInfo:
         bSgVersion = False
 
-    if inDevMode():
-        if not publishSceneDependencies(damEntity, scanResults, sComment):
-            return
+    if not publishSceneDependencies(damEntity, scanResults, sComment):
+        return
 
     sSavedScnPath = myasys.saveScene(confirm=False)
     if not sSavedScnPath:
