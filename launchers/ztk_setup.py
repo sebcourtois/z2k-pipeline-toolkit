@@ -209,7 +209,7 @@ class Z2kToolkit(object):
         sNoSummary = "/NJS" if not summary else ""
 
         sExcludeFiles = ["*.pyc", ".git*", ".*project", "*.lic", "Thumbs.db",
-                         "pull_all.bat", "azer ertiubh kjg.txt"]
+                         "pull_all.bat"]
         if not self.isDev:
             sExcludeFiles += ["setup_*.bat"]
 
@@ -300,13 +300,17 @@ class Z2kToolkit(object):
 
                 #print "bBeenUpdated", bBeenUpdated
                 if bBeenUpdated:
-                    msg = """
+                    sMsg = """
 #===============================================================================
 # Tools updated so let's relaunch...
 #===============================================================================
                         """
-                    relaunchArgs = [sys.executable] + sys.argv + ["-u", "0", "-r", "1"]
-                    print msg
+                    relaunchArgs = [sys.executable] + sys.argv[:c] + ["-u", "0", "-r", "1"] + launchArgs
+                    print sMsg
+                    print sys.argv[:c]
+                    print launchArgs
+                    print relaunchArgs
+
                     subprocess.call(relaunchArgs, shell=True)
                     return
 

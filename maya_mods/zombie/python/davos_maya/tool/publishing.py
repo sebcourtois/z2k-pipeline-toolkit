@@ -17,7 +17,7 @@ from davos.tools import publish_dependencies
 
 from .general import entityFromScene
 from davos_maya.tool import dependency_scan
-from pytd.util.sysutils import inDevMode
+#from pytd.util.sysutils import inDevMode
 
 def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
@@ -71,7 +71,7 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
                 sUpdNodeList.append(sNodeName)
 
     if not sBuddyFileList:
-        return
+        return (not bDryRun)
 
     sMsg = """
 Opening a new process to publish associated files: .psd, .tx, etc...
@@ -135,7 +135,7 @@ def publishCurrentScene(*args, **kwargs):
                                     withSgVersion=bSgVersion,
                                     **kwargs)
 
-    pm.displayInfo("Publishing completed !")
+    pm.displayWarning("Publishing completed !")
 
     return res
 

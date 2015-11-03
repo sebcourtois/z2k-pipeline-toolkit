@@ -265,6 +265,7 @@ def scanTextureDependency(damAst):
         for sTexAbsPath in sTexAbsPathList:
 
             scanLogDct = {}
+            resultDct = {}
             sBuddyFileList = []
 
             sNormTexPath = normCase(sTexAbsPath)
@@ -435,36 +436,38 @@ def scanTextureDependency(damAst):
             addResult(resultDct)
 
     #looking for unused files in texture direcotry
-    sTexDirFileList = sorted(iterPaths(sPrivTexDirPath, dirs=False, recursive=False))
+    if osp.isdir(sPrivTexDirPath):
+        sTexDirFileList = sorted(iterPaths(sPrivTexDirPath, dirs=False, recursive=False))
 
-    numUnused = 0
-    for p in sTexDirFileList:
+        numUnused = 0
+        for p in sTexDirFileList:
 
-        if normCase(p) in sFoundFileList:
-            continue
+            if normCase(p) in sFoundFileList:
+                continue
 
-        sExt = osp.splitext(p)[-1]
-        if sExt.lower() not in sAllowTexTypes:
-            continue
+            sExt = osp.splitext(p)[-1]
+            if sExt.lower() not in sAllowTexTypes:
+                continue
 
-        scanLogDct = {"warning":[("UnusedPrivateFiles", p)]}
+            scanLogDct = {"warning":[("UnusedPrivateFiles", p)]}
 
-        resultDct = {"abs_path":p,
-                     "scan_log":scanLogDct,
-                     "file_nodes":[],
-                     "buddy_files":[],
-                     "publish_ok":False,
-                     "drc_file":None,
-                     }
-        addResult(resultDct)
+            resultDct = {"abs_path":p,
+                         "scan_log":scanLogDct,
+                         "file_nodes":[],
+                         "buddy_files":[],
+                         "publish_ok":False,
+                         "drc_file":None,
+                         }
+            addResult(resultDct)
 
-        numUnused += 1
+            numUnused += 1
 
-    if numUnused:
-        sAllSeveritySet.add("warning")
+        if numUnused:
+            sAllSeveritySet.add("warning")
 
-    resultDct["scan_severities"] = sAllSeveritySet
-    resultDct["publish_count"] = publishCount
+    if scanResults:
+        resultDct["scan_severities"] = sAllSeveritySet
+        resultDct["publish_count"] = publishCount
 
     return scanResults
 
@@ -479,7 +482,7 @@ def launch(damEntity=None, modal=False):
 
     scanResults = scanTextureDependency(damEntity)
     if not scanResults:
-        return
+        return scanResults
 
     dialog = DependencyTreeDialog()
 
