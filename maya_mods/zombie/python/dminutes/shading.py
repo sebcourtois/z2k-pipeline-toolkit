@@ -609,7 +609,7 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
     return wrongShadEngine if wrongShadEngine != [] else  None
 
 
-def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType = "surfaceShader", updateOnly=False):  
+def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType = "lambert", updateOnly=False):  
     """
     This script get a list of pre_* file node from the selection (fileNodeList = "selection") or 
     from the entire scene (fileNodeList = "all") and generate a low resolution jpg file from the existing .tga file.
