@@ -13,7 +13,7 @@ from davos.tools import create_dirs_n_files
 
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
-from pytd.util.sysutils import inDevMode
+#from pytd.util.sysutils import inDevMode
 
 def doCreateFolders(sEntiType, *args):
     create_dirs_n_files.launch(sEntiType, dryRun=False,
@@ -39,8 +39,8 @@ class DavosSetup(ToolSetup):
             with pm.subMenuItem(label="Create Folders", to=False):
                 pm.menuItem(label="Assets...", c=partial(doCreateFolders, "asset"))
                 pm.menuItem(label="Shots...", c=partial(doCreateFolders, "shot"))
-            if inDevMode():
-                pm.menuItem(label="Scan Dependencies...", c=doDependencyScan)
+
+            pm.menuItem(label="Scan Dependencies...", c=doDependencyScan)
             pm.menuItem(label="Publish...", c=publishing.publishCurrentScene)
 
         ToolSetup.populateMenu(self)
