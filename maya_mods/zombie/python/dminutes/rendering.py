@@ -141,6 +141,16 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
     mc.setAttr("defaultArnoldRenderOptions.skipLicenseCheck",1)
     mc.setAttr("defaultArnoldRenderOptions.log_verbosity",1)#warnig + info
+
+
+    mc.setAttr("defaultArnoldRenderOptions.GITotalDepth",10)
+    mc.setAttr("defaultArnoldRenderOptions.GIDiffuseDepth",0)
+    mc.setAttr("defaultArnoldRenderOptions.GIGlossyDepth",1)
+    mc.setAttr("defaultArnoldRenderOptions.GIDiffuseDepth",0)
+    mc.setAttr("defaultArnoldRenderOptions.GIRefractionDepth",8)
+    mc.setAttr("defaultArnoldRenderOptions.GIReflectionDepth",10)
+    mc.setAttr("defaultArnoldRenderOptions.GIVolumeDepth",0)
+    mc.setAttr("defaultArnoldRenderOptions.autoTransparencyDepth",10)
     
     print "#### info: render options are now production ready"
 
@@ -185,7 +195,7 @@ def setRenderOutputDir(gui = True):
             mc.workspace( saveWorkspace = True)
             mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
             #mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputFilePath_exp ,type = "string")
-            mc.file(save = True)
+            #mc.file(save = True)
         else:
             print "#### Warning: you are not working in an 'asset' structure directory, output image name and path cannot not be automaticaly set"
     elif mc.ls("|shot"):

@@ -210,7 +210,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
             finalMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
             finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(finalMapdir)))
             publicMapdir = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
-            publicMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(finalMapdir)))
+            publicMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(publicMapdir)))
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
@@ -232,6 +232,8 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         fileName = os.path.split(mapFilePath)[1]       
         finalMapFilePathExpanded = miscUtils.normPath(miscUtils.pathJoin(finalMapdirExpand,fileName))
         finalMapFilePath = miscUtils.normPath(miscUtils.pathJoin(finalMapdir,fileName))
+        publicMapFilePathExpanded = miscUtils.normPath(miscUtils.pathJoin(publicMapdirExpand,fileName))
+        publicMapFilePath = miscUtils.normPath(miscUtils.pathJoin(publicMapdir,fileName))
 
         #tests the texture extention
         mapExtention = (os.path.split(mapFilePath))[-1].split(".")[-1]
@@ -269,7 +271,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
 
         #tests if used path match the finalMapDir and if the texture exists
         elif mapPath == publicMapdir: 
-            if os.path.isfile(publicMapdirExpand) == True:
+            if os.path.isfile(publicMapFilePathExpanded) == True:
                 if inVerbose == True: print "#### Info: '{0:^24}' Published File :'{1}'".format(eachFileNode,mapFilePath)  
                 continue
             else:
@@ -607,7 +609,7 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
     return wrongShadEngine if wrongShadEngine != [] else  None
 
 
-def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType = "surfaceShader", updateOnly=False):  
+def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType = "lambert", updateOnly=False):  
     """
     This script get a list of pre_* file node from the selection (fileNodeList = "selection") or 
     from the entire scene (fileNodeList = "all") and generate a low resolution jpg file from the existing .tga file.

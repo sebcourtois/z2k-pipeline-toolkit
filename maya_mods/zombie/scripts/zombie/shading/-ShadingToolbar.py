@@ -73,9 +73,7 @@ def buttonTxUpdateAll(*args):
 def buttonTxUpdateSelection(*args):
 	shading.generateTxForRender( fileNodeList = 'selection', updateOnly=True)
 
-#publish textures files
-def buttonPublishTexturePrint(*args):
-	shading.getTexturesToPublish (verbose = True)
+
 
 # Make a new window
 
@@ -85,7 +83,7 @@ if mc.window( "shadingToolBox", exists = True ):
 
 
 window = mc.window( "shadingToolBox", title="Shading Toolbox", iconName='Shading',toolbox = True, sizeable = False )
-mc.window(window, e = True, widthHeight=(260, 650))
+mc.window(window, e = True, widthHeight=(260, 590))
 
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 
@@ -163,10 +161,6 @@ mc.button( label='Update All', recomputeSize = False, width = 125, c=buttonTxUpd
 mc.button( label='Update Selection',  recomputeSize = False, width = 125, c= buttonTxUpdateSelection )
 mc.setParent( '..' )
 
-#publish textures files
-mc.separator(style = 'in', h = 5  )
-mc.text(label="publish textures files", align='center')
-mc.button( label='Print',  c= buttonPublishTexturePrint )
 
 mc.showWindow( window )
 
