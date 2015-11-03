@@ -385,14 +385,27 @@ def scanTextureDependency(damAst):
                         tgaImg.close()
 
             bPublish = False
-            if bExists and drcFile and drcFile.isPrivate() and ("error" not in scanLogDct.keys()):
-                publishCount += 1
-                bPublish = True
+            if bExists and drcFile and ("error" not in scanLogDct.keys()):
 
-                sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
-                sMsg = ", ".join(s.upper() for s in sExtList) + " found" if sBuddyFileList else ""
+                if drcFile.isPrivate():
 
-                scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
+                    bUpToDate = True
+                    pubFile = drcFile.getPublicFile()
+                    if pubFile:
+                        bUpToDate = pubFile.isUpToDate()
+
+                    if bUpToDate:
+                        publishCount += 1
+                        bPublish = True
+
+                        sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
+                        sMsg = (", ".join(s.upper() for s in sExtList) + " found"
+                                if sBuddyFileList else "")
+
+                        scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
+                    else:
+                        sMsg = "Public file is OUT OF SYNC."
+                        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
 
             resultDct = {"abs_path":sTexAbsPath,
                          "scan_log":scanLogDct,

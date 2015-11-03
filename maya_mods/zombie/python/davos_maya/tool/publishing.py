@@ -99,7 +99,7 @@ def publishCurrentScene(*args, **kwargs):
     if inDevMode():
         scanResults = dependency_scan.launch(damEntity, modal=True)
         if scanResults is None:
-            pm.displayInfo("Canceled")
+            pm.displayInfo("Canceled.")
             return
 
     bSgVersion = True
@@ -126,7 +126,7 @@ def publishCurrentScene(*args, **kwargs):
                                     comment=sComment,
                                     sgTask=sgTaskInfo,
                                     withSgVersion=bSgVersion,
-                                     **kwargs)
+                                    **kwargs)
 
     pm.displayInfo("Publishing completed !")
 
