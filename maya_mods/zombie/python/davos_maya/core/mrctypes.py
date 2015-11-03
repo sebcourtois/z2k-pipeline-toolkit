@@ -1,7 +1,7 @@
 
 import os.path as osp
 
-#import pymel.core as pm
+import pymel.core as pm
 import pymel.versions as pmv
 
 from davos.core.drctypes import DrcDir, DrcFile
@@ -68,6 +68,7 @@ class MrcFile(DrcFile):
         p = self.absPath()
 
         if self.isPublic():
+
             damEntity = self.getEntity(fail=True)
             refDir = damEntity.getResource("public", "ref_dir")
             if refDir and (normCase(self.parentDir().absPath()) == normCase(refDir.absPath())):
@@ -78,3 +79,12 @@ class MrcFile(DrcFile):
             sNamespace = underJoin((self.name.split(".", 1)[0], padded(1, 2)))
 
         return myasys.importFile(p, reference=True, ns=sNamespace, **kwargs)
+
+    def mayaImportImage(self):
+
+        if self.isPublic():
+            p = self.envPath("ZOMB_TEXTURE_PATH")
+        else:
+            p = self.absPath()
+
+        return pm.mel.importImageFile(p, False, False, True)
