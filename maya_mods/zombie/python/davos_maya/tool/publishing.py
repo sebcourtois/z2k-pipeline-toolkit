@@ -21,7 +21,7 @@ from pytd.util.sysutils import inDevMode
 
 def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
-    bDryRun = kwargs.pop("dryRun", True)
+    bDryRun = kwargs.pop("dryRun", False)
 
     proj = damEntity.project
 
@@ -128,7 +128,7 @@ def publishCurrentScene(*args, **kwargs):
                                     withSgVersion=bSgVersion,
                                      **kwargs)
 
-    pm.displayInfo("Publishing done !")
+    pm.displayInfo("Publishing completed !")
 
     return res
 
