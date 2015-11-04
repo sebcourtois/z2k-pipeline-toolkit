@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 
-/.settings/
+.settings
 /maya_mods/Toonkit_module
 
 # system Files
@@ -21,3 +21,4 @@ launchers/alex
 /third-party/_python27_site/PySide
 /third-party/_python27_site/PySide-1.2.0-py2.7.egg-info
 /maya_mods/zombie/python/dminutes/Z2K_Batchator/debug
+
