@@ -1,4 +1,4 @@
-+ zombie 0.1 ./zombie
++ zombie any ./zombie
 PYTHONPATH+:=python
 
 

@@ -223,6 +223,7 @@ def scanTextureDependency(damAst):
     proj = damAst.project
     sAstName = damAst.name
     sPrivTexDirPath = damAst.getPath("private", "texture_dir")
+    sPubTexDirPath = damAst.getPath("public", "texture_dir")
     sAllowTexTypes = proj.getVar("project", "allowed_texture_formats")
 
     allFileNodes = lsNodes("*", type='file', not_rn=True)
@@ -279,30 +280,33 @@ def scanTextureDependency(damAst):
                 sMsg = "Only UDIM (Mari) accepted"
                 scanLogDct.setdefault("error", []).append(('BadUvTilingMode', sMsg))
 
+            sDirPath, sFilename = osp.split(sTexAbsPath)
+            sBasePath, sExt = osp.splitext(sTexAbsPath)
+
             drcFile = None
             bExists = osp.isfile(sTexAbsPath) or bUdim
             if not bExists:
                 scanLogDct.setdefault("error", []).append(('FileNotFound', sTexAbsPath))
             else:
                 sFoundFileList.append(normCase(sTexAbsPath))
-                drcFile = proj.entryFromPath(sTexAbsPath, dbNode=False)
+                drcFile = proj.entryFromPath(sTexAbsPath)
                 #print drcFile, drcFile.absPath()
                 if drcFile and drcFile.isPublic():
-                    scanLogDct.setdefault("info", []).append(('AlreadyPublished', sTexAbsPath))
+                    if normCase(sDirPath) == normCase(sPubTexDirPath):
 
-                    resultDct = {"abs_path":sTexAbsPath,
-                                 "scan_log":scanLogDct,
-                                 "file_nodes":fileNodeDct[sNormTexPath],
-                                 "buddy_files":sBuddyFileList,
-                                 "publish_ok":False,
-                                 "drc_file":drcFile,
-                                 }
-                    addResult(resultDct)
-                    continue
+                        scanLogDct.setdefault("info", []).append(('AlreadyPublished', sTexAbsPath))
+
+                        resultDct = {"abs_path":sTexAbsPath,
+                                     "scan_log":scanLogDct,
+                                     "file_nodes":fileNodeDct[sNormTexPath],
+                                     "buddy_files":sBuddyFileList,
+                                     "publish_ok":False,
+                                     "drc_file":drcFile,
+                                     }
+                        addResult(resultDct)
+                        continue
 
             sTiling = ""
-            sDirPath, sFilename = osp.split(sTexAbsPath)
-            sBasePath, sExt = osp.splitext(sTexAbsPath)
             if bUdim:
                 if len(re.findall(UDIM_RGX, sFilename)) != 1:
                     sMsg = "Must match 'name.1###.ext' pattern"
@@ -400,14 +404,17 @@ def scanTextureDependency(damAst):
 
                     bUpToDate = True
                     bOldPrivFile = False
-                    pubFile = drcFile.getPublicFile()
-                    if pubFile:
-                        bUpToDate = pubFile.isUpToDate()
-                        if drcFile.fsMtime < pubFile.dbMtime:
-                            bOldPrivFile = True
-                            sFmt = "%Y-%m-%d %H:%M"
-                            sCurTime = drcFile.fsMtime.strftime(sFmt)
-                            sPubTime = pubFile.dbMtime.strftime(sFmt)
+
+                    pubFile = drcFile.getPublicFile(weak=True)
+                    bUpToDate = pubFile.isUpToDate()
+
+                    privFsMtime = drcFile.fsMtime
+                    pubDbMtime = pubFile.dbMtime
+                    if (pubFile.currentVersion > 0) and (privFsMtime < pubDbMtime):
+                        bOldPrivFile = True
+                        sFmt = "%Y-%m-%d %H:%M"
+                        sCurTime = privFsMtime.strftime(sFmt)
+                        sPubTime = pubDbMtime.strftime(sFmt)
 
                     if bOldPrivFile:
                         sMsg = ("File is OBSOLETE: \n yours: {}\npublic: {}"
