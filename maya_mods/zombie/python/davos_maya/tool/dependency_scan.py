@@ -1,24 +1,28 @@
 
 import os.path as osp
+import re
 
 from PySide import QtGui
-from PySide.QtCore import Qt
+from PySide.QtCore import Qt, QSize
+
+import PIL.Image
+pilimage = PIL.Image
 
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 import pymel.core as pm
 
-from pytd.gui.dialogs import QuickTreeDialog
+from pytd.gui.dialogs import QuickTreeDialog, confirmDialog
 from pytd.gui.widgets import QuickTree, QuickTreeItem
 #from pytd.util.logutils import logMsg
 from pytaya.core.general import lsNodes
-from pytd.util.fsutils import pathResolve, normCase, pathJoin
 
+from pytd.util.fsutils import pathResolve, normCase, pathJoin
+from pytd.util.fsutils import ignorePatterns, iterPaths
 from pytd.util.strutils import labelify, assertChars
 from pytd.util.qtutils import setWaitCursor
 from pytd.util.sysutils import argToTuple, toStr
 
-from davos.core.damproject import DamProject
-
+from .general import entityFromScene
 
 mainWin = None
 
@@ -52,19 +56,27 @@ class DependencyTreeItem(QuickTreeItem):
                     if brush:
                         self.setBackground(c, brush)
 
+class ItemDelegate(QtGui.QStyledItemDelegate):
+
+    def __init__(self, parent=None):
+        super(ItemDelegate, self).__init__(parent)
+
+    def sizeHint(self, option, index):
+        return QtGui.QStyledItemDelegate.sizeHint(self, option, index) + QSize(4, 4)
+
 class DependencyTree(QuickTree):
 
     def __init__(self, parent):
         super(DependencyTree, self).__init__(parent)
 
-        QT_STYLE = QtGui.QStyleFactory.create("WindowsVista")
+        self.itemClass = DependencyTreeItem
+
+        QT_STYLE = QtGui.QStyleFactory.create("Plastique")
         self.setStyle(QT_STYLE)
         self.setAlternatingRowColors(True)
+        self.setItemDelegate(ItemDelegate(self))
 
-        self.itemClass = DependencyTreeItem
-        self.itemClicked.connect(self.onItemClicked)
-
-    def onItemClicked(self, item):
+    def _onItemClicked(self, item):
         userData = item.data(0, Qt.UserRole)
         if userData:
             wrappedNodes = argToTuple(userData)
@@ -78,28 +90,138 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
         super(DependencyTreeDialog, self).__init__(parent=parent)
         self.setAttribute(Qt.WA_DeleteOnClose, True)
         self.setTreeWidget(DependencyTree(self))
-        self.resize(1100, 600)
+        self.resize(900, 600)
 
         self.refreshBtn = self.buttonBox.addButton("Refresh", QtGui.QDialogButtonBox.ResetRole)
         self.refreshBtn.clicked.connect(self.refresh)
 
     def refresh(self):
         self.treeWidget.clear()
-        setupTreeData(self.treeWidget, scanTextureDependency())
+        self.setupTreeData(scanTextureDependency(entityFromScene()))
+
+    def setupTreeData(self, scanResults):
+
+        treeWidget = self.treeWidget
+
+        sHeaderList = ["Files", "Summary", "Description"]
+        treeWidget.setHeaderLabels(sHeaderList)
+
+        sAllSeveritySet = scanResults[-1]["scan_severities"]
+        print "-------------", sAllSeveritySet
+
+        sFileGrpItems = set()
+        treeData = []
+        for result in scanResults:
+
+            fileNodes = result["file_nodes"]
+            sFileNodeNames = tuple(n.name()for n in fileNodes)
+
+            wrappedNodes = []
+            numNodes = 0
+            sNumNodes = ""
+
+            if fileNodes:
+                fileNodeTreeData = {}
+                for fileNode in fileNodes:
+
+                    sNodeName = fileNode.name()
+
+                    wrappedNode = WrappedNode(fileNode)
+                    wrappedNodes.append(wrappedNode)
+
+                    itemData = {"texts": [sNodeName, "", fileNode.getAttr("fileTextureName")],
+                                "roles":{Qt.UserRole:(0, wrappedNode)},
+                                "type":NODE_ITEM_TYPE
+                                }
+                    fileNodeTreeData[sNodeName] = itemData
+
+                numNodes = len(fileNodes)
+                sNumNodes = "{} {}".format(numNodes, "nodes" if numNodes > 1 else "node")
+
+            sTexAbsPath = result["abs_path"]
+            sFilename = osp.basename(sTexAbsPath)
+
+            scanLogDct = result["scan_log"]
+
+            for sSeverity, logItemsList in scanLogDct.iteritems():
+
+                sSeverityTitle = (sSeverity + 's').upper()
+
+                for sLogCode, sLogMsg in logItemsList:
+
+                    sItemPath = pathJoin(sSeverityTitle, labelify(sLogCode))
+                    sFileGrpItems.add(sItemPath)
+                    sItemPath = pathJoin(sItemPath, sFilename)
+
+                    itemRoles = {Qt.UserRole:(0, wrappedNodes)}
+
+                    itemData = {"path": sItemPath,
+                                "texts": [sFilename, sNumNodes, sLogMsg.strip().rstrip('.')],
+                                "roles":itemRoles,
+                                "type":FILE_ITEM_TYPE
+                                }
+                    treeData.append(itemData)
+
+                    if (sLogCode == "ReadyToPublish"):
+                        sBuddyFileList = result["buddy_files"]
+                        for sBuddyPath in sBuddyFileList:
+
+                            sBudFilename = osp.basename(sBuddyPath)
+                            itemData = {"path": pathJoin(sItemPath, sBudFilename),
+                                        "texts": [sBudFilename, "", sBuddyPath],
+                                        }
+                            treeData.append(itemData)
+
+                    for sNodeName in sFileNodeNames:
+                        itemData = fileNodeTreeData[sNodeName].copy()
+                        itemData["path"] = pathJoin(sItemPath, sNodeName)
+                        treeData.append(itemData)
+
+        numCol = treeWidget.columnCount()
+        serverityItems = (("info", Qt.green), ("warning", Qt.yellow), ("error", Qt.red))
+        for sSeverity, qtcolor in serverityItems:
+
+            if sSeverity not in sAllSeveritySet:
+                continue
+
+            color = QtGui.QColor(qtcolor)
+            color.setAlpha(35)
+
+            itemData = {"path": (sSeverity + 's').upper(),
+                        #"texts": [sFilename, sNumNodes, sMsg],
+                        "roles":{#Qt.ForegroundRole:(0, QtGui.QBrush(qtcolor)),
+                                 Qt.BackgroundRole:(xrange(numCol), QtGui.QBrush(color)), },
+                        }
+            treeData.insert(0, itemData)
+
+        if scanResults[-1]["publish_count"]:
+            p = pathJoin(("info" + 's').upper(), labelify("ReadyToPublish"))
+            itemData = {"path": p,
+                        #"texts": [sFilename, sNumNodes, sMsg],
+                        "roles":{#Qt.ForegroundRole:(0, QtGui.QBrush(qtcolor)),
+                                 Qt.ForegroundRole:(0, QtGui.QBrush(Qt.green)), },
+                        }
+            treeData.append(itemData)
+
+        treeWidget.createTree(treeData)
+
+        c = sHeaderList.index("Summary")
+        for sItemPath in sFileGrpItems:
+            item = treeWidget.itemFromPath(sItemPath)
+            item.setText(c, "{} files".format(item.childCount()))
+
+        for i in xrange(treeWidget.topLevelItemCount()):
+            item = treeWidget.topLevelItem(i)
+            item.setExpanded(True)
+
+UDIM_MODE = 3
+UDIM_RGX = r"\.1\d{3}\."
 
 @setWaitCursor
-def scanTextureDependency():
-
-    sCurScnPath = pm.sceneName()
-    if not sCurScnPath:
-        raise ValueError("Invalid scene name: '{}'".format(sCurScnPath))
-
-    proj = DamProject.fromPath(sCurScnPath, fail=True)
-    damAst = proj.entityFromPath(sCurScnPath, fail=True)
+def scanTextureDependency(damAst):
 
     proj = damAst.project
     sAstName = damAst.name
-    #privTexDir = damAst.getResource("private", "texture_dir")
     sPrivTexDirPath = damAst.getPath("private", "texture_dir")
     sAllowTexTypes = proj.getVar("project", "allowed_texture_formats")
 
@@ -107,243 +229,301 @@ def scanTextureDependency():
     scanResults = []
     fileNodeDct = {}
 
-    for fileNode in allFileNodes:
+    sAllSeveritySet = set()
+    sFoundFileList = []
+    publishCount = 0
 
-        issueList = []
-        sBuddyFileList = []
+    def addResult(res):
+#        for k, v in res.iteritems(): print k, v
+#        print ""
+        scanResults.append(res)
+        sAllSeveritySet.update(res["scan_log"].iterkeys())
+
+    for fileNode in allFileNodes:
 
         sTexPath = fileNode.getAttr("fileTextureName")
         if not sTexPath:
             continue
 
-        sAbsTexPath = pathResolve(sTexPath)
+        iTilingMode = fileNode.getAttr("uvTilingMode")
+        bUvTileOn = (iTilingMode != 0)
+        bUdim = (iTilingMode == UDIM_MODE)
 
-        sNormTexPath = normCase(sAbsTexPath)
-        if sNormTexPath in fileNodeDct:
-            fileNodeDct[sNormTexPath].append(fileNode)
-            continue
+        sTexAbsPath = pathResolve(sTexPath)
+        drcFile = proj.entryFromPath(sTexAbsPath, dbNode=False)
 
-        fileNodeDct[sNormTexPath] = [fileNode]
+        sTexAbsPathList = (sTexAbsPath,)
+        if bUdim and drcFile:
+            sFilename = re.sub(UDIM_RGX, ".1*.", osp.basename(sTexAbsPath))
+            sDirPath = drcFile.parentDir().absPath()
+            sTexAbsPathList = sorted(iterPaths(sDirPath, dirs=False,
+                                             recursive=False,
+                                             keepFiles=ignorePatterns(sFilename)
+                                             )
+                                     )
 
-        bExists = True
-        if not osp.isfile(sAbsTexPath):
-            issueList.append(('FileNotFound', "error", sAbsTexPath))
-            bExists = False
+        for sTexAbsPath in sTexAbsPathList:
 
-        sDirPath, sFilename = osp.split(sAbsTexPath)
-        sBasePath, sExt = osp.splitext(sAbsTexPath)
-        if sExt.lower() not in sAllowTexTypes:
-            sMsg = ("Only accepts: '{}'".format("' '".join(sAllowTexTypes)))
-            issueList.append(('BadTextureFormat', "error", sMsg))
+            scanLogDct = {}
+            resultDct = {}
+            sBuddyFileList = []
 
-        if normCase(sDirPath) != normCase(sPrivTexDirPath):
-            sMsg = ("Not in '{}'".format(osp.normpath(sPrivTexDirPath)))
-            issueList.append(('BadLocation', "error", sMsg))
-
-        sMsg = ""
-        sChannel = ""
-        if sFilename.lower().startswith(sAstName.lower()):
-            sMsg = ("Must NOT start with the asset name")
-        else:
-            sBaseName = osp.basename(sBasePath)
-            try:
-                assertChars(sBaseName, r"[\w]")
-            except AssertionError, e:
-                sMsg = toStr(e)
+            sNormTexPath = normCase(sTexAbsPath)
+            if sNormTexPath in fileNodeDct:
+                fileNodeDct[sNormTexPath].append(fileNode)
+                continue
             else:
-                sNameParts = sBaseName.split("_")
-                if len(sNameParts) < 3:
-                    sMsg = "Must have at least 3 parts: tex_subject_channel"
-                elif sNameParts[0] != "tex":
-                    sMsg = ("Must start with 'tex_'")
+                fileNodeDct[sNormTexPath] = [fileNode]
+
+            if bUvTileOn and (not bUdim):
+                sMsg = "Only UDIM (Mari) accepted"
+                scanLogDct.setdefault("error", []).append(('BadUvTilingMode', sMsg))
+
+            drcFile = None
+            bExists = osp.isfile(sTexAbsPath) or bUdim
+            if not bExists:
+                scanLogDct.setdefault("error", []).append(('FileNotFound', sTexAbsPath))
+            else:
+                sFoundFileList.append(normCase(sTexAbsPath))
+                drcFile = proj.entryFromPath(sTexAbsPath, dbNode=False)
+                #print drcFile, drcFile.absPath()
+                if drcFile and drcFile.isPublic():
+                    scanLogDct.setdefault("info", []).append(('AlreadyPublished', sTexAbsPath))
+
+                    resultDct = {"abs_path":sTexAbsPath,
+                                 "scan_log":scanLogDct,
+                                 "file_nodes":fileNodeDct[sNormTexPath],
+                                 "buddy_files":sBuddyFileList,
+                                 "publish_ok":False,
+                                 "drc_file":drcFile,
+                                 }
+                    addResult(resultDct)
+                    continue
+
+            sTiling = ""
+            sDirPath, sFilename = osp.split(sTexAbsPath)
+            sBasePath, sExt = osp.splitext(sTexAbsPath)
+            if bUdim:
+                if len(re.findall(UDIM_RGX, sFilename)) != 1:
+                    sMsg = "Must match 'name.1###.ext' pattern"
+                    scanLogDct.setdefault("error", []).append(('BadUDIMFilename', sMsg))
                 else:
-                    sChannel = sNameParts[-1]
-                    if len(sChannel) not in (3, 4):
-                        sMsg = ("Channel name can only have 3 or 4 characters, got '{}'"
-                                .format(sChannel))
-        if sMsg:
-            issueList.append(('BadFilename', "error", sMsg))
+                    sBasePath, sTiling = sBasePath.rsplit('.', 1)
+
+            sBaseName = osp.basename(sBasePath)
+
+            if sExt.lower() not in sAllowTexTypes:
+                sMsg = ("Only accepts: '{}'".format("' '".join(sAllowTexTypes)))
+                scanLogDct.setdefault("error", []).append(('BadTextureFormat', sMsg))
+
+            if normCase(sDirPath) != normCase(sPrivTexDirPath):
+                sMsg = ("Not in '{}'".format(osp.normpath(sPrivTexDirPath)))
+                scanLogDct.setdefault("error", []).append(('BadLocation', sMsg))
+
             sMsg = ""
-
-        if sExt == ".tga":
-
-            sPsdSeverity = "error" if sChannel == "col" else "warning"
-            sBuddyItems = (("psd", sPsdSeverity), ("tx", "error"))
-            for sBuddyExt, sSeveriry in sBuddyItems:
-                sBuddyPath = ".".join((sBasePath, sBuddyExt))
-                if not osp.isfile(sBuddyPath):
-                    sCode = sBuddyExt.upper() + "FileNotFound"
-                    issueList.append((sCode, sSeveriry, sBuddyPath))
-                else:
-                    sBuddyFileList.append(sBuddyPath)
-
-            if bExists:
-
-                import PIL.Image
-                pilimage = PIL.Image
-
+            sChannel = ""
+            if sFilename.lower().startswith(sAstName.lower()):
+                sMsg = ("Must NOT start with the asset name")
+            else:
                 try:
-                    tgaImg = pilimage.open(sAbsTexPath)
-                    tileInfo = tgaImg.tile[0]
-                    sCompress = tileInfo[0]
-                    sMode = tileInfo[-1][0]
+                    assertChars(sBaseName, r"[\w]")
+                except AssertionError, e:
+                    sMsg = toStr(e)
+                else:
+                    sNameParts = sBaseName.split("_")
+                    if len(sNameParts) != 3:
+                        sMsg = "Must have 3 parts: tex_textureSubject_channel"
+                    elif sNameParts[0] != "tex":
+                        sMsg = ("Must start with 'tex_'")
+                    else:
+                        sChannel = sNameParts[-1]
+                        if len(sChannel) != 3:
+                            sMsg = ("Channel can only have 3 characters, got {} in '{}'"
+                                    .format(len(sChannel), sChannel))
+            if sMsg:
+                scanLogDct.setdefault("error", []).append(('BadFilename', sMsg))
+                sMsg = ""
 
-                    bRgb24 = (sMode == "BGR")
-                    bCompr = (sCompress == "tga_rle")
+            if sExt == ".tga":
 
-                    sMsgList = []
-                    if not bCompr:
-                        sMsgList.append("NOT COMPRESSED")
+                bColor = (sChannel == "col")
+                sPsdSeverity = "error" if bColor else "info"
+                sBuddyItems = [(".tx", "error"), (".psd", sPsdSeverity)]
 
-                    if not bRgb24:
-                        depthDct = {"BGR;5": 16, "BGR":24, "BGRA":32}
-                        sMsg = "Expected 24 bits, got {} bits".format(depthDct[sMode])
-                        sMsgList.append(sMsg)
+                if bColor:
+                    sBuddyItems.append(("HD.jpg", "info"))
 
-                    if sMsgList:
-                        sMsg = "\n".join(sMsgList)
-                        issueList.append(("BadTargaFormat", "error", sMsg))
+                for sBuddySfx, sSeveriry in sBuddyItems:
 
-                finally:
-                    tgaImg.close()
+                    sSuffix = sBuddySfx
+                    if sTiling and ("."in sBuddySfx):
+                        sSuffix = sBuddySfx.replace(".", "." + sTiling + ".")
+                    sBuddyPath = "".join((sBasePath, sSuffix))
 
-        resultDct = {"abs_path":sAbsTexPath,
-                     "issues":issueList,
-                     "file_nodes":fileNodeDct[sNormTexPath],
-                     "buddy_files":sBuddyFileList
-                     }
+                    if not osp.isfile(sBuddyPath):
+                        sBuddyLabel = "".join(s.capitalize()for s in sBuddySfx.split("."))
+                        sErrCode = sBuddyLabel + "FileNotFound"
+                        scanLogDct.setdefault(sSeveriry, []).append((sErrCode, sBuddyPath))
+                    else:
+                        sFoundFileList.append(normCase(sBuddyPath))
+                        sBuddyFileList.append(sBuddyPath)
 
-        scanResults.append(resultDct)
+                if bExists:
+                    try:
+                        tgaImg = pilimage.open(sTexAbsPath)
+                        tileInfo = tgaImg.tile[0]
+                        sCompress = tileInfo[0]
+                        sMode = tileInfo[-1][0]
+
+                        bRgb24 = (sMode == "BGR")
+                        bCompr = (sCompress == "tga_rle")
+
+                        sMsgList = []
+                        if not bCompr:
+                            sMsgList.append("NOT COMPRESSED")
+
+                        if not bRgb24:
+                            depthDct = {"BGR;5": 16, "BGR":24, "BGRA":32}
+                            sMsg = "Expected 24 bits, got {} bits".format(depthDct[sMode])
+                            sMsgList.append(sMsg)
+
+                        if sMsgList:
+                            sMsg = "\n".join(sMsgList)
+                            scanLogDct.setdefault("error", []).append(("BadTargaFormat", sMsg))
+                    finally:
+                        tgaImg.close()
+
+            bPublish = False
+            if bExists and drcFile and ("error" not in scanLogDct.keys()):
+
+                if drcFile.isPrivate():
+
+                    bUpToDate = True
+                    bOldPrivFile = False
+                    pubFile = drcFile.getPublicFile()
+                    if pubFile:
+                        bUpToDate = pubFile.isUpToDate()
+                        if drcFile.fsMtime < pubFile.dbMtime:
+                            bOldPrivFile = True
+                            sFmt = "%Y-%m-%d %H:%M"
+                            sCurTime = drcFile.fsMtime.strftime(sFmt)
+                            sPubTime = pubFile.dbMtime.strftime(sFmt)
+
+                    if bOldPrivFile:
+                        sMsg = ("File is OBSOLETE: \n yours: {}\npublic: {}"
+                                .format(sCurTime, sPubTime))
+                        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
+                    elif not bUpToDate:
+                        sMsg = "Public file is OUT OF SYNC"
+                        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
+                    else:
+                        publishCount += 1
+                        bPublish = True
+
+                        sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
+                        sMsg = (", ".join(s.upper() for s in sExtList) + " found"
+                                if sBuddyFileList else "")
+
+                        scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
+
+            resultDct = {"abs_path":sTexAbsPath,
+                         "scan_log":scanLogDct,
+                         "file_nodes":fileNodeDct[sNormTexPath],
+                         "buddy_files":sBuddyFileList,
+                         "publish_ok":bPublish,
+                         "drc_file":drcFile,
+                         }
+            addResult(resultDct)
+
+    #looking for unused files in texture direcotry
+    if osp.isdir(sPrivTexDirPath):
+        sTexDirFileList = sorted(iterPaths(sPrivTexDirPath, dirs=False, recursive=False))
+
+        numUnused = 0
+        for p in sTexDirFileList:
+
+            if normCase(p) in sFoundFileList:
+                continue
+
+            sExt = osp.splitext(p)[-1]
+            if sExt.lower() not in sAllowTexTypes:
+                continue
+
+            scanLogDct = {"warning":[("UnusedPrivateFiles", p)]}
+
+            resultDct = {"abs_path":p,
+                         "scan_log":scanLogDct,
+                         "file_nodes":[],
+                         "buddy_files":[],
+                         "publish_ok":False,
+                         "drc_file":None,
+                         }
+            addResult(resultDct)
+
+            numUnused += 1
+
+        if numUnused:
+            sAllSeveritySet.add("warning")
+
+    if scanResults:
+        resultDct["scan_severities"] = sAllSeveritySet
+        resultDct["publish_count"] = publishCount
 
     return scanResults
 
-def setupTreeData(treeWidget, scanResults):
+dialog = None
 
-    sHeaderList = ["Files", "Summary", "Infos"]
-    treeWidget.setHeaderLabels(sHeaderList)
+def launch(damEntity=None, modal=False):
 
-    sFoundSeverities = set()
-    sFileGrpItems = set()
-    treeData = []
-    for result in scanResults:
+    global dialog
 
-        fileNodes = result["file_nodes"]
-        if fileNodes:
+    if not damEntity:
+        damEntity = entityFromScene()
 
-            sFileNodeNames = tuple(n.name()for n in fileNodes)
+    scanResults = scanTextureDependency(damEntity)
+    if not scanResults:
+        return scanResults
 
-            wrappedNodes = []
-            fileNodeTreeData = {}
-            for fileNode in fileNodes:
+    dialog = DependencyTreeDialog()
 
-                sNodeName = fileNode.name()
+    l = ("Dependencies Status", damEntity.name, damEntity.project.name.capitalize())
+    dialog.setWindowTitle(" - ".join(l))
 
-                wrappedNode = WrappedNode(fileNode)
-                wrappedNodes.append(wrappedNode)
+    buttonBox = dialog.buttonBox
+    okBtn = buttonBox.button(QtGui.QDialogButtonBox.Ok)
 
-                itemData = {"texts": [sNodeName, "", fileNode.getAttr("fileTextureName")],
-                            "roles":{Qt.UserRole:(0, wrappedNode)},
-                            "type":NODE_ITEM_TYPE
-                            }
-                fileNodeTreeData[sNodeName] = itemData
+    err = None
+    if "error" in scanResults[-1]["scan_severities"]:
 
-            numNodes = len(fileNodes)
-            sNumNodes = "{} {}".format(numNodes, "nodes" if numNodes > 1 else "node")
+        err = RuntimeError("Please, fix the following erros and retry publishing.")
 
-        sAbsTexPath = result["abs_path"]
-        sFilename = osp.basename(sAbsTexPath)
+        buttonBox.removeButton(okBtn)
+        btn = buttonBox.button(QtGui.QDialogButtonBox.Cancel)
+        btn.setText("Close")
 
-        issueList = result["issues"]
-        if issueList:
+    else:
+        if modal:
+            okBtn.setText("Publish")
 
-            for sIssueCode, sSeverity, sMsg in issueList:
+    dialog.show()
+    dialog.setupTreeData(scanResults)
 
-                sFoundSeverities.add(sSeverity)
+    if modal:
+        if err:
+            confirmDialog(title='SORRY !',
+                          message=toStr(err),
+                          button=["OK"],
+                          defaultButton="OK",
+                          cancelButton="OK",
+                          dismissString="OK",
+                          icon="critical",
+                          parent=dialog
+                          )
+            raise err
 
-                sSeverityTitle = (sSeverity + 's').upper()
+        dialog.close()
+        if dialog.exec_():
+            return scanResults
 
-                sItemPath = pathJoin(sSeverityTitle, labelify(sIssueCode))
-                sFileGrpItems.add(sItemPath)
-                sItemPath = pathJoin(sItemPath, sFilename)
+    return None
 
-                itemData = {"path": sItemPath,
-                            "texts": [sFilename, sNumNodes, sMsg.strip('.')],
-                            "roles":{Qt.UserRole:(0, wrappedNodes)},
-                            "type":FILE_ITEM_TYPE
-                            }
-                treeData.append(itemData)
-
-                for sNodeName in sFileNodeNames:
-                    itemData = fileNodeTreeData[sNodeName].copy()
-                    itemData["path"] = pathJoin(sItemPath, sNodeName)
-                    treeData.append(itemData)
-        else:
-            sSeverity = "info"
-            sFoundSeverities.add(sSeverity)
-
-            sSeverityTitle = (sSeverity + 's').upper()
-            sItemPath = pathJoin(sSeverityTitle, sFilename)
-            sFileGrpItems.add(sSeverityTitle)
-
-            sBuddyFileList = result["buddy_files"]
-
-            sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
-            sMsg = ", ".join(sExtList) + " found" if sBuddyFileList else ""
-
-            itemData = {"path": sItemPath,
-                        "texts": [sFilename, sNumNodes, sMsg],
-                        "roles":{Qt.UserRole:(0, wrappedNodes)},
-                        }
-            treeData.append(itemData)
-
-            for sPath in sBuddyFileList:
-
-                sFilename = osp.basename(sPath)
-                itemData = {"path": pathJoin(sItemPath, sFilename),
-                            "texts": [sFilename, "", ""],
-                            "roles":{Qt.ForegroundRole:(0, QtGui.QBrush(Qt.green))},
-                            }
-                treeData.append(itemData)
-
-            for sNodeName in sFileNodeNames:
-                itemData = fileNodeTreeData[sNodeName].copy()
-                itemData["path"] = pathJoin(sItemPath, sNodeName)
-                treeData.append(itemData)
-
-    numCol = treeWidget.columnCount()
-    for sSeverity, qtcolor in (("info", Qt.green), ("warning", Qt.yellow), ("error", Qt.red)):
-
-        if sSeverity not in sFoundSeverities:
-            continue
-
-        color = QtGui.QColor(qtcolor)
-        color.setAlpha(35)
-
-        itemData = {"path": (sSeverity + 's').upper(),
-                    #"texts": [sFilename, sNumNodes, sMsg],
-                    "roles":{#Qt.ForegroundRole:(0, QtGui.QBrush(qtcolor)),
-                             Qt.BackgroundRole:(xrange(numCol), QtGui.QBrush(color)), },
-                    }
-        treeData.insert(0, itemData)
-
-    treeWidget.createTree(treeData)
-
-    c = sHeaderList.index("Summary")
-    for sItemPath in sFileGrpItems:
-        item = treeWidget.itemFromPath(sItemPath)
-        item.setText(c, "{} files".format(item.childCount()))
-        #item.setExpanded(True)
-
-    for i in xrange(treeWidget.topLevelItemCount()):
-        item = treeWidget.topLevelItem(i)
-        item.setExpanded(True)
-
-def launch():
-
-    dlg = DependencyTreeDialog()
-    dlg.show()
-
-    setupTreeData(dlg.treeWidget, scanTextureDependency())
-
-#    dlg.close()
-#    dlg.exec_()

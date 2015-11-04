@@ -3,6 +3,7 @@ from mtoa.aovs import AOVInterface
 
 import miscUtils
 import os
+import re
 import shutil
 import maya.mel
 
@@ -139,12 +140,23 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.AASampleClamp",2.5)
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
     mc.setAttr("defaultArnoldRenderOptions.skipLicenseCheck",1)
+    mc.setAttr("defaultArnoldRenderOptions.log_verbosity",1)#warnig + info
+
+
+    mc.setAttr("defaultArnoldRenderOptions.GITotalDepth",10)
+    mc.setAttr("defaultArnoldRenderOptions.GIDiffuseDepth",0)
+    mc.setAttr("defaultArnoldRenderOptions.GIGlossyDepth",1)
+    mc.setAttr("defaultArnoldRenderOptions.GIDiffuseDepth",0)
+    mc.setAttr("defaultArnoldRenderOptions.GIRefractionDepth",8)
+    mc.setAttr("defaultArnoldRenderOptions.GIReflectionDepth",10)
+    mc.setAttr("defaultArnoldRenderOptions.GIVolumeDepth",0)
+    mc.setAttr("defaultArnoldRenderOptions.autoTransparencyDepth",10)
     
     print "#### info: render options are now production ready"
 
 
 
-def setRenderOutputDir():
+def setRenderOutputDir(gui = True):
 
     outputImageName = ""
 
@@ -157,13 +169,33 @@ def setRenderOutputDir():
     #define output directoy
     if mc.ls("|asset"):        
         if  mainFilePathElem[-4] == "asset":
-            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"review",mainFilePathElem[-2])
+            departement =  mainFilePathElem[-1].split("_")[-1].split(".")[0].split("-")[0]
+            version =  mainFilePathElem[-1].split("_")[-1].split(".")[0].split("-")[1]
+            if departement not in ["modeling","anim","previz","render"]:
+                myMessage = "#### {:>7}: '{}' is not a valid scene name, file type '{}' is not valid and cannot be used to define the render path".format("Error",mainFilePathElem[-1], departement)
+                if gui == True:
+                    mc.confirmDialog( title='Shader structure Error', message=myMessage, button=['Ok'], defaultButton='Ok' )
+                else:
+                    print myMessage
+                departement = "undefined"
+            if not re.match('^v[0-9]{3}$', version):
+                myMessage = "#### {:>7}: '{}' is not a valid scene name, version '{}' is not valid and cannot be used to define the render path".format("Error",mainFilePathElem[-1], version)
+                if gui == True:
+                    mc.confirmDialog( title='Shader structure Error', message=myMessage, button=['Ok'], defaultButton='Ok' )
+                else:
+                    print myMessage
+                version = "vxxx"
+            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_ASSET_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"review",departement+"-"+version)
             outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
             outputImageName = mainFilePathElem[-2]
+
             print "#### Info: Set render path: {}".format( outputFilePath)
-            #print "#### Info: Set image name:  {}".format( outputImageName)
-            #mc.workspace(fileRule=["images",outputFilePath_exp])
-            mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputFilePath_exp ,type = "string")
+            print "#### Info: Set image name:  {}".format( outputImageName)
+            mc.workspace(fileRule=["images",outputFilePath_exp])
+            mc.workspace( saveWorkspace = True)
+            mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
+            #mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputFilePath_exp ,type = "string")
+            #mc.file(save = True)
         else:
             print "#### Warning: you are not working in an 'asset' structure directory, output image name and path cannot not be automaticaly set"
     elif mc.ls("|shot"):
@@ -175,7 +207,9 @@ def setRenderOutputDir():
             print "#### Info: Set render path: {}".format( outputFilePath_exp)
             print "#### Info: Set image name:  {}".format( outputImageName)
             mc.workspace(fileRule=["images",outputFilePath_exp])
+            mc.workspace( saveWorkspace = True)
             mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
+            #mc.file(save = True)
         else:
             print "#### Warning: you are not working in an 'shot' structure directory, output image name and path cannot not be automaticaly set"
     else:

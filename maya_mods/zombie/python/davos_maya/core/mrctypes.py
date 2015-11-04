@@ -1,11 +1,13 @@
 
 import os.path as osp
 
-#import pymel.core as pm
+import pymel.core as pm
 import pymel.versions as pmv
 
 from davos.core.drctypes import DrcDir, DrcFile
 from pytaya.core import system as myasys
+from pytd.util.strutils import padded, underJoin
+from pytd.util.fsutils import normCase
 #from pytd.util.fsutils import pathSuffixed
 
 
@@ -48,13 +50,41 @@ class MrcFile(DrcFile):
             self.assertIsMayaScene()
 
         if self.isPublic():
-            sOpenSuffix = "".join((self.versionSuffix(), '-', 'readonly'))
+            sWordList = (self.versionSuffix(self.currentVersion), '-', 'readonly')
+            sOpenSuffix = "".join(sWordList)
             privFile, _ = self.copyToPrivateSpace(suffix=sOpenSuffix, **kwargs)
         else:
             privFile = self
 
         result = myasys.saveScene(discard=True)
-        if result == '_cancelled_':
+        if not result:
             return
 
         return myasys.openScene(privFile.absPath(), force=True)
+
+    def mayaImportScene(self, *args, **kwargs):
+
+        sNamespace = ""
+        p = self.absPath()
+
+        if self.isPublic():
+
+            damEntity = self.getEntity(fail=True)
+            refDir = damEntity.getResource("public", "ref_dir")
+            if refDir and (normCase(self.parentDir().absPath()) == normCase(refDir.absPath())):
+                sNamespace = underJoin((damEntity.name, padded(1, 2)))
+                p = self.envPath()
+
+        if not sNamespace:
+            sNamespace = underJoin((self.name.split(".", 1)[0], padded(1, 2)))
+
+        return myasys.importFile(p, reference=True, ns=sNamespace, **kwargs)
+
+    def mayaImportImage(self):
+
+        if self.isPublic():
+            p = self.envPath("ZOMB_TEXTURE_PATH")
+        else:
+            p = self.absPath()
+
+        return pm.mel.importImageFile(p, False, False, True)

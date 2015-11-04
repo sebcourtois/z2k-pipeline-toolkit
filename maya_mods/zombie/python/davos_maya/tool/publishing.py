@@ -1,68 +1,114 @@
 
 
+import subprocess
+from tempfile import NamedTemporaryFile
+
 import pymel.core as pm
 
 #from pytd.util.logutils import logMsg
 from pytaya.core import system as myasys
 
-from davos.core.damproject import DamProject
-from pytd.gui.dialogs import confirmDialog
+#from pytd.gui.dialogs import confirmDialog
 #from pytd.util.logutils import logMsg
-from pytaya.core.general import lsNodes
-from pytd.util.fsutils import pathResolve
+#from pytaya.core.general import lsNodes
+#from pytd.util.fsutils import pathResolve
 
-def publishSceneDependencies(proj, sCurScnPath, **kwargs):
+from davos.tools import publish_dependencies
 
-    fileNodeList = lsNodes("*", type='file', not_rn=True)
-    fileTexItems = []
-    for fileNode in fileNodeList:
+from .general import entityFromScene
+from davos_maya.tool import dependency_scan
+#from pytd.util.sysutils import inDevMode
 
-        p = fileNode.getAttr("fileTextureName")
-        if not p:
+def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
+
+    bDryRun = kwargs.pop("dryRun", False)
+
+    proj = damEntity.project
+
+    sTexPathList = []
+    fileNodesList = []
+    sBuddyFileList = []
+    for result in scanResults:
+
+        if not result["publish_ok"]:
             continue
 
-        sAbsPath = pathResolve(p)
-        privFile = proj.entryFromPath(sAbsPath)
-        if not privFile:
-            continue
+        fileNodes = result["file_nodes"]
+        if fileNodes:
+            sTexPathList.append(result["abs_path"])
+            fileNodesList.append(fileNodes)
+            sBuddyFileList.extend(result["buddy_files"])
 
-        if privFile.isPublic():
-            continue
-
-        fileTexItems.append((fileNode, privFile))
-
-    sTexPathList = tuple(f.absPath() for _, f in fileTexItems)
     if sTexPathList:
-
-        sConfirm = confirmDialog(title="QUESTION !",
-                                 message="Publish Textures ?",
-                                 button=("Yes", "No"),
-                                 defaultButton="No",
-                                 cancelButton="No",
-                                 dismissString="No",
-                                 icon="question",
-                                )
-        if sConfirm == "No":
-            return
-
-        publishedFileItems = proj.publishDependencies("texture_dep", sCurScnPath,
-                                                      sTexPathList, **kwargs)
-
-        fileNodes = (n for n, _ in fileTexItems)
+        publishedFileItems = proj.publishDependencies("texture_dep",
+                                                      damEntity,
+                                                      sTexPathList,
+                                                      sComment,
+                                                      dryRun=bDryRun,
+                                                      **kwargs)
         pubFiles = (f for f, _ in publishedFileItems)
 
-        for fileNode, pubFile in zip(fileNodes, pubFiles):
-            fileNode.setAttr("fileTextureName", pubFile.envPath())
+        sUpdNodeList = []
+        sMsgFmt = u"\nChanging {}: \nfrom '{}'\nto   '{}'"
+
+        for fileNodes, pubFile in zip(fileNodesList, pubFiles):
+
+            sEnvPath = pubFile.envPath("ZOMB_TEXTURE_PATH")
+
+            for fileNode in fileNodes:
+
+                sNodeName = fileNode.name()
+                if sNodeName in sUpdNodeList:
+                    continue
+
+                sMsg = (sMsgFmt.format(fileNode, fileNode.getAttr("fileTextureName"),
+                                       sEnvPath))
+                print sMsg
+
+                if not bDryRun:
+                    fileNode.setAttr("fileTextureName", sEnvPath)
+
+                sUpdNodeList.append(sNodeName)
+
+    if not sBuddyFileList:
+        return (not bDryRun)
+
+    sMsg = """
+Opening a new process to publish associated files: .psd, .tx, etc...
+DO NOT CLOSE THE WINDOW BEFORE IT FINISHES !!!
+"""
+    pm.displayWarning(sMsg)
+
+    with NamedTemporaryFile(suffix=".txt", delete=False) as tmpFile:
+        tmpFile.write("\n".join(sBuddyFileList))
+
+    p = publish_dependencies.__file__
+    sCmdArgs = [r"C:\Python27\python.exe",
+                p[:-1]if p.endswith("c") else p,
+                proj.name, "texture_dep",
+                damEntity.sgEntityType.lower(),
+                damEntity.name,
+                tmpFile.name,
+                sComment,
+                "--dryRun", str(int(bDryRun)),
+                ]
+
+    subprocess.Popen(sCmdArgs)
+
+    return (not bDryRun)
 
 def publishCurrentScene(*args, **kwargs):
 
     sCurScnPath = pm.sceneName()
-    if not sCurScnPath:
-        raise ValueError("Invalid scene name: '{}'".format(sCurScnPath))
-
-    proj = DamProject.fromPath(sCurScnPath, fail=True)
+    damEntity = entityFromScene(sCurScnPath)
+    proj = damEntity.project
 
     _, curPubFile = proj.assertEditedVersion(sCurScnPath)
+
+    scanResults = dependency_scan.launch(damEntity, modal=True)
+    if scanResults is None:
+        pm.displayInfo("Canceled !")
+        return
 
     bSgVersion = True
     try:
@@ -75,7 +121,8 @@ def publishCurrentScene(*args, **kwargs):
     if not sgTaskInfo:
         bSgVersion = False
 
-    #publishSceneDependencies(proj, sCurScnPath, comment=sComment)
+    if not publishSceneDependencies(damEntity, scanResults, sComment):
+        return
 
     sSavedScnPath = myasys.saveScene(confirm=False)
     if not sSavedScnPath:
@@ -86,6 +133,9 @@ def publishCurrentScene(*args, **kwargs):
                                     comment=sComment,
                                     sgTask=sgTaskInfo,
                                     withSgVersion=bSgVersion,
-                                     **kwargs)
+                                    **kwargs)
+
+    pm.displayWarning("Publishing completed !")
+
     return res
 

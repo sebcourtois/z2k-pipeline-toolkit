@@ -146,7 +146,7 @@ class asset_lib(object):
     }
 
     dependency_types = {
-    "texture_dep":{"location":"texture_dir", "checksum":True}
+    "texture_dep":{"location":"texture_dir", "checksum":True, "env_var":"ZOMB_TEXTURE_PATH"}
     }
 
 class camera(object):
