@@ -1,3 +1,4 @@
+# Embedded file name: C:\jipe_Local\z2k-pipeline-toolkit\maya_mods\third_party\scripts\studiolibrary\api\record.py
 """
 Released subject to the BSD License
 Please visit http://www.voidspace.org.uk/python/license.shtml
@@ -37,28 +38,26 @@ doesn't happen to anyone else.
 import os
 import shutil
 import logging
-
 import studiolibrary
 import studiolibrary.gui.recordswidgetitem as recordswidgetitem
-
 from PySide import QtGui
 from PySide import QtCore
-
-
-__all__ = ["Record"]
+__all__ = ['Record']
 logger = logging.getLogger(__name__)
-
 
 class RecordError(Exception):
     """"""
+    pass
 
 
 class RecordSaveError(RecordError):
     """"""
+    pass
 
 
 class RecordLoadError(RecordError):
     """"""
+    pass
 
 
 class RecordSignal(QtCore.QObject):
@@ -71,9 +70,7 @@ class RecordSignal(QtCore.QObject):
 
 
 class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
-
-    META_PATH = "<PATH>/.studioLibrary/record.dict"
-
+    META_PATH = '<PATH>/.studioLibrary/record.dict'
     signal = RecordSignal()
     onSaved = signal.onSaved
     onSaving = signal.onSaving
@@ -81,16 +78,13 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
     onDeleted = signal.onDeleted
     onDeleting = signal.onDeleting
 
-    def __init__(self, path=None, plugin=None,
-                 recordsWidget=None, library=None):
+    def __init__(self, path = None, plugin = None, recordsWidget = None, library = None):
         """
         :type recordsWidget: recordswidget.RecordsWidget
         """
         self._plugin = plugin
         self._library = library
-
         self.setPlugin(plugin)
-
         recordswidgetitem.RecordsWidgetItem.__init__(self, recordsWidget)
         studiolibrary.MasterPath.__init__(self, path)
 
@@ -135,7 +129,7 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         """
         pass
 
-    def rename(self, name, force=True):
+    def rename(self, name, force = True):
         """
         :type name: str
         :type force: bool
@@ -153,20 +147,16 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         """
         if not path:
             raise RecordError('Cannot set empty record path.')
-
         text = os.path.basename(path)
-        iconPath = path + "/thumbnail.jpg"
-
+        iconPath = path + '/thumbnail.jpg'
         self.setText(text)
         self.setIconPath(iconPath)
-
         dirname, basename, extension = studiolibrary.splitPath(path)
         if not extension:
             if self.plugin():
                 path += self.plugin().extension()
             else:
                 raise RecordSaveError('No extension found!')
-
         studiolibrary.MasterPath.setPath(self, path)
 
     def setPlugin(self, plugin):
@@ -258,7 +248,7 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         """
         :rtype: str
         """
-        return self.metaFile().get('owner', "")
+        return self.metaFile().get('owner', '')
 
     def mtime(self):
         """
@@ -277,7 +267,7 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         The default delete behaviour is to retire and create a version
         of the record. The record/path never gets deleted from the file
         system.
-
+        
         :rtype: None
         """
         logger.debug('Record Deleting: {0}'.format(self.path()))
@@ -286,16 +276,15 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         Record.onDeleted.emit(self)
         logger.debug('Record Deleted: {0}'.format(self.path()))
 
-    def moveContents(self, contents, destination=None):
+    def moveContents(self, contents, destination = None):
         """
         :type contents: list[str]
         """
         if not destination:
             destination = self.path()
-
         for src in contents or []:
             basename = os.path.basename(src)
-            dst = destination + "/" + basename
+            dst = destination + '/' + basename
             logger.info('Moving Content: {0} => {1}'.format(src, dst))
             shutil.move(src, dst)
 
@@ -306,58 +295,48 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         logger.debug('Loading "{0}"'.format(self.name()))
         Record.onLoaded.emit(self)
 
-    def save(self, path=None, contents=None, force=False):
+    def save(self, path = None, contents = None, force = False):
         """
         :type contents: list[str]
         :type force: bool
         """
         path = path or self.path()
         contents = contents or []
-
         logger.debug('Record Saving: {0}'.format(path))
         Record.onSaving.emit(self)
-
         self.setPath(path)
-
         if os.path.exists(self.path()):
-
             if force:
                 self.delete()
-
             elif self.library():
                 result = self.showRetireDialog()
                 if result != QtGui.QMessageBox.Yes:
                     logger.debug('Dialog Canceled')
                     return
             else:
-                raise RecordSaveError("Record already exists!")
-
+                raise RecordSaveError('Record already exists!')
         self.metaFile().save()
         self.moveContents(contents)
-
         Record.onSaved.emit(self)
         logger.debug('Record Saved: {0}'.format(self.path()))
 
-    def showRetireDialog(self, parent=None):
+    def showRetireDialog(self, parent = None):
         """
         :type parent: QtGui.QWidget
         """
         parent = parent or self.recordsWidget()
-        message = 'The chosen name "{0}" already exists!\n ' \
-                  'Would you like to create a new version?'.format(self.name())
-        result = QtGui.QMessageBox.question(parent, "Retire Record?", message,
-                                            QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel)
+        message = 'The chosen name "{0}" already exists!\n Would you like to create a new version?'.format(self.name())
+        result = QtGui.QMessageBox.question(parent, 'Retire Record?', message, QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel)
         if result == QtGui.QMessageBox.Yes:
             self.delete()
         return result
 
-    def showRenameDialog(self, parent=None):
+    def showRenameDialog(self, parent = None):
         """
         :type parent: QtGui.QWidget
         """
         parent = parent or self.library()
-        name, accepted = QtGui.QInputDialog.getText(parent, "Rename", "New Name",
-                                                    QtGui.QLineEdit.Normal, self.name(),)
+        name, accepted = QtGui.QInputDialog.getText(parent, 'Rename', 'New Name', QtGui.QLineEdit.Normal, self.name())
         if accepted:
             self.rename(str(name))
         return accepted
@@ -368,7 +347,7 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         """
         padding = 1
         r = self.iconRect()
-        return QtCore.QRect(r.x()+padding, r.y()+padding, 13, 13)
+        return QtCore.QRect(r.x() + padding, r.y() + padding, 13, 13)
 
     def paintPluginIcon(self, painter, option):
         """
@@ -377,7 +356,6 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         """
         rect = self.pluginIconRect()
         isListView = self.recordsWidget().isListView()
-
         if not isListView:
             pixmap = self.plugin().pixmap()
             if isinstance(pixmap, QtGui.QPixmap):

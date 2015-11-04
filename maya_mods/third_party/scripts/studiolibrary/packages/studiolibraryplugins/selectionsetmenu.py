@@ -1,3 +1,4 @@
+# Embedded file name: C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/third_party/scripts/studiolibrary/packages\studiolibraryplugins\selectionsetmenu.py
 """
 Released subject to the BSD License
 Please visit http://www.voidspace.org.uk/python/license.shtml
@@ -39,13 +40,9 @@ import sys
 import logging
 import studiolibrary
 from functools import partial
-
 from PySide import QtGui
-
-
-__all__ = ["SelectionSetMenu"]
+__all__ = ['SelectionSetMenu']
 logger = logging.getLogger(__name__)
-
 
 class SelectionSetMenu(QtGui.QMenu):
 
@@ -71,13 +68,10 @@ class SelectionSetMenu(QtGui.QMenu):
         :rtype: None
         """
         self.clear()
-
         for record in self.records():
-
             dirname = os.path.basename(record.dirname())
-            basename = record.name().replace(record.extension(), "")
-            nicename = dirname + ": " + basename
-
+            basename = record.name().replace(record.extension(), '')
+            nicename = dirname + ': ' + basename
             action = studiolibrary.Action(nicename, self)
             trigger = partial(record.load, **self._kwargs)
             action.setCallback(trigger)
@@ -88,17 +82,13 @@ class MainWindow(QtGui.QMainWindow):
 
     def __init__(self):
         super(MainWindow, self).__init__()
-
         library = studiolibrary.Library.default()
-
         menubar = self.menuBar()
-        path = "C:/Users/Hovel/Dropbox/libraries/animation/Malcolm/default.pose"
-        records = library.findRecords(path, ".set", direction=studiolibrary.Direction.Up)
-
-        menu = SelectionSetMenu("Selection Sets", parent=menubar, records=records)
+        path = 'C:/Users/Hovel/Dropbox/libraries/animation/Malcolm/default.pose'
+        records = library.findRecords(path, '.set', direction=studiolibrary.Direction.Up)
+        menu = SelectionSetMenu('Selection Sets', parent=menubar, records=records)
         menu.setStyleSheet(library.styleSheet())
         menubar.addMenu(menu)
-
         self.statusBar()
         self.setGeometry(300, 300, 250, 150)
         self.setWindowTitle('Menubar')
@@ -106,10 +96,7 @@ class MainWindow(QtGui.QMainWindow):
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG,
-                        format='%(levelname)s: %(funcName)s: %(message)s',
-                        filemode='w')
-
+    logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(funcName)s: %(message)s', filemode='w')
     app = QtGui.QApplication(sys.argv)
     window = MainWindow()
     sys.exit(app.exec_())

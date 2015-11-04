@@ -1,11 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
 import os
 import dminutes.Z2K_ReleaseTool.Z2K_ReleaseTool as z2kR
 reload (z2kR)
 
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_SET_checks as Z2K_PcheckD
 reload(Z2K_PcheckD)
+
 
 # get zomb project
 curproj = os.environ.get("DAVOS_INIT_PROJECT")
@@ -16,7 +18,7 @@ Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="set_RouteDuRhum_def
                         projConnectB= True, theProject=curproj,
                         theComment= "auto rock the casbah release !",
                         debug=False )
+
 Z2K_ReleaseTool_GuiI.createWin()
 
-Z2K_Pcheck = Z2K_PcheckD.checkModule()
-Z2K_Pcheck.insertLayout( parent=Z2K_ReleaseTool_GuiI.layoutImportModule )
+Z2K_Pcheck = Z2K_PcheckD.checkModule(GUI=True, parent=Z2K_ReleaseTool_GuiI.layoutImportModule )

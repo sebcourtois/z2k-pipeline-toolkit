@@ -1,4 +1,4 @@
-#!/usr/bin/python
+# Embedded file name: C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/third_party/scripts/studiolibrary/packages\studiolibraryplugins\mirrortableplugin.py
 """
 Released subject to the BSD License
 Please visit http://www.voidspace.org.uk/python/license.shtml
@@ -65,19 +65,15 @@ import mutils
 import logging
 import studiolibrary
 import mayabaseplugin
-
 try:
     import maya.cmds
-except ImportError, msg:
+except ImportError as msg:
     print msg
 
 from PySide import QtGui
 from PySide import QtCore
-
-
 logger = logging.getLogger(__name__)
 MirrorOption = mutils.MirrorOption
-
 
 class Plugin(mayabaseplugin.Plugin):
 
@@ -86,11 +82,9 @@ class Plugin(mayabaseplugin.Plugin):
         :type library: studiolibrary.Library
         """
         studiolibrary.Plugin.__init__(self, library)
-
-        self.setName("Mirror Table")
-        self.setIconPath(self.dirname() + "/resource/images/mirrortable.png")
-        self.setExtension("mirror")
-
+        self.setName('Mirror Table')
+        self.setIconPath(self.dirname() + '/resource/images/mirrortable.png')
+        self.setExtension('mirror')
         self.setRecord(Record)
         self.setInfoWidget(MirrorTableInfoWidget)
         self.setCreateWidget(MirrorTableCreateWidget)
@@ -100,13 +94,13 @@ class Plugin(mayabaseplugin.Plugin):
         """
         :rtype: bool
         """
-        return self.settings().get("mirrorAnimation", True)
+        return self.settings().get('mirrorAnimation', True)
 
     def mirrorOption(self):
         """
         :rtype: MirrorOption
         """
-        return self.settings().get("mirrorOption", MirrorOption.Swap)
+        return self.settings().get('mirrorOption', MirrorOption.Swap)
 
 
 class Record(mayabaseplugin.Record):
@@ -117,7 +111,7 @@ class Record(mayabaseplugin.Record):
         :type kwargs:
         """
         mayabaseplugin.Record.__init__(self, *args, **kwargs)
-        self.setTransferBasename("mirrortable.json")
+        self.setTransferBasename('mirrortable.json')
         self.setTransferClass(mutils.MirrorTable)
 
     def keyPressEvent(self, event):
@@ -141,17 +135,15 @@ class Record(mayabaseplugin.Record):
         animation = self.plugin().mirrorAnimation()
         namespaces = self.namespaces()
         objects = maya.cmds.ls(selection=True) or []
-
         try:
-            self.load(objects=objects, namespaces=namespaces,
-                      option=option, animation=animation)
-        except Exception, msg:
+            self.load(objects=objects, namespaces=namespaces, option=option, animation=animation)
+        except Exception as msg:
             if self.libraryWidget():
                 self.libraryWidget().setError(msg)
             raise
 
     @mutils.showWaitCursor
-    def load(self, objects=None, namespaces=None, option=None, animation=True, time=None):
+    def load(self, objects = None, namespaces = None, option = None, animation = True, time = None):
         """
         :type objects: list[str]
         :type namespaces: list[str]
@@ -160,26 +152,21 @@ class Record(mayabaseplugin.Record):
         :type time: list[int]
         """
         objects = objects or []
-        self.transferObject().load(objects=objects, namespaces=namespaces,
-                                   option=option, animation=animation, time=time)
+        self.transferObject().load(objects=objects, namespaces=namespaces, option=option, animation=animation, time=time)
 
-    def save(self, objects, leftSide, rightSide, path=None, iconPath=None):
+    def save(self, objects, leftSide, rightSide, path = None, iconPath = None):
         """
         :type path: str
         :type objects: list[str]
         :type iconPath: str
         :rtype: None
-
+        
         """
-        logger.info("Saving: %s" % self.transferPath())
-
-        tempDir = studiolibrary.TempDir("Transfer", makedirs=True)
+        logger.info('Saving: %s' % self.transferPath())
+        tempDir = studiolibrary.TempDir('Transfer', makedirs=True)
         tempPath = os.path.join(tempDir.path(), self.transferBasename())
-
-        t = self.transferClass().fromObjects(objects, leftSide=leftSide,
-                                             rightSide=rightSide)
+        t = self.transferClass().fromObjects(objects, leftSide=leftSide, rightSide=rightSide)
         t.save(tempPath)
-
         studiolibrary.Record.save(self, path=path, contents=[tempPath, iconPath])
 
 
@@ -201,10 +188,8 @@ class MirrorTablePreviewWidget(mayabaseplugin.PreviewWidget):
         :type record: Record
         """
         mayabaseplugin.PreviewWidget.__init__(self, *args, **kwargs)
-
         self.ui.mirrorAnimationCheckBox.stateChanged.connect(self.stateChanged)
         self.ui.mirrorOptionComboBox.currentIndexChanged.connect(self.stateChanged)
-
         mt = self.record().transferObject()
         self.ui.left.setText(mt.leftSide())
         self.ui.right.setText(mt.rightSide())
@@ -226,8 +211,8 @@ class MirrorTablePreviewWidget(mayabaseplugin.PreviewWidget):
         """
         super(MirrorTablePreviewWidget, self).saveSettings()
         s = self.settings()
-        s.set("mirrorOption", int(self.mirrorOption()))
-        s.set("mirrorAnimation", bool(self.mirrorAnimation()))
+        s.set('mirrorOption', int(self.mirrorOption()))
+        s.set('mirrorAnimation', bool(self.mirrorAnimation()))
         s.save()
 
     def loadSettings(self):
@@ -235,10 +220,8 @@ class MirrorTablePreviewWidget(mayabaseplugin.PreviewWidget):
         """
         super(MirrorTablePreviewWidget, self).loadSettings()
         s = self.settings()
-
-        mirrorOption = int(s.get("mirrorOption", MirrorOption.Swap))
-        mirrorAnimation = bool(s.get("mirrorAnimation", True))
-
+        mirrorOption = int(s.get('mirrorOption', MirrorOption.Swap))
+        mirrorAnimation = bool(s.get('mirrorAnimation', True))
         self.ui.mirrorOptionComboBox.setCurrentIndex(mirrorOption)
         self.ui.mirrorAnimationCheckBox.setChecked(mirrorAnimation)
 
@@ -275,18 +258,13 @@ class MirrorTableCreateWidget(mayabaseplugin.CreateWidget):
         :rtype: None
         """
         objects = maya.cmds.ls(selection=True) or []
-
         if not self.ui.left.text():
             self.ui.left.setText(mutils.MirrorTable.findLeftSide(objects))
-
         if not self.ui.right.text():
             self.ui.right.setText(mutils.MirrorTable.findRightSide(objects))
-
         mt = mutils.MirrorTable.fromObjects([], leftSide=str(self.ui.left.text()), rightSide=str(self.ui.right.text()))
-
         self.ui.leftCount.setText(str(mt.leftCount(objects)))
         self.ui.rightCount.setText(str(mt.rightCount(objects)))
-
         mayabaseplugin.CreateWidget.selectionChanged(self)
 
     def save(self, objects, path, iconPath, description):
@@ -301,10 +279,9 @@ class MirrorTableCreateWidget(mayabaseplugin.CreateWidget):
         rightSide = self.rightText()
         r = self.record()
         r.setDescription(description)
-        self.record().save(objects=objects, leftSide=leftSide,
-                           rightSide=rightSide, path=path, iconPath=self.iconPath())
+        self.record().save(objects=objects, leftSide=leftSide, rightSide=rightSide, path=path, iconPath=self.iconPath())
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import studiolibrary
     studiolibrary.main()

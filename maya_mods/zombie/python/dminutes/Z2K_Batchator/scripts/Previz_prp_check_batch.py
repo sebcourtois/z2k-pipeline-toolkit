@@ -1,5 +1,5 @@
 
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_Prp_checks as Z2K_PcheckD
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_PROP_checks as Z2K_PcheckD
 reload(Z2K_PcheckD)
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+# Embedded file name: C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/third_party/scripts/studiolibrary/packages\studiolibraryplugins\poseplugin.py
 """
 Released subject to the BSD License
 Please visit http://www.voidspace.org.uk/python/license.shtml
@@ -63,17 +63,13 @@ import math
 import mutils
 import logging
 import mayabaseplugin
-
 from PySide import QtCore
-
 try:
     import maya.cmds
-except ImportError, msg:
+except ImportError as msg:
     print msg
 
-
 logger = logging.getLogger(__name__)
-
 
 class Plugin(mayabaseplugin.Plugin):
 
@@ -82,10 +78,8 @@ class Plugin(mayabaseplugin.Plugin):
         :type library: studiolibrary.Library
         """
         mayabaseplugin.Plugin.__init__(self, library)
-
-        self.setName("Pose")
-        self.setIconPath(self.dirname() + "/resource/images/pose.png")
-
+        self.setName('Pose')
+        self.setIconPath(self.dirname() + '/resource/images/pose.png')
         self.setRecord(Record)
         self.setInfoWidget(PoseInfoWidget)
         self.setCreateWidget(PoseCreateWidget)
@@ -95,25 +89,25 @@ class Plugin(mayabaseplugin.Plugin):
         """
         :type enable: bool
         """
-        self.settings().set("keyOption", enable)
+        self.settings().set('keyOption', enable)
 
     def keyOption(self):
         """
         :rtype: bool
         """
-        return self.settings().get("keyOption", False)
+        return self.settings().get('keyOption', False)
 
     def setMirrorOption(self, enable):
         """
         :type enable: bool
         """
-        self.settings().set("mirrorOption", enable)
+        self.settings().set('mirrorOption', enable)
 
     def mirrorOption(self):
         """
         :rtype: bool
         """
-        return self.settings().get("mirrorOption", False)
+        return self.settings().get('mirrorOption', False)
 
 
 class Record(mayabaseplugin.Record):
@@ -124,18 +118,17 @@ class Record(mayabaseplugin.Record):
         :type kwargs: dict[]
         """
         mayabaseplugin.Record.__init__(self, *args, **kwargs)
-
         self._options = None
         self._isLoading = False
         self._autoKeyFrame = None
         self._mousePosition = None
         self._currentBlendValue = 0.0
         self._previousBlendValue = 0.0
-
         self.setTransferClass(mutils.Pose)
-        self.setTransferBasename("pose.dict")
+        self.setTransferBasename('pose.dict')
         if not os.path.exists(self.transferPath()):
-            self.setTransferBasename("pose.json")
+            self.setTransferBasename('pose.json')
+        return
 
     def isLoading(self):
         """
@@ -149,7 +142,7 @@ class Record(mayabaseplugin.Record):
         """
         paths = self.mirrorTables()
         if paths:
-            path = paths[0] + "/mirrortable.json"
+            path = paths[0] + '/mirrortable.json'
             return mutils.MirrorTable.fromPath(path)
 
     def isBlending(self):
@@ -177,7 +170,7 @@ class Record(mayabaseplugin.Record):
         mirror = self.plugin().mirrorOption()
         mirror = False if mirror else True
         self.plugin().setMirrorOption(mirror)
-        self.plugin().emit(QtCore.SIGNAL("updateMirror(bool)"), bool(mirror))
+        self.plugin().emit(QtCore.SIGNAL('updateMirror(bool)'), bool(mirror))
 
     def keyPressEvent(self, event):
         """
@@ -190,8 +183,7 @@ class Record(mayabaseplugin.Record):
                 blend = self.currentBlendValue()
                 mirror = self.plugin().mirrorOption()
                 if self.isBlending():
-                    self.loadFromSettings(blend=blend, mirror=mirror,
-                                          showBlendMessage=True, batchMode=True)
+                    self.loadFromSettings(blend=blend, mirror=mirror, showBlendMessage=True, batchMode=True)
                 else:
                     self.loadFromSettings(blend=blend, mirror=mirror, refresh=True)
 
@@ -209,8 +201,7 @@ class Record(mayabaseplugin.Record):
         if event.button() == QtCore.Qt.MidButton:
             self._mousePosition = event.pos()
             blend = self.previousBlendValue()
-            self.loadFromSettings(blend=blend, batchMode=True,
-                                  showBlendMessage=True)
+            self.loadFromSettings(blend=blend, batchMode=True, showBlendMessage=True)
 
     def mouseMoveEvent(self, event):
         """
@@ -220,8 +211,7 @@ class Record(mayabaseplugin.Record):
         if self.isBlending():
             value = (event.pos().x() - self.mousePosition().x()) / 1.5
             value = math.ceil(value) + self.previousBlendValue()
-            self.loadFromSettings(blend=value, batchMode=True,
-                                  showBlendMessage=True)
+            self.loadFromSettings(blend=value, batchMode=True, showBlendMessage=True)
 
     def mouseReleaseEvent(self, event):
         """
@@ -239,7 +229,8 @@ class Record(mayabaseplugin.Record):
         self._mousePosition = None
         self._transferObject = None
         self._previousBlendValue = 0.0
-        self.plugin().emit(QtCore.SIGNAL("updateBlend(int)"), int(0.0))
+        self.plugin().emit(QtCore.SIGNAL('updateBlend(int)'), int(0.0))
+        return
 
     def beforeLoad(self):
         """
@@ -247,9 +238,7 @@ class Record(mayabaseplugin.Record):
         """
         if self._isLoading:
             return
-
         logger.info('Loading Record "{0}"'.format(self.path()))
-
         self._isLoading = True
 
     def afterLoad(self):
@@ -258,13 +247,13 @@ class Record(mayabaseplugin.Record):
         """
         if not self._isLoading:
             return
-
-        self._isLoading = False
-        self._options = None
-        self._mousePosition = None
-        self._previousBlendValue = self._currentBlendValue
-
-        logger.info('Loaded Record "{0}"'.format(self.path()))
+        else:
+            self._isLoading = False
+            self._options = None
+            self._mousePosition = None
+            self._previousBlendValue = self._currentBlendValue
+            logger.info('Loaded Record "{0}"'.format(self.path()))
+            return
 
     def doubleClicked(self):
         """
@@ -272,8 +261,7 @@ class Record(mayabaseplugin.Record):
         """
         self.loadFromSettings(clearSelection=False)
 
-    def loadFromSettings(self, blend=100.0, refresh=True, showBlendMessage=False,
-                         batchMode=False, clearSelection=True, mirror=None):
+    def loadFromSettings(self, blend = 100.0, refresh = True, showBlendMessage = False, batchMode = False, clearSelection = True, mirror = None):
         """
         :type blend: float
         :type refresh: bool
@@ -284,30 +272,25 @@ class Record(mayabaseplugin.Record):
         if self._options is None:
             plugin = self.plugin()
             self._options = dict()
-            self._options["key"] = plugin.keyOption()
+            self._options['key'] = plugin.keyOption()
             self._options['mirror'] = plugin.mirrorOption()
             self._options['namespaces'] = self.namespaces()
             self._options['mirrorTable'] = self.mirrorTable()
             self._options['objects'] = maya.cmds.ls(selection=True) or []
-
         if mirror is not None:
             self._options['mirror'] = mirror
-
         if self.plugin():
-            self.plugin().emit(QtCore.SIGNAL("updateBlend(int)"), int(blend))
-
+            self.plugin().emit(QtCore.SIGNAL('updateBlend(int)'), int(blend))
         try:
-            self.load(blend=blend, refresh=refresh, batchMode=batchMode,
-                      clearSelection=clearSelection, showBlendMessage=showBlendMessage,
-                      **self._options)
-        except Exception, msg:
+            self.load(blend=blend, refresh=refresh, batchMode=batchMode, clearSelection=clearSelection, showBlendMessage=showBlendMessage, **self._options)
+        except Exception as msg:
             if self.libraryWidget():
                 self.libraryWidget().setError(msg)
             raise
 
-    def load(self, objects=None, namespaces=None, blend=100.0, key=None,
-             refresh=True, attrs=None, mirror=None, mirrorTable=None,
-             showBlendMessage=False, clearSelection=False, batchMode=False):
+        return
+
+    def load(self, objects = None, namespaces = None, blend = 100.0, key = None, refresh = True, attrs = None, mirror = None, mirrorTable = None, showBlendMessage = False, clearSelection = False, batchMode = False):
         """
         :type objects: list[str]
         :type blend: float
@@ -320,22 +303,15 @@ class Record(mayabaseplugin.Record):
         :type mirrorTable: mutils.MirrorTable
         """
         logger.debug("Loading pose '%s'" % self.path())
-
         self._currentBlendValue = blend
-
         if showBlendMessage and self.recordsWidget():
-            self.recordsWidget().showMessage("Blend: %s%%" % str(blend))
-
+            self.recordsWidget().showMessage('Blend: %s%%' % str(blend))
         self.beforeLoad()
         try:
-            mayabaseplugin.Record.load(self, objects=objects, namespaces=namespaces, blend=blend,
-                                       mirror=mirror, key=key, refresh=refresh, attrs=attrs,
-                                       mirrorTable=mirrorTable, clearSelection=clearSelection,
-                                       batchMode=batchMode)
+            mayabaseplugin.Record.load(self, objects=objects, namespaces=namespaces, blend=blend, mirror=mirror, key=key, refresh=refresh, attrs=attrs, mirrorTable=mirrorTable, clearSelection=clearSelection, batchMode=batchMode)
         except Exception:
             self.afterLoad()
             raise
-
         finally:
             if not batchMode:
                 self.afterLoad()
@@ -351,6 +327,7 @@ class PoseInfoWidget(mayabaseplugin.InfoWidget):
 
 
 class PoseCreateWidget(mayabaseplugin.CreateWidget):
+
     def __init__(self, *args, **kwargs):
         """"""
         mayabaseplugin.CreateWidget.__init__(self, *args, **kwargs)
@@ -363,22 +340,19 @@ class PosePreviewWidget(mayabaseplugin.PreviewWidget):
         :rtype: None
         """
         mayabaseplugin.PreviewWidget.__init__(self, *args, **kwargs)
-
-        self.connect(self.ui.keyCheckBox, QtCore.SIGNAL("clicked()"), self.stateChanged)
-        self.connect(self.ui.mirrorCheckBox, QtCore.SIGNAL("clicked()"), self.stateChanged)
-        self.connect(self.ui.blendSlider, QtCore.SIGNAL("sliderMoved(int)"), self.sliderMoved)
-        self.connect(self.ui.blendSlider, QtCore.SIGNAL("sliderReleased()"), self.sliderReleased)
-        self.plugin().connect(self.plugin(), QtCore.SIGNAL("updateBlend(int)"), self.updateSlider)
-        self.plugin().connect(self.plugin(), QtCore.SIGNAL("updateMirror(bool)"), self.updateMirror)
-
-        # Mirror check box
-        mirrorTip = "Cannot find mirror table!"
+        self.connect(self.ui.keyCheckBox, QtCore.SIGNAL('clicked()'), self.stateChanged)
+        self.connect(self.ui.mirrorCheckBox, QtCore.SIGNAL('clicked()'), self.stateChanged)
+        self.connect(self.ui.blendSlider, QtCore.SIGNAL('sliderMoved(int)'), self.sliderMoved)
+        self.connect(self.ui.blendSlider, QtCore.SIGNAL('sliderReleased()'), self.sliderReleased)
+        self.plugin().connect(self.plugin(), QtCore.SIGNAL('updateBlend(int)'), self.updateSlider)
+        self.plugin().connect(self.plugin(), QtCore.SIGNAL('updateMirror(bool)'), self.updateMirror)
+        mirrorTip = 'Cannot find mirror table!'
         mirrorTable = self.record().mirrorTable()
         if mirrorTable:
-            mirrorTip = "Using mirror table: %s" % mirrorTable.path()
-
+            mirrorTip = 'Using mirror table: %s' % mirrorTable.path()
         self.ui.mirrorCheckBox.setToolTip(mirrorTip)
         self.ui.mirrorCheckBox.setEnabled(mirrorTable is not None)
+        return
 
     def updateMirror(self, mirror):
         """
@@ -394,10 +368,8 @@ class PosePreviewWidget(mayabaseplugin.PreviewWidget):
         :rtype: None
         """
         mayabaseplugin.PreviewWidget.loadSettings(self)
-
         key = self.plugin().keyOption()
         mirror = self.plugin().mirrorOption()
-
         self.ui.keyCheckBox.setChecked(key)
         self.ui.mirrorCheckBox.setChecked(mirror)
 
@@ -407,10 +379,8 @@ class PosePreviewWidget(mayabaseplugin.PreviewWidget):
         """
         key = bool(self.ui.keyCheckBox.isChecked())
         mirror = bool(self.ui.mirrorCheckBox.isChecked())
-
         self.plugin().setKeyOption(key)
         self.plugin().setMirrorOption(mirror)
-
         mayabaseplugin.PreviewWidget.saveSettings(self)
 
     def updateSlider(self, value):
@@ -424,15 +394,13 @@ class PosePreviewWidget(mayabaseplugin.PreviewWidget):
         :rtype: None
         """
         blend = self.ui.blendSlider.value()
-        self.record().loadFromSettings(blend=blend, refresh=False,
-                                       showBlendMessage=True)
+        self.record().loadFromSettings(blend=blend, refresh=False, showBlendMessage=True)
 
     def sliderMoved(self, value):
         """
         :type value: float
         """
-        self.record().loadFromSettings(blend=value, batchMode=True,
-                                       showBlendMessage=True)
+        self.record().loadFromSettings(blend=value, batchMode=True, showBlendMessage=True)
 
     def accept(self):
         """

@@ -1,3 +1,4 @@
+# Embedded file name: C:\jipe_Local\z2k-pipeline-toolkit\maya_mods\third_party\scripts\studiolibrary\api\plugin.py
 """
 Released subject to the BSD License
 Please visit http://www.voidspace.org.uk/python/license.shtml
@@ -38,22 +39,17 @@ import os
 import logging
 import studiolibrary
 import studiolibrary.gui
-
 from PySide import QtGui
 from PySide import QtCore
-
-
-__all__ = ["Plugin"]
+__all__ = ['Plugin']
 logger = logging.getLogger(__name__)
-
 
 class Plugin(studiolibrary.BasePlugin):
 
-    def __init__(self, library, parent=None):
+    def __init__(self, library, parent = None):
         studiolibrary.BasePlugin.__init__(self, parent)
         self._library = library
-
-        self._iconPath = ""
+        self._iconPath = ''
         self._action = None
         self._pixmap = None
         self._settings = None
@@ -66,26 +62,25 @@ class Plugin(studiolibrary.BasePlugin):
         self._currentInfoRecord = None
         self._currentPreviewRecord = None
         self._loggerLevel = logging.NOTSET
-
         self._recordClass = studiolibrary.Record
-
         if library.libraryWidget():
             self._infoTimer = QtCore.QTimer(library.libraryWidget())
             self._infoTimer.setSingleShot(True)
-            self._infoTimer.connect(self._infoTimer, QtCore.SIGNAL("timeout()"), self._showInfoWidget)
+            self._infoTimer.connect(self._infoTimer, QtCore.SIGNAL('timeout()'), self._showInfoWidget)
+        return
 
     @staticmethod
     def defaultSettingsPath():
         """
         :rtype: str
         """
-        return os.path.join(studiolibrary.Settings.DEFAULT_PATH, "Plugin")
+        return os.path.join(studiolibrary.Settings.DEFAULT_PATH, 'Plugin')
 
     def settingsPath(self):
         """
         :rtype: str
         """
-        return os.path.join(self.defaultSettingsPath(), self.name() + ".dict")
+        return os.path.join(self.defaultSettingsPath(), self.name() + '.dict')
 
     def setLoggerLevel(self, value):
         """
@@ -112,7 +107,7 @@ class Plugin(studiolibrary.BasePlugin):
         """
         if self.libraryWidget():
             self._action = QtGui.QAction(studiolibrary.icon(self.iconPath()), self.name(), self.libraryWidget().ui.newMenu)
-            self.libraryWidget().connect(self._action, QtCore.SIGNAL("triggered(bool)"), self.showCreateWidget)
+            self.libraryWidget().connect(self._action, QtCore.SIGNAL('triggered(bool)'), self.showCreateWidget)
             self.libraryWidget().ui.newMenu.addAction(self._action)
 
     def unload(self):
@@ -121,7 +116,7 @@ class Plugin(studiolibrary.BasePlugin):
         """
         if self.libraryWidget() and self._action:
             self.libraryWidget().ui.newMenu.removeAction(self._action)
-            self._infoTimer.disconnect(self._infoTimer, QtCore.SIGNAL("timeout()"), self._showInfoWidget)
+            self._infoTimer.disconnect(self._infoTimer, QtCore.SIGNAL('timeout()'), self._showInfoWidget)
 
     def match(self, path):
         """
@@ -146,8 +141,8 @@ class Plugin(studiolibrary.BasePlugin):
         """
         :type extension: str
         """
-        if not extension.startswith("."):
-            extension = "." + extension
+        if not extension.startswith('.'):
+            extension = '.' + extension
         self._extension = extension
 
     def extension(self):
@@ -155,7 +150,7 @@ class Plugin(studiolibrary.BasePlugin):
         :rtype : str
         """
         if not self._extension:
-            return "." + self.name().lower()
+            return '.' + self.name().lower()
         return self._extension
 
     def setRecord(self, record):
@@ -165,17 +160,14 @@ class Plugin(studiolibrary.BasePlugin):
         """
         self._recordClass = record
 
-    def record(self, path=None, recordsWidget=None):
+    def record(self, path = None, recordsWidget = None):
         """
         :rtype: studiolibrary.Record
         """
         library = self.library()
-
         if not recordsWidget and self.libraryWidget():
             recordsWidget = self.libraryWidget().recordsWidget()
-
-        return self._recordClass(path=path, plugin=self,
-                                 library=library, recordsWidget=recordsWidget)
+        return self._recordClass(path=path, plugin=self, library=library, recordsWidget=recordsWidget)
 
     def settings(self):
         """
@@ -269,8 +261,9 @@ class Plugin(studiolibrary.BasePlugin):
                 self._infoTimer.stop()
                 self._currentInfoRecord = None
                 self.libraryWidget().ui.infoFrame.hide()
+        return
 
-    def showInfoWidget(self, record, wait=None):
+    def showInfoWidget(self, record, wait = None):
         """
         :type record: studiolibrary.Record
         :type wait: float || None
@@ -290,17 +283,13 @@ class Plugin(studiolibrary.BasePlugin):
         """
         record = self._currentInfoRecord
         parent = self.infoWindow().ui.mainFrame
-
         self.deleteChildren(parent)
         widget = self.infoWidget(parent, record)
-
         if widget:
             width = widget.width()
             height = widget.height()
-
             self.infoWindow().setFixedWidth(width)
             self.infoWindow().setFixedHeight(height)
-
             self.infoWindow().show()
 
     def setCreateWidget(self, widget):
@@ -318,14 +307,13 @@ class Plugin(studiolibrary.BasePlugin):
         """
         return self.loadWidget(self._createWidget, libraryWidget, record)
 
-    def showCreateWidget(self, record=None):
+    def showCreateWidget(self, record = None):
         """
         :type record: studiolibrary.Record
         :rtype: None
         """
         if not record:
             record = self.record()
-
         _w = self.createWidget(libraryWidget=self.libraryWidget(), record=record)
         self.libraryWidget().setCreateWidget(_w)
 
@@ -378,11 +366,9 @@ class Plugin(studiolibrary.BasePlugin):
         :rtype: None
         """
         if record and record == self.libraryWidget().previewRecord():
-            message = 'Preview widget for record "{0}"' \
-                      ' is already loaded.'.format(record.name())
+            message = 'Preview widget for record "{0}" is already loaded.'.format(record.name())
             logger.debug(message)
             return
-
         widget = self.previewWidget(parent, record)
         self.libraryWidget().setPreviewWidget(widget, record)
 
@@ -403,8 +389,7 @@ class Plugin(studiolibrary.BasePlugin):
         :type record: studiolibrary.Record
         :rtype: QtGui.QWidget
         """
-        logger.debug('Loading widget for record {name} => {path}'.format(name=record.name(),
-                                                                         path=record.path()))
+        logger.debug('Loading widget for record {name} => {path}'.format(name=record.name(), path=record.path()))
         w = None
         try:
             if record.errors():
@@ -412,7 +397,7 @@ class Plugin(studiolibrary.BasePlugin):
                 w.setTraceback(record.errors())
             elif widget:
                 w = widget(record=record, libraryWidget=parent)
-        except Exception, e:
+        except Exception as e:
             import traceback
             msg = traceback.format_exc()
             w = studiolibrary.gui.TracebackWidget(None)
@@ -441,4 +426,3 @@ class Plugin(studiolibrary.BasePlugin):
             child = widget.layout().itemAt(i).widget()
             widget.layout().removeWidget(child)
             self.deleteWidget(child)
-

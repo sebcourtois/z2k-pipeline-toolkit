@@ -1,3 +1,4 @@
+# Embedded file name: C:\jipe_Local\z2k-pipeline-toolkit\maya_mods\third_party\scripts\studiolibrary\api\library.py
 """
 Released subject to the BSD License
 Please visit http://www.voidspace.org.uk/python/license.shtml
@@ -37,14 +38,10 @@ doesn't happen to anyone else.
 import os
 import logging
 import studiolibrary
-
 from PySide import QtGui
 from PySide import QtCore
-
-
-__all__ = ["Library", "LibraryError"]
+__all__ = ['Library', 'LibraryError']
 logger = logging.getLogger(__name__)
-
 
 class LibraryError(Exception):
     """"""
@@ -66,26 +63,21 @@ class LibrarySignal(QtCore.QObject):
 
 
 class Library(object):
-
     _libraries = dict()
-
     signal = LibrarySignal()
     onAdded = signal.onAdded
     onLoaded = signal.onLoaded
     onDeleted = signal.onDeleted
     onPathChanged = signal.onPathChanged
     onSettingsSaved = signal.onSettingsSaved
-
-    DEFAULT_NAME = "Default"
+    DEFAULT_NAME = 'Default'
     DEFAULT_PLUGINS = []
-    DEFAULT_COLOR = "rgb(0, 175, 255)"
-    DEFAULT_BACKGROUND_COLOR = "rgb(70, 70, 70)"
-    SETTINGS_DIALOG_TEXT = "All changes will be saved to your local settings."
-    WELCOME_DIALOG_TEXT = """Before you get started please choose a folder location for storing the data. \
-A network folder is recommended for sharing within a studio."""
+    DEFAULT_COLOR = 'rgb(0, 175, 255)'
+    DEFAULT_BACKGROUND_COLOR = 'rgb(70, 70, 70)'
+    SETTINGS_DIALOG_TEXT = 'All changes will be saved to your local settings.'
+    WELCOME_DIALOG_TEXT = 'Before you get started please choose a folder location for storing the data. A network folder is recommended for sharing within a studio.'
 
     def __init__(self):
-
         self._name = None
         self._debug = False
         self._theme = None
@@ -93,6 +85,7 @@ A network folder is recommended for sharing within a studio."""
         self._libraryWidget = None
         self._settingsDialog = None
         self._pluginManager = studiolibrary.PluginManager()
+        return
 
     @staticmethod
     def libraries():
@@ -118,7 +111,7 @@ A network folder is recommended for sharing within a studio."""
         """
         :rtype: str
         """
-        return os.path.join(studiolibrary.Settings.DEFAULT_PATH, "Library")
+        return os.path.join(studiolibrary.Settings.DEFAULT_PATH, 'Library')
 
     @staticmethod
     def windows():
@@ -129,6 +122,7 @@ A network folder is recommended for sharing within a studio."""
         for library in Library.libraries():
             if library.libraryWidget() is not None:
                 result.append(library.libraryWidget())
+
         return result
 
     def pluginManager(self):
@@ -138,13 +132,12 @@ A network folder is recommended for sharing within a studio."""
         return self._pluginManager
 
     @classmethod
-    def fromName(cls, name=None):
+    def fromName(cls, name = None):
         """
         :type name: str
         """
         if not name:
             name = Library.DEFAULT_NAME
-
         if name in Library._libraries:
             return Library._libraries.get(name)
         else:
@@ -161,10 +154,11 @@ A network folder is recommended for sharing within a studio."""
         for library in Library.libraries():
             if library.isDefault():
                 return library
+
         return Library.fromName(Library.DEFAULT_NAME)
 
     @staticmethod
-    def sortRecords(records, sort=studiolibrary.SortOption.Ordered, order=None):
+    def sortRecords(records, sort = studiolibrary.SortOption.Ordered, order = None):
         """
         :type records: list[studiolibrary.Record]
         :type sort: studiolibrary.SortOption
@@ -174,24 +168,21 @@ A network folder is recommended for sharing within a studio."""
         order = order or []
         result = []
         _records = {}
-
-        # Index records
         for record in records:
             if sort == studiolibrary.SortOption.Ordered:
                 _records.setdefault(record.name(), record)
             elif sort == studiolibrary.SortOption.Modified:
                 _records.setdefault(record.mtime() + str(id(record)), record)
 
-        # Sort records by custom order
         if sort == studiolibrary.SortOption.Ordered:
             for name in order:
                 if name in _records:
                     result.append(_records[name])
+
             for name in _records:
                 if name not in order and name in _records:
                     result.append(_records[name])
 
-        # Sort records by modified
         elif sort == studiolibrary.SortOption.Modified:
             order = sorted(_records.keys())
             order.reverse()
@@ -213,9 +204,10 @@ A network folder is recommended for sharing within a studio."""
             record = self.recordFromPath(path)
             if record:
                 records.append(record)
+
         return records
 
-    def findRecords(self, path, search=None, direction=studiolibrary.Direction.Down):
+    def findRecords(self, path, search = None, direction = studiolibrary.Direction.Down):
         """
         :type path: str
         :type search: str
@@ -228,9 +220,10 @@ A network folder is recommended for sharing within a studio."""
             record = self.recordFromPath(path)
             if record:
                 records.append(record)
+
         return records
 
-    def recordFromPath(self, path, recordsWidget=None):
+    def recordFromPath(self, path, recordsWidget = None):
         """
         :type path: str
         :rtype: studiolibrary.Record
@@ -240,15 +233,15 @@ A network folder is recommended for sharing within a studio."""
         for plugin in plugins:
             if plugin.match(path):
                 return plugin.record(path, recordsWidget=recordsWidget)
+
         logger.debug('Cannot find plugin for path extension "%s"' % path)
 
     def setLoggerLevel(self, level):
         """
         :type logging.level: int
         """
-        logger = logging.getLogger("studiolibrary")
+        logger = logging.getLogger('studiolibrary')
         logger.setLevel(level)
-
         for plugin in self.pluginManager().plugins().values():
             plugin.setLoggerLevel(level)
 
@@ -262,11 +255,8 @@ A network folder is recommended for sharing within a studio."""
         """
         :rtype: None
         """
-        message = """Would you like to remove "%s" library from the manager?
-This does not modify or delete the contents of the library.""" % self.name()
-
-        result = QtGui.QMessageBox.question(None, "Remove Library", message,
-                                            QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+        message = 'Would you like to remove "%s" library from the manager?\nThis does not modify or delete the contents of the library.' % self.name()
+        result = QtGui.QMessageBox.question(None, 'Remove Library', message, QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
         if result == QtGui.QMessageBox.Yes:
             self.delete()
         return result
@@ -275,19 +265,15 @@ This does not modify or delete the contents of the library.""" % self.name()
         """
         :rtype: None
         """
-        logger.debug("Deleting library: %s" % self.name())
-
+        logger.debug('Deleting library: %s' % self.name())
         self.settings().delete()
         if self.libraryWidget():
             self.libraryWidget().close(saveSettings=False)
-
         if self.settingsDialog():
             self.settingsDialog().close()
-
         del Library._libraries[self.name()]
-
         Library.onDeleted.emit(self)
-        logger.debug("Deleted library: %s" % self.name())
+        logger.debug('Deleted library: %s' % self.name())
 
     def name(self):
         """
@@ -302,27 +288,24 @@ This does not modify or delete the contents of the library.""" % self.name()
         """
         if self.name() == name:
             return
-
         self.validateName(name)
-
         if self._name in self._libraries:
             self._libraries[name] = self._libraries.pop(self.name())
         self._name = name
-
-        settingsPath = Library.defaultSettingsPath() + "/" + name + ".dict"
+        settingsPath = Library.defaultSettingsPath() + '/' + name + '.dict'
         if not self.settings():
             s = studiolibrary.MetaFile(settingsPath)
             self.setSettings(s)
         elif not self.settings().exists():
             self.settings().setPath(settingsPath)
         else:
-            self.settings().rename(name, extension=".dict")
+            self.settings().rename(name, extension='.dict')
 
     def plugins(self):
         """
         :rtype: list[str]
         """
-        return self.settings().get("plugins", Library.DEFAULT_PLUGINS)
+        return self.settings().get('plugins', Library.DEFAULT_PLUGINS)
 
     def loadPlugin(self, name):
         """
@@ -359,26 +342,27 @@ This does not modify or delete the contents of the library.""" % self.name()
             self.pluginManager().unloadPlugin(plugin)
         else:
             logger.debug("Cannot find plugin with name '%s'" % name)
+        return
 
     def setPlugins(self, value):
         """
         :type value:
         :rtype: None
         """
-        self.settings().set("plugins", value)
+        self.settings().set('plugins', value)
 
     def setKwargs(self, kwargs):
         """
         :type kwargs: dict[]
         :rtype: None
         """
-        self.settings().set("kwargs", kwargs)
+        self.settings().set('kwargs', kwargs)
 
     def kwargs(self):
         """
         :rtype: dict[]
         """
-        return self.settings().get("kwargs", {})
+        return self.settings().get('kwargs', {})
 
     def theme(self):
         """
@@ -387,35 +371,28 @@ This does not modify or delete the contents of the library.""" % self.name()
         if self._theme is None:
             c1 = self.color()
             b1 = self.backgroundColor()
-
-            self._theme = {
-                "PACKAGE_DIRNAME": studiolibrary.dirname(),
-                "RESOURCE_DIRNAME": studiolibrary.RESOURCE_DIRNAME,
-
-                "COLOR": c1.toString(),
-                "COLOR_R": str(c1.red()),
-                "COLOR_G": str(c1.green()),
-                "COLOR_B": str(c1.blue()),
-
-                "BACKGROUND_COLOR": b1.toString(),
-                "BACKGROUND_COLOR_R": str(b1.red()),
-                "BACKGROUND_COLOR_G": str(b1.green()),
-                "BACKGROUND_COLOR_B": str(b1.blue()),
-
-                "RECORD_TEXT_COLOR": studiolibrary.Color(255, 255, 255, 255).toString(),
-                "RECORD_TEXT_SELECTED_COLOR": studiolibrary.Color(255, 255, 255, 255).toString(),
-                "RECORD_BACKGROUND_COLOR": studiolibrary.Color(255, 255, 255, 20).toString(),
-                "RECORD_BACKGROUND_SELECTED_COLOR":  self.color().toString(),
-            }
-
+            self._theme = {'PACKAGE_DIRNAME': studiolibrary.dirname(),
+             'RESOURCE_DIRNAME': studiolibrary.RESOURCE_DIRNAME,
+             'COLOR': c1.toString(),
+             'COLOR_R': str(c1.red()),
+             'COLOR_G': str(c1.green()),
+             'COLOR_B': str(c1.blue()),
+             'BACKGROUND_COLOR': b1.toString(),
+             'BACKGROUND_COLOR_R': str(b1.red()),
+             'BACKGROUND_COLOR_G': str(b1.green()),
+             'BACKGROUND_COLOR_B': str(b1.blue()),
+             'RECORD_TEXT_COLOR': studiolibrary.Color(255, 255, 255, 255).toString(),
+             'RECORD_TEXT_SELECTED_COLOR': studiolibrary.Color(255, 255, 255, 255).toString(),
+             'RECORD_BACKGROUND_COLOR': studiolibrary.Color(255, 255, 255, 20).toString(),
+             'RECORD_BACKGROUND_SELECTED_COLOR': self.color().toString()}
         return self._theme
 
     def styleSheet(self):
         """
         :rtype: str
         """
-        self._theme = None  # clear theme options
-        path = studiolibrary.RESOURCE_DIRNAME + "/css/style.css"
+        self._theme = None
+        path = studiolibrary.RESOURCE_DIRNAME + '/css/style.css'
         styleSheet = studiolibrary.StyleSheet.fromPath(path, options=self.theme())
         return styleSheet.data()
 
@@ -423,7 +400,7 @@ This does not modify or delete the contents of the library.""" % self.name()
         """
         :rtype: studiolibrary.Color
         """
-        c = self.settings().get("color", Library.DEFAULT_COLOR)
+        c = self.settings().get('color', Library.DEFAULT_COLOR)
         return studiolibrary.Color.fromString(c)
 
     def setColor(self, color):
@@ -431,13 +408,13 @@ This does not modify or delete the contents of the library.""" % self.name()
         :type color: studiolibrary.Color
         """
         c = studiolibrary.Color(color.red(), color.green(), color.blue(), color.alpha())
-        self.settings().set("color", c.toString())
+        self.settings().set('color', c.toString())
 
     def backgroundColor(self):
         """
         :rtype: studiolibrary.Color
         """
-        c = self.settings().get("backgroundColor", Library.DEFAULT_BACKGROUND_COLOR)
+        c = self.settings().get('backgroundColor', Library.DEFAULT_BACKGROUND_COLOR)
         return studiolibrary.Color.fromString(c)
 
     def setBackgroundColor(self, color):
@@ -445,34 +422,30 @@ This does not modify or delete the contents of the library.""" % self.name()
         :type color: studiolibrary.Color
         """
         c = studiolibrary.Color(color.red(), color.green(), color.blue(), color.alpha())
-        self.settings().set("backgroundColor", c.toString())
+        self.settings().set('backgroundColor', c.toString())
 
     def path(self):
         """
         :rtype: str
         """
-        return self.settings().get("path", "")
+        return self.settings().get('path', '')
 
-    def validateName(self, name, caseSensitive=True):
+    def validateName(self, name, caseSensitive = True):
         """
         :type name: str
         """
         libraries = {}
-
         if not name or not name.strip():
             raise LibraryValidateError('Cannot use an empty name "%s"!' % name)
-
         try:
             name.decode('ascii')
         except UnicodeDecodeError:
             raise LibraryValidateError('The name "%s" is not an ascii-encoded string!' % name)
 
         studiolibrary.validateString(name)
-
         if name in Library._libraries:
             if self != Library._libraries[name]:
                 raise LibraryValidateError('The Library "%s" already exists!' % name)
-
         if caseSensitive:
             for n in Library._libraries:
                 libraries[n.lower()] = Library._libraries[n]
@@ -486,15 +459,12 @@ This does not modify or delete the contents of the library.""" % self.name()
         """
         :type path: str
         """
-        if "." in path:
+        if '.' in path:
             raise LibraryValidateError('Invalid token "." (dot) found in path "%s"!' % path)
-
-        if "\\" in path:
+        if '\\' in path:
             raise LibraryValidateError("Please use '/' instead of '\\'. Invalid token found for path '%s'!" % path)
-
         if not path or not path.strip():
             raise LibraryValidateError("Cannot set an empty path '%s'!" % path)
-
         if not os.path.exists(path):
             raise LibraryValidateError("Cannot find folder path '%s'!" % path)
 
@@ -503,7 +473,7 @@ This does not modify or delete the contents of the library.""" % self.name()
         :type path: str
         """
         self.validatePath(path)
-        self.settings().set("path", path)
+        self.settings().set('path', path)
         Library.onPathChanged.emit(self)
 
     def setDefault(self, value):
@@ -513,6 +483,7 @@ This does not modify or delete the contents of the library.""" % self.name()
         """
         for library in self.libraries():
             library._setDefault(False)
+
         self._setDefault(value)
 
     def _setDefault(self, value):
@@ -520,26 +491,26 @@ This does not modify or delete the contents of the library.""" % self.name()
         :type value: bool
         :rtype: None
         """
-        self.settings().set("isDefault", value)
+        self.settings().set('isDefault', value)
 
     def isDefault(self):
         """
         :rtype: bool
         """
-        return self.settings().get("isDefault", False)
+        return self.settings().get('isDefault', False)
 
     def versionPath(self):
         """
         :rtype: str
         """
-        return self.settings().get("versionPath", "")
+        return self.settings().get('versionPath', '')
 
     def setVersionPath(self, path):
         """
         :type path: str
         """
         self.validatePath(path)
-        self.settings().set("versionPath", path)
+        self.settings().set('versionPath', path)
 
     def settings(self):
         """
@@ -578,28 +549,23 @@ This does not modify or delete the contents of the library.""" % self.name()
         if not self.path():
             result = self.execWelcomeDialog()
             if result == QtGui.QDialog.Rejected:
-                logger.debug("Dialog was canceled")
+                logger.debug('Dialog was canceled')
                 return
         elif not os.path.exists(self.path()):
             result = self.execSettingsDialog()
             if result == QtGui.QDialog.Rejected:
-                logger.debug("Dialog was canceled")
+                logger.debug('Dialog was canceled')
                 return
-
         logger.debug("Showing library '%s'" % self.path())
         self.setKwargs(kwargs)
-
-        # Create a new window
         if not self.libraryWidget():
             self.unloadPlugins()
             libraryWidget = studiolibrary.LibraryWidget(library=self)
             self.setLibraryWidget(libraryWidget)
         else:
             self.libraryWidget().close()
-
         self.libraryWidget().showNormal()
         self.libraryWidget().raiseWindow()
-
         Library.onLoaded.emit(self)
 
     def settingsDialog(self):
@@ -637,13 +603,11 @@ This does not modify or delete the contents of the library.""" % self.name()
         color = self.color()
         backgroundColor = self.backgroundColor()
         result = self.settingsDialog().exec_()
-
         if result == QtGui.QDialog.Accepted:
             self.saveSettingsDialog()
         else:
             self.setColor(color)
             self.setBackgroundColor(backgroundColor)
-
         return result
 
     @staticmethod
@@ -652,42 +616,35 @@ This does not modify or delete the contents of the library.""" % self.name()
         :rtype: None
         """
         library = Library()
-        settings = studiolibrary.MetaFile("")
+        settings = studiolibrary.MetaFile('')
         library.setSettings(settings)
-
         settingsDialog = studiolibrary.SettingsDialog(None, library=library)
-        settingsDialog.setTitle("New Library!")
-        settingsDialog.setHeader("Create a new library")
-        settingsDialog.setText("Create a new library with a different folder location and switch between them. "
-                               "For example; This could be useful when working on different film productions, "
-                               "or for having a shared library and a local library.")
-
+        settingsDialog.setTitle('New Library!')
+        settingsDialog.setHeader('Create a new library')
+        settingsDialog.setText('Create a new library with a different folder location and switch between them. For example; This could be useful when working on different film productions, or for having a shared library and a local library.')
         result = settingsDialog.exec_()
-
         if result == QtGui.QDialog.Accepted:
             name = settingsDialog.name()
             path = settingsDialog.location()
-
             library.validateName(name)
             library.validatePath(path)
-
             library = Library.fromName(name)
             library.setPath(path)
             library.settings().data().update(settings.data())
             library.show()
             Library.onAdded.emit(library)
-
             return library
         else:
-            logger.info("New library dialog was canceled!")
+            logger.info('New library dialog was canceled!')
+            return
 
     def showWelcomeDialog(self):
         """
         :rtype: None
         """
         self.showSettingsDialog()
-        self.settingsDialog().setTitle("Hello!")
-        self.settingsDialog().setHeader("Welcome to the Studio Library")
+        self.settingsDialog().setTitle('Hello!')
+        self.settingsDialog().setHeader('Welcome to the Studio Library')
         self.settingsDialog().setText(Library.WELCOME_DIALOG_TEXT)
         return self.settingsDialog()
 
@@ -696,15 +653,12 @@ This does not modify or delete the contents of the library.""" % self.name()
         :rtype: None
         """
         self.settingsDialog().close()
-
-        self.settingsDialog().setTitle("Settings")
-        self.settingsDialog().setHeader("Local Library Settings")
+        self.settingsDialog().setTitle('Settings')
+        self.settingsDialog().setHeader('Local Library Settings')
         self.settingsDialog().setText(Library.SETTINGS_DIALOG_TEXT)
-
         self.settingsDialog().setName(self.name())
         self.settingsDialog().setLocation(self.path())
         self.settingsDialog().updateStyleSheet()
-
         self.settingsDialog().showNormal()
         return self.settingsDialog()
 
@@ -714,7 +668,6 @@ This does not modify or delete the contents of the library.""" % self.name()
         """
         if len(Library.libraries()) == 1:
             self.setDefault(True)
-
         self.setName(self.settingsDialog().name())
         self.setColor(self.settingsDialog().color())
         self.setPath(self.settingsDialog().location())

@@ -48,7 +48,7 @@
 #       x show bool result
 ########################################################
 
-
+# THIS CHECKER IS THE MOST UP TO DATE, USE IT tO IMPLEMENTS CHARS AND SETS CHECK AND FUTUR ANIM
 
 
 import os,sys

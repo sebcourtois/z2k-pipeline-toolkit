@@ -1,3 +1,4 @@
+# Embedded file name: C:\jipe_Local\z2k-pipeline-toolkit\maya_mods\third_party\scripts\studiolibrary\api\folder.py
 """
 Released subject to the BSD License
 Please visit http://www.voidspace.org.uk/python/license.shtml
@@ -37,35 +38,31 @@ doesn't happen to anyone else.
 import os
 import logging
 import studiolibrary
-
 from PySide import QtGui
-
-
-__all__ = ["Folder"]
+__all__ = ['Folder']
 logger = logging.getLogger(__name__)
-
 
 class InvalidPathError(Exception):
     """
     """
+    pass
 
 
 class Folder(studiolibrary.MasterPath):
-
-    META_PATH = "<PATH>/.studioLibrary/folder.dict"
-    ORDER_PATH = "<PATH>/.studioLibrary/order.list"
+    META_PATH = '<PATH>/.studioLibrary/folder.dict'
+    ORDER_PATH = '<PATH>/.studioLibrary/order.list'
 
     def __init__(self, path):
         """
         :type path: str
         """
         if not path:
-            raise InvalidPathError("Invalid folder path specified")
-
+            raise InvalidPathError('Invalid folder path specified')
         studiolibrary.MasterPath.__init__(self, path)
         self._pixmap = None
+        return
 
-    def save(self, force=False):
+    def save(self, force = False):
         """
         """
         logger.debug("Saving folder '%s'" % self.path())
@@ -73,8 +70,7 @@ class Folder(studiolibrary.MasterPath):
             if force:
                 self.retire()
             else:
-                raise Exception("Folder already exists!")
-
+                raise Exception('Folder already exists!')
         self.metaFile().save()
         logger.debug("Saved folder '%s'" % self.path())
 
@@ -84,18 +80,15 @@ class Folder(studiolibrary.MasterPath):
         """
         if 'bold' in self.metaFile().data():
             del self.metaFile().data()['bold']
-
         if 'color' in self.metaFile().data():
             del self.metaFile().data()['color']
-
         if 'iconPath' in self.metaFile().data():
             del self.metaFile().data()['iconPath']
-
         if 'iconVisibility' in self.metaFile().data():
             del self.metaFile().data()['iconVisibility']
-
         self.metaFile().save()
         self._pixmap = None
+        return
 
     def setColor(self, color):
         """
@@ -103,9 +96,10 @@ class Folder(studiolibrary.MasterPath):
         """
         self._pixmap = None
         if isinstance(color, QtGui.QColor):
-            color = ('rgb(%d, %d, %d, %d)' % color.getRgb())
-        self.metaFile().set("color", color)
+            color = 'rgb(%d, %d, %d, %d)' % color.getRgb()
+        self.metaFile().set('color', color)
         self.metaFile().save()
+        return
 
     def color(self):
         """
@@ -113,30 +107,31 @@ class Folder(studiolibrary.MasterPath):
         """
         color = self.metaFile().get('color', None)
         if color:
-            r, g, b, a = eval(color.replace('rgb', ""), {})
+            r, g, b, a = eval(color.replace('rgb', ''), {})
             return QtGui.QColor(r, g, b, a)
         else:
-            return None
+            return
+            return
 
     def setIconVisible(self, value):
         """
         :type value: bool
         """
-        self.metaFile().set("iconVisibility", value)
+        self.metaFile().set('iconVisibility', value)
         self.metaFile().save()
 
     def isIconVisible(self):
         """
         :rtype: bool
         """
-        return self.metaFile().get("iconVisibility", True)
+        return self.metaFile().get('iconVisibility', True)
 
-    def setBold(self, value, save=True):
+    def setBold(self, value, save = True):
         """
         :type value: bool
         :type save: bool
         """
-        self.metaFile().set("bold", value)
+        self.metaFile().set('bold', value)
         if save:
             self.metaFile().save()
 
@@ -144,7 +139,7 @@ class Folder(studiolibrary.MasterPath):
         """
         :rtype: bool
         """
-        return self.metaFile().get("bold", False)
+        return self.metaFile().get('bold', False)
 
     def name(self):
         """
@@ -165,31 +160,31 @@ class Folder(studiolibrary.MasterPath):
         self._pixmap = None
         self.metaFile().set('iconPath', iconPath)
         self.metaFile().save()
+        return
 
     def iconPath(self):
         """
         :rtype: str
         """
-        iconPath = self.metaFile().get("icon", None)  # Legacy
-        iconPath = self.metaFile().get("iconPath", iconPath)
+        iconPath = self.metaFile().get('icon', None)
+        iconPath = self.metaFile().get('iconPath', iconPath)
         if not iconPath:
-            return studiolibrary.image("folder")
-        return iconPath
+            return studiolibrary.image('folder')
+        else:
+            return iconPath
 
     def pixmap(self):
         """
         :rtype: QtGui.QPixmap
         """
         if not self.isIconVisible():
-            return studiolibrary.pixmap("")
-
+            return studiolibrary.pixmap('')
         if not self._pixmap:
             iconPath = self.iconPath()
             color = self.color()
-            if iconPath == studiolibrary.image("folder") and not color:
+            if iconPath == studiolibrary.image('folder') and not color:
                 color = QtGui.QColor(250, 250, 250, 200)
             self._pixmap = studiolibrary.pixmap(iconPath, color=color)
-
         return self._pixmap
 
     def orderPath(self):
@@ -206,11 +201,9 @@ class Folder(studiolibrary.MasterPath):
         """
         path = self.orderPath()
         dirname = os.path.dirname(path)
-
         if not os.path.exists(dirname):
             os.makedirs(dirname)
-
-        f = open(path, "w")
+        f = open(path, 'w')
         f.write(str(order))
         f.close()
 
@@ -220,7 +213,7 @@ class Folder(studiolibrary.MasterPath):
         """
         path = self.orderPath()
         if os.path.exists(path):
-            f = open(path, "r")
+            f = open(path, 'r')
             data = f.read()
             f.close()
             if data.strip():

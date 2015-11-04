@@ -1,4 +1,4 @@
-#!/usr/bin/python
+# Embedded file name: C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/third_party/scripts/studiolibrary/packages\studiolibraryplugins\selectionsetplugin.py
 """
 Released subject to the BSD License
 Please visit http://www.voidspace.org.uk/python/license.shtml
@@ -38,10 +38,7 @@ doesn't happen to anyone else.
 import os
 import mutils
 import mayabaseplugin
-
-
 from PySide import QtGui
-
 
 class PluginError(Exception):
     """Base class for exceptions in this module."""
@@ -55,11 +52,9 @@ class Plugin(mayabaseplugin.Plugin):
         :type library: studiolibrary.Library
         """
         mayabaseplugin.Plugin.__init__(self, library)
-
-        self.setName("Selection Set")
-        self.setIconPath(self.dirname() + "/resource/images/set.png")
-        self.setExtension("set")
-
+        self.setName('Selection Set')
+        self.setIconPath(self.dirname() + '/resource/images/set.png')
+        self.setExtension('set')
         self.setRecord(Record)
         self.setInfoWidget(SelectionSetInfoWidget)
         self.setCreateWidget(SelectionSetCreateWidget)
@@ -73,12 +68,11 @@ class Record(mayabaseplugin.Record):
         :rtype: None
         """
         mayabaseplugin.Record.__init__(self, *args, **kwargs)
-        self.setTransferBasename("set.json")
+        self.setTransferBasename('set.json')
         self.setTransferClass(mutils.SelectionSet)
-
-        self.setTransferBasename("set.list")
+        self.setTransferBasename('set.list')
         if not os.path.exists(self.transferPath()):
-            self.setTransferBasename("set.json")
+            self.setTransferBasename('set.json')
 
     def doubleClicked(self):
         """
@@ -93,12 +87,12 @@ class Record(mayabaseplugin.Record):
         namespaces = self.namespaces()
         try:
             self.load(namespaces=namespaces)
-        except Exception, msg:
+        except Exception as msg:
             if self.libraryWidget():
                 self.libraryWidget().setError(msg)
             raise
 
-    def load(self, namespaces=None):
+    def load(self, namespaces = None):
         """
         :type namespaces: list[str] | None
         """
@@ -141,6 +135,6 @@ class SelectionSetCreateWidget(mayabaseplugin.CreateWidget):
         mayabaseplugin.CreateWidget.__init__(self, *args, **kwargs)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import studiolibrary
     studiolibrary.main()

@@ -10,10 +10,11 @@
 # Comment : wip
 #
 # TO DO:
-#   - add comment from version.
+#   WIP add comment from version for now it's alway the edited version wich is alway a public n+1 version (auto increment probleme)
+#   - add release and unLock btn
+#   x Make it contextual (add mode contextual) this is done outside in the ReleaseTool_ALADIN_LAMP.py
+#   aboard: add type chooser (previz_ref/anim_ref/previz_scene/anim_scene) et enlevé le ref c est de toute facon pour le release
 #   x add seeRef 
-#   - Make it contextual (add mode contextual)
-#   - add type chooser (previz_ref/anim_ref/previz_scene/anim_scene) et enlevé le ref c est de toute facon pour le release
 #   x add cat chooser to the GUI, "set/env/char/prop"
 #   x handle module import style
 #   x Unlockink the edited file if not saved
@@ -21,7 +22,7 @@
 #   x debug/advanced mode
 #   - add save debug file
 #   - add filter ability for big menu list
-#   - ass see REF button
+#   
 ########################################################
 
 
@@ -68,6 +69,7 @@ class Z2K_ReleaseTool (object):
         self.destinationAsset = destinationAsset
         self.destinationAssetType = destinationAssetType
         self.theProject = theProject
+        self.theComment = theComment
         print "**** projConnectB = ", projConnectB
         if projConnectB :
             self.proj=Z2K.projConnect(theProject=theProject)
@@ -144,7 +146,7 @@ class Z2K_ReleaseTool (object):
 
 
     def release_Asset(self,destinationAsset="chr_aurelien_manteau", destinationAssetType = "previz_ref",
-        theComment= "auto rock the casbah release !",
+        theComment= "auto rock the casbah release !", autoUnlock = False,
         *args, **kwargs):
         print "release_Asset()"
 
@@ -154,6 +156,8 @@ class Z2K_ReleaseTool (object):
         path_private_toPublishAbs= path_private_toPublish.absPath()
         print "path_private_toPublish=", path_private_toPublishAbs
         
+
+
         # save file with Maya at the supposed place
         newName = cmds.file (rename = path_private_toPublishAbs)
         exportedFileM= cmds.file ( save=True, force=True, options= "v=0", type= "mayaBinary", preserveReferences=False,  )
@@ -190,16 +194,16 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
     upImg= basePath + ICONPATH
         
     
-    def __init__(self, sourceAsset="", assetCat="", SourceAssetType="", destinationAsset="", destinationAssetType="", projConnectB="",theProject="",*args, **kwargs):
+    def __init__(self, sourceAsset="", assetCat="", SourceAssetType="", destinationAsset="", destinationAssetType="", projConnectB="",theProject="",theComment="",*args, **kwargs):
         # self = Z2K_ReleaseTool
-        Z2K_ReleaseTool.__init__(self,sourceAsset,assetCat,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject)
+        Z2K_ReleaseTool.__init__(self,sourceAsset,assetCat,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject,theComment)
         # self.sourceAsset = sourceAsset
         # self.SourceAssetType = SourceAssetType
         # self.destinationAsset = destinationAsset
         # self.destinationAssetType = destinationAssetType
         # self.projConnectB = projConnectB
         # self.theProject = theProject
-
+        # self.theComment = theComment
         # self = Z2K_ReleaseTool(*args, **kwargs)
         print "theProject = ", self.proj
         print self.name,self.version
@@ -215,6 +219,8 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
         self.destinationAsset = cmds.textField(self.BdestinationAsset, q=1,text=True)
         self.destinationAssetType = cmds.textField(self.BdestinationAssetType, q=1,text=True)
+
+        self.theComment =  cmds.textField(self.BtheComment, q=1,text=True)
 
         print self.sourceAsset,"->",self.destinationAsset, self.sourceAssetType,"->",self.destinationAssetType
     
@@ -275,7 +281,8 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         self.getInterfaceValues()
         print "X",self.sourceAsset,"->",self.destinationAsset, self.sourceAssetType,"->",self.destinationAssetType
         try :
-            exportedFileZ2K = self.release_Asset( destinationAsset= self.destinationAsset ,destinationAssetType = self.destinationAssetType)
+            exportedFileZ2K = self.release_Asset( destinationAsset= self.destinationAsset ,destinationAssetType = self.destinationAssetType,
+                                    theComment= self.theComment)
             cmds.confirmDialog(title= "ASSET RELEASE DONE",message= exportedFileZ2K,button="OK", messageAlign="center", icon="information")
 
         except Exception,err:
@@ -303,7 +310,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         # if cmds.window(self.cf, q=True, exists=True):
         #     cmds.deleteUI(self.cf, window=True)
         #create la window et rename apres
-        print "MAMI BOUSIN:",cmds.dockControl(self.dc, q=True, exists=True)
+        print "DOCK MAMI BOUSIN:",cmds.dockControl(self.dc, q=True, exists=True)
         if cmds.dockControl(self.dc, q=True, exists=True):
             cmds.deleteUI(self.dc)
         if cmds.window(self.cf, q=True, exists=True):
@@ -395,15 +402,21 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         cmds.setParent("..")
         self.Brelease_Asset  = cmds.button("RELEASE ASSET",c= self.btn_release_Asset)
         
-        
+        # comment
+        self.commentRowL= cmds.rowLayout(nc=4, adj=2, manage=1)
+        cmds.text("Comment:")
+        self.BtheComment= cmds.textField("releaseComment",text=self.theComment, w=85, manage=1,enable=1)
+
+
         # debug options
         if not self.debug:
-            cmds.rowLayout(self.sourceRowL, e=1, manage=0)
-            # cmds.textField(self.BsourceAsset, e=1, manage=0)
-            # cmds.textField(self.BsourceAssetType, e=1, manage=0)
-            cmds.rowLayout(self.destiRowL, e=1, manage=0)
-            # cmds.textField(self.BdestinationAsset, e=1, manage=0)
-            # cmds.textField(self.BdestinationAssetType, e=1, manage=0)
+            cmds.rowLayout(self.sourceRowL, e=1, enable=0)
+
+            # cmds.textField(self.BsourceAsset, editable=0, )
+            # cmds.textField(self.BsourceAssetType, editable=0, )
+            cmds.optionMenu(self.BdestinationAssetMenu,e=1,enable=0)
+            cmds.rowLayout(self.destiRowL, e=1, enable=0)
+
 
         # show the window
         # cmds.showWindow(self.cf)

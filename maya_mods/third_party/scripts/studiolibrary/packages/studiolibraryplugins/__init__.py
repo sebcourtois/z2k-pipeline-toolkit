@@ -1,3 +1,4 @@
+# Embedded file name: C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/third_party/scripts/studiolibrary/packages\studiolibraryplugins\__init__.py
 """
 # Released subject to the BSD License
 # Please visit http://www.voidspace.org.uk/python/license.shtml
@@ -29,3 +30,4 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 """
+pass
