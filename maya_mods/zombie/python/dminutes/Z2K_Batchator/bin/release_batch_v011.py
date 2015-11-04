@@ -162,7 +162,6 @@ reload (jpIO)
 
 
 from davos.core import damproject
-reload(damproject)
 from davos.core.damtypes import DamAsset
 import os
 import dminutes.Z2K_ReleaseTool.Z2K_ReleaseTool as Z2KR
