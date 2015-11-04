@@ -1,4 +1,4 @@
-# Embedded file name: C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/third_party/scripts/studiolibrary/packages\studiolibraryplugins\__init__.py
+# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.8.6/build27/studiolibrary/packages/mutils\tests\test_mirrortable.py
 """
 # Released subject to the BSD License
 # Please visit http://www.voidspace.org.uk/python/license.shtml
@@ -15,7 +15,7 @@
    # notice, this list of conditions and the following disclaimer in the
    # documentation and/or other materials provided with the distribution.
    # * Neither the name of Kurt Rathjen nor the
-   # names of its contributors may be used to endorse or promote products
+   # objects of its contributors may be used to endorse or promote products
    # derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY KURT RATHJEN  ''AS IS'' AND ANY
@@ -30,4 +30,23 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 """
-pass
+import mutils
+import test_base
+
+class TestMirrorTable(test_base.TestBase):
+
+    def setUp(self):
+        """
+        """
+        pass
+
+    def matchObjects(self, expectedResult, srcName = None, dstName = None):
+        """
+        """
+        pass
+
+    def test_findOtherSide(self):
+        """
+        Test no matches
+        """
+        pass

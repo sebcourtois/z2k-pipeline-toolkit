@@ -50,14 +50,12 @@ import maya.mel as mel
 from functools import partial
 import inspect
 
-
 import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
 import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
 reload(Batch_CONFIG)
 from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
 print "DEBUGFILE=", DEBUGFILE
-
 
 
 class checkModule(object):
@@ -69,9 +67,10 @@ class checkModule(object):
     upImg= basePath + ICONPATH
 
 
-    def __init__(self, GUI=True, *args, **kwargs):
+    def __init__(self, GUI=True, parent="", *args, **kwargs):
         print "init"
         self.GUI=GUI
+        self.parent = parent
         self.ebg = True
         self.DebugPrintFile = DEBUGFILE
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
@@ -87,6 +86,10 @@ class checkModule(object):
             self.BDebugBoard = ""
             self.BCleanAll=""
             self.BClearAll=""
+
+        else:
+            self.insertLayout(parent=self.parent)
+
 
 
 
@@ -1104,7 +1107,7 @@ class checkModule(object):
         debugD = {}
         for obj in inObjL:
             # print "obj=", obj
-            test,debugL = self.isKeyed(inObj=obj)
+            test,debugL = jpZ.isKeyed(inObj=obj)
             # print "    *",test,debugL
             if test:
                 toReturnB = False
@@ -1156,7 +1159,7 @@ class checkModule(object):
     # ---------------------------------------------------------------------------------------------------------
     #--------------------- Buttons functions ----------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
-    @waiter
+    @jpZ.waiter
     def btn_checkStructure(self, controlN="", *args, **kwargs):
         boolResult=True
 
@@ -1184,7 +1187,7 @@ class checkModule(object):
         
         return boolResult
 
-    @waiter
+    @jpZ.waiter
     def btn_CleanScene(self, controlN="", *args, **kwargs):
         boolResult=True
 
@@ -1220,7 +1223,7 @@ class checkModule(object):
         
         return boolResult
         
-    @waiter
+    @jpZ.waiter
     def btn_CleanObjects(self, controlN="", *args, **kwargs):
         boolResult=True
 

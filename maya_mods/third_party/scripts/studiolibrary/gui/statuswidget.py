@@ -1,4 +1,4 @@
-# Embedded file name: C:\jipe_Local\z2k-pipeline-toolkit\maya_mods\third_party\scripts\studiolibrary\config.py
+# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.8.6/build27/studiolibrary\gui\statuswidget.py
 """
 Released subject to the BSD License
 Please visit http://www.voidspace.org.uk/python/license.shtml
@@ -35,22 +35,52 @@ doesn't happen to anyone else.
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 """
-import os
 import studiolibrary
-studiolibrary.Library.DEFAULT_PLUGINS = ['studiolibraryplugins.lockplugin',
- 'studiolibraryplugins.poseplugin',
- 'studiolibraryplugins.animationplugin',
- 'studiolibraryplugins.mirrortableplugin',
- 'studiolibraryplugins.selectionsetplugin']
-studiolibrary.CHECK_FOR_UPDATES_ENABLED = True
-studiolibrary.Analytics.ENABLED = True
-studiolibrary.Analytics.DEFAULT_ID = 'UA-50172384-1'
-studiolibrary.FoldersWidget.CACHE_ENABLED = True
-studiolibrary.FoldersWidget.SELECT_CHILDREN_ENABLED = False
-studiolibrary.Settings.DEFAULT_PATH = os.getenv('APPDATA') or os.getenv('HOME')
-studiolibrary.Settings.DEFAULT_PATH += '/studiolibrary'
-studiolibrary.Record.META_PATH = '<PATH>/.studioLibrary/record.dict'
-studiolibrary.Folder.META_PATH = '<PATH>/.studioLibrary/folder.dict'
-studiolibrary.Folder.ORDER_PATH = '<PATH>/.studioLibrary/order.list'
-studiolibrary.MasterPath.VERSION_CONTROL_ENABLED = True
-studiolibrary.MasterPath.VERSION_PATH = '<DIRNAME>/.studioLibrary/<NAME><EXTENSION>/<NAME><VERSION><EXTENSION>'
+from PySide import QtGui
+from PySide import QtCore
+DISPLAY_TIME = 6000
+
+class StatusWidget(QtGui.QWidget):
+
+    def __init__(self, *args):
+        QtGui.QWidget.__init__(self, *args)
+        studiolibrary.loadUi(self)
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        self.setObjectName('statusWidget')
+        self.setFixedHeight(19)
+        self.setMinimumWidth(5)
+        self._timer = QtCore.QTimer(self)
+        QtCore.QObject.connect(self._timer, QtCore.SIGNAL('timeout()'), self.clear)
+
+    def setError(self, text, msec = DISPLAY_TIME):
+        icon = studiolibrary.icon('error14', ignoreOverride=True)
+        self.ui.button.setIcon(icon)
+        self.ui.message.setStyleSheet('color: rgb(222, 0, 0);')
+        self.setText(text, msec)
+
+    def setWarning(self, text, msec = DISPLAY_TIME):
+        icon = studiolibrary.icon('warning14', ignoreOverride=True)
+        self.ui.button.setIcon(icon)
+        self.ui.message.setStyleSheet('color: rgb(222, 180, 0);')
+        self.setText(text, msec)
+
+    def setInfo(self, text, msec = DISPLAY_TIME):
+        icon = studiolibrary.icon('info14', ignoreOverride=True)
+        self.ui.button.setIcon(icon)
+        self.ui.message.setStyleSheet('')
+        self.setText(text, msec)
+
+    def setText(self, text, msec = DISPLAY_TIME):
+        if not text:
+            self.clear()
+        else:
+            self.ui.message.setText(text)
+            self._timer.stop()
+            self._timer.start(msec)
+
+    def clear(self):
+        self._timer.stop()
+        self.ui.message.setText('')
+        self.ui.message.setStyleSheet('')
+        icon = studiolibrary.icon('blank', ignoreOverride=True)
+        self.ui.button.setIcon(icon)

@@ -1,12 +1,17 @@
-# Embedded file name: C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/third_party/scripts/studiolibrary/packages\studiolibraryplugins\__init__.py
+# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.8.6/build27/studiolibrary\gui\newfolderdialog.py
 """
-# Released subject to the BSD License
-# Please visit http://www.voidspace.org.uk/python/license.shtml
-#
-# Copyright (c) 2014, Kurt Rathjen
-# All rights reserved.
-# Comments, suggestions and bug reports are welcome.
-#
+Released subject to the BSD License
+Please visit http://www.voidspace.org.uk/python/license.shtml
+
+Contact: kurt.rathjen@gmail.com
+Comments, suggestions and bug reports are welcome.
+Copyright (c) 2015, Kurt Rathjen, All rights reserved.
+
+It is a very non-restrictive license but it comes with the usual disclaimer.
+This is free software: test it, break it, just don't blame me if it eats your
+data! Of course if it does, let me know and I'll fix the problem so that it
+doesn't happen to anyone else.
+
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
    # * Redistributions of source code must retain the above copyright
@@ -18,7 +23,7 @@
    # names of its contributors may be used to endorse or promote products
    # derived from this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN  ''AS IS'' AND ANY
+# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN ''AS IS'' AND ANY
 # EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
 # DISCLAIMED. IN NO EVENT SHALL KURT RATHJEN BE LIABLE FOR ANY
@@ -30,4 +35,26 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 """
-pass
+import studiolibrary
+from PySide import QtGui
+from PySide import QtCore
+__all__ = ['NewFolderDialog']
+
+class NewFolderDialog(QtGui.QDialog):
+
+    def __init__(self, *args):
+        QtGui.QDialog.__init__(self, *args)
+        studiolibrary.loadUi(self)
+        self.setWindowTitle('Create Folder')
+        self._text = ''
+        self.connect(self.ui.cancelButton, QtCore.SIGNAL('clicked()'), self.close)
+        self.connect(self.ui.createButton, QtCore.SIGNAL('clicked()'), self.create)
+
+    def text(self):
+        return self._text
+
+    def create(self):
+        text = str(self.ui.lineEdit.text()).strip()
+        if text:
+            self._text = text
+            self.close()

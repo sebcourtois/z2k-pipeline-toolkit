@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
 import os
 import dminutes.Z2K_ReleaseTool.Z2K_ReleaseTool as z2kR
 reload (z2kR)
@@ -20,4 +21,4 @@ Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="prp_fusilSylvain_de
                         )
 Z2K_ReleaseTool_GuiI.createWin()
 
-Z2K_Pcheck = Z2K_PcheckD.checkModule(GUI=True,parent=Z2K_ReleaseTool_GuiI.layoutImportModule )
+Z2K_Pcheck = Z2K_PcheckD.checkModule(GUI=True, parent=Z2K_ReleaseTool_GuiI.layoutImportModule )

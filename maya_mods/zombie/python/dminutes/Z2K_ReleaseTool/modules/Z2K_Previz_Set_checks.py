@@ -67,9 +67,10 @@ class checkModule(object):
 
 
 
-    def __init__(self, GUI=True, *args, **kwargs):
+    def __init__(self,  GUI=True, parent="", *args, **kwargs):
         print "init"
         self.GUI=GUI
+        self.parent = parent
         self.ebg = True
         self.DebugPrintFile = DEBUGFILE
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
@@ -86,7 +87,8 @@ class checkModule(object):
             self.BCleanAll=""
             self.BClearAll=""
 
-
+        else:
+            self.insertLayout(parent=self.parent)
 
 
     # decorators ---------------------------
