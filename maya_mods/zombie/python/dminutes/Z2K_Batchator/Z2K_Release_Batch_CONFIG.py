@@ -7,8 +7,32 @@ DEBUGFILE= DEBUGFILE_PREVIZ_PRP
 # GUI
 Z2K_ICONPATH = "zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/"
 
-# don't forget the final "/" and put them all in the right direction : "/"
-BATCH_SOURCEFOLDER = "Z:/06_PARTAGE/jp/RELEASE_PUBLISH/A_PUBLIER/2015_10_26/ALL/"
+
+# donner ici la list des assets du meme type to release
+BATCH_ASSET_LIST = ["prp_feuille_dessinMonstreLucie",
+"prp_feuilleFroissee_dessinTombe",
+"prp_feuilleFroissee_dessinTombe",
+"prp_badgeMultiPass_gretchen",
+"prp_balaisBallons_default",
+
+"prp_carteControleur_aurelien",
+"prp_cartes_jeu1",
+
+"prp_casquette_zombillenium",
+"prp_feuilles_miranda",
+"prp_gomme_default",
+"prp_grpSacs_souvenirZ2k",
+"prp_hache_default",
+"prp_limeOngle_default",
+
+"prp_parapluie_default",
+"prp_petalesRose_noire",
+"prp_rose_noire",
+"prp_stickChauvSou_mauve",
+"prp_storeBaguette_default",
+"prp_ticketZ2k_default",
+"prp_cercueil_casse",
+"prp_cercueil_default",]
 
 # Batch parameters - All configuration is Done Here.
 ASSETCAT = "prp" #"chr","set","prp"
@@ -23,7 +47,6 @@ RELEASEMAYAFILE= 1
 UNLOCKFILE= 1
 PREPUBLISH_PYSCRIPTL = [
 "C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py",
-"C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/replaceAsset_batch_v001.py",
 ]
 PRERELEASE_PYSCRIPTL=[
 "C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Previz_prp_check_batch.py",

@@ -320,6 +320,47 @@ def getSel(*args, **kwargs):
 
 
 #♠--------------------- CHECK FUNCTION ------------------------------
+def isSet_meshCache_OK (theSet="set_meshCache",theType="prop",*args, **kwargs):
+        """ Description: check si le contenue du setMeshCache est conforme au type donné
+                theType : "set" or "something else / si c'est un "set" il cherche des group
+                            only, sinon le reste du tps des mesh only
+            Return : BOOL
+            Dependencies : cmds - getSetContent
+        """
+        toReturn =True
+        debug =""
+        print "theType=", theType
+        setContentL = getSetContent(inSetL=[theSet])
+        print "setContentL=", setContentL
+        if setContentL:
+            if theType not in ["set"]:
+                # cas general on veut seulement des mesh dans le set
+                for i in setContentL:
+                    sL= cmds.listRelatives(i,s=1,ni=1)
+                    if  sL:
+                        if not cmds.objectType(i) in ["transform"] and not len(sL)>0 :
+                            toReturn= False
+                            debug ="certain object ne sont pas des MESH"
+                    else:
+                        toReturn= False
+                        debug ="certain object ne sont pas des MESH"
+
+            else:
+                print "set"
+                # is a set donc on doit avoir seulement des group pour le moement
+                for i in setContentL:
+                    sL= cmds.listRelatives(i,s=1,ni=1)
+                    print "sL=", sL,cmds.objectType(i)
+                    if  sL or not cmds.objectType(i) in ["transform"] :
+                        toReturn =False
+                        debug ="certain object ne sont pas des Groups"
+
+        else:
+            toReturn= False
+            debug ="le set est vide"
+
+
+        return toReturn,debug
 
 def isKeyed ( inObj, *args, **kwargs):
         """ Description: Check if the given object'keyable attrib are effictively keyed

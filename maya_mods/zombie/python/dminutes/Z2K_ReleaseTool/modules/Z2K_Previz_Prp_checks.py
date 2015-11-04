@@ -15,7 +15,7 @@
 #                   from dminutes import assetconformation
 #                   reload(assetconformation)
 #                   assetconformation.setSubdiv()
-
+#       x add isSetMeshCacheOK()
 #       - clean obj button have to be grayed if checkStructure not done (setSmoothness need good structure)
 #       - add auto remove camera if is camera du pipe
 #       x add check for BigDaddy et BigDaddy_NeutralPose and base CTR
@@ -377,9 +377,11 @@ class checkModule(object):
 
         return toReturnB,debugD
 
+
     def checkGrp_geo(self,theGroup="asset|grp_geo",theAttrL= ["smoothLevel1","smoothLevel2"] ,*args, **kwargs):
         """ check if the attrib of smooth are present
         """
+        # TURNED OFF : THE CHECK IS NOT ANYMORE EXECUTED
         print("checkGrp_geo()")
         toCreateL = []
         toReturnB = True
@@ -407,7 +409,7 @@ class checkModule(object):
 
     def cleanGrp_geo (self, theGroup="asset|grp_geo",theAttrL= ["smoothLevel1","smoothLevel2"] ,assetType="previz", *args, **kwargs):
         print "cleanGrp_geo()"
-        
+        # TURNED OFF : THE CHECK IS NOT ANYMORE EXECUTED
         erroredL = []
         createdL= []
         toReturnB = True
@@ -684,7 +686,7 @@ class checkModule(object):
                             deletedL.append(node)
                     except Exception,err:
                         errorL.append(node)
-                        # print "ERROR on {0} : {1}".format(node,err)
+                        print "ERROR on {0} : {1}".format(node,err)
             if len(errorL)>0:
                 toReturnB = False
                 debugD["Errored"] = errorL
@@ -742,7 +744,7 @@ class checkModule(object):
             Dependencies : cmds - cleanUnusedNode()
         """
         self.printF( "CleanDisconnectedNodes()", st="t")
-        toReturnB,debugD = self.cleanUnusedNode(execptionTL = ["dagNode"], specificTL=[], mode="delete")
+        toReturnB,debugD = self.cleanUnusedNode(execptionTL = ["dagNode","defaultRenderUtilityList"], specificTL=[], mode="delete")
 
         return [toReturnB,debugD]
 
@@ -1011,13 +1013,22 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=2, e=True)
+        self.pBar_upd(step=1, maxValue=3, e=True)
 
         # steps
         if not self.checkBaseStructure()[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
         if not self.checkAssetStructure( )[0]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+        self.printF("isSetMeshCacheOK()", st="t")
+        res,details = jpZ.isSet_meshCache_OK ()
+        self.printF(res, st="r")
+        self.printF(details)
+
+        if not res:
             boolResult = False
         self.pBar_upd(step= 1,)
 

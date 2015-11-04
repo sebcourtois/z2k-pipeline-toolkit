@@ -28,10 +28,9 @@ import dminutes.Z2K_wrapper as Z2K
 reload(Z2K)
 import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
-import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
+import dminutes.Z2K_Batchator.First_PublishAndRelease_CONFIG as Batch_CONFIG
 reload(Batch_CONFIG)
 from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
-print "DEBUGFILE=", DEBUGFILE
 
 
 
@@ -281,3 +280,5 @@ class Z2K_ASSET_replacer_GUI(Z2K_ASSET_replacer):
 # exec
 # Z2K_ASSET_replacer_GUIA.insertLayout(parent="")
 # Z2K_ASSET_replacer_GUIA = Z2K_ASSET_replacer_GUI(replacingScene="")
+
+

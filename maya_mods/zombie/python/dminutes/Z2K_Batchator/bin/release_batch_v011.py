@@ -563,29 +563,13 @@ class Z2K_ReleaseBatch(object):
 # ----------------- EXEC --------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------------------
 
-sourceFolder = BATCH_SOURCEFOLDER #"Z:/06_PARTAGE/jp/ENVOI/150928/" test FINAL_PROPS_01
 
-# construct scenelist from folder
-fileL = [x for x in os.listdir(sourceFolder) if os.path.isfile(sourceFolder+ x) ]
-assetToReleaseL = []
-erroredL = []
-for f in sorted(fileL):
-
-    print f
-    if f.count("_") in [3]:
-        asset = f.rsplit("_",1)[0]
-        print "   ",asset
-        assetToReleaseL.append(asset)
-    else: 
-        erroredL.append(f)
-
-# test la conformité des nom d'asset
-if len(erroredL):
-    for k in erroredL:
-        print "NAME ERROR ON: {0}".format(k)
-
-    raw_input("EXIT_SCRIPT_AND_CHECK_YOUR_FILENAMES")
 print "!!!!!!!!!!!!!!!!!!!!!!!!!! curproj=", curproj
+# get asset list from batch CONFIG file
+assetToReleaseL= BATCH_ASSET_LIST
+for k in assetToReleaseL:
+    print "* ",k
+
 
 # launch the batch
 # DON'T FORGET TO SET WELL THE PROJECT AND OPTIONS
