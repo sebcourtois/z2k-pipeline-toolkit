@@ -72,7 +72,7 @@ class MrcFile(DrcFile):
             p = self.envPath()
 
             damEntity = self.getEntity(fail=True)
-            refDir = damEntity.getResource("public", "ref_dir")
+            refDir = damEntity.getResource("public", "ref_dir", None)
             if refDir and (normCase(self.parentDir().absPath()) == normCase(refDir.absPath())):
                 sNamespace = underJoin((damEntity.name, padded(1, 2)))
 
