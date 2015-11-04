@@ -5,27 +5,19 @@
 import os
 import pymel.core as pc
 
-from pytd.util.fsutils import pathJoin
-
 from dminutes import sceneManager
 reload(sceneManager)
-
-from davos.core import damproject
-reload(damproject)
-
-from davos_maya.core import mrclibrary  
-MrcLibrary = mrclibrary.MrcLibrary
 
 import dminutes.maya_scene_operations as mop
 reload(mop)
 
-"""Global instance of sceneManager Class""" 
+"""Global instance of sceneManager Class"""
 SCENE_MANAGER = None
 
-"""Global instance of shotgunengine Class""" 
+"""Global instance of shotgunengine Class"""
 SG = None
 
-"""Various caches for UI lists""" 
+"""Various caches for UI lists"""
 CATEG_ITEMS = {}
 TASKS = {}
 VERSIONS = {}
@@ -47,7 +39,7 @@ def sceneManagerUI():
     if (pc.window('sceneManagerUI', q=True, exists=True)):
         pc.deleteUI('sceneManagerUI')
 
-    dirname, filename = os.path.split(os.path.abspath(__file__))
+    dirname, _ = os.path.split(os.path.abspath(__file__))
     ui = pc.loadUI(uiFile=dirname + "/UI/sceneManagerUIB.ui")
     connectCallbacks()
 
@@ -82,7 +74,7 @@ def initialize(d_inContext=None):
 def updateButtons():
     """Update buttons availability from maya_scene_operations commands dictionary"""
     for buttonName in ACTION_BUTTONS:
-        prefix, action, suffix = buttonName.split('_')
+        _, action, _ = buttonName.split('_')
         enable = False if not 'task' in SCENE_MANAGER.context else mop.canDo(action, SCENE_MANAGER.context['task']['content']) == True
         pc.control(buttonName, edit=True, enable=enable)
 
@@ -92,7 +84,7 @@ def refreshContextUI():
     """Update buttons availability from contexts (scene Context / UI Context)"""
     contextMatches = SCENE_MANAGER.refreshSceneContext()
 
-    pc.control('sm_switchContext_bt', edit=True, enable= not contextMatches)
+    pc.control('sm_switchContext_bt', edit=True, enable=not contextMatches)
 
     pc.control('sm_capture_bt', edit=True, enable=contextMatches)
     pc.control('sm_saveWip_bt', edit=True, enable=contextMatches)
@@ -153,13 +145,14 @@ def refreshOptionMenu(s_inName, a_Items):
         pc.deleteUI(item)
 
     for item in a_Items:
-        pc.menuItem(s_inName + "_" + item, label= item, parent=s_inName)
+        pc.menuItem(s_inName + "_" + item, label=item, parent=s_inName)
 
 def refreshStep(*args):
     """Call when the step is changed (this could be included in 'doStepChanged')"""
     global CATEG_ITEMS
 
-    if SCENE_MANAGER.context['step']['entity_type'] == 'Shot':
+    sgStep = SCENE_MANAGER.context['step']
+    if sgStep['entity_type'] == 'Shot':
         pc.control('sm_asset_chooser_grp', edit=True, visible=False)
         pc.control('sm_shot_chooser_grp', edit=True, visible=True)
 
@@ -182,7 +175,7 @@ def refreshStep(*args):
         refreshOptionMenu('sm_seq_dd', categ_names)
         doCategChanged(*args)
 
-    elif SCENE_MANAGER.context['step']['entity_type'] == 'Asset':
+    elif sgStep['entity_type'] == 'Asset':
         pc.control('sm_asset_chooser_grp', edit=True, visible=True)
         pc.control('sm_shot_chooser_grp', edit=True, visible=False)
 
@@ -205,7 +198,7 @@ def refreshStep(*args):
         doCategChanged(*args)
 
     else:
-        pc.error('Unknown entity type {0} from step {1} !'.format(SCENE_MANAGER.context['entity_type'], step))
+        pc.error('Unknown entity type {0} from step {1} !'.format(SCENE_MANAGER.context['entity_type'], sgStep))
 
 #------------------------------------------------------------------
 #               Button functions
@@ -263,7 +256,7 @@ def doStepChanged(*args):
             SCENE_MANAGER.context['step'] = allowedStep
             SG.updateStep(allowedStep)
             break
-    
+
     if SCENE_MANAGER.context['step'] == None:
         pc.error('Cannot get entity type from step {0} !'.format(step))
 
@@ -307,7 +300,7 @@ def doTaskChanged(*args):
     #get Versions on task
     VERSIONS = {}
     versions = SCENE_MANAGER.getVersions()
-    
+
     for version in versions:
         VERSIONS[version['code']] = version
         SCENE_MANAGER.context['version'] = version
@@ -358,17 +351,17 @@ def doRefreshSceneInfo(*args):
     """Displays the comparison of shotgun and active scene Assets"""
     assetsInfo = SCENE_MANAGER.getAssetsInfo()
 
-    gridContent = ["Scene", "Shotgun"]
+    #gridContent = ["Scene", "Shotgun"]
 
-    lengths = [20,20]
+    lengths = [20, 20]
     for assetInfo in assetsInfo:
         if len(assetInfo['localinfo']) > lengths[0]:
             lengths[0] = len(assetInfo['localinfo'])
 
         if len(assetInfo['dbinfo']) > lengths[1]:
-            lengths[1] = len(assetInfo['dbinfo'])    
+            lengths[1] = len(assetInfo['dbinfo'])
 
-    formatting = " {0:<"+str(lengths[0])+"}| {1:<"+str(lengths[1])+"}"
+    formatting = " {0:<" + str(lengths[0]) + "}| {1:<" + str(lengths[1]) + "}"
 
     pc.textScrollList("sm_sceneInfo_lb", edit=True, removeAll=True)
     pc.textScrollList("sm_sceneInfo_lb", edit=True, append=formatting.format("SCENE", "DATABASE"))
@@ -454,7 +447,7 @@ def doCreateFolder(*args):
     """Associated button is hidden (forbidden)"""
     #For debug purposes (Cheers !!!)
     #print str(SCENE_MANAGER.context)
-    SCENE_MANAGER.createFolder() 
+    SCENE_MANAGER.createFolder()
 
 #action buttons
 def doInit(*args):
@@ -468,8 +461,8 @@ def doCreate(*args):
     doRefreshSceneInfo()
     doRefreshFileStatus()
 
-def doPouet(*args,**kwargs):
+def doPouet(*args, **kwargs):
     """Best function ever"""
     print "pouet"
-    for i,j in  SCENE_MANAGER.context.iteritems():
-        print "    ",i,j
+    for i, j in  SCENE_MANAGER.context.iteritems():
+        print "    ", i, j

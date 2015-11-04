@@ -19,8 +19,9 @@ if [%5]==[] (SET OUTFOLDER=%INFOLDER%) else (SET OUTFOLDER=%5)
 SET OUTPATH=%OUTFOLDER%%OUTNAME%
 
 ECHO "-------- VIDEO EXTRACTION ---------"
-REM OTHER OSSIBLE CODECS -vcodec mpeg4 -acodec copy
-call %FFMPEG% -i %1 -c:v libx264 -preset slow -acodec libmp3lame -ss %STARTTC% -to %ENDTC% -y %OUTPATH%
+REM OTHER POSSIBLE CODECS -vcodec mpeg4 -acodec copy
+REM OTHER POSSIBLE AUDIO CODECS -acodec libmp3lame     => does not work ?
+call %FFMPEG% -i %1 -c:v libx264 -preset slow -acodec libvo_aacenc -ss %STARTTC% -to %ENDTC% -y %OUTPATH%
 
 ECHO "-------- AUDIO EXTRACTION ---------"
 SET AUDIOOUT=%OUTPATH:animatic.mov=sound.wav%
