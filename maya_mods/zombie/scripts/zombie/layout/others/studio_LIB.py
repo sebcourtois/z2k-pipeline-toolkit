@@ -31,8 +31,13 @@ previzPath = "studiolib_LIB/Previz"
 print "commonDir=",root
 superusers = ["jipe"]
 
-
+# test if root exists
+if os.path.isdir(root):
+    finalRoot=root
+else:
+    finalRoot = ""
+print "finalRoot=",finalRoot
 #finally launch the lib interfaces
-stl.main( name=name,root=root, superusers=superusers, lockFolder="Approved", show=True, analytics=False)
+stl.main( name=name,root=finalRoot, superusers=superusers, lockFolder="Approved", show=True, analytics=False)
 stl.main( name="My Local", root=localdir,show=False, analytics=False)
 
