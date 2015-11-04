@@ -50,18 +50,21 @@ import maya.mel as mel
 from functools import partial
 import inspect
 
+import dminutes.jipeLib_Z2K as jpZ
+reload(jpZ)
 import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
 reload(Batch_CONFIG)
 from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
-
 print "DEBUGFILE=", DEBUGFILE
 
 class checkModule(object):
     name = "AssetPreviz_Module"
     cf = name
 
-    basePath =  os.environ.get("MAYA_MODULE_PATH").split(";")[0]
-    upImg= basePath +"/zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/Z2K_PREVIZ_LOGO_A3.bmp"
+    basePath = jpZ.getBaseModPath()
+    ICONPATH = Z2K_ICONPATH + "Z2K_SET_LOGO_A1.bmp"
+    upImg= basePath + ICONPATH
+
 
 
     def __init__(self, GUI=True, *args, **kwargs):

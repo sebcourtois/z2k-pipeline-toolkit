@@ -4,7 +4,7 @@ import os
 import dminutes.Z2K_ReleaseTool.Z2K_ReleaseTool as z2kR
 reload (z2kR)
 
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_Chr_checks as Z2K_PcheckD
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_PROP_checks as Z2K_PcheckD
 reload(Z2K_PcheckD)
 
 
@@ -12,8 +12,8 @@ reload(Z2K_PcheckD)
 curproj = os.environ.get("DAVOS_INIT_PROJECT")
 print curproj
 
-Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", assetCat = "chr",
-                        destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
+Z2K_ReleaseTool_GuiI = z2kR.Z2K_ReleaseTool_Gui(sourceAsset="prp_fusilSylvain_default", SourceAssetType="previz_scene", assetCat = "prp",
+                        destinationAsset="prp_fusilSylvain_default", destinationAssetType= "previz_ref",
                         projConnectB= True, theProject=curproj,
                         theComment= "auto rock the casbah release !",
                         debug=False,

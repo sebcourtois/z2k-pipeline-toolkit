@@ -10,22 +10,15 @@
 # Comment : wip
 #
 # TO DO:
-#       WIP mettage en lIB et nouveau path and names
-#       - if set_subdiv_* exists - apply setSubdiv else delete setSubdiv() 
-#                   from dminutes import assetconformation
-#                   reload(assetconformation)
-#                   assetconformation.setSubdiv()
-#       x add isSetMeshCacheOK()
-#       - clean obj button have to be grayed if checkStructure not done (setSmoothness need good structure)
+#       - add simple check layers (geometry / control) to check structure
+#       x add check for BigDaddy et BigDaddy_NeutralPose
 #       - add auto remove camera if is camera du pipe
-#       x add check for BigDaddy et BigDaddy_NeutralPose and base CTR
 #       - separate interface from base class
-#       - add BigDaddy check
-#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
 #       x MentalRayCleanNodes (['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'])
 #       x check geometry all to zero
 #       x BUG check colorLum
 #       - check geometry modeling history
+#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
 #       WIP Clean ref Nodes + exception arnold etc
 #       ? Check UV smoothing/display paremeters
 #       ? delete mentalRayNode
@@ -57,6 +50,7 @@ import maya.mel as mel
 from functools import partial
 import inspect
 
+
 import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
 import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
@@ -71,14 +65,13 @@ class checkModule(object):
     cf = name
 
     basePath = jpZ.getBaseModPath()
-    ICONPATH = Z2K_ICONPATH + "Z2K_PREVIZ_LOGO_A3.bmp"
+    ICONPATH = Z2K_ICONPATH + "Z2K_CHAR_LOGO_A1.bmp"
     upImg= basePath + ICONPATH
 
 
-    def __init__(self, GUI=True, parent="", *args, **kwargs):
+    def __init__(self, GUI=True, *args, **kwargs):
         print "init"
         self.GUI=GUI
-        self.parent = parent
         self.ebg = True
         self.DebugPrintFile = DEBUGFILE
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
@@ -95,46 +88,204 @@ class checkModule(object):
             self.BCleanAll=""
             self.BClearAll=""
 
-        else:
-            self.insertLayout(parent=self.parent)
 
-        # decorating functions
-        self.printF= self.Z2KprintDeco(jpZ.printF)
-        
+
+
     # decorators ---------------------------
-    def Z2KprintDeco(self, func, *args, **kwargs):
-        print "func=", func.__name__
-        def deco(*args, **kwargs):
+    def Z2KprintDeco(func, *args, **kwargs):
+        def deco(self,*args, **kwargs):
             # print u"Exécution de la fonction '%s'." % func.__name__
-            func(toScrollF=self.BDebugBoard, toFile = self.DebugPrintFile, GUI=self.GUI, *args, **kwargs)
+            func(self, toScrollF=self.BDebugBoard, toFile = self.DebugPrintFile, *args, **kwargs)
         return deco
 
+    def waiter (func,*args, **kwargs):
+        def deco(self,*args, **kwargs):
+            result = True
+            cmds.waitCursor( state=True )
+            print "wait..."
+            try:
+                print func
+                result = func(self,*args, **kwargs)
+            except Exception,err:
+                print "#ERROR JP:",err
+                # cmds.waitCursor( state=False )
+            cmds.waitCursor( state=False )
+            print "...wait"
+            if not result and self.GUI:
+                print "try GUI ANYWAY MOTHER fOCKER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
+
+            return result
+        return deco
+
+    # ------------ printer -----------------
+    @Z2KprintDeco
+    def printF( self, text="", st="main", toScrollF="", toFile = "",
+        openMode="a+", *args, **kwargs):
+        # print "printF()",self.GUI,toFile
+        stringToPrint=""
+ 
+        text = str(object=text)
+        if st in ["title","t"]:
+            stringToPrint += "\n"+text.center(40, "-")+"\n"
+        if  st in ["main","m"]:
+            stringToPrint += "    "+text+"\n"
+        if st in ["result","r"]:
+            stringToPrint += " -RESULT: "+text.upper()+"\n"
+
+        if not toFile in [""] and not self.GUI:
+            # print the string to a file
+            with open(toFile, openMode) as f:
+                f.write( stringToPrint )
+                print stringToPrint
+
+        else:
+            # print to textLayout
+            cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
+            print stringToPrint
+
     
-    # def waiter (func,*args, **kwargs):
-    #     def deco(self,*args, **kwargs):
-    #         result = True
-    #         cmds.waitCursor( state=True )
-    #         print "wait..."
-    #         try:
-    #             print func
-    #             result = func(self,*args, **kwargs)
-    #         except Exception,err:
-    #             print "#ERROR in waiter():",err
-
-    #             # cmds.waitCursor( state=False )
-    #         cmds.waitCursor( state=False )
-    #         print "...wait"
-    #         if not result and self.GUI:
-    #             print "try GUI ANYWAY MOTHER fOCKER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    #             cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
-
-    #         return result
-    #     return deco
 
 
 
+    def jlistSets(self, *args,**kwargs):
+        """
+        description : wrapper of cmds.listSets() that return empty list []
+                     if None originaly returned. Avoid treatment problems.
+        """
+        toReturnL = cmds.listSets(*args,**kwargs)
+        if not toReturnL:
+            toReturnL=[]
+
+        return toReturnL
+
+    def setFilterTest(self,setName="",includedSetL=["objectSet","textureBakeSet","vertexBakeSet","character"],
+        excludedSetL=["shadingEngine","displayLayer","ilrBakeLayer"],
+        bookmarksSets = False, defaultSets=False,lockedSets=False,
+        *args, **kwargs):
+        """ Description: Permet de recuperer les set Object visible dans l'outliner, avec la possibilité de changer les filtres
+            Return : BOOL
+            Dependencies : cmds - 
+        """
+        # #plugin object sets
+        # try:
+        #     apiNodeType = cmds.nodeType(setName, api=True)
+        # except RuntimeError:
+        #     return False
+        # if apiNodeType == "kPluginObjectSet":
+        #     return True
+
+        # get setType
+        try:
+            nodeType = cmds.nodeType(setName)
+        except RuntimeError:
+            return False
+            
+        # accepted sets
+        if not nodeType in  includedSetL:
+            return False
+
+        # Rendering - dispLayers - LayerTurttle
+        if nodeType in excludedSetL:
+            return False
+
+        # bookmarks
+        if not bookmarksSets:
+            if cmds.getAttr(setName+"."+ "annotation") in ["bookmarkAnimCurves"]:
+                return False
+
+        # maya default sets
+        if not defaultSets:
+            if setName in cmds.ls(defaultNodes=True):
+                return False
+        
+        # locked sets
+        if not lockedSets:
+            if setName in cmds.ls(lockedNodes=True):
+                return False
+
+        # others filtered by attribs
+        excludeAttrL = ["verticesOnlySet", "edgesOnlySet", "facetsOnlySet", "editPointsOnlySet", "renderableOnlySet"]
+        for attr in excludeAttrL:
+            if cmds.getAttr (setName+"."+attr) :
+                return False
+
+        # finally return True if nothing of all the rest
+        return True
+
+    def getOutlinerSets(self,*args, **kwargs):
+        """ Description: return the outliner visible filtered objects sets 
+            Return : [LIST]
+            Dependencies : cmds -  setFilterTest()
+        """
+        
+        return [setName for setName in cmds.ls(sets=True) if self.setFilterTest(setName=setName)]
+       
+    def getSetContent (self, inSetL=[],*args,**kwargs):
+        """
+        description : return the objL in a setlist
+        Return : [list]
+        """
+        outL = []
+        objL = []
+        for i in inSetL:
+            if cmds.objExists(i):
+                objL= cmds.listConnections(i+"."+"dagSetMembers",source=1)
+                if objL:
+                    outL.extend(objL)
+        return outL
+
+    def getSel(self,*args, **kwargs):
+        objL = cmds.ls( os=True, fl=True, l=True, )
+        return objL
+    
+    def isKeyed (self, inObj, *args, **kwargs):
+        """ Description: Check if the given object'keyable attrib are effictively keyed
+            Return : [BOOL,DebugList]
+            Dependencies : cmds - isConnected() -
+        """
+
+        toReturnB = False
+        debugD ={}
+        if len(inObj) >0:
+            if cmds.objExists(inObj):
+                conL = cmds.listConnections(inObj)
+                # print "conL=", conL
+                if conL:
+                    if len(conL)>0 :
+                        # print"lengthed"
+                        attrL = cmds.listAttr(inObj,k=True)
+                        if attrL:
+                            if len(attrL)>0:
+                                for attr in attrL:
+                                    attrN = inObj + "."+ attr
+                                    if cmds.connectionInfo(attrN,isDestination=True):
+                                        conL = cmds.listConnections(attrN,s=True,t="animCurve")
+                                        # print "conL=", conL
+                                        debugD[attrN] = conL
+                                        toReturnB =True
 
 
+        return [toReturnB,debugD]
+
+    def isConnected (self, node="", exceptionL=["nodeGraphEditorInfo","defaultRenderUtilityList","objectSet"], *args, **kwargs):
+        toReturnB=True
+        conL = []
+        
+        # print "///",node
+        if cmds.listConnections(node):
+            for i in cmds.listConnections(node):
+                # print "    " +node + " <-> "+ i
+                if not i in [node]:
+                    if cmds.objectType(i) not in exceptionL:
+                        conL.append(i)
+
+            if len (conL) == 0:
+                toReturnB= False
+        else:
+            toReturnB= False
+
+        return [toReturnB,conL]
 
     def isSkinned(self, inObjL=[], verbose=False, printOut = False,*args,**kwargs):
         ''' Description : Get the list of the SlinClusters of the selected mesh
@@ -189,8 +340,6 @@ class checkModule(object):
 
 
         return [toReturnB,outSkinClusterL]
-
-    
 
     def NodeTypeScanner(self,execptionTL = [], exceptDerived= True, specificTL=[], specificDerived=False,
         mayaDefaultObjL=["characterPartition","defaultLightList1","dynController1","globalCacheControl",
@@ -265,7 +414,7 @@ class checkModule(object):
         AllBaseObj = baseLayerL + baseObjL + baseSetL
         print tab+"AllBaseObj=", AllBaseObj
         topObjL = list(set(cmds.ls(assemblies=True,) ) - set(baseExcludeL) )
-        topSetL = jpZ.getOutlinerSets()
+        topSetL = self.getOutlinerSets()
         layerL = list(set(cmds.ls(type="displayLayer",)) - set(baseExcludeL) )
 
         # ---------- prints --------------
@@ -300,7 +449,7 @@ class checkModule(object):
         
 
 
-       # Layers test
+        # Layers test
         debugD["layerL"] = {}
         if not sorted(baseLayerL) == sorted(layerL):
             debugD["layerL"]["result"] = "PAS CONFORME"
@@ -308,6 +457,8 @@ class checkModule(object):
             toReturnB= False
         else:
             debugD["layerL"]["result"] = "OK"
+
+        
 
 
         # baseCTRL test
@@ -371,18 +522,16 @@ class checkModule(object):
             self.printF( i.ljust(10)+" : "+ str( dico["result"] ) )
             if len(dico.get("Found",""))>0:
                 self.printF("     -Found= " + str( dico.get("Found","")   ) )
-
         # --------------------------
         
 
         return toReturnB,debugD
 
-
     def checkGrp_geo(self,theGroup="asset|grp_geo",theAttrL= ["smoothLevel1","smoothLevel2"] ,*args, **kwargs):
         """ check if the attrib of smooth are present
         """
-        # TURNED OFF : THE CHECK IS NOT ANYMORE EXECUTED
         print("checkGrp_geo()")
+        # OLD PERIMED
         toCreateL = []
         toReturnB = True
         if cmds.objExists(theGroup):
@@ -409,7 +558,7 @@ class checkModule(object):
 
     def cleanGrp_geo (self, theGroup="asset|grp_geo",theAttrL= ["smoothLevel1","smoothLevel2"] ,assetType="previz", *args, **kwargs):
         print "cleanGrp_geo()"
-        # TURNED OFF : THE CHECK IS NOT ANYMORE EXECUTED
+        # OLD PERIMED
         erroredL = []
         createdL= []
         toReturnB = True
@@ -444,7 +593,7 @@ class checkModule(object):
             
             # connecting attrib
             if assetType in ["previz"]:
-                for i in jpZ.getSetContent(inSetL=["set_meshCache"]):
+                for i in self.getSetContent(inSetL=["set_meshCache"]):
                     print "*",i
                     shapeL=cmds.listRelatives(i,s=1,ni=1)
                     if shapeL:
@@ -593,9 +742,9 @@ class checkModule(object):
             if lay not in FilterL:
                 cmds.delete(lay)
 
-    def createDisplayLayer (self,  n="default_Name", inObjL=[], displayType=0, hideOnPlayback=0,enableOverride=True, *args, **kwargs):
-        # createDisplayLayer( state = {0:Normal state, 1:Templated, 2:Reference}
-        print "createDisplayLayer(%s,%s,%s)" % (n,displayType,hideOnPlayback)
+    def createDiplayLayer (self,  n="default_Name", inObjL=[], displayType=0, hideOnPlayback=0,enableOverride=True, *args, **kwargs):
+        # createDiplayLayer( state = {0:Normal state, 1:Templated, 2:Reference}
+        print "createDiplayLayer(%s,%s,%s)" % (n,displayType,hideOnPlayback)
 
         # create layer if doesn't exist
         if not cmds.objExists(n):
@@ -613,7 +762,7 @@ class checkModule(object):
         """ Description: Clean the display Layers by rebuilding it with the content of the corresponding sets 
                             setL <-> layerL
             Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
-            Dependencies : cmds - createDisplayLayer() - delete_displayLayer()
+            Dependencies : cmds - createDiplayLayer() - delete_displayLayer()
         """
         
         tab = "    "
@@ -634,7 +783,7 @@ class checkModule(object):
             if cmds.objExists(theSet):
                 inObjL = cmds.listConnections( theSet+".dagSetMembers",source=1)
                 if inObjL:
-                    self.createDisplayLayer ( n=paramL[0], inObjL=inObjL, displayType=paramL[1], hideOnPlayback=paramL[2])
+                    self.createDiplayLayer ( n=paramL[0], inObjL=inObjL, displayType=paramL[1], hideOnPlayback=paramL[2])
                     debugL.append(theSet + " :DONE")
                 else:
                     toReturnB= False
@@ -666,7 +815,7 @@ class checkModule(object):
         unconectedCL =[]
         # loop
         for node in nodeL:
-            if not jpZ.isConnected(node=node)[0]:
+            if not self.isConnected(node=node)[0]:
                 # print "-","toDELETe:",node
                 unconectedCL.append(node)
 
@@ -686,7 +835,7 @@ class checkModule(object):
                             deletedL.append(node)
                     except Exception,err:
                         errorL.append(node)
-                        print "ERROR on {0} : {1}".format(node,err)
+                        # print "ERROR on {0} : {1}".format(node,err)
             if len(errorL)>0:
                 toReturnB = False
                 debugD["Errored"] = errorL
@@ -715,7 +864,6 @@ class checkModule(object):
 
         return [toReturnB,debugD]
     
-
     def cleanUnusedConstraint(self,mode = "delete",*args, **kwargs):
         """ Description: Delete All Un-connected Constraint
             Return : BOOL,debugD
@@ -744,7 +892,7 @@ class checkModule(object):
             Dependencies : cmds - cleanUnusedNode()
         """
         self.printF( "CleanDisconnectedNodes()", st="t")
-        toReturnB,debugD = self.cleanUnusedNode(execptionTL = ["dagNode","defaultRenderUtilityList"], specificTL=[], mode="delete")
+        toReturnB,debugD = self.cleanUnusedNode(execptionTL = ["dagNode"], specificTL=[], mode="delete")
 
         return [toReturnB,debugD]
 
@@ -956,7 +1104,7 @@ class checkModule(object):
         debugD = {}
         for obj in inObjL:
             # print "obj=", obj
-            test,debugL = jpZ.isKeyed(inObj=obj)
+            test,debugL = self.isKeyed(inObj=obj)
             # print "    *",test,debugL
             if test:
                 toReturnB = False
@@ -1008,27 +1156,18 @@ class checkModule(object):
     # ---------------------------------------------------------------------------------------------------------
     #--------------------- Buttons functions ----------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
-    @jpZ.waiter
+    @waiter
     def btn_checkStructure(self, controlN="", *args, **kwargs):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=3, e=True)
+        self.pBar_upd(step=1, maxValue=2, e=True)
 
         # steps
         if not self.checkBaseStructure()[0]:
             boolResult = False
         self.pBar_upd(step= 1,)
         if not self.checkAssetStructure( )[0]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
-
-        self.printF("isSetMeshCacheOK()", st="t")
-        res,details = jpZ.isSet_meshCache_OK ()
-        self.printF(res, st="r")
-        self.printF(details)
-
-        if not res:
             boolResult = False
         self.pBar_upd(step= 1,)
 
@@ -1045,7 +1184,7 @@ class checkModule(object):
         
         return boolResult
 
-    @jpZ.waiter
+    @waiter
     def btn_CleanScene(self, controlN="", *args, **kwargs):
         boolResult=True
 
@@ -1071,8 +1210,8 @@ class checkModule(object):
         if not self.cleanUnusedConstraint( mode="delete")[0]:
             boolResult = False 
         self.pBar_upd(step= 1,)
-        if not self.CleanDisconnectedNodes( mode="delete")[0]:
-            boolResult = False 
+        # if not self.CleanDisconnectedNodes( mode="delete")[0]:
+        #     boolResult = False 
         self.pBar_upd(step= 1,)
                
         # colors
@@ -1081,19 +1220,19 @@ class checkModule(object):
         
         return boolResult
         
-    @jpZ.waiter
+    @waiter
     def btn_CleanObjects(self, controlN="", *args, **kwargs):
         boolResult=True
 
         # set progress bar
         self.pBar_upd(step=1, maxValue=10, e=True)
 
-        meshCacheObjL = jpZ.getSetContent(inSetL=["set_meshCache"] )
-        controlObjL = jpZ.getSetContent(inSetL=["set_control"] )
+        meshCacheObjL = self.getSetContent(inSetL=["set_meshCache"] )
+        controlObjL = self.getSetContent(inSetL=["set_control"] )
 
         # steps
-        if not self.isSkinned(inObjL= meshCacheObjL,verbose=True)[0] :
-            boolResult = False
+        # if not self.isSkinned(inObjL= meshCacheObjL,verbose=True)[0] :
+        #     boolResult = False
         self.pBar_upd(step= 1,)
         if not self.cleanUnusedInfluence(inObjL=meshCacheObjL)[0] :
             boolResult = False
@@ -1204,6 +1343,20 @@ class checkModule(object):
                 if step:
                     cmds.progressBar(self.BValidationPBar,e=1,step=step,)
 
+
+
+    # ------------- Layout -------------------------------------------------------
+    def createWin(self, *args,**kwargs):
+        # test si la windows exist / permet d'avoir plusieurs windows grace a var "cf" de la class
+        if cmds.window(self.cf, q=True, exists=True):
+            cmds.deleteUI(self.cf, window=True)
+        #create la window et rename apres
+        self.cf = cmds.window(self.cf ,rtf=True, tlb=False, t=(self.cf + " : " + str(self.cf)))
+        outputW = cmds.window(self.cf, e=True, sizeable=True, t=(self.cf + " : " + str(self.cf)))
+        
+        # show window
+        cmds.showWindow(self.cf)
+        return outputW
 
 
     # ------------- Layout -------------------------------------------------------

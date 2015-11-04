@@ -3,7 +3,6 @@
 
 
 from davos.core import damproject
-reload(damproject)
 from davos.core.damtypes import DamAsset
 
 import os, sys
