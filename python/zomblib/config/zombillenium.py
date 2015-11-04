@@ -151,6 +151,8 @@ class asset_lib(object):
 
 class camera(object):
 
+    entity_class = "davos.core.damtypes.DamAsset"
+
     prefix = "cam"
     aliases = (prefix, "Camera",)
     assetType = prefix
