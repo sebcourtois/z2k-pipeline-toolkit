@@ -210,8 +210,6 @@ class character3d(charbase):
     aliases = (prefix, "Character 3D",)
     assetType = prefix
 
-
-
 class character2d(charbase):
 
     prefix = "c2d"
@@ -252,6 +250,7 @@ class prop3d(object):
     }
 
     resources_settings = asset_lib.resources_settings
+    dependency_types = asset_lib.dependency_types
 
 class vehicle3d(prop3d):
 
@@ -260,6 +259,7 @@ class vehicle3d(prop3d):
     prefix = "vhl"
     aliases = (prefix, "Vehicle 3D",)
     assetType = prefix
+    dependency_types = asset_lib.dependency_types
 
 class set3d(object):
 
@@ -297,6 +297,8 @@ class set3d(object):
                     "sg_steps":("Model HD", "Surfacing"), },
     }
 
+    dependency_types = asset_lib.dependency_types
+
 class environment3d(set3d):
 
     entity_class = "davos.core.damtypes.DamAsset"
@@ -304,6 +306,8 @@ class environment3d(set3d):
     prefix = "env"
     aliases = (prefix, "Env 3D",)
     assetType = prefix
+
+    dependency_types = asset_lib.dependency_types
 
 class fx_previz(object):
 
