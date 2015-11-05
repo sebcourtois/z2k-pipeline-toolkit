@@ -473,8 +473,8 @@ def scanTextureDependency(damAst):
             sAllSeveritySet.add("warning")
 
     if scanResults:
-        resultDct["scan_severities"] = sAllSeveritySet
-        resultDct["publish_count"] = publishCount
+        scanResults[-1]["scan_severities"] = sAllSeveritySet
+        scanResults[-1]["publish_count"] = publishCount
 
     return scanResults
 

@@ -1,5 +1,4 @@
 
-
 import subprocess
 from tempfile import NamedTemporaryFile
 
@@ -22,6 +21,8 @@ from davos_maya.tool import dependency_scan
 def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
     bDryRun = kwargs.pop("dryRun", False)
+
+    sPython27Path = r"C:\Python27\python.exe"
 
     proj = damEntity.project
 
@@ -83,7 +84,7 @@ DO NOT CLOSE THE WINDOW BEFORE IT FINISHES !!!
         tmpFile.write("\n".join(sBuddyFileList))
 
     p = publish_dependencies.__file__
-    sCmdArgs = [r"C:\Python27\python.exe",
+    sCmdArgs = [sPython27Path,
                 p[:-1]if p.endswith("c") else p,
                 proj.name, "texture_dep",
                 damEntity.sgEntityType.lower(),
