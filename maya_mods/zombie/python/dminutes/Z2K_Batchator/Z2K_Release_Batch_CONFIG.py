@@ -9,30 +9,19 @@ Z2K_ICONPATH = "zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/"
 
 
 # donner ici la list des assets du meme type to release
-BATCH_ASSET_LIST = ["prp_feuille_dessinMonstreLucie",
-"prp_feuilleFroissee_dessinTombe",
-"prp_feuilleFroissee_dessinTombe",
-"prp_badgeMultiPass_gretchen",
-"prp_balaisBallons_default",
-
-"prp_carteControleur_aurelien",
-"prp_cartes_jeu1",
-
-"prp_casquette_zombillenium",
-"prp_feuilles_miranda",
-"prp_gomme_default",
-"prp_grpSacs_souvenirZ2k",
-"prp_hache_default",
-"prp_limeOngle_default",
-
-"prp_parapluie_default",
-"prp_petalesRose_noire",
-"prp_rose_noire",
-"prp_stickChauvSou_mauve",
-"prp_storeBaguette_default",
-"prp_ticketZ2k_default",
-"prp_cercueil_casse",
-"prp_cercueil_default",]
+failedL=['prp_grandeRoue_default' ,'vhl_trainMine_default' ,'prp_tige_barbaPapa' ,'prp_boiteStickers_default',]
+BATCH_ASSET_LIST =[
+'vhl_voitureAurelien_default' ,
+'prp_casquette_zombillenium' ,
+'prp_paquetChewingGum_default' ,
+'prp_caisseBandouliere_goodiesZ2k' ,
+'prp_barbaPapa_default' ,
+'prp_porteCle_crabe' ,
+'prp_calepin_default' ,
+'prp_balaisBallons_default' ,
+'prp_balai_default',
+'prp_gomme_default',
+]
 
 # Batch parameters - All configuration is Done Here.
 ASSETCAT = "prp" #"chr","set","prp"
@@ -43,7 +32,7 @@ THECOMMENT= "Auto_Release_rockTheCasbah" #"Auto_Release_rockTheCasbah !","First_
 OPENINMAYA= 1 
 READONLY= 0
 PUBLISHMAYAFILE= 0
-RELEASEMAYAFILE= 0
+RELEASEMAYAFILE=1
 UNLOCKFILE= 1
 PREPUBLISH_PYSCRIPTL = [
 "C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py",

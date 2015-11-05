@@ -51,7 +51,7 @@ def RELEAZE_ALADIN():
         if  infoDict["assetCat"] in ["chr"]:
             print "It' is a CHAR test"
             Z2K_Pcheck = Z2K_Pcheck_CHAR
-        if  infoDict["assetCat"] in ["prp"]:
+        if  infoDict["assetCat"] in ["prp","vhl"]:
             print "It' is a PROP test"
             Z2K_Pcheck = Z2K_Pcheck_PROP
         if  infoDict["assetCat"] in ["set"]:
