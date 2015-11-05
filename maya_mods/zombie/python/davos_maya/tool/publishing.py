@@ -1,4 +1,5 @@
 
+import os
 import subprocess
 from tempfile import NamedTemporaryFile
 
@@ -16,13 +17,13 @@ from davos.tools import publish_dependencies
 
 from .general import entityFromScene
 from davos_maya.tool import dependency_scan
-#from pytd.util.sysutils import inDevMode
+from pytd.util.sysutils import toStr, inDevMode
+
+bDevDryRun = False
 
 def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
-    bDryRun = kwargs.pop("dryRun", False)
-
-    sPython27Path = r"C:\Python27\python.exe"
+    bDryRun = kwargs.pop("dryRun", False if not inDevMode() else bDevDryRun)
 
     proj = damEntity.project
 
@@ -50,7 +51,7 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
         pubFiles = (f for f, _ in publishedFileItems)
 
         sUpdNodeList = []
-        sMsgFmt = u"\nChanging {}: \nfrom '{}'\nto   '{}'"
+        sMsgFmt = "\nChanging {}: \nfrom '{}'\nto   '{}'"
 
         for fileNodes, pubFile in zip(fileNodesList, pubFiles):
 
@@ -76,7 +77,6 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
     sMsg = """
 Opening a new process to publish associated files: .psd, .tx, etc...
-DO NOT CLOSE THE WINDOW BEFORE IT FINISHES !!!
 """
     pm.displayWarning(sMsg)
 
@@ -84,16 +84,23 @@ DO NOT CLOSE THE WINDOW BEFORE IT FINISHES !!!
         tmpFile.write("\n".join(sBuddyFileList))
 
     p = publish_dependencies.__file__
+
+    sPython27Path = r"C:\Python27\python.exe"
+    sScriptPath = p[:-1]if p.endswith("c") else p
     sCmdArgs = [sPython27Path,
-                p[:-1]if p.endswith("c") else p,
+                os.environ["Z2K_LAUNCH_SCRIPT"],
+                "launch", "--update", "0", "--renew", "1",
+                sPython27Path,
+                sScriptPath,
                 proj.name, "texture_dep",
                 damEntity.sgEntityType.lower(),
-                damEntity.name,
-                tmpFile.name,
-                sComment,
-                "--dryRun", str(int(bDryRun)),
+                damEntity.name, tmpFile.name,
+                sComment, "--dryRun", str(int(bDryRun)),
                 ]
+    sCmdArgs = list(toStr(a)for a in sCmdArgs)
 
+    if inDevMode():
+        print sCmdArgs
     subprocess.Popen(sCmdArgs)
 
     return (not bDryRun)
@@ -121,6 +128,9 @@ def publishCurrentScene(*args, **kwargs):
 
     if not sgTaskInfo:
         bSgVersion = False
+
+    pm.mel.ScriptEditor()
+    pm.scriptEditorInfo(e=True, suppressInfo=True)
 
     if not publishSceneDependencies(damEntity, scanResults, sComment):
         return

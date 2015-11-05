@@ -232,6 +232,7 @@ def scanTextureDependency(damAst):
 
     sAllSeveritySet = set()
     sFoundFileList = []
+    sPrivFileList = []
     publishCount = 0
 
     def addResult(res):
@@ -288,13 +289,16 @@ def scanTextureDependency(damAst):
             if not bExists:
                 scanLogDct.setdefault("error", []).append(('FileNotFound', sTexAbsPath))
             else:
-                sFoundFileList.append(normCase(sTexAbsPath))
+                sFoundFileList.append(sNormTexPath)
                 drcFile = proj.entryFromPath(sTexAbsPath)
                 #print drcFile, drcFile.absPath()
                 if drcFile and drcFile.isPublic():
                     if normCase(sDirPath) == normCase(sPubTexDirPath):
 
-                        scanLogDct.setdefault("info", []).append(('AlreadyPublished', sTexAbsPath))
+                        scanLogDct.setdefault("info", []).append(('PublicFiles', sTexAbsPath))
+
+                        privFile = drcFile.getPrivateFile(weak=True)
+                        sPrivFileList.append(normCase(privFile.absPath()))
 
                         resultDct = {"abs_path":sTexAbsPath,
                                      "scan_log":scanLogDct,
@@ -444,19 +448,27 @@ def scanTextureDependency(damAst):
 
     #looking for unused files in texture direcotry
     if osp.isdir(sPrivTexDirPath):
+
         sTexDirFileList = sorted(iterPaths(sPrivTexDirPath, dirs=False, recursive=False))
 
         numUnused = 0
         for p in sTexDirFileList:
 
-            if normCase(p) in sFoundFileList:
-                continue
+            scanLogDct = {}
 
             sExt = osp.splitext(p)[-1]
             if sExt.lower() not in sAllowTexTypes:
                 continue
 
-            scanLogDct = {"warning":[("UnusedPrivateFiles", p)]}
+            np = normCase(p)
+
+            if np in sPrivFileList:
+                scanLogDct.setdefault("info", []).append(("AlreadyPublished", p))
+
+            elif np not in sFoundFileList:
+                scanLogDct.setdefault("warning", []).append(("UnusedPrivateFiles", p))
+            else:
+                continue
 
             resultDct = {"abs_path":p,
                          "scan_log":scanLogDct,
@@ -468,9 +480,6 @@ def scanTextureDependency(damAst):
             addResult(resultDct)
 
             numUnused += 1
-
-        if numUnused:
-            sAllSeveritySet.add("warning")
 
     if scanResults:
         scanResults[-1]["scan_severities"] = sAllSeveritySet
