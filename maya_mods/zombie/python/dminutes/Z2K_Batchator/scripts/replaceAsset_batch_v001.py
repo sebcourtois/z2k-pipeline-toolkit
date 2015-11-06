@@ -6,7 +6,7 @@ import dminutes.Z2K_Batchator.First_PublishAndRelease_CONFIG as Batch_CONFIG
 reload(Batch_CONFIG)
 from dminutes.Z2K_Batchator.First_PublishAndRelease_CONFIG import *
 
-print "DEBUGFILE=", DEBUGFILEDEBUGFILE
+print "DEBUGFILE=", DEBUGFILE
 
 
 print "-"*80
