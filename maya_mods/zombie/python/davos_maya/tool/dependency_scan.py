@@ -162,15 +162,15 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
                                 }
                     treeData.append(itemData)
 
-                    if (sLogCode == "ReadyToPublish"):
-                        sBuddyFileList = result["buddy_files"]
-                        for sBuddyPath in sBuddyFileList:
+                    #if (sLogCode == "ReadyToPublish"):
+                    sBuddyFileList = result["buddy_files"]
+                    for sBuddyPath in sBuddyFileList:
 
-                            sBudFilename = osp.basename(sBuddyPath)
-                            itemData = {"path": pathJoin(sItemPath, sBudFilename),
-                                        "texts": [sBudFilename, "", sBuddyPath],
-                                        }
-                            treeData.append(itemData)
+                        sBudFilename = osp.basename(sBuddyPath)
+                        itemData = {"path": pathJoin(sItemPath, sBudFilename),
+                                    "texts": [sBudFilename, "", sBuddyPath],
+                                    }
+                        treeData.append(itemData)
 
                     for sNodeName in sFileNodeNames:
                         itemData = fileNodeTreeData[sNodeName].copy()
@@ -232,6 +232,7 @@ def scanTextureDependency(damAst):
 
     sAllSeveritySet = set()
     sFoundFileList = []
+    sPrivFileList = []
     publishCount = 0
 
     def addResult(res):
@@ -260,8 +261,7 @@ def scanTextureDependency(damAst):
             sTexAbsPathList = sorted(iterPaths(sDirPath, dirs=False,
                                              recursive=False,
                                              keepFiles=ignorePatterns(sFilename)
-                                             )
-                                     )
+                                             ))
 
         for sTexAbsPath in sTexAbsPathList:
 
@@ -283,18 +283,24 @@ def scanTextureDependency(damAst):
             sDirPath, sFilename = osp.split(sTexAbsPath)
             sBasePath, sExt = osp.splitext(sTexAbsPath)
 
+            bValidPublicFile = False
             drcFile = None
             bExists = osp.isfile(sTexAbsPath) or bUdim
             if not bExists:
                 scanLogDct.setdefault("error", []).append(('FileNotFound', sTexAbsPath))
             else:
-                sFoundFileList.append(normCase(sTexAbsPath))
+                sFoundFileList.append(sNormTexPath)
                 drcFile = proj.entryFromPath(sTexAbsPath)
-                #print drcFile, drcFile.absPath()
+
                 if drcFile and drcFile.isPublic():
                     if normCase(sDirPath) == normCase(sPubTexDirPath):
 
-                        scanLogDct.setdefault("info", []).append(('AlreadyPublished', sTexAbsPath))
+                        bValidPublicFile = True
+
+                        scanLogDct.setdefault("info", []).append(('PublicFiles', sTexAbsPath))
+
+                        privFile = drcFile.getPrivateFile(weak=True)
+                        sPrivFileList.append(normCase(privFile.absPath()))
 
                         resultDct = {"abs_path":sTexAbsPath,
                                      "scan_log":scanLogDct,
@@ -304,7 +310,6 @@ def scanTextureDependency(damAst):
                                      "drc_file":drcFile,
                                      }
                         addResult(resultDct)
-                        continue
 
             sTiling = ""
             if bUdim:
@@ -320,9 +325,10 @@ def scanTextureDependency(damAst):
                 sMsg = ("Only accepts: '{}'".format("' '".join(sAllowTexTypes)))
                 scanLogDct.setdefault("error", []).append(('BadTextureFormat', sMsg))
 
-            if normCase(sDirPath) != normCase(sPrivTexDirPath):
-                sMsg = ("Not in '{}'".format(osp.normpath(sPrivTexDirPath)))
-                scanLogDct.setdefault("error", []).append(('BadLocation', sMsg))
+            if not bValidPublicFile:
+                if normCase(sDirPath) != normCase(sPrivTexDirPath):
+                    sMsg = ("Not in '{}'".format(osp.normpath(sPrivTexDirPath)))
+                    scanLogDct.setdefault("error", []).append(('BadLocation', sMsg))
 
             sMsg = ""
             sChannel = ""
@@ -335,8 +341,8 @@ def scanTextureDependency(damAst):
                     sMsg = toStr(e)
                 else:
                     sNameParts = sBaseName.split("_")
-                    if len(sNameParts) != 3:
-                        sMsg = "Must have 3 parts: tex_textureSubject_channel"
+                    if len(sNameParts) not in (3, 4):
+                        sMsg = "Must have 3 or 4 parts: tex_textureSubject_[optional]_channel"
                     elif sNameParts[0] != "tex":
                         sMsg = ("Must start with 'tex_'")
                     else:
@@ -387,7 +393,8 @@ def scanTextureDependency(damAst):
                             sMsgList.append("NOT COMPRESSED")
 
                         if not bRgb24:
-                            depthDct = {"BGR;5": 16, "BGR":24, "BGRA":32}
+                            depthDct = {"BGR;5": 16, "BGR":24, "BGRA":32,
+                                        "RGB;5": 16, "RGB":24, "RGBA":32}
                             sMsg = "Expected 24 bits, got {} bits".format(depthDct[sMode])
                             sMsgList.append(sMsg)
 
@@ -444,19 +451,27 @@ def scanTextureDependency(damAst):
 
     #looking for unused files in texture direcotry
     if osp.isdir(sPrivTexDirPath):
+
         sTexDirFileList = sorted(iterPaths(sPrivTexDirPath, dirs=False, recursive=False))
 
         numUnused = 0
         for p in sTexDirFileList:
 
-            if normCase(p) in sFoundFileList:
-                continue
+            scanLogDct = {}
 
             sExt = osp.splitext(p)[-1]
             if sExt.lower() not in sAllowTexTypes:
                 continue
 
-            scanLogDct = {"warning":[("UnusedPrivateFiles", p)]}
+            np = normCase(p)
+
+            if np in sPrivFileList:
+                scanLogDct.setdefault("info", []).append(("AlreadyPublished", p))
+
+            elif np not in sFoundFileList:
+                scanLogDct.setdefault("warning", []).append(("UnusedPrivateFiles", p))
+            else:
+                continue
 
             resultDct = {"abs_path":p,
                          "scan_log":scanLogDct,
@@ -468,9 +483,6 @@ def scanTextureDependency(damAst):
             addResult(resultDct)
 
             numUnused += 1
-
-        if numUnused:
-            sAllSeveritySet.add("warning")
 
     if scanResults:
         scanResults[-1]["scan_severities"] = sAllSeveritySet

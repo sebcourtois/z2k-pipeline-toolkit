@@ -305,10 +305,11 @@ class Z2kToolkit(object):
 # Tools updated so let's relaunch...
 #===============================================================================
                         """
-                    relaunchArgs = [sys.executable] + sys.argv[:c] + ["-u", "0", "-r", "1"] + launchArgs
+                    relaunchArgs = ([sys.executable] + sys.argv[:c] +
+                                    ["--update", "0", "--renew", "1"] + launchArgs)
                     print sMsg
-                    print sys.argv[:c]
-                    print launchArgs
+#                    print sys.argv[:c]
+#                    print launchArgs
                     print relaunchArgs
 
                     subprocess.call(relaunchArgs, shell=True)
