@@ -237,7 +237,8 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
 
 
         uvTilingMode = mc.getAttr(eachFileNode+".uvTilingMode")
-        if  uvTilingMode != 0: mc.setAttr(eachFileNode+".uvTilingMode",0)
+
+
 
         #tests the texture extention
         mapExtention = (os.path.split(mapFilePath))[-1].split(".")[-1]
@@ -252,6 +253,13 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
                     if inVerbose == True: print "#### {:>7}: '{:^30}' {:^30} '{}'".format("Warning",eachFileNode,"Udim not allowed for jpg:", mapFilePath)       
                     outWrongFileNodeList.append(eachFileNode)
                     continue
+                elif ".1001." in os.path.split(mapFilePath)[-1] and uvTilingMode != 3:
+                    if inConform is True:
+                        uvTilingMode = 3
+                        mc.setAttr(eachFileNode+".uvTilingMode",uvTilingMode)
+                        if inVerbose == True:print "#### {:>7}: '{:^30}' {:^30} ".format("Info",eachFileNode,"uvTilingMode set to 3 ")
+                    else:
+                        if inVerbose == True:print "#### {:>7}: '{:^30}' {:^30} ".format("Info",eachFileNode,"uvTilingMode must be set to 3 ")
 
                 elif ".1001." in os.path.split(mapFilePath)[-1]:
                     udimNb = 1002
@@ -281,8 +289,10 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
 
         #tests if the texture exists in the privateMapdirExpand, and modify the path if inConform = True
         elif os.path.isfile(privateMapFilePathExpanded) is True:
-            if inConform is True: 
+            if inConform is True:
+                if  uvTilingMode != 0: mc.setAttr(eachFileNode+".uvTilingMode",0)
                 mc.setAttr(eachFileNode+".fileTextureName", privateMapFilePathExpanded, type = "string")
+                if  uvTilingMode != 0: mc.setAttr(eachFileNode+".uvTilingMode",uvTilingMode)
                 if inVerbose == True: print "#### {:>7}: '{:^30}' {:^30} '{}'".format("Info",eachFileNode,"The file path changed to: ", privateMapFilePathExpanded)
                 continue
             else:
@@ -298,7 +308,9 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
                     print "#### Error: "+eachFileNode+" file could not be found: "+privateMapFilePathExpanded
                     outWrongFileNodeList.append(eachFileNode)
                     continue
+                if  uvTilingMode != 0: mc.setAttr(eachFileNode+".uvTilingMode",0)
                 mc.setAttr(eachFileNode+".fileTextureName", privateMapFilePathExpanded, type = "string")
+                if  uvTilingMode != 0: mc.setAttr(eachFileNode+".uvTilingMode",uvTilingMode)
                 if inVerbose == True: print "#### {:>7}: '{:^30}' {:^30} '{}'".format("Info",eachFileNode,"The file path changed to: ",privateMapFilePathExpanded)                        
                 continue
         else:
@@ -306,7 +318,8 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
             outWrongFileNodeList.append(eachFileNode)
             continue
 
-        if  uvTilingMode != 0: mc.setAttr(eachFileNode+".uvTilingMode",uvTilingMode)
+
+
 
     if outWrongFileNodeList: 
         print "#### {:>7}: {} file node(s) have wrong file path settings".format("Warning",len(outWrongFileNodeList))
@@ -668,22 +681,8 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
         privateMapFilePathExpanded = miscUtils.pathJoin(privateMapdirExpand,fileName)
         privateMapFilePath = miscUtils.pathJoin(privateMapdir,fileName)
 
-        outNode = mc.listConnections (eachFileNode+".outColor", source=False, destination=True, connections = False)
-        if len(outNode)>1:
-            print "#### {:>7}: '{}' FileNode is connected to several shading node".format("Error",eachFileNode)
-            wrongFileNodeList.append(eachFileNode)
-            continue
-        elif len(outNode) == 0:
-            continue
-        elif mc.nodeType(outNode[0])!= preShadNodeType:
-            print "#### {:>7}: '{}' FileNode is connected not connected to a {} preview shading node".format("Error",eachFileNode, preShadNodeType)
-            wrongFileNodeList.append(eachFileNode)
-            continue
-        elif not "$PRIV_ZOMB_TEXTURE_PATH" in mapFilePath:
-            print "#### {:>7}: '{}' FileNode has wrong file path settings, must be defined with $PRIV_ZOMB_TEXTURE_PATH".format("Error",eachFileNode)
-            wrongFileNodeList.append(eachFileNode)
-            continue
-        elif not os.path.isfile(tgaFilePathExpand) and os.path.isfile(jpgFilePathExpand):
+
+        if not os.path.isfile(tgaFilePathExpand) and os.path.isfile(jpgFilePathExpand):
             print "#### {:>7}: '{}' No '.tga' file could be found, '.jpg' is done already".format("Info", eachFileNode)
         elif not os.path.isfile(mapFilePathExpand) and not os.path.isfile(tgaFilePathExpand):
             print "#### {:>7}: '{}' Missing File  -->  {}".format("Error", eachFileNode, mapFilePathExpand)
@@ -879,12 +878,8 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
         privateMapFilePathExpanded = miscUtils.pathJoin(privateMapdirExpand,fileName)
         privateMapFilePath = miscUtils.pathJoin(privateMapdir,fileName)
 
-        if mapFilePath != tgaFilePath: 
-            print "#### {:>7}: '{}' FileNode, wrong file format: '{}',  should be a tga".format("Error",eachFileNode,mapFilePath.split(".")[-1])
-            wrongFileNodeList.append(eachFileNode)
-            continue
-        elif not "$PRIV_ZOMB_TEXTURE_PATH" in mapFilePath:
-            print "#### {:>7}: '{}' FileNode has wrong file path settings, must be defined with $PRIV_ZOMB_TEXTURE_PATH".format("Error",eachFileNode)
+        if mapFilePathExpand != tgaFilePathExpand: 
+            print "#### {:>7}: '{}' FileNode, wrong file format: '{}',  should be a tga".format("Error",eachFileNode,tgaFilePathExpand.split(".")[-1])
             wrongFileNodeList.append(eachFileNode)
             continue
         elif not os.path.isfile(tgaFilePathExpand) and os.path.isfile(mipMapFilePathExpand):
@@ -894,12 +889,12 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
             wrongFileNodeList.append(eachFileNode)
             continue
 
-        makeTxForArnold(inputFilePathName = tgaFilePath, outputFilePathName = "", updateOnly = updateOnly)
+        makeTxForArnold(inputFilePathName = tgaFilePathExpand, outputFilePathName = "", updateOnly = updateOnly)
 
-        if ".1001." in os.path.split(tgaFilePath)[-1]:
+        if ".1001." in os.path.split(tgaFilePathExpand)[-1]:
             udimNb = 1002
             while udimNb < 1100:
-                udimMapFilePath = tgaFilePath.replace(".1001.","."+str(udimNb)+".")
+                udimMapFilePath = tgaFilePathExpand.replace(".1001.","."+str(udimNb)+".")
                 udimMapFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(udimMapFilePath)))
                 if os.path.isfile(udimMapFilePath_exp) == True:
                     makeTxForArnold(inputFilePathName = udimMapFilePath, outputFilePathName = "", updateOnly = updateOnly)
