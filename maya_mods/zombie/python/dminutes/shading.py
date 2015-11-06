@@ -57,7 +57,7 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
     elif shadEngineList == "selection":
         shadEngineList = mc.ls(selection = True,type = "shadingEngine")
         if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
-        if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
+        if "initialShadingGroup" in shadEngineList: shadEngineList.remove("initialShadingGroup")
         shadEngineListTemp = shadEngineList
         for each in shadEngineListTemp:
             if ":" in each: shadEngineList.remove(each) 
@@ -108,7 +108,7 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
                 if connectedToSeveralSG (item):
                     materialParticule = "shared"
                 preview_shader_type = mc.nodeType(item)
-                if not re.match('pre_'+materialParticule+'_'+preview_shader_type+'[0-9]{0,3}$',preview_shader):
+                if not re.match('pre_'+materialParticule+'_'+preview_shader_type+'[0-9]{0,3}$',preview_shader) and not mc.lockNode(item, q=True):
                     preview_shader = mc.rename(item,'pre_'+materialParticule+'_'+preview_shader_type)
                 
             for item in mc.listHistory (render_shader):
@@ -118,7 +118,7 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
                 if connectedToSeveralSG (item):
                     materialParticule = "shared"
                 render_shader_type = mc.nodeType(item)
-                if not re.match('mat_'+materialParticule+'_'+render_shader_type+'[0-9]{0,3}$',render_shader):
+                if not re.match('mat_'+materialParticule+'_'+render_shader_type+'[0-9]{0,3}$',render_shader) and not mc.lockNode(item, q=True):
                     render_shader = mc.rename(item,'mat_'+materialParticule+'_'+render_shader_type)
             if verbose == True: print "#### {:>7}: {:^28} tree has been conformed properly".format("Info", each)
 
@@ -461,7 +461,7 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
     elif shadEngineList == "selection":
         shadEngineList = mc.ls(selection = True,type = "shadingEngine")
         if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
-        if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
+        if "initialShadingGroup" in shadEngineList: shadEngineList.remove("initialShadingGroup")
         shadEngineListTemp = shadEngineList
         for each in shadEngineListTemp:
             if ":" in each: shadEngineList.remove(each) 
@@ -1046,6 +1046,16 @@ def createShadingGroup():
     print "#### {:>7}:  {} shading groups created, assigned and conformed".format("Info",len(transformMeshList))
     conformPreviewShadingTree( shadEngineList = "all", verbose = False, selectWrongShadEngine = False)
     conformShaderName(shadEngineList = "all", selectWrongShadEngine = False, verbose = False )
+
+
+def printTextureFileName ():
+    fileNodeList = mc.ls("*",type ="file")
+    for each in fileNodeList:
+       mapFilePath = miscUtils.normPath(mc.getAttr(each+".fileTextureName"))
+       mapFilePathExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePath))) 
+       print "#### Info: '{0:^30}' Image Name: '{1}'".format(each,mapFilePath) 
+
+
 
 
 

@@ -32,8 +32,10 @@ def buttonConformAllTexturePath(*args):
 	shading.conformTexturePath( inConform = True)
 def buttonHardPathAllTexturePath(*args):
 	shading.conformTexturePath( inConform = True, hardPath = True)
-def buttonPrintAllTexturePath(*args):
+def buttonCheckAllTexturePath(*args):
 	shading.conformTexturePath( inConform = False)
+def buttonPrintAllTexturePath(*args):
+	shading.printTextureFileName()
 
 
 #Conform Shader Names
@@ -109,7 +111,10 @@ mc.setParent( '..' )
 #conform texture path
 mc.separator(style = 'in', h = 5  )
 mc.text(label="File Texture Path", align='center')
-mc.button( label='Comform All', c= buttonConformAllTexturePath)
+mc.flowLayout( )
+mc.button( label='Comform All', recomputeSize = False, width = 125, c= buttonConformAllTexturePath)
+mc.button( label='Check All', recomputeSize = False, width = 125, c=  buttonCheckAllTexturePath)
+mc.setParent( '..' )
 mc.button( label='Hard Path All', c= buttonHardPathAllTexturePath)
 mc.button( label='Print All', c=  buttonPrintAllTexturePath)
 
