@@ -40,7 +40,7 @@ class DavosSetup(ToolSetup):
                 pm.menuItem(label="Assets...", c=partial(doCreateFolders, "asset"))
                 pm.menuItem(label="Shots...", c=partial(doCreateFolders, "shot"))
 
-            pm.menuItem(label="Scan Dependencies...", c=doDependencyScan)
+            pm.menuItem(label="Check Dependencies...", c=doDependencyScan)
             pm.menuItem(label="Publish...", c=publishing.publishCurrentScene)
 
         ToolSetup.populateMenu(self)

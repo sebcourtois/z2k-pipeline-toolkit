@@ -162,15 +162,15 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
                                 }
                     treeData.append(itemData)
 
-                    if (sLogCode == "ReadyToPublish"):
-                        sBuddyFileList = result["buddy_files"]
-                        for sBuddyPath in sBuddyFileList:
+                    #if (sLogCode == "ReadyToPublish"):
+                    sBuddyFileList = result["buddy_files"]
+                    for sBuddyPath in sBuddyFileList:
 
-                            sBudFilename = osp.basename(sBuddyPath)
-                            itemData = {"path": pathJoin(sItemPath, sBudFilename),
-                                        "texts": [sBudFilename, "", sBuddyPath],
-                                        }
-                            treeData.append(itemData)
+                        sBudFilename = osp.basename(sBuddyPath)
+                        itemData = {"path": pathJoin(sItemPath, sBudFilename),
+                                    "texts": [sBudFilename, "", sBuddyPath],
+                                    }
+                        treeData.append(itemData)
 
                     for sNodeName in sFileNodeNames:
                         itemData = fileNodeTreeData[sNodeName].copy()
@@ -283,6 +283,7 @@ def scanTextureDependency(damAst):
             sDirPath, sFilename = osp.split(sTexAbsPath)
             sBasePath, sExt = osp.splitext(sTexAbsPath)
 
+            bValidPublicFile = False
             drcFile = None
             bExists = osp.isfile(sTexAbsPath) or bUdim
             if not bExists:
@@ -290,9 +291,11 @@ def scanTextureDependency(damAst):
             else:
                 sFoundFileList.append(sNormTexPath)
                 drcFile = proj.entryFromPath(sTexAbsPath)
-                #print drcFile, drcFile.absPath()
+
                 if drcFile and drcFile.isPublic():
                     if normCase(sDirPath) == normCase(sPubTexDirPath):
+
+                        bValidPublicFile = True
 
                         scanLogDct.setdefault("info", []).append(('PublicFiles', sTexAbsPath))
 
@@ -307,7 +310,6 @@ def scanTextureDependency(damAst):
                                      "drc_file":drcFile,
                                      }
                         addResult(resultDct)
-                        continue
 
             sTiling = ""
             if bUdim:
@@ -323,9 +325,10 @@ def scanTextureDependency(damAst):
                 sMsg = ("Only accepts: '{}'".format("' '".join(sAllowTexTypes)))
                 scanLogDct.setdefault("error", []).append(('BadTextureFormat', sMsg))
 
-            if normCase(sDirPath) != normCase(sPrivTexDirPath):
-                sMsg = ("Not in '{}'".format(osp.normpath(sPrivTexDirPath)))
-                scanLogDct.setdefault("error", []).append(('BadLocation', sMsg))
+            if not bValidPublicFile:
+                if normCase(sDirPath) != normCase(sPrivTexDirPath):
+                    sMsg = ("Not in '{}'".format(osp.normpath(sPrivTexDirPath)))
+                    scanLogDct.setdefault("error", []).append(('BadLocation', sMsg))
 
             sMsg = ""
             sChannel = ""
@@ -390,7 +393,8 @@ def scanTextureDependency(damAst):
                             sMsgList.append("NOT COMPRESSED")
 
                         if not bRgb24:
-                            depthDct = {"BGR;5": 16, "BGR":24, "BGRA":32}
+                            depthDct = {"BGR;5": 16, "BGR":24, "BGRA":32,
+                                        "RGB;5": 16, "RGB":24, "RGBA":32}
                             sMsg = "Expected 24 bits, got {} bits".format(depthDct[sMode])
                             sMsgList.append(sMsg)
 
