@@ -261,8 +261,7 @@ def scanTextureDependency(damAst):
             sTexAbsPathList = sorted(iterPaths(sDirPath, dirs=False,
                                              recursive=False,
                                              keepFiles=ignorePatterns(sFilename)
-                                             )
-                                     )
+                                             ))
 
         for sTexAbsPath in sTexAbsPathList:
 
@@ -339,8 +338,8 @@ def scanTextureDependency(damAst):
                     sMsg = toStr(e)
                 else:
                     sNameParts = sBaseName.split("_")
-                    if len(sNameParts) != 3:
-                        sMsg = "Must have 3 parts: tex_textureSubject_channel"
+                    if len(sNameParts) not in (3, 4):
+                        sMsg = "Must have 3 or 4 parts: tex_textureSubject_[optional]_channel"
                     elif sNameParts[0] != "tex":
                         sMsg = ("Must start with 'tex_'")
                     else:
