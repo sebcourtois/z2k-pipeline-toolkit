@@ -144,10 +144,10 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
-            finalMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
-            finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(finalMapdir)))
+            privateMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
+            privateMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(privateMapdir)))
             publicMapdir = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
-            publicMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(finalMapdir)))
+            publicMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(privateMapdir)))
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
@@ -207,8 +207,8 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
-            finalMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
-            finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(finalMapdir)))
+            privateMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
+            privateMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(privateMapdir)))
             publicMapdir = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
             publicMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(publicMapdir)))
         else:
@@ -221,7 +221,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
     fileNodeList = mc.ls("*",type ="file")
     outWrongFileNodeList = []
     outMapPathForPublishList = []
-    if inVerbose == True: print "#### info: Expanded working directory: '{}'".format(os.path.normpath(finalMapdirExpand))
+    if inVerbose == True: print "#### info: Expanded working directory: '{}'".format(os.path.normpath(privateMapdirExpand))
 
 
     for eachFileNode in fileNodeList:
@@ -230,8 +230,8 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         mapFilePathExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePath)))
         mapPath = os.path.split(mapFilePath)[0]
         fileName = os.path.split(mapFilePath)[1]       
-        finalMapFilePathExpanded = miscUtils.normPath(miscUtils.pathJoin(finalMapdirExpand,fileName))
-        finalMapFilePath = miscUtils.normPath(miscUtils.pathJoin(finalMapdir,fileName))
+        privateMapFilePathExpanded = miscUtils.normPath(miscUtils.pathJoin(privateMapdirExpand,fileName))
+        privateMapFilePath = miscUtils.normPath(miscUtils.pathJoin(privateMapdir,fileName))
         publicMapFilePathExpanded = miscUtils.normPath(miscUtils.pathJoin(publicMapdirExpand,fileName))
         publicMapFilePath = miscUtils.normPath(miscUtils.pathJoin(publicMapdir,fileName))
 
@@ -241,12 +241,12 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
             if inVerbose == True: print "#### warning: '{0:^24}' the file extention :'.{1}'  is not conform, only {2} are allowed".format(eachFileNode,mapExtention,inAuthorizedFormat)
             outWrongFileNodeList.append(eachFileNode)
             continue
-        #tests if used path match the finalMapDir and if the texture exists
-        elif mapPath == finalMapdir: 
+        #tests if used path match the privateMapdir and if the texture exists
+        elif mapPath == privateMapdirExpand: 
             if os.path.isfile(mapFilePathExpand) == True:
                 if hardPath is True:
-                    mc.setAttr(eachFileNode+".fileTextureName", finalMapFilePathExpanded, type = "string")
-                    if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,finalMapFilePathExpanded)
+                    mc.setAttr(eachFileNode+".fileTextureName", privateMapFilePathExpanded, type = "string")
+                    if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,privateMapFilePathExpanded)
                 else:
                     if ".1001." in os.path.split(mapFilePath)[-1] and mapFilePath.split(".")[-1] == "jpg":
                         if inVerbose == True: print "#### Warning: '{0:^24}' udim not allowed for jpg:'{1}'".format(eachFileNode,mapFilePath)       
@@ -269,7 +269,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
                 outWrongFileNodeList.append(eachFileNode)
                 continue
 
-        #tests if used path match the finalMapDir and if the texture exists
+        #tests if used path match the privateMapdirExpand and if the texture exists
         elif mapPath == publicMapdir: 
             if os.path.isfile(publicMapFilePathExpanded) == True:
                 if inVerbose == True: print "#### Info: '{0:^24}' Published File :'{1}'".format(eachFileNode,mapFilePath)  
@@ -279,37 +279,38 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
                 outWrongFileNodeList.append(eachFileNode)
                 continue
 
-        #tests if the texture exists in the finalMapDir, and modify the path if inConform = True
-        elif os.path.isfile(finalMapFilePathExpanded) is True:
+        #tests if the texture exists in the privateMapdirExpand, and modify the path if inConform = True
+        elif os.path.isfile(privateMapFilePathExpanded) is True:
             if inConform is True: 
+                #if 
                 if hardPath is True:
-                    mc.setAttr(eachFileNode+".fileTextureName", finalMapFilePathExpanded, type = "string")
-                    if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,finalMapFilePathExpanded)
+                    mc.setAttr(eachFileNode+".fileTextureName", privateMapFilePathExpanded, type = "string")
+                    if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,privateMapFilePathExpanded)
                 else:
-                    mc.setAttr(eachFileNode+".fileTextureName", finalMapFilePath, type = "string")
-                    if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,finalMapFilePath)
+                    mc.setAttr(eachFileNode+".fileTextureName", privateMapFilePathExpanded, type = "string")
+                    if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,privateMapFilePathExpanded)
                 continue
             else:
                 if inVerbose == True: print "#### Warning: '{0:^24}' wrong path file :'{1}'".format(eachFileNode,mapFilePath)       
                 outWrongFileNodeList.append(eachFileNode)
                 continue
-        #tests if the texture file exists at the initial file path and copy it if required to the finalMapDir
+        #tests if the texture file exists at the initial file path and copy it if required to the privateMapdirExpand
         elif os.path.isfile(mapFilePath) is True:
             if inCopy is True:
-                print "#### Info: copy file: "+mapFilePath+" --> "+finalMapFilePathExpanded
-                shutil.copyfile(mapFilePath, finalMapFilePathExpanded)
-                if os.path.isfile(finalMapFilePathExpanded) == False: 
-                    print "#### Error: "+eachFileNode+" file could not be found: "+finalMapFilePathExpanded
+                print "#### Info: copy file: "+mapFilePath+" --> "+privateMapFilePathExpanded
+                shutil.copyfile(mapFilePath, privateMapFilePathExpanded)
+                if os.path.isfile(privateMapFilePathExpanded) == False: 
+                    print "#### Error: "+eachFileNode+" file could not be found: "+privateMapFilePathExpanded
                     outWrongFileNodeList.append(eachFileNode)
                     continue
                 if hardPath is True:
-                    mc.setAttr(eachFileNode+".fileTextureName", finalMapFilePathExpanded, type = "string")
+                    mc.setAttr(eachFileNode+".fileTextureName", privateMapFilePathExpanded, type = "string")
                 else:
-                    mc.setAttr(eachFileNode+".fileTextureName", finalMapFilePath, type = "string")
-                if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,finalMapFilePath)                        
+                    mc.setAttr(eachFileNode+".fileTextureName", privateMapFilePathExpanded, type = "string")
+                if inVerbose == True: print "#### Info: '{0:^24}' the file path changed to {1}".format(eachFileNode,privateMapFilePathExpanded)                        
                 continue
         else:
-            if inVerbose == True: print "#### warning: '{0:^24}' the file must be moved to {1}".format(eachFileNode,finalMapFilePath)                         
+            if inVerbose == True: print "#### warning: '{0:^24}' the file must be moved to {1}".format(eachFileNode,privateMapFilePathExpanded)                         
             outWrongFileNodeList.append(eachFileNode)
             continue
 
@@ -625,8 +626,8 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
-            finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
-            finalMapdirExpand = os.path.expandvars(os.path.expandvars(finalMapdir))
+            privateMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            privateMapdirExpand = os.path.expandvars(os.path.expandvars(privateMapdir))
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
@@ -670,8 +671,8 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
 
         mapPath = os.path.split(mapFilePath)[0]
         fileName = os.path.split(mapFilePath)[1]       
-        finalMapFilePathExpanded = miscUtils.pathJoin(finalMapdirExpand,fileName)
-        finalMapFilePath = miscUtils.pathJoin(finalMapdir,fileName)
+        privateMapFilePathExpanded = miscUtils.pathJoin(privateMapdirExpand,fileName)
+        privateMapFilePath = miscUtils.pathJoin(privateMapdir,fileName)
 
         outNode = mc.listConnections (eachFileNode+".outColor", source=False, destination=True, connections = False)
         if len(outNode)>1:
@@ -832,8 +833,8 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset":
-            finalMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
-            finalMapdirExpand = os.path.expandvars(os.path.expandvars(finalMapdir))
+            privateMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
+            privateMapdirExpand = os.path.expandvars(os.path.expandvars(privateMapdir))
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
@@ -881,8 +882,8 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
 
         mapPath = os.path.split(mapFilePath)[0]
         fileName = os.path.split(mapFilePath)[1]       
-        finalMapFilePathExpanded = miscUtils.pathJoin(finalMapdirExpand,fileName)
-        finalMapFilePath = miscUtils.pathJoin(finalMapdir,fileName)
+        privateMapFilePathExpanded = miscUtils.pathJoin(privateMapdirExpand,fileName)
+        privateMapFilePath = miscUtils.pathJoin(privateMapdir,fileName)
 
         if mapFilePath != tgaFilePath: 
             print "#### {:>7}: '{}' FileNode, wrong file format: '{}',  should be a tga".format("Error",eachFileNode,mapFilePath.split(".")[-1])
@@ -928,8 +929,8 @@ def getTexturesToPublish (verbose = True):
         print "#### {:>7}: One (or several) the texture path is not conform, please run the conformTexturePath() procedure first".format("Error")
         return
 
-    finalMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(os.path.split(mapFilePathList[0])[0])))
-    print "#### {:>7}: Expanded working directory: '{}'".format("Info",os.path.normpath(finalMapdirExpand))
+    privateMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(os.path.split(mapFilePathList[0])[0])))
+    print "#### {:>7}: Expanded working directory: '{}'".format("Info",os.path.normpath(privateMapdirExpand))
 
     missingFiles = 0
     filesToPublish = []
@@ -1051,7 +1052,7 @@ def createShadingGroup():
 def printTextureFileName ():
     fileNodeList = mc.ls("*",type ="file")
     for each in fileNodeList:
-       mapFilePath = miscUtils.normPath(mc.getAttr(each+".fileTextureName"))
+       mapFilePath = os.path.normpath(miscUtils.normPath(mc.getAttr(each+".fileTextureName")))
        mapFilePathExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePath))) 
        print "#### Info: '{0:^30}' Image Name: '{1}'".format(each,mapFilePath) 
 
