@@ -30,12 +30,12 @@ def buttonSetRenderOutput(*args):
 #conform texture path
 def buttonConformAllTexturePath(*args):
 	shading.conformTexturePath( inConform = True)
-def buttonHardPathAllTexturePath(*args):
-	shading.conformTexturePath( inConform = True, hardPath = True)
 def buttonCheckAllTexturePath(*args):
 	shading.conformTexturePath( inConform = False)
 def buttonPrintAllTexturePath(*args):
-	shading.printTextureFileName()
+	shading.printTextureFileName(fileNodeList = "all")
+def buttonPrintSelTexturePath(*args):
+	shading.printTextureFileName(fileNodeList = "selection")
 
 
 #Conform Shader Names
@@ -115,8 +115,10 @@ mc.flowLayout( )
 mc.button( label='Comform All', recomputeSize = False, width = 125, c= buttonConformAllTexturePath)
 mc.button( label='Check All', recomputeSize = False, width = 125, c=  buttonCheckAllTexturePath)
 mc.setParent( '..' )
-mc.button( label='Hard Path All', c= buttonHardPathAllTexturePath)
-mc.button( label='Print All', c=  buttonPrintAllTexturePath)
+mc.flowLayout( )
+mc.button( label='Print All', recomputeSize = False, width = 125, c= buttonPrintAllTexturePath)
+mc.button( label='Print Selection', recomputeSize = False, width = 125, c=  buttonPrintSelTexturePath)
+mc.setParent( '..' )
 
 #Conform Shader Names
 mc.separator(style = 'in', h = 5 )
