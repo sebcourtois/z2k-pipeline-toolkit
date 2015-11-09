@@ -145,7 +145,8 @@ def infosFromMayaScene(*args, **kwargs):
     """
     testOk = True
     outD = {}
-    if  len(cmds.file(q=1 ,sceneName=True)):
+    scenePathTmp = cmds.file(q=1 ,sceneName=True)
+    if   "asset" in scenePathTmp :
         categoryL = getCatL()
         assetTypeL= getAssetTypeL()
         #path and short name
