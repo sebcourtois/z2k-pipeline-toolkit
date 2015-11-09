@@ -66,6 +66,7 @@ class shot_lib(object):
                      "{name}_sound.wav -> animatic_sound":None,
                      "{name}_animatic.mov -> animatic_capture":None,
                      "{name}_camera.ma -> camera_scene":None,
+                     "{name}_infoSet.txt -> infoSet_file":None,
                     },
                  "{step:01_previz} -> previz_dir":
                     {
