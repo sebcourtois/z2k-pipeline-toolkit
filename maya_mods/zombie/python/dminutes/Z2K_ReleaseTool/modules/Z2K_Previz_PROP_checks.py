@@ -7,28 +7,30 @@
 # Comment : BASE SCRIPT OUT OF Z2K in v002
 # Author : Jean-Philippe Descoins
 # Date : 2015-26-08
-# Comment : wip
+# Comment : wip  THIS THE MOST UPDATED SCRIPT ( ADD SET SUBDIV FN IN OTHERS : DELETE_APPLY and STRUCTURE CHECK)
 #
 # TO DO:
+#       - Handle versioning problems if edti it's incremented/ if readonly it's not (if edit and if not publish add please publish edited)
 #       WIP mettage en lIB et nouveau path and names
-#       - if set_subdiv_* exists - apply setSubdiv else delete setSubdiv() 
+#       - clean obj button have to be grayed if checkStructure not done (setSmoothness need good structure)
+#       - add auto remove camera if is camera du pipe
+#       - separate interface from base class
+#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
+#       - check geometry modeling history
+#       WIP Clean ref Nodes + exception arnold etc
+#       ? Check UV smoothing/display paremeters
+#       x if set_subdiv_* exists - apply setSubdiv else delete setSubdiv() 
 #                   from dminutes import assetconformation
 #                   reload(assetconformation)
 #                   assetconformation.setSubdiv()
 #       x add isSetMeshCacheOK()
-#       - clean obj button have to be grayed if checkStructure not done (setSmoothness need good structure)
-#       - add auto remove camera if is camera du pipe
+#       x add delete_setSubdiv()
 #       x add check for BigDaddy et BigDaddy_NeutralPose and base CTR
-#       - separate interface from base class
-#       - add BigDaddy check
-#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
+#       x add BigDaddy check
 #       x MentalRayCleanNodes (['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'])
 #       x check geometry all to zero
 #       x BUG check colorLum
-#       - check geometry modeling history
-#       WIP Clean ref Nodes + exception arnold etc
-#       ? Check UV smoothing/display paremeters
-#       ? delete mentalRayNode
+#       x delete mentalRayNode
 #       x check BaseStructure
 #       x check group geo check for attrib of smooth: connect grp_geo smooth lvl2 to set_meshCache obj if pas existant
 #       x check Under_AssetStructure
@@ -63,7 +65,7 @@ import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
 reload(Batch_CONFIG)
 from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
 print "DEBUGFILE=", DEBUGFILE
-
+from dminutes import assetconformation
 
 
 class checkModule(object):
@@ -108,32 +110,6 @@ class checkModule(object):
             # print u"Exécution de la fonction '%s'." % func.__name__
             func(toScrollF=self.BDebugBoard, toFile = self.DebugPrintFile, GUI=self.GUI, *args, **kwargs)
         return deco
-
-    
-    # def waiter (func,*args, **kwargs):
-    #     def deco(self,*args, **kwargs):
-    #         result = True
-    #         cmds.waitCursor( state=True )
-    #         print "wait..."
-    #         try:
-    #             print func
-    #             result = func(self,*args, **kwargs)
-    #         except Exception,err:
-    #             print "#ERROR in waiter():",err
-
-    #             # cmds.waitCursor( state=False )
-    #         cmds.waitCursor( state=False )
-    #         print "...wait"
-    #         if not result and self.GUI:
-    #             print "try GUI ANYWAY MOTHER fOCKER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    #             cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
-
-    #         return result
-    #     return deco
-
-
-
-
 
 
     def isSkinned(self, inObjL=[], verbose=False, printOut = False,*args,**kwargs):
@@ -259,7 +235,8 @@ class checkModule(object):
 
         baseExcludeL = ["persp","top","front","side","left","back","bottom","defaultCreaseDataSet","defaultLayer"]
         baseObjL = ["asset",]
-        baseSetL = ["set_meshCache","set_control"]
+        baseSetL = ["set_meshCache","set_control",]
+        additionnalSetL = ["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"]
         baseLayerL = ["control","geometry"]
         baseCTRL = ["BigDaddy","BigDaddy_NeutralPose","Global_SRT","Local_SRT","Global_SRT_NeutralPose","Local_SRT_NeutralPose"]
         AllBaseObj = baseLayerL + baseObjL + baseSetL
@@ -291,13 +268,22 @@ class checkModule(object):
 
         # topSetL test
         debugD["topSetL"] = {}
-        if not sorted(baseSetL) == sorted(topSetL):
+        debugD["topSetL"]["Found"] = ""
+        debugD["topSetL"]["result"] = []
+        for i in topSetL:
+
+            if not i in baseSetL and not i in additionnalSetL:
+        # if not sorted(baseSetL) == sorted(topSetL):
+                debugD["topSetL"]["result"].append( False )
+                debugD["topSetL"]["Found"] += " -" + i
+                toReturnB= False
+            else:
+                debugD["topSetL"]["result"].append( True )
+        # if 1 flase dans tout les test alors pas bon
+        if False in debugD["topSetL"]["result"]:
             debugD["topSetL"]["result"] = "PAS CONFORME"
-            debugD["topSetL"]["Found"] = topSetL
-            toReturnB= False
         else:
             debugD["topSetL"]["result"] = "OK"
-        
 
 
        # Layers test
@@ -469,6 +455,36 @@ class checkModule(object):
             self.printF("created Attrib: {0}/{1}".format(len(createdL),len(theAttrL)) )
         # --------------------------
         return [toReturnB,createdL]
+
+    def Apply_Delete_setSubdiv (self, applySetSub=True, toDelete=["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"],*args, **kwargs):
+        print "Apply_Delete_setSubdiv()"
+        toReturnB = True
+        setSub = False
+        if applySetSub:
+            try:
+                assetconformation.setSubdiv()
+                setSub = True
+            except:
+                print "    No setSubDiv to Apply in the scene"
+
+        deletedL = []
+        for i in toDelete:
+            try:
+                cmds.delete(i)
+                deletedL.append(i)
+            except:
+                pass
+        
+
+        # prints -------------------
+        self.printF("Apply_Delete_setSubdiv()", st="t")
+        self.printF(toReturnB, st="r")
+        self.printF("Set Subdiv applyed: {0}".format(setSub) )
+        if len(deletedL):
+            self.printF("deleted: {0} - {1}".format(len(deletedL),deletedL ) )
+        # --------------------------
+
+        return [toReturnB,deletedL]
 
     def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',
         'Draft','DraftMotionBlur','DraftRapidMotion','Preview','PreviewCaustics','PreviewFinalGather','PreviewGlobalIllum',
@@ -1050,9 +1066,12 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=8, e=True)
+        self.pBar_upd(step=1, maxValue=9, e=True)
 
         # steps
+        if not self.Apply_Delete_setSubdiv()[0]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
         if not self.cleanRefNodes()[0]:
             boolResult = False
         self.pBar_upd(step= 1,)

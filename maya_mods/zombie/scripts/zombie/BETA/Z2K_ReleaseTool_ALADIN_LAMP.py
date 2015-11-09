@@ -73,12 +73,12 @@ def RELEAZE_ALADIN():
 
         # insert le bon module de check dans l'interface
         Z2K_Pcheck="NADA"
-        
+        print 'infoDict["assetCat"]=',infoDict["assetCat"]
         # THIS IS FOR NOW ONLY OK FOR THE PREVIZ, IT DOESN'T TEST infoDict["assetType"] but only infoDict["assetCat"]
         if  infoDict["assetCat"] in ["chr"]:
             print "It' is a CHAR test"
             Z2K_Pcheck = Z2K_Pcheck_CHAR
-        if  infoDict["assetCat"] in ["prp","vhl"]:
+        if  infoDict["assetCat"] in ["prp","vhl","c2d"]:
             print "It' is a PROP test"
             Z2K_Pcheck = Z2K_Pcheck_PROP
         if  infoDict["assetCat"] in ["set"]:
