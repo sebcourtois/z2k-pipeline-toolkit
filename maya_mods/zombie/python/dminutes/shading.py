@@ -1011,19 +1011,28 @@ def getTexturesToPublish (verbose = True):
 
 def createShadingGroup():
     """
-    This script creates a shading engine for each "geo_" object in the scene, and conform it
+    This script creates a shading engine for all the selected geometrie objects, and conform it
     """
     print ""
-    print "#### {:>7}: runing shading.createShadingGroup()"
+    print "#### {:>7}: runing shading.createShadingGroup()".format("Info")
+    transformMeshList = []
+    selection = mc.ls( selection=True, l=True)
+    for each in selection:
+        meshList = miscUtils.getAllTransfomMeshes(inParent = selection)
+        for eachMesh in meshList:
+            transformMeshList.append(eachMesh)
+    if not transformMeshList:
+        print "#### {:>7}: nothing selected, please select at leas a geometrie and run again the script".format("Info")
+        return
 
-    transformMeshList =     miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
-
-    answer =  mc.confirmDialog( title='Confirm', message="You are about to create a new shading group for all the 'geo_' object in the scene, all the existing shaers will be disconnected. Do you want to continue?", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+    answer =  mc.confirmDialog( title='Confirm', message="You are about to create a new shading group for all the selected 'geo_' objects (and children), all the existing shaers will be disconnected. Do you want to continue?", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
     if answer == "Cancel": 
         return
     wrongGeoList = modeling.checkMeshNamingConvention()
     if wrongGeoList:
-        raise ValueError("#### Error: 'geo_' wrong naming convention")
+        #raise ValueError("#### Error: 'geo_' wrong naming convention")
+        mc.confirmDialog( title='Confirm', message="#### Error: 'geo_' wrong naming convention, please check the script editor log for details", button=['Ok'], defaultButton='Ok')
+        return
 
     for each in transformMeshList:
         myName = each.split("|")[-1].lstrip("geo_")
@@ -1036,6 +1045,8 @@ def createShadingGroup():
     print "#### {:>7}:  {} shading groups created, assigned and conformed".format("Info",len(transformMeshList))
     conformPreviewShadingTree( shadEngineList = "all", verbose = False, selectWrongShadEngine = False)
     conformShaderName(shadEngineList = "all", selectWrongShadEngine = False, verbose = False )
+
+
 
 
 def printTextureFileName (fileNodeList = "all"):
