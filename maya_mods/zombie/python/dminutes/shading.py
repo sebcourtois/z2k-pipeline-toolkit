@@ -108,8 +108,9 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
                 if connectedToSeveralSG (item):
                     materialParticule = "shared"
                 preview_shader_type = mc.nodeType(item)
-                if not re.match('pre_'+materialParticule+'_'+preview_shader_type+'[0-9]{0,3}$',preview_shader) and not mc.lockNode(item, q=True):
+                if not re.match('pre_'+materialParticule+'_'+preview_shader_type+'[0-9]{0,3}$',preview_shader) and  mc.lockNode(item, q=True)[-1] and not mc.ls(item, defaultNodes = True):
                     preview_shader = mc.rename(item,'pre_'+materialParticule+'_'+preview_shader_type)
+                    print "preview_shader "+preview_shader
                 
             for item in mc.listHistory (render_shader):
                 materialParticule = str(materialName)
@@ -118,8 +119,9 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
                 if connectedToSeveralSG (item):
                     materialParticule = "shared"
                 render_shader_type = mc.nodeType(item)
-                if not re.match('mat_'+materialParticule+'_'+render_shader_type+'[0-9]{0,3}$',render_shader) and not mc.lockNode(item, q=True):
+                if not re.match('mat_'+materialParticule+'_'+render_shader_type+'[0-9]{0,3}$',render_shader) and  not mc.lockNode(item, q=True)[-1] and not mc.ls(item, defaultNodes = True):
                     render_shader = mc.rename(item,'mat_'+materialParticule+'_'+render_shader_type)
+                    print "render_shader "+render_shader
             if verbose == True: print "#### {:>7}: {:^28} tree has been conformed properly".format("Info", each)
 
     if  wrongShadEngine != [] and selectWrongShadEngine == True:
