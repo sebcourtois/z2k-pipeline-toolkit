@@ -22,7 +22,8 @@ import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
 import dminutes.camImpExp as camIE
 reload(camIE)
-
+import dminutes.infoSetExp as infoE
+reload(infoE)
 
 
 # get zomb project
@@ -501,10 +502,11 @@ class SceneManager():
             # here is incerted the publish of the camera of the scene
             print "exporting the camera of the shot"
             camImpExpI = camIE.camImpExp()
-            camImpExpI.exportCam (theProj=self.context['damProject'], sceneName=jpZ.getShotName(), )
+            camImpExpI.exportCam (sceneName=jpZ.getShotName(), )
 
-
-            # here will be incerted the publish of the infoSet file with the position of the global and local srt of sets assets
+            # here is the publish of the infoSet file with the position of the global and local srt of sets assets
+            infoSetExpI =infoE.infoSetExp()
+            infoSetExpI.export(sceneName=jpZ.getShotName())
 
             # here is the original publish
             if rslt != None:

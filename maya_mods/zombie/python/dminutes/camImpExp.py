@@ -8,12 +8,11 @@
 # Date : 2014-11-01
 # Comment : WIP
 # TO DO:
-# wip securiser l'export, en cas d'erreur remettre la scene intact
+
 # x gerer import (replace / add to scene)
 # x import hecker les problemes de NS
 # x import add
 # x import mergeRef option
-# - Export implementer  checkExported
 # x Add import from other scene -> Done in davos asset manager
 ################################################################
 #    ! Toute utilisation de ce se script sans autorisation     #
@@ -59,7 +58,7 @@ class camImpExp(object):
 
 
 
-    def getDataCamFilePath(self, theProj="", currentScene="sq6660_sh6660",*args, **kwargs):
+    def getDataCamFilePath(self,  currentScene="sq6660_sh6660",*args, **kwargs):
         """ Description: Recupere from damas le path private pour sauver le fichier cam exported
                          from maya. Ce fichier est ensuite published avec le publish Damas qui gere increment
                          et commentaire.
@@ -68,9 +67,9 @@ class camImpExp(object):
         """
         
         print "getDataCamFilePath()"
-        print "theProj=", theProj
+        print "theProj=", self.proj
         camFileN =""
-        damShot = DamShot(theProj, name=currentScene)
+        damShot = DamShot(self.proj, name=currentScene)
         print "damShot=", damShot
         # camFileN = damShot.getPath("public","camera_scene")
         camFileN = damShot.getPath("private","camera_scene")
@@ -79,13 +78,13 @@ class camImpExp(object):
         print "camFileNB=", camFileN
         return camFileN
 
-    def publishCamFile(self,theProj="", currentScene="sq6660_sh6660",comment="", **kwargs):
+    def publishCamFile(self, currentScene="sq6660_sh6660",comment="", **kwargs):
         """ Description: Publish la camera exported avant à partir du meme private path
             Return : [publicFile,versionFile]
             Dependencies : -
         """
         
-        damShot = DamShot(theProj, name=currentScene)
+        damShot = DamShot(self.proj, name=currentScene)
         dataDir = damShot.getResource("public","data_dir")
         topublish = damShot.getPath("private","camera_scene")
 
@@ -93,7 +92,7 @@ class camImpExp(object):
         print "pubFile,versionFile=", pubFile,versionFile
         return pubFile,versionFile
 
-    def exportCam(self, theProj="", sceneName="",   checkExported=False, GUI=True, *args, **kwargs):
+    def exportCam(self,  sceneName="",   checkExported=False, GUI=True, *args, **kwargs):
         """ Description: export la camera de la scene courante ds le data de sceneName
             Return : BOOL
             Dependencies : cmds - getDataCamFilePath() - publishCamFile()
@@ -107,7 +106,7 @@ class camImpExp(object):
             cmds.undoInfo( openChunk=True)
 
             # get output scenepath from Davos
-            outPath=self.getDataCamFilePath( theProj=theProj, currentScene=sceneName)
+            outPath=self.getDataCamFilePath( currentScene=sceneName)
             print "*outPath=", outPath
             
             # check if the scene is conform for unparenting and export
@@ -165,7 +164,7 @@ class camImpExp(object):
                         print "* bad version"
                         shotVersion = "UNKNWON"
                     # publish Davos from private exported file
-                    result=self.publishCamFile( theProj=theProj, currentScene=sceneName,comment= "From "+shotVersion)
+                    result=self.publishCamFile( currentScene=sceneName,comment= "From "+shotVersion)
                     print "result=", result
 
                 else:
@@ -193,7 +192,7 @@ class camImpExp(object):
         return pathToReturn
 
 
-    def importCam(self, theProj="", sceneName="",replaceCam=True, GUI=False, MergeRef=True,refDigit=3, *args, **kwargs):
+    def importCam(self,  sceneName="",replaceCam=True, GUI=False, MergeRef=True,refDigit=3, *args, **kwargs):
         """ Description: import la camera de sceneName dans la scene courante
             Return : BOOL
             Dependencies : cmds - getDataCamFilePath()
@@ -208,7 +207,7 @@ class camImpExp(object):
         camExists= False
 
         # get inPath scene from Davos
-        inPath=self.getDataCamFilePath( theProj=theProj, currentScene=sceneName)
+        inPath=self.getDataCamFilePath(  currentScene=sceneName)
         print "*inPath=", inPath
 
         # check if there is allready imported camera and import NS
@@ -286,19 +285,19 @@ class camImpExp(object):
         print "btn_exportCam()"
         res = cmds.confirmDialog( title='Confirm', message='Are you sure?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No' )
         if res == "Yes":
-            self.exportCam (theProj=self.proj, sceneName=jpZ.getShotName(), )
+            self.exportCam ( sceneName=jpZ.getShotName(), )
 
     def btn_importCamReplace(self,*args, **kwargs):
         print "btn_importCamReplace()"
         res = cmds.confirmDialog( title='Confirm', message='Are you sure?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No' )
         if res == "Yes":
-            self.importCam (theProj=self.proj, sceneName=jpZ.getShotName(), replaceCam=True, GUI=True, MergeRef=True )
+            self.importCam ( sceneName=jpZ.getShotName(), replaceCam=True, GUI=True, MergeRef=True )
     
     def btn_importCamAdd(self,*args, **kwargs):
         print "btn_importCamAdd()"
         res = cmds.confirmDialog( title='Confirm', message='Are you sure?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No' )
         if res == "Yes":
-            self.importCam (theProj=self.proj, sceneName=jpZ.getShotName(), replaceCam=False, GUI=True, MergeRef=False )
+            self.importCam ( sceneName=jpZ.getShotName(), replaceCam=False, GUI=True, MergeRef=False )
 
 
     def createWindow(self,*args, **kwargs):
@@ -331,11 +330,11 @@ if __name__ in ["__main__"]:
 # # intanciate the class
 # camImpExpI = camImpExp()
 # # import et remplace dans la hierarchy
-# self.importCam (theProj=self.proj, sceneName=jpZ.getShotName(), replaceCam=True, GUI=True, MergeRef=True )
+# self.importCam (sceneName=jpZ.getShotName(), replaceCam=True, GUI=True, MergeRef=True )
 
 # # import et ajoute la camera en reference
-# self.importCam (theProj=self.proj, sceneName=jpZ.getShotName(), replaceCam=False, GUI=True, MergeRef=False )
+# self.importCam (sceneName=jpZ.getShotName(), replaceCam=False, GUI=True, MergeRef=False )
 
 # # export la cam de la scene
-# self.exportCam (theProj=self.proj, sceneName=jpZ.getShotName(), )
+# self.exportCam (sceneName=jpZ.getShotName(), )
 
