@@ -108,7 +108,6 @@ class camImpExp(object):
 
             # get output scenepath from Davos
             outPath=self.getDataCamFilePath( theProj=theProj, currentScene=sceneName)
-            
             print "*outPath=", outPath
             
             # check if the scene is conform for unparenting and export
