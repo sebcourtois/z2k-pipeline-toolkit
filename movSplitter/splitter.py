@@ -43,7 +43,7 @@ def convertTcToSecondsTc(in_Tc, in_fps=FPS, in_iHoursOffset=0, in_iMinutesOffset
 
 	#print "{0} {1} {2} {3}".format(hours, minutes, seconds, frames)
 
-	return "{1}{0}{2}{0}{3:.2f}".format(TC_SEPARATOR, hours, minutes, seconds + frames/FPS)
+	return "{1}{0}{2}{0}{3}".format(TC_SEPARATOR, hours, minutes, seconds + frames/FPS)
 
 def convertTcToSeconds(in_Tc, in_fps=FPS, in_iHoursOffset=0, in_iMinutesOffset=0, in_iSecondsOffset=0, in_iFramesOffset=0):
 	hours, minutes, seconds, frames = [int(val) for val in in_Tc.split(TC_SEPARATOR)]
@@ -143,7 +143,7 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
 			if in_sSeqFilter != None and in_sSeqOverrideName != None:
 				sequenceCode = in_sSeqOverrideName
 
-			cmdLine = "{0} {1} {2} {3} {4}".format(batFile, '{0}'.format(in_sSourcePath), convertTcToSecondsTc(shot["start"], in_iHoursOffset=-1), convertTcToSecondsTc(shot["end"], in_iHoursOffset=-1, in_iFramesOffset=-1), sequenceCode + "_" + shotCode + "_animatic.mov")
+			cmdLine = "{0} {1} {2} {3} {4}".format(batFile, '{0}'.format(in_sSourcePath), convertTcToSecondsTc(shot["start"], in_iHoursOffset=-1), convertTcToSecondsTc(shot["end"], in_iHoursOffset=-1, in_iFramesOffset=0), sequenceCode + "_" + shotCode + "_animatic.mov")
 
 			if in_bExportInShotFolders:
 				path = getShotFolder(sequenceCode, shotCode)
