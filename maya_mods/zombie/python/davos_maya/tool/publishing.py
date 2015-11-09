@@ -32,7 +32,7 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
     sBuddyFileList = []
     for result in scanResults:
 
-        if not result["publish_ok"]:
+        if not result["publishable"]:
             continue
 
         fileNodes = result["file_nodes"]
@@ -51,7 +51,7 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
         pubFiles = (f for f, _ in publishedFileItems)
 
         sUpdNodeList = []
-        sMsgFmt = "\nChanging {}: \nfrom '{}'\nto   '{}'"
+        sMsgFmt = "\nUpdating {} path: \nfrom '{}'\n  to '{}'"
 
         for fileNodes, pubFile in zip(fileNodesList, pubFiles):
 
@@ -63,7 +63,8 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
                 if sNodeName in sUpdNodeList:
                     continue
 
-                sMsg = (sMsgFmt.format(fileNode, fileNode.getAttr("fileTextureName"),
+                sMsg = (sMsgFmt.format(repr(fileNode),
+                                       fileNode.getAttr("fileTextureName"),
                                        sEnvPath))
                 print sMsg
 
@@ -146,7 +147,7 @@ def publishCurrentScene(*args, **kwargs):
                                     withSgVersion=bSgVersion,
                                     **kwargs)
 
-    pm.displayWarning("Publishing completed !")
+    #pm.displayWarning("Publishing completed !")
 
     return res
 
