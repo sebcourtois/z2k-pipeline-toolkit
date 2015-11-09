@@ -20,8 +20,13 @@ MrcLibrary = mrclibrary.MrcLibrary
 import dminutes.maya_scene_operations as mop
 import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
+import dminutes.camImpExp as camIE
+reload(camIE)
 
-PROJECTNAME = "zombillenium"
+
+
+# get zomb project
+PROJECTNAME = os.environ.get("DAVOS_INIT_PROJECT")
 
 noneValue = 'NONE'
 notFoundvalue = 'NOT FOUND'
@@ -34,6 +39,8 @@ TASK_ASSET_REL = {'previz 3D':'previz_ref', 'animation':'anim_ref'}
 LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
 
 FILE_SUFFIXES = {'Previz 3D':'_previz.ma'}
+
+
 
 def getReversedDict(in_dict):
     """Get a copy of a dictionary key<=>value (Beware of identical values)"""
@@ -491,6 +498,15 @@ class SceneManager():
 
             rslt = self.context['damProject'].publishEditedVersion(currentScene)
 
+            # here is incerted the publish of the camera of the scene
+            print "exporting the camera of the shot"
+            camImpExpI = camIE.camImpExp()
+            camImpExpI.exportCam (theProj=self.context['damProject'], sceneName=jpZ.getShotName(), )
+
+
+            # here will be incerted the publish of the infoSet file with the position of the global and local srt of sets assets
+
+            # here is the original publish
             if rslt != None:
                 pc.confirmDialog( title='Publish OK', message='{0} was published successfully'.format(rslt[0].name))
         else:
