@@ -36,10 +36,6 @@
 import os
 import maya.cmds as cmds
 
-# import dminutes.Z2K_ReleaseTool.Z2K_Asset_Previz_checks as Z2K_PcheckD
-# reload(Z2K_PcheckD)
-# import dminutes.Z2K_ReleaseTool._versions.Z2K_Asset_Previz_checks_v007 as Z2K_PcheckD
-# Z2K_Pcheck = Z2K_PcheckD.AssetPrevizMod()
 import dminutes.Z2K_wrapper as Z2K
 reload(Z2K)
 
@@ -49,6 +45,17 @@ import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
 reload(Batch_CONFIG)
 from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
 print "DEBUGFILE=", DEBUGFILE
+# import dminutes.Z2K_ReleaseTool.Z2K_Asset_Previz_checks as Z2K_PcheckD
+# reload(Z2K_PcheckD)
+# import dminutes.Z2K_ReleaseTool._versions.Z2K_Asset_Previz_checks_v007 as Z2K_PcheckD
+# Z2K_Pcheck = Z2K_PcheckD.AssetPrevizMod()
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_PROP_checks as Z2K_Pcheck_PROP
+reload(Z2K_Pcheck_PROP)
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_CHAR_checks as Z2K_Pcheck_CHAR
+reload(Z2K_Pcheck_CHAR)
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_SET_checks as Z2K_Pcheck_SET
+reload(Z2K_Pcheck_SET)
+
 
 
 class Z2K_ReleaseTool (object):
@@ -79,7 +86,7 @@ class Z2K_ReleaseTool (object):
 
         self.path_private_toEdit = ""
 
-        self.assetL = jpZ.getAssetL ( assetCat=self.assetCat )
+        self.assetL = jpZ.getAssetL ( assetCat= self.assetCat )
 
         # self.createWin()
 
@@ -87,6 +94,8 @@ class Z2K_ReleaseTool (object):
 
     # ------------------------ JIPE_LIB Functions ------------------------------------
 
+
+        
 
     def openAsset(self, sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", readOnly=False, autoUnlock=True, seeRef=False, *args,**kwargs):
 
@@ -262,21 +271,29 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
 
-    def btn_open_Asset_readOnly(self,*args, **kwargs):
+        # update UI with current scene informations
+        self.updateUI()
+        
+    def btn_open_Asset_readOnly(self, *args, **kwargs):
         print "btn_open_Asset_readOnly()"
         self.getInterfaceValues()
         self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=True,autoUnlock=False, seeRef=False)
         cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
 
-    def btn_see_Ref(self,*args, **kwargs):
+        # update UI with current scene informations
+        self.updateUI()
+
+    def btn_see_Ref(self, *args, **kwargs):
         print "btn_see_Ref()"
         self.getInterfaceValues()
         self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=True,autoUnlock=False, seeRef=True)
         cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
 
-    def btn_release_Asset( self,*args,**kwargs):
+
+
+    def btn_release_Asset( self, *args,**kwargs):
         print "btn_release_Asset()"
         self.getInterfaceValues()
         print "X",self.sourceAsset,"->",self.destinationAsset, self.sourceAssetType,"->",self.destinationAssetType
@@ -289,7 +306,67 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             msg= str(err)
             cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
 
-    
+        # disable l'UI, elle ne peut etre reactived que avec le boutton get_context
+        cmds.layout(self.layToEn,e=1,en=0)
+        cmds.button(self.Brelease_Asset,e=1,en=0) 
+
+    def updateUI(self, *args, **kwargs):
+        # cascade
+        if self.assetCat  in self.categoryL:
+            cmds.optionMenu(self.BcategoryMenu ,e=True, value=self.assetCat)
+        self.refreshOptionMenu(theOptMenuL=[self.BsourceAssetMenu,self.BdestinationAssetMenu], inList=self.assetL)
+        self.btn_sourceAssetMenu()
+
+    def btn_set_context(self, *args, **kwargs):
+        print "btn_set_context"
+        # get scene info
+        infoDict = jpZ.infosFromMayaScene()
+        print "infoDict=", infoDict 
+        if infoDict:
+            # set inReleaseTool context
+            self.sourceAsset =infoDict["assetName"]
+            self.SourceAssetType =infoDict["assetType"]+"_scene"
+            self.assetCat = infoDict["assetCat"]
+            self.destinationAsset =infoDict["assetName"]
+            self.destinationAssetType = infoDict["assetType"]+"_ref"
+            self.theComment = "released From " + infoDict["version"] 
+            self.assetL = jpZ.getAssetL ( assetCat= self.assetCat )
+
+            # update UI with current scene informations
+            self.updateUI()
+
+            # unparent or delete old test layout
+            toDel = cmds.layout(self.layoutImportModule,q=1,childArray=1)
+            print "toDel=", toDel
+            cmds.deleteUI(toDel[0])
+            # parent the new good one
+            Z2K_Pcheck="NADA"
+            print 'infoDict["assetCat"]=',infoDict["assetCat"]
+            # THIS IS FOR NOW ONLY OK FOR THE PREVIZ, IT DOESN'T TEST infoDict["assetType"] but only infoDict["assetCat"]
+            if  infoDict["assetCat"] in ["chr"]:
+                print "It' is a CHAR test"
+                Z2K_Pcheck = Z2K_Pcheck_CHAR
+            if  infoDict["assetCat"] in ["prp","vhl","c2d"]:
+                print "It' is a PROP test"
+                Z2K_Pcheck = Z2K_Pcheck_PROP
+            if  infoDict["assetCat"] in ["set"]:
+                print "It' is a SET test"
+                Z2K_Pcheck = Z2K_Pcheck_SET
+
+
+            if Z2K_Pcheck in ["NADA"]:
+                raise Exception("PAS DE MODULE DE CHECK POUR CET ASSET")
+            else:
+                print "Z2K_Pcheck=", Z2K_Pcheck
+                Z2K_Pcheck = Z2K_Pcheck.checkModule(GUI=True, parent=self.layoutImportModule )
+
+            # Enable l'UI, elle ne peut etre reactived que avec le boutton get_context
+            cmds.layout(self.layToEn,e=1,en=1)
+            cmds.button(self.Brelease_Asset,e=1,en=1) 
+
+        else:
+            raise Exception("THIS SCENE IS NOT RELEASABLE! ")
+
     # --------------Window-----------------------------------------------
     def deleteUIandpref(self,*args, **kwargs):
         print "deleteUIandpref()"
@@ -328,10 +405,12 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         # cmds.setParent("..")
         
         # cmds.frameLayout(lv=1, mh=5, mw=5,l="OPEN:",cll=1)
-        
-        
-        cmds.tabLayout(tabsVisible=0,borderStyle="full")
         cmds.columnLayout(adj=1,rs=2)
+        cmds.button("GET CONTEXT",h=30,c=self.btn_set_context )
+        cmds.setParent("..")
+        self.layToEn = cmds.tabLayout(tabsVisible=0,borderStyle="full")
+        cmds.columnLayout(adj=1,rs=2)
+        
         
         
         # category menu
@@ -428,7 +507,9 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
                                 cc=self.deleteUIandpref,retain=False,splitLayout="horizontal",fixedWidth=True,w=self.width+5 )
 
 
-
+        # disable l'UI, elle ne peut etre reactived que avec le boutton get_context
+        cmds.layout(self.layToEn,e=1,en=0)
+        cmds.button(self.Brelease_Asset,e=1,en=0) 
         
 
 # Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", assetCat = "chr", SourceAssetType="previz_scene",
