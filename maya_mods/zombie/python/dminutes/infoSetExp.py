@@ -95,9 +95,7 @@ class infoSetExp(object):
                 print "    s=",infoDict[i]["scale"]
         else:
             errmsg = "Nothing to export in this scene,CHECK your REFERENCES!"
-            if GUI and not errmsg in ["UNKNWON"]:
-                cmds.confirmDialog( title='Error', message='Export impossible mon pote!\n{0}'.format(errmsg), button=['ok'], 
-                                    defaultButton='ok', cancelButton='ok', dismissString='ok',icon="warning" )
+            
         return infoDict
 
     def export(self, sceneName="", *args, **kwargs):
