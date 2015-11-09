@@ -69,6 +69,8 @@ class DependencyTree(QuickTree):
     def __init__(self, parent):
         super(DependencyTree, self).__init__(parent)
 
+        self.defaultFlags |= Qt.ItemIsEditable
+
         self.itemClass = DependencyTreeItem
 
         QT_STYLE = QtGui.QStyleFactory.create("Plastique")
@@ -217,13 +219,18 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
 UDIM_MODE = 3
 UDIM_RGX = r"\.1\d{3}\."
 
-@setWaitCursor
-def scanTextureDependency(damAst):
 
-    proj = damAst.project
-    sAstName = damAst.name
-    sPrivTexDirPath = damAst.getPath("private", "texture_dir")
-    sPubTexDirPath = damAst.getPath("public", "texture_dir")
+@setWaitCursor
+def scanTextureDependency(damEntity):
+
+    proj = damEntity.project
+    sAstName = damEntity.name
+    sPrivTexDirPath = damEntity.getPath("private", "texture_dir")
+    sPubTexDirPath = damEntity.getPath("public", "texture_dir")
+    if osp.exists(sPubTexDirPath):
+        pubTexDir = proj.entryFromPath(sPubTexDirPath)
+        pubTexDir.loadChildDbNodes()
+
     sAllowTexTypes = proj.getVar("project", "allowed_texture_formats")
 
     allFileNodes = lsNodes("*", type='file', not_rn=True)
@@ -240,6 +247,7 @@ def scanTextureDependency(damAst):
 #        print ""
         scanResults.append(res)
         sAllSeveritySet.update(res["scan_log"].iterkeys())
+
 
     for fileNode in allFileNodes:
 
@@ -278,7 +286,7 @@ def scanTextureDependency(damAst):
 
             if bUvTileOn and (not bUdim):
                 sMsg = "Only UDIM (Mari) accepted"
-                scanLogDct.setdefault("error", []).append(('BadUvTilingMode', sMsg))
+                scanLogDct.setdefault("error", []).append(('BadUVTilingMode', sMsg))
 
             sDirPath, sFilename = osp.split(sTexAbsPath)
             sBasePath, sExt = osp.splitext(sTexAbsPath)
@@ -302,22 +310,25 @@ def scanTextureDependency(damAst):
                         privFile = drcFile.getPrivateFile(weak=True)
                         sPrivFileList.append(normCase(privFile.absPath()))
 
-                        resultDct = {"abs_path":sTexAbsPath,
-                                     "scan_log":scanLogDct,
-                                     "file_nodes":fileNodeDct[sNormTexPath],
-                                     "buddy_files":sBuddyFileList,
-                                     "publish_ok":False,
-                                     "drc_file":drcFile,
-                                     }
-                        addResult(resultDct)
+#                        resultDct = {"abs_path":sTexAbsPath,
+#                                     "scan_log":scanLogDct,
+#                                     "file_nodes":fileNodeDct[sNormTexPath],
+#                                     "buddy_files":sBuddyFileList,
+#                                     "publishable":False,
+#                                     "drc_file":drcFile,
+#                                     }
+#                        addResult(resultDct)
 
             sTiling = ""
-            if bUdim:
-                if len(re.findall(UDIM_RGX, sFilename)) != 1:
+            if len(re.findall(UDIM_RGX, sFilename)) != 1:
+                if bUdim:
                     sMsg = "Must match 'name.1###.ext' pattern"
                     scanLogDct.setdefault("error", []).append(('BadUDIMFilename', sMsg))
-                else:
-                    sBasePath, sTiling = sBasePath.rsplit('.', 1)
+            else:
+                sBasePath, sTiling = sBasePath.rsplit('.', 1)
+                if not bUdim:
+                    sMsg = "UDIM mode is OFF"
+                    scanLogDct.setdefault("error", []).append(('BadUVTilingMode', sMsg))
 
             sBaseName = osp.basename(sBasePath)
 
@@ -372,13 +383,13 @@ def scanTextureDependency(damAst):
 
                     if not osp.isfile(sBuddyPath):
                         sBuddyLabel = "".join(s.capitalize()for s in sBuddySfx.split("."))
-                        sErrCode = sBuddyLabel + "FileNotFound"
-                        scanLogDct.setdefault(sSeveriry, []).append((sErrCode, sBuddyPath))
+                        sStatusCode = sBuddyLabel.upper() + "FileNotFound"
+                        scanLogDct.setdefault(sSeveriry, []).append((sStatusCode, sBuddyPath))
                     else:
                         sFoundFileList.append(normCase(sBuddyPath))
                         sBuddyFileList.append(sBuddyPath)
 
-                if bExists:
+                if bExists and (not bValidPublicFile):
                     try:
                         tgaImg = pilimage.open(sTexAbsPath)
                         tileInfo = tgaImg.tile[0]
@@ -404,7 +415,7 @@ def scanTextureDependency(damAst):
                     finally:
                         tgaImg.close()
 
-            bPublish = False
+            bPublishable = False
             if bExists and drcFile and ("error" not in scanLogDct.keys()):
 
                 if drcFile.isPrivate():
@@ -432,7 +443,7 @@ def scanTextureDependency(damAst):
                         scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
                     else:
                         publishCount += 1
-                        bPublish = True
+                        bPublishable = True
 
                         sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
                         sMsg = (", ".join(s.upper() for s in sExtList) + " found"
@@ -444,7 +455,7 @@ def scanTextureDependency(damAst):
                          "scan_log":scanLogDct,
                          "file_nodes":fileNodeDct[sNormTexPath],
                          "buddy_files":sBuddyFileList,
-                         "publish_ok":bPublish,
+                         "publishable":bPublishable,
                          "drc_file":drcFile,
                          }
             addResult(resultDct)
@@ -477,7 +488,7 @@ def scanTextureDependency(damAst):
                          "scan_log":scanLogDct,
                          "file_nodes":[],
                          "buddy_files":[],
-                         "publish_ok":False,
+                         "publishable":False,
                          "drc_file":None,
                          }
             addResult(resultDct)
@@ -492,15 +503,21 @@ def scanTextureDependency(damAst):
 
 dialog = None
 
-def launch(damEntity=None, modal=False):
+def launch(damEntity=None, scanResults=None, modal=False):
 
     global dialog
 
     if not damEntity:
         damEntity = entityFromScene()
 
-    scanResults = scanTextureDependency(damEntity)
+    if scanResults is None:
+        scanResults = scanTextureDependency(damEntity)
+
     if not scanResults:
+        return scanResults
+
+    sScanSeverities = scanResults[-1]["scan_severities"]
+    if not sScanSeverities:
         return scanResults
 
     dialog = DependencyTreeDialog()
@@ -514,12 +531,11 @@ def launch(damEntity=None, modal=False):
     err = None
     if "error" in scanResults[-1]["scan_severities"]:
 
-        err = RuntimeError("Please, fix the following erros and retry publishing.")
+        err = RuntimeError("Please, fix the following errors and retry...")
 
         buttonBox.removeButton(okBtn)
         btn = buttonBox.button(QtGui.QDialogButtonBox.Cancel)
         btn.setText("Close")
-
     else:
         if modal:
             okBtn.setText("Publish")

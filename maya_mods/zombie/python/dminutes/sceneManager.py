@@ -3,7 +3,7 @@
 #------------------------------------------------------------------
 
 import pymel.core as pc
-import maya.cmds as mc
+import maya.cmds as cmds
 
 import tkMayaCore as tkc
 
@@ -22,7 +22,8 @@ import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
 import dminutes.camImpExp as camIE
 reload(camIE)
-
+import dminutes.infoSetExp as infoE
+reload(infoE)
 
 
 # get zomb project
@@ -175,7 +176,7 @@ class SceneManager():
         self.context['sceneEntry'] = None
         self.context['sceneData'] = {}
 
-        curScenePath = os.path.abspath(mc.file(q=True, sn=True))
+        curScenePath = os.path.abspath(cmds.file(q=True, sn=True))
         if curScenePath != '':
             entry = self.context['damProject'].entryFromPath(curScenePath)
             if entry != None:
@@ -288,7 +289,7 @@ class SceneManager():
         if entry == None:
             pc.error("Cannot get entry for context {0}".format(self.context))
 
-        currentScene = os.path.abspath(mc.file(q=True, sn=True))
+        currentScene = os.path.abspath(cmds.file(q=True, sn=True))
         if currentScene == '':
             pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
@@ -301,7 +302,7 @@ class SceneManager():
     #     if entry == None:
     #         pc.error("Cannot get entry for context {0}".format(self.context))
 
-    #     currentScene = os.path.abspath(mc.file(q=True, sn=True))
+    #     currentScene = os.path.abspath(cmds.file(q=True, sn=True))
     #     if currentScene == '':
     #         pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
@@ -327,7 +328,7 @@ class SceneManager():
         if entry == None:
             pc.error("Cannot get entry for context {0}".format(self.context))
 
-        currentScene = os.path.abspath(mc.file(q=True, sn=True))
+        currentScene = os.path.abspath(cmds.file(q=True, sn=True))
         if currentScene == '':
             pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
@@ -363,7 +364,7 @@ class SceneManager():
 
             CAPTUREINFO['user'] = self.context['damProject']._shotgundb.currentUser['name']
             #Infer capture path
-            scenePath = mc.file(q=True, sn=True)
+            scenePath = cmds.file(q=True, sn=True)
             CAPTUREINFO['scene'] = os.path.basename(scenePath)
 
             capturePath = scenePath.replace(".ma", ".mov")
@@ -472,8 +473,8 @@ class SceneManager():
                         iversion = int(version) + 1
 
                         newpath = os.path.join(rootPath, vSplit[0] + ".{0:03}.ma".format(iversion))
-                        mc.file(rename=newpath)
-                        mc.file(save=True)
+                        cmds.file(rename=newpath)
+                        cmds.file(save=True)
                     else:
                         privFile = entry.edit(openFile= not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
 
@@ -490,7 +491,7 @@ class SceneManager():
         return privFile
 
     def publish(self):
-        currentScene = os.path.abspath(mc.file(q=True, sn=True))
+        currentScene = os.path.abspath(cmds.file(q=True, sn=True))
         if currentScene != '':
             entry = self.context['damProject'].entryFromPath(currentScene)
             if entry == None:
@@ -501,10 +502,11 @@ class SceneManager():
             # here is incerted the publish of the camera of the scene
             print "exporting the camera of the shot"
             camImpExpI = camIE.camImpExp()
-            camImpExpI.exportCam (theProj=self.context['damProject'], sceneName=jpZ.getShotName(), )
+            camImpExpI.exportCam (sceneName=jpZ.getShotName(), )
 
-
-            # here will be incerted the publish of the infoSet file with the position of the global and local srt of sets assets
+            # here is the publish of the infoSet file with the position of the global and local srt of sets assets
+            infoSetExpI =infoE.infoSetExp()
+            infoSetExpI.export(sceneName=jpZ.getShotName())
 
             # here is the original publish
             if rslt != None:
@@ -604,28 +606,36 @@ class SceneManager():
         """Updates scene Assets from shotgun shot<=>assets linking"""
         # WIP CORRECTION collapseVariables (ERROR)
         assetsInfo = self.getAssetsInfo()
-
+        errorL = []
         for assetInfo in assetsInfo:
             # print '**          assetInfo["dbinfo"] ' + str(assetInfo['dbinfo'])
             # print '**          assetInfo["localinfo"] ' + str(assetInfo['localinfo'])
             # print '**          assetInfo["path"]' + str(assetInfo['path'])
 
-            # get_File_By_DAVOS methodes
-            drcFile = self.context["damProject"].entryFromPath(assetInfo['path'])
-            The_ASSET_PATH = drcFile.envPath()
-            # print "* The_ASSET_PATH=", The_ASSET_PATH
-            if assetInfo['dbinfo'] == noneValue:
-                if not addOnly:
-                    #Asset that does not exist in shot, remove
-                    mop.removeAsset(The_ASSET_PATH)
-            elif assetInfo['dbinfo'] != assetInfo['localinfo']:
-                if notFoundvalue in assetInfo['dbinfo']:
-                    pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
-                else:
-                    mop.importAsset(The_ASSET_PATH, assetInfo['name'] + "_1")
-        
+            try:
+                # get_File_By_DAVOS methodes
+                drcFile = self.context["damProject"].entryFromPath(assetInfo['path'])
+                The_ASSET_PATH = drcFile.envPath()
+                # print "* The_ASSET_PATH=", The_ASSET_PATH
+                if assetInfo['dbinfo'] == noneValue:
+                    if not addOnly:
+                        #Asset that does not exist in shot, remove
+                        mop.removeAsset(The_ASSET_PATH)
+                elif assetInfo['dbinfo'] != assetInfo['localinfo']:
+                    if notFoundvalue in assetInfo['dbinfo']:
+                        pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
+                    else:
+                        mop.importAsset(The_ASSET_PATH, assetInfo['name'] + "_1")
+            except Exception,err:
+                errorTxt= "* ERROR ON {0} : \n    {1}".format(assetInfo['name'],err)
+                print errorTxt
+                errorL.append(errorTxt)
+
         mop.reArrangeAssets()
 
+        if len(errorL):
+            cmds.confirmDialog( title='Error', message="Problemes lors de l'import:\n{0}".format("\n\t".join(errorL)), button=['ok'], 
+                                    defaultButton='ok', cancelButton='ok', dismissString='ok',icon="warning" )
 
 
     def updateShotgun(self, addOnly=True):
@@ -693,10 +703,10 @@ def deleteHUD(*args, **kwargs):
     # FUNCTION QUI SEMBLE MANQUER, a ajouter quelque part apres le playblast
     # actuellement il y a un bug qui fait que t'as des script qui tournent en permanence dans la scene, et qui plante si
     # ce n'est pas une scene zombie avec une belle camera
-    headsUps = mc.headsUpDisplay(listHeadsUpDisplays=True)
+    headsUps = cmds.headsUpDisplay(listHeadsUpDisplays=True)
     for i in headsUps:
         if "HUD_ZOMB" in i:
             print i
-            mc.headsUpDisplay(i,rem=True)
+            cmds.headsUpDisplay(i,rem=True)
 
 
