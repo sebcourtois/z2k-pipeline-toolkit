@@ -13,6 +13,7 @@ reload(mop)
 
 """Global instance of sceneManager Class"""
 SCENE_MANAGER = None
+SCENE_MANAGER_UI = None
 
 """Global instance of shotgunengine Class"""
 SG = None
@@ -30,7 +31,7 @@ ACTION_BUTTONS = []
 
 def sceneManagerUI():
     """Main UI Creator"""
-    global SCENE_MANAGER
+    global SCENE_MANAGER, SCENE_MANAGER_UI
     global SG
 
     SCENE_MANAGER = sceneManager.SceneManager()
@@ -41,6 +42,7 @@ def sceneManagerUI():
 
     dirname, _ = os.path.split(os.path.abspath(__file__))
     ui = pc.loadUI(uiFile=dirname + "/UI/sceneManagerUIB.ui")
+    SCENE_MANAGER_UI = ui
     connectCallbacks()
 
     initialize()
@@ -108,6 +110,16 @@ def setContextUI():
         if not somethingChanged:
             refreshContextUI()
 
+        return True
+
+    return False
+
+def kill():
+
+    global SCENE_MANAGER_UI
+
+    if SCENE_MANAGER_UI:
+        pc.deleteUI(SCENE_MANAGER_UI, window=True)
         return True
 
     return False
