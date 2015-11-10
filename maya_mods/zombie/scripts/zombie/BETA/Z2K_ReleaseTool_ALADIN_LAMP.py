@@ -72,24 +72,24 @@ def RELEAZE_ALADIN():
             raise Exception("THIS IS ALLREADY A REF FILE : THIS SCENE IS NOT RELEASABLE!")
 
         # insert le bon module de check dans l'interface
-        Z2K_Pcheck="NADA"
-        print 'infoDict["assetCat"]=',infoDict["assetCat"]
-        # THIS IS FOR NOW ONLY OK FOR THE PREVIZ, IT DOESN'T TEST infoDict["assetType"] but only infoDict["assetCat"]
-        if  infoDict["assetCat"] in ["chr"]:
-            print "It' is a CHAR test"
-            Z2K_Pcheck = Z2K_Pcheck_CHAR
-        if  infoDict["assetCat"] in ["prp","vhl","c2d"]:
-            print "It' is a PROP test"
-            Z2K_Pcheck = Z2K_Pcheck_PROP
-        if  infoDict["assetCat"] in ["set"]:
-            print "It' is a SET test"
-            Z2K_Pcheck = Z2K_Pcheck_SET
+        # Z2K_Pcheck="NADA"
+        # print 'infoDict["assetCat"]=',infoDict["assetCat"]
+        # # THIS IS FOR NOW ONLY OK FOR THE PREVIZ, IT DOESN'T TEST infoDict["assetType"] but only infoDict["assetCat"]
+        # if  infoDict["assetCat"] in ["chr"]:
+        #     print "It' is a CHAR test"
+        #     Z2K_Pcheck = Z2K_Pcheck_CHAR
+        # if  infoDict["assetCat"] in ["prp","vhl","c2d"]:
+        #     print "It' is a PROP test"
+        #     Z2K_Pcheck = Z2K_Pcheck_PROP
+        # if  infoDict["assetCat"] in ["set"]:
+        #     print "It' is a SET test"
+        #     Z2K_Pcheck = Z2K_Pcheck_SET
 
-        if Z2K_Pcheck in ["NADA"]:
-            raise Exception("PAS DE MODULE DE CHECK POUR CET ASSET")
-        else:
-            print "Z2K_Pcheck=", Z2K_Pcheck
-            Z2K_Pcheck = Z2K_Pcheck.checkModule(GUI=True, parent=Z2K_ReleaseTool_GuiI.layoutImportModule )
+        # if Z2K_Pcheck in ["NADA"]:
+        #     raise Exception("PAS DE MODULE DE CHECK POUR CET ASSET")
+        # else:
+        #     print "Z2K_Pcheck=", Z2K_Pcheck
+        #     Z2K_Pcheck = Z2K_Pcheck.checkModule(GUI=True, parent=Z2K_ReleaseTool_GuiI.layoutImportModule )
 
     else:
         raise Exception("THIS SCENE IS NOT RELEASABLE! ")

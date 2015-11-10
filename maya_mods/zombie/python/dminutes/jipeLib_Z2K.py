@@ -145,54 +145,58 @@ def infosFromMayaScene(*args, **kwargs):
     """
     testOk = True
     outD = {}
-    categoryL = getCatL()
-    assetTypeL= getAssetTypeL()
-    #path and short name
-    outD["scenePath"]= cmds.file(q=1,sceneName=True)
-    outD["fileName"]= cmds.file(q=1,sceneName=True,shortName=True)
-    outD["assetName"] = outD["fileName"].rsplit("_",1)[0]
-    outD["assetCat"] = outD["fileName"].split("_",1)[0]
-    outD["assetType"] = outD["fileName"].rsplit("_",1)[1].split("-",1)[0]
-    outD["version"] = outD["fileName"].split("-",1)[1][:4]
+    scenePathTmp = cmds.file(q=1 ,sceneName=True)
+    if   "asset" in scenePathTmp :
+        categoryL = getCatL()
+        assetTypeL= getAssetTypeL()
+        #path and short name
+        outD["scenePath"]= cmds.file(q=1,sceneName=True)
+        outD["fileName"]= cmds.file(q=1,sceneName=True,shortName=True)
+        outD["assetName"] = outD["fileName"].rsplit("_",1)[0]
+        outD["assetCat"] = outD["fileName"].split("_",1)[0]
+        outD["assetType"] = outD["fileName"].rsplit("_",1)[1].split("-",1)[0]
+        outD["version"] = outD["fileName"].split("-",1)[1][:4]
 
-    if outD["assetName"][:2]+outD["assetName"][6:9] in ["sq_sh"]:
-        print "this is a shot", outD["assetName"]
+        if outD["assetName"][:2]+outD["assetName"][6:9] in ["sq_sh"]:
+            print "this is a shot", outD["assetName"]
 
 
-    # verification
-    
-    # assetCat
-    if not outD["assetCat"]  in categoryL :
-        print "* bad assetCat -->",outD["assetCat"],"not in",categoryL
-        testOk = False
-    else:
-        print "*","assetCat ok:".rjust(15),outD["assetCat"]
-    
-    # Version
-    if not outD["version"][0]  in ["v"] and not len(outD["version"])in [4]:
-        print "* bad version"
-        testOk = False
-    else:
-        print "*","version ok:".rjust(15),outD["version"]
+        # verification
+        
+        # assetCat
+        if not outD["assetCat"]  in categoryL :
+            print "* bad assetCat -->",outD["assetCat"],"not in",categoryL
+            testOk = False
+        else:
+            print "*","assetCat ok:".rjust(15),outD["assetCat"]
+        
+        # Version
+        if not outD["version"][0]  in ["v"] and not len(outD["version"])in [4]:
+            print "* bad version"
+            testOk = False
+        else:
+            print "*","version ok:".rjust(15),outD["version"]
 
-    # assetType
-    if not outD["assetType"] in assetTypeL and not len(outD["version"])in [4]:
-        print "* bad assetType"
-        testOk = False
-    else:
-        print "*","assetType ok:".rjust(15),outD["assetType"]
+        # assetType
+        if not outD["assetType"] in assetTypeL and not len(outD["version"])in [4]:
+            print "* bad assetType"
+            testOk = False
+        else:
+            print "*","assetType ok:".rjust(15),outD["assetType"]
 
-    # assetName
-    if not outD["assetName"].count("_") not in [3] :
-        print "* bad assetName"
-        testOk = False
-    else:
-        print "*","assetName ok:".rjust(15),outD["assetName"]
-    
+        # assetName
+        if not outD["assetName"].count("_") not in [3] :
+            print "* bad assetName"
+            testOk = False
+        else:
+            print "*","assetName ok:".rjust(15),outD["assetName"]
+        
 
-    # finally return the dico
-    if testOk:
-        return outD
+        # finally return the dico
+        if testOk:
+            return outD
+        else:
+            return False
     else:
         return False
 
