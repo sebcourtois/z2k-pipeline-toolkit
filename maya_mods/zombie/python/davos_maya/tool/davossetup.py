@@ -16,6 +16,7 @@ from davos_maya.tool import publishing
 #from pytd.util.sysutils import inDevMode
 
 from dminutes import sceneManagerUI
+from pytd.util.sysutils import toStr
 
 def doCreateFolders(sEntiType, *args):
     create_dirs_n_files.launch(sEntiType, dryRun=False,
@@ -58,6 +59,15 @@ class DavosSetup(ToolSetup):
         ToolSetup.afterBuildingMenu(self)
         pmu.putEnv("DAVOS_FILE_CHECK", "1")
         pm.colorManagementPrefs(e=True, cmEnabled=False)
+
+        import logging
+        try:
+            logger = logging.getLogger("requests.packages.urllib3.connectionpool")
+            logger.disabled = True
+            logger = logging.getLogger("pytd.util.external.parse")
+            logger.disabled = True
+        except Exception as e:
+            pm.displayWarning(toStr(e))
 
     def beforeReloading(self, *args):
         file_browser.kill()

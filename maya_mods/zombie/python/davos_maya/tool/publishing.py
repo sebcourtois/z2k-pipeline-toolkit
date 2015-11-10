@@ -76,33 +76,46 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
     if not sBuddyFileList:
         return (not bDryRun)
 
-    sMsg = """
+    bUseSubprocess = False
+    if not bUseSubprocess:
+
+        print "\n" + " Publishing associated files: .psd, .tx, etc... ".center(100, '-')
+
+        publishedFileItems = proj.publishDependencies("texture_dep",
+                                                      damEntity,
+                                                      sBuddyFileList,
+                                                      sComment,
+                                                      dryRun=bDryRun,
+                                                      **kwargs)
+    else:
+        sMsg = """
 Opening a new process to publish associated files: .psd, .tx, etc...
-"""
-    pm.displayWarning(sMsg)
+    """
+        pm.displayWarning(sMsg)
 
-    with NamedTemporaryFile(suffix=".txt", delete=False) as tmpFile:
-        tmpFile.write("\n".join(sBuddyFileList))
+        with NamedTemporaryFile(suffix=".txt", delete=False) as tmpFile:
+            tmpFile.write("\n".join(sBuddyFileList))
 
-    p = publish_dependencies.__file__
+        p = publish_dependencies.__file__
 
-    sPython27Path = r"C:\Python27\python.exe"
-    sScriptPath = p[:-1]if p.endswith("c") else p
-    sCmdArgs = [sPython27Path,
-                os.environ["Z2K_LAUNCH_SCRIPT"],
-                "launch", "--update", "0", "--renew", "1",
-                sPython27Path,
-                sScriptPath,
-                proj.name, "texture_dep",
-                damEntity.sgEntityType.lower(),
-                damEntity.name, tmpFile.name,
-                sComment, "--dryRun", str(int(bDryRun)),
-                ]
-    sCmdArgs = list(toStr(a)for a in sCmdArgs)
+        sPython27Path = r"C:\Python27\python.exe"
+        sScriptPath = p[:-1]if p.endswith("c") else p
+        sCmdArgs = [sPython27Path,
+                    os.environ["Z2K_LAUNCH_SCRIPT"],
+                    "launch", "--update", "0", "--renew", "1",
+                    sPython27Path,
+                    sScriptPath,
+                    proj.name, "texture_dep",
+                    damEntity.sgEntityType.lower(),
+                    damEntity.name, tmpFile.name,
+                    sComment, "--dryRun", str(int(bDryRun)),
+                    ]
 
-    if inDevMode():
-        print sCmdArgs
-    subprocess.Popen(sCmdArgs)
+        sCmdArgs = list(toStr(a)for a in sCmdArgs)
+        if inDevMode():
+            print sCmdArgs
+
+        subprocess.Popen(sCmdArgs)
 
     return (not bDryRun)
 
@@ -131,7 +144,7 @@ def publishCurrentScene(*args, **kwargs):
         bSgVersion = False
 
     pm.mel.ScriptEditor()
-    pm.scriptEditorInfo(e=True, suppressInfo=True)
+    pm.mel.handleScriptEditorAction("maximizeHistory")
 
     if not publishSceneDependencies(damEntity, scanResults, sComment):
         return
@@ -147,7 +160,7 @@ def publishCurrentScene(*args, **kwargs):
                                     withSgVersion=bSgVersion,
                                     **kwargs)
 
-    #pm.displayWarning("Publishing completed !")
+    pm.displayWarning("Publishing completed !")
 
     return res
 
