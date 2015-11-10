@@ -109,7 +109,6 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
         treeWidget.setHeaderLabels(sHeaderList)
 
         sAllSeveritySet = scanResults[-1]["scan_severities"]
-        print "-------------", sAllSeveritySet
 
         sFileGrpItems = set()
         treeData = []
@@ -362,7 +361,7 @@ def scanTextureDependency(damEntity):
 
                 bColor = (sChannel == "col")
                 sPsdSeverity = sHighSeverity if bColor else "info"
-                sBuddyItems = [(".tx", sHighSeverity), (".psd", sPsdSeverity)]
+                sBuddyItems = [(".tx", "warning"), (".psd", sPsdSeverity)]
 
                 if bColor:
                     sBuddyItems.append(("HD.jpg", "info"))
