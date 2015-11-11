@@ -160,7 +160,7 @@ class Z2K_ReleaseTool (object):
         theComment= "auto rock the casbah release !", autoUnlock = False,
         *args, **kwargs):
         print "release_Asset()"
-
+        
         print "***//",destinationAsset, destinationAssetType
         path_public,path_private = Z2K.getPath(proj=self.proj, assetName=destinationAsset, pathType=destinationAssetType)
         path_private_toPublish = Z2K.editFile(proj=self.proj, Path_publish_public=path_public)
@@ -330,7 +330,9 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         if self.assetCat  in self.categoryL:
             cmds.optionMenu(self.BcategoryMenu ,e=True, value=self.assetCat)
         self.refreshOptionMenu(theOptMenuL=[self.BsourceAssetMenu,self.BdestinationAssetMenu], inList=self.assetL)
-       
+        
+        cmds.optionMenu(self.BsourceAssetMenu ,e=True, value=self.sourceAsset)
+
         cmds.textField(self.BsourceAsset,e=1, text=self.sourceAsset)
         cmds.textField(self.BsourceAssetType, e=1, text=self.SourceAssetType)
 
@@ -345,13 +347,13 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             print "deleteUI():",err
 
 
-    def btn_set_context(self, *args, **kwargs):
-        print "btn_set_context"
+    def btn_get_context(self, *args, **kwargs):
+        print "btn_get_context"
         # get scene info
         self.SceneInfoDict = jpZ.infosFromMayaScene()
         infoDict = self.SceneInfoDict
         print "infoDict=", infoDict 
-        if infoDict:
+        if infoDict and not "Ref" in infoDict["assetType"][-3:] :
             # set inReleaseTool context
             self.assetCat = infoDict["assetCat"]
             self.sourceAsset =infoDict["assetName"]
@@ -368,15 +370,38 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
             # parent the new good one
             Z2K_Pcheck="NADA"
-            print 'infoDict["assetCat"]=',infoDict["assetCat"]
+            print 'self.assetCat=',self.assetCat
             # THIS IS FOR NOW ONLY OK FOR THE PREVIZ, IT DOESN'T TEST infoDict["assetType"] but only infoDict["assetCat"]
-            if  infoDict["assetCat"] in ["chr"]:
+            tab = "    "
+            if  self.assetCat in ["chr"]:
                 print "It' is a CHAR test"
-                Z2K_Pcheck = Z2K_Pcheck_CHAR
-            if  infoDict["assetCat"] in ["prp","vhl","c2d"]:
+                if self.SourceAssetType in ["modeling_scene"]:
+                    print tab, "modeling, test not ready"
+                elif self.SourceAssetType in ["previz_scene"]:
+                    print tab, "previz"
+                    Z2K_Pcheck = Z2K_Pcheck_CHAR
+                elif self.SourceAssetType in ["anim_scene"]:
+                    print tab, "anim-> same as props"
+                    Z2K_Pcheck = Z2K_Pcheck_PROP
+                elif self.SourceAssetType in ["render_scene"]:
+                    print tab, "render, test not ready"
+
+                else:
+                    print tab, "unknown test or not specific test ready"
+
+
+
+            if  self.assetCat in ["prp","vhl","c2d"]:
                 print "It' is a PROP test"
-                Z2K_Pcheck = Z2K_Pcheck_PROP
-            if  infoDict["assetCat"] in ["set"]:
+                if self.SourceAssetType in ["modeling_scene"]:
+                    print tab, "modeling, test not ready"
+                elif self.SourceAssetType in ["previz_scene","anim_scene"]:
+                    print tab, "previz-anim"
+                    Z2K_Pcheck = Z2K_Pcheck_PROP
+                elif self.SourceAssetType in ["render_scene"]:
+                    print tab, "render, test not ready"
+                
+            if  self.assetCat in ["set"]:
                 print "It' is a SET test"
                 Z2K_Pcheck = Z2K_Pcheck_SET
 
@@ -392,7 +417,10 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             cmds.button(self.Brelease_Asset,e=1,en=1) 
 
         else:
-            raise Exception("THIS SCENE IS NOT RELEASABLE! ")
+            msg= "THIS SCENE IS NOT RELEASABLE! "
+            print msg
+            cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
+            # raise Exception(msg)
 
     # --------------Window-----------------------------------------------
     def deleteUIandpref(self,*args, **kwargs):
@@ -433,7 +461,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         
         # cmds.frameLayout(lv=1, mh=5, mw=5,l="OPEN:",cll=1)
         cmds.columnLayout(adj=1,rs=2)
-        cmds.button("GET CONTEXT",h=30,c=self.btn_set_context )
+        cmds.button("GET CONTEXT", ann="Rub the Lamp and make a wish'",h=30,c=self.btn_get_context )
         cmds.setParent("..")
         self.layToEn = cmds.tabLayout(tabsVisible=0,borderStyle="full")
         cmds.columnLayout(adj=1,rs=2)
@@ -515,7 +543,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
 
         # debug options
-        if not self.debug:
+        if  not self.debug:
             cmds.rowLayout(self.sourceRowL, e=1, enable=0)
 
             # cmds.textField(self.BsourceAsset, editable=0, )
