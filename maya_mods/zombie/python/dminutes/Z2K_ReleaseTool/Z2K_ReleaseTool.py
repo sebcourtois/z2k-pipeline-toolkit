@@ -167,17 +167,34 @@ class Z2K_ReleaseTool (object):
         path_private_toPublishAbs= path_private_toPublish.absPath()
         print "path_private_toPublish=", path_private_toPublishAbs
         
+        # check if current file is published
+        path_public,path_private = Z2K.getPath(proj=self.proj, assetName=self.sourceAsset, pathType=self.SourceAssetType)
+        print "path_public=", path_public
+        print "path_private=", path_private
+        #pubFile is a MrcFile
+        pubFile_Version = "v" + str(self.proj.entryFromPath(path_public).currentVersion).zfill(3)
+        curVersion = jpZ.infosFromMayaScene()["version"]
+        print "pubFile_Version=",pubFile_Version
+        print "current_Version=",curVersion
+
+        if pubFile_Version == curVersion:
 
 
-        # save file with Maya at the supposed place
-        newName = cmds.file (rename = path_private_toPublishAbs)
-        exportedFileM= cmds.file ( save=True, force=True, options= "v=0", type= "mayaBinary", preserveReferences=False,  )
+            # save file with Maya at the supposed place
+            newName = cmds.file (rename = path_private_toPublishAbs)
+            exportedFileM= cmds.file ( save=True, force=True, options= "v=0", type= "mayaBinary", preserveReferences=False,  )
 
-        # publishing this file to the public
-        exportedFileZ2K = Z2K.publishFile(proj=self.proj, path_private_toPublish=path_private_toPublish, comment=theComment)
+            # auto comment if not given
+            if theComment in ["",None]:
+                thecomment = "released From " + curVersion
+            # publishing this file to the public
+            exportedFileZ2K = Z2K.publishFile(proj=self.proj, path_private_toPublish=path_private_toPublish, comment=theComment)
 
-        # re open the publish file for checking
-        cmds.file(os.path.normpath(exportedFileZ2K), open=True,f=True)
+            # re open the publish file for checking
+            cmds.file(os.path.normpath(exportedFileZ2K), open=True,f=True)
+        else:
+            print "Not RELEAZED: Edited version was not published!"
+            exportedFileZ2K = "NOT RELEAZED: Edited version was not published before release!"
 
         return exportedFileZ2K
 
