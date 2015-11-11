@@ -77,4 +77,30 @@ def createUserWorkspace():
     pm.workspace( davosUser, openWorkspace = True )
 
         
-        
+def deleteUnknownNodes():
+    
+    mentalRayNodeList = [u'mentalrayGlobals',u'mentalrayItemsList',u'miDefaultFramebuffer',u'miDefaultOptions',u'Draft',u'DraftMotionBlur',u'DraftRapidMotion',u'Preview',u'PreviewCaustics',u'PreviewFinalGather',u'PreviewGlobalIllum',u'PreviewImrRayTracyOff',u'PreviewImrRayTracyOn',u'PreviewMotionblur',u'PreviewRapidMotion',u'Production',u'ProductionFineTrace',u'ProductionMotionblur',u'ProductionRapidFur',u'ProductionRapidHair',u'ProductionRapidMotion']
+    turtleNodeList = [u'TurtleDefaultBakeLayer',u'TurtleBakeLayerManager',u'TurtleRenderOptions',u'TurtleUIOptions']
+
+    mentalRayNodeList = mc.ls(mentalRayNodeList)
+    turtleNodeList= mc.ls(turtleNodeList)
+
+    for each in mentalRayNodeList:
+        try:
+            mc.lockNode(each,lock = False)
+            mc.delete(each)
+            print "#### {:>7}: '{}' Mental Ray node deleted".format("Info", each)
+        except:
+            print "#### {:>7}: '{}' Mental Ray node could not be deleted".format("Warning", each)
+
+    for each in turtleNodeList:
+        try:
+            mc.lockNode(each,lock = False)
+            mc.delete(each)
+            print "#### {:>7}: '{}' Turtle node deleted".format("Info", each)
+        except:
+            print "#### {:>7}: '{}' Turtle node could not be deleted".format("Warning", each)
+
+    unknownNodes = mc.ls(type = "unknown")
+    for each in unknownNodes:
+        print "#### {:>7}: '{}' is unknowed".format("Warning", each)
