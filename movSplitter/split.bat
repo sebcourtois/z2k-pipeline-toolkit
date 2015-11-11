@@ -21,6 +21,8 @@ SET OUTPATH=%OUTFOLDER%%OUTNAME%
 ECHO "-------- VIDEO EXTRACTION ---------"
 REM OTHER POSSIBLE CODECS -vcodec mpeg4 -acodec copy
 REM OTHER POSSIBLE AUDIO CODECS -acodec libmp3lame     => does not work ?
+REM call %FFMPEG% -i %1 -c:v libx264 -preset slow -acodec libvo_aacenc -ss %STARTTC% -to %ENDTC% -y %OUTPATH%
+ECHO %FFMPEG% -i %1 -c:v libx264 -preset slow -acodec libvo_aacenc -ss %STARTTC% -to %ENDTC% -y %OUTPATH%
 call %FFMPEG% -i %1 -c:v libx264 -preset slow -acodec libvo_aacenc -ss %STARTTC% -to %ENDTC% -y %OUTPATH%
 
 ECHO "-------- AUDIO EXTRACTION ---------"

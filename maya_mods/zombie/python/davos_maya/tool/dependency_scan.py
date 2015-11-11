@@ -109,7 +109,6 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
         treeWidget.setHeaderLabels(sHeaderList)
 
         sAllSeveritySet = scanResults[-1]["scan_severities"]
-        print "-------------", sAllSeveritySet
 
         sFileGrpItems = set()
         treeData = []
@@ -292,6 +291,7 @@ def scanTextureDependency(damEntity):
             sBasePath, sExt = osp.splitext(sTexAbsPath)
 
             bValidPublicFile = False
+            sHighSeverity = "error"
             drcFile = None
             bExists = osp.isfile(sTexAbsPath) or bUdim
             if not bExists:
@@ -304,42 +304,34 @@ def scanTextureDependency(damEntity):
                     if normCase(sDirPath) == normCase(sPubTexDirPath):
 
                         bValidPublicFile = True
+                        sHighSeverity = "warning"
 
                         scanLogDct.setdefault("info", []).append(('PublicFiles', sTexAbsPath))
 
                         privFile = drcFile.getPrivateFile(weak=True)
                         sPrivFileList.append(normCase(privFile.absPath()))
 
-#                        resultDct = {"abs_path":sTexAbsPath,
-#                                     "scan_log":scanLogDct,
-#                                     "file_nodes":fileNodeDct[sNormTexPath],
-#                                     "buddy_files":sBuddyFileList,
-#                                     "publishable":False,
-#                                     "drc_file":drcFile,
-#                                     }
-#                        addResult(resultDct)
-
             sTiling = ""
             if len(re.findall(UDIM_RGX, sFilename)) != 1:
                 if bUdim:
                     sMsg = "Must match 'name.1###.ext' pattern"
-                    scanLogDct.setdefault("error", []).append(('BadUDIMFilename', sMsg))
+                    scanLogDct.setdefault(sHighSeverity, []).append(('BadUDIMFilename', sMsg))
             else:
                 sBasePath, sTiling = sBasePath.rsplit('.', 1)
                 if not bUdim:
                     sMsg = "UDIM mode is OFF"
-                    scanLogDct.setdefault("error", []).append(('BadUVTilingMode', sMsg))
+                    scanLogDct.setdefault(sHighSeverity, []).append(('BadUVTilingMode', sMsg))
 
             sBaseName = osp.basename(sBasePath)
 
             if sExt.lower() not in sAllowTexTypes:
                 sMsg = ("Only accepts: '{}'".format("' '".join(sAllowTexTypes)))
-                scanLogDct.setdefault("error", []).append(('BadTextureFormat', sMsg))
+                scanLogDct.setdefault(sHighSeverity, []).append(('BadTextureFormat', sMsg))
 
             if not bValidPublicFile:
                 if normCase(sDirPath) != normCase(sPrivTexDirPath):
                     sMsg = ("Not in '{}'".format(osp.normpath(sPrivTexDirPath)))
-                    scanLogDct.setdefault("error", []).append(('BadLocation', sMsg))
+                    scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
 
             sMsg = ""
             sChannel = ""
@@ -362,14 +354,14 @@ def scanTextureDependency(damEntity):
                             sMsg = ("Channel can only have 3 characters, got {} in '{}'"
                                     .format(len(sChannel), sChannel))
             if sMsg:
-                scanLogDct.setdefault("error", []).append(('BadFilename', sMsg))
+                scanLogDct.setdefault(sHighSeverity, []).append(('BadFilename', sMsg))
                 sMsg = ""
 
             if sExt == ".tga":
 
                 bColor = (sChannel == "col")
-                sPsdSeverity = "error" if bColor else "info"
-                sBuddyItems = [(".tx", "error"), (".psd", sPsdSeverity)]
+                sPsdSeverity = sHighSeverity if bColor else "info"
+                sBuddyItems = [(".tx", "warning"), (".psd", sPsdSeverity)]
 
                 if bColor:
                     sBuddyItems.append(("HD.jpg", "info"))
@@ -411,7 +403,7 @@ def scanTextureDependency(damEntity):
 
                         if sMsgList:
                             sMsg = "\n".join(sMsgList)
-                            scanLogDct.setdefault("error", []).append(("BadTargaFormat", sMsg))
+                            scanLogDct.setdefault(sHighSeverity, []).append(("BadTargaFormat", sMsg))
                     finally:
                         tgaImg.close()
 

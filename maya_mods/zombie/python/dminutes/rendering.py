@@ -171,7 +171,7 @@ def setRenderOutputDir(gui = True):
         if  mainFilePathElem[-4] == "asset":
             departement =  mainFilePathElem[-1].split("_")[-1].split(".")[0].split("-")[0]
             version =  mainFilePathElem[-1].split("_")[-1].split(".")[0].split("-")[1]
-            if departement not in ["modeling","anim","previz","render"]:
+            if departement not in ["modeling","anim","previz","render","master"]:
                 myMessage = "#### {:>7}: '{}' is not a valid scene name, file type '{}' is not valid and cannot be used to define the render path".format("Error",mainFilePathElem[-1], departement)
                 if gui == True:
                     mc.confirmDialog( title='Shader structure Error', message=myMessage, button=['Ok'], defaultButton='Ok' )

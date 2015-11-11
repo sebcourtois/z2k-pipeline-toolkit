@@ -2,20 +2,19 @@
 #               UI data and logic for sceneManagerUI.py
 #------------------------------------------------------------------
 
-import pymel.core as pc
-import maya.cmds as cmds
-
-import tkMayaCore as tkc
-
 import os
 import re
+
+import pymel.core as pc
+import maya.cmds as cmds
+import maya.mel
+
+#import tkMayaCore as tkc
 
 from davos.core import damproject
 from davos.core.damtypes import DamShot
 
-from davos_maya.core import mrclibrary
 from davos.core.utils import versionFromName
-MrcLibrary = mrclibrary.MrcLibrary
 
 import dminutes.maya_scene_operations as mop
 import dminutes.jipeLib_Z2K as jpZ
@@ -57,12 +56,159 @@ def pathNorm(p):
     """Normalize a path, in term of separator"""
     return os.path.normpath(p).replace("\\", "/")
 
+def restoreSelection(func):
+
+    def doIt(*args, **kwargs):
+
+        sSelList = cmds.ls(sl=True)
+        try:
+            ret = func(*args, **kwargs)
+        finally:
+            if sSelList:
+                try:
+                    cmds.select(sSelList)
+                except Exception as e:
+                    print "Could restore previous selection: {}".format(e)
+
+        return ret
+    return doIt
+
+@restoreSelection
+def makeCapture(filepath, start, end, width, height, displaymode="",
+                showFrameNumbers=True, format="iff", compression="jpg",
+                ornaments=False, play=False, useCamera=None, audioNode=None,
+                i_inFilmFit=0, i_inDisplayResolution=0, i_inDisplayFilmGate=0,
+                i_inOverscan=1.0, i_inSafeAction=0, i_inSafeTitle=0,
+                i_inGateMask=0, f_inMaskOpacity=0.8):
+
+    pc.select(cl=True)
+    names = []
+    name = ""
+
+    pan = pc.playblast(activeEditor=True)
+    app = pc.modelEditor(pan, query=True, displayAppearance=True)
+    tex = pc.modelEditor(pan, query=True, displayTextures=True)
+    wireOnShaded = pc.modelEditor(pan, query=True, wireframeOnShaded=True)
+    xray = pc.modelEditor(pan, query=True, xray=True)
+    jointXray = pc.modelEditor(pan, query=True, jointXray=True)
+    hud = pc.modelEditor(pan, query=True, hud=True)
+
+    #Camera settings
+    oldCamera = None
+    if useCamera != None:
+        curCam = pc.modelEditor(pan, query=True, camera=True)
+        if curCam != useCamera:
+            oldCamera = curCam
+            pc.modelEditor(pan, edit=True, camera=useCamera)
+
+    camera = pc.modelEditor(pan, query=True, camera=True)
+    if camera.type() == "transform":
+        camera = camera.getShape()
+
+    filmFit = pc.getAttr(camera + ".filmFit")
+    displayResolution = pc.getAttr(camera + ".displayResolution")
+    displayFilmGate = pc.getAttr(camera + ".displayFilmGate")
+    overscan = pc.getAttr(camera + ".overscan")
+    safeAction = pc.getAttr(camera + ".displaySafeAction")
+    safeTitle = pc.getAttr(camera + ".displaySafeTitle")
+    displayGateMask = pc.getAttr(camera + ".displayGateMask")
+    displayGateMaskOpacity = pc.getAttr(camera + ".displayGateMaskOpacity")
+
+    pc.setAttr(camera + ".filmFit", i_inFilmFit)
+    pc.setAttr(camera + ".displayResolution", i_inDisplayResolution)
+    pc.setAttr(camera + ".displayFilmGate", i_inDisplayFilmGate)
+    pc.setAttr(camera + ".overscan", i_inOverscan)
+    pc.setAttr(camera + ".displaySafeAction", i_inSafeAction)
+    pc.setAttr(camera + ".displaySafeTitle", i_inSafeTitle)
+    pc.setAttr(camera + ".displayGateMask", i_inGateMask)
+    pc.setAttr(camera + ".displayGateMaskOpacity", f_inMaskOpacity)
+
+    #visible types
+    nurbsCurvesShowing = pc.modelEditor(pan, query=True, nurbsCurves=True)
+
+    editorKwargs = {}
+    if displaymode:
+        if displaymode == "wireframe":
+            pc.modelEditor(pan, edit=True, displayAppearance="wireframe", wireframeOnShaded=False, hud=ornaments)
+        else:
+            pc.modelEditor(pan, edit=True, displayAppearance="smoothShaded", wireframeOnShaded=False, hud=ornaments)
+
+        editorKwargs = dict(displayTextures="textured" in displaymode or displaymode == "OpenGL")
+
+    pc.modelEditor(pan, edit=True, nurbsCurves=False, **editorKwargs)
+
+    playblastKwargs = dict(format=format, compression=compression, quality=90,
+                           sequenceTime=False, clearCache=True, viewer=play,
+                           showOrnaments=ornaments,
+                           framePadding=4,
+                           forceOverwrite=True,
+                           percent=100,
+                           startTime=start, endTime=end,
+                           width=width, height=height,
+                           )
+
+    sAudioNode = audioNode
+    if not sAudioNode:
+        gPlayBackSlider = maya.mel.eval('$tmpVar=$gPlayBackSlider')
+        sAudioNode = cmds.timeControl(gPlayBackSlider, q=True, sound=True)
+
+    if sAudioNode:
+        sSoundPath = cmds.getAttr(".".join((sAudioNode, "filename")))
+        if not os.path.exists(sSoundPath):
+            pc.displayError("File of '{}' node not found: '{}' !"
+                              .format(sAudioNode, sSoundPath))
+        else:
+            playblastKwargs.update(sound=sAudioNode)
+
+
+    if format == "iff" and showFrameNumbers:
+        name = pc.playblast(filename=filepath, **playblastKwargs)
+
+        for i in range(start, end + 1):
+            oldFileName = name.replace("####", str(i).zfill(4))
+            newFileName = oldFileName.replace(".", "_", 1)
+            if os.path.isfile(newFileName):
+                os.remove(newFileName)
+            os.rename(oldFileName, newFileName)
+            names.append(newFileName)
+    else:
+        if format == "iff":
+            name = pc.playblast(completeFilename=filepath, **playblastKwargs)
+        else:
+            name = pc.playblast(filename=filepath, **playblastKwargs)
+
+        names.append(name)
+
+    #Reset values
+    pc.modelEditor(pan, edit=True, displayAppearance=app,
+                   displayTextures=tex,
+                   wireframeOnShaded=wireOnShaded,
+                   xray=xray,
+                   jointXray=jointXray,
+                   nurbsCurves=nurbsCurvesShowing,
+                   hud=hud)
+
+    #Camera
+    pc.setAttr(camera + ".filmFit", filmFit)
+    pc.setAttr(camera + ".displayResolution", displayResolution)
+    pc.setAttr(camera + ".displayFilmGate", displayFilmGate)
+    pc.setAttr(camera + ".overscan", overscan)
+    pc.setAttr(camera + ".displaySafeAction", safeAction)
+    pc.setAttr(camera + ".displaySafeTitle", safeTitle)
+    pc.setAttr(camera + ".displayGateMask", displayGateMask)
+    pc.setAttr(camera + ".displayGateMaskOpacity", displayGateMaskOpacity)
+
+    if oldCamera != None:
+        pc.modelEditor(pan, edit=True, camera=oldCamera)
+
+    return names
+
 class SceneManager():
     """Main Class to handle SceneManager Data and operations"""
     def __init__(self, d_inContext=None):
-        self.context={}
-        self.projectname="zombillenium"
-        self.context['damProject'] = damproject.DamProject(self.projectname, libraryType=MrcLibrary)
+        self.context = {}
+        self.projectname = "zombillenium"
+        self.context['damProject'] = damproject.DamProject(self.projectname)
 
         if self.context['damProject'] == None:
             pc.error("Cannot initialize project '{0}'".format(self.projectname))
@@ -84,7 +230,7 @@ class SceneManager():
             elif alternatePath in s_inPath:
                 return s_inPath.replace(alternatePath, encapsulation.format(key))
 
-                
+
         return s_inPath
 
     def getTasks(self, b_inMyTasks=False):
@@ -111,11 +257,11 @@ class SceneManager():
 
         if d_inEntity['type'] == 'Shot':
             nameKey = 'code'
-            tokens['name']=d_inEntity[nameKey]
-            tokens['sequence']=d_inEntity['sg_sequence']['name']
+            tokens['name'] = d_inEntity[nameKey]
+            tokens['sequence'] = d_inEntity['sg_sequence']['name']
         elif d_inEntity['type'] == 'Asset':
-            tokens['name']=d_inEntity[nameKey]
-            tokens['assetType']=d_inEntity[nameKey].split('_')[0]
+            tokens['name'] = d_inEntity[nameKey]
+            tokens['assetType'] = d_inEntity[nameKey].split('_')[0]
 
         #"public","asset_lib","master_file", tokens={"assetType":"chr","asset":sAssetName}
         #print 'tokens ' + str(tokens)
@@ -123,7 +269,7 @@ class SceneManager():
         try:
             path = self.context['damProject'].getPath('public', lib, s_inFileTag, tokens=tokens)
         except Exception, e:
-            pc.warning('damProject.getPath failed with {0}, {1}, {2} : {3}'.format(lib,s_inFileTag,tokens, e))
+            pc.warning('damProject.getPath failed with {0}, {1}, {2} : {3}'.format(lib, s_inFileTag, tokens, e))
 
         """
         #This part was usefull when davos was not completely configured, should be pointless now
@@ -216,10 +362,10 @@ class SceneManager():
 
     def assert_isEditable(self):
         message = ""
-        
+
         if not self.refreshSceneContext():
             message = self.context['sceneState']
-        
+
         if not self.isEditable():
             message = "Your entity is locked by {0} !".format(self.context['lock'])
 
@@ -245,19 +391,19 @@ class SceneManager():
 
         lib = LIBS[self.context['entity']['type']]
         if lib == "asset_lib":
-            lib =  self.context['entity']['sg_asset_type']
+            lib = self.context['entity']['sg_asset_type']
 
         tokens = {}
 
         nameKey = 'code'
 
         if self.context['entity']['type'] == 'Shot':
-            tokens['name']=self.context['entity'][nameKey]
-            tokens['sequence']=self.context['entity']['sg_sequence']['name']
+            tokens['name'] = self.context['entity'][nameKey]
+            tokens['sequence'] = self.context['entity']['sg_sequence']['name']
         elif self.context['entity']['type'] == 'Asset':
             print self.context['entity']
-            tokens['name']=self.context['entity'][nameKey]
-            tokens['assetType']=self.context['entity'][nameKey].split('_')[0]
+            tokens['name'] = self.context['entity'][nameKey]
+            tokens['assetType'] = self.context['entity'][nameKey].split('_')[0]
 
         if 'task' in self.context:
             if self.context['task']['content'] in TASK_FILE_REL:
@@ -296,7 +442,7 @@ class SceneManager():
         return pc.saveAs(currentScene, force=b_inForce)
 
     # def saveIncrement(self, b_inForce=True):
-    #     # old 
+    #     # old
     #     entry = self.getEntry()
 
     #     if entry == None:
@@ -307,7 +453,7 @@ class SceneManager():
     #         pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
     #     matches = re.match(".*(v\d{3})\.(\d{3})\.ma", currentScene)
-        
+
     #     if matches:
     #         curVersion = int(matches.group(2))
     #         curVersion += 1
@@ -318,11 +464,11 @@ class SceneManager():
     #             pc.error("File already exists ({0})!".format(newFileName))
     #     else:
     #         pc.warning("Invalid file pattern !")
-        
+
     #     return None
 
     def saveIncrement(self, b_inForce=True):
-        # new incrementing system based on the last versoin present in the folder 
+        # new incrementing system based on the last versoin present in the folder
         entry = self.getEntry()
 
         if entry == None:
@@ -333,10 +479,10 @@ class SceneManager():
             pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
         matches = re.match(".*(v\d{3})\.(\d{3})\.ma", currentScene)
-        
+
         if matches:
             print "currentScene=", currentScene
-            newFileName = jpZ.createIncrementedFilePath(filePath=currentScene,vSep= ".", extSep=".ma", digits=3,)
+            newFileName = jpZ.createIncrementedFilePath(filePath=currentScene, vSep=".", extSep=".ma", digits=3,)
 
             if b_inForce or not os.path.isfile(newFileName):
                 return pc.saveAs(newFileName, force=b_inForce)
@@ -344,7 +490,7 @@ class SceneManager():
                 pc.error("File already exists ({0})!".format(newFileName))
         else:
             pc.warning("Invalid file pattern !")
-        
+
         return None
 
 
@@ -378,7 +524,7 @@ class SceneManager():
 
             #get camera
             camName = 'cam_{0}'.format(self.context['entity']['code'])
-            cams = pc.ls(camName+":*", type='camera')
+            cams = pc.ls(camName + ":*", type='camera')
 
             if len(cams) == 0:
                 pc.error("Cannot detect camera with pattern {0}".format(camName))
@@ -396,21 +542,23 @@ class SceneManager():
             if len(pc.PyNode(curCam).getShape().getChildren()) > 0:
                 pc.setFocus('modelPanel4')
 
-            tkc.capture(capturePath, captureStart, captureEnd, 1280, 720, "shaded", format="qt", compression="H.264", ornaments=True,
-                useCamera=cam, i_inFilmFit=1, i_inDisplayFilmGate=1, i_inSafeAction=1, i_inSafeTitle=0, i_inGateMask=1, f_inMaskOpacity=1.0, play=True)
+            makeCapture(capturePath, captureStart, captureEnd, 1280, 720, useCamera=cam,
+                        format="qt", compression="H.264", ornaments=True, play=True,
+                        i_inFilmFit=1, i_inDisplayFilmGate=1, i_inSafeAction=1,
+                        i_inSafeTitle=0, i_inGateMask=1, f_inMaskOpacity=1.0)
 
             restoreHUD(oldValues)
 
             pc.setAttr(cams[0].name() + '.aspectRatio', 1.7778)
 
-            os.system("start "+capturePath.replace("/", "\\"))
+            os.system("start " + capturePath.replace("/", "\\"))
 
     def edit(self, editInPlace=None, onBase=False):
         privFile = None
 
         lib = LIBS[self.context['entity']['type']]
         if lib == "asset_lib":
-            lib =  self.context['entity']['sg_asset_type']
+            lib = self.context['entity']['sg_asset_type']
 
         tokens = {}
 
@@ -418,11 +566,11 @@ class SceneManager():
 
         if self.context['entity']['type'] == 'Shot':
             nameKey = 'code'
-            tokens['name']=self.context['entity'][nameKey]
-            tokens['sequence']=self.context['entity']['sg_sequence']['name']
+            tokens['name'] = self.context['entity'][nameKey]
+            tokens['sequence'] = self.context['entity']['sg_sequence']['name']
         elif d_inEntity['type'] == 'Asset':
-            tokens['name']=self.context['entity'][nameKey]
-            tokens['assetType']=self.context['entity'][nameKey].split('_')[0]
+            tokens['name'] = self.context['entity'][nameKey]
+            tokens['assetType'] = self.context['entity'][nameKey].split('_')[0]
 
         if 'task' in self.context:
             if self.context['task']['content'] in TASK_FILE_REL:
@@ -437,7 +585,7 @@ class SceneManager():
                 if path != None:
                     entry = self.context['damProject'].entryFromPath(path)
                     if entry == None:
-                        result = pc.confirmDialog( title='Non existing entity', message='Entity "{0}"" does not exists, do yout want to create it ?'.format(self.context['entity'][nameKey]), button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+                        result = pc.confirmDialog(title='Non existing entity', message='Entity "{0}"" does not exists, do yout want to create it ?'.format(self.context['entity'][nameKey]), button=['Yes', 'No'], defaultButton='Yes', cancelButton='No', dismissString='No')
                         if result == "Yes":
                             self.createFolder()
                             entry = self.context['damProject'].entryFromPath(path)
@@ -446,11 +594,11 @@ class SceneManager():
                         else:
                             pc.warning('Edit cancelled by user !')
                             return ''
-                    
+
                     result = "Yes" if editInPlace else "No"
 
                     if editInPlace == None:
-                        result = pc.confirmDialog( title='Edit options', message='Do you want to use current scene for this edit ?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+                        result = pc.confirmDialog(title='Edit options', message='Do you want to use current scene for this edit ?', button=['Yes', 'No'], defaultButton='Yes', cancelButton='No', dismissString='No')
 
                     if result == "Yes":
                         privFile = entry.edit(openFile=False, existing="keep")#existing values = choose, fail, keep, abort, overwrite
@@ -476,7 +624,7 @@ class SceneManager():
                         cmds.file(rename=newpath)
                         cmds.file(save=True)
                     else:
-                        privFile = entry.edit(openFile= not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
+                        privFile = entry.edit(openFile=not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
 
                     if privFile is None:
                         pc.warning('There was a problem with the edit !')
@@ -502,15 +650,15 @@ class SceneManager():
             # here is incerted the publish of the camera of the scene
             print "exporting the camera of the shot"
             camImpExpI = camIE.camImpExp()
-            camImpExpI.exportCam (sceneName=jpZ.getShotName(), )
+            camImpExpI.exportCam (sceneName=jpZ.getShotName(),)
 
             # here is the publish of the infoSet file with the position of the global and local srt of sets assets
-            infoSetExpI =infoE.infoSetExp()
+            infoSetExpI = infoE.infoSetExp()
             infoSetExpI.export(sceneName=jpZ.getShotName())
 
             # here is the original publish
             if rslt != None:
-                pc.confirmDialog( title='Publish OK', message='{0} was published successfully'.format(rslt[0].name))
+                pc.confirmDialog(title='Publish OK', message='{0} was published successfully'.format(rslt[0].name))
         else:
             pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
@@ -557,26 +705,26 @@ class SceneManager():
                 if not exists:
                     dbInfo += ' ({0})'.format(notFoundvalue)
                 else:
-                    dbInfo += " ("+fileTag+")"
+                    dbInfo += " (" + fileTag + ")"
 
                 localInfo = noneValue
                 foundSceneAsset = None
                 for sceneAsset in remainingAssets:
                     if path == sceneAsset['path']:
                         foundSceneAsset = sceneAsset
-                        localInfo = sceneAsset['name'] + " ("+fileTag+")"
+                        localInfo = sceneAsset['name'] + " (" + fileTag + ")"
                         break
 
                 if foundSceneAsset != None:
                     remainingAssets.remove(foundSceneAsset)
 
                 assetsInfo.append({'name':assetOccurence['asset']['name'], 'localinfo':localInfo, 'dbinfo':dbInfo, 'path':path})
-            
+
             else:
                 pc.warning('PATH= NONE  -> Asset NOT found {0} ({1})!'.format(assetOccurence['asset']['name'], path))
 
         for remainingAsset in remainingAssets:
-            assetFullName = remainingAsset['name'] + " ("+self.getFiletagFromPath(remainingAsset['path'])+")"
+            assetFullName = remainingAsset['name'] + " (" + self.getFiletagFromPath(remainingAsset['path']) + ")"
             assetsInfo.append({'name':remainingAsset['name'], 'localinfo':assetFullName, 'dbinfo':noneValue, 'path':remainingAsset['path']})
 
         return assetsInfo
@@ -599,7 +747,7 @@ class SceneManager():
     #                 pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
     #             else:
     #                 mop.importAsset(self.collapseVariables(assetInfo['path']), assetInfo['name'] + "_1")
-        
+
     #     mop.reArrangeAssets()
 
     def updateScene(self, addOnly=True):
@@ -626,16 +774,16 @@ class SceneManager():
                         pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
                     else:
                         mop.importAsset(The_ASSET_PATH, assetInfo['name'] + "_1")
-            except Exception,err:
-                errorTxt= "* ERROR ON {0} : \n    {1}".format(assetInfo['name'],err)
+            except Exception, err:
+                errorTxt = "* ERROR ON {0} : \n    {1}".format(assetInfo['name'], err)
                 print errorTxt
                 errorL.append(errorTxt)
 
         mop.reArrangeAssets()
 
         if len(errorL):
-            cmds.confirmDialog( title='Error', message="Problemes lors de l'import:\n{0}".format("\n\t".join(errorL)), button=['ok'], 
-                                    defaultButton='ok', cancelButton='ok', dismissString='ok',icon="warning" )
+            cmds.confirmDialog(title='Error', message="Problemes lors de l'import:\n{0}".format("\n\t".join(errorL)), button=['ok'],
+                                    defaultButton='ok', cancelButton='ok', dismissString='ok', icon="warning")
 
 
     def updateShotgun(self, addOnly=True):
@@ -658,10 +806,10 @@ def stepInfo():
 
 def frameInfo():
     return pc.currentTime(query=True)
-    
+
 def focalInfo():
     return 'F {0}mm'.format(pc.getAttr('{0}.focalLength'.format(CAPTUREINFO['cam'])))
-    
+
 def endFrameInfo():
     return CAPTUREINFO['end']
 
@@ -674,22 +822,22 @@ def createHUD():
         headUpsValues[headsUp] = pc.headsUpDisplay(headsUp, query=True, visible=True)
         pc.headsUpDisplay(headsUp, edit=True, visible=False)
 
-    pc.headsUpDisplay( 'HUD_ZOMBUser', section=0, block=pc.headsUpDisplay(nextFreeBlock=0), blockSize='small', label='', labelFontSize='small', dataFontSize='small', command=userInfo, attachToRefresh=True)
-    pc.headsUpDisplay( 'HUD_ZOMBScene', section=2, block=pc.headsUpDisplay(nextFreeBlock=2), blockSize='small', label='', labelFontSize='small', dataFontSize='small', command=sceneInfo, attachToRefresh=True)
-    pc.headsUpDisplay( 'HUD_ZOMBStep', section=4, block=pc.headsUpDisplay(nextFreeBlock=4), blockSize='small', label='', labelFontSize='small', dataFontSize='small', command=stepInfo, attachToRefresh=True)
-    pc.headsUpDisplay( 'HUD_ZOMBFrame', section=5, block=pc.headsUpDisplay(nextFreeBlock=5), blockSize='small', label='', labelFontSize='small', dataFontSize='small', command=frameInfo, attachToRefresh=True)
-    pc.headsUpDisplay( 'HUD_ZOMBFocal', section=7, block=pc.headsUpDisplay(nextFreeBlock=7), blockSize='small', label='', labelFontSize='small', dataFontSize='small', command=focalInfo, attachToRefresh=True)
-    pc.headsUpDisplay( 'HUD_ZOMBEndFrame', section=9, block=pc.headsUpDisplay(nextFreeBlock=9), blockSize='small', label='', labelFontSize='small', dataFontSize='small', command=endFrameInfo, attachToRefresh=True)
+    pc.headsUpDisplay('HUD_ZOMBUser', section=0, block=pc.headsUpDisplay(nextFreeBlock=0), blockSize='small', label='', labelFontSize='small', dataFontSize='small', command=userInfo, attachToRefresh=True)
+    pc.headsUpDisplay('HUD_ZOMBScene', section=2, block=pc.headsUpDisplay(nextFreeBlock=2), blockSize='small', label='', labelFontSize='small', dataFontSize='small', command=sceneInfo, attachToRefresh=True)
+    pc.headsUpDisplay('HUD_ZOMBStep', section=4, block=pc.headsUpDisplay(nextFreeBlock=4), blockSize='small', label='', labelFontSize='small', dataFontSize='small', command=stepInfo, attachToRefresh=True)
+    pc.headsUpDisplay('HUD_ZOMBFrame', section=5, block=pc.headsUpDisplay(nextFreeBlock=5), blockSize='small', label='', labelFontSize='small', dataFontSize='small', command=frameInfo, attachToRefresh=True)
+    pc.headsUpDisplay('HUD_ZOMBFocal', section=7, block=pc.headsUpDisplay(nextFreeBlock=7), blockSize='small', label='', labelFontSize='small', dataFontSize='small', command=focalInfo, attachToRefresh=True)
+    pc.headsUpDisplay('HUD_ZOMBEndFrame', section=9, block=pc.headsUpDisplay(nextFreeBlock=9), blockSize='small', label='', labelFontSize='small', dataFontSize='small', command=endFrameInfo, attachToRefresh=True)
 
     return headUpsValues
 
 def restoreHUD(oldValues=None):
-    pc.headsUpDisplay( 'HUD_ZOMBUser', rem=True)
-    pc.headsUpDisplay( 'HUD_ZOMBScene', rem=True)
-    pc.headsUpDisplay( 'HUD_ZOMBStep', rem=True)
-    pc.headsUpDisplay( 'HUD_ZOMBFrame', rem=True)
-    pc.headsUpDisplay( 'HUD_ZOMBFocal', rem=True)
-    pc.headsUpDisplay( 'HUD_ZOMBEndFrame', rem=True)
+    pc.headsUpDisplay('HUD_ZOMBUser', rem=True)
+    pc.headsUpDisplay('HUD_ZOMBScene', rem=True)
+    pc.headsUpDisplay('HUD_ZOMBStep', rem=True)
+    pc.headsUpDisplay('HUD_ZOMBFrame', rem=True)
+    pc.headsUpDisplay('HUD_ZOMBFocal', rem=True)
+    pc.headsUpDisplay('HUD_ZOMBEndFrame', rem=True)
 
     headsUps = pc.headsUpDisplay(listHeadsUpDisplays=True)
 
@@ -707,6 +855,6 @@ def deleteHUD(*args, **kwargs):
     for i in headsUps:
         if "HUD_ZOMB" in i:
             print i
-            cmds.headsUpDisplay(i,rem=True)
+            cmds.headsUpDisplay(i, rem=True)
 
 
