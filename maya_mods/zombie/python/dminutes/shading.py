@@ -159,8 +159,8 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
     shading_cam_filename =  os.path.join("$ZOMB_ASSET_PATH", "cam",cameraName,cameraName+fileType)
     
     if remove == False:
-        if cameraName in  str(mc.file(query=True, list=True, reference = True)):
-            print "#### info 'referenceShadingCamera': a camera '"+cameraName+"' is already referenced in this scene, operation canceled"
+        if "cam_shading_" in  str(mc.file(query=True, list=True, reference = True)):
+            print "#### info 'referenceShadingCamera': a camera 'cam_shading_*' is already referenced in this scene, operation canceled"
         else:
             mc.currentTime(1)
             if mc.ls("|asset|*",type = "orientConstraint"):
@@ -179,12 +179,12 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
                     break
             #mc.orientConstraint( cameraNameSpace+':crv_trunAround','|asset',name = "asset2crvTrurnAround_orientConstraint")
             mc.connectAttr(cameraNameSpace+":crv_trunAround.rotate", '|asset.rotate', force =True)
-        if not mc.listConnections('defaultArnoldRenderOptions.background',connections = False):
-            #myAiRaySwitch = mc.shadingNode("aiRaySwitch", asShader=True)
-            #mc.setAttr(myAiRaySwitch+".camera", 0.5,0.5,0.5, type = "double3")
-            #mc.setAttr(myAiRaySwitch+".refraction", 0.5,0.5,0.5, type = "double3")
-            myAiRaySwitch = cameraNameSpace+":env_aiRaySwitch"
-            mc.connectAttr(myAiRaySwitch+".message", 'defaultArnoldRenderOptions.background', force =True)
+            if not mc.listConnections('defaultArnoldRenderOptions.background',connections = False):
+                #myAiRaySwitch = mc.shadingNode("aiRaySwitch", asShader=True)
+                #mc.setAttr(myAiRaySwitch+".camera", 0.5,0.5,0.5, type = "double3")
+                #mc.setAttr(myAiRaySwitch+".refraction", 0.5,0.5,0.5, type = "double3")
+                myAiRaySwitch = cameraNameSpace+":env_aiRaySwitch"
+                mc.connectAttr(myAiRaySwitch+".message", 'defaultArnoldRenderOptions.background', force =True)
 
 
     else:
@@ -193,16 +193,17 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
             for each in  mc.file(query=True, list=True, reference = True):
                 if "cam_shading_" in each:
                     mc.file(each, removeReference = True)
-                    if mc.ls("|asset|*",type = "orientConstraint"):
-                        mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
-                    pm.disconnectAttr("|asset.rotateX")
-                    pm.disconnectAttr("|asset.rotateY")
-                    pm.disconnectAttr("|asset.rotateZ")
-                    mc.setAttr ("|asset.rotateX", 0)
-                    mc.setAttr ("|asset.rotateY", 0)
-                    mc.setAttr ("|asset.rotateZ", 0)
-                    #mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
                     print "#### info 'referenceShadingCamera': remove camera '"+each+""
+            if mc.ls("|asset|*",type = "orientConstraint"):
+                mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
+            #mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
+            pm.disconnectAttr("|asset.rotateX")
+            pm.disconnectAttr("|asset.rotateY")
+            pm.disconnectAttr("|asset.rotateZ")
+            mc.setAttr ("|asset.rotateX", 0)
+            mc.setAttr ("|asset.rotateY", 0)
+            mc.setAttr ("|asset.rotateZ", 0)
+
         else:
             print "#### info 'referenceShadingCamera': no 'cam_shading_*' to remove"
         try:    
