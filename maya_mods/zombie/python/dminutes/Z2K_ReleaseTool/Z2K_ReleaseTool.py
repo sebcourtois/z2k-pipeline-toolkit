@@ -355,6 +355,8 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
         cmds.textField(self.BdestinationAsset,e=1, text=self.destinationAsset)
         cmds.textField(self.BdestinationAssetType, e=1, text=self.destinationAssetType)
+
+        cmds.textField(self.BtheComment,e=1,text=self.theComment, )
         # unparent or delete old test layout
         toDel = cmds.layout(self.layoutImportModule,q=1,childArray=1)
         print "toDel=", toDel
