@@ -36,7 +36,7 @@
 
 import os
 import maya.cmds as cmds
-
+from functools import partial
 import dminutes.Z2K_wrapper as Z2K
 reload(Z2K)
 
@@ -222,9 +222,9 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
     upImg= basePath + ICONPATH
         
     
-    def __init__(self, sourceAsset="", assetCat="", SourceAssetType="", destinationAsset="", destinationAssetType="", projConnectB="",theProject="",theComment="",*args, **kwargs):
+    def __init__(self, sourceAsset="", assetCat="", SourceAssetType="", destinationAsset="", destinationAssetType="", projConnectB="",theProject="",theComment="",debug="",*args, **kwargs):
         # self = Z2K_ReleaseTool
-        Z2K_ReleaseTool.__init__(self,sourceAsset,assetCat,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject,theComment)
+        Z2K_ReleaseTool.__init__(self,sourceAsset,assetCat,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject,theComment,debug)
         # self.sourceAsset = sourceAsset
         # self.SourceAssetType = SourceAssetType
         # self.destinationAsset = destinationAsset
@@ -313,13 +313,13 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
 
 
-    def btn_release_Asset( self, *args,**kwargs):
-        print "btn_release_Asset()"
+    def btn_release_Asset( self, force=False, *args,**kwargs):
+        print "btn_release_Asset()",force
         self.getInterfaceValues()
 
         # check if the context of the UI is the same as the scene
         curCTX = jpZ.infosFromMayaScene()
-        if curCTX == self.SceneInfoDict :
+        if curCTX == self.SceneInfoDict or force:
             print "CONTEXT IS OK"
 
 
@@ -329,18 +329,24 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
                                         theComment= self.theComment)
                 cmds.confirmDialog(title= "ASSET RELEASE DONE",message= exportedFileZ2K,button="OK", messageAlign="center", icon="information")
 
+                # disable l'UI, elle ne peut etre reactived que avec le boutton get_context
+                # cmds.layout(self.layToEn,e=1,en=0)
+                cmds.layout(self.layToEnB,e=1,en=0)
+
             except Exception,err:
                 msg= str(err)
                 cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
+
+            
 
         else:
             msg= "BAD CONTEXT ! \n\t do a get_context"
             print msg
             cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
 
-        # disable l'UI, elle ne peut etre reactived que avec le boutton get_context
-        cmds.layout(self.layToEn,e=1,en=0)
-        cmds.button(self.Brelease_Asset,e=1,en=0) 
+        
+
+
 
     def updateUI(self, *args, **kwargs):
         # cascade
@@ -349,10 +355,10 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         self.refreshOptionMenu(theOptMenuL=[self.BsourceAssetMenu,self.BdestinationAssetMenu], inList=self.assetL)
         
         cmds.optionMenu(self.BsourceAssetMenu ,e=True, value=self.sourceAsset)
-
         cmds.textField(self.BsourceAsset,e=1, text=self.sourceAsset)
         cmds.textField(self.BsourceAssetType, e=1, text=self.SourceAssetType)
 
+        cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.destinationAsset)
         cmds.textField(self.BdestinationAsset,e=1, text=self.destinationAsset)
         cmds.textField(self.BdestinationAssetType, e=1, text=self.destinationAssetType)
 
@@ -433,7 +439,8 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
             # Enable l'UI, 
             cmds.layout(self.layToEn,e=1,en=1)
-            cmds.button(self.Brelease_Asset,e=1,en=1) 
+            cmds.layout(self.layToEnB,e=1,en=1)
+            # cmds.button(self.Brelease_Asset,e=1,en=1) 
 
         else:
             msg= "THIS SCENE IS NOT RELEASABLE! "
@@ -534,7 +541,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         # cmds.setParent("..")
         cmds.setParent("..")
 
-        cmds.tabLayout(tabsVisible=0,borderStyle="full")
+        self.layToEnB= cmds.tabLayout(tabsVisible=0,borderStyle="full")
         cmds.columnLayout(adj=1,rs=2)
         # cmds.separator(  style='out' )
 
@@ -554,26 +561,25 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         # release button
         cmds.setParent("..")
         self.Brelease_Asset  = cmds.button("RELEASE ASSET",c= self.btn_release_Asset)
-        
+        self.BforceRelease = cmds.button("FORCE RELEASE ASSET",c= partial(self.btn_release_Asset,True) )
         # comment
         self.commentRowL= cmds.rowLayout(nc=4, adj=2, manage=1)
         cmds.text("Comment:")
-        self.BtheComment= cmds.textField("releaseComment",text=self.theComment, w=85, manage=1,enable=1)
+        self.BtheComment= cmds.textField("releaseComment",text=self.theComment, w=85, manage=1,)
 
 
         # debug options
-        if  not self.debug:
+        if  not  self.debug:
+
             cmds.rowLayout(self.sourceRowL, e=1, enable=0)
-
-            # cmds.textField(self.BsourceAsset, editable=0, )
-            # cmds.textField(self.BsourceAssetType, editable=0, )
-            cmds.optionMenu(self.BdestinationAssetMenu,e=1,enable=0)
-            cmds.rowLayout(self.destiRowL, e=1, enable=0)
-
             cmds.optionMenu(self.BcategoryMenu,e=1,m=0)
             cmds.optionMenu(self.BsourceAssetMenu,e=1,m=0)
+
+            cmds.rowLayout(self.destiRowL, e=1, enable=0)
             cmds.optionMenu(self.BdestinationAssetMenu,e=1,m=0)
 
+            cmds.button(self.BforceRelease,e=1,m=0)
+            cmds.rowLayout(self.commentRowL,e=1,  enable=0)
         # show the window
         # cmds.showWindow(self.cf)
         
@@ -586,7 +592,8 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
         # disable l'UI, elle ne peut etre reactived que avec le boutton get_context
         cmds.layout(self.layToEn,e=1,en=0)
-        cmds.button(self.Brelease_Asset,e=1,en=0) 
+        cmds.layout(self.layToEnB,e=1,en=0)
+        # cmds.button(self.Brelease_Asset,e=1,en=0) 
         
 
 # Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", assetCat = "chr", SourceAssetType="previz_scene",
