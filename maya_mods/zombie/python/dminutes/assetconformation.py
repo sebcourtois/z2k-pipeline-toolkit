@@ -1,7 +1,7 @@
 import maya.cmds as mc
 import re
 import string
-from dminutes import assetconformation
+
 
 
 def onCheckInAsset():
