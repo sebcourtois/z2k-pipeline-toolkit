@@ -18,7 +18,7 @@
 ################################################################
 import os
 import maya.cmds as cmds
-
+from dminutes import assetconformation
 
 # general function 
 def createIncrementedFilePath( filePath="", vSep= "_v",extSep=".ma", digits=3, *args, **kwargs):
@@ -385,6 +385,160 @@ def getSel(*args, **kwargs):
 
 
 #♠--------------------- CHECK FUNCTION ------------------------------
+def checkBaseStructure(*args,**kwargs):
+        """
+        Descrition: Check if th Basic hierachy is ok
+        Return: [result,debugDict]
+        Dependencies: cmds - getOutlinerSets()
+        """
+        print "checkBaseStructure()"
+        tab= "    "
+        debugL = []
+        debugDetL = []
+
+        debugD = {}
+        toReturnB = True
+
+        # check if asset gp and set here
+
+        baseExcludeL = ["persp","top","front","side","left","back","bottom","defaultCreaseDataSet","defaultLayer"]
+        baseObjL = ["asset",]
+        baseSetL = ["set_meshCache","set_control",]
+        additionnalSetL = ["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"]
+        baseLayerL = ["control","geometry"]
+        baseCTRL = ["BigDaddy","BigDaddy_NeutralPose","Global_SRT","Local_SRT","Global_SRT_NeutralPose","Local_SRT_NeutralPose"]
+        AllBaseObj = baseLayerL + baseObjL + baseSetL
+        print tab+"AllBaseObj=", AllBaseObj
+        topObjL = list(set(cmds.ls(assemblies=True,) ) - set(baseExcludeL) )
+        topSetL = getOutlinerSets()
+        layerL = list(set(cmds.ls(type="displayLayer",)) - set(baseExcludeL) )
+
+        # ---------- prints --------------
+        print tab+ "topObjL:",len(topObjL)
+        for i in topObjL:
+            print tab+ "    -",i
+        print tab+ "topSetL:",len(topSetL)
+        for i in topSetL:
+            print tab+ "    -",i
+        print tab+ "layerL:",len(layerL)
+        for i in layerL:
+            print tab+ "    -",i
+
+        # ---------------------------------
+        # topObjL test
+        debugD["topObjL"] = {}    
+        if not sorted(baseObjL) == sorted(topObjL):
+            debugD["topObjL"]["result"] = "PAS CONFORME"
+            debugD["topObjL"]["Found"] = topObjL
+            toReturnB= False
+        else:
+            debugD["topObjL"]["result"] = "OK"
+
+        # topSetL test
+        debugD["topSetL"] = {}
+        debugD["topSetL"]["Found"] = ""
+        debugD["topSetL"]["result"] = []
+        for i in topSetL:
+
+            if not i in baseSetL and not i in additionnalSetL:
+        # if not sorted(baseSetL) == sorted(topSetL):
+                debugD["topSetL"]["result"].append( False )
+                debugD["topSetL"]["Found"] += " -" + i
+                toReturnB= False
+            else:
+                debugD["topSetL"]["result"].append( True )
+        # if 1 flase dans tout les test alors pas bon
+        if False in debugD["topSetL"]["result"]:
+            debugD["topSetL"]["result"] = "PAS CONFORME"
+        else:
+            debugD["topSetL"]["result"] = "OK"
+
+
+       # Layers test
+        debugD["layerL"] = {}
+        if not sorted(baseLayerL) == sorted(layerL):
+            debugD["layerL"]["result"] = "PAS CONFORME"
+            debugD["layerL"]["Found"] = layerL
+            toReturnB= False
+        else:
+            debugD["layerL"]["result"] = "OK"
+
+
+        # baseCTRL test
+        debugD["baseCTRL"] = {}
+        test= "OK"
+        notFoundL=[]
+        for i in baseCTRL:
+            if not cmds.objExists(i):
+                toReturnB= False
+                test= "PAS CONFORME"
+                notFoundL.append(i)
+
+        debugD["baseCTRL"]["result"] = test
+        debugD["baseCTRL"]["NOT_Found"] = notFoundL
+
+        print "toReturnB=", toReturnB
+        return toReturnB,debugD
+
+def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig","grp_geo"],*args,**kwargs):
+        print "checkAssetStructure()"
+        """ Description: check inside the asset_gp
+            Return : [result,debugDict]
+            Dependencies : cmds - 
+        """
+        
+        toReturnB = False
+        debugD = {}
+        tab="    "
+        expect_str = " - ".join(expectedL)
+        if cmds.objExists(assetgpN):
+            childL = cmds.listRelatives(assetgpN,  c=True)
+            print tab,expect_str, childL
+            debugD[expect_str] = {}
+            if sorted(expectedL) == sorted(childL):
+                toReturnB = True
+                debugD[ expect_str ]["result"] = "OK"
+                print tab, toReturnB
+            else:
+                toReturnB = False
+                debugD[expect_str]["result"] = "PAS CONFORME"
+                debugD[expect_str]["Found"] = childL
+                print tab, toReturnB
+
+        
+        
+
+        return toReturnB,debugD
+
+def Apply_Delete_setSubdiv (applySetSub=True, toDelete=["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"],*args, **kwargs):
+    print "Apply_Delete_setSubdiv()"
+    """ Description: apply setSubdiv() if present and delete it
+        Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
+        Dependencies : cmds - assetconformation.setSubdiv()
+    """
+    
+    toReturnB = True
+    setSub = False
+    if applySetSub:
+        try:
+            assetconformation.setSubdiv()
+            setSub = True
+        except:
+            print "    No setSubDiv to Apply in the scene"
+
+    deletedL = []
+    for i in toDelete:
+        try:
+            cmds.delete(i)
+            deletedL.append(i)
+        except:
+            pass
+
+    return [toReturnB,setSub,deletedL]
+
+
+
+
 def isSet_meshCache_OK (theSet="set_meshCache",theType="prop",*args, **kwargs):
         """ Description: check si le contenue du setMeshCache est conforme au type donné
                 theType : "set" or "something else / si c'est un "set" il cherche des group
@@ -425,7 +579,7 @@ def isSet_meshCache_OK (theSet="set_meshCache",theType="prop",*args, **kwargs):
             debug ="le set est vide"
 
 
-        return toReturn,debug
+        return [toReturn,debug]
 
 def isKeyed ( inObj, *args, **kwargs):
         """ Description: Check if the given object'keyable attrib are effictively keyed

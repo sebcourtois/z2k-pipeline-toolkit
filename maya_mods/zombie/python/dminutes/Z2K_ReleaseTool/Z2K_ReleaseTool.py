@@ -42,14 +42,16 @@ reload(Z2K)
 
 import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
-import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
-reload(Batch_CONFIG)
-from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
-print "DEBUGFILE=", DEBUGFILE
-# import dminutes.Z2K_ReleaseTool.Z2K_Asset_Previz_checks as Z2K_PcheckD
-# reload(Z2K_PcheckD)
-# import dminutes.Z2K_ReleaseTool._versions.Z2K_Asset_Previz_checks_v007 as Z2K_PcheckD
-# Z2K_Pcheck = Z2K_PcheckD.AssetPrevizMod()
+# import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
+# reload(Batch_CONFIG)
+# from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
+
+# import   constant
+import dminutes.Z2K_ReleaseTool.modules as ini
+reload(ini)
+from dminutes.Z2K_ReleaseTool.modules import *
+
+
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_PROP_checks as Z2K_Pcheck_PROP
 reload(Z2K_Pcheck_PROP)
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_CHAR_checks as Z2K_Pcheck_CHAR
@@ -340,7 +342,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             
 
         else:
-            msg= "BAD CONTEXT ! \n\t do a get_context"
+            msg= "BAD CONTEXT ! \n do a get_context"
             print msg
             cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
 
@@ -402,40 +404,87 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
                 print "It' is a CHAR test"
                 if self.SourceAssetType in ["modeling_scene"]:
                     print tab, "modeling, test not ready"
+                    # set DEBUG FILE here
+                    theDebugFile  = DEBUGFILE_MODELING_CHR
+
+                elif self.SourceAssetType in ["render_scene"]:
+                    print tab, "render, test not ready"
+                    # set DEBUG FILE here
+                    theDebugFile  = DEBUGFILE_RENDER_CHR
+
                 elif self.SourceAssetType in ["previz_scene"]:
                     print tab, "previz"
                     Z2K_Pcheck = Z2K_Pcheck_CHAR
+                    # set DEBUG FILE here
+                    theDebugFile  = DEBUGFILE_PREVIZ_CHR
+
                 elif self.SourceAssetType in ["anim_scene"]:
                     print tab, "anim-> same as props"
                     Z2K_Pcheck = Z2K_Pcheck_PROP
-                elif self.SourceAssetType in ["render_scene"]:
-                    print tab, "render, test not ready"
+                    # set DEBUG FILE here
+                    theDebugFile  = DEBUGFILE_ANIM_CHR
 
                 else:
                     print tab, "unknown test or not specific test ready"
 
 
 
-            if  self.assetCat in ["prp","vhl","c2d"]:
+            elif  self.assetCat in ["prp","vhl","c2d"]:
                 print "It' is a PROP test"
                 if self.SourceAssetType in ["modeling_scene"]:
                     print tab, "modeling, test not ready"
-                elif self.SourceAssetType in ["previz_scene","anim_scene"]:
-                    print tab, "previz-anim"
-                    Z2K_Pcheck = Z2K_Pcheck_PROP
+                    # set DEBUG FILE here
+                    theDebugFile  = DEBUGFILE_MODELING_PRP
+
                 elif self.SourceAssetType in ["render_scene"]:
                     print tab, "render, test not ready"
+                    # set DEBUG FILE here
+                    theDebugFile  = DEBUGFILE_RENDER_PRP
+
+                elif self.SourceAssetType in ["previz_scene"]:
+                    print tab, "previz"
+                    # set DEBUG FILE here
+                    theDebugFile  = DEBUGFILE_PREVIZ_PRP
+                    Z2K_Pcheck = Z2K_Pcheck_PROP
+
+                elif self.SourceAssetType in ["anim_scene"]:
+                    print tab, "anim"
+                    # set DEBUG FILE here
+                    theDebugFile  = DEBUGFILE_ANIM_PRP
+                    Z2K_Pcheck = Z2K_Pcheck_PROP
+                    
                 
-            if  self.assetCat in ["set"]:
+            elif  self.assetCat in ["set"]:
                 print "It' is a SET test"
-                Z2K_Pcheck = Z2K_Pcheck_SET
+                if self.SourceAssetType in ["modeling_scene"]:
+                    print tab, "modeling, test not ready"
+                    # set DEBUG FILE here
+                    theDebugFile  = DEBUGFILE_MODELING_SET
+
+                elif self.SourceAssetType in ["render_scene"]:
+                    print tab, "render, test not ready"
+                    # set DEBUG FILE here
+                    theDebugFile  = DEBUGFILE_RENDER_SET
+
+                elif self.SourceAssetType in ["previz_scene"]:
+                    print tab, "previz"
+                    # set DEBUG FILE here
+                    theDebugFile  = DEBUGFILE_PREVIZ_SET
+                    Z2K_Pcheck = Z2K_Pcheck_SET
+                    
+                elif self.SourceAssetType in ["anim_scene"]:
+                    print tab, "anim, test not ready"
+                    # set DEBUG FILE here
+                    theDebugFile  = DEBUGFILE_ANIM_SET
+
+                
 
 
             if Z2K_Pcheck in ["NADA"]:
                 raise Exception("PAS DE MODULE DE CHECK POUR CET ASSET")
             else:
                 print "Z2K_Pcheck=", Z2K_Pcheck
-                Z2K_Pcheck = Z2K_Pcheck.checkModule(GUI=True, parent=self.layoutImportModule )
+                Z2K_Pcheck = Z2K_Pcheck.checkModule(GUI=True, parent=self.layoutImportModule, debugFile = theDebugFile )
 
             # Enable l'UI, 
             cmds.layout(self.layToEn,e=1,en=1)

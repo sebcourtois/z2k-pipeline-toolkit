@@ -10,6 +10,8 @@
 # Comment : wip  THIS THE MOST UPDATED SCRIPT ( ADD SET SUBDIV FN IN OTHERS : DELETE_APPLY and STRUCTURE CHECK)
 #
 # TO DO:
+#       - Add debug file in input of th e class ; a reporter sur les check des autres
+#       - add turttle check
 #       - Handle versioning problems if edti it's incremented/ if readonly it's not (if edit and if not publish add please publish edited)
 #       WIP mettage en lIB et nouveau path and names
 #       - clean obj button have to be grayed if checkStructure not done (setSmoothness need good structure)
@@ -61,11 +63,13 @@ import inspect
 
 import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
-import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
-reload(Batch_CONFIG)
-from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
-print "DEBUGFILE=", DEBUGFILE
-from dminutes import assetconformation
+# import   constant
+import dminutes.Z2K_ReleaseTool.modules as ini
+reload(ini)
+from dminutes.Z2K_ReleaseTool.modules import *
+
+
+
 
 
 class checkModule(object):
@@ -77,12 +81,12 @@ class checkModule(object):
     upImg= basePath + ICONPATH
 
 
-    def __init__(self, GUI=True, parent="", *args, **kwargs):
+    def __init__(self, GUI=True, parent="", debugFile ="", *args, **kwargs):
         print "init"
         self.GUI=GUI
         self.parent = parent
         self.ebg = True
-        self.DebugPrintFile = DEBUGFILE
+        self.DebugPrintFile = debugFile
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
 
@@ -218,152 +222,7 @@ class checkModule(object):
 
     # cleaning/checking functions --------------------------------------------
   
-    def checkBaseStructure(self,*args,**kwargs):
-        """
-        Descrition: Check if th Basic hierachy is ok
-        Return: [Bool,detail]
-        """
-        print "checkBaseStructure()"
-        tab= "    "
-        debugL = []
-        debugDetL = []
-
-        debugD = {}
-        toReturnB = True
-
-        # check if asset gp and set here
-
-        baseExcludeL = ["persp","top","front","side","left","back","bottom","defaultCreaseDataSet","defaultLayer"]
-        baseObjL = ["asset",]
-        baseSetL = ["set_meshCache","set_control",]
-        additionnalSetL = ["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"]
-        baseLayerL = ["control","geometry"]
-        baseCTRL = ["BigDaddy","BigDaddy_NeutralPose","Global_SRT","Local_SRT","Global_SRT_NeutralPose","Local_SRT_NeutralPose"]
-        AllBaseObj = baseLayerL + baseObjL + baseSetL
-        print tab+"AllBaseObj=", AllBaseObj
-        topObjL = list(set(cmds.ls(assemblies=True,) ) - set(baseExcludeL) )
-        topSetL = jpZ.getOutlinerSets()
-        layerL = list(set(cmds.ls(type="displayLayer",)) - set(baseExcludeL) )
-
-        # ---------- prints --------------
-        print tab+ "topObjL:",len(topObjL)
-        for i in topObjL:
-            print tab+ "    -",i
-        print tab+ "topSetL:",len(topSetL)
-        for i in topSetL:
-            print tab+ "    -",i
-        print tab+ "layerL:",len(layerL)
-        for i in layerL:
-            print tab+ "    -",i
-
-        # ---------------------------------
-        # topObjL test
-        debugD["topObjL"] = {}    
-        if not sorted(baseObjL) == sorted(topObjL):
-            debugD["topObjL"]["result"] = "PAS CONFORME"
-            debugD["topObjL"]["Found"] = topObjL
-            toReturnB= False
-        else:
-            debugD["topObjL"]["result"] = "OK"
-
-        # topSetL test
-        debugD["topSetL"] = {}
-        debugD["topSetL"]["Found"] = ""
-        debugD["topSetL"]["result"] = []
-        for i in topSetL:
-
-            if not i in baseSetL and not i in additionnalSetL:
-        # if not sorted(baseSetL) == sorted(topSetL):
-                debugD["topSetL"]["result"].append( False )
-                debugD["topSetL"]["Found"] += " -" + i
-                toReturnB= False
-            else:
-                debugD["topSetL"]["result"].append( True )
-        # if 1 flase dans tout les test alors pas bon
-        if False in debugD["topSetL"]["result"]:
-            debugD["topSetL"]["result"] = "PAS CONFORME"
-        else:
-            debugD["topSetL"]["result"] = "OK"
-
-
-       # Layers test
-        debugD["layerL"] = {}
-        if not sorted(baseLayerL) == sorted(layerL):
-            debugD["layerL"]["result"] = "PAS CONFORME"
-            debugD["layerL"]["Found"] = layerL
-            toReturnB= False
-        else:
-            debugD["layerL"]["result"] = "OK"
-
-
-        # baseCTRL test
-        debugD["baseCTRL"] = {}
-        test= "OK"
-        notFoundL=[]
-        for i in baseCTRL:
-            if not cmds.objExists(i):
-                toReturnB= False
-                test= "PAS CONFORME"
-                notFoundL.append(i)
-
-        debugD["baseCTRL"]["result"] = test
-        debugD["baseCTRL"]["NOT_Found"] = notFoundL
-
-        # prints -------------------
-        self.printF("checkBaseStructure()", st="t")
-        self.printF(toReturnB, st="r")
-        for i,dico in debugD.iteritems():
-            toPrint=""
-            if not dico["result"] in ["OK"]:
-                toPrintA = "BAD"
-                if len(dico.get("Found",""))>0:
-                    toPrintA = "     -Found= " + str( dico.get("Found","")   )
-                if len(dico.get("NOT_Found",""))>0:
-                    toPrintA = "     -NOT_Found= " + str( dico.get("NOT_Found","")   )
-
-                toPrint = i.ljust(15)+": "+ str( dico["result"]+toPrintA)
-            else:
-                toPrint = i.ljust(15)+": "+ str( dico["result"] )
-            self.printF( toPrint )
-        # -------------------
-
-        print "toReturnB=", toReturnB
-        return toReturnB,debugD
-
-    def checkAssetStructure(self, assetgpN="asset", expectedL=["grp_rig","grp_geo"],*args,**kwargs):
-        print "checkAssetStructure()"
-        toReturnB = False
-        debugD = {}
-        tab="    "
-        expect_str = " - ".join(expectedL)
-        if cmds.objExists(assetgpN):
-            childL = cmds.listRelatives(assetgpN,  c=True)
-            print tab,expect_str, childL
-            debugD[expect_str] = {}
-            if sorted(expectedL) == sorted(childL):
-                toReturnB = True
-                debugD[ expect_str ]["result"] = "OK"
-                print tab, toReturnB
-            else:
-                toReturnB = False
-                debugD[expect_str]["result"] = "PAS CONFORME"
-                debugD[expect_str]["Found"] = childL
-                print tab, toReturnB
-
-        # prints -------------------
-        self.printF("checkAssetStructure()", st="t")
-        self.printF(toReturnB, st="r")
-        for i,dico in debugD.iteritems():
-            self.printF( i.ljust(10)+" : "+ str( dico["result"] ) )
-            if len(dico.get("Found",""))>0:
-                self.printF("     -Found= " + str( dico.get("Found","")   ) )
-
-        # --------------------------
-        
-
-        return toReturnB,debugD
-
-
+    # not used here anymore, but usefull for render test
     def checkGrp_geo(self,theGroup="asset|grp_geo",theAttrL= ["smoothLevel1","smoothLevel2"] ,*args, **kwargs):
         """ check if the attrib of smooth are present
         """
@@ -393,6 +252,7 @@ class checkModule(object):
 
         return [toReturnB,toCreateL]
 
+    # not used here anymore, but usefull for render test
     def cleanGrp_geo (self, theGroup="asset|grp_geo",theAttrL= ["smoothLevel1","smoothLevel2"] ,assetType="previz", *args, **kwargs):
         print "cleanGrp_geo()"
         # TURNED OFF : THE CHECK IS NOT ANYMORE EXECUTED
@@ -456,35 +316,12 @@ class checkModule(object):
         # --------------------------
         return [toReturnB,createdL]
 
-    def Apply_Delete_setSubdiv (self, applySetSub=True, toDelete=["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"],*args, **kwargs):
-        print "Apply_Delete_setSubdiv()"
-        toReturnB = True
-        setSub = False
-        if applySetSub:
-            try:
-                assetconformation.setSubdiv()
-                setSub = True
-            except:
-                print "    No setSubDiv to Apply in the scene"
-
-        deletedL = []
-        for i in toDelete:
-            try:
-                cmds.delete(i)
-                deletedL.append(i)
-            except:
-                pass
+    
         
 
-        # prints -------------------
-        self.printF("Apply_Delete_setSubdiv()", st="t")
-        self.printF(toReturnB, st="r")
-        self.printF("Set Subdiv applyed: {0}".format(setSub) )
-        if len(deletedL):
-            self.printF("deleted: {0} - {1}".format(len(deletedL),deletedL ) )
-        # --------------------------
+        
 
-        return [toReturnB,deletedL]
+        
 
     def cleanMentalRayNodes (self, toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',
         'Draft','DraftMotionBlur','DraftRapidMotion','Preview','PreviewCaustics','PreviewFinalGather','PreviewGlobalIllum',
@@ -1032,10 +869,43 @@ class checkModule(object):
         self.pBar_upd(step=1, maxValue=3, e=True)
 
         # steps
-        if not self.checkBaseStructure()[0]:
+
+        # *
+        result,debugD = jpZ.checkBaseStructure()
+        # prints -------------------
+        self.printF("checkBaseStructure()", st="t")
+        self.printF(result, st="r")
+        for i,dico in debugD.iteritems():
+            toPrint=""
+            if not dico["result"] in ["OK"]:
+                toPrintA = "BAD"
+                if len(dico.get("Found",""))>0:
+                    toPrintA = "     -Found= " + str( dico.get("Found","")   )
+                if len(dico.get("NOT_Found",""))>0:
+                    toPrintA = "     -NOT_Found= " + str( dico.get("NOT_Found","")   )
+
+                toPrint = i.ljust(15)+": "+ str( dico["result"]+toPrintA)
+            else:
+                toPrint = i.ljust(15)+": "+ str( dico["result"] )
+            self.printF( toPrint )
+        # -------------------
+        if not result:
             boolResult = False
         self.pBar_upd(step= 1,)
-        if not self.checkAssetStructure( )[0]:
+
+
+        # *
+        result,debugD = jpZ.checkAssetStructure()
+        # prints -------------------
+        self.printF("checkAssetStructure()", st="t")
+        self.printF(result, st="r")
+        for i,dico in debugD.iteritems():
+            self.printF( i.ljust(10)+" : "+ str( dico["result"] ) )
+            if len(dico.get("Found",""))>0:
+                self.printF("     -Found= " + str( dico.get("Found","")   ) )
+
+        # --------------------------
+        if not result:
             boolResult = False
         self.pBar_upd(step= 1,)
 
@@ -1055,6 +925,8 @@ class checkModule(object):
         #     boolResult = False
         # self.pBar_upd(step= 1,)
 
+
+
         # colors
         print "*btn_checkStructure:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
@@ -1069,9 +941,20 @@ class checkModule(object):
         self.pBar_upd(step=1, maxValue=9, e=True)
 
         # steps
-        if not self.Apply_Delete_setSubdiv()[0]:
+        result,setSub,deletedL = jpZ.Apply_Delete_setSubdiv()
+        # prints -------------------
+        self.printF("Apply_Delete_setSubdiv()", st="t")
+        self.printF(result, st="r")
+        self.printF("Set Subdiv applyed: {0}".format(setSub) )
+        if len(deletedL):
+            self.printF("deleted: {0} - {1}".format(len(deletedL),deletedL ) )
+        # --------------------------
+        if not result:
             boolResult = False
         self.pBar_upd(step= 1,)
+
+
+        # wiiip here
         if not self.cleanRefNodes()[0]:
             boolResult = False
         self.pBar_upd(step= 1,)

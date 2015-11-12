@@ -38,12 +38,7 @@ reload(jpZ)
 import dminutes.Z2K_ReleaseTool.Z2K_ReleaseTool as z2kR
 reload (z2kR)
 
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_PROP_checks as Z2K_Pcheck_PROP
-reload(Z2K_Pcheck_PROP)
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_CHAR_checks as Z2K_Pcheck_CHAR
-reload(Z2K_Pcheck_CHAR)
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_SET_checks as Z2K_Pcheck_SET
-reload(Z2K_Pcheck_SET)
+
 
 
 # get zomb project
@@ -67,25 +62,6 @@ def RELEAZE_ALADIN():
 
         Z2K_ReleaseTool_GuiI.createWin()
 
-        # insert le bon module de check dans l'interface
-        # Z2K_Pcheck="NADA"
-        # print 'infoDict["assetCat"]=',infoDict["assetCat"]
-        # # THIS IS FOR NOW ONLY OK FOR THE PREVIZ, IT DOESN'T TEST infoDict["assetType"] but only infoDict["assetCat"]
-        # if  infoDict["assetCat"] in ["chr"]:
-        #     print "It' is a CHAR test"
-        #     Z2K_Pcheck = Z2K_Pcheck_CHAR
-        # if  infoDict["assetCat"] in ["prp","vhl","c2d"]:
-        #     print "It' is a PROP test"
-        #     Z2K_Pcheck = Z2K_Pcheck_PROP
-        # if  infoDict["assetCat"] in ["set"]:
-        #     print "It' is a SET test"
-        #     Z2K_Pcheck = Z2K_Pcheck_SET
-
-        # if Z2K_Pcheck in ["NADA"]:
-        #     raise Exception("PAS DE MODULE DE CHECK POUR CET ASSET")
-        # else:
-        #     print "Z2K_Pcheck=", Z2K_Pcheck
-        #     Z2K_Pcheck = Z2K_Pcheck.checkModule(GUI=True, parent=Z2K_ReleaseTool_GuiI.layoutImportModule )
 
     else:
         raise Exception("THIS SCENE IS NOT RELEASABLE! ")

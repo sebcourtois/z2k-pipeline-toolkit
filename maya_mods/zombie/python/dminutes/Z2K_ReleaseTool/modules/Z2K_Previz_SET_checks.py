@@ -52,10 +52,13 @@ import inspect
 
 import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
-import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
-reload(Batch_CONFIG)
-from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
-print "DEBUGFILE=", DEBUGFILE
+# import   constant
+import dminutes.Z2K_ReleaseTool.modules as ini
+reload(ini)
+from dminutes.Z2K_ReleaseTool.modules import *
+
+
+from dminutes import assetconformation
 
 class checkModule(object):
     name = "AssetPreviz_Module"
@@ -67,12 +70,12 @@ class checkModule(object):
 
 
 
-    def __init__(self,  GUI=True, parent="", *args, **kwargs):
+    def __init__(self, GUI=True, parent="", debugFile ="", *args, **kwargs):
         print "init"
         self.GUI=GUI
         self.parent = parent
         self.ebg = True
-        self.DebugPrintFile = DEBUGFILE
+        self.DebugPrintFile = debugFile
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
 
