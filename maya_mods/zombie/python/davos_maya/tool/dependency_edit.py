@@ -159,6 +159,9 @@ def editTextureFiles(dryRun=False):
 
     privFile = None
 
+    pm.mel.ScriptEditor()
+    pm.mel.handleScriptEditorAction("maximizeHistory")
+
     for pubFile, fileNodes in pubFileItems:
 
         privFile, _ = pubFile.copyToPrivateSpace(dry_run=dryRun)

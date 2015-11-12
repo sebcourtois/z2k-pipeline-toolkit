@@ -61,13 +61,16 @@ class DavosSetup(ToolSetup):
         pm.colorManagementPrefs(e=True, cmEnabled=False)
 
         import logging
-        try:
-            logger = logging.getLogger("requests.packages.urllib3.connectionpool")
-            logger.disabled = True
-            logger = logging.getLogger("pytd.util.external.parse")
-            logger.disabled = True
-        except Exception as e:
-            pm.displayWarning(toStr(e))
+
+        for sModule in ("requests.packages.urllib3.connectionpool",
+                        "pytd.util.external.parse",
+                        "PIL.Image"):
+            try:
+                logger = logging.getLogger(sModule)
+                if logger:
+                    logger.disabled = True
+            except Exception as e:
+                pm.displayWarning(toStr(e))
 
     def beforeReloading(self, *args):
         file_browser.kill()

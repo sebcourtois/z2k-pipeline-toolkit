@@ -2,6 +2,7 @@
 import os
 import subprocess
 from tempfile import NamedTemporaryFile
+import itertools as itr
 
 import pymel.core as pm
 
@@ -18,6 +19,7 @@ from davos.tools import publish_dependencies
 from .general import entityFromScene
 from davos_maya.tool import dependency_scan
 from pytd.util.sysutils import toStr, inDevMode
+from pytd.util.fsutils import pathRelativeTo
 
 bDevDryRun = False
 
@@ -28,8 +30,8 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
     proj = damEntity.project
 
     sTexPathList = []
-    fileNodesList = []
-    sBuddyFileList = []
+    allFileNodesList = []
+    allBuddyPathsList = []
     for result in scanResults:
 
         if not result["publishable"]:
@@ -38,10 +40,13 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
         fileNodes = result["file_nodes"]
         if fileNodes:
             sTexPathList.append(result["abs_path"])
-            fileNodesList.append(fileNodes)
-            sBuddyFileList.extend(result["buddy_files"])
+            allFileNodesList.append(fileNodes)
+            allBuddyPathsList.append(result["buddy_files"])
 
     if sTexPathList:
+
+        print "\n" + " Publishing texture files ".center(100, '-')
+
         publishedFileItems = proj.publishDependencies("texture_dep",
                                                       damEntity,
                                                       sTexPathList,
@@ -53,7 +58,7 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
         sUpdNodeList = []
         sMsgFmt = "\nUpdating {} path: \nfrom '{}'\n  to '{}'"
 
-        for fileNodes, pubFile in zip(fileNodesList, pubFiles):
+        for fileNodes, pubFile in zip(allFileNodesList, pubFiles):
 
             sEnvPath = pubFile.envPath("ZOMB_TEXTURE_PATH")
 
@@ -73,20 +78,39 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
                 sUpdNodeList.append(sNodeName)
 
-    if not sBuddyFileList:
+    if not allBuddyPathsList:
         return (not bDryRun)
+
+    sAllBuddyFileList = list(itr.chain(*allBuddyPathsList))
 
     bUseSubprocess = False
     if not bUseSubprocess:
 
-        print "\n" + " Publishing associated files: .psd, .tx, etc... ".center(100, '-')
+        print "\n" + " Publishing associated files (.psd, .tx) ".center(100, '-')
 
         publishedFileItems = proj.publishDependencies("texture_dep",
                                                       damEntity,
-                                                      sBuddyFileList,
+                                                      sAllBuddyFileList,
                                                       sComment,
                                                       dryRun=bDryRun,
                                                       **kwargs)
+
+
+        print "\n" + " Publishing report ".center(100, '-')
+
+        count = len(sTexPathList) + len(sAllBuddyFileList)
+        sSep = "\n"
+        sMsgFiles = ""
+        for sTexPath, sBuddyPathList in itr.izip(sTexPathList, allBuddyPathsList):
+
+            sMsgFiles += sSep + sTexPath
+            if sBuddyPathList:
+                sMsgFiles += (sSep + sSep.join(sBuddyPathList))
+
+            sMsgFiles += "\n"
+
+        print sMsgFiles + "\n- {} files have been published.".format(count)
+
     else:
         sMsg = """
 Opening a new process to publish associated files: .psd, .tx, etc...
@@ -94,7 +118,7 @@ Opening a new process to publish associated files: .psd, .tx, etc...
         pm.displayWarning(sMsg)
 
         with NamedTemporaryFile(suffix=".txt", delete=False) as tmpFile:
-            tmpFile.write("\n".join(sBuddyFileList))
+            tmpFile.write("\n".join(sAllBuddyFileList))
 
         p = publish_dependencies.__file__
 
