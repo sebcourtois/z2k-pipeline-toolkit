@@ -15,7 +15,6 @@ from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
 #from pytd.util.sysutils import inDevMode
 
-from dminutes import sceneManagerUI
 from pytd.util.sysutils import toStr
 
 def doCreateFolders(sEntiType, *args):
@@ -74,7 +73,12 @@ class DavosSetup(ToolSetup):
 
     def beforeReloading(self, *args):
         file_browser.kill()
-        sceneManagerUI.kill()
+
+        try:
+            from dminutes import sceneManagerUI
+            sceneManagerUI.kill()
+        except Exception as e:
+            pm.displayInfo("Could not kill 'sceneManagerUI': {}".format(toStr(e)))
 
         ToolSetup.beforeReloading(self, *args)
 

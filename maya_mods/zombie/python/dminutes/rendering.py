@@ -31,9 +31,7 @@ def setArnoldRenderOption(outputFormat):
         shadingMode = False
         print "#### info: Lighting mode render options"       
 
-
-    setRenderOutputDir()    
-
+   
 
     mmToIncheFactor = 0.0393700787401575
     camApertureInche = 35 * mmToIncheFactor 
@@ -156,7 +154,7 @@ def setArnoldRenderOption(outputFormat):
 
 
 
-def setRenderOutputDir(gui = True):
+def getRenderOutput(gui = True):
 
     outputImageName = ""
 
@@ -165,6 +163,16 @@ def setRenderOutputDir(gui = True):
 
     mainFilePath = mc.file(q=True, list = True)[0]
     mainFilePathElem = mainFilePath.split("/")
+
+    try:
+        davosUser = os.environ["DAVOS_USER"]
+    except:
+        myMessage = "#### {:>7}: DAVOS_USER environement variable is not defined, please log to davos".format("Error")
+        if gui == True:
+            mc.confirmDialog( title='$DAVOS_USER not defined', message=myMessage, button=['Ok'], defaultButton='Ok' )
+            return
+        else:
+            raise ValueError(myMessage)
 
     #define output directoy
     if mc.ls("|asset"):        
@@ -191,9 +199,9 @@ def setRenderOutputDir(gui = True):
 
             print "#### Info: Set render path: {}".format( outputFilePath)
             print "#### Info: Set image name:  {}".format( outputImageName)
-            mc.workspace(fileRule=["images",outputFilePath_exp])
-            mc.workspace( saveWorkspace = True)
-            mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
+            #mc.workspace(fileRule=["images",outputFilePath_exp])
+            #mc.workspace( saveWorkspace = True)
+            #mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
             #mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputFilePath_exp ,type = "string")
             #mc.file(save = True)
         else:
@@ -206,14 +214,15 @@ def setRenderOutputDir(gui = True):
             outputImageName = mainFilePathElem[-2]
             print "#### Info: Set render path: {}".format( outputFilePath_exp)
             print "#### Info: Set image name:  {}".format( outputImageName)
-            mc.workspace(fileRule=["images",outputFilePath_exp])
-            mc.workspace( saveWorkspace = True)
-            mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
+            #mc.workspace(fileRule=["images",outputFilePath_exp])
+            #mc.workspace( saveWorkspace = True)
+            #mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
             #mc.file(save = True)
         else:
             print "#### Warning: you are not working in an 'shot' structure directory, output image name and path cannot not be automaticaly set"
     else:
         print "#### Warning: no '|asset'or '|shot' group could be found in this scene, output image name and path cannot be automaticaly set"
+    return outputFilePath_exp, outputImageName
     
     
 def createBatchRender():
@@ -238,6 +247,9 @@ def createBatchRender():
     renderDesc = os.environ["MAYA_RENDER_DESC_PATH"]
     mayaPlugInPath = os.environ["MAYA_PLUG_IN_PATH"]
     arnoldPluginPath = os.environ["ARNOLD_PLUGIN_PATH"]
+
+
+    outputFilePath, outputImageName = getRenderOutput()
 
     zombToolsPath = os.environ["ZOMB_TOOL_PATH"]
     arnoldToolPath = os.path.normpath(zombToolsPath+"/z2k-pipeline-toolkit/maya_mods/solidangle/mtoadeploy/2016")
@@ -267,9 +279,11 @@ def createBatchRender():
     renderBatch_obj.write("set DAVOS_USER="+davosUser+"\n\n")
 
     renderBatch_obj.write('set option=-r arnold -lic on\n')
+    renderBatch_obj.write('set image=-im '+outputImageName+'\n')
+    renderBatch_obj.write('set path=-rd '+os.path.normpath(outputFilePath)+'\n')
     workingFile = os.path.normpath(workingFile)
     renderBatch_obj.write("set scene="+workingFile+"\n")
-    finalCommand = r'"C:\Python27\python.exe" "'+setupEnvToolsNetwork+'" launch %render% %option% %scene%'
+    finalCommand = r'"C:\Python27\python.exe" "'+setupEnvToolsNetwork+'" launch %render% %option% %path% %image% %scene%'
     renderBatch_obj.write(finalCommand+"\n")
     renderBatch_obj.write("\n")
     renderBatch_obj.write("pause\n")

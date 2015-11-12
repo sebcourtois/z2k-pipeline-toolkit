@@ -216,7 +216,7 @@ def scanTextureDependency(damEntity):
     try:
         sPrivTexDirPath = damEntity.getPath("private", "texture_dir")
     except AttributeError as e:
-        print toStr(e)
+        pm.displayInfo(toStr(e))
         return []
 
     sPubTexDirPath = damEntity.getPath("public", "texture_dir")
@@ -224,7 +224,7 @@ def scanTextureDependency(damEntity):
         pubTexDir = proj.entryFromPath(sPubTexDirPath)
         pubTexDir.loadChildDbNodes()
 
-    sAllowTexTypes = proj.getVar("project", "allowed_texture_formats")
+    sAllowedTexTypes = proj.getVar("project", "allowed_texture_formats")
 
     allFileNodes = lsNodes("*", type='file', not_rn=True)
     scanResults = []
@@ -318,8 +318,8 @@ def scanTextureDependency(damEntity):
 
             sBaseName = osp.basename(sBasePath)
 
-            if sExt.lower() not in sAllowTexTypes:
-                sMsg = ("Only accepts: '{}'".format("' '".join(sAllowTexTypes)))
+            if sExt.lower() not in sAllowedTexTypes:
+                sMsg = ("Only accepts: '{}'".format("' '".join(sAllowedTexTypes)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadTextureFormat', sMsg))
 
             if (not bValidPublicFile) and (normCase(sTexDirPath) != normCase(sPrivTexDirPath)):
@@ -440,24 +440,25 @@ def scanTextureDependency(damEntity):
                         publishCount += 1
                     addResult(resDct)
 
+    sAllowedFileTypes = [".tx", ".psd"]
+    sAllowedFileTypes.extend(sAllowedTexTypes)
     #looking for unused files in texture direcotry
     if osp.isdir(sPrivTexDirPath):
 
         sTexDirFileList = sorted(iterPaths(sPrivTexDirPath, dirs=False, recursive=False))
 
-        #numUnused = 0
         for p in sTexDirFileList:
 
             scanLogDct = {}
 
             sExt = osp.splitext(p)[-1]
-            if sExt.lower() not in sAllowTexTypes:
+            if sExt.lower() not in sAllowedFileTypes:
                 continue
 
             np = normCase(p)
 
             if np in sPrivFileList:
-                scanLogDct.setdefault("info", []).append(("AlreadyPublished", p))
+                pass#scanLogDct.setdefault("info", []).append(("AlreadyPublished", p))
             elif np not in sFoundFileList:
                 scanLogDct.setdefault("warning", []).append(("UnusedPrivateFiles", p))
             else:
@@ -471,8 +472,6 @@ def scanTextureDependency(damEntity):
                          "drc_file":None,
                          }
             addResult(resultDct)
-
-            #numUnused += 1
 
     if scanResults:
         scanResults[-1]["scan_severities"] = sAllSeveritySet
