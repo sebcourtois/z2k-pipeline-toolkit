@@ -60,27 +60,27 @@ def createImgPlane():
     if not pc.namespace(exists='cam_animatic'):
         pc.namespace(addNamespace='cam_animatic')
 
-    cam_animatic = pc.camera( name= 'cam_animatic:asset', aspectRatio=1.77, displayFilmGate=True )
+    cam_animatic = pc.camera(name='cam_animatic:asset', aspectRatio=1.77, displayFilmGate=True)
     cam_animatic[0].rename('cam_animatic:asset')
-    pc.setAttr( cam_animatic[1].name() +'.visibility', 0 )
+    pc.setAttr(cam_animatic[1].name() + '.visibility', 0)
     #mc.parent( CAM_Animatic[0], grpDict['GD_ROOT'] )
 
-    IMGP = pc.imagePlane(camera = cam_animatic[1], showInAllViews=False, name="imgPlane_animatic")
+    IMGP = pc.imagePlane(camera=cam_animatic[1], showInAllViews=False, name="imgPlane_animatic")
     IMGP[1].rename("imgPlane_animatic")
 
     #SET DE L'IMAGE PLANE
-    pc.setAttr(IMGP[1].name()+".type",2)
-    pc.setAttr(IMGP[1].name()+".fit",1)
-    pc.setAttr(IMGP[1].name()+".useFrameExtension",1)
-    pc.setAttr(IMGP[1].name()+".frameOffset",-100)
-    pc.setAttr(IMGP[1].name()+".frameIn",101)
-    pc.setAttr(IMGP[1].name()+".frameOut",1000)
-    pc.setAttr(cam_animatic[1] +".displayFilmGate", 1)
-    pc.setAttr(cam_animatic[1] +".displayGateMask", 1)
-    pc.setAttr(cam_animatic[1] +".overscan", 1.4)
-    pc.setAttr(cam_animatic[1] +".displaySafeTitle", 1)
-    pc.setAttr(cam_animatic[1] +".displaySafeAction", 1)
-    pc.setAttr(cam_animatic[1] +".displayGateMaskColor", [0,0,0])
+    pc.setAttr(IMGP[1].name() + ".type", 2)
+    pc.setAttr(IMGP[1].name() + ".fit", 1)
+    pc.setAttr(IMGP[1].name() + ".useFrameExtension", 1)
+    pc.setAttr(IMGP[1].name() + ".frameOffset", -100)
+    pc.setAttr(IMGP[1].name() + ".frameIn", 101)
+    pc.setAttr(IMGP[1].name() + ".frameOut", 1000)
+    pc.setAttr(cam_animatic[1] + ".displayFilmGate", 1)
+    pc.setAttr(cam_animatic[1] + ".displayGateMask", 1)
+    pc.setAttr(cam_animatic[1] + ".overscan", 1.4)
+    pc.setAttr(cam_animatic[1] + ".displaySafeTitle", 1)
+    pc.setAttr(cam_animatic[1] + ".displaySafeAction", 1)
+    pc.setAttr(cam_animatic[1] + ".displayGateMaskColor", [0, 0, 0])
 
     return (IMGP[1], cam_animatic[0])
 
@@ -91,8 +91,10 @@ def importAsset(s_inPath, s_inNS='', b_inRef=True):
     else:
         importedAsset = pc.system.importFile(s_inPath, namespace=s_inNS)
 
+    return importedAsset
+
 def removeAsset(s_inPath):
-    mc.file(s_inPath, removeReference=True )
+    mc.file(s_inPath, removeReference=True)
 
 def getAssetRoot(s_inNS):
     assetRoot = None
@@ -161,7 +163,7 @@ def reArrangeAssets():
         'env':'grp_environment',
         'c2d':'grp_character2D',
         'vhl':'grp_vehicule',
-        
+
     }
 
     #Collect references
@@ -234,29 +236,29 @@ def camCTRLReplace():
     vCamR = dCamInfo['Transform'].getRotation(space='world')
     vCamS = dCamInfo['Transform'].getScale()
 
-    dCamInfo['Global'].setTranslation([vCamT[0],0,vCamT[2]], space='world')
-    dCamInfo['Global'].setRotation([0,vCamR[1],0], space='world')
+    dCamInfo['Global'].setTranslation([vCamT[0], 0, vCamT[2]], space='world')
+    dCamInfo['Global'].setRotation([0, vCamR[1], 0], space='world')
     dCamInfo['Local'].setTranslation(vCamT, space='world')
-    dCamInfo['Local'].setRotation([0,vCamR[1],0], space='world')
+    dCamInfo['Local'].setRotation([0, vCamR[1], 0], space='world')
     dCamInfo['Dolly'].setRotation(vCamR, space='world')
-    dCamInfo['Dolly'].setTranslation([0,0,0], space='object')
+    dCamInfo['Dolly'].setTranslation([0, 0, 0], space='object')
 
-    dCamInfo['Transform'].setTranslation([0,0,0], space='object')
-    dCamInfo['Transform'].setRotation([0,0,0], space='object')
-    dCamInfo['Transform'].setScale([1,1,1])
+    dCamInfo['Transform'].setTranslation([0, 0, 0], space='object')
+    dCamInfo['Transform'].setRotation([0, 0, 0], space='object')
+    dCamInfo['Transform'].setScale([1, 1, 1])
 
 def camKeyAll():
     dCamInfo = getCameraRig()
 
-    mc.setKeyframe( dCamInfo['Global'].longName(), dCamInfo['Local'].longName(), dCamInfo['Dolly'].longName(), dCamInfo['Transform'].longName(), attribute=['translateX', 'translateY','translateZ', 'rotateX', 'rotateY', 'rotateZ'] )
-    mc.setKeyframe( dCamInfo['Shape'].longName(), attribute=['focalLength'] )
+    mc.setKeyframe(dCamInfo['Global'].longName(), dCamInfo['Local'].longName(), dCamInfo['Dolly'].longName(), dCamInfo['Transform'].longName(), attribute=['translateX', 'translateY', 'translateZ', 'rotateX', 'rotateY', 'rotateZ'])
+    mc.setKeyframe(dCamInfo['Shape'].longName(), attribute=['focalLength'])
 
 def camRemKey():
     dCamInfo = getCameraRig()
 
-    mc.cutKey( dCamInfo['Global'].longName(), dCamInfo['Local'].longName(), dCamInfo['Dolly'].longName(), dCamInfo['Transform'].longName(), attribute=['translateX', 'translateY','translateZ', 'rotateX', 'rotateY', 'rotateZ'] )
-    mc.cutKey( dCamInfo['Shape'].longName(), attribute=['focalLength'])
-    
+    mc.cutKey(dCamInfo['Global'].longName(), dCamInfo['Local'].longName(), dCamInfo['Dolly'].longName(), dCamInfo['Transform'].longName(), attribute=['translateX', 'translateY', 'translateZ', 'rotateX', 'rotateY', 'rotateZ'])
+    mc.cutKey(dCamInfo['Shape'].longName(), attribute=['focalLength'])
+
 def camToZero():
     dCamInfo = getCameraRig()
 
@@ -264,16 +266,16 @@ def camToZero():
     vCamR = dCamInfo['Transform'].getRotation(space='world')
     vCamS = dCamInfo['Transform'].getScale()
 
-    dCamInfo['Global'].setTranslation([0,0,0], space='world')
-    dCamInfo['Global'].setRotation([0,0,0], space='world')
-    dCamInfo['Local'].setTranslation([0,0,0], space='world')
-    dCamInfo['Local'].setRotation([0,0,0], space='world')
-    dCamInfo['Dolly'].setRotation([0,0,0], space='world')
-    dCamInfo['Dolly'].setTranslation([0,0,0], space='world')
+    dCamInfo['Global'].setTranslation([0, 0, 0], space='world')
+    dCamInfo['Global'].setRotation([0, 0, 0], space='world')
+    dCamInfo['Local'].setTranslation([0, 0, 0], space='world')
+    dCamInfo['Local'].setRotation([0, 0, 0], space='world')
+    dCamInfo['Dolly'].setRotation([0, 0, 0], space='world')
+    dCamInfo['Dolly'].setTranslation([0, 0, 0], space='world')
 
     dCamInfo['Transform'].setTranslation(vCamT, space='world')
     dCamInfo['Transform'].setRotation(vCamR, space='world')
-    dCamInfo['Transform'].setScale([1,1,1])
+    dCamInfo['Transform'].setScale([1, 1, 1])
 
 
 #GLOBALS METHODS
@@ -304,14 +306,16 @@ def importSceneStructure(o_inSceneManager):
     if pc.objExists('shot'):
         return
 
+    sEntityType = o_inSceneManager.context['entity']['type']
+
     #Import scene structure
     template_path = o_inSceneManager.context['damProject'].getPath('template', 'project')
-    strucure_path = os.path.join(template_path, "{0}_layout_tree.ma".format(o_inSceneManager.context['entity']['type'].lower()))
+    strucure_path = os.path.join(template_path, "{0}_layout_tree.ma".format(sEntityType.lower()))
 
     if os.path.isfile(strucure_path):
         mc.file(strucure_path, i=True, rpr='')
     else:
-        pc.warning("Base file structure not found for entity type : {0}".format(entity['type']))
+        pc.warning("Base file structure not found for entity type : {0}".format(sEntityType))
 
 #Creates
 def create_scene_base(o_inSceneManager):
@@ -341,18 +345,19 @@ def create_previz_scene(o_inSceneManager):
 #Inits
 def init_shot_constants(o_inSceneManager):
     start = 101
-    duration = o_inSceneManager.context['entity']['sg_cut_out'] - o_inSceneManager.context['entity']['sg_cut_in']
+
+    duration = o_inSceneManager.getDuration()
 
     pc.playbackOptions(edit=True, minTime=start)
     pc.playbackOptions(edit=True, animationStartTime=start)
-    pc.playbackOptions(edit=True, maxTime=start + duration)
-    pc.playbackOptions(edit=True, animationEndTime=start + duration)
+    pc.playbackOptions(edit=True, maxTime=start + duration - 1)
+    pc.playbackOptions(edit=True, animationEndTime=start + duration - 1)
 
 def init_scene_base(o_inSceneManager):
     #Set units
     angle = 'degree'
     linear = 'centimeter'
-    time='film'
+    time = 'film'
     pc.currentUnit(angle=angle, linear=linear, time=time)
 
     #color management
@@ -384,29 +389,29 @@ def init_previz_scene(o_inSceneManager):
     IMGP = createImgPlane()
 
     # --- Set Viewport 2.0 AO default Value
-    pc.setAttr( 'hardwareRenderingGlobals.ssaoAmount', 0.3)
-    pc.setAttr( 'hardwareRenderingGlobals.ssaoRadius', 8 )
-    pc.setAttr( 'hardwareRenderingGlobals.ssaoFilterRadius', 8 )
-    pc.setAttr( 'hardwareRenderingGlobals.ssaoSamples', 16 )
+    pc.setAttr('hardwareRenderingGlobals.ssaoAmount', 0.3)
+    pc.setAttr('hardwareRenderingGlobals.ssaoRadius', 8)
+    pc.setAttr('hardwareRenderingGlobals.ssaoFilterRadius', 8)
+    pc.setAttr('hardwareRenderingGlobals.ssaoSamples', 16)
 
     # Set Viewport
-    pc.mel.eval( 'setNamedPanelLayout("Four View")' )
-    pc.mel.eval( 'ThreeRightSplitViewArrangement' )
+    pc.mel.eval('setNamedPanelLayout("Four View")')
+    pc.mel.eval('ThreeRightSplitViewArrangement')
 
     #Image plane
-    sidePanel = mc.getPanel( withLabel= 'Side View' )
-    pc.modelPanel( sidePanel, edit= True, camera= IMGP[1])
+    sidePanel = mc.getPanel(withLabel='Side View')
+    pc.modelPanel(sidePanel, edit=True, camera=IMGP[1])
     #Camera
-    perspPanel = mc.getPanel( withLabel= 'Persp View' )
-    pc.modelPanel( perspPanel, edit= True, camera= 'persp' )
+    perspPanel = mc.getPanel(withLabel='Persp View')
+    pc.modelPanel(perspPanel, edit=True, camera='persp')
     #Work view
-    workPanel = mc.getPanel( withLabel= 'Top View' )
-    pc.modelPanel( workPanel, edit= True, camera= 'persp' )
+    workPanel = mc.getPanel(withLabel='Top View')
+    pc.modelPanel(workPanel, edit=True, camera='persp')
 
-    pc.modelEditor( sidePanel, edit= True, allObjects= 0, imagePlane= True, grid= False )
+    pc.modelEditor(sidePanel, edit=True, allObjects=0, imagePlane=True, grid=False)
 
     #Import camera  "X:\asset\cam\cam_shot_default\cam_shot_default.ma"
-    
+
     camDefaultPath = o_inSceneManager.context['damProject'].getPath('public', 'camera', 'scene', tokens={'name':'cam_shot_default'})
 
     camName = 'cam_{0}'.format(o_inSceneManager.context['entity']['code'])
@@ -430,7 +435,7 @@ def init_previz_scene(o_inSceneManager):
                     camsLength -= 1
         else:
             remainingCamera = otherCams[0]
-            
+
         if remainingCamera != None and remainingCamera.namespace() != '{0}:'.format(camName):
             #rename camera
             pc.namespace(rename=(remainingCamera.namespace(), camName))
@@ -444,8 +449,8 @@ def init_previz_scene(o_inSceneManager):
             pc.warning('Default camera file cannot be found ({0})'.format(camDefaultPath))
 
     if len(camObjs) > 0:
-        perspPanel = mc.getPanel( withLabel= 'Persp View' )
-        pc.modelPanel( perspPanel, edit= True, camera=camObjs[0])
+        perspPanel = mc.getPanel(withLabel='Persp View')
+        pc.modelPanel(perspPanel, edit=True, camera=camObjs[0])
     else:
         pc.warning("Cannot find the shot camera {0} !!".format(camName))
 
@@ -454,6 +459,8 @@ def init_previz_scene(o_inSceneManager):
     IMGP = createImgPlane()
 
     if os.path.isfile(imgPlanePath):
+        pc.currentTime(101)
+        pc.refresh()
         pc.imagePlane(IMGP[0], edit=True, fileName=imgPlanePath)
     else:
         pc.warning('Image plane file cannot be found ({0})'.format(imgPlanePath))
@@ -462,15 +469,15 @@ def init_previz_scene(o_inSceneManager):
 
     #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
     soundPath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_sound')
-    pc.runtime.DeleteAllSounds()
+    pc.mel.DeleteAllSounds()
     if os.path.isfile(soundPath):
         # --- Import Sound
         # - Import current shot Sound
-        audio_shot = pc.sound( offset=101, file= soundPath, name = 'audio')
+        audio_shot = pc.sound(offset=101, file=soundPath, name='audio')
 
         # - Show Sound in Timeline
         aPlayBackSliderPython = pc.mel.eval('$tmpVar=$gPlayBackSlider')
-        pc.timeControl( aPlayBackSliderPython, e=True, sound=audio_shot, displaySound=True )
+        pc.timeControl(aPlayBackSliderPython, e=True, sound=audio_shot, displaySound=True)
 
     else:
         pc.warning('Sound file cannot be found ({0})'.format(soundPath))
@@ -491,13 +498,13 @@ COMMANDS = {
 
 
 
-def exportCam(sceneName="",*args, **kwargs):
+def exportCam(sceneName="", *args, **kwargs):
     """ Description: export la camera du given shot
         Return : BOOL
         Dependencies : cmds - 
     """
 
-    
+
 
     # get camera_group
 
@@ -507,5 +514,4 @@ def exportCam(sceneName="",*args, **kwargs):
 
     # return
 
-    
-    
+
