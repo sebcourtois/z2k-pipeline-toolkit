@@ -21,6 +21,138 @@ import maya.cmds as cmds
 from dminutes import assetconformation
 
 # general function 
+
+
+
+
+
+# Z2K base general functions -----------------
+def getBaseModPath(*args, **kwargs):
+    """
+    recupere le path de base des modules
+    """
+    basePath = ""
+    allModL = os.environ.get("MAYA_MODULE_PATH").split(";")
+    for p in allModL:
+        if "/z2k-pipeline-toolkit/maya_mods" in p:
+            basePath = p + "/"
+    return basePath
+
+
+# ------------------------ OS/Z2K Functions ------------------------------------
+def getAssetL (assetCat="chr",*args,**kwargs):
+    """ Description: return the asset list filtered by category (chr/prp/set/env/c2d...)
+        Return : [LIST]
+        Dependencies : cmds - 
+    """
+    
+    theDir = os.path.normpath( os.environ.get("ZOMB_ASSET_PATH")) + os.sep + assetCat
+    print "theDir=", theDir
+    if os.path.isdir(theDir):
+        assetL = sorted(os.listdir(theDir) )
+        if not len(assetL):
+            assetL=["Empty Folder"]
+        
+    else:
+        assetL=["Invalide folder"]
+
+    return assetL
+
+def getCatL (*args,**kwargs):
+    theDir = os.environ.get("ZOMB_ASSET_PATH")
+    print "theDir=", theDir
+    if os.path.isdir(theDir):
+        assetL = sorted(os.listdir(theDir) )
+        if not len(assetL):
+            assetL=["Empty Folder"]
+        
+    else:
+        assetL=["Invalide folder"]
+
+    return assetL
+
+def getAssetTypeL (*args, **kwargs):
+    print "getAssetTypeL()"
+    return ["anim","previz","modeling","render","master"]
+
+def getShotName(*args, **kwargs):
+    print "getShotName()"
+    # get shot name
+    currentSceneP,currentScene = cmds.file(q=1,sceneName=True),cmds.file(q=1,sceneName=True,shortName=True)
+    shotName = currentScene.rsplit("_",1)[0]
+    print "shotName=", shotName
+    if shotName[:2]+shotName[6:9] in ["sq_sh"]:
+        return shotName
+    else:
+        return "BAD SCENE NAME"
+
+def infosFromMayaScene(*args, **kwargs):
+    """ Description: decompose les infos à partir de la scene courante: 
+                scenePath-fileName-assetName-assetCat-assetType-version
+        Return : dict
+        Dependencies : cmds - getCatL - getAssetTypeL
+    """
+    testOk = True
+    outD = {}
+    scenePathTmp = cmds.file(q=1 ,sceneName=True)
+    print "scenePathTmp=", scenePathTmp
+    if   "asset" in scenePathTmp :
+        print "folder asset ok"
+        categoryL = getCatL()
+        assetTypeL= getAssetTypeL()
+        print "categoryL=", categoryL
+        print "assetTypeL=", assetTypeL
+        #path and short name
+        outD["scenePath"]= cmds.file(q=1,sceneName=True)
+        outD["fileName"]= cmds.file(q=1,sceneName=True,shortName=True)
+        outD["assetName"] = outD["fileName"].rsplit("_",1)[0]
+        outD["assetCat"] = outD["fileName"].split("_",1)[0]
+        outD["assetType"] = outD["fileName"].rsplit("_",1)[1].split("-",1)[0]
+        outD["version"] = outD["fileName"].split("-",1)[1][:4]
+
+        if outD["assetName"][:2]+outD["assetName"][6:9] in ["sq_sh"]:
+            print "this is a shot", outD["assetName"]
+
+
+        # verification
+        
+        # assetCat
+        if not outD["assetCat"]  in categoryL :
+            print "* bad assetCat -->",outD["assetCat"],"not in",categoryL
+            testOk = False
+        else:
+            print "*","assetCat ok:".rjust(15),outD["assetCat"]
+        
+        # Version
+        if not outD["version"][0]  in ["v"] and not len(outD["version"])in [4]:
+            print "* bad version"
+            testOk = False
+        else:
+            print "*","version ok:".rjust(15),outD["version"]
+
+        # assetType
+        if not outD["assetType"] in assetTypeL and not len(outD["version"])in [4]:
+            print "* bad assetType"
+            testOk = False
+        else:
+            print "*","assetType ok:".rjust(15),outD["assetType"]
+
+        # assetName
+        if not outD["assetName"].count("_") not in [3] :
+            print "* bad assetName"
+            testOk = False
+        else:
+            print "*","assetName ok:".rjust(15),outD["assetName"]
+        
+
+        # finally return the dico
+        if testOk:
+            return outD
+        else:
+            return False
+    else:
+        return False
+
 def createIncrementedFilePath( filePath="", vSep= "_v",extSep=".ma", digits=3, *args, **kwargs):
     """ Description: return incremented File path starting with the last version present in the 
         folder of the given file.
@@ -78,128 +210,6 @@ def createIncrementedFilePath( filePath="", vSep= "_v",extSep=".ma", digits=3, *
 
 
 
-
-# Z2K base general functions -----------------
-def getBaseModPath(*args, **kwargs):
-    """
-    recupere le path de base des modules
-    """
-    basePath = ""
-    allModL = os.environ.get("MAYA_MODULE_PATH").split(";")
-    for p in allModL:
-        if "/z2k-pipeline-toolkit/maya_mods" in p:
-            basePath = p + "/"
-    return basePath
-
-# ------------------------ OS/Z2K Functions ------------------------------------
-def getAssetL (assetCat="chr",*args,**kwargs):
-    """ Description: return the asset list filtered by category (chr/prp/set/env/c2d...)
-        Return : [LIST]
-        Dependencies : cmds - 
-    """
-    
-    theDir = os.path.normpath( os.environ.get("ZOMB_ASSET_PATH")) + os.sep + assetCat
-    print "theDir=", theDir
-    if os.path.isdir(theDir):
-        assetL = sorted(os.listdir(theDir) )
-        if not len(assetL):
-            assetL=["Empty Folder"]
-        
-    else:
-        assetL=["Invalide folder"]
-
-    return assetL
-
-def getCatL (*args,**kwargs):
-    theDir = os.environ.get("ZOMB_ASSET_PATH")
-    print "theDir=", theDir
-    if os.path.isdir(theDir):
-        assetL = sorted(os.listdir(theDir) )
-        if not len(assetL):
-            assetL=["Empty Folder"]
-        
-    else:
-        assetL=["Invalide folder"]
-
-    return assetL
-
-def getAssetTypeL (*args, **kwargs):
-    return ["anim","previz","modeling","render","master"]
-
-def getShotName(*args, **kwargs):
-    print "getShotName()"
-    # get shot name
-    currentSceneP,currentScene = cmds.file(q=1,sceneName=True),cmds.file(q=1,sceneName=True,shortName=True)
-    shotName = currentScene.rsplit("_",1)[0]
-    print "shotName=", shotName
-    if shotName[:2]+shotName[6:9] in ["sq_sh"]:
-        return shotName
-    else:
-        return "BAD SCENE NAME"
-
-def infosFromMayaScene(*args, **kwargs):
-    """ Description: decompose les infos à partir de la scene courante: 
-                scenePath-fileName-assetName-assetCat-assetType-version
-        Return : dict
-        Dependencies : cmds - getCatL - getAssetTypeL
-    """
-    testOk = True
-    outD = {}
-    scenePathTmp = cmds.file(q=1 ,sceneName=True)
-    if   "asset" in scenePathTmp :
-        categoryL = getCatL()
-        assetTypeL= getAssetTypeL()
-        #path and short name
-        outD["scenePath"]= cmds.file(q=1,sceneName=True)
-        outD["fileName"]= cmds.file(q=1,sceneName=True,shortName=True)
-        outD["assetName"] = outD["fileName"].rsplit("_",1)[0]
-        outD["assetCat"] = outD["fileName"].split("_",1)[0]
-        outD["assetType"] = outD["fileName"].rsplit("_",1)[1].split("-",1)[0]
-        outD["version"] = outD["fileName"].split("-",1)[1][:4]
-
-        if outD["assetName"][:2]+outD["assetName"][6:9] in ["sq_sh"]:
-            print "this is a shot", outD["assetName"]
-
-
-        # verification
-        
-        # assetCat
-        if not outD["assetCat"]  in categoryL :
-            print "* bad assetCat -->",outD["assetCat"],"not in",categoryL
-            testOk = False
-        else:
-            print "*","assetCat ok:".rjust(15),outD["assetCat"]
-        
-        # Version
-        if not outD["version"][0]  in ["v"] and not len(outD["version"])in [4]:
-            print "* bad version"
-            testOk = False
-        else:
-            print "*","version ok:".rjust(15),outD["version"]
-
-        # assetType
-        if not outD["assetType"] in assetTypeL and not len(outD["version"])in [4]:
-            print "* bad assetType"
-            testOk = False
-        else:
-            print "*","assetType ok:".rjust(15),outD["assetType"]
-
-        # assetName
-        if not outD["assetName"].count("_") not in [3] :
-            print "* bad assetName"
-            testOk = False
-        else:
-            print "*","assetName ok:".rjust(15),outD["assetName"]
-        
-
-        # finally return the dico
-        if testOk:
-            return outD
-        else:
-            return False
-    else:
-        return False
-
 # printer  -------------------------------------------------------
 def printF( text="", st="main", toScrollF="", toFile = "", inc=False, GUI= True,
         openMode="a+", *args, **kwargs):
@@ -251,6 +261,17 @@ def waiter (func,*args, **kwargs):
     return deco
 
 # 3D maya functions ---------------------------
+def Ltest(objL,*args,**kwargs):
+    # old way
+    # if type(objL) is not list:
+    #     objL = [objL]
+
+    # new way
+    if not isinstance(objL,list):
+        objL = [objL]
+
+    return objL
+
 def matchByXformMatrix(cursel=[], mode=0, *args, **kwargs):
     ''' Description : Match SRT in world cursel objects to the first one
                     mode : - 0/first = the first object is the reference
@@ -284,8 +305,6 @@ def matchByXformMatrix(cursel=[], mode=0, *args, **kwargs):
             # print "Matrix setted"
         return True
 
-
-
 def jlistSets( *args,**kwargs):
         """
         description : wrapper of cmds.listSets() that return empty list []
@@ -296,7 +315,6 @@ def jlistSets( *args,**kwargs):
             toReturnL=[]
 
         return toReturnL
-
 
 def setFilterTest(setName="",includedSetL=["objectSet","textureBakeSet","vertexBakeSet","character"],
         excludedSetL=["shadingEngine","displayLayer","ilrBakeLayer"],
@@ -352,7 +370,6 @@ def setFilterTest(setName="",includedSetL=["objectSet","textureBakeSet","vertexB
         # finally return True if nothing of all the rest
         return True
 
-
 def getOutlinerSets(*args, **kwargs):
         """ Description: return the outliner visible filtered objects sets 
             Return : [LIST]
@@ -360,7 +377,6 @@ def getOutlinerSets(*args, **kwargs):
         """
         
         return [setName for setName in cmds.ls(sets=True) if setFilterTest(setName=setName)]
-
 
 def getSetContent ( inSetL=[],*args,**kwargs):
         """
@@ -376,15 +392,145 @@ def getSetContent ( inSetL=[],*args,**kwargs):
                     outL.extend(objL)
         return outL
 
-
-
 def getSel(*args, **kwargs):
         objL = cmds.ls( os=True, fl=True, l=True, )
         return objL
 
+def getGeoInHierarchy(cursel=[],theType="mesh",*args,**kwargs):
+    listOut = []
+    cursel = Ltest(cursel)
+    if not len(cursel)>0 : 
+        cursel= cmds.ls(os=True, flatten=True,allPaths=True)
+    # select mesh in hierarchy
+    cursel = cmds.listRelatives(cursel,allDescendents=True, path=True)
+    listOut = [a for a in cursel if cmds.listRelatives(a,c=1,type=theType, path=True)]
+    
+    return listOut
+
+def delete_displayLayer( FilterL=["defaultLayer"], *args, **kwargs):
+    print "delete_displayLayer()"
+
+    displ = cmds.ls(type="displayLayer", long=True)
+    for lay in displ:
+        if lay not in FilterL:
+            cmds.delete(lay)
+
+def createDisplayLayer ( n="default_Name", inObjL=[], displayType=0, hideOnPlayback=0,enableOverride=True, *args, **kwargs):
+    print "createDisplayLayer(%s,%s,%s)" % (n,displayType,hideOnPlayback)
+
+    # create layer if doesn't exist
+    if not cmds.objExists(n):
+        cmds.createDisplayLayer(name=n, number=1,empty=True,nr=True)
+
+    # set the layer state
+    cmds.setAttr(n + ".displayType", displayType)
+    cmds.setAttr(n + ".hideOnPlayback",hideOnPlayback)
+    cmds.setAttr(n + ".enabled",enableOverride)
+
+    # add obj list to the layer
+    cmds.editDisplayLayerMembers(n, inObjL,nr=True)
 
 
-#♠--------------------- CHECK FUNCTION ------------------------------
+def NodeTypeScanner( execptionTL = [], exceptDerived= True, specificTL=[], specificDerived=False,
+        mayaDefaultObjL=["characterPartition","defaultLightList1","dynController1","globalCacheControl",
+        "hardwareRenderGlobals","hardwareRenderingGlobals","defaultHardwareRenderGlobals","hyperGraphInfo",
+        "hyperGraphLayout","ikSystem","characterPartition","char_aurelienPolo_wip_18_sceneConfigurationScriptNode",
+        "char_aurelienPolo_wip_18_uiConfigurationScriptNode","sequenceManager1","strokeGlobals","time1","defaultViewColorManager",
+        "defaultColorMgtGlobals","defaultObjectSet","defaultTextureList1","lightList1","defaultObjectSet",
+        "sceneConfigurationScriptNode","uiConfigurationScriptNode"],
+        *args, **kwargs):
+        """ Description: Return Node list base on specific type /excepted type filtered
+                        If nothing it give evrething in scene
+                        basic type herited coulb be "dagNode" / "transform" /
+            Return : LIST
+            Dependencies : cmds - 
+        """
+
+        theTypeL =[]
+        allTypeL = cmds.ls(nodeTypes=1)
+        toReturnL = []
+        if not len(specificTL) >0:
+                theTypeL = allTypeL
+        else:
+            theTypeL = specificTL
+
+        for typ in theTypeL:
+            # print "****",typ
+            if len(theTypeL)>0:
+                filtered = [x for x in cmds.ls(type=typ) if  x not in mayaDefaultObjL ]
+                if len(filtered)>0:
+                    for obj in filtered:
+                        if not obj in mayaDefaultObjL:
+                            testB = False
+                            if len(execptionTL)>0:
+                                for ex in execptionTL:
+                                    if  cmds.nodeType(obj) in  cmds.nodeType(ex, derived=exceptDerived, isTypeName=True,):
+                                        # print "#######",cmds.nodeType(obj), "is bad"
+                                        testB = True
+                                        break
+                                if not testB:
+                                    toReturnL.append(obj)
+                                        
+                            else:
+                                toReturnL.append(obj)
+
+        return toReturnL
+
+# wip to make faster
+def UnusedNodeAnalyse( execptionTL = [], specificTL= [], mode = "delete",verbose=True, *args, **kwargs):
+    """ Description: Test if nodes have connections based on type and excluded_type in all the scene and either delete/select/print it.
+                    mode = "delete" / "select" / "print"
+        Return : [BOOL,Dict]
+        Dependencies : cmds - NodeTypeScanner() - isConnected()
+    """
+    
+    toReturnB = True
+    nodeL = NodeTypeScanner(execptionTL=execptionTL, specificTL=specificTL)
+    print "*nodeL=", len(nodeL)
+    unconectedCL =[]
+    # loop
+    for node in nodeL:
+        if not isConnected(node=node)[0]:
+            # print "-","toDELETe:",node
+            unconectedCL.append(node)
+
+    print "unconectedCL=", len(unconectedCL)
+    
+    # finally 
+    errorL = []
+    deletedL =[]
+    debugD = {}
+    if mode in ["delete"]:
+        if len(unconectedCL):
+            for node in unconectedCL:
+                try:
+                    if not cmds.lockNode(node, q=1)[0]:
+                        print "try deleting",node,cmds.lockNode(node,q=1)[0]
+                        cmds.delete (node)
+                        deletedL.append(node)
+                except Exception,err:
+                    errorL.append(node)
+                    print "ERROR on {0} : {1}".format(node,err)
+        if len(errorL)>0:
+            toReturnB = False
+    
+    debugD["errorL"] = errorL
+    debugD["deletedL"] = deletedL
+
+    if mode in ["select"]:
+        cmds.select (unconectedCL) 
+
+    if mode in ["print"]:
+        for node in unconectedCL:
+            print node
+
+    return [toReturnB,debugD]
+
+
+
+
+
+#--------------------- CHECK FUNCTION ------------------------------
 def checkBaseStructure(*args,**kwargs):
         """
         Descrition: Check if th Basic hierachy is ok
@@ -480,13 +626,18 @@ def checkBaseStructure(*args,**kwargs):
         print "toReturnB=", toReturnB
         return toReturnB,debugD
 
-def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig","grp_geo"],*args,**kwargs):
-        print "checkAssetStructure()"
+def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig","grp_geo"],
+        additionalL=["grp_placeHolders"],*args,**kwargs):
         """ Description: check inside the asset_gp
             Return : [result,debugDict]
             Dependencies : cmds - 
         """
-        
+        print "checkAssetStructure()"
+
+        # switch expeted list depending on the name of the scene
+        sceneName = cmds.file(q=1,sceneName=True, shortName=True)
+        if sceneName[:3] in ["set"]:
+            expectedL.extend(additionalL)
         toReturnB = False
         debugD = {}
         tab="    "
@@ -495,6 +646,8 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig","grp_geo"],*args,
             childL = cmds.listRelatives(assetgpN,  c=True)
             print tab,expect_str, childL
             debugD[expect_str] = {}
+            print "*",sorted(expectedL) 
+            print "*",sorted(childL)
             if sorted(expectedL) == sorted(childL):
                 toReturnB = True
                 debugD[ expect_str ]["result"] = "OK"
@@ -511,11 +664,11 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig","grp_geo"],*args,
         return toReturnB,debugD
 
 def Apply_Delete_setSubdiv (applySetSub=True, toDelete=["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"],*args, **kwargs):
-    print "Apply_Delete_setSubdiv()"
     """ Description: apply setSubdiv() if present and delete it
         Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
         Dependencies : cmds - assetconformation.setSubdiv()
     """
+    print "Apply_Delete_setSubdiv()"
     
     toReturnB = True
     setSub = False
@@ -536,8 +689,37 @@ def Apply_Delete_setSubdiv (applySetSub=True, toDelete=["set_subdiv_0", "set_sub
 
     return [toReturnB,setSub,deletedL]
 
+def checkSRT (inObjL=[], *args,**kwargs):
+    # print "checkSRT()"
+    tab= "    "
+    toReturnB = True
+    debugD = {}
+    tmpDict ={}
+
+    attribD =   {"translateX":0.0, "translateY":0.0, "translateZ":0.0,
+                  "rotateX":0.0, "rotateY":0.0, "rotateZ":0.0,
+                  "scaleX":1.0, "scaleY":1.0, "scaleZ":1.0,
+                }
+
+    for obj in inObjL:
+        badassResult = False
+        errAttrL= []
+        for i,j in attribD.iteritems():
+            if not round(cmds.getAttr(obj+"."+i),3) == round(j,3):
+                # print tab + obj
+                # print tab+"    err:",i, round(cmds.getAttr(obj+"."+i),3), "<>",j
+                toReturnB = False
+                badassResult = True
+                errAttrL.append(i)
+                
+        if badassResult:
+            debugD[obj]= errAttrL
 
 
+    # print tab,"DONE", toReturnB,debugD
+
+    # print "toReturnB=",toReturnB
+    return [toReturnB,debugD]
 
 def isSet_meshCache_OK (theSet="set_meshCache",theType="prop",*args, **kwargs):
         """ Description: check si le contenue du setMeshCache est conforme au type donné
@@ -552,7 +734,7 @@ def isSet_meshCache_OK (theSet="set_meshCache",theType="prop",*args, **kwargs):
         setContentL = getSetContent(inSetL=[theSet])
         print "setContentL=", setContentL
         if setContentL:
-            if theType not in ["set"]:
+            if theType not in ["setPreviz"]:
                 # cas general on veut seulement des mesh dans le set
                 for i in setContentL:
                     sL= cmds.listRelatives(i,s=1,ni=1)
@@ -629,123 +811,427 @@ def isConnected ( node="", exceptionL=["nodeGraphEditorInfo","defaultRenderUtili
 
         return [toReturnB,conL]
 
+def isSkinned(inObjL=[], verbose=False, printOut = False,*args,**kwargs):
+        ''' Description : Get the list of the SlinClusters of the selected mesh
+                Return : [resultBool,outSkinClusterL,noSkinL]
+                Dependencies : cmds - 
+        '''                 
+        toReturnB = False
+        outSkinClusterL=[]
+        outSkinnedObj = []
+        tab = "    "
+        if len(inObjL):
+            for obj in inObjL:
+                print "  obj =", obj
+                skinClusterList = []
+                history = cmds.listHistory(obj, il=2)
+                # print "    history = ", history
+                if history not in [None,"None"]:
+                    for node in history:
+                        if cmds.nodeType(node) == "skinCluster":
+                            skinClusterList.append(node)
+                            outSkinClusterL.append(node)
+                            outSkinnedObj.append(obj)
+                else :
+                    print "#Error# getSkinCluster(): No History stack"
+                    toReturnB = False
+
+                if len(skinClusterList) < 1:
+                    shapes = cmds.listRelatives(obj, s=True)
+                    for shape in shapes:
+                        history = cmds.listHistory(shape)
+                        for node in history:
+                            if cmds.nodeType(node) == "skinCluster":
+                                skinClusterList.append(node)
+                                outSkinClusterL.append(node)
+                
+        
+
+        noSkinL = list(set(inObjL) - set(outSkinnedObj))
+        if len(outSkinClusterL) >= len(inObjL):
+            toReturnB = True
+
+        print tab,"SkinCluster/obj = {0} / {1}".format(len(outSkinClusterL),len(inObjL) )
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return [toReturnB,outSkinClusterL,noSkinL]
 
 
 
 # ------------------------ cleaning Function -----------------
-
+# object cleaning
 def resetSRT( inObjL=[], *args,**kwargs):
-        # remet les valeur SRT a (1,1,1) (0,0,0) (0,0,0)
-        print "resetSRT()"
-        tab = "    "
-        cursel = inObjL
-        debugL = []
-        resetedL = []
-        toReturnB = True
+    """ Description: remet les valeur SRT a (1,1,1) (0,0,0) (0,0,0)
+        Return : [toReturnB,debugD]
+        Dependencies : cmds - checkSRT()
+    """
+    print "resetSRT()"
+
+    tab = "    "
+    cursel = inObjL
+    debugD = {}
+    debugL = []
+    resetedL = []
+    toReturnB = True
+    
+    for i in cursel:
         
-        for i in cursel:
-            
-            if  not checkSRT([i])[0]:
-                # print "    reseting",i
+        if  not checkSRT([i])[0]:
+            # print "    reseting",i
+            try:
+                cmds.xform(i, ro=(0, 0, 0), t=(0, 0, 0), s=(1, 1, 1))
+                resetedL.append(i)
+            except Exception,err:
+                toReturnB=False
+                debugL.append(err)
+
+
+    debugD["errors"] = debugL
+    debugD["resetedL"]= resetedL
+
+
+    # print tab,"DONE",toReturnB
+    return [toReturnB,debugD]
+
+def checkKeys(inObjL=[],*args, **kwargs):
+    """ Description: check if there is some keys on keyables of inObjL
+        Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
+        Dependencies : cmds - isKeyed()
+    """
+    toReturnB = True
+    debugD = {}
+    for obj in inObjL:
+        test,debugL = isKeyed(inObj=obj)
+        # print "    *",test,debugL
+        if test:
+            toReturnB = False
+            debugD[obj] = debugL
+    
+    # print "##",debugD
+    return [toReturnB,debugD]
+
+def cleanKeys( inObjL=[], *args, **kwargs):
+    """ Description: delete all animation on inObj
+        Return : [toReturnB,cleanedL,debugD]
+        Dependencies : cmds - checkKeys()
+    """
+    print "cleanKeys()"
+    toReturnB = True
+    debugD = []
+    cleanedL = []
+    print "inObjL=", inObjL
+    oktest, debugD = checkKeys(inObjL=inObjL, )
+    print "cleanKeys(2)"
+    if not oktest:
+        for obj,j in debugD.iteritems():
+            for toDeleteL in j.values():
                 try:
-                    cmds.xform(i, ro=(0, 0, 0), t=(0, 0, 0), s=(1, 1, 1))
-                    resetedL.append(i)
+                    cmds.delete(toDeleteL)
+                    cleanedL.append(toDeleteL)
                 except Exception,err:
-                    toReturnB=False
-                    debugL.append(err)
+                    toReturnB = False
+                    debugD[obj] = err
+                    print "ERROR:",obj,err
 
-        # print tab,"DONE",toReturnB
+    return [toReturnB,cleanedL,debugD]
 
-        # prints -------------------
-        printF("resetSRT()", st="t")
-        printF(toReturnB, st="r")
-        printF ( " Reseted : {0}/{1}".format( len(resetedL),len(inObjL), ) )
-        printF ( " error on: {0}/{1}".format( len(debugL),len(inObjL), ) )
-        for j in debugL:
-            printF ( "     on : {0}".format( j.ljust(15) ) )
-       
+def cleanUnusedInfluence(inObjL="",*args,**kwargs):
+    """ Description: Delete unused influance on given inObjL . Return Flase if some obj doesn't have a skinClust
+        Return : [BOOL, totalSkinClusterL, deletedDict{skinCluster:DeletedInfluenceL}]
+        Dependencies : cmds - isSkinned() - 
+    """
+    print "cleanUnusedInfluance()"
 
-        # --------------------------
+    # to convert to real python code with cmds.skinCluster(theSkincluster, removeUnusedInfluence=True)
+    tab = "    "
+    toReturnB=True
+    deletedDict = {}
+    outCount = 0
+    totalSkinClusterL= []
+    if len(inObjL)>0:
+        for obj in inObjL:
+            skinned,skinClusterL,noSkinL = isSkinned(inObjL=[obj])
+            totalSkinClusterL.extend(skinClusterL)
+            # print tab,obj,skinned,skinClusterL,noSkinL
+            if skinned in [True,1]:
+                for skinCluster in (skinClusterL):
+                    print tab,skinCluster
 
-        return [toReturnB,debugL]
+                    # get def list all and the unsused w
+                    defL = cmds.skinCluster(skinCluster,q=1,  inf=True)
+                    wDefL = cmds.skinCluster(skinCluster,q=1,  wi=True)
+                    toDeleteL = list(set(defL)-set(wDefL))
+                    print tab,"toDeleteL=", toDeleteL
+
+                    # turn of the skinNode for faster exec
+                    baseSkinNState = cmds.getAttr (skinCluster +".nodeState")
+                    cmds.setAttr (skinCluster+".nodeState", 1)
+
+                    # removing loop
+                    if len(toDeleteL)>0:
+                        for i in toDeleteL:
+                            print tab,"**",skinCluster,i
+                            try:
+                                u=cmds.skinCluster(skinCluster,e=True,  ri=i, )
+                            except Exception,err:
+                                print err
+                                toReturnB=False
+                        
+                        outCount +=1
+                        deletedDict[skinCluster]= toDeleteL
+                        print outCount,len(deletedDict)
+                    # turn on skinNode    
+                    cmds.setAttr (skinCluster+".nodeState", 0)
 
 
-def cleanKeys( inObjL=[],verbose=True, *args, **kwargs):
-        print "cleanKeys()"
+    return [toReturnB,totalSkinClusterL,deletedDict]
+
+def setSmoothness(inObjL=[], mode=0, *args,**kwargs):
+        print "setSmoothness()"
+        tab="    "
         toReturnB = True
-        debugD = []
-        cleanedL = []
-        print "inObjL=", inObjL
-        oktest, debugD = checkKeys(inObjL=inObjL, verbose=False)
-        print "cleanKeys(2)"
-        if not oktest:
-            for obj,j in debugD.iteritems():
-                for toDeleteL in j.values():
-                    try:
-                        cmds.delete(toDeleteL)
-                        cleanedL.append(toDeleteL)
-                    except Exception,err:
-                        toReturnB = False
-                        debugD[obj] = err
-                        print "AHAHAH",obj,err
+        debugD = {}
+        # handle the display of mesh in viewport
+        if type(inObjL) is not list:
+            inObjL = list(inObjL)
+        for obj in inObjL:
+            # print tab,obj
+            try :
+                shapeL=cmds.listRelatives(obj,s=1,ni=1)
+                if shapeL:
+                    for shape in shapeL:
+                        print "    ",shape
+                        # connect the attr if not connected
+                        if not cmds.connectionInfo(shape + "."+"smoothLevel",isDestination=True):
+                            cmds.displaySmoothness( obj, polygonObject=mode )
+            except Exception,err:
+                toReturnB = False
+                debugD[obj]= err
 
-         # prints -------------------
-        if verbose:
-            printF("cleanKeys()", st="t")
-            printF(toReturnB, st="r")
-            printF ( " Cleaned : {0}/{1}".format( len(cleanedL),len(inObjL), ) )
-            printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(inObjL), ) )
-            for i,j in debugD.iteritems():
-                printF ( "     - {0}: {1}".format( i.ljust(15),j.values() ) )
-        # --------------------------
+        print tab,"DONE",toReturnB, debugD   
+
+        
+
+        return [toReturnB,debugD]
+
+def disableShapeOverrides(inObjL=[],*args, **kwargs):
+        # desactivate Overide des geometry contenu dans le set "set_meshCache"
+        print "disableShapeOverrides()"
+        tab = "   "
+        toReturnB = True
+        debugD= {}
+        attrL = ["overrideEnabled","overrideDisplayType"]
+        for obj in inObjL:
+            for attr in attrL:
+                try:
+                    cmds.setAttr (cmds.listRelatives(obj, c=True, ni=True, type="shape", fullPath=True)[0]+"."+ attr,0)
+                except Exception,err:
+                    toReturnB = False
+                    debugD[obj]= attr
+
+        print tab,"DONE",toReturnB
+
+        
 
         return [toReturnB,debugD]
 
 
 
+# scene cleaning
+def cleanMentalRayNodes ( toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',
+        'Draft','DraftMotionBlur','DraftRapidMotion','Preview','PreviewCaustics','PreviewFinalGather','PreviewGlobalIllum',
+        'PreviewImrRayTracyOff','PreviewImrRayTracyOn','PreviewMotionblur','PreviewRapidMotion','Production','ProductionFineTrace',
+        'ProductionMotionblur','ProductionRapidFur','ProductionRapidHair','ProductionRapidMotion',
+        ],
+        *args, **kwargs):
+        """ Description: Delete all mentalrayNodes in toDeleteL
+            Return : [toReturnB,toDeleteL,deletedL,failL]
+            Dependencies : cmds - 
+        """
+        
+        print "cleanMentalRayNodes()"
+        tab = "    "
+        toReturnB = True
+        deletedL=[]
+        failL=[]
+        print tab,"toDeleteL=", toDeleteL
+
+        for i in toDeleteL:
+            if cmds.objExists(i):
+                try:
+                    cmds.lockNode(i, lock=False)
+                    cmds.delete(i)
+                    deletedL.append(i)
+                except:
+                    toReturnB=False
+                    failL.append(i)
 
 
+        return [toReturnB,toDeleteL,deletedL,failL]
+
+def cleanTurtleNodes ( toDeleteL=["TurtleDefaultBakeLayer"], *args, **kwargs):
+        """ Description: Delete all turtle in toDeleteL
+            Return : [toReturnB,toDeleteL,deletedL,failL]
+            Dependencies : cmds - 
+        """
+        
+        print "cleanMentalRayNodes()"
+        tab = "    "
+        toReturnB = True
+        deletedL=[]
+        failL=[]
+        print tab,"toDeleteL=", toDeleteL
+
+        for i in toDeleteL:
+            if cmds.objExists(i):
+                try:
+                    cmds.lockNode(i, lock=False)
+                    cmds.delete(i)
+                    deletedL.append(i)
+                except:
+                    toReturnB=False
+                    failL.append(i)
 
 
+        return [toReturnB,toDeleteL,deletedL,failL]
 
 
+def cleanRefNodes(toDeleteL = ["UNKNOWN_REF_NODE","SHAREDREFERENCENODE","REFERENCE"],*args,**kwargs):
+        print "cleanRefNodes()"
+        tab = "    "
+        toReturnB = False
+        objtoDeleteL=[]
+        deletedL=[]
+        print tab,"toDeleteL=", toDeleteL
+         # clean UNKNOWN REF NODES =======================
+        for ref in cmds.ls(type='reference'):
+            for curToDelType in toDeleteL:
+                
+                if curToDelType.upper() in cmds.objectType(ref).upper():
+                    print tab, '* %s' % ref
+                    objtoDeleteL.append(ref)
+                    try:
+                        cmds.lockNode(ref, lock=False)
+                        cmds.delete(ref)
+                        print tab,"DELETED:", ref
+                        deletedL.append(curToDelType)
+                    except Exception, e:
+                            print tab,"%s"% e
+
+        if len(objtoDeleteL) == len(deletedL):
+            toReturnB = True
+        else:
+            toReturnB = False
+
+        return [toReturnB,objtoDeleteL,deletedL]
+
+def remove_All_NS ( NSexclusionL = [""], limit = 100, *args,**kwargs):
+        """ Description: Delete all NameSpace appart the ones in the NSexclusionL
+            Return : nothing
+            Dependencies : cmds - 
+        """
+        tab= "    "
+        print "remove_All_NS()"
+        toReturnB = True
+
+        # "UI","shared" NS are used by maya itself
+        NS_exclusion=["UI","shared"]
+        NS_exclusion.extend(NSexclusionL)
+        # set the current nameSpace to the root nameSpace
+        cmds.namespace(setNamespace = ":")
+        # get NS list
+        nsL = cmds.namespaceInfo(listOnlyNamespaces=True)# list content of a namespace  
+        
+
+        for loop in range(len(nsL)+2):
+            nsL = cmds.namespaceInfo(listOnlyNamespaces=True)
+            for ns in nsL:
+                if ns not in NS_exclusion:
+                    print tab+"ns:",ns
+                    cmds.namespace( removeNamespace =ns, mergeNamespaceWithRoot=True)
+
+        # recursive
+        count = 0
+        nsLFin = cmds.namespaceInfo(listOnlyNamespaces=True)
+        while len(nsLFin)>2:
+            remove_All_NS(NSexclusionL = NSexclusionL)
+            count += 1
+            if count > limit:
+                break
+
+        return [toReturnB]
 
 
+# WIIIIP APPEND THE SPECIAL CASE OF SET AND DO NOTHING in the check script
+def cleanDisplayLayerWithSet (tableD={"set_meshCache":["geometry",2,0],"set_control":["control",0,0] }, preDelAll=True, *arg, **kwargs):
+    """ Description: Clean the display Layers by rebuilding it with the content of the corresponding sets 
+                        setL <-> layerL
+        Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
+        Dependencies : cmds - createDisplayLayer() - delete_displayLayer()
+    """
+    
+    tab = "    "
+    toReturnB= True
+    debugL = []
+
+    # pre deleting all layers if rebuild is possible
+    if preDelAll:
+        oktest= True
+        for theSet,paramL in tableD.iteritems():
+            if not cmds.objExists(theSet):
+                oktest=False
+        if oktest:
+            delete_displayLayer()
+
+    # rebuild with given sets
+    for theSet,paramL in tableD.iteritems():
+        if cmds.objExists(theSet):
+            inObjL = cmds.listConnections( theSet+".dagSetMembers",source=1)
+            if inObjL:
+                createDisplayLayer ( n=paramL[0], inObjL=inObjL, displayType=paramL[1], hideOnPlayback=paramL[2])
+                debugL.append(theSet + " :DONE")
+            else:
+                toReturnB= False
+                debugL.append(theSet + " :EMPTY")
+        else:
+            toReturnB= False
+            debugL.append(theSet + " :DOESN'T EXISTS")
+    
+    return [toReturnB,debugL]
 
 
+def cleanUnusedConstraint(*args, **kwargs):
+    """ Description: Delete All Un-connected Constraint
+        Return : BOOL,debugD
+        Dependencies : cmds - UnusedNodeAnalyse()
+    """
+    print "cleanUnusedConstraint()"
+    
+    toReturnB,debugD = UnusedNodeAnalyse(execptionTL = [], specificTL=["constraint",], mode="delete")
+    print "**debugD=", debugD
+    return [toReturnB,debugD]
 
+def cleanUnUsedAnimCurves( *args, **kwargs):
+    """ Description: Delete All Un-connected Anim_Curves
+        Return : BOOL,debugD
+        Dependencies : cmds - UnusedNodeAnalyse()
+    """
+    print "cleanUnUsedAnimCurves()"
 
+    toReturnB,debugD = UnusedNodeAnalyse(execptionTL = [], specificTL=["animCurve"], mode="delete")
 
+    return [toReturnB,debugD]
 
+def CleanDisconnectedNodes(*args, **kwargs):
+    """ Description: Delete All Un-connected non dag Nodes
+        Return : BOOL,debugD
+        Dependencies : cmds - UnusedNodeAnalyse()
+    """
+    print "CleanDisconnectedNodes()"
+    
+    toReturnB,debugD = UnusedNodeAnalyse(execptionTL = ["dagNode","defaultRenderUtilityList"], specificTL=[], mode="delete")
 
-
-
-
-
-
-
-
-
-
-
-
+    return [toReturnB,debugD]
 
 
 
