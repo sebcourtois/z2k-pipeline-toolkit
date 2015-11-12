@@ -19,7 +19,7 @@ from davos.tools import publish_dependencies
 from .general import entityFromScene
 from davos_maya.tool import dependency_scan
 from pytd.util.sysutils import toStr, inDevMode
-from pytd.util.fsutils import pathRelativeTo
+#from pytd.util.fsutils import pathRelativeTo
 
 bDevDryRun = False
 
