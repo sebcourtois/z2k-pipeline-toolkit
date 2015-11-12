@@ -518,8 +518,8 @@ class SceneManager():
             #Get start/end from shotgun
             captureStart = 101
             CAPTUREINFO['start'] = captureStart
-            duration = self.context['entity']['sg_cut_out'] - self.context['entity']['sg_cut_in']
-            captureEnd = captureStart + duration
+            duration = self.getDuration()
+            captureEnd = captureStart + duration - 1
             CAPTUREINFO['end'] = captureEnd
 
             #get camera
@@ -556,21 +556,23 @@ class SceneManager():
     def edit(self, editInPlace=None, onBase=False):
         privFile = None
 
-        lib = LIBS[self.context['entity']['type']]
+        entity = self.context['entity']
+
+        lib = LIBS[entity['type']]
         if lib == "asset_lib":
-            lib = self.context['entity']['sg_asset_type']
+            lib = entity['sg_asset_type']
 
         tokens = {}
 
         nameKey = 'name'
 
-        if self.context['entity']['type'] == 'Shot':
+        if entity['type'] == 'Shot':
             nameKey = 'code'
-            tokens['name'] = self.context['entity'][nameKey]
-            tokens['sequence'] = self.context['entity']['sg_sequence']['name']
-        elif d_inEntity['type'] == 'Asset':
-            tokens['name'] = self.context['entity'][nameKey]
-            tokens['assetType'] = self.context['entity'][nameKey].split('_')[0]
+            tokens['name'] = entity[nameKey]
+            tokens['sequence'] = entity['sg_sequence']['name']
+        elif entity['type'] == 'Asset':
+            tokens['name'] = entity[nameKey]
+            tokens['assetType'] = entity[nameKey].split('_')[0]
 
         if 'task' in self.context:
             if self.context['task']['content'] in TASK_FILE_REL:
@@ -585,7 +587,13 @@ class SceneManager():
                 if path != None:
                     entry = self.context['damProject'].entryFromPath(path)
                     if entry == None:
-                        result = pc.confirmDialog(title='Non existing entity', message='Entity "{0}"" does not exists, do yout want to create it ?'.format(self.context['entity'][nameKey]), button=['Yes', 'No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+                        msg = 'Entity "{0}"" does not exists, do yout want to create it ?'.format(entity[nameKey])
+                        result = pc.confirmDialog(title='Non existing entity',
+                                                  message=msg,
+                                                  button=['Yes', 'No'],
+                                                  defaultButton='Yes',
+                                                  cancelButton='No',
+                                                  dismissString='No')
                         if result == "Yes":
                             self.createFolder()
                             entry = self.context['damProject'].entryFromPath(path)
@@ -598,7 +606,12 @@ class SceneManager():
                     result = "Yes" if editInPlace else "No"
 
                     if editInPlace == None:
-                        result = pc.confirmDialog(title='Edit options', message='Do you want to use current scene for this edit ?', button=['Yes', 'No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+                        result = pc.confirmDialog(title='Edit options',
+                                                  message='Do you want to use current scene for this edit ?',
+                                                  button=['Yes', 'No'],
+                                                  defaultButton='Yes',
+                                                  cancelButton='No',
+                                                  dismissString='No')
 
                     if result == "Yes":
                         privFile = entry.edit(openFile=False, existing="keep")#existing values = choose, fail, keep, abort, overwrite
@@ -791,6 +804,20 @@ class SceneManager():
 
     def do(self, s_inCmd):
         mop.do(s_inCmd, self.context['task']['content'], self)
+
+    def getDuration(self):
+        shot = self.context['entity']
+        inOutDuration = shot['sg_cut_out'] - shot['sg_cut_in'] + 1
+        duration = shot['sg_cut_duration']
+
+        if inOutDuration != duration:
+            pc.displayInfo("sg_cut_out - sg_cut_in = {} but sg_cut_duration = {}"
+                           .format(inOutDuration, duration))
+
+        if duration < 1:
+            raise ValueError("Invalid shot duration: {}".format(duration))
+
+        return duration
 
 # capture
 CAPTUREINFO = {}
