@@ -216,7 +216,7 @@ def scanTextureDependency(damEntity):
     try:
         sPrivTexDirPath = damEntity.getPath("private", "texture_dir")
     except AttributeError as e:
-        print toStr(e)
+        pm.displayInfo(toStr(e))
         return []
 
     sPubTexDirPath = damEntity.getPath("public", "texture_dir")
