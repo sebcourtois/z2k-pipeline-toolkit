@@ -31,7 +31,8 @@ def setArnoldRenderOption(outputFormat):
         shadingMode = False
         print "#### info: Lighting mode render options"       
 
-   
+    #TEMPORAIRE
+    mc.workspace(fileRule=["images","images"])
 
     mmToIncheFactor = 0.0393700787401575
     camApertureInche = 35 * mmToIncheFactor 
@@ -200,6 +201,7 @@ def getRenderOutput(gui = True):
             print "#### Info: Set render path: {}".format( outputFilePath)
             print "#### Info: Set image name:  {}".format( outputImageName)
             #mc.workspace(fileRule=["images",outputFilePath_exp])
+            #mc.workspace(fileRule=["images","images"])
             #mc.workspace( saveWorkspace = True)
             #mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
             #mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputFilePath_exp ,type = "string")
