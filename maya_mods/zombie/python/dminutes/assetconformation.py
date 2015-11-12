@@ -1,8 +1,7 @@
 import maya.cmds as mc
 import re
 import string
-import dminutes.jipeLib_Z2K as jpZ
-reload (jpZ)
+from dminutes import assetconformation
 
 
 def onCheckInAsset():
