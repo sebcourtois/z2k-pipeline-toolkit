@@ -64,12 +64,8 @@ def RELEAZE_ALADIN():
                             debug=False,
                             )
 
-        # create releaseTool windows
-        if not "Ref" in infoDict["assetType"][-3:] :
-            Z2K_ReleaseTool_GuiI.createWin()
-        else:
 
-            raise Exception("THIS IS ALLREADY A REF FILE : THIS SCENE IS NOT RELEASABLE!")
+        Z2K_ReleaseTool_GuiI.createWin()
 
         # insert le bon module de check dans l'interface
         # Z2K_Pcheck="NADA"

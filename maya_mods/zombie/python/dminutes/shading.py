@@ -1,4 +1,5 @@
 import maya.cmds as mc
+import pymel.core as pm
 import maya.OpenMaya as om
 import re
 import os
@@ -158,28 +159,51 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
     shading_cam_filename =  os.path.join("$ZOMB_ASSET_PATH", "cam",cameraName,cameraName+fileType)
     
     if remove == False:
-        if cameraName in  str(mc.file(query=True, list=True, reference = True)):
-            print "#### info 'referenceShadingCamera': a camera '"+cameraName+"' is already referenced in this scene, operation canceled"
+        if "cam_shading_" in  str(mc.file(query=True, list=True, reference = True)):
+            print "#### info 'referenceShadingCamera': a camera 'cam_shading_*' is already referenced in this scene, operation canceled"
         else:
             mc.currentTime(1)
-            mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
-            mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
-            mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False)
-            mc.orientConstraint( cameraName+'00:crv_trunAround','|asset',name = "asset2crvTrurnAround_orientConstraint")
-        if not mc.listConnections('defaultArnoldRenderOptions.background',connections = False):
-            myAiRaySwitch = mc.shadingNode("aiRaySwitch", asShader=True)
-            mc.setAttr(myAiRaySwitch+".camera", 0.5,0.5,0.5, type = "double3")
-            mc.setAttr(myAiRaySwitch+".refraction", 0.5,0.5,0.5, type = "double3")
-            mc.connectAttr(myAiRaySwitch+".message", 'defaultArnoldRenderOptions.background', force =True)
+            if mc.ls("|asset|*",type = "orientConstraint"):
+                mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
+            #mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
+            pm.disconnectAttr("|asset.rotateX")
+            pm.disconnectAttr("|asset.rotateY")
+            pm.disconnectAttr("|asset.rotateZ")
+            mc.setAttr ("|asset.rotateX", 0)
+            mc.setAttr ("|asset.rotateY", 0)
+            mc.setAttr ("|asset.rotateZ", 0)
+            cameraNewNodes = mc.file(shading_cam_filename, reference = True, namespace = cameraName+"00", ignoreVersion  = True,  groupLocator = True, mergeNamespacesOnClash = False, returnNewNodes = True)
+            for each in cameraNewNodes:
+                if ":" in each:
+                    cameraNameSpace = each.split(":")[0]
+                    break
+            #mc.orientConstraint( cameraNameSpace+':crv_trunAround','|asset',name = "asset2crvTrurnAround_orientConstraint")
+            mc.connectAttr(cameraNameSpace+":crv_trunAround.rotate", '|asset.rotate', force =True)
+            if not mc.listConnections('defaultArnoldRenderOptions.background',connections = False):
+                #myAiRaySwitch = mc.shadingNode("aiRaySwitch", asShader=True)
+                #mc.setAttr(myAiRaySwitch+".camera", 0.5,0.5,0.5, type = "double3")
+                #mc.setAttr(myAiRaySwitch+".refraction", 0.5,0.5,0.5, type = "double3")
+                myAiRaySwitch = cameraNameSpace+":env_aiRaySwitch"
+                mc.connectAttr(myAiRaySwitch+".message", 'defaultArnoldRenderOptions.background', force =True)
+
+
     else:
         if "cam_shading_" in  str(mc.file(query=True, list=True, reference = True)):
             mc.currentTime(1)
             for each in  mc.file(query=True, list=True, reference = True):
                 if "cam_shading_" in each:
                     mc.file(each, removeReference = True)
-                    mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
-                    mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
                     print "#### info 'referenceShadingCamera': remove camera '"+each+""
+            if mc.ls("|asset|*",type = "orientConstraint"):
+                mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
+            #mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
+            pm.disconnectAttr("|asset.rotateX")
+            pm.disconnectAttr("|asset.rotateY")
+            pm.disconnectAttr("|asset.rotateZ")
+            mc.setAttr ("|asset.rotateX", 0)
+            mc.setAttr ("|asset.rotateY", 0)
+            mc.setAttr ("|asset.rotateZ", 0)
+
         else:
             print "#### info 'referenceShadingCamera': no 'cam_shading_*' to remove"
         try:    
@@ -700,13 +724,12 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
 
         if mainFilePathElem[-3] == "chr" and os.path.isfile(jpgFilePathExpand):
             print "#### {:>7}: '{}' FileNode, jpg file: '{}',  already exists, can't replace it automaticaly on characters,please delete it manually first".format("Warning",eachFileNode,os.path.split(mapFilePath)[-1])
-            continue
-
-        imageResize(inputFilePathName = tgaFilePath, outputFilePathName = "", lod = LOD, jpgQuality = 90, updateOnly = updateOnly, openImageMentalRay = True)
+        else:
+            imageResize(inputFilePathName = tgaFilePath, outputFilePathName = "", lod = LOD, jpgQuality = 90, updateOnly = updateOnly, openImageMentalRay = True)
 
         if mapFilePath != jpgFilePath: 
             mc.setAttr(eachFileNode+".fileTextureName", jpgFilePath, type="string")
-            continue
+
 
     if wrongFileNodeList: 
         print ""
