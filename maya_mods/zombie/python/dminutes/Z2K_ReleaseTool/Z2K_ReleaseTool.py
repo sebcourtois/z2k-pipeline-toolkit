@@ -241,6 +241,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         self.dc = self.cf+"_Dock" +"_" +self.theProject
         self.width = 315
 
+
     # --------------interface functions-----------------------------------------------
     def getInterfaceValues( self,*args,**kwargs):
         print "getInterfaceValues()"
@@ -642,8 +643,11 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         # disable l'UI, elle ne peut etre reactived que avec le boutton get_context
         cmds.layout(self.layToEn,e=1,en=0)
         cmds.layout(self.layToEnB,e=1,en=0)
-        # cmds.button(self.Brelease_Asset,e=1,en=0) 
         
+        # self.btn_get_context()
+
+
+
 
 # Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", assetCat = "chr", SourceAssetType="previz_scene",
 #                       destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",

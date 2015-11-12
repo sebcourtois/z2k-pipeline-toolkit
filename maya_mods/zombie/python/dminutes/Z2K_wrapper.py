@@ -111,6 +111,10 @@ def publishFile(proj="", path_private_toPublish="",comment="test the cashbah mod
 
     return PublishedFile_absPath
 
+def feedSG_Release(proj="", releasedRefFileP="", fromVersion="042", *args, **kwargs):
+    # waiting for Seb
+    pass
+
 
 # WIP ----------------------- ajout du SG publish
 def publishEditedVersionSG(proj="", path_private_toPublish="", comment="test the cashbah moda foka!", 
