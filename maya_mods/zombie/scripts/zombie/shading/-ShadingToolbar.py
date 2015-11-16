@@ -23,6 +23,8 @@ def buttonDefaultShadingCamRemove(*args):
 #Render Settings
 def buttonSetRenderOption(*args):
 	rendering.setArnoldRenderOption("png")
+def buttonSetRenderOptionJpg(*args):
+	rendering.setArnoldRenderOption("jpg")
 
 
 
@@ -101,9 +103,11 @@ mc.setParent( '..' )
 
 #Render Settings
 mc.separator(style = 'in', h = 5  )
-#mc.text(label="Render Options", align='center')
-mc.button( label='Set Render Options', c= buttonSetRenderOption )
-
+mc.text(label="Set Render Options", align='center')
+mc.flowLayout( )
+mc.button( label='png', c= buttonSetRenderOption, recomputeSize = False, width = 125 )
+mc.button( label='jpg', c= buttonSetRenderOptionJpg, recomputeSize = False, width = 125 )
+mc.setParent( '..' )
 
 
 #conform texture path
