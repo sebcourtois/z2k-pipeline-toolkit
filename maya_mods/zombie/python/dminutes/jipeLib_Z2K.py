@@ -28,8 +28,9 @@ from dminutes import assetconformation
 
 # Z2K base general functions -----------------
 def getBaseModPath(*args, **kwargs):
-    """
-    recupere le path de base des modules
+    """Desription :recupere le path de base des modules
+       Return : Path ending with "/"
+       Dependencies : os - 
     """
     basePath = ""
     allModL = os.environ.get("MAYA_MODULE_PATH").split(";")
@@ -59,6 +60,11 @@ def getAssetL (assetCat="chr",*args,**kwargs):
     return assetL
 
 def getCatL (*args,**kwargs):
+    """ Description: recupere la list des category d asset (chr-prp-set-c2d ...etc)
+        Return : LIST
+        Dependencies : os - 
+    """
+    
     theDir = os.environ.get("ZOMB_ASSET_PATH")
     print "theDir=", theDir
     if os.path.isdir(theDir):
