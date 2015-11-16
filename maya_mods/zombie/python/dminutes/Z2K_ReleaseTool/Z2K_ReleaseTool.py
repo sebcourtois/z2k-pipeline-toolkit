@@ -430,7 +430,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
 
 
-            elif  self.assetCat in ["prp","vhl","c2d"]:
+            elif  self.assetCat in ["prp","vhl","c2d","env"]:
                 print "It' is a PROP test"
                 if self.SourceAssetType in ["modeling_scene"]:
                     print tab, "modeling, test not ready"
