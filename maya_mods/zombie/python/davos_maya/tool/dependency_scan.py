@@ -493,6 +493,7 @@ def _setPublishableState(resultDct):
         return
 
     bOldPrivFile = False
+    bPublishable = False
 
     pubFile = drcFile.getPublicFile(weak=True)
     bUpToDate = pubFile.isUpToDate()
