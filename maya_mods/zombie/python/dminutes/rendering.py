@@ -121,6 +121,9 @@ def setArnoldRenderOption(outputFormat):
     if outputFormat == "png":
         mc.setAttr("defaultArnoldDriver.aiTranslator","png", type = "string")
         mc.setAttr("defaultArnoldRenderOptions.aovMode", 0)
+    elif  outputFormat == "jpg":
+        mc.setAttr("defaultArnoldDriver.aiTranslator","jpg", type = "string")
+        mc.setAttr("defaultArnoldRenderOptions.aovMode", 0)
         
     
     if shadingMode == True:
