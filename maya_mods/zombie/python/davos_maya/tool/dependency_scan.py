@@ -295,13 +295,13 @@ def scanTextureDependency(damEntity):
                 texFile = proj.entryFromPath(sTexAbsPath)
 
                 if texFile and texFile.isPublic():
+
+                    bValidPublicFile = True
+                    sHighSeverity = "warning"
+
+                    scanLogDct.setdefault("info", []).append(('PublicFiles', sTexAbsPath))
+
                     if normCase(sTexDirPath) == normCase(sPubTexDirPath):
-
-                        bValidPublicFile = True
-                        sHighSeverity = "warning"
-
-                        scanLogDct.setdefault("info", []).append(('PublicFiles', sTexAbsPath))
-
                         privFile = texFile.getPrivateFile(weak=True)
                         sPrivFileList.append(normCase(privFile.absPath()))
 
@@ -360,7 +360,7 @@ def scanTextureDependency(damEntity):
                 if bColor:
                     sBuddyItems.append(("HD.jpg", "info"))
 
-                for sBuddySfx, sSeveriry in sBuddyItems:
+                for sBuddySfx, sSeverity in sBuddyItems:
 
                     sSuffix = sBuddySfx
                     if sTiling and ("." in sBuddySfx):
@@ -370,19 +370,20 @@ def scanTextureDependency(damEntity):
                     if not osp.isfile(sBuddyPath):
                         sBuddyLabel = "".join(s.capitalize()for s in sBuddySfx.split("."))
                         sStatusCode = sBuddyLabel.upper() + "FileNotFound"
-                        scanLogDct.setdefault(sSeveriry, []).append((sStatusCode, sBuddyPath))
+                        if sSeverity != "info":
+                            scanLogDct.setdefault(sSeverity, []).append((sStatusCode, sBuddyPath))
                     else:
                         sFoundFileList.append(normCase(sBuddyPath))
 
                         budScanLogDct = {}
                         budFile = proj.entryFromPath(sBuddyPath)
                         if budFile and budFile.isPublic():
-                            if normCase(osp.dirname(sBuddyPath)) == normCase(sPubTexDirPath):
 
                                 budScanLogDct.setdefault("info", []).append(('PublicFiles', sBuddyPath))
 
-                                privBudFile = budFile.getPrivateFile(weak=True)
-                                sPrivFileList.append(normCase(privBudFile.absPath()))
+                                if normCase(osp.dirname(sBuddyPath)) == normCase(sPubTexDirPath):
+                                    privBudFile = budFile.getPrivateFile(weak=True)
+                                    sPrivFileList.append(normCase(privBudFile.absPath()))
 
                         budResultDct = {"abs_path":sBuddyPath,
                                         "scan_log":budScanLogDct,
@@ -492,25 +493,26 @@ def _setPublishableState(resultDct):
     if not drcFile.isPrivate():
         return
 
-    bOldPrivFile = False
     bPublishable = False
 
     pubFile = drcFile.getPublicFile(weak=True)
     bUpToDate = pubFile.isUpToDate()
 
-    privFsMtime = drcFile.fsMtime
-    pubDbMtime = pubFile.dbMtime
-    if (pubFile.currentVersion > 0) and (privFsMtime < pubDbMtime):
-        bOldPrivFile = True
-        sFmt = "%Y-%m-%d %H:%M"
-        sCurTime = privFsMtime.strftime(sFmt)
-        sPubTime = pubDbMtime.strftime(sFmt)
+#    bOldPrivFile = False
+#    privFsMtime = drcFile.fsMtime
+#    pubDbMtime = pubFile.dbMtime
+#    if (pubFile.currentVersion > 0) and (privFsMtime < pubDbMtime):
+#        bOldPrivFile = True
+#        sFmt = "%Y-%m-%d %H:%M"
+#        sCurTime = privFsMtime.strftime(sFmt)
+#        sPubTime = pubDbMtime.strftime(sFmt)
+#
+#    if bOldPrivFile:
+#        sMsg = ("File is OBSOLETE: \n yours: {}\npublic: {}"
+#                .format(sCurTime, sPubTime))
+#        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
 
-    if bOldPrivFile:
-        sMsg = ("File is OBSOLETE: \n yours: {}\npublic: {}"
-                .format(sCurTime, sPubTime))
-        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
-    elif not bUpToDate:
+    if not bUpToDate:
         sMsg = "Public file is OUT OF SYNC"
         scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
     else:

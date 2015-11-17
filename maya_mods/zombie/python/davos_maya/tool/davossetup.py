@@ -56,8 +56,14 @@ class DavosSetup(ToolSetup):
 
     def afterBuildingMenu(self):
         ToolSetup.afterBuildingMenu(self)
+
         pmu.putEnv("DAVOS_FILE_CHECK", "1")
+
         pm.colorManagementPrefs(e=True, cmEnabled=False)
+
+        if not pm.stackTrace(q=True, state=True):
+            pm.mel.ScriptEditor()
+            pm.mel.handleScriptEditorAction("showStackTrace")
 
         import logging
 
