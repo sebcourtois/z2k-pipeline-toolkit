@@ -41,6 +41,7 @@ class project(object):
 
     editable_file_patterns = ("*.ma", "*.mb", "*.psd", "*.nk", "*.py")
     allowed_texture_formats = (".tga", ".jpg")
+    sg_versions_mandatory = True
 
 class shot_lib(object):
 
@@ -142,8 +143,23 @@ class asset_lib(object):
     resources_settings = {
     "previz_scene":{"create_sg_version":True,
                     "sg_steps":("Model Previz",), },
+    "previz_ref":{"create_sg_version":True,
+                  "sg_tasks":("Rig_Previz",), },
+
     "modeling_scene":{"create_sg_version":True,
                       "sg_steps":("Model HD", "Surfacing"), },
+    "modeling_ref":{"create_sg_version":True,
+                    "sg_steps":("Model HD", "Surfacing"), },
+
+    "anim_scene":{"create_sg_version":True,
+                  "sg_steps":("Rigging",), },
+    "anim_ref":{"create_sg_version":True,
+                "sg_steps":("Rigging",), },
+
+    "master_scene":{"create_sg_version":True,
+                    "sg_steps":("Model HD", "Surfacing"), },
+    "master_ref":{"create_sg_version":True,
+                  "sg_steps":("Model HD", "Surfacing"), },
     }
 
     dependency_types = {
@@ -291,12 +307,14 @@ class set3d(object):
         },
     }
 
-    resources_settings = {
-    "previz_scene":{"create_sg_version":True,
-                    "sg_steps":("Model Previz",), },
-    "master_scene":{"create_sg_version":True,
-                    "sg_steps":("Model HD", "Surfacing"), },
-    }
+    resources_settings = asset_lib.resources_settings
+
+#    resources_settings = {
+#    "previz_scene":{"create_sg_version":True,
+#                    "sg_steps":("Model Previz",), },
+#    "previz_ref":{"create_sg_version":True,
+#                  "sg_tasks":("Rig_Previz",), },
+#    }
 
     dependency_types = asset_lib.dependency_types
 

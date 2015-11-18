@@ -253,13 +253,11 @@ def scanTextureDependency(damEntity):
         bUdim = (iTilingMode == UDIM_MODE)
 
         sTexAbsPath = pathResolve(sTexPath)
-        drcFile = proj.entryFromPath(sTexAbsPath, dbNode=False)
 
         sTexAbsPathList = (sTexAbsPath,)
-        if bUdim and drcFile:
+        if bUdim:
             sFilename = re.sub(UDIM_RGX, ".1*.", osp.basename(sTexAbsPath))
-            sDirPath = drcFile.parentDir().absPath()
-            sTexAbsPathList = sorted(iterPaths(sDirPath, dirs=False,
+            sTexAbsPathList = sorted(iterPaths(osp.dirname(sTexAbsPath), dirs=False,
                                              recursive=False,
                                              keepFiles=ignorePatterns(sFilename)
                                              ))
@@ -268,7 +266,7 @@ def scanTextureDependency(damEntity):
 
             scanLogDct = {}
             resultDct = {}
-            buddyResultList = []
+            foundBudResList = []
 
             sNormTexPath = normCase(sTexAbsPath)
             if sNormTexPath in fileNodeDct:
@@ -288,8 +286,20 @@ def scanTextureDependency(damEntity):
             sHighSeverity = "error"
             texFile = None
             bExists = osp.isfile(sTexAbsPath) or bUdim
+
+            resultDct = {"abs_path":sTexAbsPath,
+                         "scan_log":scanLogDct,
+                         "file_nodes":fileNodeDct[sNormTexPath],
+                         "buddy_files":[],
+                         "publishable":False,
+                         "drc_file":texFile,
+                         "exists":bExists,
+                         }
+
             if not bExists:
                 scanLogDct.setdefault("error", []).append(('FileNotFound', sTexAbsPath))
+                addResult(resultDct)
+                continue
             else:
                 sFoundFileList.append(sNormTexPath)
                 texFile = proj.entryFromPath(sTexAbsPath)
@@ -351,7 +361,7 @@ def scanTextureDependency(damEntity):
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadFilename', sMsg))
                 sMsg = ""
 
-            if sExt == ".tga":
+            if bExists and sExt == ".tga":
 
                 bColor = (sChannel == "col")
                 sPsdSeverity = sHighSeverity if bColor else "info"
@@ -360,7 +370,7 @@ def scanTextureDependency(damEntity):
                 if bColor:
                     sBuddyItems.append(("HD.jpg", "info"))
 
-                for sBuddySfx, sSeverity in sBuddyItems:
+                for sBuddySfx, sBudSeverity in sBuddyItems:
 
                     sSuffix = sBuddySfx
                     if sTiling and ("." in sBuddySfx):
@@ -370,8 +380,8 @@ def scanTextureDependency(damEntity):
                     if not osp.isfile(sBuddyPath):
                         sBuddyLabel = "".join(s.capitalize()for s in sBuddySfx.split("."))
                         sStatusCode = sBuddyLabel.upper() + "FileNotFound"
-                        if sSeverity != "info":
-                            scanLogDct.setdefault(sSeverity, []).append((sStatusCode, sBuddyPath))
+                        if sBudSeverity != "info":
+                            scanLogDct.setdefault(sBudSeverity, []).append((sStatusCode, sBuddyPath))
                     else:
                         sFoundFileList.append(normCase(sBuddyPath))
 
@@ -391,10 +401,12 @@ def scanTextureDependency(damEntity):
                                         "buddy_files":[],
                                         "publishable":False,
                                         "drc_file":budFile,
+                                        "exists":True,
                                         }
-                        buddyResultList.append(budResultDct)
+                        foundBudResList.append(budResultDct)
 
-                if bExists and (not bValidPublicFile):
+                if (not bValidPublicFile):
+                    tgaImg = None
                     try:
                         tgaImg = pilimage.open(sTexAbsPath)
                         tileInfo = tgaImg.tile[0]
@@ -418,28 +430,24 @@ def scanTextureDependency(damEntity):
                             sMsg = "\n".join(sMsgList)
                             scanLogDct.setdefault(sHighSeverity, []).append(("BadTargaFormat", sMsg))
                     finally:
-                        tgaImg.close()
+                        if tgaImg:
+                            tgaImg.close()
+                        else:
+                            sMsg = "Could not read the file"
+                            scanLogDct.setdefault(sHighSeverity, []).append(("BadTargaFormat", sMsg))
 
-            resultDct = {"abs_path":sTexAbsPath,
-                         "scan_log":scanLogDct,
-                         "file_nodes":fileNodeDct[sNormTexPath],
-                         "buddy_files":[],
-                         "publishable":False,
-                         "drc_file":texFile,
-                         }
+            resultDctList = [resultDct]
+            if foundBudResList:
+                resultDctList.extend(foundBudResList)
+                sBuddyFileList = list(brd["abs_path"] for brd in  foundBudResList)
+                resultDct["buddy_files"] = sBuddyFileList
 
-            if bExists:
-                resultDctList = [resultDct]
-                if buddyResultList:
-                    resultDctList.extend(buddyResultList)
-                    sBuddyFileList = list(brd["abs_path"] for brd in  buddyResultList)
-                    resultDct["buddy_files"] = sBuddyFileList
-
-                for resDct in resultDctList:
+            for resDct in resultDctList:
+                if resDct["exists"]:
                     _setPublishableState(resDct)
                     if resDct["publishable"]:
                         publishCount += 1
-                    addResult(resDct)
+                addResult(resDct)
 
     sAllowedFileTypes = [".tx", ".psd"]
     sAllowedFileTypes.extend(sAllowedTexTypes)

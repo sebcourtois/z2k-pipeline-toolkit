@@ -8,6 +8,7 @@ from davos.core.drctypes import DrcDir, DrcFile
 from pytaya.core import system as myasys
 from pytd.util.strutils import padded, underJoin
 from pytd.util.fsutils import normCase
+from davos.core.utils import versionFromName
 #from pytd.util.fsutils import pathSuffixed
 
 
@@ -50,9 +51,13 @@ class MrcFile(DrcFile):
             self.assertIsMayaScene()
 
         if self.isPublic():
-            sWordList = (self.versionSuffix(self.currentVersion), '-', 'readonly')
-            sOpenSuffix = "".join(sWordList)
-            privFile, _ = self.copyToPrivateSpace(suffix=sOpenSuffix, **kwargs)
+            sVersSuffix = ""
+            if versionFromName(self.name) is None:
+                sVersSuffix = self.versionSuffix(self.currentVersion)
+
+            sWordList = (sVersSuffix, '-', 'readonly')
+            sSuffix = "".join(sWordList)
+            privFile, _ = self.copyToPrivateSpace(suffix=sSuffix, **kwargs)
         else:
             privFile = self
 

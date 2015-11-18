@@ -180,6 +180,8 @@ def publishCurrentScene(*args, **kwargs):
     bSgVersion = True
     try:
         infos = curPubFile.beginPublish(sCurScnPath, checkLock=False, **kwargs)
+        if infos is None:
+            return
         sComment, iNextVers, sgTaskInfo = infos
     except Exception, e:
         curPubFile._abortPublish(e, None, None)
