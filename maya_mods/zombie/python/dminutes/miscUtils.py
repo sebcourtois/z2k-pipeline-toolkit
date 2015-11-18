@@ -104,3 +104,11 @@ def deleteUnknownNodes():
     unknownNodes = mc.ls(type = "unknown")
     for each in unknownNodes:
         print "#### {:>7}: '{}' is unknowed".format("Warning", each)
+
+
+
+def setAttrC(*args, **kwargs):
+    try:
+        mc.setAttr(*args, **kwargs)
+    except:
+        print "#### {:>7}: setAttr {}{} not possible, attribute is locked or connected".format("Warning", args, kwargs)
