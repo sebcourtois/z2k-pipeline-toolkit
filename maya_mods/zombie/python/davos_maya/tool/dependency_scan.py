@@ -268,12 +268,12 @@ def scanTextureDependency(damEntity):
             resultDct = {}
             foundBudResList = []
 
-            sNormTexPath = normCase(sTexAbsPath)
-            if sNormTexPath in fileNodeDct:
-                fileNodeDct[sNormTexPath].append(fileNode)
+            sTexNormPath = normCase(sTexAbsPath)
+            if sTexNormPath in fileNodeDct:
+                fileNodeDct[sTexNormPath].append(fileNode)
                 continue
             else:
-                fileNodeDct[sNormTexPath] = [fileNode]
+                fileNodeDct[sTexNormPath] = [fileNode]
 
             if bUvTileOn and (not bUdim):
                 sMsg = "Only UDIM (Mari) accepted"
@@ -289,10 +289,10 @@ def scanTextureDependency(damEntity):
 
             resultDct = {"abs_path":sTexAbsPath,
                          "scan_log":scanLogDct,
-                         "file_nodes":fileNodeDct[sNormTexPath],
+                         "file_nodes":fileNodeDct[sTexNormPath],
                          "buddy_files":[],
                          "publishable":False,
-                         "drc_file":texFile,
+                         "drc_file":None,
                          "exists":bExists,
                          }
 
@@ -301,8 +301,10 @@ def scanTextureDependency(damEntity):
                 addResult(resultDct)
                 continue
             else:
-                sFoundFileList.append(sNormTexPath)
+                sFoundFileList.append(sTexNormPath)
                 texFile = proj.entryFromPath(sTexAbsPath)
+
+                resultDct["drc_file"] = texFile
 
                 if texFile and texFile.isPublic():
 
@@ -361,7 +363,7 @@ def scanTextureDependency(damEntity):
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadFilename', sMsg))
                 sMsg = ""
 
-            if bExists and sExt == ".tga":
+            if sExt == ".tga":
 
                 bColor = (sChannel == "col")
                 sPsdSeverity = sHighSeverity if bColor else "info"
@@ -439,7 +441,7 @@ def scanTextureDependency(damEntity):
             resultDctList = [resultDct]
             if foundBudResList:
                 resultDctList.extend(foundBudResList)
-                sBuddyFileList = list(brd["abs_path"] for brd in  foundBudResList)
+                sBuddyFileList = list(brd["abs_path"] for brd in foundBudResList)
                 resultDct["buddy_files"] = sBuddyFileList
 
             for resDct in resultDctList:
@@ -527,9 +529,12 @@ def _setPublishableState(resultDct):
         bPublishable = True
 
         sBuddyFileList = resultDct["buddy_files"]
-        sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
-        sMsg = (", ".join(s.upper() for s in sExtList) + " found"
-                if sBuddyFileList else "")
+        if sBuddyFileList:
+            sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
+            sMsg = (", ".join(s.upper() for s in sExtList) + " found"
+                    if sBuddyFileList else "")
+        else:
+            sMsg = resultDct["abs_path"]
 
         scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
 
