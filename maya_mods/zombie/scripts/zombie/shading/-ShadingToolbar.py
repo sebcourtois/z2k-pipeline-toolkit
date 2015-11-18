@@ -77,6 +77,18 @@ def buttonTxUpdateSelection(*args):
 	shading.generateTxForRender( fileNodeList = 'selection', updateOnly=True)
 
 
+#dmnToon presets
+def buttonDmnToonReflectingGlass(*args):
+	shading.dmnToonPreset( preset = "reflectingGlass")
+def buttonDmnToonConstant(*args):
+	shading.dmnToonPreset( preset = "constant")
+def buttonDmnToonOutline(*args):
+	shading.dmnToonPreset( preset = "outline")
+def buttonDmnToonSetIllum(*args):
+	shading.dmnToonPreset( preset = "setIllum")
+
+
+
 
 # Make a new window
 
@@ -86,7 +98,7 @@ if mc.window( "shadingToolBox", exists = True ):
 
 
 window = mc.window( "shadingToolBox", title="Shading Toolbox", iconName='Shading',toolbox = True, sizeable = False )
-mc.window(window, e = True, widthHeight=(260, 590))
+mc.window(window, e = True, widthHeight=(260, 650))
 
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 
@@ -170,6 +182,18 @@ mc.button( label='Update All', recomputeSize = False, width = 125, c=buttonTxUpd
 mc.button( label='Update Selection',  recomputeSize = False, width = 125, c= buttonTxUpdateSelection )
 mc.setParent( '..' )
 
+
+#dmnToon presets
+mc.separator(style = 'in', h = 5  )
+mc.text(label="dmnToon presets", align='center')
+mc.flowLayout( )
+mc.button( label='Reflecting Glass', recomputeSize = False, width = 125, c= buttonDmnToonReflectingGlass )
+mc.button( label='Constant', recomputeSize = False, width = 125, c= buttonDmnToonConstant )
+mc.setParent( '..' )
+mc.flowLayout()
+mc.button( label='Outline', recomputeSize = False, width = 125, c=buttonDmnToonOutline )
+mc.button( label='Set Illumination',  recomputeSize = False, width = 125, c= buttonDmnToonSetIllum )
+mc.setParent( '..' )
 
 mc.showWindow( window )
 

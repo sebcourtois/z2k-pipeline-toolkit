@@ -122,7 +122,7 @@ def setArnoldRenderOption(outputFormat):
         mc.setAttr("defaultArnoldDriver.aiTranslator","png", type = "string")
         mc.setAttr("defaultArnoldRenderOptions.aovMode", 0)
     elif  outputFormat == "jpg":
-        mc.setAttr("defaultArnoldDriver.aiTranslator","jpg", type = "string")
+        mc.setAttr("defaultArnoldDriver.aiTranslator","jpeg", type = "string")
         mc.setAttr("defaultArnoldRenderOptions.aovMode", 0)
         
     
