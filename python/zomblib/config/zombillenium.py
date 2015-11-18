@@ -40,7 +40,7 @@ class project(object):
         damas_server_addr = "https://62.210.104.42:8443/api"
 
     editable_file_patterns = ("*.ma", "*.mb", "*.psd", "*.nk", "*.py")
-    allowed_texture_formats = (".tga", ".jpg")
+    allowed_texture_formats = (".tga", ".jpg", ".exr")
     sg_versions_mandatory = True
 
 class shot_lib(object):

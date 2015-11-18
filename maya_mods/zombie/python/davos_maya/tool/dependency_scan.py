@@ -282,7 +282,7 @@ def scanTextureDependency(damEntity):
             sTexDirPath, sTexFilename = osp.split(sTexAbsPath)
             sBasePath, sExt = osp.splitext(sTexAbsPath)
 
-            bValidPublicFile = False
+            bPublicFile = False
             sHighSeverity = "error"
             texFile = None
             bExists = osp.isfile(sTexAbsPath) or bUdim
@@ -308,7 +308,7 @@ def scanTextureDependency(damEntity):
 
                 if texFile and texFile.isPublic():
 
-                    bValidPublicFile = True
+                    bPublicFile = True
                     sHighSeverity = "warning"
 
                     scanLogDct.setdefault("info", []).append(('PublicFiles', sTexAbsPath))
@@ -334,7 +334,7 @@ def scanTextureDependency(damEntity):
                 sMsg = ("Only accepts: '{}'".format("' '".join(sAllowedTexTypes)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadTextureFormat', sMsg))
 
-            if (not bValidPublicFile) and (normCase(sTexDirPath) != normCase(sPrivTexDirPath)):
+            if (not bPublicFile) and (normCase(sTexDirPath) != normCase(sPrivTexDirPath)):
                 sMsg = ("Not in '{}'".format(osp.normpath(sPrivTexDirPath)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
 
@@ -359,7 +359,7 @@ def scanTextureDependency(damEntity):
                             sMsg = ("Channel can only have 3 characters, got {} in '{}'"
                                     .format(len(sChannel), sChannel))
 
-            if sMsg:
+            if sMsg and (not bPublicFile):
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadFilename', sMsg))
                 sMsg = ""
 
@@ -380,10 +380,11 @@ def scanTextureDependency(damEntity):
                     sBuddyPath = "".join((sBasePath, sSuffix))
 
                     if not osp.isfile(sBuddyPath):
-                        sBuddyLabel = "".join(s.capitalize()for s in sBuddySfx.split("."))
-                        sStatusCode = sBuddyLabel.upper() + "FileNotFound"
-                        if sBudSeverity != "info":
-                            scanLogDct.setdefault(sBudSeverity, []).append((sStatusCode, sBuddyPath))
+                        if not bPublicFile:
+                            sBuddyLabel = "".join(s.capitalize()for s in sBuddySfx.split("."))
+                            sStatusCode = sBuddyLabel.upper() + "FileNotFound"
+                            if sBudSeverity != "info":
+                                scanLogDct.setdefault(sBudSeverity, []).append((sStatusCode, sBuddyPath))
                     else:
                         sFoundFileList.append(normCase(sBuddyPath))
 
@@ -391,11 +392,11 @@ def scanTextureDependency(damEntity):
                         budFile = proj.entryFromPath(sBuddyPath)
                         if budFile and budFile.isPublic():
 
-                                budScanLogDct.setdefault("info", []).append(('PublicFiles', sBuddyPath))
+                            budScanLogDct.setdefault("info", []).append(('PublicFiles', sBuddyPath))
 
-                                if normCase(osp.dirname(sBuddyPath)) == normCase(sPubTexDirPath):
-                                    privBudFile = budFile.getPrivateFile(weak=True)
-                                    sPrivFileList.append(normCase(privBudFile.absPath()))
+                            if normCase(osp.dirname(sBuddyPath)) == normCase(sPubTexDirPath):
+                                privBudFile = budFile.getPrivateFile(weak=True)
+                                sPrivFileList.append(normCase(privBudFile.absPath()))
 
                         budResultDct = {"abs_path":sBuddyPath,
                                         "scan_log":budScanLogDct,
@@ -407,7 +408,7 @@ def scanTextureDependency(damEntity):
                                         }
                         foundBudResList.append(budResultDct)
 
-                if (not bValidPublicFile):
+                if (not bPublicFile):
                     tgaImg = None
                     try:
                         tgaImg = pilimage.open(sTexAbsPath)

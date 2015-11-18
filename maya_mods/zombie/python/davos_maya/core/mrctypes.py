@@ -76,10 +76,11 @@ class MrcFile(DrcFile):
 
             p = self.envPath()
 
-            damEntity = self.getEntity(fail=True)
-            refDir = damEntity.getResource("public", "ref_dir", None)
-            if refDir and (normCase(self.parentDir().absPath()) == normCase(refDir.absPath())):
-                sNamespace = underJoin((damEntity.name, padded(1, 2)))
+            damEntity = self.getEntity()
+            if damEntity:
+                refDir = damEntity.getResource("public", "ref_dir", None)
+                if refDir and (normCase(self.parentDir().absPath()) == normCase(refDir.absPath())):
+                    sNamespace = underJoin((damEntity.name, padded(1, 2)))
 
         if not sNamespace:
             sNamespace = underJoin((self.name.split(".", 1)[0], padded(1, 2)))
@@ -89,7 +90,11 @@ class MrcFile(DrcFile):
     def mayaImportImage(self):
 
         if self.isPublic():
-            p = self.envPath("ZOMB_TEXTURE_PATH")
+            sEnvVarList = self.library.getVar("public_path_envars")
+            if "ZOMB_TEXTURE_PATH" in sEnvVarList:
+                p = self.envPath("ZOMB_TEXTURE_PATH")
+            else:
+                p = self.envPath()
         else:
             p = self.absPath()
 
