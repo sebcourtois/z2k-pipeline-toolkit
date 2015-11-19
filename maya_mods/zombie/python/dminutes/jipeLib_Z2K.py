@@ -78,10 +78,19 @@ def getCatL (*args,**kwargs):
     return assetL
 
 def getAssetTypeL (*args, **kwargs):
+    """ Description: recupere la list des type d asset ("anim","previz","modeling","render","master"...etc)
+        Return : LIST
+        Dependencies : os - 
+    """
     print "getAssetTypeL()"
     return ["anim","previz","modeling","render","master"]
 
 def getShotName(*args, **kwargs):
+    """ Description: renvoi le nom du shot
+        Return : STRING
+        Dependencies : cmds - 
+    """
+    
     print "getShotName()"
     # get shot name
     currentSceneP,currentScene = cmds.file(q=1,sceneName=True),cmds.file(q=1,sceneName=True,shortName=True)
@@ -218,7 +227,12 @@ def createIncrementedFilePath( filePath="", vSep= "_v",extSep=".ma", digits=3, *
 
 # printer  -------------------------------------------------------
 def printF( text="", st="main", toScrollF="", toFile = "", inc=False, GUI= True,
-        openMode="a+", *args, **kwargs):
+    openMode="a+", *args, **kwargs):
+    """ Description: printer avec mise en forme integrer et link vers file or maya layout
+        Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
+        Dependencies : cmds - 
+    """
+
         # print "printF()",GUI,toFile
         stringToPrint=""
  
