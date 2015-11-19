@@ -19,6 +19,7 @@ from davos.tools import publish_dependencies
 from .general import entityFromScene
 from davos_maya.tool import dependency_scan
 from pytd.util.sysutils import toStr, inDevMode
+from pytd.gui.dialogs import confirmDialog
 #from pytd.util.fsutils import pathRelativeTo
 
 bDevDryRun = False
@@ -143,6 +144,11 @@ Opening a new process to publish associated files: .psd, .tx, etc...
 
     return (not bDryRun)
 
+def quickSceneCleanUp():
+
+    from dminutes import miscUtils
+    miscUtils.deleteUnknownNodes()
+
 def publishCurrentScene(*args, **kwargs):
 
     sCurScnPath = pm.sceneName()
@@ -151,6 +157,21 @@ def publishCurrentScene(*args, **kwargs):
 
     _, curPubFile = proj.assertEditedVersion(sCurScnPath)
 
+    curPubFile.ensureLocked(autoLock=False)
+
+    try:
+        quickSceneCleanUp()
+    except Exception, e:
+        sConfirm = confirmDialog(title='INFO !',
+                                 message="Quick cleanup failed !\n\n{0}".format(toStr(e)),
+                                 button=['Continue', 'Cancel'],
+                                 defaultButton='Continue',
+                                 cancelButton='Cancel',
+                                 dismissString='Continue',
+                                 icon="information")
+        if sConfirm == 'Cancel':
+            raise
+
     scanResults = dependency_scan.launch(damEntity, modal=True)
     if scanResults is None:
         pm.displayInfo("Canceled !")
@@ -158,7 +179,9 @@ def publishCurrentScene(*args, **kwargs):
 
     bSgVersion = True
     try:
-        infos = curPubFile.beginPublish(sCurScnPath, **kwargs)
+        infos = curPubFile.beginPublish(sCurScnPath, checkLock=False, **kwargs)
+        if infos is None:
+            return
         sComment, iNextVers, sgTaskInfo = infos
     except Exception, e:
         curPubFile._abortPublish(e, None, None)

@@ -1085,6 +1085,110 @@ def printTextureFileName (fileNodeList = "all"):
 
 
 
+def dmnToonPreset (preset = ""):
+
+    dmnToonNodeList = mc.ls(selection = True, type ="dmnToon")
+
+    if not dmnToonNodeList:
+        print "#### {:>7}: no dmnToon node selected, please select at least one of them and run again the script".format("Warning")
+        return
+
+    if preset == "reflectingGlass":
+        for each in dmnToonNodeList:
+            print "####info: setting dmnToon node: "+each+" as "+preset
+            miscUtils.setAttrC(each+".diffuseIntensity", 1)
+            miscUtils.setAttrC(each+".ambientIntensity", 1)
+
+            miscUtils.setAttrC(each+".shadowMaskWeight", 0)
+            miscUtils.setAttrC(each+".shadowMaskWeight01", 0)
+            miscUtils.setAttrC(each+".shadowMaskWeight02", 0)
+            miscUtils.setAttrC(each+".shadowMaskWeight03", 0)
+
+            miscUtils.setAttrC(each+".rimToonWeight", 0)
+            miscUtils.setAttrC(each+".lambertWeight", 0)
+            miscUtils.setAttrC(each+".incidenceWeight", 0)
+            miscUtils.setAttrC(each+".occlusionWeight", 0)  
+            miscUtils.setAttrC(each+".toonWeight", 0)
+            miscUtils.setAttrC(each+".contourWeight", 0)
+
+            miscUtils.setAttrC(each+".reflectionWeight", 1)
+            miscUtils.setAttrC(each+".reflectionRoughness", 0)
+            miscUtils.setAttrC(each+".reflectionAdditive", 0)
+            miscUtils.setAttrC(each+".specularWeight", 1)
+            miscUtils.setAttrC(each+".specularRoughness", 0)
+
+            miscUtils.setAttrC(each+".opacity", 0.2,0.2,0.2, type = "double3")
+
+
+    elif preset == "constant":
+        for each in dmnToonNodeList:
+            print "####info: setting dmnToon node: "+each+" as "+preset
+            miscUtils.setAttrC(each+".diffuseIntensity", 1)
+            miscUtils.setAttrC(each+".ambientIntensity", 1)
+
+            miscUtils.setAttrC(each+".shadowMaskWeight", 0)
+            miscUtils.setAttrC(each+".shadowMaskWeight01", 0)
+            miscUtils.setAttrC(each+".shadowMaskWeight02", 0)
+            miscUtils.setAttrC(each+".shadowMaskWeight03", 0)
+
+            miscUtils.setAttrC(each+".rimToonWeight", 0)
+            miscUtils.setAttrC(each+".lambertWeight", 0)
+            miscUtils.setAttrC(each+".incidenceWeight", 0)
+            miscUtils.setAttrC(each+".occlusionWeight", 0)  
+            miscUtils.setAttrC(each+".toonWeight", 0)
+            miscUtils.setAttrC(each+".contourWeight", 0)
+
+            miscUtils.setAttrC(each+".reflectionWeight", 0)
+            miscUtils.setAttrC(each+".specularWeight", 0)
+
+
+    elif preset == "outline":
+        for each in dmnToonNodeList:
+            print "####info: setting dmnToon node: "+each+" as "+preset
+            try:
+                miscUtils.setAttrC(each+".shadowMaskWeight", 1)
+                miscUtils.setAttrC(each+".shadowMask", 0,0,0, type = "double3")
+
+                miscUtils.setAttrC(each+".rimToonWeight", 0)
+                miscUtils.setAttrC(each+".lambertWeight", 0)
+                miscUtils.setAttrC(each+".incidenceWeight", 0)
+                miscUtils.setAttrC(each+".occlusionWeight", 0)  
+                miscUtils.setAttrC(each+".toonWeight", 0)
+                miscUtils.setAttrC(each+".contourWeight", 0)
+
+                miscUtils.setAttrC(each+".reflectionWeight", 0)
+                miscUtils.setAttrC(each+".specularWeight", 0)
+            except: pass
+
+
+    elif preset == "setIllum":
+        for each in dmnToonNodeList:
+            print "####info: setting dmnToon node: "+each+" as "+preset
+
+            miscUtils.setAttrC(each+".shadowMaskWeight", 0)
+            miscUtils.setAttrC(each+".shadowMaskWeight01", 0)
+            miscUtils.setAttrC(each+".shadowMaskWeight02", 0)
+            miscUtils.setAttrC(each+".shadowMaskWeight03", 0)
+
+            miscUtils.setAttrC(each+".rimToonWeight", 0)
+            miscUtils.setAttrC(each+".incidenceWeight", 0)
+            miscUtils.setAttrC(each+".contourWeight", 0)
+
+            miscUtils.setAttrC(each+".toonSoftness", 1)
+
+    else:
+        print "#### {:>7}: preset '"+preset+"' is not defined ".format("Error")
+        return
+            
+
+
+
+
+
+  
+
+
+
 
 
 

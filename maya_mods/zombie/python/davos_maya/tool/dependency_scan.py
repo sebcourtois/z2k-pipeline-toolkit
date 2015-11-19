@@ -20,7 +20,7 @@ from pytd.util.fsutils import pathResolve, normCase, pathJoin
 from pytd.util.fsutils import ignorePatterns, iterPaths
 from pytd.util.strutils import labelify, assertChars
 from pytd.util.qtutils import setWaitCursor
-from pytd.util.sysutils import argToTuple, toStr
+from pytd.util.sysutils import argToTuple, toStr, inDevMode
 
 from .general import entityFromScene
 
@@ -208,6 +208,9 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
 UDIM_MODE = 3
 UDIM_RGX = r"\.1\d{3}\."
 
+def makeUdimFilePattern(p):
+    return re.sub(UDIM_RGX, ".1*.", osp.basename(p))
+
 @setWaitCursor
 def scanTextureDependency(damEntity):
 
@@ -253,29 +256,29 @@ def scanTextureDependency(damEntity):
         bUdim = (iTilingMode == UDIM_MODE)
 
         sTexAbsPath = pathResolve(sTexPath)
-        drcFile = proj.entryFromPath(sTexAbsPath, dbNode=False)
 
+        sUdimFileList = []
         sTexAbsPathList = (sTexAbsPath,)
-        if bUdim and drcFile:
-            sFilename = re.sub(UDIM_RGX, ".1*.", osp.basename(sTexAbsPath))
-            sDirPath = drcFile.parentDir().absPath()
-            sTexAbsPathList = sorted(iterPaths(sDirPath, dirs=False,
+        if bUdim:
+            sUdimPat = makeUdimFilePattern(sTexAbsPath)
+            sTexAbsPathList = sorted(iterPaths(osp.dirname(sTexAbsPath), dirs=False,
                                              recursive=False,
-                                             keepFiles=ignorePatterns(sFilename)
+                                             keepFiles=ignorePatterns(sUdimPat)
                                              ))
+            sUdimFileList = sTexAbsPathList[:]
 
         for sTexAbsPath in sTexAbsPathList:
 
             scanLogDct = {}
             resultDct = {}
-            buddyResultList = []
+            foundBudResList = []
 
-            sNormTexPath = normCase(sTexAbsPath)
-            if sNormTexPath in fileNodeDct:
-                fileNodeDct[sNormTexPath].append(fileNode)
+            sTexNormPath = normCase(sTexAbsPath)
+            if sTexNormPath in fileNodeDct:
+                fileNodeDct[sTexNormPath].append(fileNode)
                 continue
             else:
-                fileNodeDct[sNormTexPath] = [fileNode]
+                fileNodeDct[sTexNormPath] = [fileNode]
 
             if bUvTileOn and (not bUdim):
                 sMsg = "Only UDIM (Mari) accepted"
@@ -284,24 +287,40 @@ def scanTextureDependency(damEntity):
             sTexDirPath, sTexFilename = osp.split(sTexAbsPath)
             sBasePath, sExt = osp.splitext(sTexAbsPath)
 
-            bValidPublicFile = False
+            bPublicFile = False
             sHighSeverity = "error"
             texFile = None
-            bExists = osp.isfile(sTexAbsPath) or bUdim
+            bExists = bUdim or osp.isfile(sTexAbsPath)
+
+            resultDct = {"abs_path":sTexAbsPath,
+                         "scan_log":scanLogDct,
+                         "file_nodes":fileNodeDct[sTexNormPath],
+                         "buddy_files":[],
+                         "udim_files":list(p for p in sUdimFileList
+                                           if p != sTexAbsPath),
+                         "publishable":False,
+                         "drc_file":None,
+                         "exists":bExists,
+                         }
+
             if not bExists:
                 scanLogDct.setdefault("error", []).append(('FileNotFound', sTexAbsPath))
+                addResult(resultDct)
+                continue
             else:
-                sFoundFileList.append(sNormTexPath)
+                sFoundFileList.append(sTexNormPath)
                 texFile = proj.entryFromPath(sTexAbsPath)
 
+                resultDct["drc_file"] = texFile
+
                 if texFile and texFile.isPublic():
+
+                    bPublicFile = True
+                    sHighSeverity = "warning"
+
+                    scanLogDct.setdefault("info", []).append(('PublicFiles', sTexAbsPath))
+
                     if normCase(sTexDirPath) == normCase(sPubTexDirPath):
-
-                        bValidPublicFile = True
-                        sHighSeverity = "warning"
-
-                        scanLogDct.setdefault("info", []).append(('PublicFiles', sTexAbsPath))
-
                         privFile = texFile.getPrivateFile(weak=True)
                         sPrivFileList.append(normCase(privFile.absPath()))
 
@@ -322,7 +341,7 @@ def scanTextureDependency(damEntity):
                 sMsg = ("Only accepts: '{}'".format("' '".join(sAllowedTexTypes)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadTextureFormat', sMsg))
 
-            if (not bValidPublicFile) and (normCase(sTexDirPath) != normCase(sPrivTexDirPath)):
+            if (not bPublicFile) and (normCase(sTexDirPath) != normCase(sPrivTexDirPath)):
                 sMsg = ("Not in '{}'".format(osp.normpath(sPrivTexDirPath)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
 
@@ -347,7 +366,7 @@ def scanTextureDependency(damEntity):
                             sMsg = ("Channel can only have 3 characters, got {} in '{}'"
                                     .format(len(sChannel), sChannel))
 
-            if sMsg:
+            if sMsg and (not bPublicFile):
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadFilename', sMsg))
                 sMsg = ""
 
@@ -360,7 +379,7 @@ def scanTextureDependency(damEntity):
                 if bColor:
                     sBuddyItems.append(("HD.jpg", "info"))
 
-                for sBuddySfx, sSeveriry in sBuddyItems:
+                for sBuddySfx, sBudSeverity in sBuddyItems:
 
                     sSuffix = sBuddySfx
                     if sTiling and ("." in sBuddySfx):
@@ -368,19 +387,21 @@ def scanTextureDependency(damEntity):
                     sBuddyPath = "".join((sBasePath, sSuffix))
 
                     if not osp.isfile(sBuddyPath):
-                        sBuddyLabel = "".join(s.capitalize()for s in sBuddySfx.split("."))
-                        sStatusCode = sBuddyLabel.upper() + "FileNotFound"
-                        scanLogDct.setdefault(sSeveriry, []).append((sStatusCode, sBuddyPath))
+                        if not bPublicFile:
+                            sBuddyLabel = "".join(s.capitalize()for s in sBuddySfx.split("."))
+                            sStatusCode = sBuddyLabel.upper() + "FileNotFound"
+                            if sBudSeverity != "info":
+                                scanLogDct.setdefault(sBudSeverity, []).append((sStatusCode, sBuddyPath))
                     else:
                         sFoundFileList.append(normCase(sBuddyPath))
 
                         budScanLogDct = {}
                         budFile = proj.entryFromPath(sBuddyPath)
                         if budFile and budFile.isPublic():
+
+                            budScanLogDct.setdefault("info", []).append(('PublicFiles', sBuddyPath))
+
                             if normCase(osp.dirname(sBuddyPath)) == normCase(sPubTexDirPath):
-
-                                budScanLogDct.setdefault("info", []).append(('PublicFiles', sBuddyPath))
-
                                 privBudFile = budFile.getPrivateFile(weak=True)
                                 sPrivFileList.append(normCase(privBudFile.absPath()))
 
@@ -388,12 +409,15 @@ def scanTextureDependency(damEntity):
                                         "scan_log":budScanLogDct,
                                         "file_nodes":[],
                                         "buddy_files":[],
+                                        "udim_files":[],
                                         "publishable":False,
                                         "drc_file":budFile,
+                                        "exists":True,
                                         }
-                        buddyResultList.append(budResultDct)
+                        foundBudResList.append(budResultDct)
 
-                if bExists and (not bValidPublicFile):
+                if (not bPublicFile):
+                    tgaImg = None
                     try:
                         tgaImg = pilimage.open(sTexAbsPath)
                         tileInfo = tgaImg.tile[0]
@@ -417,28 +441,24 @@ def scanTextureDependency(damEntity):
                             sMsg = "\n".join(sMsgList)
                             scanLogDct.setdefault(sHighSeverity, []).append(("BadTargaFormat", sMsg))
                     finally:
-                        tgaImg.close()
+                        if tgaImg:
+                            tgaImg.close()
+                        else:
+                            sMsg = "Could not read the file"
+                            scanLogDct.setdefault(sHighSeverity, []).append(("BadTargaFormat", sMsg))
 
-            resultDct = {"abs_path":sTexAbsPath,
-                         "scan_log":scanLogDct,
-                         "file_nodes":fileNodeDct[sNormTexPath],
-                         "buddy_files":[],
-                         "publishable":False,
-                         "drc_file":texFile,
-                         }
+            resultDctList = [resultDct]
+            if foundBudResList:
+                resultDctList.extend(foundBudResList)
+                sBuddyFileList = list(brd["abs_path"] for brd in foundBudResList)
+                resultDct["buddy_files"] = sBuddyFileList
 
-            if bExists:
-                resultDctList = [resultDct]
-                if buddyResultList:
-                    resultDctList.extend(buddyResultList)
-                    sBuddyFileList = list(brd["abs_path"] for brd in  buddyResultList)
-                    resultDct["buddy_files"] = sBuddyFileList
-
-                for resDct in resultDctList:
+            for resDct in resultDctList:
+                if resDct["exists"]:
                     _setPublishableState(resDct)
                     if resDct["publishable"]:
                         publishCount += 1
-                    addResult(resDct)
+                addResult(resDct)
 
     sAllowedFileTypes = [".tx", ".psd"]
     sAllowedFileTypes.extend(sAllowedTexTypes)
@@ -468,6 +488,7 @@ def scanTextureDependency(damEntity):
                          "scan_log":scanLogDct,
                          "file_nodes":[],
                          "buddy_files":[],
+                         "udim_files":[],
                          "publishable":False,
                          "drc_file":None,
                          }
@@ -492,34 +513,39 @@ def _setPublishableState(resultDct):
     if not drcFile.isPrivate():
         return
 
-    bOldPrivFile = False
     bPublishable = False
 
     pubFile = drcFile.getPublicFile(weak=True)
     bUpToDate = pubFile.isUpToDate()
 
-    privFsMtime = drcFile.fsMtime
-    pubDbMtime = pubFile.dbMtime
-    if (pubFile.currentVersion > 0) and (privFsMtime < pubDbMtime):
-        bOldPrivFile = True
-        sFmt = "%Y-%m-%d %H:%M"
-        sCurTime = privFsMtime.strftime(sFmt)
-        sPubTime = pubDbMtime.strftime(sFmt)
+#    bOldPrivFile = False
+#    privFsMtime = drcFile.fsMtime
+#    pubDbMtime = pubFile.dbMtime
+#    if (pubFile.currentVersion > 0) and (privFsMtime < pubDbMtime):
+#        bOldPrivFile = True
+#        sFmt = "%Y-%m-%d %H:%M"
+#        sCurTime = privFsMtime.strftime(sFmt)
+#        sPubTime = pubDbMtime.strftime(sFmt)
+#
+#    if bOldPrivFile:
+#        sMsg = ("File is OBSOLETE: \n yours: {}\npublic: {}"
+#                .format(sCurTime, sPubTime))
+#        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
 
-    if bOldPrivFile:
-        sMsg = ("File is OBSOLETE: \n yours: {}\npublic: {}"
-                .format(sCurTime, sPubTime))
-        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
-    elif not bUpToDate:
+    if not bUpToDate:
         sMsg = "Public file is OUT OF SYNC"
         scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
     else:
         bPublishable = True
 
+        sMsg = ""
         sBuddyFileList = resultDct["buddy_files"]
-        sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
-        sMsg = (", ".join(s.upper() for s in sExtList) + " found"
-                if sBuddyFileList else "")
+        if sBuddyFileList:
+            sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
+            sMsg = (", ".join(s.upper() for s in sExtList) + " found"
+                    if sBuddyFileList else "")
+        elif inDevMode():
+            sMsg = resultDct["abs_path"]
 
         scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
 

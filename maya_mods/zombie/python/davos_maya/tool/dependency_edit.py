@@ -4,6 +4,7 @@ import os.path as osp
 import filecmp
 #from datetime import datetime
 
+import maya.utils as mu
 import pymel.core as pm
 
 from . import dependency_scan
@@ -11,6 +12,7 @@ from davos_maya.tool.general import entityFromScene
 
 from pytaya.core.rendering import fileNodesFromObjects
 from pytd.util.fsutils import pathResolve
+
 #from pytd.util.sysutils import toStr
 
 
@@ -81,8 +83,15 @@ def editTextureFiles(dryRun=False):
         preEditResults.append(res)
         sAllSeveritySet.update(res["scan_log"].iterkeys())
 
-
     pubFileItems = []
+
+    sSelUdimFileSet = set()
+    for srcRes in scanResults:
+        if srcRes["abs_path"] in sSelTexPathSet:
+            l = srcRes["udim_files"]
+            if l:
+                sSelUdimFileSet.update(l)
+                #print srcRes["abs_path"], srcRes["buddy_files"]
 
     for srcRes in scanResults:
 
@@ -95,10 +104,10 @@ def editTextureFiles(dryRun=False):
 
         sPubTexPath = srcRes["abs_path"]
         if sPubTexPath not in sSelTexPathSet:
-            continue
+            if sPubTexPath not in sSelUdimFileSet:
+                continue
 
         sPubPathList = [sPubTexPath] + srcRes["buddy_files"]
-
         for i, sPubFilePath in enumerate(sPubPathList):
 
             scanLogDct = {}
@@ -159,8 +168,10 @@ def editTextureFiles(dryRun=False):
 
     privFile = None
 
-    pm.mel.ScriptEditor()
-    pm.mel.handleScriptEditorAction("maximizeHistory")
+    def showScriptEditor():
+        pm.mel.ScriptEditor()
+        pm.mel.handleScriptEditorAction("maximizeHistory")
+    mu.executeInMainThreadWithResult(showScriptEditor)
 
     for pubFile, fileNodes in pubFileItems:
 
