@@ -152,10 +152,10 @@ maya.standalone.initialize(name='python')
 execfile(r"C:/jipe_Local/00_JIPE_SCRIPT/PythonTree/Maya_jipeLib_Setter_v0.3.py")
 
 #  import
-import RIG_WORKGROUP.jipe_lib.lib.mayaFunc as jpm
-reload (jpm)
-import RIG_WORKGROUP.jipe_lib.lib.jipe_IO as jpIO
-reload (jpIO)
+# import RIG_WORKGROUP.jipe_lib.lib.mayaFunc as jpm
+# reload (jpm)
+# import RIG_WORKGROUP.jipe_lib.lib.jipe_IO as jpIO
+# reload (jpIO)
 
 
 

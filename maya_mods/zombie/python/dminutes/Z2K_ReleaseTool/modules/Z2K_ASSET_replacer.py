@@ -41,7 +41,7 @@ class Z2K_ASSET_replacer(object):
     OVcurDir = "Z2K_ASSET_replacer_CurDir"
     
 
-    def __init__(self, theProject="zombtest",currentSceneP="", replacingSceneP="",*args, **kwargs):
+    def __init__(self, theProject="",currentSceneP="", replacingSceneP="",*args, **kwargs):
         print "init"
         self.theProject = theProject
         self.replacingSceneP = replacingSceneP
@@ -49,7 +49,7 @@ class Z2K_ASSET_replacer(object):
         if self.currentSceneP in [""]:
             self.currentSceneP,self.currentScene = self.getCurrentScene()
         else:
-            self.currentScene = os.normpath( self.currentSceneP).rsplit(os.sep,1)[-1]
+            self.currentScene = os.path.normpath( self.currentSceneP).rsplit(os.sep,1)[-1]
 
         self.theProj=Z2K.projConnect(theProject=self.theProject)
 

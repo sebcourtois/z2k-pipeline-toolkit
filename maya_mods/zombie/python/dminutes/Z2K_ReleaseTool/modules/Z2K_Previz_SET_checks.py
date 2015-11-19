@@ -462,12 +462,12 @@ class checkModule(object):
         result,cleanedL,debugD = jpZ.cleanKeys(inObjL=controlObjL,verbose=True)
         if not result:
             # prints -------------------
-            printF("cleanKeys()", st="t")
-            printF(result, st="r")
-            printF ( " Cleaned : {0}/{1}".format( len(cleanedL),len(controlObjL), ) )
-            printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(controlObjL), ) )
+            self.printF("cleanKeys()", st="t")
+            self.printF(result, st="r")
+            self.printF ( " Cleaned : {0}/{1}".format( len(cleanedL),len(controlObjL), ) )
+            self.printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(controlObjL), ) )
             for i,j in debugD.iteritems():
-                printF ( "     - {0}: {1}".format( i.ljust(15),j.values() ) )
+                self.printF ( "     - {0}: {1}".format( i.ljust(15),j.values() ) )
             # --------------------------
             boolResult = False
         self.pBar_upd(step= 1,)
