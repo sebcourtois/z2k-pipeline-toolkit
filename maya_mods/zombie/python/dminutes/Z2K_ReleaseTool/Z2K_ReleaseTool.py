@@ -181,16 +181,36 @@ class Z2K_ReleaseTool (object):
 
         if pubFile_Version == curVersion:
 
+            # get scene form SG feed
+            print "******",
+            scenePathSG = cmds.file(q=1,sceneName=True)
+            print "scenePathSG=", scenePathSG
 
             # save file with Maya at the supposed place
             newName = cmds.file (rename = path_private_toPublishAbs)
             exportedFileM= cmds.file ( save=True, force=True, options= "v=0", type= "mayaBinary", preserveReferences=False,  )
 
-            # auto comment if not given
+            # auto comment DAVOS if not given
             if theComment in ["",None]:
                 thecomment = "released From " + curVersion
+
+            # feeding SG #1
+            
+            curVersFile = self.proj.versionFileFromPrivatePath(scenePathSG)
+            print "curVersFile=", curVersFile
+            curSgVers = curVersFile.getSgVersion()
+            print "curSgVers=", curSgVers
             # publishing this file to the public
             exportedFileZ2K = Z2K.publishFile(proj=self.proj, path_private_toPublish=path_private_toPublish, comment=theComment)
+            
+            # feeding SG #2
+            rlsVersFile = self.proj.versionFileFromPrivatePath(exportedFileZ2K)
+            print "rlsVersFile=", rlsVersFile
+            rlsSgVers = rlsVersFile.getSgVersion()
+            print "rlsSgVers=", rlsSgVers
+
+            # feeding SG #3 (final step)
+            self.proj.updateSgEntity(curSgVers,sg_current_release_version=rlsSgVers, sg_released=True)
 
             # re open the publish file for checking
             cmds.file(os.path.normpath(exportedFileZ2K), open=True,f=True)
