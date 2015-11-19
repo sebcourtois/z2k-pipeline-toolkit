@@ -233,27 +233,27 @@ def printF( text="", st="main", toScrollF="", toFile = "", inc=False, GUI= True,
         Dependencies : cmds - 
     """
 
-        # print "printF()",GUI,toFile
-        stringToPrint=""
- 
-        text = str(object=text)
-        if st in ["title","t"]:
-            stringToPrint += "\n"+text.center(40, "-")+"\n"
-        if  st in ["main","m"]:
-            stringToPrint += "    "+text+"\n"
-        if st in ["result","r"]:
-            stringToPrint += " -RESULT: "+text.upper()+"\n"
+    # print "printF()",GUI,toFile
+    stringToPrint=""
 
-        if not toFile in [""] and not GUI:
-            # print the string to a file
-            with open(toFile, openMode) as f:
-                f.write( stringToPrint )
-                print stringToPrint
+    text = str(object=text)
+    if st in ["title","t"]:
+        stringToPrint += "\n"+text.center(40, "-")+"\n"
+    if  st in ["main","m"]:
+        stringToPrint += "    "+text+"\n"
+    if st in ["result","r"]:
+        stringToPrint += " -RESULT: "+text.upper()+"\n"
 
-        else:
-            # print to textLayout
-            cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
+    if not toFile in [""] and not GUI:
+        # print the string to a file
+        with open(toFile, openMode) as f:
+            f.write( stringToPrint )
             print stringToPrint
+
+    else:
+        # print to textLayout
+        cmds.scrollField(toScrollF, e=1,insertText=stringToPrint, insertionPosition=0, font = "plainLabelFont")
+        print stringToPrint
 
 # decorator generique ----------------------------
 def waiter (func,*args, **kwargs):
