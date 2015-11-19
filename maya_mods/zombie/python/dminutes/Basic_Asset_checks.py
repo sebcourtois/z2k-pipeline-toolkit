@@ -1,0 +1,583 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+########################################################
+# Name    : Z2K_Chr_Previz_checks
+# Version : v010
+# Description : Create previz maya file in .mb with some cleaning one the leadAsset
+# Comment : BASE SCRIPT OUT OF Z2K in v002
+# Author : Jean-Philippe Descoins
+# Date : 2015-26-08
+# Comment : wip
+# TO DO:
+#       - Add debug file in input of th e class ; a reporter sur les check des autres
+#       x add turttle check
+#       x Handle versioning problems if edti it's incremented/ if readonly it's not (if edit and if not publish add please publish edited)
+#       WIP mettage en lIB et nouveau path and names
+#       - clean obj button have to be grayed if checkStructure not done (setSmoothness need good structure)
+#       - add auto remove camera if is camera du pipe
+#       - separate interface from base class
+#       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
+#       - check geometry modeling history
+#       WIP Clean ref Nodes + exception arnold etc
+#       ? Check UV smoothing/display paremeters
+#       x if set_subdiv_* exists - apply setSubdiv else delete setSubdiv() 
+#                   from dminutes import assetconformation
+#                   reload(assetconformation)
+#                   assetconformation.setSubdiv()
+#       x add isSetMeshCacheOK()
+#       x add delete_setSubdiv()
+#       x add check for BigDaddy et BigDaddy_NeutralPose and base CTR
+#       x add BigDaddy check
+#       x MentalRayCleanNodes (['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions'])
+#       x check geometry all to zero
+#       x BUG check colorLum
+#       x delete mentalRayNode
+#       x check BaseStructure
+#       x check group geo check for attrib of smooth: connect grp_geo smooth lvl2 to set_meshCache obj if pas existant
+#       x check Under_AssetStructure
+#       x Clean NameSpace
+#       x Delete unused Nodes 
+#       x isSkinned
+#       x cleanUnusedInfluence
+#       x disableShapeOverrides
+#       x Clean display Layers
+#       x check keyed CTR
+#       x Check controls SRT 
+#       x Reset controls SRT
+#       x Reduce smooth display
+#       x delete unUsed animCurves
+#       x delete unsusedConstraints
+#       x Check if there is some keys on controlers and geometries
+#       x show bool result
+########################################################
+
+# THIS CHECKER IS THE MOST UP TO DATE, USE IT tO IMPLEMENTS CHARS AND SETS CHECK AND FUTUR ANIM
+
+
+import os,sys
+import maya.cmds as cmds
+import maya.mel as mel
+from functools import partial
+import inspect
+
+import dminutes.jipeLib_Z2K as jpZ
+reload(jpZ)
+# import   constant
+import dminutes.Z2K_ReleaseTool.modules as ini
+reload(ini)
+from dminutes.Z2K_ReleaseTool.modules import *
+
+
+
+
+
+class checkModule(object):
+    name = "AssetPreviz_Module"
+    cf = name
+
+    basePath = jpZ.getBaseModPath()
+    ICONPATH = Z2K_ICONPATH + "Z2K_CHECKS_A1.bmp"
+    upImg= basePath + ICONPATH
+
+
+    def __init__(self, GUI=True, parent="", debugFile ="", *args, **kwargs):
+        print "init"
+        self.GUI=GUI
+        self.parent = parent
+        self.ebg = True
+        self.DebugPrintFile = debugFile
+        self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
+        self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
+
+        # trickage pour le batch mode goret
+        print "GUI=",self.GUI
+        if self.GUI in [False,0]:
+            self.BcheckStructure=""
+            self.BCheckScene=""
+            self.BCheckObjects=""
+            self.BDebugBoardF=""
+            self.BDebugBoard = ""
+            self.BCleanAll=""
+            self.BClearAll=""
+
+        else:
+            self.insertLayout(parent=self.parent)
+
+        # decorating functions
+        self.printF= self.Z2KprintDeco(jpZ.printF)
+        
+    # decorators ---------------------------
+    def Z2KprintDeco(self, func, *args, **kwargs):
+        print "func=", func.__name__
+        def deco(*args, **kwargs):
+            # print u"Exécution de la fonction '%s'." % func.__name__
+            func(toScrollF=self.BDebugBoard, toFile = self.DebugPrintFile, GUI=self.GUI, *args, **kwargs)
+        return deco
+
+    
+
+    # ---------------------------------------------------------------------------------------------------------
+    #--------------------- Buttons functions ----------------------------------------------------------------------------
+    #----------------------------------------------------------------------------------------------------------
+    @jpZ.waiter
+    def btn_checkStructure(self, controlN="", *args, **kwargs):
+        boolResult=True
+
+        # set progress bar
+        self.pBar_upd(step=1, maxValue=3, e=True)
+
+        # steps
+
+        # 1   checkBaseStructure()
+        result,debugD = jpZ.checkBaseStructure()
+        # prints -------------------
+        self.printF("checkBaseStructure()", st="t")
+        self.printF(result, st="r")
+        for i,dico in debugD.iteritems():
+            toPrint=""
+            if not dico["result"] in ["OK"]:
+                toPrintA = "BAD"
+                if len(dico.get("Found",""))>0:
+                    toPrintA = "     -Found= " + str( dico.get("Found","")   )
+                if len(dico.get("NOT_Found",""))>0:
+                    toPrintA = "     -NOT_Found= " + str( dico.get("NOT_Found","")   )
+
+                toPrint = i.ljust(15)+": "+ str( dico["result"]+toPrintA)
+            else:
+                toPrint = i.ljust(15)+": "+ str( dico["result"] )
+            self.printF( toPrint )
+        # -------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 2   checkAssetStructure()
+        result,debugD = jpZ.checkAssetStructure(assetgpN="asset", expectedL=["grp_rig","grp_geo"],
+        additionalL=["grp_placeHolders"])
+        # prints -------------------
+        self.printF("checkAssetStructure()", st="t")
+        self.printF(result, st="r")
+        for i,dico in debugD.iteritems():
+            self.printF( i.ljust(10)+" : "+ str( dico["result"] ) )
+            if len(dico.get("Found",""))>0:
+                self.printF("     -Found= " + str( dico.get("Found","")   ) )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # 3   isSet_meshCache_OK()
+        infoDict = jpZ.infosFromMayaScene()
+        if infoDict["assetCat"] in ["set"]:
+            theType = "setPreviz"
+        else :
+            theType = ""
+        result,details = jpZ.isSet_meshCache_OK (theType = theType)
+        # prints -------------------
+        self.printF("isSetMeshCacheOK()", st="t")
+        self.printF(result, st="r")
+        self.printF(details)
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # colors
+        print "*btn_checkStructure:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+        
+        return boolResult
+
+    @jpZ.waiter
+    def btn_CheckScene(self, controlN="", *args, **kwargs):
+        boolResult=True
+
+        # set progress bar
+        self.pBar_upd(step=1, maxValue=6, e=True)
+
+        # steps
+
+        # 1 Apply_Delete_setSubdiv()
+        # result,setSub,deletedL = jpZ.Apply_Delete_setSubdiv()
+        # # prints -------------------
+        # self.printF("Apply_Delete_setSubdiv()", st="t")
+        # self.printF(result, st="r")
+        # self.printF("Set Subdiv applyed: {0}".format(setSub) )
+        # if len(deletedL):
+        #     self.printF("deleted: {0} - {1}".format(len(deletedL),deletedL ) )
+        # # --------------------------
+        # if not result:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+
+
+
+        #2 checkRefNodes()
+        objtoDeleteL = cmds.ls(type='reference')
+        result= True
+        if len(objtoDeleteL):
+            result = False
+        # prints -------------------
+        self.printF("checkRefNodes()", st="t")
+        self.printF(result, st="r")
+        self.printF("to_delete:")
+        for i in objtoDeleteL:
+            self.printF("    -{0}".format(i))
+        self.printF( "total to_delete = {0}".format( len(objtoDeleteL) ) )
+        # --------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+ 
+        # 3 cleanMentalRayNodes()
+        # result,toDeleteL,deletedL,failL = jpZ.cleanMentalRayNodes()
+        # # prints -------------------
+        # self.printF("cleanMentalRayNodes()", st="t")
+        # self.printF(result, st="r")
+        # self.printF( "objectDeleted={0}/{1}".format( len(deletedL),len(toDeleteL)  ) )
+        # for i in deletedL:
+        #     self.printF("- deleted: {0}".format(i))
+
+        # if len(failL):
+        #     self.printF( "failL= {0}".format( failL  ) )
+        # # --------------------------
+        # if not result:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+
+
+        # 4 check_NS()
+        result,debugL = jpZ.check_NS()
+        # prints -------------------
+        self.printF("check_NS()", st="t")
+        self.printF(result, st="r")
+        self.printF("to_delete:")
+        for i in debugL:
+            self.printF("    -{0}".format(i))
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # # 5 cleanDisplayLayerWithSet()
+        # result,debugL = jpZ.cleanDisplayLayerWithSet(setL=["set_meshCache","set_control"],layerL=["geometry","control"])
+        # # prints -------------------
+        # self.printF("cleanDisplayLayerWithSet()", st="t")
+        # self.printF(result, st="r")
+        # for i in debugL:
+        #     self.printF(i)
+        # # --------------------------
+        # if not result :
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+
+
+
+        # # 6 checkUnUsedAnimCurves()
+        result,debugD = jpZ. UnusedNodeAnalyse(execptionTL = [], specificTL=["animCurve"], mode="check")
+
+        # prints -------------------
+        self.printF( "checkUnUsedAnimCurves()", st="t")
+        # prints inside-------------------
+        self.printF(result, st="r")
+        if len(debugD["errorL"]):
+            self.printF("erroredL:")
+            for i in debugD["errorL"] :
+                self.printF("    -{0} error".format(i))
+        self.printF("total errored = {0}".format( len(debugD["errorL"] ) ) )
+        
+        if len(debugD["deletedL"]):
+            self.printF("to_delete:")
+            for i in debugD["deletedL"]:
+                self.printF("    -{0}".format(i))
+        self.printF("total to_delete = {0}".format(len(debugD["deletedL"]) ) )
+        # --------------------------
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # 7 checkUnusedConstraint()
+        result,debugD = jpZ.UnusedNodeAnalyse(execptionTL = [], specificTL=["constraint",], mode="check")
+    
+        # prints -------------------
+        self.printF( "checkUnusedConstraint()", st="t")
+        # prints inside-------------------
+        self.printF(result, st="r")
+        if len(debugD["errorL"]):
+            self.printF("erroredL:")
+            for i in debugD["errorL"] :
+                self.printF("    -{0} error".format(i))
+        self.printF("total errored = {0}".format( len(debugD["errorL"] ) ) )
+        
+        if len(debugD["deletedL"]):
+            self.printF("to_delete:")
+            for i in debugD["deletedL"]:
+                self.printF("    -{0}".format(i))
+        self.printF("total to_delete = {0}".format(len(debugD["deletedL"]) ) )
+        # --------------------------
+        # --------------------------
+        if not result:
+            boolResult = False 
+        self.pBar_upd(step= 1,)
+
+
+
+        # 8 checkDisconnectedNodes()
+        result,debugD = jpZ.UnusedNodeAnalyse(execptionTL = ["dagNode","defaultRenderUtilityList","partition"], specificTL=[], mode="check")
+
+        # prints -------------------
+        self.printF( "checkDisconnectedNodes()", st="t")
+        # prints inside-------------------
+        self.printF(result, st="r")
+        if len(debugD["errorL"]):
+            self.printF("erroredL:")
+            for i in debugD["errorL"] :
+                self.printF("    -{0} error".format(i))
+        self.printF("total errored = {0}".format( len(debugD["errorL"] ) ) )
+        
+        if len(debugD["deletedL"]):
+            self.printF("to_deleteL:")
+            for i in debugD["deletedL"]:
+                self.printF("    -{0}".format(i))
+        self.printF("total to_delete = {0}".format(len(debugD["deletedL"]) ) )
+        # --------------------------
+        # --------------------------
+        if not result:
+            boolResult = False 
+        self.pBar_upd(step= 1,)
+              
+
+
+        # # 9 cleanTurtleNodes
+        # result,toDeleteL,deletedL,failL = jpZ.cleanTurtleNodes()
+        # # prints -------------------
+        # self.printF("cleanTurtleNodes()", st="t")
+        # self.printF(result, st="r")
+        # self.printF( "objectDeleted={0}/{1}".format( len(deletedL),len(toDeleteL)  ) )
+        # for i in deletedL:
+        #     self.printF("- deleted: {0}".format(i))
+
+        # if len(failL):
+        #     self.printF( "failL= {0}".format( failL  ) )
+        # # --------------------------
+        # if not result:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+
+
+
+        # colors
+        print "*btn_CheckScene:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+        
+        return boolResult
+        
+    @jpZ.waiter
+    def btn_CheckObjects(self, controlN="", *args, **kwargs):
+        boolResult=True
+
+        # set progress bar
+        self.pBar_upd(step=1, maxValue=5, e=True)
+
+        meshCacheObjL = jpZ.getSetContent(inSetL=["set_meshCache"] )
+        controlObjL = jpZ.getSetContent(inSetL=["set_control"] )
+
+        # steps
+
+
+
+        # 1 isSkinned (meshCacheObjL)
+        infoDict = jpZ.infosFromMayaScene()
+        print "******",infoDict["assetCat"]
+        if not infoDict["assetCat"] in ["set"]:
+
+            result,outSkinClusterL,noSkinL = jpZ.isSkinned(inObjL= meshCacheObjL,)
+            # prints -------------------
+            self.printF("isSkinned()", st="t")
+            self.printF(result, st="r")
+            self.printF("skinned_object = {0} / {1}".format(len(outSkinClusterL),len(meshCacheObjL) ) )
+            for i in noSkinL:
+                self.printF("    No skin on: {0}".format(i) )
+            # --------------------------
+            if not result :
+                boolResult = False
+            self.pBar_upd(step= 1,)
+
+
+            # 5 checkSRT (controlObjL)
+            result,debugD = jpZ.checkSRT(inObjL = controlObjL, )
+            # prints -------------------
+            self.printF("checkSRT(controlObjL)", st="t")
+            self.printF(result, st="r")
+            self.printF ( " not zero total: {0}/{1}".format( len(debugD.keys()),len(meshCacheObjL), ) )
+            for i,j in debugD.iteritems():
+                self.printF ( "    - {0} : {1}".format( i.ljust(15), " ".join(j) ) )
+            # --------------------------
+            if not result:
+                boolResult = False
+            self.pBar_upd(step= 1,)
+
+            # 6 checkSRT (meshCacheObjL)
+            result,debugD = jpZ.checkSRT(inObjL = meshCacheObjL, )
+            # prints -------------------
+            self.printF("checkSRT(meshCacheObj)", st="t")
+            self.printF(result, st="r")
+            self.printF ( " not zero total: {0}/{1}".format( len(debugD.keys()),len(meshCacheObjL), ) )
+            for i,j in debugD.iteritems():
+                self.printF ( "    - {0} : {1}".format( i.ljust(15), " ".join(j) ) )
+            # --------------------------
+            if not result:
+                boolResult = False
+            self.pBar_upd(step= 1,)
+
+        else:
+            self.pBar_upd(step= 1,)
+            self.pBar_upd(step= 1,)
+            self.pBar_upd(step= 1,)
+
+
+        # 7 checkKeys (controlObjL)
+        result,debugD = jpZ.checkKeys(inObjL=controlObjL,verbose=True)
+        # prints -------------------
+        self.printF("checkKeys()", st="t")
+        self.printF(result, st="r")
+        self.printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(controlObjL), ) )
+        for i,j in debugD.iteritems():
+            self.printF ( "     - {0}: {1}".format( i.ljust(15),j.keys() ) )
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+        # colors
+        print "*btn_CheckObjects:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+        
+
+        
+
+
+        
+
+
+    def btn_clearAll(self, *args, **kwargs):
+        print "btn_clearAll()"
+
+        cmds.scrollField(self.BDebugBoard, e=1, clear=True)
+        cmds.progressBar(self.BValidationPBar,e=1,progress=0)
+
+        defCol = [0.40,0.40,0.40]
+        cmds.button(self.BcheckStructure, e=1, bgc= defCol)
+        cmds.button(self.BCheckScene, e=1, bgc= defCol)
+        cmds.button(self.BCheckObjects, e=1, bgc= defCol)
+        # cmds.button(self.BCleanAll, e=1, bgc= defCol)
+
+   
+
+    # ----------------------------------jipe general functions -------------------------------
+    def colorLighten(self, thecolor=[0,0,0], factor= 0.5, *args, **kwargs):
+        outColor = [ (1- x) * factor + x for x in thecolor ]
+        return outColor
+
+    def colorDarken(self, thecolor=[0,0,0], factor= 0.5, *args, **kwargs):
+        outColor = [ x * factor for x in thecolor ]
+        return outColor
+
+    def colorLum (self, thecolor=[0,0,0], factor= 0.5,  *args, **kwargs):
+        outColor = thecolor
+        if factor > 0 :
+            outColor = [ (1- x) * factor + x for x in thecolor ]
+
+        elif factor < 0 :
+            outColor = [ x * abs(1 + factor) for x in thecolor ]
+
+        return outColor
+
+    # -------------------------- interface function --------------------------------
+    def colorBoolControl(self, controlL=[], boolL=[],labelL=[""],  *args, **kwargs):
+        # color the controlL depending on the given Bool
+        if self.GUI:
+            
+            for i,j,label in zip(controlL,boolL,labelL):
+                    if j in [True,1]:
+                        cmds.button(i, e=1, backgroundColor=self.trueColor, ebg=self.ebg)
+                    else:
+                        cmds.button(i, e=1, backgroundColor=self.falseColor, ebg=self.ebg)
+
+
+    def pBar_upd (self, step=0,maxValue=10,e=False, *args, **kwargs):
+        # print "pBar_upd()",step
+        if self.GUI:
+            if e:
+                cmds.progressBar(self.BValidationPBar,e=1,maxValue=maxValue,progress=step)
+            else:
+                if step:
+                    cmds.progressBar(self.BValidationPBar,e=1,step=step,)
+
+
+
+    # ------------- Layout -------------------------------------------------------
+    def createWin(self, *args,**kwargs):
+        # test si la windows exist / permet d'avoir plusieurs windows grace a var "cf" de la class
+        if cmds.window(self.cf, q=True, exists=True):
+            cmds.deleteUI(self.cf, window=True)
+        #create la window et rename apres
+        self.cf = cmds.window(self.cf ,rtf=True, tlb=False, t=(self.cf + " : " + str(self.cf)))
+        outputW = cmds.window(self.cf, e=True, sizeable=True, t=(self.cf + " : " + str(self.cf)))
+        
+        # show window
+        cmds.showWindow(self.cf)
+        return outputW
+
+
+    def insertLayout(self, parent="",*args, **kwargs):
+
+        if parent in [""]:
+            parent = self.createWin()
+
+        cmds.setParent(parent)
+        self.bigDadL = cmds.frameLayout(label=self.name.center(50), fn="boldLabelFont", lv=0)
+        self.layoutImportModule = cmds.columnLayout("layoutImportModule",adj=True)
+        cmds.tabLayout(tabsVisible=0,borderStyle="full")
+        cmds.columnLayout("layoutModule",columnOffset= ["both",0],adj=True,)
+
+        cmds.image(image=self.upImg)
+        cmds.columnLayout("layoutImportModule",columnOffset= ["both",0],adj=True,)
+        # self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= partial(self.btn_cleanAll),en=1)
+
+        self.BcheckStructure = cmds.button("checkStructure", )
+        cmds.button(self.BcheckStructure,e=1,c= partial( self.btn_checkStructure,self.BcheckStructure) )
+
+        self.BCheckScene = cmds.button("CheckScene",)
+        cmds.button(self.BCheckScene,e=1,c= partial( self.btn_CheckScene,self.BCheckScene))
+
+        self.BCheckObjects = cmds.button("CheckObjects",)
+        cmds.button(self.BCheckObjects,e=1,c= partial( self.btn_CheckObjects,self.BCheckObjects) )
+        
+        self.BValidationPBar = cmds.progressBar(maxValue=3,s=1 )
+
+        self.BDebugBoardF= cmds.frameLayout("DebugBoard",cll=False,cl=True)
+        self.BDebugBoard = cmds.scrollField(w=250,h=300,)
+        
+        cmds.setParent("..")
+        self.BClearAll = cmds.button("clear",c= self.btn_clearAll,)
+  
+        
+
+#----------------------------------------------------------------------------------------------------------
+#--------------------- EXEC -------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------
+
+Z2K_Pcheck = checkModule(GUI=True )
+Z2K_Pcheck.insertLayout( parent="" )

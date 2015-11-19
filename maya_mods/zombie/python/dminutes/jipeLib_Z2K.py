@@ -499,7 +499,7 @@ def NodeTypeScanner( execptionTL = [], exceptDerived= True, specificTL=[], speci
 # wip to make faster
 def UnusedNodeAnalyse( execptionTL = [], specificTL= [], mode = "delete",verbose=True, *args, **kwargs):
     """ Description: Test if nodes have connections based on type and excluded_type in all the scene and either delete/select/print it.
-                    mode = "delete" / "select" / "print"
+                    mode = "check" /"delete" / "select" / "print"
         Return : [BOOL,Dict]
         Dependencies : cmds - NodeTypeScanner() - isConnected()
     """
@@ -520,19 +520,21 @@ def UnusedNodeAnalyse( execptionTL = [], specificTL= [], mode = "delete",verbose
     errorL = []
     deletedL =[]
     debugD = {}
-    if mode in ["delete"]:
-        if len(unconectedCL):
-            for node in unconectedCL:
-                try:
-                    if not cmds.lockNode(node, q=1)[0]:
-                        print "try deleting",node,cmds.lockNode(node,q=1)[0]
+
+    if len(unconectedCL):
+        for node in unconectedCL:
+            print "////",node
+            try:
+                if not cmds.lockNode(node, q=1)[0]:
+                    print "try deleting",node,cmds.lockNode(node,q=1)[0]
+                    if mode in ["delete"]:
                         cmds.delete (node)
-                        deletedL.append(node)
-                except Exception,err:
-                    errorL.append(node)
-                    print "ERROR on {0} : {1}".format(node,err)
-        if len(errorL)>0:
-            toReturnB = False
+                    deletedL.append(node)
+            except Exception,err:
+                errorL.append(node)
+                print "ERROR on {0} : {1}".format(node,err)
+    if len(errorL)>0:
+        toReturnB = False
     
     debugD["errorL"] = errorL
     debugD["deletedL"] = deletedL
@@ -540,9 +542,14 @@ def UnusedNodeAnalyse( execptionTL = [], specificTL= [], mode = "delete",verbose
     if mode in ["select"]:
         cmds.select (unconectedCL) 
 
-    if mode in ["print"]:
+    elif mode in ["print"]:
         for node in unconectedCL:
             print node
+    elif mode in ["check"]:
+        if len(deletedL):
+            toReturnB = False
+    print "tatata",len(unconectedCL)
+    
 
     return [toReturnB,debugD]
 
@@ -848,12 +855,13 @@ def isSkinned(inObjL=[], verbose=False, printOut = False,*args,**kwargs):
                 # print "    history = ", history
                 if history not in [None,"None"]:
                     for node in history:
+                        print "   node=",node
                         if cmds.nodeType(node) == "skinCluster":
                             skinClusterList.append(node)
                             outSkinClusterL.append(node)
                             outSkinnedObj.append(obj)
                 else :
-                    print "#Error# getSkinCluster(): No History stack"
+                    print "#Error# getSkinCluster(): No skin, No History stack"
                     toReturnB = False
 
                 if len(skinClusterList) < 1:
@@ -868,6 +876,8 @@ def isSkinned(inObjL=[], verbose=False, printOut = False,*args,**kwargs):
         
 
         noSkinL = list(set(inObjL) - set(outSkinnedObj))
+        print "outSkinnedObj=", outSkinnedObj
+        print "noSkinL=", noSkinL
         if len(outSkinClusterL) >= len(inObjL):
             toReturnB = True
 
@@ -1116,7 +1126,7 @@ def cleanTurtleNodes ( toDeleteL=["TurtleDefaultBakeLayer"], *args, **kwargs):
         return [toReturnB,toDeleteL,deletedL,failL]
 
 
-def cleanRefNodes(toDeleteL = ["UNKNOWN_REF_NODE","SHAREDREFERENCENODE","REFERENCE"],*args,**kwargs):
+def cleanRefNodes(toDeleteL = ["UNKNOWN_REF_NODE","SHAREDREFERENCENODE","REFERENCE"],testMode=False,*args,**kwargs):
         print "cleanRefNodes()"
         tab = "    "
         toReturnB = False
@@ -1132,7 +1142,8 @@ def cleanRefNodes(toDeleteL = ["UNKNOWN_REF_NODE","SHAREDREFERENCENODE","REFEREN
                     objtoDeleteL.append(ref)
                     try:
                         cmds.lockNode(ref, lock=False)
-                        cmds.delete(ref)
+                        if not testMode:
+                            cmds.delete(ref)
                         print tab,"DELETED:", ref
                         deletedL.append(curToDelType)
                     except Exception, e:
@@ -1145,6 +1156,21 @@ def cleanRefNodes(toDeleteL = ["UNKNOWN_REF_NODE","SHAREDREFERENCENODE","REFEREN
 
         return [toReturnB,objtoDeleteL,deletedL]
 
+
+def check_NS (NS_exclusion=[],*args, **kwargs):
+    toReturnB= True
+    # "UI","shared" NS are used by maya itself
+    NS_exclusionBL=["UI","shared"]
+    badNSL =[]
+    nsL = cmds.namespaceInfo(listOnlyNamespaces=True)
+    NS_exclusionBL.extend(NS_exclusion)
+    if len(nsL):
+        for i in nsL:
+            if i not in NS_exclusionBL:
+                toReturnB = False
+                badNSL.append(i)
+    return [toReturnB,badNSL]
+
 def remove_All_NS ( NSexclusionL = [""], limit = 100, *args,**kwargs):
         """ Description: Delete all NameSpace appart the ones in the NSexclusionL
             Return : nothing
@@ -1153,10 +1179,9 @@ def remove_All_NS ( NSexclusionL = [""], limit = 100, *args,**kwargs):
         tab= "    "
         print "remove_All_NS()"
         toReturnB = True
-
         # "UI","shared" NS are used by maya itself
-        NS_exclusion=["UI","shared"]
-        NS_exclusion.extend(NSexclusionL)
+        NS_exclusionBL=["UI","shared"]
+        NS_exclusionBL.extend(NSexclusionL)
         # set the current nameSpace to the root nameSpace
         cmds.namespace(setNamespace = ":")
         # get NS list
@@ -1166,7 +1191,7 @@ def remove_All_NS ( NSexclusionL = [""], limit = 100, *args,**kwargs):
         for loop in range(len(nsL)+2):
             nsL = cmds.namespaceInfo(listOnlyNamespaces=True)
             for ns in nsL:
-                if ns not in NS_exclusion:
+                if ns not in NS_exclusionBL:
                     print tab+"ns:",ns
                     cmds.namespace( removeNamespace =ns, mergeNamespaceWithRoot=True)
 
@@ -1228,7 +1253,7 @@ def cleanUnusedConstraint(*args, **kwargs):
     print "cleanUnusedConstraint()"
     
     toReturnB,debugD = UnusedNodeAnalyse(execptionTL = [], specificTL=["constraint",], mode="delete")
-    print "**debugD=", debugD
+    # print "**debugD=", debugD
     return [toReturnB,debugD]
 
 def cleanUnUsedAnimCurves( *args, **kwargs):
