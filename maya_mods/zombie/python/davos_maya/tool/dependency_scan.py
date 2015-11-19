@@ -20,7 +20,7 @@ from pytd.util.fsutils import pathResolve, normCase, pathJoin
 from pytd.util.fsutils import ignorePatterns, iterPaths
 from pytd.util.strutils import labelify, assertChars
 from pytd.util.qtutils import setWaitCursor
-from pytd.util.sysutils import argToTuple, toStr
+from pytd.util.sysutils import argToTuple, toStr, inDevMode
 
 from .general import entityFromScene
 
@@ -208,6 +208,9 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
 UDIM_MODE = 3
 UDIM_RGX = r"\.1\d{3}\."
 
+def makeUdimFilePattern(p):
+    return re.sub(UDIM_RGX, ".1*.", osp.basename(p))
+
 @setWaitCursor
 def scanTextureDependency(damEntity):
 
@@ -254,13 +257,15 @@ def scanTextureDependency(damEntity):
 
         sTexAbsPath = pathResolve(sTexPath)
 
+        sUdimFileList = []
         sTexAbsPathList = (sTexAbsPath,)
         if bUdim:
-            sFilename = re.sub(UDIM_RGX, ".1*.", osp.basename(sTexAbsPath))
+            sUdimPat = makeUdimFilePattern(sTexAbsPath)
             sTexAbsPathList = sorted(iterPaths(osp.dirname(sTexAbsPath), dirs=False,
                                              recursive=False,
-                                             keepFiles=ignorePatterns(sFilename)
+                                             keepFiles=ignorePatterns(sUdimPat)
                                              ))
+            sUdimFileList = sTexAbsPathList[:]
 
         for sTexAbsPath in sTexAbsPathList:
 
@@ -285,12 +290,14 @@ def scanTextureDependency(damEntity):
             bPublicFile = False
             sHighSeverity = "error"
             texFile = None
-            bExists = osp.isfile(sTexAbsPath) or bUdim
+            bExists = bUdim or osp.isfile(sTexAbsPath)
 
             resultDct = {"abs_path":sTexAbsPath,
                          "scan_log":scanLogDct,
                          "file_nodes":fileNodeDct[sTexNormPath],
                          "buddy_files":[],
+                         "udim_files":list(p for p in sUdimFileList
+                                           if p != sTexAbsPath),
                          "publishable":False,
                          "drc_file":None,
                          "exists":bExists,
@@ -402,6 +409,7 @@ def scanTextureDependency(damEntity):
                                         "scan_log":budScanLogDct,
                                         "file_nodes":[],
                                         "buddy_files":[],
+                                        "udim_files":[],
                                         "publishable":False,
                                         "drc_file":budFile,
                                         "exists":True,
@@ -480,6 +488,7 @@ def scanTextureDependency(damEntity):
                          "scan_log":scanLogDct,
                          "file_nodes":[],
                          "buddy_files":[],
+                         "udim_files":[],
                          "publishable":False,
                          "drc_file":None,
                          }
@@ -529,12 +538,13 @@ def _setPublishableState(resultDct):
     else:
         bPublishable = True
 
+        sMsg = ""
         sBuddyFileList = resultDct["buddy_files"]
         if sBuddyFileList:
             sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
             sMsg = (", ".join(s.upper() for s in sExtList) + " found"
                     if sBuddyFileList else "")
-        else:
+        elif inDevMode():
             sMsg = resultDct["abs_path"]
 
         scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
