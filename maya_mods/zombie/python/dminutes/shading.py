@@ -1096,8 +1096,8 @@ def dmnToonPreset (preset = ""):
     if preset == "reflectingGlass":
         for each in dmnToonNodeList:
             print "####info: setting dmnToon node: "+each+" as "+preset
-            miscUtils.setAttrC(each+".diffuseIntensity", 1)
-            miscUtils.setAttrC(each+".ambientIntensity", 1)
+            miscUtils.setAttrC(each+".diffuseIntensity", 0)
+            miscUtils.setAttrC(each+".ambientIntensity", 0)
 
             miscUtils.setAttrC(each+".shadowMaskWeight", 0)
             miscUtils.setAttrC(each+".shadowMaskWeight01", 0)
