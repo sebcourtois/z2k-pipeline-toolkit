@@ -6,6 +6,7 @@ from zomblib.config import zombillenium as zomb
 class project(zomb.project):
     dir_name = "zombtest"
     damas_root_path = "/{}/".format(dir_name)
+    sg_versions_mandatory = False
 
 class asset_lib(zomb.asset_lib):
     pass
