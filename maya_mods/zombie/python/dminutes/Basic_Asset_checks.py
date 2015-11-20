@@ -198,7 +198,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=6, e=True)
+        self.pBar_upd(step=1, maxValue=7, e=True)
 
         # steps
 
@@ -359,21 +359,21 @@ class checkModule(object):
               
 
 
-        # # 9 cleanTurtleNodes
-        # result,toDeleteL,deletedL,failL = jpZ.cleanTurtleNodes()
-        # # prints -------------------
-        # self.printF("cleanTurtleNodes()", st="t")
-        # self.printF(result, st="r")
-        # self.printF( "objectDeleted={0}/{1}".format( len(deletedL),len(toDeleteL)  ) )
-        # for i in deletedL:
-        #     self.printF("- deleted: {0}".format(i))
+        # 9 cleanTurtleNodes
+        result,toDeleteL,deletedL,failL = jpZ.cleanTurtleNodes(check=True)
+        # prints -------------------
+        self.printF("cleanTurtleNodes()", st="t")
+        self.printF(result, st="r")
+        self.printF( "objectDeleted={0}/{1}".format( len(deletedL),len(toDeleteL)  ) )
+        for i in deletedL:
+            self.printF("- deleted: {0}".format(i))
 
-        # if len(failL):
-        #     self.printF( "failL= {0}".format( failL  ) )
-        # # --------------------------
-        # if not result:
-        #     boolResult = False
-        # self.pBar_upd(step= 1,)
+        if len(failL):
+            self.printF( "failL= {0}".format( failL  ) )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
 
 
 

@@ -11,7 +11,7 @@ from . import dependency_scan
 from davos_maya.tool.general import entityFromScene
 
 from pytaya.core.rendering import fileNodesFromObjects
-from pytd.util.fsutils import pathResolve
+from pytd.util.fsutils import pathResolve, normCase
 
 #from pytd.util.sysutils import toStr
 
@@ -57,6 +57,7 @@ def editTextureFiles(dryRun=False):
     pubScnFile.ensureLocked()
 
     pubTexDir = damEntity.getResource("public", "texture_dir", fail=True)
+    sPubTexDirPath = pubTexDir.absPath()
     pubTexDir.loadChildDbNodes()
 
     fileNodeList = fileNodesFromSelection()
@@ -99,10 +100,18 @@ def editTextureFiles(dryRun=False):
         if not infos:
             continue
 
-        if "PublicFiles" not in dict(infos):
+        texFile = srcRes["drc_file"]
+        if not texFile:
             continue
 
-        sPubTexPath = srcRes["abs_path"]
+        if texFile.isPrivate():
+            continue
+
+        sPubTexPath = texFile.absPath()
+        sTexDirPath = osp.dirname(sPubTexPath)
+        if normCase(sTexDirPath) != normCase(sPubTexDirPath):
+            continue
+
         if sPubTexPath not in sSelTexPathSet:
             if sPubTexPath not in sSelUdimFileSet:
                 continue
@@ -112,6 +121,18 @@ def editTextureFiles(dryRun=False):
 
             scanLogDct = {}
             pubFile = proj.entryFromPath(sPubFilePath)
+
+            if i == 0:
+                resultDct = srcRes.copy()
+                resultDct["scan_log"] = scanLogDct
+            else:
+                resultDct = {"abs_path":sPubFilePath,
+                             "scan_log":scanLogDct,
+                             "file_nodes":[],
+                             "buddy_files":[],
+                             "publishable":False,
+                             "drc_file":None,
+                             }
 
             if not pubFile.isUpToDate():
                 sMsg = "Sorry, you have to wait for the file to be synced"
@@ -135,17 +156,7 @@ def editTextureFiles(dryRun=False):
 #                        except OSError as e:
 #                            sMsg = toStr(e)
 #                            scanLogDct.setdefault("error", []).append(('FileInUse', sMsg))
-            if i == 0:
-                resultDct = srcRes.copy()
-                resultDct["scan_log"] = scanLogDct
-            else:
-                resultDct = {"abs_path":sPubFilePath,
-                             "scan_log":scanLogDct,
-                             "file_nodes":[],
-                             "buddy_files":[],
-                             "publishable":False,
-                             "drc_file":None,
-                             }
+
             addResult(resultDct)
 
             if "error" not in scanLogDct:
