@@ -1017,113 +1017,113 @@ def cleanUnusedInfluence(inObjL="",*args,**kwargs):
     return [toReturnB,totalSkinClusterL,deletedDict]
 
 def setSmoothness(inObjL=[], mode=0, *args,**kwargs):
-        print "setSmoothness()"
-        tab="    "
-        toReturnB = True
-        debugD = {}
-        # handle the display of mesh in viewport
-        if type(inObjL) is not list:
-            inObjL = list(inObjL)
-        for obj in inObjL:
-            # print tab,obj
-            try :
-                shapeL=cmds.listRelatives(obj,s=1,ni=1)
-                if shapeL:
-                    for shape in shapeL:
-                        print "    ",shape
-                        # connect the attr if not connected
-                        if not cmds.connectionInfo(shape + "."+"smoothLevel",isDestination=True):
-                            cmds.displaySmoothness( obj, polygonObject=mode )
-            except Exception,err:
-                toReturnB = False
-                debugD[obj]= err
+    print "setSmoothness()"
+    tab="    "
+    toReturnB = True
+    debugD = {}
+    # handle the display of mesh in viewport
+    if type(inObjL) is not list:
+        inObjL = list(inObjL)
+    for obj in inObjL:
+        # print tab,obj
+        try :
+            shapeL=cmds.listRelatives(obj,s=1,ni=1)
+            if shapeL:
+                for shape in shapeL:
+                    print "    ",shape
+                    # connect the attr if not connected
+                    if not cmds.connectionInfo(shape + "."+"smoothLevel",isDestination=True):
+                        cmds.displaySmoothness( obj, polygonObject=mode )
+        except Exception,err:
+            toReturnB = False
+            debugD[obj]= err
 
-        print tab,"DONE",toReturnB, debugD   
+    print tab,"DONE",toReturnB, debugD   
 
-        
+    
 
-        return [toReturnB,debugD]
+    return [toReturnB,debugD]
 
 def disableShapeOverrides(inObjL=[],*args, **kwargs):
-        # desactivate Overide des geometry contenu dans le set "set_meshCache"
-        print "disableShapeOverrides()"
-        tab = "   "
-        toReturnB = True
-        debugD= {}
-        attrL = ["overrideEnabled","overrideDisplayType"]
-        for obj in inObjL:
-            for attr in attrL:
-                try:
-                    cmds.setAttr (cmds.listRelatives(obj, c=True, ni=True, type="shape", fullPath=True)[0]+"."+ attr,0)
-                except Exception,err:
-                    toReturnB = False
-                    debugD[obj]= attr
+    # desactivate Overide des geometry contenu dans le set "set_meshCache"
+    print "disableShapeOverrides()"
+    tab = "   "
+    toReturnB = True
+    debugD= {}
+    attrL = ["overrideEnabled","overrideDisplayType"]
+    for obj in inObjL:
+        for attr in attrL:
+            try:
+                cmds.setAttr (cmds.listRelatives(obj, c=True, ni=True, type="shape", fullPath=True)[0]+"."+ attr,0)
+            except Exception,err:
+                toReturnB = False
+                debugD[obj]= attr
 
-        print tab,"DONE",toReturnB
+    print tab,"DONE",toReturnB
 
-        
+    
 
-        return [toReturnB,debugD]
+    return [toReturnB,debugD]
 
 
 
 # scene cleaning
 def cleanMentalRayNodes ( toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',
-        'Draft','DraftMotionBlur','DraftRapidMotion','Preview','PreviewCaustics','PreviewFinalGather','PreviewGlobalIllum',
-        'PreviewImrRayTracyOff','PreviewImrRayTracyOn','PreviewMotionblur','PreviewRapidMotion','Production','ProductionFineTrace',
-        'ProductionMotionblur','ProductionRapidFur','ProductionRapidHair','ProductionRapidMotion',
-        ],
-        *args, **kwargs):
-        """ Description: Delete all mentalrayNodes in toDeleteL
-            Return : [toReturnB,toDeleteL,deletedL,failL]
-            Dependencies : cmds - 
-        """
-        
-        print "cleanMentalRayNodes()"
-        tab = "    "
-        toReturnB = True
-        deletedL=[]
-        failL=[]
-        print tab,"toDeleteL=", toDeleteL
+    'Draft','DraftMotionBlur','DraftRapidMotion','Preview','PreviewCaustics','PreviewFinalGather','PreviewGlobalIllum',
+    'PreviewImrRayTracyOff','PreviewImrRayTracyOn','PreviewMotionblur','PreviewRapidMotion','Production','ProductionFineTrace',
+    'ProductionMotionblur','ProductionRapidFur','ProductionRapidHair','ProductionRapidMotion',
+    ],
+    *args, **kwargs):
+    """ Description: Delete all mentalrayNodes in toDeleteL
+        Return : [toReturnB,toDeleteL,deletedL,failL]
+        Dependencies : cmds - 
+    """
+    
+    print "cleanMentalRayNodes()"
+    tab = "    "
+    toReturnB = True
+    deletedL=[]
+    failL=[]
+    print tab,"toDeleteL=", toDeleteL
 
-        for i in toDeleteL:
-            if cmds.objExists(i):
-                try:
-                    cmds.lockNode(i, lock=False)
-                    cmds.delete(i)
-                    deletedL.append(i)
-                except:
-                    toReturnB=False
-                    failL.append(i)
+    for i in toDeleteL:
+        if cmds.objExists(i):
+            try:
+                cmds.lockNode(i, lock=False)
+                cmds.delete(i)
+                deletedL.append(i)
+            except:
+                toReturnB=False
+                failL.append(i)
 
 
-        return [toReturnB,toDeleteL,deletedL,failL]
+    return [toReturnB,toDeleteL,deletedL,failL]
 
 def cleanTurtleNodes ( toDeleteL=["TurtleDefaultBakeLayer"], *args, **kwargs):
-        """ Description: Delete all turtle in toDeleteL
-            Return : [toReturnB,toDeleteL,deletedL,failL]
-            Dependencies : cmds - 
-        """
-        
-        print "cleanMentalRayNodes()"
-        tab = "    "
-        toReturnB = True
-        deletedL=[]
-        failL=[]
-        print tab,"toDeleteL=", toDeleteL
+    """ Description: Delete all turtle in toDeleteL
+        Return : [toReturnB,toDeleteL,deletedL,failL]
+        Dependencies : cmds - 
+    """
+    
+    print "cleanMentalRayNodes()"
+    tab = "    "
+    toReturnB = True
+    deletedL=[]
+    failL=[]
+    print tab,"toDeleteL=", toDeleteL
 
-        for i in toDeleteL:
-            if cmds.objExists(i):
-                try:
-                    cmds.lockNode(i, lock=False)
-                    cmds.delete(i)
-                    deletedL.append(i)
-                except:
-                    toReturnB=False
-                    failL.append(i)
+    for i in toDeleteL:
+        if cmds.objExists(i):
+            try:
+                cmds.lockNode(i, lock=False)
+                cmds.delete(i)
+                deletedL.append(i)
+            except:
+                toReturnB=False
+                failL.append(i)
 
 
-        return [toReturnB,toDeleteL,deletedL,failL]
+    return [toReturnB,toDeleteL,deletedL,failL]
 
 
 def cleanRefNodes(toDeleteL = ["UNKNOWN_REF_NODE","SHAREDREFERENCENODE","REFERENCE"],testMode=False,*args,**kwargs):
