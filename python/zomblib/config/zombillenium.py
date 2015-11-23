@@ -206,9 +206,16 @@ class charbase(object):
             "{name}_previzRef.mb-> previz_ref":None,
             "{name}_renderRef.mb-> render_ref":None,
             },
-        "review -> review_dir":{},
+        "review -> review_dir":
+            {
+            "{name}_anim.mov -> anim_review":None,
+            "{name}_modeling.mov -> modeling_review":None,
+            "{name}_previz.mov -> previz_review":None,
+            "{name}_render.mov -> render_review":None,
+            },
         "script -> script_dir":{},
         "texture -> texture_dir":{},
+
         "{name}_anim.ma -> anim_scene":None,
         "{name}_modeling.ma -> modeling_scene":None,
         "{name}_previz.ma -> previz_scene":None,
@@ -256,9 +263,15 @@ class prop3d(object):
             "{name}_previzRef.mb -> previz_ref":None,
             "{name}_renderRef.mb -> render_ref":None,
             },
-        "review -> review_dir":{},
-        #"script -> script_dir":{},
+        "review -> review_dir":
+            {
+            "{name}_anim.mov -> anim_review":None,
+            "{name}_modeling.mov -> modeling_review":None,
+            "{name}_previz.mov -> previz_review":None,
+            "{name}_render.mov -> render_review":None,
+            },
         "texture -> texture_dir":{},
+
         "{name}_anim.ma -> anim_scene":None,
         "{name}_modeling.ma -> modeling_scene":None,
         "{name}_previz.ma -> previz_scene":None,
@@ -276,6 +289,17 @@ class vehicle3d(prop3d):
     prefix = "vhl"
     aliases = (prefix, "Vehicle 3D",)
     assetType = prefix
+
+    dependency_types = asset_lib.dependency_types
+
+class fx_previz(prop3d):
+
+    entity_class = "davos.core.damtypes.DamAsset"
+
+    prefix = "fxp"
+    aliases = (prefix, "FX")
+    assetType = prefix
+
     dependency_types = asset_lib.dependency_types
 
 class set3d(object):
@@ -299,23 +323,19 @@ class set3d(object):
             "{name}_previzRef.mb-> previz_ref":None,
             "{name}_masterRef.mb-> master_ref":None,
             },
-        "review -> review_dir":{},
-        #"script -> script_dir":{},
+        "review -> review_dir":
+            {
+            "{name}_previz.mov -> previz_review":None,
+            "{name}_master.mov -> master_review":None,
+            },
         "texture -> texture_dir":{},
+
         "{name}_previz.ma -> previz_scene":None,
         "{name}_master.ma -> master_scene":None,
         },
     }
 
     resources_settings = asset_lib.resources_settings
-
-#    resources_settings = {
-#    "previz_scene":{"create_sg_version":True,
-#                    "sg_steps":("Model Previz",), },
-#    "previz_ref":{"create_sg_version":True,
-#                  "sg_tasks":("Rig_Previz",), },
-#    }
-
     dependency_types = asset_lib.dependency_types
 
 class environment3d(set3d):
@@ -327,17 +347,6 @@ class environment3d(set3d):
     assetType = prefix
 
     dependency_types = asset_lib.dependency_types
-
-class fx_previz(object):
-
-    entity_class = "davos.core.damtypes.DamAsset"
-
-    prefix = "fxp"
-    aliases = (prefix,)
-    assetType = prefix
-
-    public_path = join(asset_lib.public_path, "{assetType}")
-    private_path = join(asset_lib.private_path, "{assetType}")
 
 
 
