@@ -463,7 +463,7 @@ def imageResize(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQua
 
 
 
-def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrongShadEngine = True, preShadNodeType = "lambert", matShadNodeType= "dmnToon", matTextureInput = ".outColor", preTextureInput = ".color", gui = True):
+def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrongShadEngine = True, preShadNodeType = "lambert", matShadNodeTypeList= ["dmnToon","aiRaySwitch"], matTextureInput = ".outColor", preTextureInput = ".color", gui = True):
     """
     from a ginven shading engine
     this script assumes the shading tree has 2 different parts:
@@ -471,12 +471,12 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         - a material (or render) shading tree for the render engine, the material shading node (matShadNode) is the node connected in the aiSurfaceShader input shading engine
     the script
         - check the existence of the 'preShadNode', replace it, if it has a wrong type, create it doesn't exists
-        - gets the 'matTextureInput' connection of the 'matShadNodeType' and duplicate it then connect the new texture node in the 'preShadNode.preTextureInput'
+        - gets the 'matTextureInput' connection of the 'matShadNodeTypeList' and duplicate it then connect the new texture node in the 'preShadNode.preTextureInput'
         - conform the shding tree nodes names using conformShaderName() function
 
     """
     if verbose == True: print ""
-    if verbose == True: print "#### {:>7}: runing shading.conformTexturePath( shadEngineList = [...], verbose = {}, preShadNodeType = {}, matShadNodeType = {}, matTextureInput = {}, preTextureInput ={})".format("Info", preShadNodeType, verbose, matShadNodeType, matTextureInput, preTextureInput)
+    if verbose == True: print "#### {:>7}: runing shading.conformPreviewShadingTree( shadEngineList = [...], verbose = {}, preShadNodeType = {}, matShadNodeTypeList = {}, matTextureInput = {}, preTextureInput ={})".format("Info", preShadNodeType, verbose, matShadNodeTypeList, matTextureInput, preTextureInput)
 
 
     if shadEngineList == "all":
@@ -515,11 +515,12 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         print "#### {:>7}: the preview shading node type is unkowned: preShadNodeType = {}".format("Error", preShadNodeType)
         return
 
-    try:
-        mc.nodeType(matShadNodeType, isTypeName=True)
-    except:
-        print "#### {:>7}: the render shading node type is unkowned: matShadNodeType = {}".format("Error", matShadNodeType)
-        return
+    for each in matShadNodeTypeList:
+        try:
+            mc.nodeType(each, isTypeName=True)
+        except:
+            print "#### {:>7}: the render shading node type is unkowned: matShadNodeType = {}".format("Error", each)
+            return
 
 
     correctShadEngine =[]
@@ -581,7 +582,8 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         else:
             preShadNode = preShadNode[-1]
 
-        if not matShadNode or mc.nodeType(matShadNode[-1]) != matShadNodeType:
+        matShadNodeType = mc.nodeType(matShadNode[-1])
+        if not matShadNode or matShadNodeType not in matShadNodeTypeList:
             if verbose == True: print "#### {:>7}: {:^28} The material shading node is missing or has a wrong type,  ".format("Info", shadingEngine)
             matShadNode = mc.shadingNode(matShadNodeType, asShader=True)
             mc.connectAttr(matShadNode+".outColor", shadingEngine+'.aiSurfaceShader', force =True)
