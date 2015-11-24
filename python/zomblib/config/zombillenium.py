@@ -156,6 +156,11 @@ class asset_lib(object):
     "anim_ref":{"create_sg_version":True,
                 "sg_steps":("Rigging",), },
 
+    "render_scene":{"create_sg_version":True,
+                    "sg_tasks":("Shading",), },
+    "render_ref":{"create_sg_version":True,
+                  "sg_tasks":("Shading",), },
+
     "master_scene":{"create_sg_version":True,
                     "sg_steps":("Model HD", "Surfacing"), },
     "master_ref":{"create_sg_version":True,
