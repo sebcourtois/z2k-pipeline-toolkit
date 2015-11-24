@@ -135,7 +135,7 @@ def setArnoldRenderOption(outputFormat):
         mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",1)
 
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseSamples",0)
-    mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples",3)
+    mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples",2)
     mc.setAttr("defaultArnoldRenderOptions.GIRefractionSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.sssBssrdfSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp",1)

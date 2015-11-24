@@ -233,7 +233,7 @@ def updateArnoldTargetFilePreview(*args):
     
         # get the project's image directory
         #
-        imgDir = pm.workspace("images", q=True, fileRuleEntry=True)
+        imgDir = pm.workspace(fileRuleEntry="images")
         fullPath = pm.workspace(expandName=imgDir)
         pathLabel = pm.mel.uiRes("m_createMayaSoftwareCommonGlobalsTab.kNewPath")
         path = pm.format(pathLabel, s=fullPath)

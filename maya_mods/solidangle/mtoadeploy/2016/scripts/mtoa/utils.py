@@ -392,7 +392,7 @@ def getFileName(pathType, tokens, path='<Scene>', frame=None, fileType='images',
     if pathType in [pm.api.MCommonRenderSettingsData.kRelativePath, 'relative']:
         return partialPath
 
-    imageDir = pm.workspace(fileType, q=True, fileRuleEntry=True)
+    imageDir = pm.workspace(fileRuleEntry=fileType)
     imageDir = imageDir if imageDir else 'data'
     imageDir = pm.workspace(expandName=imageDir);
 
@@ -465,7 +465,7 @@ def createLocator(locatorType, asLight=False):
     return (shapeName, lName)
 
 def getSourceImagesDir():
-    sourceImagesRule = cmds.workspace('sourceImages', query=True, fileRuleEntry=True)
+    sourceImagesRule = cmds.workspace(fileRuleEntry='sourceImages')
     if sourceImagesRule != None:
         sourceImagesRule = sourceImagesRule.split(';')
         ret = []
