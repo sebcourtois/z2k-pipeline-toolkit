@@ -572,7 +572,15 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
                 if surfShadTrsConnect: 
                     mc.connectAttr(surfShadTrsConnect, preShadNode+'.transparency', force =True)
             else:
-                mc.delete(preShadNode[-1])
+                if mc.nodeType(preShadNode[-1]) == "dmnToon":
+                    if not matShadNode:
+                        oDmnToon=pm.PyNode(preShadNode[-1]+'.outColor')
+                        oDmnToon.connect(shadingEngine+'.aiSurfaceShader')
+                        matShadNode =  mc.listConnections(shadingEngine+'.aiSurfaceShader',connections = False)
+                    oSgrSurShad = pm.PyNode(shadingEngine+'.surfaceShader')
+                    oSgrSurShad.disconnect()
+                else:
+                    mc.delete(preShadNode[-1])
                 preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
                 mc.setAttr(preShadNode+'.diffuse', 0.1)
                 mc.setAttr(preShadNode+'.ambientColor', 0.9, 0.9, 0.9, type = "double3")
@@ -582,7 +590,11 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         else:
             preShadNode = preShadNode[-1]
 
-        matShadNodeType = mc.nodeType(matShadNode[-1])
+        try:
+            matShadNodeType = mc.nodeType(matShadNode[-1])
+        except:
+            matShadNodeType = "None"
+
         if not matShadNode or matShadNodeType not in matShadNodeTypeList:
             if verbose == True: print "#### {:>7}: {:^28} The material shading node is missing or has a wrong type,  ".format("Info", shadingEngine)
             matShadNode = mc.shadingNode(matShadNodeType, asShader=True)
