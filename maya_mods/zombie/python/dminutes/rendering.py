@@ -137,7 +137,7 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples",2)
     mc.setAttr("defaultArnoldRenderOptions.GIRefractionSamples",0)
-    mc.setAttr("defaultArnoldRenderOptions.sssBssrdfSamples",0)
+    mc.setAttr("defaultArnoldRenderOptions.GISssSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp",1)
     mc.setAttr("defaultArnoldRenderOptions.AASampleClamp",2.5)
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
