@@ -13,9 +13,15 @@ from davos.tools import create_dirs_n_files
 
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
-#from pytd.util.sysutils import inDevMode
+from pytd.util.sysutils import inDevMode
 
 from pytd.util.sysutils import toStr
+
+if inDevMode():
+    try:
+        from pytaya.util import refparser
+    except ImportError:
+        pass
 
 def doCreateFolders(sEntiType, *args):
     create_dirs_n_files.launch(sEntiType, dryRun=False,

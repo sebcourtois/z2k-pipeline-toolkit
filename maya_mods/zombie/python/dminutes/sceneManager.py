@@ -322,7 +322,7 @@ class SceneManager():
         self.context['sceneEntry'] = None
         self.context['sceneData'] = {}
 
-        curScenePath = os.path.abspath(cmds.file(q=True, sn=True))
+        curScenePath = os.path.abspath(pc.sceneName())
         if curScenePath != '':
             entry = self.context['damProject'].entryFromPath(curScenePath)
             if entry != None:
@@ -435,7 +435,7 @@ class SceneManager():
         if entry == None:
             pc.error("Cannot get entry for context {0}".format(self.context))
 
-        currentScene = os.path.abspath(cmds.file(q=True, sn=True))
+        currentScene = os.path.abspath(pc.sceneName())
         if currentScene == '':
             pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
@@ -448,7 +448,7 @@ class SceneManager():
     #     if entry == None:
     #         pc.error("Cannot get entry for context {0}".format(self.context))
 
-    #     currentScene = os.path.abspath(cmds.file(q=True, sn=True))
+    #     currentScene = os.path.abspath(pc.sceneName())
     #     if currentScene == '':
     #         pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
@@ -474,7 +474,7 @@ class SceneManager():
         if entry == None:
             pc.error("Cannot get entry for context {0}".format(self.context))
 
-        currentScene = os.path.abspath(cmds.file(q=True, sn=True))
+        currentScene = os.path.abspath(pc.sceneName())
         if currentScene == '':
             pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
@@ -510,7 +510,7 @@ class SceneManager():
 
             CAPTUREINFO['user'] = self.context['damProject']._shotgundb.currentUser['name']
             #Infer capture path
-            scenePath = cmds.file(q=True, sn=True)
+            scenePath = pc.sceneName()
             CAPTUREINFO['scene'] = os.path.basename(scenePath)
 
             capturePath = scenePath.replace(".ma", ".mov")
@@ -652,7 +652,7 @@ class SceneManager():
         return privFile
 
     def publish(self):
-        currentScene = os.path.abspath(cmds.file(q=True, sn=True))
+        currentScene = os.path.abspath(pc.sceneName())
         if currentScene != '':
             entry = self.context['damProject'].entryFromPath(currentScene)
             if entry == None:
