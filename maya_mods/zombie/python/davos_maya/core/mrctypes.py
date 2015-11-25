@@ -65,7 +65,7 @@ class MrcFile(DrcFile):
         if not result:
             return
 
-        return myasys.openScene(privFile.absPath(), force=True)
+        return myasys.openScene(privFile.absPath(), force=True, fail=False)
 
     def mayaImportScene(self, *args, **kwargs):
 
