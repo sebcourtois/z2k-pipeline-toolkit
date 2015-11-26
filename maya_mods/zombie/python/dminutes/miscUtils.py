@@ -105,6 +105,11 @@ def deleteUnknownNodes():
     for each in unknownNodes:
         print "#### {:>7}: '{}' is unknowed".format("Warning", each)
 
+    try:
+        mc.unloadPlugin("Turtle",force = True)
+    except:
+        pass
+
 
 
 def setAttrC(*args, **kwargs):
