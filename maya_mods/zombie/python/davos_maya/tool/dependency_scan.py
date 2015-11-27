@@ -533,7 +533,8 @@ def _setPublishableState(resultDct):
 #        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
 
     if not bUpToDate:
-        sMsg = "Public file is OUT OF SYNC"
+        sMsg = """Public file appears to have been modified from another site.
+Wait for the next file synchronization and retry publishing."""
         scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
     else:
         bPublishable = True

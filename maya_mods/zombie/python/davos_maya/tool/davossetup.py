@@ -20,6 +20,7 @@ from pytd.util.sysutils import toStr
 if inDevMode():
     try:
         from pytaya.util import refparser
+        from davos_maya.tool import reference
     except ImportError:
         pass
 

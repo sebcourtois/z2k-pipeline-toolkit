@@ -228,56 +228,6 @@ def getCameraRig():
 
     return camInfo
 
-#Camera manipulation scripts
-def camCTRLReplace():
-    dCamInfo = getCameraRig()
-
-    vCamT = dCamInfo['Transform'].getTranslation(space='world')
-    vCamR = dCamInfo['Transform'].getRotation(space='world')
-    vCamS = dCamInfo['Transform'].getScale()
-
-    dCamInfo['Global'].setTranslation([vCamT[0], 0, vCamT[2]], space='world')
-    dCamInfo['Global'].setRotation([0, vCamR[1], 0], space='world')
-    dCamInfo['Local'].setTranslation(vCamT, space='world')
-    dCamInfo['Local'].setRotation([0, vCamR[1], 0], space='world')
-    dCamInfo['Dolly'].setRotation(vCamR, space='world')
-    dCamInfo['Dolly'].setTranslation([0, 0, 0], space='object')
-
-    dCamInfo['Transform'].setTranslation([0, 0, 0], space='object')
-    dCamInfo['Transform'].setRotation([0, 0, 0], space='object')
-    dCamInfo['Transform'].setScale([1, 1, 1])
-
-def camKeyAll():
-    dCamInfo = getCameraRig()
-
-    mc.setKeyframe(dCamInfo['Global'].longName(), dCamInfo['Local'].longName(), dCamInfo['Dolly'].longName(), dCamInfo['Transform'].longName(), attribute=['translateX', 'translateY', 'translateZ', 'rotateX', 'rotateY', 'rotateZ'])
-    mc.setKeyframe(dCamInfo['Shape'].longName(), attribute=['focalLength'])
-
-def camRemKey():
-    dCamInfo = getCameraRig()
-
-    mc.cutKey(dCamInfo['Global'].longName(), dCamInfo['Local'].longName(), dCamInfo['Dolly'].longName(), dCamInfo['Transform'].longName(), attribute=['translateX', 'translateY', 'translateZ', 'rotateX', 'rotateY', 'rotateZ'])
-    mc.cutKey(dCamInfo['Shape'].longName(), attribute=['focalLength'])
-
-def camToZero():
-    dCamInfo = getCameraRig()
-
-    vCamT = dCamInfo['Transform'].getTranslation(space='world')
-    vCamR = dCamInfo['Transform'].getRotation(space='world')
-    vCamS = dCamInfo['Transform'].getScale()
-
-    dCamInfo['Global'].setTranslation([0, 0, 0], space='world')
-    dCamInfo['Global'].setRotation([0, 0, 0], space='world')
-    dCamInfo['Local'].setTranslation([0, 0, 0], space='world')
-    dCamInfo['Local'].setRotation([0, 0, 0], space='world')
-    dCamInfo['Dolly'].setRotation([0, 0, 0], space='world')
-    dCamInfo['Dolly'].setTranslation([0, 0, 0], space='world')
-
-    dCamInfo['Transform'].setTranslation(vCamT, space='world')
-    dCamInfo['Transform'].setRotation(vCamR, space='world')
-    dCamInfo['Transform'].setScale([1, 1, 1])
-
-
 #GLOBALS METHODS
 def canDo(s_inCommand, s_inTask):
     cmd = COMMANDS.get(s_inCommand)
