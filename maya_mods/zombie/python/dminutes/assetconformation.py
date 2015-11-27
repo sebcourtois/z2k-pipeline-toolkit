@@ -1,6 +1,9 @@
 import maya.cmds as mc
+import pymel.core as pm
 import re
 import string
+import miscUtils
+import os
 
 
 
@@ -336,3 +339,238 @@ def setShadingMask(selectFailingNodes = False, verbose = True, gui = True):
 
 
 
+class Asset_File_Conformer:
+    def __init__(self):
+        if mc.ls("|asset"):        
+            self.mainFilePath = mc.file(q=True, list = True)[0]
+            self.mainFilePathElem = self.mainFilePath.split("/")
+            self.assetName = self.mainFilePathElem[-2]
+            self.assetType = self.mainFilePathElem[-3]
+            self.sourceFile = "render"
+            self.sourceList =[]
+            self.targetList =[]
+            self.sourceTargetListMatch = False
+            self.sourceTargetTopoMatch = False
+
+            if  self.mainFilePathElem[-4] == "asset":
+                self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_render.ma"))
+                self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
+            else:
+                raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+        else :
+            raise ValueError("#### Error: no '|asset' could be found in this scene")
+
+
+    def inportFile(self,sourceFile = "render"):
+        if sourceFile in ["render","anim","modeling"]:
+            self.sourceFile = sourceFile
+        else:
+            raise ValueError("#### Error: the choosen sourceFile '"+sourceFile+"'' is not correct")
+        print "#### {:>7}: importing '{}'".format("Info",self.renderFilePath_exp)
+        mc.file( self.renderFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True )
+
+
+    def cleanFile(self):
+        refNodeList = mc.ls(type = "reference")
+        for each in refNodeList:
+            if re.match('^render[0-9]{0,3}:[a-zA-Z0-9]{1,255}', each) or re.match('^anim[0-9]{0,3}:[a-zA-Z0-9]{1,255}', each) or re.match('^modeling[0-9]{0,3}:[a-zA-Z0-9]{1,255}', each):
+                fileRef= pm.FileReference(each)
+                try:
+                    print "#### {:>7}:removing reference '{}'".format("Info",fileRef.path)
+                    fileRef.remove()
+                except :
+                    pass
+
+        nameSpaceList = mc.namespaceInfo(listOnlyNamespaces=True,r=True)
+        for each in nameSpaceList:
+            if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each):
+                node2deleteList = mc.ls(each+":*")
+                for node2delete in node2deleteList:
+                    mc.lockNode(node2delete,lock = False)
+
+        nameSpaceList = mc.namespaceInfo(listOnlyNamespaces=True)
+        for each in nameSpaceList:
+            if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each):
+                print "#### {:>7}:removing namespace and its content: '{:<10}' ".format("Info",each)
+                mc.namespace(removeNamespace=each, deleteNamespaceContent=True)
+
+
+    
+
+    def initSourceTargetList(self, targetObjects = "set_meshCache"):
+        """
+        targetObjects = "set_meshCache" "selection" or a given list
+            - set_meshCache, or given list :  the method initiate the sourceList (prefixing targets obj with the name space) and targetList automaticaly
+            - selection, (2 transforms expected) fisrt object selected is the source, the second is the target
+
+        """
+        self.sourceList =[]
+        self.targetList =[]
+
+        if targetObjects == "set_meshCache" or isinstance(targetObjects, (list,tuple,set)):
+            errorOnTarget = 0
+            errorOnSource = 0
+            if targetObjects == "set_meshCache":
+                if mc.ls("set_meshCache"):
+                    targetObjects = mc.sets('set_meshCache',q=True)
+                else:
+                    print ("#### {:>7}: no 'set_meshCache' could be found".format("Error", each))
+                    errorOnTarget = errorOnTarget + 1                   
+
+            for each in targetObjects:
+                if mc.ls(each):
+                    self.targetList.append(each)
+                else:
+                    print ("#### {:>7}: no '{}' object could be found".format("Error", each))
+                    errorOnTarget = errorOnTarget + 1
+
+            for eachTarget in self.targetList:
+                #eachSource = self.sourceFile+":"+eachTarget
+                eachSource = self.sourceFile+":"+("|"+self.sourceFile+":").join(eachTarget.split("|"))
+                if mc.ls(eachSource):
+                    self.sourceList.append(eachSource)
+                else:
+                    errorOnSource = errorOnSource + 1
+                    print ("#### {:>7}: target --> '{:<30}'  has no correspondig source --> '{}'".format("Error",eachTarget, eachSource))
+
+            if errorOnTarget != 0: self.targetList =[]
+            if errorOnSource != 0: self.sourceList =[]
+
+
+        elif targetObjects == "selection":
+            mySelection = mc.ls(selection=True)
+            if len(mySelection)== 2:
+                if mc.nodeType(mySelection[0]) == "transform":
+                    self.sourceList = [mySelection[0]]
+                else:
+                    print ("#### {:>7}: selected source is not a 'transform' node".format("Error"))
+
+                if mc.nodeType(mySelection[1]) == "transform":
+                    self.targetList = [mySelection[1]]
+                else:
+                    print ("#### {:>7}: selected target is not a 'transform' node".format("Error"))
+            else:
+                print ("#### {:>7}: 2 objects must be selected, source first then target".format("Error"))
+                print ("#### {:>7}: selection {}".format("Error",mySelection))
+    
+
+        else:
+            raise ValueError("#### Error: can't recognize targetObjects: '"+targetObjects+"'' value, should be 'set_meshCache' or a list")
+
+        if self.targetList and len(self.sourceList) == len(self.targetList):
+            self.sourceTargetListMatch = True
+        else:
+            self.sourceTargetListMatch = False
+            print "#### {:>7}: target list and source list not conform".format("Error")
+            print "#### {:>7}: source {}".format("Error", self.sourceList)
+            print "#### {:>7}: target {}".format("Error", self.targetList)
+
+
+
+    def printSourceTarget(self):
+        if self.targetList and len(self.sourceList) == len(self.targetList):
+            targetNb = len (self.targetList)
+            i = 0
+            while i<targetNb:
+                print self.sourceList[i]+" --> "+self.targetList[i]
+                i+=1
+        else:
+            print "#### {:>7}: target list and source list not conform".format("Error")
+            print "#### {:>7}: source {}".format("Error", self.sourceList)
+            print "#### {:>7}: target {}".format("Error", self.targetList)
+
+
+
+    def checkSourceTargetTopoMatch(self):
+        if self.sourceTargetListMatch == True:
+            i = 0
+            topoMismatch = 0
+            while i < len(self.targetList):
+
+                sourceVrtxCnt = len(mc.getAttr(self.sourceList[i]+".vrts[:]"))
+                targetVrtxCnt = len(mc.getAttr(self.targetList[i]+".vrts[:]"))
+                if sourceVrtxCnt != targetVrtxCnt:
+                    topoMismatch = topoMismatch + 1
+                    print ("#### {:>7}: Vertex number mismatch: '{}' vertex nb = {} -- '{}' vertex nb = {}".format("Error",self.sourceList[i],sourceVrtxCnt, self.targetList[i],targetVrtxCnt))
+
+                sourceBBox =  mc.exactWorldBoundingBox(self.sourceList[i])
+                targetBBox =  mc.exactWorldBoundingBox(self.targetList[i])
+                if sourceVrtxCnt != targetVrtxCnt:
+                    print ("#### {:>7}: Bounding box  mismatch: '{}' -- '{}'".format("Info",self.sourceList[i], self.targetList[i]))
+
+                i+=1
+
+            if topoMismatch == 0:
+                self.sourceTargetTopoMatch = True
+            else:
+                self.sourceTargetTopoMatch = False
+        else:
+            print "#### {:>7}: cannot check topoligie, target and source list mismatch".format("Error")
+
+
+
+    def transferUv(self):
+        if self.sourceTargetListMatch == True:
+            i = 0
+            uvTransferFailed = 0
+            while i < len(self.targetList):
+                sourceShapeLn = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
+                targetShapeLn = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
+                print self.sourceList[i]+" --> "+self.targetList[i]
+                #mc.transferAttributes( self.sourceList[i], self.targetList[i], sampleSpace=5, transferUVs=2 )
+                i+=1
+        else:
+            print "#### {:>7}: cannot transfer uvs, target and source list mismatch".format("Error")
+
+
+    def smoothPolyDisplay(self, inMeshList = []):
+        for each in inMeshList:
+                mc.polySoftEdge (each, angle=180, constructionHistory=True)
+                mc.bakePartialHistory( each, prePostDeformers=True)
+                print "#### {:>7}: polySoftEdge -> '{:^30}'".format("Info",each)
+
+
+    def transferRenderAttr(self):
+        shapeAttrList = ["boundaryRule", "continuity", "smoothUVs", "propagateEdgeHardness", "keepMapBorders", "keepBorder", "keepHardEdge",
+                        "castsShadows", "receiveShadows", "holdOut", "motionBlur", "primaryVisibility",
+                        "smoothShading", "visibleInReflections", "visibleInRefractions", "doubleSided", "opposite",
+                        "aiSelfShadows", "aiOpaque", "aiVisibleInDiffuse", "aiVisibleInGlossy", "aiMatte", "aiSubdivUvSmoothing", "aiSubdivSmoothDerivs"]
+
+        if self.sourceTargetListMatch == True:
+            i = 0
+            shapeTransferFailed = 0
+            attrTransferFailed = 0
+            while i < len(self.targetList):
+                sourceShapeLn = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
+                targetShapeLn = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
+                if len(sourceShapeLn) != 1 or len(targetShapeLn) != 1:
+                    if len(sourceShapeLn) != 1:
+                        print ("#### {:>7}: {} shape(s) found under transform: '{}'".format("Error",len(sourceShapeLn), self.sourceList[i]))
+                    if len(targetShapeLn) != 1:
+                        print ("#### {:>7}: {} shape(s) found under transform: '{}'".format("Error",len(targetShapeLn), self.targetList[i]))
+                    shapeTransferFailed += 1
+                else:
+                    for each in shapeAttrList:
+                        attrValue = mc.getAttr(sourceShapeLn[0]+"."+each)
+                        attrTransfOk = miscUtils.setAttrC(targetShapeLn[0]+"."+each,attrValue)
+                        if attrTransfOk == False:
+                            attrTransferFailed += 1
+                i+=1
+            if shapeTransferFailed != 0 or attrTransferFailed != 0:
+                if shapeTransferFailed != 0:
+                    print ("#### {:>7}: Rendering attribute transfer failed for {} shape(s)".format("Error",shapeTransferFailed))
+                if attrTransferFailed != 0:
+                    print ("#### {:>7}: Rendering attribute transfer failed for {} attribute(s)".format("Warning",attrTransferFailed))
+            else:
+                print ("#### {:>7}: Rendering attribute transfered properly ({} objects)".format("Info",len(self.targetList)))
+        else:
+            print "#### {:>7}: cannot transfer rendering attributes, target and source list mismatch".format("Error")
+
+
+
+
+
+
+
+
+   

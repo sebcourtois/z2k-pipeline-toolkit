@@ -250,7 +250,16 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
 
     for eachFileNode in fileNodeList:
         wrongFileNode = False
+
+        uvTilingMode = mc.getAttr(eachFileNode+".uvTilingMode")#3 is mari UVDI, 0 is off
+        useFrameExtension = mc.getAttr(eachFileNode+".useFrameExtension")#0 is not a sequence, 1 is a sequence
+
         mapFilePath = miscUtils.normPath(mc.getAttr(eachFileNode+".fileTextureName"))
+        #fix udim file node settind
+        if re.search('.1[0-9]{3}.[a-zA-Z0-9]{3}$', mapFilePath) and useFrameExtension == 0 :
+            mapFilePath = re.sub('.1[0-9]{3}.','.1001.',mapFilePath)
+            mc.setAttr(eachFileNode+".fileTextureName",mapFilePath,type = 'string')
+
         mapFilePathExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePath)))
         mapPath = os.path.split(mapFilePath)[0]
         fileName = os.path.split(mapFilePath)[1]       
@@ -260,7 +269,8 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         publicMapFilePath = miscUtils.normPath(miscUtils.pathJoin(publicMapdir,fileName))
 
 
-        uvTilingMode = mc.getAttr(eachFileNode+".uvTilingMode")
+
+
 
 
 
