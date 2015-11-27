@@ -741,6 +741,10 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
             wrongFileNodeList.append(eachFileNode)
             continue
 
+        if "$ZOMB_TEXTURE_PATH" in mapFilePath or os.path.expandvars(os.path.expandvars("$ZOMB_TEXTURE_PATH")) in mapFilePath:
+            print "#### {:>7}: '{}' skipping '.jpg' creation, texture is in the public directory: '{}'".format("Info",eachFileNode,mapFilePath)
+            continue
+
         if mainFilePathElem[-3] == "chr": 
             LOD = 3
         else:
