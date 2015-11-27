@@ -348,7 +348,7 @@ class environment3d(set3d):
     entity_class = "davos.core.damtypes.DamAsset"
 
     prefix = "env"
-    aliases = (prefix, "Env 3D",)
+    aliases = (prefix, "Environment",)
     assetType = prefix
 
     dependency_types = asset_lib.dependency_types
