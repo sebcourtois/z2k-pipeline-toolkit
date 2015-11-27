@@ -915,6 +915,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
         privateMapFilePathExpanded = miscUtils.pathJoin(privateMapdirExpand,fileName)
         privateMapFilePath = miscUtils.pathJoin(privateMapdir,fileName)
 
+
         if mapFilePathExpand != tgaFilePathExpand: 
             print "#### {:>7}: '{}' FileNode, wrong file format: '{}',  should be a tga".format("Error",eachFileNode,tgaFilePathExpand.split(".")[-1])
             wrongFileNodeList.append(eachFileNode)
@@ -924,6 +925,10 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
         elif not os.path.isfile(mapFilePathExpand) and not os.path.isfile(tgaFilePathExpand):
             print "#### {:>7}: '{}' Missing File  -->  {}".format("Error", eachFileNode, mapFilePathExpand)
             wrongFileNodeList.append(eachFileNode)
+            continue
+
+        if "$ZOMB_TEXTURE_PATH" in mapFilePath or os.path.expandvars(os.path.expandvars("$ZOMB_TEXTURE_PATH")):
+            print "#### {:>7}: '{}' skipping '.tx' creation, texture is in the public directory: '{}'".format("Info",eachFileNode,mapFilePath)
             continue
 
         makeTxForArnold(inputFilePathName = tgaFilePathExpand, outputFilePathName = "", updateOnly = updateOnly)
