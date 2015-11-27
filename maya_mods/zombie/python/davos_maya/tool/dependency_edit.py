@@ -135,7 +135,8 @@ def editTextureFiles(dryRun=False):
                              }
 
             if not pubFile.isUpToDate():
-                sMsg = "Sorry, you have to wait for the file to be synced"
+                sMsg = """The file appears to have been modified from another site.
+File needs to be synced before you can edit it."""
                 scanLogDct.setdefault("error", []).append(('FileOutOfSync', sMsg))
                 #print "File is OUT OF SYNC: '{}'".format(sPubTexPath)
             else:
