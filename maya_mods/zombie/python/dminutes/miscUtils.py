@@ -115,5 +115,7 @@ def deleteUnknownNodes():
 def setAttrC(*args, **kwargs):
     try:
         mc.setAttr(*args, **kwargs)
+        return True
     except:
         print "#### {:>7}: setAttr {}{} not possible, attribute is locked or connected".format("Warning", args, kwargs)
+        return False
