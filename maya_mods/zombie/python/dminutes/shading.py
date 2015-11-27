@@ -927,7 +927,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
             wrongFileNodeList.append(eachFileNode)
             continue
 
-        if "$ZOMB_TEXTURE_PATH" in mapFilePath or os.path.expandvars(os.path.expandvars("$ZOMB_TEXTURE_PATH")):
+        if "$ZOMB_TEXTURE_PATH" in mapFilePath or os.path.expandvars(os.path.expandvars("$ZOMB_TEXTURE_PATH")) in mapFilePath:
             print "#### {:>7}: '{}' skipping '.tx' creation, texture is in the public directory: '{}'".format("Info",eachFileNode,mapFilePath)
             continue
 
