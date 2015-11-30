@@ -6,7 +6,7 @@ import pymel.util as pmu
 from functools import partial
 
 from pytaya.util.toolsetup import ToolSetup
-from pytaya.util import qtutils as  myaqt
+from pytaya.util import qtutils as myaqt
 #from pytd.util.sysutils import toStr
 
 from davos.tools import create_dirs_n_files
@@ -68,9 +68,10 @@ class DavosSetup(ToolSetup):
 
         pm.colorManagementPrefs(e=True, cmEnabled=False)
 
-        if not pm.stackTrace(q=True, state=True):
-            pm.mel.ScriptEditor()
-            pm.mel.handleScriptEditorAction("showStackTrace")
+        if not pm.about(batch=True):
+            if not pm.stackTrace(q=True, state=True):
+                pm.mel.ScriptEditor()
+                pm.mel.handleScriptEditorAction("showStackTrace")
 
         import logging
 

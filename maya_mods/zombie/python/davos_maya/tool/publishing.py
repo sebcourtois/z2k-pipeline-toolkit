@@ -200,7 +200,7 @@ def publishCurrentScene(*args, **kwargs):
     if not sSavedScnPath:
         raise RuntimeError("Could not save your current scene !")
 
-    res = proj.publishEditedVersion(sCurScnPath,
+    res = proj.publishEditedVersion(sSavedScnPath,
                                     version=iNextVers,
                                     comment=sComment,
                                     sgTask=sgTaskInfo,
