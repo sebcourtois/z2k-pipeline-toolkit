@@ -561,6 +561,11 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
     return unFreezedTransfomList if unFreezedTransfomList != [] else  None
 
 def compareHDToPreviz():
+    """
+    This script has been made at dreamwall, to compare previz and master modeling structure you must import the previz file as a reference, 
+    the asset node should have this kind of name: "nameSpace:asset_previz". then select the previz asset transform and the master asst transform, 
+    run the script and read the log
+    """
     # compare asset_hi to asset_previz ( compare translate-rotate of group are the same and local pivot rotate-scale of hi must be 0).
     import maya.cmds as cmds
 
