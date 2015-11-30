@@ -1099,7 +1099,7 @@ def cleanMentalRayNodes ( toDeleteL=['mentalrayGlobals','mentalrayItemsList','mi
 
     return [toReturnB,toDeleteL,deletedL,failL]
 
-def cleanTurtleNodes ( toDeleteL=["TurtleDefaultBakeLayer"], *args, **kwargs):
+def cleanTurtleNodes ( toDeleteL=["TurtleDefaultBakeLayer"], check=False, *args, **kwargs):
     """ Description: Delete all turtle in toDeleteL
         Return : [toReturnB,toDeleteL,deletedL,failL]
         Dependencies : cmds - 
@@ -1116,7 +1116,8 @@ def cleanTurtleNodes ( toDeleteL=["TurtleDefaultBakeLayer"], *args, **kwargs):
         if cmds.objExists(i):
             try:
                 cmds.lockNode(i, lock=False)
-                cmds.delete(i)
+                if not check:
+                    cmds.delete(i)
                 deletedL.append(i)
             except:
                 toReturnB=False
