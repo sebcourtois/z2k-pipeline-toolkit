@@ -10,7 +10,7 @@ import maya.cmds as cmds
 import maya.mel
 
 #import tkMayaCore as tkc
-
+from zomblib import shotgunengine
 from davos.core import damproject
 from davos.core.damtypes import DamShot
 
@@ -18,6 +18,7 @@ from davos.core.utils import versionFromName
 
 import dminutes.maya_scene_operations as mop
 import dminutes.jipeLib_Z2K as jpZ
+from pytd.util.fsutils import pathResolve
 reload(jpZ)
 import dminutes.camImpExp as camIE
 reload(camIE)
@@ -28,18 +29,15 @@ reload(infoE)
 # get zomb project
 PROJECTNAME = os.environ.get("DAVOS_INIT_PROJECT")
 
-noneValue = 'NONE'
+noneValue = 'MISSING'
 notFoundvalue = 'NOT FOUND'
 
 #FROM DAVOS !!!!
-STEP_FILE_REL = {'Previz 3D':'previz_scene'}
-TASK_FILE_REL = {'previz 3D':'previz_scene'}
-TASK_ASSET_REL = {'previz 3D':'previz_ref', 'animation':'anim_ref'}
+STEP_FILE_REL = {'Previz 3D':'previz_scene', 'Layout':'layout_scene'}
+TASK_FILE_REL = {'previz 3D':'previz_scene', 'layout':'layout_scene'}
+TASK_ASSET_REL = {'previz 3D':'previz_ref', 'layout':'anim_ref', 'animation':'anim_ref'}
 
 LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
-
-FILE_SUFFIXES = {'Previz 3D':'_previz.ma'}
-
 
 
 def getReversedDict(in_dict):
@@ -270,27 +268,6 @@ class SceneManager():
             path = self.context['damProject'].getPath('public', lib, s_inFileTag, tokens=tokens)
         except Exception, e:
             pc.warning('damProject.getPath failed with {0}, {1}, {2} : {3}'.format(lib, s_inFileTag, tokens, e))
-
-        """
-        #This part was usefull when davos was not completely configured, should be pointless now
-        if path == None and False:
-            path = self.context['damProject'].getPath('public', lib, 'entity_dir', tokens=tokens)
-            fileName = None
-            
-            if d_inEntity['type'] == 'Asset':
-                fileName = d_inEntity[nameKey] + FILE_SUFFIXES[self.context['step']['name']]
-            elif d_inEntity['type'] == 'Shot':
-                fileName = d_inEntity[nameKey] + FILE_SUFFIXES[self.context['step']['name']]
-
-            if 'ref' in s_inFileTag:
-                path = os.path.join(path, 'ref')
-                fileName = fileName.replace('.ma', '.mb')
-
-            if fileName == None:
-                pc.error('Cannot get file name of {0} on {1}'.format(s_inFileTag, d_inEntity))
-
-            path = pathNorm(os.path.join(path, fileName))
-        """
 
         return path
 
@@ -687,11 +664,10 @@ class SceneManager():
     def getAssetsInfo(self):
         """Compare Shotgun shot<=>assets linking and scene content"""
         sgAssets = self.getShotgunContent()
-        sceneAssets = mop.getSceneContent(self)
+
+        shotAssetsDct = dict((d['asset']['name'], d) for d in sgAssets)
 
         assetsInfo = []
-
-        remainingAssets = list(sceneAssets)
 
         #consider previz_ref as default
         fileTag = "previz_ref"
@@ -701,44 +677,39 @@ class SceneManager():
         else:
             pc.warning('Cannot detect file tag from task {0}, {1} used by default !!'.format(self.context['task']['content'], fileTag))
 
-        for assetOccurence in sgAssets:
-            occurences = assetOccurence['sg_occurences']
-            path = self.getPath(assetOccurence['asset'], fileTag)
-            exists = False
-            print "*path=", path
-            print '{0} time(s) {1} ({2}) with path {3}'.format(occurences, assetOccurence['asset']['name'], fileTag, path)
-            if path:
-                if os.path.isfile(path):
-                    #print 'Asset found {0} !'.format(assetOccurence['asset']['name'])
-                    exists = True
-                else:
-                    pc.warning('Asset NOT found {0} ({1})!'.format(assetOccurence['asset']['name'], path))
+        proj = self.context['damProject']
+        astLib = proj.getLibrary("public", "asset_lib")
 
-                dbInfo = assetOccurence['asset']['name']
-                if not exists:
-                    dbInfo += ' ({0})'.format(notFoundvalue)
-                else:
-                    dbInfo += " (" + fileTag + ")"
+        sRefPathList = []
+        for oFileRef in pc.listReferences():
 
-                localInfo = noneValue
-                foundSceneAsset = None
-                for sceneAsset in remainingAssets:
-                    if path == sceneAsset['path']:
-                        foundSceneAsset = sceneAsset
-                        localInfo = sceneAsset['name'] + " (" + fileTag + ")"
-                        break
+            sRefPath = pathResolve(oFileRef.path)
 
-                if foundSceneAsset != None:
-                    remainingAssets.remove(foundSceneAsset)
-
-                assetsInfo.append({'name':assetOccurence['asset']['name'], 'localinfo':localInfo, 'dbinfo':dbInfo, 'path':path})
-
+            if sRefPath in sRefPathList:
+                continue
             else:
-                pc.warning('PATH= NONE  -> Asset NOT found {0} ({1})!'.format(assetOccurence['asset']['name'], path))
+                sRefPathList.append(sRefPath)
 
-        for remainingAsset in remainingAssets:
-            assetFullName = remainingAsset['name'] + " (" + self.getFiletagFromPath(remainingAsset['path']) + ")"
-            assetsInfo.append({'name':remainingAsset['name'], 'localinfo':assetFullName, 'dbinfo':noneValue, 'path':remainingAsset['path']})
+            sFilename = os.path.basename(sRefPath)
+            info = {'name':'UNKNOWN', 'scn_info':sFilename, 'sg_info':noneValue, 'path':sRefPath}
+
+            damAst = proj.entityFromPath(sRefPath, library=astLib, fail=False)
+            if not damAst:
+                info['scn_info'] = "UNKNOWN ASSET"
+                assetsInfo.append(info)
+                continue
+
+            sAstName = damAst.name
+            info['name'] = sAstName
+            shotAst = shotAssetsDct.pop(sAstName, None)
+            if shotAst is not None:
+                info['sg_info'] = sAstName
+
+            assetsInfo.append(info)
+
+        for sAstName in shotAssetsDct.iterkeys():
+            info = {'name':sAstName, 'scn_info':noneValue, 'sg_info':sAstName, 'path':""}
+            assetsInfo.append(info)
 
         return assetsInfo
 
@@ -748,15 +719,15 @@ class SceneManager():
     #     assetsInfo = self.getAssetsInfo()
 
     #     for assetInfo in assetsInfo:
-    #         #print 'assetInfo["dbinfo"] ' + str(assetInfo['dbinfo'])
-    #         #print 'assetInfo["localinfo"] ' + str(assetInfo['localinfo'])
+    #         #print 'assetInfo["sg_info"] ' + str(assetInfo['sg_info'])
+    #         #print 'assetInfo["scn_info"] ' + str(assetInfo['scn_info'])
     #         #print 'assetInfo["path"]' + str(assetInfo['path'])
-    #         if assetInfo['dbinfo'] == noneValue:
+    #         if assetInfo['sg_info'] == noneValue:
     #             if not addOnly:
     #                 #Asset that does not exist in shot, remove
     #                 mop.removeAsset(self.collapseVariables(assetInfo['path']))
-    #         elif assetInfo['dbinfo'] != assetInfo['localinfo']:
-    #             if notFoundvalue in assetInfo['dbinfo']:
+    #         elif assetInfo['sg_info'] != assetInfo['scn_info']:
+    #             if notFoundvalue in assetInfo['sg_info']:
     #                 pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
     #             else:
     #                 mop.importAsset(self.collapseVariables(assetInfo['path']), assetInfo['name'] + "_1")
@@ -769,8 +740,8 @@ class SceneManager():
         assetsInfo = self.getAssetsInfo()
         errorL = []
         for assetInfo in assetsInfo:
-            # print '**          assetInfo["dbinfo"] ' + str(assetInfo['dbinfo'])
-            # print '**          assetInfo["localinfo"] ' + str(assetInfo['localinfo'])
+            # print '**          assetInfo["sg_info"] ' + str(assetInfo['sg_info'])
+            # print '**          assetInfo["scn_info"] ' + str(assetInfo['scn_info'])
             # print '**          assetInfo["path"]' + str(assetInfo['path'])
 
             try:
@@ -778,12 +749,12 @@ class SceneManager():
                 drcFile = self.context["damProject"].entryFromPath(assetInfo['path'])
                 The_ASSET_PATH = drcFile.envPath()
                 # print "* The_ASSET_PATH=", The_ASSET_PATH
-                if assetInfo['dbinfo'] == noneValue:
+                if assetInfo['sg_info'] == noneValue:
                     if not addOnly:
                         #Asset that does not exist in shot, remove
                         mop.removeAsset(The_ASSET_PATH)
-                elif assetInfo['dbinfo'] != assetInfo['localinfo']:
-                    if notFoundvalue in assetInfo['dbinfo']:
+                elif assetInfo['sg_info'] != assetInfo['scn_info']:
+                    if notFoundvalue in assetInfo['sg_info']:
                         pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
                     else:
                         mop.importAsset(The_ASSET_PATH, assetInfo['name'] + "_1")

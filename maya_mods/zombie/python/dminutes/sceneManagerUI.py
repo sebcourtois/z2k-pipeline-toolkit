@@ -6,10 +6,10 @@ import os
 import pymel.core as pc
 
 from dminutes import sceneManager
-reload(sceneManager)
+#reload(sceneManager)
 
 import dminutes.maya_scene_operations as mop
-reload(mop)
+#reload(mop)
 
 """Global instance of sceneManager Class"""
 SCENE_MANAGER = None
@@ -51,15 +51,19 @@ def sceneManagerUI():
 
 def initialize(d_inContext=None):
     """Initialize default values (Operator AllowedSteps and CurrentStep...), hide forbidden buttons"""
+
+    curSgUser = SG.currentUser
+    userSgStep = curSgUser['sg_currentstep']
+
     #User info
-    pc.textField('sm_user_bt', edit=True, text=SG.currentUser['name'])
+    pc.textField('sm_user_bt', edit=True, text=curSgUser['name'])
     pc.textField('sm_project_bt', edit=True, text=SCENE_MANAGER.projectname)
 
-    steps = [astep['name'] for astep in SG.currentUser['sg_allowedsteps']]
+    steps = [astep['name'] for astep in curSgUser['sg_allowedsteps']]
     refreshOptionMenu('sm_step_dd', steps)
 
-    if SG.currentUser['sg_currentstep'] != None and SG.currentUser['sg_currentstep']['name'] in steps:
-        pc.optionMenu("sm_step_dd", edit=True, value=SG.currentUser['sg_currentstep']['name'])
+    if userSgStep is not None and userSgStep['name'] in steps:
+        pc.optionMenu("sm_step_dd", edit=True, value=userSgStep['name'])
 
     if d_inContext != None:
         SCENE_MANAGER.init(d_inContext)
@@ -69,7 +73,7 @@ def initialize(d_inContext=None):
     pc.control("sm_createFolder_bt", edit=True, visible=False)
     pc.control("sm_edit_bt", edit=True, visible=False)
 
-    doStepChanged()
+    doStepChanged(updateStep=False)
 
     setContextUI()
 
@@ -101,9 +105,11 @@ def setContextUI():
         #print context
         somethingChanged = False
 
+        print context["step"]
         somethingChanged |= setOption("sm_step_dd", context["step"])
 
         if "shot" in context:
+            print context["seq"], context["shot"]
             somethingChanged |= setOption("sm_seq_dd", context["seq"])
             somethingChanged |= setOption("sm_shot_dd", context["shot"])
 
@@ -140,7 +146,7 @@ def setOption(s_inName, s_inValue):
         pc.optionMenu(s_inName, edit=True, value=s_inValue)
         changed = True
         if s_inName == 'sm_step_dd':
-            doStepChanged()
+            doStepChanged(updateStep=False)
         elif s_inName == 'sm_categ_dd' or s_inName == 'sm_seq_dd':
             doCategChanged()
         elif s_inName == 'sm_asset_dd' or s_inName == 'sm_shot_dd':
@@ -174,11 +180,12 @@ def refreshStep(*args):
         CATEG_ITEMS = {}
         for shot in shots:
             if shot['sg_sequence'] == None:
-                pc.warning('entity {0} with category "None" will be ignored'.format(shot['code']))
+                pc.warning('entity {0} with category "None" will be ignored'
+                           .format(shot['code']))
                 continue
 
             seqName = shot['sg_sequence']['name']
-            if not seqName in CATEG_ITEMS:
+            if seqName not in CATEG_ITEMS:
                 categ_names.append(seqName)
                 CATEG_ITEMS[seqName] = {}
 
@@ -197,7 +204,8 @@ def refreshStep(*args):
         CATEG_ITEMS = {}
         for asset in assets:
             if asset['sg_asset_type'] == None:
-                pc.warning('entity {0} with category "None" will be ignored'.format(asset['code']))
+                pc.warning('entity {0} with category "None" will be ignored'
+                           .format(asset['code']))
                 continue
 
             if not asset['sg_asset_type'] in CATEG_ITEMS:
@@ -258,21 +266,32 @@ def doDisconnect(*args):
     SG.logoutUser()
     sceneManagerUI()
 
-def doStepChanged(*args):
+def doStepChanged(*args, **kwargs):
     #print args
-    step = pc.optionMenu("sm_step_dd", query=True, value=True)
-    SCENE_MANAGER.context['step'] = None
+    bUpdSg = kwargs.get("updateStep", True)
+
+    prevStep = SCENE_MANAGER.context.get('step')
+    stepName = pc.optionMenu("sm_step_dd", query=True, value=True)
+    newStep = None
 
     for allowedStep in SG.currentUser['sg_allowedsteps']:
-        if allowedStep['name'] == step:
-            SCENE_MANAGER.context['step'] = allowedStep
-            SG.updateStep(allowedStep)
+        if allowedStep['name'] == stepName:
+            newStep = allowedStep
+            if bUpdSg:
+                print "updating {}'s step to {}".format(SG.currentUser["name"], allowedStep)
+                SG.updateStep(allowedStep)
             break
 
-    if SCENE_MANAGER.context['step'] == None:
-        pc.error('Cannot get entity type from step {0} !'.format(step))
+    if newStep == None:
+        pc.error('Cannot get entity type from step {0} !'.format(stepName))
+    else:
+        SCENE_MANAGER.context['step'] = newStep
 
-    refreshStep(*args)
+    if (not prevStep) or (prevStep['entity_type'] != newStep['entity_type']):
+        refreshStep(*args)
+    else:
+        doEntityChanged()
+
 
 def doCategChanged(*args):
     categCtrlName = 'sm_seq_dd' if SCENE_MANAGER.context['step']['entity_type'] == 'Shot' else 'sm_categ_dd'
@@ -367,19 +386,21 @@ def doRefreshSceneInfo(*args):
 
     lengths = [20, 20]
     for assetInfo in assetsInfo:
-        if len(assetInfo['localinfo']) > lengths[0]:
-            lengths[0] = len(assetInfo['localinfo'])
+        if len(assetInfo['scn_info']) > lengths[0]:
+            lengths[0] = len(assetInfo['scn_info'])
 
-        if len(assetInfo['dbinfo']) > lengths[1]:
-            lengths[1] = len(assetInfo['dbinfo'])
+        if len(assetInfo['sg_info']) > lengths[1]:
+            lengths[1] = len(assetInfo['sg_info'])
 
     formatting = " {0:<" + str(lengths[0]) + "}| {1:<" + str(lengths[1]) + "}"
 
     pc.textScrollList("sm_sceneInfo_lb", edit=True, removeAll=True)
-    pc.textScrollList("sm_sceneInfo_lb", edit=True, append=formatting.format("SCENE", "DATABASE"))
+    rowTexts = ("SCENE REFERENCES", "SHOT RELATED ASSETS")
+    pc.textScrollList("sm_sceneInfo_lb", edit=True, append=formatting.format(*rowTexts))
 
     for assetInfo in assetsInfo:
-        pc.textScrollList("sm_sceneInfo_lb", edit=True, append=formatting.format(assetInfo['localinfo'], assetInfo['dbinfo']))
+        rowTexts = (assetInfo['scn_info'], assetInfo['sg_info'])
+        pc.textScrollList("sm_sceneInfo_lb", edit=True, append=formatting.format(*rowTexts))
 
 def doUnlock(*args):
     """Simply unlocks current entry, but button is hidden (forbidden)"""
