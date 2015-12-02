@@ -107,6 +107,7 @@ def infosFromMayaScene(*args, **kwargs):
         Return : dict
         Dependencies : cmds - getCatL - getAssetTypeL
     """
+    print ("infosFromMayaScene()")
     testOk = True
     outD = {}
     scenePathTmp = cmds.file(q=1 ,sceneName=True)

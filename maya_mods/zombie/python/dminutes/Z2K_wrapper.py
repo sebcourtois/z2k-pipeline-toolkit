@@ -8,7 +8,7 @@ from davos.core.damtypes import DamAsset
 import os, sys
 import maya.cmds as cmds
 import maya.mel as mel
-
+import pymel.core as pm
 
 def projConnect(theProject="zombtest",*args,**kwargs):
     """
@@ -65,6 +65,7 @@ def getPath(proj="", assetName="", pathType="previz_ref", *args, **kwargs):
 
 def openFileReadOnly(proj="",Path_publish_public="", autoAction="overwrite", *args, **kwargs):
     print "openFileReadOnly()"
+    # BUGGED EN MODE BATCH A CHECKER
     tab= "    "
     if not os.path.exists(Path_publish_public):
         with open(Path_publish_public, 'w') as f:
@@ -74,8 +75,9 @@ def openFileReadOnly(proj="",Path_publish_public="", autoAction="overwrite", *ar
     pubFile = proj.entryFromPath(Path_publish_public)
     # privFile = pubFile.__class__.__base__.edit(pubFile)
     print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!pubFile=", pubFile
-    privFile = pubFile.mayaOpen(existing=autoAction)
-
+    pubFile.mayaOpen(existing=autoAction)
+    # wip test avant prifPath = mayaopen...
+    privFile = proj.entryFromPath(cmds.file(q=1,sceneName = True))
     print tab,"public_file_Version=",pubFile.currentVersion
     print tab, "privFile=",privFile
 

@@ -383,7 +383,7 @@ class checkModule(object):
         
         return boolResult
         
-    @jpZ.waiter
+    # @jpZ.waiter
     def btn_CheckObjects(self, controlN="", *args, **kwargs):
         boolResult=True
 
