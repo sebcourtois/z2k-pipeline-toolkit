@@ -75,9 +75,9 @@ def openFileReadOnly(proj="",Path_publish_public="", autoAction="overwrite", *ar
     pubFile = proj.entryFromPath(Path_publish_public)
     # privFile = pubFile.__class__.__base__.edit(pubFile)
     print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!pubFile=", pubFile
-    pubFile.mayaOpen(existing=autoAction)
+    privFile = pubFile.mayaOpen(existing=autoAction)
     # wip test avant prifPath = mayaopen...
-    privFile = proj.entryFromPath(cmds.file(q=1,sceneName = True))
+    # privFile = proj.entryFromPath(cmds.file(q=1,sceneName = True))
     print tab,"public_file_Version=",pubFile.currentVersion
     print tab, "privFile=",privFile
 

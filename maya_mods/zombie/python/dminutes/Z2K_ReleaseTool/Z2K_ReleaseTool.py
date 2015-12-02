@@ -158,7 +158,7 @@ class Z2K_ReleaseTool (object):
         return path_private_toEdit
 
 
-    def release_Asset(self,destinationAsset="chr_aurelien_manteau", destinationAssetType = "previz_ref",
+    def release_Asset(self, destinationAsset="chr_aurelien_manteau", destinationAssetType = "previz_ref",
         theComment= "auto rock the casbah release !", autoUnlock = False,
         *args, **kwargs):
         print "release_Asset()"
@@ -170,7 +170,7 @@ class Z2K_ReleaseTool (object):
         print "path_private_toPublish=", path_private_toPublishAbs
         
         # check if current file is published
-        path_public,path_private = Z2K.getPath(proj=self.proj, assetName=self.sourceAsset, pathType=self.SourceAssetType)
+        path_public,path_private = Z2K.getPath(proj=self.proj, assetName=self.sourceAsset, pathType=self.sourceAssetType)
         print "path_public=", path_public
         print "path_private=", path_private
         #pubFile is a MrcFile
@@ -248,7 +248,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         # self = Z2K_ReleaseTool
         Z2K_ReleaseTool.__init__(self,sourceAsset,assetCat,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject,theComment,debug)
         # self.sourceAsset = sourceAsset
-        # self.SourceAssetType = SourceAssetType
+        # self.sourceAssetType = SourceAssetType
         # self.destinationAsset = destinationAsset
         # self.destinationAssetType = destinationAssetType
         # self.projConnectB = projConnectB
@@ -379,7 +379,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         
         cmds.optionMenu(self.BsourceAssetMenu ,e=True, value=self.sourceAsset)
         cmds.textField(self.BsourceAsset,e=1, text=self.sourceAsset)
-        cmds.textField(self.BsourceAssetType, e=1, text=self.SourceAssetType)
+        cmds.textField(self.BsourceAssetType, e=1, text=self.sourceAssetType)
 
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.destinationAsset)
         cmds.textField(self.BdestinationAsset,e=1, text=self.destinationAsset)
@@ -405,7 +405,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             # set inReleaseTool context
             self.assetCat = infoDict["assetCat"]
             self.sourceAsset =infoDict["assetName"]
-            self.SourceAssetType =infoDict["assetType"]+"_scene"
+            self.sourceAssetType =infoDict["assetType"]+"_scene"
             self.destinationAsset =infoDict["assetName"]
             self.destinationAssetType = infoDict["assetType"]+"_ref"
             self.theComment = "released From " + infoDict["version"] 
@@ -423,23 +423,23 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             tab = "    "
             if  self.assetCat in ["chr"]:
                 print "It' is a CHAR test"
-                if self.SourceAssetType in ["modeling_scene"]:
+                if self.sourceAssetType in ["modeling_scene"]:
                     print tab, "modeling, test not ready"
                     # set DEBUG FILE here
                     theDebugFile  = DEBUGFILE_MODELING_CHR
 
-                elif self.SourceAssetType in ["render_scene"]:
+                elif self.sourceAssetType in ["render_scene"]:
                     print tab, "render, test not ready"
                     # set DEBUG FILE here
                     theDebugFile  = DEBUGFILE_RENDER_CHR
 
-                elif self.SourceAssetType in ["previz_scene"]:
+                elif self.sourceAssetType in ["previz_scene"]:
                     print tab, "previz"
                     Z2K_Pcheck = Z2K_Pcheck_CHAR
                     # set DEBUG FILE here
                     theDebugFile  = DEBUGFILE_PREVIZ_CHR
 
-                elif self.SourceAssetType in ["anim_scene"]:
+                elif self.sourceAssetType in ["anim_scene"]:
                     print tab, "anim-> same as props"
                     Z2K_Pcheck = Z2K_Pcheck_PROP
                     # set DEBUG FILE here
@@ -452,23 +452,23 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
             elif  self.assetCat in ["prp","vhl","c2d","env","fxp"]:
                 print "It' is a PROP test"
-                if self.SourceAssetType in ["modeling_scene"]:
+                if self.sourceAssetType in ["modeling_scene"]:
                     print tab, "modeling, test not ready"
                     # set DEBUG FILE here
                     theDebugFile  = DEBUGFILE_MODELING_PRP
 
-                elif self.SourceAssetType in ["render_scene"]:
+                elif self.sourceAssetType in ["render_scene"]:
                     print tab, "render, test not ready"
                     # set DEBUG FILE here
                     theDebugFile  = DEBUGFILE_RENDER_PRP
 
-                elif self.SourceAssetType in ["previz_scene"]:
+                elif self.sourceAssetType in ["previz_scene"]:
                     print tab, "previz"
                     # set DEBUG FILE here
                     theDebugFile  = DEBUGFILE_PREVIZ_PRP
                     Z2K_Pcheck = Z2K_Pcheck_PROP
 
-                elif self.SourceAssetType in ["anim_scene"]:
+                elif self.sourceAssetType in ["anim_scene"]:
                     print tab, "anim"
                     # set DEBUG FILE here
                     theDebugFile  = DEBUGFILE_ANIM_PRP
@@ -477,23 +477,23 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
                 
             elif  self.assetCat in ["set"]:
                 print "It' is a SET test"
-                if self.SourceAssetType in ["modeling_scene"]:
+                if self.sourceAssetType in ["modeling_scene"]:
                     print tab, "modeling, test not ready"
                     # set DEBUG FILE here
                     theDebugFile  = DEBUGFILE_MODELING_SET
 
-                elif self.SourceAssetType in ["render_scene"]:
+                elif self.sourceAssetType in ["render_scene"]:
                     print tab, "render, test not ready"
                     # set DEBUG FILE here
                     theDebugFile  = DEBUGFILE_RENDER_SET
 
-                elif self.SourceAssetType in ["previz_scene"]:
+                elif self.sourceAssetType in ["previz_scene"]:
                     print tab, "previz"
                     # set DEBUG FILE here
                     theDebugFile  = DEBUGFILE_PREVIZ_SET
                     Z2K_Pcheck = Z2K_Pcheck_SET
                     
-                elif self.SourceAssetType in ["anim_scene"]:
+                elif self.sourceAssetType in ["anim_scene"]:
                     print tab, "anim, test not ready"
                     # set DEBUG FILE here
                     theDebugFile  = DEBUGFILE_ANIM_SET
