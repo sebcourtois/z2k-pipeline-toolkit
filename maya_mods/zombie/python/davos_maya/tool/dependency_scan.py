@@ -247,21 +247,22 @@ def scanTextureDependency(damEntity):
 
     for fileNode in allFileNodes:
 
-        sTexPath = fileNode.getAttr("fileTextureName")
-        if not sTexPath:
+        sNodePath = fileNode.getAttr("fileTextureName")
+        if not sNodePath:
             continue
 
         iTilingMode = fileNode.getAttr("uvTilingMode")
         bUvTileOn = (iTilingMode != 0)
         bUdim = (iTilingMode == UDIM_MODE)
 
-        sTexAbsPath = pathResolve(sTexPath)
+        sNodeAbsPath = pathResolve(sNodePath)
+        sNodeNormPath = normCase(sNodeAbsPath)
 
         sUdimFileList = []
-        sTexAbsPathList = (sTexAbsPath,)
+        sTexAbsPathList = (sNodeAbsPath,)
         if bUdim:
-            sUdimPat = makeUdimFilePattern(sTexAbsPath)
-            sTexAbsPathList = sorted(iterPaths(osp.dirname(sTexAbsPath), dirs=False,
+            sUdimPat = makeUdimFilePattern(sNodeAbsPath)
+            sTexAbsPathList = sorted(iterPaths(osp.dirname(sNodeAbsPath), dirs=False,
                                              recursive=False,
                                              keepFiles=ignorePatterns(sUdimPat)
                                              ))
@@ -274,11 +275,13 @@ def scanTextureDependency(damEntity):
             foundBudResList = []
 
             sTexNormPath = normCase(sTexAbsPath)
+            bNodePath = (sTexNormPath == sNodeNormPath)
             if sTexNormPath in fileNodeDct:
-                fileNodeDct[sTexNormPath].append(fileNode)
+                if bNodePath:
+                    fileNodeDct[sTexNormPath].append(fileNode)
                 continue
             else:
-                fileNodeDct[sTexNormPath] = [fileNode]
+                fileNodeDct[sTexNormPath] = [fileNode] if bNodePath else []
 
             if bUvTileOn and (not bUdim):
                 sMsg = "Only UDIM (Mari) accepted"
@@ -533,7 +536,8 @@ def _setPublishableState(resultDct):
 #        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
 
     if not bUpToDate:
-        sMsg = "Public file is OUT OF SYNC"
+        sMsg = """Public file appears to have been modified from another site.
+Wait for the next file synchronization and retry publishing."""
         scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
     else:
         bPublishable = True

@@ -250,7 +250,16 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
 
     for eachFileNode in fileNodeList:
         wrongFileNode = False
+
+        uvTilingMode = mc.getAttr(eachFileNode+".uvTilingMode")#3 is mari UVDI, 0 is off
+        useFrameExtension = mc.getAttr(eachFileNode+".useFrameExtension")#0 is not a sequence, 1 is a sequence
+
         mapFilePath = miscUtils.normPath(mc.getAttr(eachFileNode+".fileTextureName"))
+        #fix udim file node settind
+        if re.search('.1[0-9]{3}.[a-zA-Z0-9]{3}$', mapFilePath) and useFrameExtension == 0 :
+            mapFilePath = re.sub('.1[0-9]{3}.','.1001.',mapFilePath)
+            mc.setAttr(eachFileNode+".fileTextureName",mapFilePath,type = 'string')
+
         mapFilePathExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePath)))
         mapPath = os.path.split(mapFilePath)[0]
         fileName = os.path.split(mapFilePath)[1]       
@@ -260,7 +269,8 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         publicMapFilePath = miscUtils.normPath(miscUtils.pathJoin(publicMapdir,fileName))
 
 
-        uvTilingMode = mc.getAttr(eachFileNode+".uvTilingMode")
+
+
 
 
 
@@ -572,7 +582,15 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
                 if surfShadTrsConnect: 
                     mc.connectAttr(surfShadTrsConnect, preShadNode+'.transparency', force =True)
             else:
-                mc.delete(preShadNode[-1])
+                if mc.nodeType(preShadNode[-1]) == "dmnToon":
+                    if not matShadNode:
+                        oDmnToon=pm.PyNode(preShadNode[-1]+'.outColor')
+                        oDmnToon.connect(shadingEngine+'.aiSurfaceShader')
+                        matShadNode =  mc.listConnections(shadingEngine+'.aiSurfaceShader',connections = False)
+                    oSgrSurShad = pm.PyNode(shadingEngine+'.surfaceShader')
+                    oSgrSurShad.disconnect()
+                else:
+                    mc.delete(preShadNode[-1])
                 preShadNode = mc.shadingNode(preShadNodeType, asShader=True)
                 mc.setAttr(preShadNode+'.diffuse', 0.1)
                 mc.setAttr(preShadNode+'.ambientColor', 0.9, 0.9, 0.9, type = "double3")
@@ -582,7 +600,11 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         else:
             preShadNode = preShadNode[-1]
 
-        matShadNodeType = mc.nodeType(matShadNode[-1])
+        try:
+            matShadNodeType = mc.nodeType(matShadNode[-1])
+        except:
+            matShadNodeType = "None"
+
         if not matShadNode or matShadNodeType not in matShadNodeTypeList:
             if verbose == True: print "#### {:>7}: {:^28} The material shading node is missing or has a wrong type,  ".format("Info", shadingEngine)
             matShadNode = mc.shadingNode(matShadNodeType, asShader=True)
@@ -717,6 +739,10 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
         elif not(mapFilePath == tgaFilePath or mapFilePath == jpgFilePath): 
             print "#### {:>7}: '{}' FileNode, wrong file format: '{}',  should be a jpg or tga".format("Error",eachFileNode,mapFilePath.split(".")[-1])
             wrongFileNodeList.append(eachFileNode)
+            continue
+
+        if "$ZOMB_TEXTURE_PATH" in mapFilePath or os.path.expandvars(os.path.expandvars("$ZOMB_TEXTURE_PATH")) in mapFilePath:
+            print "#### {:>7}: '{}' skipping '.jpg' creation, texture is in the public directory: '{}'".format("Info",eachFileNode,mapFilePath)
             continue
 
         if mainFilePathElem[-3] == "chr": 
@@ -903,6 +929,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
         privateMapFilePathExpanded = miscUtils.pathJoin(privateMapdirExpand,fileName)
         privateMapFilePath = miscUtils.pathJoin(privateMapdir,fileName)
 
+
         if mapFilePathExpand != tgaFilePathExpand: 
             print "#### {:>7}: '{}' FileNode, wrong file format: '{}',  should be a tga".format("Error",eachFileNode,tgaFilePathExpand.split(".")[-1])
             wrongFileNodeList.append(eachFileNode)
@@ -912,6 +939,10 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
         elif not os.path.isfile(mapFilePathExpand) and not os.path.isfile(tgaFilePathExpand):
             print "#### {:>7}: '{}' Missing File  -->  {}".format("Error", eachFileNode, mapFilePathExpand)
             wrongFileNodeList.append(eachFileNode)
+            continue
+
+        if "$ZOMB_TEXTURE_PATH" in mapFilePath or os.path.expandvars(os.path.expandvars("$ZOMB_TEXTURE_PATH")) in mapFilePath:
+            print "#### {:>7}: '{}' skipping '.tx' creation, texture is in the public directory: '{}'".format("Info",eachFileNode,mapFilePath)
             continue
 
         makeTxForArnold(inputFilePathName = tgaFilePathExpand, outputFilePathName = "", updateOnly = updateOnly)

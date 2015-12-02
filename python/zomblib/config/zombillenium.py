@@ -156,6 +156,11 @@ class asset_lib(object):
     "anim_ref":{"create_sg_version":True,
                 "sg_steps":("Rigging",), },
 
+    "render_scene":{"create_sg_version":True,
+                    "sg_tasks":("Shading",), },
+    "render_ref":{"create_sg_version":True,
+                  "sg_tasks":("Shading",), },
+
     "master_scene":{"create_sg_version":True,
                     "sg_steps":("Model HD", "Surfacing"), },
     "master_ref":{"create_sg_version":True,
@@ -201,10 +206,9 @@ class charbase(object):
         {
         "ref -> ref_dir":
             {
+            "{name}_previzRef.mb -> previz_ref":None,
             "{name}_animRef.mb -> anim_ref":None,
-            "{name}_modelingRef.mb-> modeling_ref":None,
-            "{name}_previzRef.mb-> previz_ref":None,
-            "{name}_renderRef.mb-> render_ref":None,
+            "{name}_renderRef.mb -> render_ref":None,
             },
         "review -> review_dir":
             {
@@ -258,9 +262,8 @@ class prop3d(object):
         {
         "ref -> ref_dir":
             {
-            "{name}_animRef.mb -> anim_ref":None,
-            "{name}_modelingRef.mb -> modeling_ref":None,
             "{name}_previzRef.mb -> previz_ref":None,
+            "{name}_animRef.mb -> anim_ref":None,
             "{name}_renderRef.mb -> render_ref":None,
             },
         "review -> review_dir":
@@ -320,8 +323,10 @@ class set3d(object):
         {
         "ref -> ref_dir":
             {
-            "{name}_previzRef.mb-> previz_ref":None,
-            "{name}_masterRef.mb-> master_ref":None,
+            "{name}_previzRef.mb -> previz_ref":None,
+            "{name}_animRef.mb -> anim_ref":None,
+            "{name}_renderRef.mb -> render_ref":None,
+            #"{name}_masterRef.mb -> master_ref":None,
             },
         "review -> review_dir":
             {
@@ -343,7 +348,7 @@ class environment3d(set3d):
     entity_class = "davos.core.damtypes.DamAsset"
 
     prefix = "env"
-    aliases = (prefix, "Env 3D",)
+    aliases = (prefix, "Environment",)
     assetType = prefix
 
     dependency_types = asset_lib.dependency_types

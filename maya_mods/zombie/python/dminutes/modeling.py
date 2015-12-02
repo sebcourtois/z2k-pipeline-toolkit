@@ -560,6 +560,79 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
 
     return unFreezedTransfomList if unFreezedTransfomList != [] else  None
 
+def compareHDToPreviz():
+    """
+    This script has been made at dreamwall, to compare previz and master modeling structure you must import the previz file as a reference, 
+    the asset node should have this kind of name: "nameSpace:asset_previz". then select the previz asset transform and the master asst transform, 
+    run the script and read the log
+    """
+    # compare asset_hi to asset_previz ( compare translate-rotate of group are the same and local pivot rotate-scale of hi must be 0).
+    import maya.cmds as cmds
+
+    ## previz is the ref, hi could have more group but not less, and check localspace pivot translate et scale MUST be 0 !
+
+    errorCount = 0;
+    sel = cmds.ls(sl=True, type='transform') # get the transform(s) selected
+    #print sel
+    if len(sel) == 2: # test if current selection has 2 nodes
+         assetPreviz = sel[1]
+         assetHi = sel[0]
+         if "_previz" in sel[0]:
+             assetPreviz = sel[0]
+             assetHi = sel[1]
+
+         print("***** comparing translations and rotations value from " +assetHi + " to reference " + assetPreviz)
+         groupsPreviz = cmds.listRelatives(assetPreviz, ad=True, f=True,type='transform') # get all transforms with ful path
+         #print ("* " + str(groupsPreviz))
+         for groupPreviz in groupsPreviz:
+             #print (groupPreviz + " " + groupPreviz.split("|")[-1])
+             if "grp_" in groupPreviz.split("|")[-1] or "geo_" in groupPreviz.split("|")[-1]: # if the transform is a group
+                 # get positions, rotations of locator
+                 rotPreviz = cmds.xform(groupPreviz,q=True,ws=1,ro=1) #get rotations
+                 posPreviz = cmds.xform(groupPreviz,q=True,ws=1,t=1) # gettranslations
+                 #print rotPreviz
+                 #print posPreviz
+                 groupHi = groupPreviz.replace(assetPreviz, assetHi) #build groupPreviz name
+                 if cmds.objExists(groupHi): # test if group exists ?
+                     rotHi = cmds.xform(groupHi,q=True,ws=1,ro=1) # get rotations
+                     posHi = cmds.xform(groupHi,q=True,ws=1,t=1) # get translations
+                     error = False
+                     if cmp(rotHi, rotPreviz):
+                         print("\tERROR in group: " + groupHi + " has different rotate values: " + str(rotHi) + " instead of previz : " +str(rotPreviz))
+                         error = True
+                         errorCount += 1
+                     if cmp(posHi, posPreviz):
+                         print("\tERROR in group: " + groupHi + " has different translation values: " + str(posHi) + " instead of previz : "+ str(posPreviz))
+                         error = True
+                         errorCount += 1
+                     # test local pivot rotate and scale
+                     localPivotRotateHi =cmds.xform(groupHi,q=True,os=1,rp=1) # get local rotate pivot
+                     localPivotScaleHi =cmds.xform(groupHi,q=True,os=1,sp=1) # get local scale pivot
+                     if cmp(localPivotRotateHi, [0,0,0]):
+                         print("\tERROR in group: " + groupHi + " has local pivot rotate values: " + str(localPivotRotateHi))
+                         error = True
+                         errorCount += 1
+                     if cmp(localPivotScaleHi, [0,0,0]):
+                         print("\tERROR in group: " + groupHi + " has local pivot scale values: " + str(localPivotScaleHi))
+                         error = True
+                         errorCount += 1
+
+                 else:
+                     print("\tERROR: group: " + groupHi + " is missing")
+             else:
+                 print("\tERROR: group has not the good nomenclature: " + groupPreviz)
+
+         if (errorCount != 0):
+             if (errorCount == 1):
+                 print("**** " + str(errorCount) + " error found ")
+             else:
+                 print("**** " + str(errorCount) + " errors found ")
+         else:
+             print("**** checking done, no error")
+
+    else:
+         print ("\n***** please select both asset hi-def and asset previz and try again") 
+
 
 
 # -------------------------- RIG SUPPLEMENT -------------------------------------------------------------------

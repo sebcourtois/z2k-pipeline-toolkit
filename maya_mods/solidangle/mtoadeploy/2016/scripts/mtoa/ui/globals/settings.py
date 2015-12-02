@@ -452,13 +452,13 @@ def createArnoldSamplingSettings():
     pm.connectControl('ss_refraction_samples', 'defaultArnoldRenderOptions.GIRefractionSamples', index=2)
     pm.connectControl('ss_refraction_samples', 'defaultArnoldRenderOptions.GIRefractionSamples', index=3)    
 
-    pm.attrControlGrp('ss_sss_bssrdf_samples',
+    pm.attrControlGrp('ss_sss_samples',
                         label='SSS',
-                        attribute='defaultArnoldRenderOptions.sss_bssrdf_samples')
+                        attribute='defaultArnoldRenderOptions.GI_sss_samples')
     
-    pm.attrControlGrp('ss_volume_indirect_samples',
+    pm.attrControlGrp('ss_volume_samples',
                         label='Volume Indirect',
-                        attribute='defaultArnoldRenderOptions.volume_indirect_samples')
+                        attribute='defaultArnoldRenderOptions.GI_volume_samples')
 
     pm.separator()
     

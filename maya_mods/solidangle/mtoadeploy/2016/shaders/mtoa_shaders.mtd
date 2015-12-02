@@ -84,7 +84,7 @@
 [node volume_sample_float]
 
     maya.id    INT     0x00115E51
-    maya.classification     STRING  "shader/volume"
+    maya.classification     STRING  "shader/utility/volume"
     maya.swatch             BOOL    False
 
     [attr channel]
@@ -160,7 +160,7 @@
 
 [node volume_sample_rgb]
 maya.id                 INT     0x00115E52
-maya.classification     STRING  "shader/volume"
+maya.classification     STRING  "shader/utility/volume"
 maya.swatch             BOOL    False
 
 [attr channel]

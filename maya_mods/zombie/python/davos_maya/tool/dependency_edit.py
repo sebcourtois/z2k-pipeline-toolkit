@@ -12,6 +12,7 @@ from davos_maya.tool.general import entityFromScene
 
 from pytaya.core.rendering import fileNodesFromObjects
 from pytd.util.fsutils import pathResolve, normCase
+import subprocess
 
 #from pytd.util.sysutils import toStr
 
@@ -50,7 +51,10 @@ def editTextureFiles(dryRun=False):
     damEntity = entityFromScene(sCurScnPath)
 
     proj = damEntity.project
-    privScnFile = proj.entryFromPath(sCurScnPath)
+    pubLib = damEntity.getLibrary()
+    privLib = damEntity.getLibrary("private")
+
+    privScnFile = privLib.getEntry(sCurScnPath)
     pubScnFile = privScnFile.getPublicFile(fail=True)
 
     pubScnFile.assertEditedVersion(privScnFile)
@@ -120,7 +124,13 @@ def editTextureFiles(dryRun=False):
         for i, sPubFilePath in enumerate(sPubPathList):
 
             scanLogDct = {}
-            pubFile = proj.entryFromPath(sPubFilePath)
+            pubFile = pubLib.getEntry(sPubFilePath, dbNode=False)
+
+            cachedDbNode = pubFile.getDbNode(fromDb=False)
+            if cachedDbNode:
+                pubFile.refresh(simple=True)
+            else:
+                pubFile.getDbNode(fromCache=False)
 
             if i == 0:
                 resultDct = srcRes.copy()
@@ -134,8 +144,9 @@ def editTextureFiles(dryRun=False):
                              "drc_file":None,
                              }
 
-            if not pubFile.isUpToDate():
-                sMsg = "Sorry, you have to wait for the file to be synced"
+            if not pubFile.isUpToDate(refresh=False):
+                sMsg = """The file appears to have been modified from another site.
+File needs to be synced before you can edit it."""
                 scanLogDct.setdefault("error", []).append(('FileOutOfSync', sMsg))
                 #print "File is OUT OF SYNC: '{}'".format(sPubTexPath)
             else:
@@ -175,31 +186,35 @@ def editTextureFiles(dryRun=False):
         pm.displayWarning("No public textures to edit in current scene !")
         return
 
-    sMsgFmt = "\nUpdating {} path: \nfrom '{}'\n  to '{}'"
-
-    privFile = None
-
     def showScriptEditor():
         pm.mel.ScriptEditor()
         pm.mel.handleScriptEditorAction("maximizeHistory")
     mu.executeInMainThreadWithResult(showScriptEditor)
 
+    sMsgFmt = "\nRelinking '{}' node: \n    from '{}'\n      to '{}'"
+    privFile = None
+    sCopiedList = []
+    numLinked = 0
     for pubFile, fileNodes in pubFileItems:
 
-        privFile, _ = pubFile.copyToPrivateSpace(dry_run=dryRun)
-        sAbsPath = privFile.absPath()
+        privFile, bCopied = pubFile.copyToPrivateSpace(dry_run=dryRun)
+        if bCopied:
+            sCopiedList.append(privFile.name)
+        sPrivAbsPath = privFile.absPath()
 
         for fileNode in fileNodes:
 
-            sMsg = (sMsgFmt.format(repr(fileNode),
-                                   fileNode.getAttr("fileTextureName"),
-                                   sAbsPath))
-            print sMsg
+            sCurNodePath = fileNode.getAttr("fileTextureName")
+            curNodeFile = proj.entryFromPath(pathResolve(sCurNodePath), dbNode=False)
+            if curNodeFile.isPublic():
+                sMsg = sMsgFmt.format(fileNode.name(), sCurNodePath, sPrivAbsPath)
+                print sMsg
+                if not dryRun:
+                    fileNode.setAttr("fileTextureName", sPrivAbsPath)
+                numLinked += 1
 
-            if not dryRun:
-                fileNode.setAttr("fileTextureName", sAbsPath)
-
-    if privFile:
+    if sCopiedList:
         privFile.showInExplorer()
-        pm.displayInfo("{} public files copied and linked to your texture directory !"
-                       .format(len(pubFileItems)))
+
+    pm.displayInfo("copied files: {} -  relinked textures: {}."
+                   .format(len(sCopiedList), numLinked))
