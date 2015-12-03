@@ -119,3 +119,45 @@ def setAttrC(*args, **kwargs):
     except:
         print "#### {:>7}: setAttr {}{} not possible, attribute is locked or connected".format("Warning", args, kwargs)
         return False
+
+
+def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, emptyOnly=False, *args,**kwargs):
+        """ Description: Delete all NameSpace appart the ones in the NSexclusionL
+            Return : nothing
+            Dependencies : cmds - 
+        """
+        tab= "    "
+        #print "removeAllNamespace()"
+        toReturnB = True
+        # "UI","shared" NS are used by maya itself
+        NS_exclusionBL=["UI","shared"]
+        NS_exclusionBL.extend(NSexclusionL)
+        # set the current nameSpace to the root nameSpace
+        mc.namespace(setNamespace = ":")
+        # get NS list
+        nsL = mc.namespaceInfo(listOnlyNamespaces=True)# list content of a namespace  
+        
+
+        for loop in range(len(nsL)+2):
+            nsL = mc.namespaceInfo(listOnlyNamespaces=True)
+            for ns in nsL:
+                if ns not in NS_exclusionBL:
+                    if emptyOnly == False:
+                        if verbose: print tab+"ns:",ns
+                        mc.namespace( removeNamespace =ns, mergeNamespaceWithRoot=True)
+                    else:
+                        if not mc.namespaceInfo(ns,  listOnlyDependencyNodes= True):
+                            if verbose: print tab+"ns:",ns
+                            mc.namespace( removeNamespace =ns, mergeNamespaceWithRoot=True)
+
+        # recursive
+        if emptyOnly==False:
+            count = 0
+            nsLFin = mc.namespaceInfo(listOnlyNamespaces=True)
+            while len(nsLFin)>2:
+                removeAllNamespace(NSexclusionL = NSexclusionL, emptyOnly = emptyOnly, verbose= verbose)
+                count += 1
+                if count > limit:
+                    break
+
+        return [toReturnB]
