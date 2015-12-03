@@ -295,7 +295,7 @@ def deleteAovs():
     aovList = myAOVs.getAOVs()
     myAOVs.removeAOVs(aovList)
     aovs.refreshAliases()
-    print "#### {:>7}: 'softClean' has deleteded {} nodes".format("Info",deletedNodes)
+    print "#### {:>7}: 'deleteAovs' has deleted {} aovs".format("Info",len(aovList))
 
 
 
@@ -310,6 +310,7 @@ def createAovs():
     if not 'aiAOV_Z' in mc.ls( type = "aiAOV"):
         myAOVs.addAOV( "Z", aovType='float')
     aovs.refreshAliases()
+    print "#### {:>7}: 'createAovs' has created {} aovs".format("Info",len(aovNameList))
 
 
 
