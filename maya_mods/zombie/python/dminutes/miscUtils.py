@@ -84,12 +84,15 @@ def deleteUnknownNodes():
 
     mentalRayNodeList = mc.ls(mentalRayNodeList)
     turtleNodeList= mc.ls(turtleNodeList)
+    mentalRayDeletedNodeList = []
+    turtleDeletedNodeList = []
 
     for each in mentalRayNodeList:
         try:
             mc.lockNode(each,lock = False)
             mc.delete(each)
-            print "#### {:>7}: '{}' Mental Ray node deleted".format("Info", each)
+            mentalRayDeletedNodeList.append(each)
+            #print "#### {:>7}: '{}' Mental Ray node deleted".format("Info", each)
         except:
             print "#### {:>7}: '{}' Mental Ray node could not be deleted".format("Warning", each)
 
@@ -97,13 +100,22 @@ def deleteUnknownNodes():
         try:
             mc.lockNode(each,lock = False)
             mc.delete(each)
-            print "#### {:>7}: '{}' Turtle node deleted".format("Info", each)
+            turtleDeletedNodeList.append(each)
+            #print "#### {:>7}: '{}' Turtle node deleted".format("Info", each)
         except:
             print "#### {:>7}: '{}' Turtle node could not be deleted".format("Warning", each)
 
     unknownNodes = mc.ls(type = "unknown")
-    for each in unknownNodes:
-        print "#### {:>7}: '{}' is unknowed".format("Warning", each)
+    if unknownNodes:
+        print "#### {:>7}: '{}' unknown node has been found in the scene".format("Warning", len(unknownNodes))
+        print "#### {:>7}: unknown node list:'{}'".format("Warning", unknownNodes)
+
+    if mentalRayDeletedNodeList:
+        print "#### {:>7}: '{}' Mental Ray node(s) deteled: '{}'".format("Warning", len(mentalRayDeletedNodeList), mentalRayDeletedNodeList)
+
+    if turtleDeletedNodeList:
+        print "#### {:>7}: '{}' Turtle node(s) deteled: '{}".format("Warning", len(turtleDeletedNodeList), turtleDeletedNodeList)
+
 
     try:
         mc.unloadPlugin("Turtle",force = True)
