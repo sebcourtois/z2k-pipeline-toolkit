@@ -4,6 +4,7 @@ import re
 import string
 import miscUtils
 import os
+import dminutes.jipeLib_Z2K as jpZ
 
 
 
@@ -340,20 +341,23 @@ def setShadingMask(selectFailingNodes = False, verbose = True, gui = True):
 
 
 class Asset_File_Conformer:
-    def __init__(self):
+    def __init__(self,sourceFile = "render"):
         if mc.ls("|asset"):        
             self.mainFilePath = mc.file(q=True, list = True)[0]
             self.mainFilePathElem = self.mainFilePath.split("/")
             self.assetName = self.mainFilePathElem[-2]
             self.assetType = self.mainFilePathElem[-3]
-            self.sourceFile = "render"
+            if sourceFile in ["render","anim","modeling","previz"]:
+                self.sourceFile = sourceFile
+            else:
+                raise ValueError("#### Error: the choosen sourceFile '"+sourceFile+"'' is not correct")
             self.sourceList =[]
             self.targetList =[]
             self.sourceTargetListMatch = False
             self.sourceTargetTopoMatch = False
 
             if  self.mainFilePathElem[-4] == "asset":
-                self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_render.ma"))
+                self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile+".ma"))
                 self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
             else:
                 raise ValueError("#### Error: you are not working in an 'asset' structure directory")
@@ -361,11 +365,8 @@ class Asset_File_Conformer:
             raise ValueError("#### Error: no '|asset' could be found in this scene")
 
 
-    def importFile(self,sourceFile = "render"):
-        if sourceFile in ["render","anim","modeling"]:
-            self.sourceFile = sourceFile
-        else:
-            raise ValueError("#### Error: the choosen sourceFile '"+sourceFile+"'' is not correct")
+    def importFile(self):
+
         print "#### {:>7}: importing '{}'".format("Info",self.renderFilePath_exp)
         mc.file( self.renderFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True )
 
@@ -375,6 +376,7 @@ class Asset_File_Conformer:
         for each in refNodeList:
             if re.match('^render[0-9]{0,3}:[a-zA-Z0-9]{1,255}', each) or re.match('^anim[0-9]{0,3}:[a-zA-Z0-9]{1,255}', each) or re.match('^modeling[0-9]{0,3}:[a-zA-Z0-9]{1,255}', each):
                 fileRef= pm.FileReference(each)
+                #mc.referenceQuery(each,filename=True)# other way to do it
                 try:
                     print "#### {:>7}:removing reference '{}'".format("Info",fileRef.path)
                     fileRef.remove()
@@ -682,6 +684,57 @@ class Asset_File_Conformer:
         else:
             return False
 
+
+
+
+
+def softClean(struct2CleanList=["asset"]):
+    """
+    this script ientend to remove from the scene every node that do not has a link with the selected structure.
+    It also clean the empty namespaces
+    """
+    doNotDelete = ["set_control","set_meshCache","set_subdiv_0", "set_subdiv_1","set_subdiv_2","set_subdiv_3","set_subdiv_init","par_subdiv"]
+    intiSelection = mc.ls(selection = True)
+
+
+    #remove from any namespace all the nodes of ma structre to clean
+    mc.container (name="asset1", includeNetwork = True, includeShaders=True, includeHierarchyBelow=True, includeTransform=True, preview=True, addNode= struct2CleanList, force= True)
+    myAssetNodeList = mc.ls(selection = True)+doNotDelete
+    for each in myAssetNodeList:
+        if ":"in each:
+            mc.lockNode(each, lock=False)
+            newEach= mc.rename(each,each.split(":")[-1],ignoreShape=True)
+            print "#### {:>7}: Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
+
+
+    #delete all nodes that do not belong to my structure
+    mc.container (name="asset1", includeNetwork = True, includeShaders=True, includeHierarchyBelow=True, includeTransform=True, preview=True, addNode= struct2CleanList, force= True)
+    myAssetNodeList = mc.ls(selection = True)+doNotDelete
+    toDelete = list(set(mc.ls()) - set(myAssetNodeList)-set(mc.ls(lockedNodes = True))-set(mc.ls(referencedNodes = True))-set(mc.ls(type = "reference")))
+    if toDelete:
+        mc.delete(toDelete)
+        #mc.select(toDelete, replace = True, ne = True)
+
+
+    ### delete all RN gost nodes
+    refNodes = list(set(mc.ls(type = "reference")))
+    for each in refNodes:
+        try:
+            mc.referenceQuery(each,filename=True)
+        except:
+            mc.lockNode(each,lock=False)
+            mc.delete(each)
+
+
+    #try to get back to the initial selection
+    try:
+        mc.select(intiSelection, replace = True, ne = True)
+    except:
+        mc.select(cl=True)
+
+
+    ## remove all namespaces
+    miscUtils.removeAllNamespace(emptyOnly=True)
 
 
 
