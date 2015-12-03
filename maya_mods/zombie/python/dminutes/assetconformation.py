@@ -4,7 +4,7 @@ import re
 import string
 import miscUtils
 import os
-import dminutes.jipeLib_Z2K as jpZ
+
 
 
 
@@ -693,9 +693,9 @@ def softClean(struct2CleanList=["asset"]):
     this script ientend to remove from the scene every node that do not has a link with the selected structure.
     It also clean the empty namespaces
     """
-    doNotDelete = ["set_control","set_meshCache","set_subdiv_0", "set_subdiv_1","set_subdiv_2","set_subdiv_3","set_subdiv_init","par_subdiv"]
+    doNotDelete = ["set_control","set_meshCache","set_subdiv_0", "set_subdiv_1","set_subdiv_2","set_subdiv_3","set_subdiv_init","par_subdiv","defaultArnoldRenderOptions","defaultArnoldFilter","defaultArnoldDriver","defaultArnoldDisplayDriver"]
     intiSelection = mc.ls(selection = True)
-
+    deletedNodes = 0
 
     #remove from any namespace all the nodes of ma structre to clean
     mc.container (name="asset1", includeNetwork = True, includeShaders=True, includeHierarchyBelow=True, includeTransform=True, preview=True, addNode= struct2CleanList, force= True)
@@ -713,6 +713,7 @@ def softClean(struct2CleanList=["asset"]):
     toDelete = list(set(mc.ls()) - set(myAssetNodeList)-set(mc.ls(lockedNodes = True))-set(mc.ls(referencedNodes = True))-set(mc.ls(type = "reference")))
     if toDelete:
         mc.delete(toDelete)
+        deletedNodes = deletedNodes + len(toDelete)
         #mc.select(toDelete, replace = True, ne = True)
 
 
@@ -724,7 +725,9 @@ def softClean(struct2CleanList=["asset"]):
         except:
             mc.lockNode(each,lock=False)
             mc.delete(each)
-
+            deletedNodes += 1
+            
+    print "#### {:>7}: 'softClean' has deleteded {} nodes".format("Info",deletedNodes)
 
     #try to get back to the initial selection
     try:
@@ -735,6 +738,8 @@ def softClean(struct2CleanList=["asset"]):
 
     ## remove all namespaces
     miscUtils.removeAllNamespace(emptyOnly=True)
+
+
 
 
 
