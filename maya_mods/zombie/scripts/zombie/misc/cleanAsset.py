@@ -18,7 +18,7 @@ reload (miscUtils)
 
 answer =  mc.confirmDialog( title='Confirm', message="You are about to delete all the nodes that are not related to the asset structure, delete geometry history and clean the namespaces", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
 if answer != "Cancel": 
-	rendering.cleanAovs()
+	rendering.deleteAovs()
 	assetconformation.softClean()
 	modeling.geoGroupDeleteHistory()
 	modeling.makeAllMeshesUnique(inParent="|asset|grp_geo")

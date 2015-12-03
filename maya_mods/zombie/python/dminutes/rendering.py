@@ -290,10 +290,13 @@ def createBatchRender():
     print "#### Info: renderBatch.bat created: {}".format(os.path.normpath(renderBatch_trg))
 
 
-def cleanAovs():
+def deleteAovs():
     myAOVs = aovs.AOVInterface()
-    myAOVs.removeAOVs(myAOVs.getAOVs())
+    aovList = myAOVs.getAOVs()
+    myAOVs.removeAOVs(aovList)
     aovs.refreshAliases()
+    print "#### {:>7}: 'softClean' has deleteded {} nodes".format("Info",deletedNodes)
+
 
 
 def createAovs():
