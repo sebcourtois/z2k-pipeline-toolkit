@@ -79,7 +79,10 @@ def createUserWorkspace():
         
 def deleteUnknownNodes():
     
-    mentalRayNodeList = [u'mentalrayGlobals',u'mentalrayItemsList',u'miDefaultFramebuffer',u'miDefaultOptions',u'Draft',u'DraftMotionBlur',u'DraftRapidMotion',u'Preview',u'PreviewCaustics',u'PreviewFinalGather',u'PreviewGlobalIllum',u'PreviewImrRayTracyOff',u'PreviewImrRayTracyOn',u'PreviewMotionblur',u'PreviewRapidMotion',u'Production',u'ProductionFineTrace',u'ProductionMotionblur',u'ProductionRapidFur',u'ProductionRapidHair',u'ProductionRapidMotion']
+    mentalRayNodeList = [u'mentalrayGlobals',u'mentalrayItemsList',u'miDefaultFramebuffer',u'miDefaultOptions',u'Draft',u'DraftMotionBlur',u'DraftRapidMotion',u'Preview',
+                            u'PreviewCaustics',u'PreviewFinalGather',u'PreviewGlobalIllum',u'PreviewImrRayTracyOff',u'PreviewImrRayTracyOn',u'PreviewMotionblur',
+                            u'PreviewRapidMotion',u'Production',u'ProductionFineTrace',u'ProductionMotionblur',u'ProductionRapidFur',u'ProductionRapidHair',
+                            u'ProductionRapidMotion',u'miContourPreset']
     turtleNodeList = [u'TurtleDefaultBakeLayer',u'TurtleBakeLayerManager',u'TurtleRenderOptions',u'TurtleUIOptions']
 
     mentalRayNodeList = mc.ls(mentalRayNodeList)
