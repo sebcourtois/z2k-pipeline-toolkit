@@ -144,15 +144,16 @@ class asset_lib(object):
     entity_dir = "{assetType}/{name}"
 
     resources_settings = {
+    "modeling_scene":{"create_sg_version":True,
+                      "sg_steps":("Model HD", "Surfacing"), },
+
+    "master_scene":{"create_sg_version":True,
+                    "sg_steps":("Model HD", "Surfacing"), },
+
     "previz_scene":{"create_sg_version":True,
                     "sg_steps":("Model Previz",), },
     "previz_ref":{"create_sg_version":True,
                   "sg_tasks":("Rig_Previz",), },
-
-    "modeling_scene":{"create_sg_version":True,
-                      "sg_steps":("Model HD", "Surfacing"), },
-    "modeling_ref":{"create_sg_version":True,
-                    "sg_steps":("Model HD", "Surfacing"), },
 
     "anim_scene":{"create_sg_version":True,
                   "sg_steps":("Rigging",), },
@@ -163,11 +164,6 @@ class asset_lib(object):
                     "sg_tasks":("Shading",), },
     "render_ref":{"create_sg_version":True,
                   "sg_tasks":("Shading",), },
-
-    "master_scene":{"create_sg_version":True,
-                    "sg_steps":("Model HD", "Surfacing"), },
-    "master_ref":{"create_sg_version":True,
-                  "sg_steps":("Model HD", "Surfacing"), },
     }
 
     dependency_types = {

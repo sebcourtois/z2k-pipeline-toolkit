@@ -3,13 +3,19 @@
 #------------------------------------------------------------------
 
 import os
-import pymel.core as pc
+import maya.cmds as cmds
+import pymel.core
+pc = pymel.core
 
-from dminutes import sceneManager
-#reload(sceneManager)
+from pytd.util.fsutils import pathResolve
+from pytd.util.sysutils import inDevMode
+from pytd.util.logutils import logMsg
+#from pytd.util.sysutils import getCaller
+from pytd.util.qtutils import setWaitCursor
 
 import dminutes.maya_scene_operations as mop
-#reload(mop)
+from dminutes import sceneManager
+
 
 """Global instance of sceneManager Class"""
 SCENE_MANAGER = None
@@ -24,7 +30,7 @@ TASKS = {}
 VERSIONS = {}
 
 ACTION_BUTTONS = []
-
+LIST_WIDGET = None
 #------------------------------------------------------------------
 #               Main UI Creation/Initialization
 #------------------------------------------------------------------
@@ -32,7 +38,7 @@ ACTION_BUTTONS = []
 def sceneManagerUI():
     """Main UI Creator"""
     global SCENE_MANAGER, SCENE_MANAGER_UI
-    global SG
+    global SG, LIST_WIDGET
 
     SCENE_MANAGER = sceneManager.SceneManager()
     SG = SCENE_MANAGER.context['damProject']._shotgundb
@@ -43,6 +49,11 @@ def sceneManagerUI():
     dirname, _ = os.path.split(os.path.abspath(__file__))
     ui = pc.loadUI(uiFile=dirname + "/UI/sceneManagerUIB.ui")
     SCENE_MANAGER_UI = ui
+
+    sListWdgName = pc.textScrollList("sm_sceneInfo_lb", edit=True, removeAll=True,
+                                     font="fixedWidthFont", allowMultiSelection=True)
+    LIST_WIDGET = pc.ui.toPySideObject(sListWdgName)
+
     connectCallbacks()
 
     initialize()
@@ -59,11 +70,13 @@ def initialize(d_inContext=None):
     pc.textField('sm_user_bt', edit=True, text=curSgUser['name'])
     pc.textField('sm_project_bt', edit=True, text=SCENE_MANAGER.projectname)
 
-    steps = [astep['name'] for astep in curSgUser['sg_allowedsteps']]
-    refreshOptionMenu('sm_step_dd', steps)
+    sStepCodes = list(step['code'] for step in curSgUser['sg_allowedsteps']
+                                        if step['entity_type'] == 'Shot')
+    refreshOptionMenu('sm_step_dd', sStepCodes)
 
-    if userSgStep is not None and userSgStep['name'] in steps:
-        pc.optionMenu("sm_step_dd", edit=True, value=userSgStep['name'])
+    print userSgStep
+    if (userSgStep is not None) and (userSgStep['code'] in sStepCodes):
+        pc.optionMenu("sm_step_dd", edit=True, value=userSgStep['code'])
 
     if d_inContext != None:
         SCENE_MANAGER.init(d_inContext)
@@ -72,16 +85,19 @@ def initialize(d_inContext=None):
     pc.control("fileStatusGroup", edit=True, visible=False)
     pc.control("sm_createFolder_bt", edit=True, visible=False)
     pc.control("sm_edit_bt", edit=True, visible=False)
+    #pc.control("sm_disconnect_bt", edit=True, visible=False)
+    if not inDevMode():
+        pc.control("sm_pouet_bt", edit=True, visible=False)
 
     doStepChanged(updateStep=False)
-
     setContextUI()
 
 def updateButtons():
     """Update buttons availability from maya_scene_operations commands dictionary"""
     for buttonName in ACTION_BUTTONS:
         _, action, _ = buttonName.split('_')
-        enable = False if not 'task' in SCENE_MANAGER.context else mop.canDo(action, SCENE_MANAGER.context['task']['content']) == True
+        enable = (False if not 'task' in SCENE_MANAGER.context
+                  else mop.canDo(action, SCENE_MANAGER.context['task']['content']) == True)
         pc.control(buttonName, edit=True, enable=enable)
 
     refreshContextUI()
@@ -105,18 +121,22 @@ def setContextUI():
         #print context
         somethingChanged = False
 
-        print context["step"]
-        somethingChanged |= setOption("sm_step_dd", context["step"])
+        #print context["step"]
+        somethingChanged |= setOption("sm_step_dd", context["step"], runEntityChanged=False)
 
         if "shot" in context:
-            print context["seq"], context["shot"]
-            somethingChanged |= setOption("sm_seq_dd", context["seq"])
-            somethingChanged |= setOption("sm_shot_dd", context["shot"])
+            #print context["seq"], context["shot"]
+            somethingChanged |= setOption("sm_seq_dd", context["seq"], runEntityChanged=False)
+            somethingChanged |= setOption("sm_shot_dd", context["shot"], runEntityChanged=False)
+
+        doEntityChanged()
 
         if not somethingChanged:
             refreshContextUI()
 
         return True
+
+    doEntityChanged()
 
     return False
 
@@ -134,7 +154,7 @@ def kill():
 #               UI Refresh helpers
 #------------------------------------------------------------------
 
-def setOption(s_inName, s_inValue):
+def setOption(s_inName, s_inValue, runEntityChanged=True):
     """Change a value in an option menu as if option was selected manually"""
     changed = False
     items = pc.optionMenu(s_inName, query=True, itemListShort=True)
@@ -146,11 +166,12 @@ def setOption(s_inName, s_inValue):
         pc.optionMenu(s_inName, edit=True, value=s_inValue)
         changed = True
         if s_inName == 'sm_step_dd':
-            doStepChanged(updateStep=False)
+            doStepChanged(updateStep=False, runEntityChanged=runEntityChanged)
         elif s_inName == 'sm_categ_dd' or s_inName == 'sm_seq_dd':
-            doCategChanged()
+            doCategChanged(runEntityChanged=runEntityChanged)
         elif s_inName == 'sm_asset_dd' or s_inName == 'sm_shot_dd':
-            doEntityChanged()
+            if runEntityChanged:
+                doEntityChanged()
         elif s_inName == 'sm_task_dd':
             doTaskChanged()
 
@@ -165,7 +186,7 @@ def refreshOptionMenu(s_inName, a_Items):
     for item in a_Items:
         pc.menuItem(s_inName + "_" + item, label=item, parent=s_inName)
 
-def refreshStep(*args):
+def refreshStep(*args, **kwargs):
     """Call when the step is changed (this could be included in 'doStepChanged')"""
     global CATEG_ITEMS
 
@@ -192,7 +213,7 @@ def refreshStep(*args):
             CATEG_ITEMS[seqName][shot['code']] = shot
 
         refreshOptionMenu('sm_seq_dd', categ_names)
-        doCategChanged(*args)
+        doCategChanged(*args, **kwargs)
 
     elif sgStep['entity_type'] == 'Asset':
         pc.control('sm_asset_chooser_grp', edit=True, visible=True)
@@ -215,10 +236,11 @@ def refreshStep(*args):
             CATEG_ITEMS[asset['sg_asset_type']][asset['code']] = asset
 
         refreshOptionMenu('sm_categ_dd', categ_names)
-        doCategChanged(*args)
+        doCategChanged(*args, **kwargs)
 
     else:
-        pc.error('Unknown entity type {0} from step {1} !'.format(SCENE_MANAGER.context['entity_type'], sgStep))
+        pc.error('Unknown entity type {0} from step {1} !'
+                 .format(SCENE_MANAGER.context['entity_type'], sgStep))
 
 #------------------------------------------------------------------
 #               Button functions
@@ -239,6 +261,8 @@ def connectCallbacks():
     pc.button('sm_detect_bt', edit=True, c=doDetect)
 
     pc.button('sm_refreshScene_bt', edit=True, c=doRefreshSceneInfo)
+    pc.button('sm_selectRefs_bt', edit=True, c=doSelectRefs)
+
     pc.button('sm_upscene_bt', edit=True, c=doUpdateScene)
     pc.button('sm_updb_bt', edit=True, c=doUpdateShotgun)
     pc.button('sm_capture_bt', edit=True, c=doCapture)
@@ -262,6 +286,7 @@ def connectCallbacks():
     #pc.button(buttonName, edit=True, c=doCreate)
     #ACTION_BUTTONS.append(buttonName)
 
+
 def doDisconnect(*args):
     SG.logoutUser()
     sceneManagerUI()
@@ -275,7 +300,7 @@ def doStepChanged(*args, **kwargs):
     newStep = None
 
     for allowedStep in SG.currentUser['sg_allowedsteps']:
-        if allowedStep['name'] == stepName:
+        if allowedStep['code'] == stepName:
             newStep = allowedStep
             if bUpdSg:
                 print "updating {}'s step to {}".format(SG.currentUser["name"], allowedStep)
@@ -288,12 +313,12 @@ def doStepChanged(*args, **kwargs):
         SCENE_MANAGER.context['step'] = newStep
 
     if (not prevStep) or (prevStep['entity_type'] != newStep['entity_type']):
-        refreshStep(*args)
-    else:
-        doEntityChanged()
+        refreshStep(*args, runEntityChanged=False)
 
+    if kwargs.pop("runEntityChanged", True):
+        doEntityChanged(refreshSceneInfo=False)
 
-def doCategChanged(*args):
+def doCategChanged(*args, **kwargs):
     categCtrlName = 'sm_seq_dd' if SCENE_MANAGER.context['step']['entity_type'] == 'Shot' else 'sm_categ_dd'
     entityCtrlName = 'sm_shot_dd' if SCENE_MANAGER.context['step']['entity_type'] == 'Shot' else 'sm_asset_dd'
 
@@ -302,10 +327,14 @@ def doCategChanged(*args):
 
     refreshOptionMenu(entityCtrlName, sorted(CATEG_ITEMS[categ].keys()))
 
-    doEntityChanged(*args)
+    if kwargs.get("runEntityChanged", True):
+        doEntityChanged(*args)
 
 #Entity is a Shot or an Asset
-def doEntityChanged(*args):
+def doEntityChanged(*args, **kwargs):
+
+    #print "doEntityChanged", getCaller(fo=0)
+
     global TASKS
     entityCtrlName = 'sm_shot_dd' if SCENE_MANAGER.context['step']['entity_type'] == 'Shot' else 'sm_asset_dd'
 
@@ -321,9 +350,15 @@ def doEntityChanged(*args):
 
     refreshOptionMenu('sm_task_dd', sorted(TASKS.keys()))
 
-    doTaskChanged(*args)
+    if kwargs.get("runTaskChanged", True):
+        doTaskChanged(*args)
 
-def doTaskChanged(*args):
+    if kwargs.get("refreshSceneInfo", True):
+        doRefreshSceneInfo()
+
+def doTaskChanged(*args, **kwargs):
+    logMsg(log="all")
+
     global VERSIONS
     taskName = pc.optionMenu('sm_task_dd', query=True, value=True)
     SCENE_MANAGER.context['task'] = TASKS[taskName]
@@ -340,10 +375,8 @@ def doTaskChanged(*args):
     if len(versions) > 0:
         pc.textScrollList("sm_versions_lb", edit=True, append=sorted(VERSIONS.keys()))
 
-    doRefreshSceneInfo(*args)
-
+#    doRefreshSceneInfo(*args)
     doRefreshFileStatus()
-
     doVersionChanged(*args)
 
 def doVersionChanged(*args):
@@ -378,29 +411,128 @@ def doRefreshFileStatus(*args):
 def doDetect(*args):
     setContextUI()
 
+FILEREFS_FOR_LINE = {}
+
+def doSelectRefs(*args):
+
+    global LIST_WIDGET
+
+    sSelList = []
+    count = 0
+    for item in LIST_WIDGET.selectedItems():
+
+        for oFileRef in item.data(32):
+
+            if not oFileRef.isLoaded():
+                continue
+
+            sRefNode = oFileRef.refNode.name()
+            sNodeList = cmds.referenceQuery(sRefNode, nodes=True, dagPath=True)
+            if sNodeList:
+                sDagNodeList = cmds.ls(sNodeList, type="dagNode")
+                if sDagNodeList:
+                    sNodeList = sDagNodeList
+                sNodeList = [sNodeList[0], sRefNode]
+            else:
+                sNodeList = [sRefNode]
+
+            sSelList.extend(sNodeList)
+            count += 1
+
+    if sSelList:
+        cmds.select(sSelList, replace=True, noExpand=True)
+        pc.displayInfo("{} references selected.".format(count))
+    else:
+        pc.displayWarning("No selectable references !")
+
+    return sSelList
+
+@setWaitCursor
 def doRefreshSceneInfo(*args):
     """Displays the comparison of shotgun and active scene Assets"""
-    assetsInfo = SCENE_MANAGER.getAssetsInfo()
+    logMsg(log='all')
 
-    #gridContent = ["Scene", "Shotgun"]
+    global FILEREFS_FOR_LINE, LIST_WIDGET
 
-    lengths = [20, 20]
-    for assetInfo in assetsInfo:
-        if len(assetInfo['scn_info']) > lengths[0]:
-            lengths[0] = len(assetInfo['scn_info'])
+    LIST_WIDGET.clear()
+    pc.refresh()
 
-        if len(assetInfo['sg_info']) > lengths[1]:
-            lengths[1] = len(assetInfo['sg_info'])
+    assetDataList = SCENE_MANAGER.listAssetData()
 
-    formatting = " {0:<" + str(lengths[0]) + "}| {1:<" + str(lengths[1]) + "}"
+    headerData = ["NB", "ASSET NAME", "SCENE REF", "SHOTGUN LINK"]
 
-    pc.textScrollList("sm_sceneInfo_lb", edit=True, removeAll=True)
-    rowTexts = ("SCENE REFERENCES", "SHOT RELATED ASSETS")
-    pc.textScrollList("sm_sceneInfo_lb", edit=True, append=formatting.format(*rowTexts))
+    sRcNameList = set()
+    for astData in assetDataList:
+        sAstRcDct = astData["maya_refs"]
+        if sAstRcDct:
+            sRcNameList.update(sAstRcDct.iterkeys())
+    sRcNameList = sorted(sRcNameList)
 
-    for assetInfo in assetsInfo:
-        rowTexts = (assetInfo['scn_info'], assetInfo['sg_info'])
-        pc.textScrollList("sm_sceneInfo_lb", edit=True, append=formatting.format(*rowTexts))
+    headerData.extend((s.upper() for s in sRcNameList))
+    headerData.append([])
+
+    numColumns = len(headerData) - 1
+
+    sUnknownList = []
+    rowDataList = [headerData]
+    for astData in assetDataList:
+
+        oFileRefList = astData["file_refs"]
+        sNumFileRef = str(sum(1 for r in oFileRefList if r.isLoaded()))
+
+        sAstName = astData["name"]
+        rowData = [sNumFileRef,
+                    sAstName,
+                    astData["resource"],
+                    astData["sg_info"],
+                    ]
+
+        sAstRcDct = astData["maya_refs"]
+        if sAstRcDct:
+            for sRcName in sRcNameList:
+                rcDct = sAstRcDct.get(sRcName)
+                sRcInfo = ""
+                if rcDct:
+                    sRcInfo = rcDct["status"]
+                rowData.append(sRcInfo)
+        else:
+            rowData.extend(len(sRcNameList) * ("",))
+
+        rowData = rowData[:numColumns] + [oFileRefList]
+        if sAstName:
+            rowDataList.append(rowData)
+        else:
+            sUnknownList.append(rowData)
+
+    rowDataList.extend(sUnknownList)
+
+    rowFmts = numColumns * [""]
+    for i in xrange(numColumns):
+        w = max((len(r[i]) for r in rowDataList)) + 1
+        rowFmts[i] = " {{{0}:<{1}}}".format(i, w)
+
+    itemList = []
+    for rowData in rowDataList:
+
+        oFileRefList = rowData[-1]
+        sAstName = rowData[1]
+        c = numColumns
+        if not sAstName:
+            p = pathResolve(oFileRefList[0].path).replace("/", "\\")
+            sInfo = "UNKNOWN ASSET: " + p
+            rowData = [rowData[0], sInfo, oFileRefList]
+            c = len(rowData) - 1
+
+        sRowFmt = "|".join(rowFmts[:c])
+        sLine = sRowFmt.format(*rowData[:c])
+
+        LIST_WIDGET.addItem(sLine)
+        item = LIST_WIDGET.item(LIST_WIDGET.count() - 1)
+        item.setData(32, oFileRefList)
+
+        itemList.append(item)
+
+    return itemList
 
 def doUnlock(*args):
     """Simply unlocks current entry, but button is hidden (forbidden)"""
@@ -415,8 +547,8 @@ def doUnlock(*args):
 def doUpdateScene(*args):
     """Matches scene Assets with Shotgun Assets"""
     addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
-    SCENE_MANAGER.updateScene(addOnly)
-    doRefreshSceneInfo(args)
+    if SCENE_MANAGER.updateScene(addOnly):
+        doRefreshSceneInfo(args)
 
 def doUpdateShotgun(*args):
     """Matches Shotgun Assets with scene Assets (NOT IMPLEMENTED)"""

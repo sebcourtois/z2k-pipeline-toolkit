@@ -10,32 +10,33 @@ import maya.cmds as cmds
 import maya.mel
 
 #import tkMayaCore as tkc
-from zomblib import shotgunengine
-from davos.core import damproject
-from davos.core.damtypes import DamShot
+from pytd.util.fsutils import pathResolve, normCase
+from pytd.util.logutils import logMsg
 
+from davos.core import damproject
+from davos.core.damtypes import DamShot, DamAsset
 from davos.core.utils import versionFromName
 
+from zomblib import shotgunengine
 import dminutes.maya_scene_operations as mop
 import dminutes.jipeLib_Z2K as jpZ
-from pytd.util.fsutils import pathResolve
 reload(jpZ)
 import dminutes.camImpExp as camIE
 reload(camIE)
 import dminutes.infoSetExp as infoE
 reload(infoE)
 
-
 # get zomb project
 PROJECTNAME = os.environ.get("DAVOS_INIT_PROJECT")
 
+okValue = 'OK'
 noneValue = 'MISSING'
 notFoundvalue = 'NOT FOUND'
 
 #FROM DAVOS !!!!
 STEP_FILE_REL = {'Previz 3D':'previz_scene', 'Layout':'layout_scene'}
 TASK_FILE_REL = {'previz 3D':'previz_scene', 'layout':'layout_scene'}
-TASK_ASSET_REL = {'previz 3D':'previz_ref', 'layout':'anim_ref', 'animation':'anim_ref'}
+REF_FOR_TASK = {'previz 3D':'previz_ref', 'layout':'anim_ref', 'animation':'anim_ref'}
 
 LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
 
@@ -298,13 +299,15 @@ class SceneManager():
         """Retrieve the scene path and get davos data from it"""
         self.context['sceneEntry'] = None
         self.context['sceneData'] = {}
+        proj = self.context['damProject']
 
-        curScenePath = os.path.abspath(pc.sceneName())
-        if curScenePath != '':
-            entry = self.context['damProject'].entryFromPath(curScenePath)
+        curScenePath = pc.sceneName()
+        if curScenePath:
+            curScenePath = os.path.abspath(curScenePath)
+            entry = proj.entryFromPath(curScenePath)
             if entry != None:
                 self.context['sceneEntry'] = entry
-                self.context['sceneData'] = self.context['damProject'].dataFromPath(curScenePath)
+                self.context['sceneData'] = proj.dataFromPath(curScenePath)
 
         return self.contextIsMatching()
 
@@ -661,114 +664,167 @@ class SceneManager():
         """Detect the filetag (resource) from an asset path, when we don't have the shotgun info, right now it'll just say 'NONE'"""
         return notFoundvalue
 
-    def getAssetsInfo(self):
+    def listAssetData(self):
         """Compare Shotgun shot<=>assets linking and scene content"""
+        logMsg(log='all')
+
         sgAssets = self.getShotgunContent()
 
         shotAssetsDct = dict((d['asset']['name'], d) for d in sgAssets)
-
-        assetsInfo = []
-
-        #consider previz_ref as default
-        fileTag = "previz_ref"
-
-        if self.context['task']['content'] in TASK_ASSET_REL:
-            fileTag = TASK_ASSET_REL[self.context['task']['content']]
-        else:
-            pc.warning('Cannot detect file tag from task {0}, {1} used by default !!'.format(self.context['task']['content'], fileTag))
+        assetDataList = []
 
         proj = self.context['damProject']
         astLib = proj.getLibrary("public", "asset_lib")
 
-        sRefPathList = []
-        for oFileRef in pc.listReferences():
+        initData = {'name':'',
+                    'sg_info':noneValue,
+                    'resource':noneValue,
+                    'path':"",
+                    'maya_refs':{},
+                    'file_refs':[] }
+
+        sFoundAstList = []
+        oFileRefDct = {}
+        for oFileRef in pc.iterReferences():
 
             sRefPath = pathResolve(oFileRef.path)
 
-            if sRefPath in sRefPathList:
+            sRefNormPath = normCase(sRefPath)
+            if sRefNormPath in oFileRefDct:
+                oFileRefDct[sRefNormPath].append(oFileRef)
                 continue
             else:
-                sRefPathList.append(sRefPath)
+                oFileRefDct[sRefNormPath] = [oFileRef]
 
-            sFilename = os.path.basename(sRefPath)
-            info = {'name':'UNKNOWN', 'scn_info':sFilename, 'sg_info':noneValue, 'path':sRefPath}
+            pathData = proj.dataFromPath(sRefPath, library=astLib)
 
-            damAst = proj.entityFromPath(sRefPath, library=astLib, fail=False)
-            if not damAst:
-                info['scn_info'] = "UNKNOWN ASSET"
-                assetsInfo.append(info)
+            astData = initData.copy()
+            astData.update(path=sRefPath, file_refs=oFileRefDct[sRefNormPath])
+
+            if not pathData:
+                assetDataList.append(astData)
                 continue
 
-            sAstName = damAst.name
-            info['name'] = sAstName
-            shotAst = shotAssetsDct.pop(sAstName, None)
-            if shotAst is not None:
-                info['sg_info'] = sAstName
+            astData.update(pathData)
 
-            assetsInfo.append(info)
+            sAstName = astData["name"]
+            if sAstName in shotAssetsDct:
+                astData['sg_info'] = okValue
+                sFoundAstList.append(sAstName)
+
+            assetDataList.append(astData)
 
         for sAstName in shotAssetsDct.iterkeys():
-            info = {'name':sAstName, 'scn_info':noneValue, 'sg_info':sAstName, 'path':""}
-            assetsInfo.append(info)
+            if sAstName not in sFoundAstList:
+                astData = initData.copy()
+                astData.update(name=sAstName, sg_info=okValue)
+                assetDataList.append(astData)
 
-        return assetsInfo
+        for astData in assetDataList:
 
-    # BASE FUNCTION (NOT WORKING)
-    # def updateScene(self, addOnly=True):
-    #     """Updates scene Assets from shotgun shot<=>assets linking"""
-    #     assetsInfo = self.getAssetsInfo()
+            sAstName = astData['name']
+            if not sAstName:
+                continue
 
-    #     for assetInfo in assetsInfo:
-    #         #print 'assetInfo["sg_info"] ' + str(assetInfo['sg_info'])
-    #         #print 'assetInfo["scn_info"] ' + str(assetInfo['scn_info'])
-    #         #print 'assetInfo["path"]' + str(assetInfo['path'])
-    #         if assetInfo['sg_info'] == noneValue:
-    #             if not addOnly:
-    #                 #Asset that does not exist in shot, remove
-    #                 mop.removeAsset(self.collapseVariables(assetInfo['path']))
-    #         elif assetInfo['sg_info'] != assetInfo['scn_info']:
-    #             if notFoundvalue in assetInfo['sg_info']:
-    #                 pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
-    #             else:
-    #                 mop.importAsset(self.collapseVariables(assetInfo['path']), assetInfo['name'] + "_1")
+            damAst = DamAsset(proj, name=sAstName)
+            astRcDct = {}
 
-    #     mop.reArrangeAssets()
+            for sRcName, sRcPath in damAst.iterMayaRcItems(filter="*_ref"):
+
+                mrcFile = proj.entryFromPath(sRcPath, library=damAst.getLibrary(),
+                                             dbNode=False)
+
+                rcDct = {"drc_file":mrcFile, "status":okValue}
+                astRcDct[sRcName] = rcDct
+
+                if not mrcFile:
+                    sMsg = noneValue
+                    rcDct["status"] = sMsg
+                    continue
+
+                cachedDbNode = mrcFile.getDbNode(fromDb=False)
+                if cachedDbNode:
+                    mrcFile.refresh(simple=True)
+                else:
+                    mrcFile.getDbNode(fromCache=False)
+
+                if not mrcFile.currentVersion:
+                    sMsg = "NO VERSION"
+                    rcDct["status"] = sMsg
+                    continue
+
+                if not mrcFile.isUpToDate(refresh=False):
+                    sMsg = "OUT OF SYNC"
+                    rcDct["status"] = sMsg
+                    continue
+
+            astData["maya_refs"] = astRcDct
+
+        return assetDataList
 
     def updateScene(self, addOnly=True):
         """Updates scene Assets from shotgun shot<=>assets linking"""
         # WIP CORRECTION collapseVariables (ERROR)
-        assetsInfo = self.getAssetsInfo()
+        assetDataList = self.listAssetData()
         errorL = []
-        for assetInfo in assetsInfo:
-            # print '**          assetInfo["sg_info"] ' + str(assetInfo['sg_info'])
-            # print '**          assetInfo["scn_info"] ' + str(assetInfo['scn_info'])
-            # print '**          assetInfo["path"]' + str(assetInfo['path'])
+        #proj = self.context["damProject"]
+        #astLib = proj.getLibrary("public", "asset_lib")
+        sCurRefTag = self.getCurrentTaskRefTag()
+
+        count = 0
+        for astData in assetDataList:
+            # print '**          astData["sg_info"] ' + str(astData['sg_info'])
+            # print '**          astData["scn_info"] ' + str(astData['scn_info'])
+            # print '**          astData["path"]' + str(astData['path'])
+
+            if astData["resource"] != noneValue:
+                continue
 
             try:
                 # get_File_By_DAVOS methodes
-                drcFile = self.context["damProject"].entryFromPath(assetInfo['path'])
-                The_ASSET_PATH = drcFile.envPath()
-                # print "* The_ASSET_PATH=", The_ASSET_PATH
-                if assetInfo['sg_info'] == noneValue:
-                    if not addOnly:
-                        #Asset that does not exist in shot, remove
-                        mop.removeAsset(The_ASSET_PATH)
-                elif assetInfo['sg_info'] != assetInfo['scn_info']:
-                    if notFoundvalue in assetInfo['sg_info']:
-                        pc.warning('Asset {0} does not exists ({1})'.format(assetInfo['name'], assetInfo['path']))
-                    else:
-                        mop.importAsset(The_ASSET_PATH, assetInfo['name'] + "_1")
+                rcData = astData["maya_refs"].get(sCurRefTag)
+                if not rcData:
+                    continue
+
+                sStatus = rcData["status"]
+                if sStatus != okValue:
+                    raise AssertionError("'{}' is {}".format(sCurRefTag, sStatus))
+
+                mrcFile = rcData["drc_file"]
+                mrcFile.mayaImportScene()
+
             except Exception, err:
-                errorTxt = "* ERROR ON {0} : \n    {1}".format(assetInfo['name'], err)
+                errorTxt = "{0}: {1}".format(astData['name'], err)
                 print errorTxt
                 errorL.append(errorTxt)
+            else:
+                count += 1
 
-        mop.reArrangeAssets()
+        if count:
+            mop.reArrangeAssets()
 
         if len(errorL):
-            cmds.confirmDialog(title='Error', message="Problemes lors de l'import:\n{0}".format("\n\t".join(errorL)), button=['ok'],
-                                    defaultButton='ok', cancelButton='ok', dismissString='ok', icon="warning")
+            cmds.confirmDialog(title='Error',
+                               message="Could not import:\n{0}".format("\n".join(errorL)),
+                               button=['OK'],
+                               defaultButton='OK',
+                               cancelButton='OK',
+                               dismissString='OK',
+                               icon="warning")
 
+        return True if count else False
+
+    def getCurrentTaskRefTag(self):
+
+        sRefTag = ""
+
+        sTaskName = self.context['task']['content']
+        if sTaskName in REF_FOR_TASK:
+            sRefTag = REF_FOR_TASK[sTaskName]
+        else:
+            raise EnvironmentError("No resource file associated with task: '{}'"
+                                   .format(sTaskName))
+        return sRefTag
 
     def updateShotgun(self, addOnly=True):
         pass
