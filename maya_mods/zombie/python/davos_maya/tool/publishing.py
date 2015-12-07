@@ -39,12 +39,16 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
             continue
 
         fileNodes = result["file_nodes"]
-        if fileNodes:
+        sUdimFileList = result["udim_files"]
+        if fileNodes or sUdimFileList:
             sTexPathList.append(result["abs_path"])
             allFileNodesList.append(fileNodes)
             allBuddyPathsList.append(result["buddy_files"])
 
     if sTexPathList:
+
+        pm.mel.ScriptEditor()
+        pm.mel.handleScriptEditorAction("maximizeHistory")
 
         print "\n" + " Publishing texture files ".center(100, '-')
 
@@ -110,7 +114,7 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
             sMsgFiles += "\n"
 
-        print sMsgFiles + "\n- {} files have been published.".format(count)
+        print sMsgFiles + "\n- Published files: {}".format(count)
 
     else:
         sMsg = """
@@ -172,7 +176,7 @@ def publishCurrentScene(*args, **kwargs):
         if sConfirm == 'Cancel':
             raise
 
-    scanResults = dependency_scan.launch(damEntity, modal=True)
+    scanResults = dependency_scan.launch(damEntity, modal=True, okLabel="Publish")
     if scanResults is None:
         pm.displayInfo("Canceled !")
         return
@@ -189,9 +193,6 @@ def publishCurrentScene(*args, **kwargs):
 
     if not sgTaskInfo:
         bSgVersion = False
-
-    pm.mel.ScriptEditor()
-    pm.mel.handleScriptEditorAction("maximizeHistory")
 
     if not publishSceneDependencies(damEntity, scanResults, sComment):
         return
