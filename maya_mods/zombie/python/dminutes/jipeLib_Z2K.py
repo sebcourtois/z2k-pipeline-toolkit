@@ -22,7 +22,7 @@ from dminutes import assetconformation
 
 # general function 
 
-
+# ADD CHECK for DOUBLE NAMES
 
 
 
@@ -110,7 +110,7 @@ def infosFromMayaScene(*args, **kwargs):
     print ("infosFromMayaScene()")
     testOk = True
     outD = {}
-    scenePathTmp = cmds.file(q=1 ,sceneName=True)
+    scenePathTmp = cmds.file(q=1 , sceneName=True)
     print "scenePathTmp=", scenePathTmp
     if   "asset" in scenePathTmp :
         print "folder asset ok"
@@ -228,7 +228,7 @@ def createIncrementedFilePath( filePath="", vSep= "_v",extSep=".ma", digits=3, *
 
 # printer  -------------------------------------------------------
 def printF( text="", st="main", toScrollF="", toFile = "", inc=False, GUI= True,
-    openMode="a+", *args, **kwargs):
+    openMode="a+",versionning=True, *args, **kwargs):
     """ Description: printer avec mise en forme integrer et link vers file or maya layout
         Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
         Dependencies : cmds - 
@@ -453,49 +453,49 @@ def createDisplayLayer ( n="default_Name", inObjL=[], displayType=0, hideOnPlayb
 
 
 def NodeTypeScanner( execptionTL = [], exceptDerived= True, specificTL=[], specificDerived=False,
-        mayaDefaultObjL=["characterPartition","defaultLightList1","dynController1","globalCacheControl",
-        "hardwareRenderGlobals","hardwareRenderingGlobals","defaultHardwareRenderGlobals","hyperGraphInfo",
-        "hyperGraphLayout","ikSystem","characterPartition","char_aurelienPolo_wip_18_sceneConfigurationScriptNode",
-        "char_aurelienPolo_wip_18_uiConfigurationScriptNode","sequenceManager1","strokeGlobals","time1","defaultViewColorManager",
-        "defaultColorMgtGlobals","defaultObjectSet","defaultTextureList1","lightList1","defaultObjectSet",
-        "sceneConfigurationScriptNode","uiConfigurationScriptNode"],
-        *args, **kwargs):
-        """ Description: Return Node list base on specific type /excepted type filtered
-                        If nothing it give evrething in scene
-                        basic type herited coulb be "dagNode" / "transform" /
-            Return : LIST
-            Dependencies : cmds - 
-        """
+    mayaDefaultObjL=["characterPartition","defaultLightList1","dynController1","globalCacheControl",
+    "hardwareRenderGlobals","hardwareRenderingGlobals","defaultHardwareRenderGlobals","hyperGraphInfo",
+    "hyperGraphLayout","ikSystem","characterPartition","char_aurelienPolo_wip_18_sceneConfigurationScriptNode",
+    "char_aurelienPolo_wip_18_uiConfigurationScriptNode","sequenceManager1","strokeGlobals","time1","defaultViewColorManager",
+    "defaultColorMgtGlobals","defaultObjectSet","defaultTextureList1","lightList1","defaultObjectSet",
+    "sceneConfigurationScriptNode","uiConfigurationScriptNode"],
+    *args, **kwargs):
+    """ Description: Return Node list base on specific type /excepted type filtered
+                    If nothing it give evrething in scene
+                    basic type herited coulb be "dagNode" / "transform" /
+        Return : LIST
+        Dependencies : cmds - 
+    """
 
-        theTypeL =[]
-        allTypeL = cmds.ls(nodeTypes=1)
-        toReturnL = []
-        if not len(specificTL) >0:
-                theTypeL = allTypeL
-        else:
-            theTypeL = specificTL
+    theTypeL =[]
+    allTypeL = cmds.ls(nodeTypes=1)
+    toReturnL = []
+    if not len(specificTL) >0:
+            theTypeL = allTypeL
+    else:
+        theTypeL = specificTL
 
-        for typ in theTypeL:
-            # print "****",typ
-            if len(theTypeL)>0:
-                filtered = [x for x in cmds.ls(type=typ) if  x not in mayaDefaultObjL ]
-                if len(filtered)>0:
-                    for obj in filtered:
-                        if not obj in mayaDefaultObjL:
-                            testB = False
-                            if len(execptionTL)>0:
-                                for ex in execptionTL:
-                                    if  cmds.nodeType(obj) in  cmds.nodeType(ex, derived=exceptDerived, isTypeName=True,):
-                                        # print "#######",cmds.nodeType(obj), "is bad"
-                                        testB = True
-                                        break
-                                if not testB:
-                                    toReturnL.append(obj)
-                                        
-                            else:
+    for typ in theTypeL:
+        # print "****",typ
+        if len(theTypeL)>0:
+            filtered = [x for x in cmds.ls(type=typ) if  x not in mayaDefaultObjL ]
+            if len(filtered)>0:
+                for obj in filtered:
+                    if not obj in mayaDefaultObjL:
+                        testB = False
+                        if len(execptionTL)>0:
+                            for ex in execptionTL:
+                                if  cmds.nodeType(obj) in  cmds.nodeType(ex, derived=exceptDerived, isTypeName=True,):
+                                    # print "#######",cmds.nodeType(obj), "is bad"
+                                    testB = True
+                                    break
+                            if not testB:
                                 toReturnL.append(obj)
+                                    
+                        else:
+                            toReturnL.append(obj)
 
-        return toReturnL
+    return toReturnL
 
 # wip to make faster
 def UnusedNodeAnalyse( execptionTL = [], specificTL= [], mode = "delete",verbose=True, *args, **kwargs):
@@ -575,7 +575,7 @@ def checkBaseStructure(*args,**kwargs):
 
         # check if asset gp and set here
 
-        baseExcludeL = ["persp","top","front","side","left","back","bottom","defaultCreaseDataSet","defaultLayer"]
+        baseExcludeL = ["persp","top","top1","front","front1","side","side1","left","left1","back","back1","bottom1","bottom","defaultCreaseDataSet","defaultLayer"]
         baseObjL = ["asset",]
         baseSetL = ["set_meshCache","set_control",]
         additionnalSetL = ["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"]
@@ -660,23 +660,25 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig","grp_geo"],
             Return : [result,debugDict]
             Dependencies : cmds - 
         """
-        print "checkAssetStructure()"
-
+        print "checkAssetStructure()",
+        extendedL = expectedL[:]
         # switch expeted list depending on the name of the scene
         sceneName = cmds.file(q=1,sceneName=True, shortName=True)
         if sceneName[:3] in ["set"]:
-            expectedL.extend(additionalL)
+            print "it's a set"
+            extendedL.extend(additionalL)
         toReturnB = False
         debugD = {}
         tab="    "
-        expect_str = " - ".join(expectedL)
+        expect_str = " - ".join(extendedL)
         if cmds.objExists(assetgpN):
             childL = cmds.listRelatives(assetgpN,  c=True)
             print tab,expect_str, childL
             debugD[expect_str] = {}
             print "*",sorted(expectedL) 
             print "*",sorted(childL)
-            if sorted(expectedL) == sorted(childL):
+            print "*",sorted(extendedL) 
+            if (sorted(expectedL) == sorted(childL) ) or ( sorted(extendedL) == sorted(childL) ) :
                 toReturnB = True
                 debugD[ expect_str ]["result"] = "OK"
                 print tab, toReturnB
@@ -779,7 +781,7 @@ def isSet_meshCache_OK (theSet="set_meshCache",theType="prop",*args, **kwargs):
                 # is a set donc on doit avoir seulement des group pour le moement
                 for i in setContentL:
                     sL= cmds.listRelatives(i,s=1,ni=1)
-                    print "sL=", sL,cmds.objectType(i)
+                    # print "sL=", sL,cmds.objectType(i)
                     if  sL or not cmds.objectType(i) in ["transform"] :
                         toReturn =False
                         debug ="certain object ne sont pas des Groups"

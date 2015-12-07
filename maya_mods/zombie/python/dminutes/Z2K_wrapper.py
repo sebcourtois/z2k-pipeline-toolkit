@@ -117,6 +117,17 @@ def feedSG_Release(proj="", releasedRefFileP="", fromVersion="042", *args, **kwa
     # waiting for Seb
     pass
 
+def unlockAllUserLock(theUser="jipe",*args, **kwargs):
+    DamProject = damproject.DamProject
+    proj = DamProject(os.environ["DAVOS_INIT_PROJECT"])
+    print "proj=", proj
+
+    dbNodes = proj.findDbNodes("lock:{0}".format(theUser))
+
+    for n in dbNodes:
+        print drcFile
+        drcFile = proj.entryFromDbNode(n)
+        drcFile.setLocked(False)
 
 # WIP ----------------------- ajout du SG publish
 def publishEditedVersionSG(proj="", path_private_toPublish="", comment="test the cashbah moda foka!", 
