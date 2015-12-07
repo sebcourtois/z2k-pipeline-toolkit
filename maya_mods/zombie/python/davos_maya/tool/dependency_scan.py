@@ -548,10 +548,10 @@ Wait for the next file synchronization and retry publishing."""
     else:
         sSrcFilePath = resultDct["abs_path"]
         bModified = True
-        if osp.isfile(sSrcFilePath):
+        if pubFile.exists():
             sPubFilePath = pubFile.absPath()
             bModified = not filecmp.cmp(sPubFilePath, sSrcFilePath, shallow=True)
-        #bDiffers, sSrcChecksum = pubFile.differsFrom(sPubFilePath)
+            #bDiffers, sSrcChecksum = pubFile.differsFrom(sPubFilePath)
         if not bModified:
             scanLogDct.setdefault("info", []).append(("Not Modified", "File has not been modified"))
         else:
