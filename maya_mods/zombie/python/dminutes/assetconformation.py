@@ -7,6 +7,7 @@ import os
 
 
 
+
 def onCheckInAsset():
     """
     lists of things to automaticaly do before doing a check-in on an asset
@@ -346,35 +347,43 @@ class Asset_File_Conformer:
             self.mainFilePathElem = self.mainFilePath.split("/")
             self.assetName = self.mainFilePathElem[-2]
             self.assetType = self.mainFilePathElem[-3]
-            self.sourceFile = "render"
             self.sourceList =[]
             self.targetList =[]
             self.sourceTargetListMatch = False
             self.sourceTargetTopoMatch = False
-
-            if  self.mainFilePathElem[-4] == "asset":
-                self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_render.ma"))
-                self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
-            else:
-                raise ValueError("#### Error: you are not working in an 'asset' structure directory")
         else :
             raise ValueError("#### Error: no '|asset' could be found in this scene")
 
 
-    def inportFile(self,sourceFile = "render"):
-        if sourceFile in ["render","anim","modeling"]:
+    def loadFile(self,sourceFile = "render", reference = True):
+
+        if sourceFile in ["render","anim","modeling","previz"]:
             self.sourceFile = sourceFile
         else:
-            raise ValueError("#### Error: the choosen sourceFile '"+sourceFile+"'' is not correct")
-        print "#### {:>7}: importing '{}'".format("Info",self.renderFilePath_exp)
-        mc.file( self.renderFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True )
+                raise ValueError("#### Error: the choosen sourceFile '"+sourceFile+"'' is not correct")
+
+
+        if  self.mainFilePathElem[-4] == "asset":
+            self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile+".ma"))
+            self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
+        else:
+            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+
+
+        if reference:
+            print "#### {:>7}: reference '{}'".format("Info",self.renderFilePath_exp)
+            mc.file( self.renderFilePath_exp, type= "mayaAscii", ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True, reference = True )
+        else:
+            print "#### {:>7}: importing '{}'".format("Info",self.renderFilePath_exp)
+            mc.file( self.renderFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True )
 
 
     def cleanFile(self):
         refNodeList = mc.ls(type = "reference")
         for each in refNodeList:
-            if re.match('^render[0-9]{0,3}:[a-zA-Z0-9]{1,255}', each) or re.match('^anim[0-9]{0,3}:[a-zA-Z0-9]{1,255}', each) or re.match('^modeling[0-9]{0,3}:[a-zA-Z0-9]{1,255}', each):
+            if re.match('^render[0-9]{0,3}RN', each) or re.match('^anim[0-9]{0,3}RN', each) or re.match('^modeling[0-9]{0,3}RN', each) or re.match('^previz[0-9]{0,3}RN', each):
                 fileRef= pm.FileReference(each)
+                #mc.referenceQuery(each,filename=True)# other way to do it
                 try:
                     print "#### {:>7}:removing reference '{}'".format("Info",fileRef.path)
                     fileRef.remove()
@@ -383,14 +392,14 @@ class Asset_File_Conformer:
 
         nameSpaceList = mc.namespaceInfo(listOnlyNamespaces=True,r=True)
         for each in nameSpaceList:
-            if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each):
+            if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each) or re.match('^previz[0-9]{0,3}', each):
                 node2deleteList = mc.ls(each+":*")
                 for node2delete in node2deleteList:
                     mc.lockNode(node2delete,lock = False)
 
         nameSpaceList = mc.namespaceInfo(listOnlyNamespaces=True)
         for each in nameSpaceList:
-            if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each):
+            if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each) or re.match('^previz[0-9]{0,3}', each):
                 print "#### {:>7}:removing namespace and its content: '{:<10}' ".format("Info",each)
                 mc.namespace(removeNamespace=each, deleteNamespaceContent=True)
 
@@ -414,20 +423,26 @@ class Asset_File_Conformer:
                 if mc.ls("set_meshCache"):
                     targetObjects = mc.sets('set_meshCache',q=True)
                 else:
-                    print ("#### {:>7}: no 'set_meshCache' could be found".format("Error", each))
-                    errorOnTarget = errorOnTarget + 1                   
+                    print ("#### {:>7}: no 'set_meshCache' could be found".format("Error"))
+                    errorOnTarget = errorOnTarget + 1
+                    targetObjects= []                   
 
             for each in targetObjects:
-                if mc.ls(each):
+                if mc.nodeType (each)!= "transform":
+                    print ("#### {:>7}: no '{}' target object has not the right type, only 'transform' nodes accepted".format("Error", each))
+                    errorOnTarget = errorOnTarget + 1
+                elif mc.ls(each):
                     self.targetList.append(each)
                 else:
-                    print ("#### {:>7}: no '{}' object could be found".format("Error", each))
+                    print ("#### {:>7}: no '{}' target object could be found".format("Error", each))
                     errorOnTarget = errorOnTarget + 1
 
-            for eachTarget in self.targetList:
-                #eachSource = self.sourceFile+":"+eachTarget
-                eachSource = self.sourceFile+":"+("|"+self.sourceFile+":").join(eachTarget.split("|"))
-                if mc.ls(eachSource):
+            for eachSource in self.targetList:
+                eachSource = self.sourceFile+":"+("|"+self.sourceFile+":").join(eachSource.split("|"))
+                if mc.nodeType (eachSource)!= "transform":
+                    print ("#### {:>7}: no '{}' source object has not the right type, only 'transform' nodes accepted".format("Error", each))
+                    errorOnSource = errorOnSource + 1
+                elif mc.ls(eachSource):
                     self.sourceList.append(eachSource)
                 else:
                     errorOnSource = errorOnSource + 1
@@ -509,18 +524,124 @@ class Asset_File_Conformer:
 
 
 
-    def transferUv(self):
+    def transferUV(self):
         if self.sourceTargetListMatch == True:
-            i = 0
+            i = -1
             uvTransferFailed = 0
-            while i < len(self.targetList):
-                sourceShapeLn = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
-                targetShapeLn = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
-                print self.sourceList[i]+" --> "+self.targetList[i]
-                #mc.transferAttributes( self.sourceList[i], self.targetList[i], sampleSpace=5, transferUVs=2 )
+            while i < len(self.targetList)-1:
                 i+=1
+                shapeOrig = False
+                sourceShapeList = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
+                if len(sourceShapeList)==0:
+                    print ("#### {:>7}: source, no shape coud be found under transform : '{}'".format("Error",self.sourceList[i]))
+                    uvTransferFailed +=1
+                    continue
+                elif len(sourceShapeList)==1:
+                    sourceShape = sourceShapeList[0]
+                else:
+                    print ("#### {:>7}: several 'shapes' were found under: '{}' transform".format("Error",self.sourceList[i]))
+                    uvTransferFailed +=1
+                    continue
+
+                targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=False)
+                if len(targetShapeList)==0:
+                    print ("#### {:>7}: target, no shape coud be found under transform: '{}'".format("Error",self.sourceList[i]))
+                    uvTransferFailed +=1
+                    continue
+                elif len(targetShapeList)==1:
+                    targetShape = targetShapeList[0]
+                else:
+                    shapeOrigList =[]
+                    for each in targetShapeList:
+                        if mc.getAttr(each+".intermediateObject") == 1 and len(mc.listHistory(each+".inMesh"))==1 and "ShapeOrig" in each:
+                            shapeOrigList.append(each)
+                    if len(shapeOrigList) == 1:
+                        targetShape = shapeOrigList[0]
+                        shapeOrig = True
+                    else:
+                        print ("#### {:>7}: several 'ShapeOrig' were found under: '{}' transform".format("Error",self.sourceList[i]))
+                        uvTransferFailed +=1
+                        continue
+
+                #print sourceShape+" --> "+targetShape
+                if shapeOrig == True: mc.setAttr(targetShape+".intermediateObject", 0)
+                mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                mc.delete(targetShape, constructionHistory = True)
+                if shapeOrig == True: mc.setAttr(targetShape+".intermediateObject", 1)
+
+            if uvTransferFailed ==0:
+                print "#### {:>7}: UVs has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
+            else:
+                print ("#### {:>7}: UVs transfer failed for {} object(s)".format("Error",uvTransferFailed))
+
         else:
             print "#### {:>7}: cannot transfer uvs, target and source list mismatch".format("Error")
+            return False
+
+        if uvTransferFailed == 0:
+            return True
+        else:
+            return False
+
+
+
+    def transferSG(self):
+        if self.sourceTargetListMatch == True:
+            i = -1
+            sgTransferFailed = 0
+            while i < len(self.targetList)-1:
+                i+=1
+                sourceShapeList = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
+                if len(sourceShapeList)==0:
+                    print ("#### {:>7}: source, no shape coud be found under transform : '{}'".format("Error",self.sourceList[i]))
+                    sgTransferFailed +=1
+                    continue
+                elif len(sourceShapeList)==1:
+                    sourceShape = sourceShapeList[0]
+                else:
+                    print ("#### {:>7}: several 'shapes' were found under: '{}' transform".format("Error",self.sourceList[i]))
+                    sgTransferFailed +=1
+                    continue
+
+                targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
+                if len(targetShapeList)==0:
+                    print ("#### {:>7}: target, no shape coud be found under transform: '{}'".format("Error",self.sourceList[i]))
+                    sgTransferFailed +=1
+                    continue
+                elif len(targetShapeList)==1:
+                    targetShape = targetShapeList[0]
+                else:
+                    print ("#### {:>7}: several 'shapes' were found under: '{}' transform".format("Error",self.sourceList[i]))
+                    sgTransferFailed +=1
+                    continue
+
+                print sourceShape+" --> "+targetShape
+                mc.transferShadingSets(sourceShape,targetShape)
+
+            if sgTransferFailed ==0:
+                print "#### {:>7}: materials has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
+            else:
+                print ("#### {:>7}: materials transfer failed for {} object(s)".format("Error",sgTransferFailed))
+
+        else:
+            print "#### {:>7}: cannot transfer materials, target and source list mismatch".format("Error")
+            return False
+
+        if sgTransferFailed == 0:
+            return True
+        else:
+            return False
+
+    def disconnectAiMaterials(self):
+        shadEngineList = mc.ls("*",type = "shadingEngine")
+        shadEngineList.remove("initialParticleSE")
+        shadEngineList.remove("initialShadingGroup")
+        if not shadEngineList :
+            print "#### {:>7}: no shading engine".format("Error")
+            return
+        for each in shadEngineList:
+            matShadNode =  mc.listConnections(each+'.aiSurfaceShader',connections = True, plugs=True)
+            mc.disconnectAttr(matShadNode[1],matShadNode[0])
 
 
     def smoothPolyDisplay(self, inMeshList = []):
@@ -565,6 +686,74 @@ class Asset_File_Conformer:
                 print ("#### {:>7}: Rendering attribute transfered properly ({} objects)".format("Info",len(self.targetList)))
         else:
             print "#### {:>7}: cannot transfer rendering attributes, target and source list mismatch".format("Error")
+
+        if shapeTransferFailed == 0:
+            return True
+        else:
+            return False
+
+
+
+
+
+def softClean(struct2CleanList=["asset"]):
+    """
+    this script ientend to remove from the scene every node that do not has a link with the selected structure.
+    It also clean the empty namespaces
+    """
+    undeletable = ['sideShape','frontShape','front','sideShape','side','perspShape','perspShape','persp','topShape','top','topShape','frontShape','characterPartition',
+                'defaultObjectSet','initialShadingGroup','defaultLightSet','renderPartition','initialParticleSE','strokeGlobals','defaultRenderQuality','defaultRenderingList1',
+                'defaultTextureList1','renderLayerManager','particleCloud1','hyperGraphInfo','shaderGlow1','hardwareRenderingGlobals','globalCacheControl','postProcessList1',
+                'lambert1','defaultRenderGlobals','time1','dynController1','lightList1','hyperGraphLayout','defaultLightList1','defaultLayer','defaultHardwareRenderGlobals',
+                'defaultShaderList1','ikSystem','sequenceManager1','defaultColorMgtGlobals','defaultViewColorManager','lightLinker1','layerManager','defaultResolution',
+                'initialMaterialInfo','renderGlobalsList1','dof1','hardwareRenderGlobals','defaultRenderLayer','defaultRenderUtilityList1']
+
+    doNotDelete = ["set_control","set_meshCache","set_subdiv_0", "set_subdiv_1","set_subdiv_2","set_subdiv_3","set_subdiv_init","par_subdiv","defaultArnoldRenderOptions","defaultArnoldFilter","defaultArnoldDriver","defaultArnoldDisplayDriver"]
+    intiSelection = mc.ls(selection = True)
+    deletedNodes = 0
+
+    #remove from any namespace all the nodes of ma structre to clean
+    mc.container (name="asset1", includeNetwork = True, includeShaders=True, includeHierarchyBelow=True, includeTransform=True, preview=True, addNode= struct2CleanList, force= True)
+    myAssetNodeList = mc.ls(selection = True)+doNotDelete
+    for each in myAssetNodeList:
+        if ":"in each:
+            mc.lockNode(each, lock=False)
+            newEach= mc.rename(each,each.split(":")[-1],ignoreShape=True)
+            print "#### {:>7}: Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
+
+
+    #delete all nodes that do not belong to my structure
+    mc.container (name="asset1", includeNetwork = True, includeShaders=True, includeHierarchyBelow=True, includeTransform=True, preview=True, addNode= struct2CleanList, force= True)
+    myAssetNodeList = mc.ls(selection = True)+doNotDelete
+    toDelete = list(set(mc.ls()) - set(myAssetNodeList)-set(mc.ls(lockedNodes = True))-set(mc.ls(referencedNodes = True))-set(mc.ls(type = "reference"))-set(undeletable))
+    if toDelete:
+        mc.delete(toDelete)
+        deletedNodes = deletedNodes + len(toDelete)
+        #mc.select(toDelete, replace = True, ne = True)
+
+
+    ### delete all RN gost nodes
+    refNodes = list(set(mc.ls(type = "reference")))
+    for each in refNodes:
+        try:
+            mc.referenceQuery(each,filename=True)
+        except:
+            mc.lockNode(each,lock=False)
+            mc.delete(each)
+            deletedNodes += 1
+
+    print "#### {:>7}: 'softClean' has deleted {} nodes".format("Info",deletedNodes)
+
+    #try to get back to the initial selection
+    try:
+        mc.select(intiSelection, replace = True, ne = True)
+    except:
+        mc.select(cl=True)
+
+
+    ## remove all namespaces
+    miscUtils.removeAllNamespace(emptyOnly=True)
+
 
 
 

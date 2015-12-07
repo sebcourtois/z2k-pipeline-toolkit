@@ -79,17 +79,23 @@ def createUserWorkspace():
         
 def deleteUnknownNodes():
     
-    mentalRayNodeList = [u'mentalrayGlobals',u'mentalrayItemsList',u'miDefaultFramebuffer',u'miDefaultOptions',u'Draft',u'DraftMotionBlur',u'DraftRapidMotion',u'Preview',u'PreviewCaustics',u'PreviewFinalGather',u'PreviewGlobalIllum',u'PreviewImrRayTracyOff',u'PreviewImrRayTracyOn',u'PreviewMotionblur',u'PreviewRapidMotion',u'Production',u'ProductionFineTrace',u'ProductionMotionblur',u'ProductionRapidFur',u'ProductionRapidHair',u'ProductionRapidMotion']
+    mentalRayNodeList = [u'mentalrayGlobals',u'mentalrayItemsList',u'miDefaultFramebuffer',u'miDefaultOptions',u'Draft',u'DraftMotionBlur',u'DraftRapidMotion',u'Preview',
+                            u'PreviewCaustics',u'PreviewFinalGather',u'PreviewGlobalIllum',u'PreviewImrRayTracyOff',u'PreviewImrRayTracyOn',u'PreviewMotionblur',
+                            u'PreviewRapidMotion',u'Production',u'ProductionFineTrace',u'ProductionMotionblur',u'ProductionRapidFur',u'ProductionRapidHair',
+                            u'ProductionRapidMotion',u'miContourPreset']
     turtleNodeList = [u'TurtleDefaultBakeLayer',u'TurtleBakeLayerManager',u'TurtleRenderOptions',u'TurtleUIOptions']
 
     mentalRayNodeList = mc.ls(mentalRayNodeList)
     turtleNodeList= mc.ls(turtleNodeList)
+    mentalRayDeletedNodeList = []
+    turtleDeletedNodeList = []
 
     for each in mentalRayNodeList:
         try:
             mc.lockNode(each,lock = False)
             mc.delete(each)
-            print "#### {:>7}: '{}' Mental Ray node deleted".format("Info", each)
+            mentalRayDeletedNodeList.append(each)
+            #print "#### {:>7}: '{}' Mental Ray node deleted".format("Info", each)
         except:
             print "#### {:>7}: '{}' Mental Ray node could not be deleted".format("Warning", each)
 
@@ -97,13 +103,22 @@ def deleteUnknownNodes():
         try:
             mc.lockNode(each,lock = False)
             mc.delete(each)
-            print "#### {:>7}: '{}' Turtle node deleted".format("Info", each)
+            turtleDeletedNodeList.append(each)
+            #print "#### {:>7}: '{}' Turtle node deleted".format("Info", each)
         except:
             print "#### {:>7}: '{}' Turtle node could not be deleted".format("Warning", each)
 
     unknownNodes = mc.ls(type = "unknown")
-    for each in unknownNodes:
-        print "#### {:>7}: '{}' is unknowed".format("Warning", each)
+    if unknownNodes:
+        print "#### {:>7}: '{}' unknown node has been found in the scene".format("Warning", len(unknownNodes))
+        print "#### {:>7}: unknown node list:'{}'".format("Warning", unknownNodes)
+
+    if mentalRayDeletedNodeList:
+        print "#### {:>7}: '{}' Mental Ray node(s) deteled: '{}'".format("Warning", len(mentalRayDeletedNodeList), mentalRayDeletedNodeList)
+
+    if turtleDeletedNodeList:
+        print "#### {:>7}: '{}' Turtle node(s) deteled: '{}".format("Warning", len(turtleDeletedNodeList), turtleDeletedNodeList)
+
 
     try:
         mc.unloadPlugin("Turtle",force = True)
@@ -119,3 +134,45 @@ def setAttrC(*args, **kwargs):
     except:
         print "#### {:>7}: setAttr {}{} not possible, attribute is locked or connected".format("Warning", args, kwargs)
         return False
+
+
+def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, emptyOnly=False, *args,**kwargs):
+        """ Description: Delete all NameSpace appart the ones in the NSexclusionL
+            Return : nothing
+            Dependencies : cmds - 
+        """
+        tab= "    "
+        #print "removeAllNamespace()"
+        toReturnB = True
+        # "UI","shared" NS are used by maya itself
+        NS_exclusionBL=["UI","shared"]
+        NS_exclusionBL.extend(NSexclusionL)
+        # set the current nameSpace to the root nameSpace
+        mc.namespace(setNamespace = ":")
+        # get NS list
+        nsL = mc.namespaceInfo(listOnlyNamespaces=True)# list content of a namespace  
+        
+
+        for loop in range(len(nsL)+2):
+            nsL = mc.namespaceInfo(listOnlyNamespaces=True)
+            for ns in nsL:
+                if ns not in NS_exclusionBL:
+                    if emptyOnly == False:
+                        if verbose: print tab+"ns:",ns
+                        mc.namespace( removeNamespace =ns, mergeNamespaceWithRoot=True)
+                    else:
+                        if not mc.namespaceInfo(ns,  listOnlyDependencyNodes= True):
+                            if verbose: print tab+"ns:",ns
+                            mc.namespace( removeNamespace =ns, mergeNamespaceWithRoot=True)
+
+        # recursive
+        if emptyOnly==False:
+            count = 0
+            nsLFin = mc.namespaceInfo(listOnlyNamespaces=True)
+            while len(nsLFin)>2:
+                removeAllNamespace(NSexclusionL = NSexclusionL, emptyOnly = emptyOnly, verbose= verbose)
+                count += 1
+                if count > limit:
+                    break
+
+        return [toReturnB]

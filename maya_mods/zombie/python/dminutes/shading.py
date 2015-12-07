@@ -269,11 +269,6 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
         publicMapFilePath = miscUtils.normPath(miscUtils.pathJoin(publicMapdir,fileName))
 
 
-
-
-
-
-
         #tests the texture extention
         mapExtention = (os.path.split(mapFilePath))[-1].split(".")[-1]
         if mapExtention  not in inAuthorizedFormat:
@@ -600,6 +595,7 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         else:
             preShadNode = preShadNode[-1]
 
+
         try:
             matShadNodeType = mc.nodeType(matShadNode[-1])
         except:
@@ -607,7 +603,7 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
 
         if not matShadNode or matShadNodeType not in matShadNodeTypeList:
             if verbose == True: print "#### {:>7}: {:^28} The material shading node is missing or has a wrong type,  ".format("Info", shadingEngine)
-            matShadNode = mc.shadingNode(matShadNodeType, asShader=True)
+            matShadNode = mc.shadingNode("dmnToon", asShader=True)
             mc.connectAttr(matShadNode+".outColor", shadingEngine+'.aiSurfaceShader', force =True)
             continue
         else:
@@ -739,10 +735,6 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
         elif not(mapFilePath == tgaFilePath or mapFilePath == jpgFilePath): 
             print "#### {:>7}: '{}' FileNode, wrong file format: '{}',  should be a jpg or tga".format("Error",eachFileNode,mapFilePath.split(".")[-1])
             wrongFileNodeList.append(eachFileNode)
-            continue
-
-        if "$ZOMB_TEXTURE_PATH" in mapFilePath or os.path.expandvars(os.path.expandvars("$ZOMB_TEXTURE_PATH")) in mapFilePath:
-            print "#### {:>7}: '{}' skipping '.jpg' creation, texture is in the public directory: '{}'".format("Info",eachFileNode,mapFilePath)
             continue
 
         if mainFilePathElem[-3] == "chr": 

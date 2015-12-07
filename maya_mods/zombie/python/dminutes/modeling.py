@@ -389,8 +389,7 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
         - fixShapeName (boolean): fix invalid shapes names if True, only log info otherwise
         - return (list): the meshes list that still have an invalid shape name
     """
-    print ""
-    print "#### {:>7}: modeling.meshShapeNameConform(fixShapeName = {}, myTransMesh = {}, forceInfoOff = {}, inParent = {})".format("Info",fixShapeName, myTransMesh, forceInfoOff, inParent)
+
     if not myTransMesh:
         myTransMesh = miscUtils.getAllTransfomMeshes(inParent)
         if myTransMesh is None: myTransMesh = []
@@ -414,13 +413,13 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
             print "#### warning: 'meshShapeNameConform': '"+each+"' has a wrong shape name: '"+myShape.split("|")[-1]+"' --> should be renamed as: --> '"+myShapeCorrectName.split("|")[-1]+"'"
             shapesToFix.append(each)
     if renamedNumber != 0:
-        if forceInfoOff is False: print "#### info: 'meshShapeNameConform': "+str(renamedNumber)+" shape(s) fixed"
+        if forceInfoOff is False: print "#### {:>7}:'meshShapeNameConform': {} shape(s) fixed".format("Info",renamedNumber)    
         return None
-    elif shapesToFix:
-        if forceInfoOff is False: print "#### info: 'meshShapeNameConform': "+str(len(shapesToFix))+" shape(s) to be fixed"
+    elif shapesToFix: 
+        if forceInfoOff is False: print "#### {:>7}:'meshShapeNameConform': {} shape(s) to be fixed".format("Info",shapesToFix)
         return shapesToFix
     elif checkAllScene == True:
-        if forceInfoOff is False: print "#### info: 'meshShapeNameConform': all meshes shapes names are correct"
+        if forceInfoOff is False: print "#### {:>7}:'meshShapeNameConform': all meshes shapes names are correct".format("Info",shapesToFix)
         return None
     else:
         return None
@@ -501,9 +500,9 @@ def makeAllMeshesUnique(inParent = "*"):
             multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
     else:
         if inParent == "*":
-            print "#### info: 'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name "
+            print "#### {:>7}:'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name".format("Info")
         else :
-            print "#### info: 'makeAllMeshesUnique' no multiple mesh found under '"+inParent+"' all meshes have unique short name "
+            print "#### {:>7}:'makeAllMeshesUnique' no multiple mesh found under '{}' all meshes have unique short name ".format("Info",inParent)
 
 
 def geoGroupDeleteHistory():
@@ -512,7 +511,7 @@ def geoGroupDeleteHistory():
     """
     geoTransformList = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
     cmds.delete(geoTransformList,ch =True)
-    print "#### info :'geoGroupDeleteHistory': deteted history on "+str(len(geoTransformList))+" geometries : "
+    print "#### {:>7}:'geoGroupDeleteHistory': deteted history on {} geometries".format("Info",len(geoTransformList))
     
     geoShapeList = cmds.ls(cmds.listRelatives("|asset|grp_geo", allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
     deletedShapeList = []
@@ -561,6 +560,11 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
     return unFreezedTransfomList if unFreezedTransfomList != [] else  None
 
 def compareHDToPreviz():
+    """
+    This script has been made at dreamwall, to compare previz and master modeling structure you must import the previz file as a reference, 
+    the asset node should have this kind of name: "nameSpace:asset_previz". then select the previz asset transform and the master asst transform, 
+    run the script and read the log
+    """
     # compare asset_hi to asset_previz ( compare translate-rotate of group are the same and local pivot rotate-scale of hi must be 0).
     import maya.cmds as cmds
 
