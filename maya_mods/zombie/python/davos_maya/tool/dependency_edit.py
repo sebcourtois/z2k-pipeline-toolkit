@@ -4,43 +4,50 @@ import os.path as osp
 import filecmp
 #from datetime import datetime
 
+import maya.cmds as mc
 import maya.utils as mu
 import pymel.core as pm
 
 from . import dependency_scan
 from davos_maya.tool.general import entityFromScene
 
-from pytaya.core.rendering import fileNodesFromObjects
+from pytaya.core.rendering import fileNodesFromObjects, fileNodesFromShaders
 from pytd.util.fsutils import pathResolve, normCase
-import subprocess
 
 #from pytd.util.sysutils import toStr
 
 
 def fileNodesFromSelection():
 
-    oSelList = pm.selected(transforms=True, shapes=True)
+    sSelList = mc.ls(sl=True)
 
     oFileNodeList = []
+    sConfirmMsg = ""
 
-    if not oSelList:
+    if not sSelList:
         oFileNodeList = pm.ls("*", r=True, type="file")
         sConfirmMsg = "Edit All Texture Files ??"
     else:
-        oFileNodeList = fileNodesFromObjects(pm.selected(dag=True, shapes=True))
-        sConfirmMsg = "Edit {} Texture Files from selection ?".format(len(oFileNodeList))
+        oFileNodeList = pm.ls(sSelList, type='file')
+        oFileNodeList.extend(fileNodesFromShaders(pm.ls(sSelList, type=mc.listNodeTypes('shader', ex="texture"))))
+        oFileNodeList.extend(fileNodesFromObjects(pm.ls(sSelList, dag=True, shapes=True)))
+
+        #sFiles = '\n'.join("'{}'".format(osp.basename(n.getAttr('fileTextureName'))) for n in oFileNodeList)
+        #sConfirmMsg = "Edit {} selected textures:\n\n".format(len(oFileNodeList))
+        #sConfirmMsg += sFiles
 
     if not oFileNodeList:
-        pm.warning("No Texture File found from current selection !")
+        pm.warning("No File node found in current selection !")
         return
 
-    sConfirm = pm.confirmDialog(title='QUESTION !'
-                                , message=sConfirmMsg
-                                , button=['OK', 'Cancel'])
+    if sConfirmMsg:
+        sConfirm = pm.confirmDialog(title='QUESTION !',
+                                    message=sConfirmMsg,
+                                    button=['OK', 'Cancel'])
 
-    if sConfirm == 'Cancel':
-        pm.warning("Canceled !")
-        return
+        if sConfirm == 'Cancel':
+            pm.warning("Canceled !")
+            return
 
     return oFileNodeList
 
@@ -167,6 +174,8 @@ File needs to be synced before you can edit it."""
 #                        except OSError as e:
 #                            sMsg = toStr(e)
 #                            scanLogDct.setdefault("error", []).append(('FileInUse', sMsg))
+                    else:
+                        scanLogDct.setdefault("info", []).append(('ReadyToEdit', ""))
 
             addResult(resultDct)
 
@@ -177,13 +186,14 @@ File needs to be synced before you can edit it."""
         preEditResults[-1]["scan_severities"] = sAllSeveritySet
         preEditResults[-1]["publish_count"] = 0
 
-    res = dependency_scan.launch(damEntity, scanResults=preEditResults, modal=True)
-    if res is None:
-        pm.displayInfo("Canceled !")
+    if not pubFileItems:
+        pm.displayWarning("No public textures to edit !")
         return
 
-    if not pubFileItems:
-        pm.displayWarning("No public textures to edit in current scene !")
+    res = dependency_scan.launch(damEntity, scanResults=preEditResults, modal=True,
+                                 okLabel="Edit", expandTree=True)
+    if res is None:
+        pm.displayInfo("Canceled !")
         return
 
     def showScriptEditor():

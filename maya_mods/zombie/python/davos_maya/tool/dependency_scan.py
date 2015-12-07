@@ -6,6 +6,7 @@ from PySide import QtGui
 from PySide.QtCore import Qt, QSize
 
 import PIL.Image
+import filecmp
 pilimage = PIL.Image
 
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
@@ -101,7 +102,7 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
         self.treeWidget.clear()
         self.setupTreeData(scanTextureDependency(entityFromScene()))
 
-    def setupTreeData(self, scanResults):
+    def setupTreeData(self, scanResults, allExpanded=False):
 
         treeWidget = self.treeWidget
 
@@ -196,10 +197,15 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
 
         treeWidget.createTree(treeData)
 
+        if len(sFileGrpItems) == 1:
+            allExpanded = True
+
         c = sHeaderList.index("Summary")
         for sItemPath in sFileGrpItems:
             item = treeWidget.itemFromPath(sItemPath)
             item.setText(c, "{} files".format(item.childCount()))
+            if allExpanded:
+                item.setExpanded(True)
 
         for i in xrange(treeWidget.topLevelItemCount()):
             item = treeWidget.topLevelItem(i)
@@ -263,9 +269,9 @@ def scanTextureDependency(damEntity):
         if bUdim:
             sUdimPat = makeUdimFilePattern(sNodeAbsPath)
             sTexAbsPathList = sorted(iterPaths(osp.dirname(sNodeAbsPath), dirs=False,
-                                             recursive=False,
-                                             keepFiles=ignorePatterns(sUdimPat)
-                                             ))
+                                               recursive=False,
+                                               keepFiles=ignorePatterns(sUdimPat)
+                                               ))
             sUdimFileList = sTexAbsPathList[:]
 
         for sTexAbsPath in sTexAbsPathList:
@@ -300,7 +306,7 @@ def scanTextureDependency(damEntity):
                          "file_nodes":fileNodeDct[sTexNormPath],
                          "buddy_files":[],
                          "udim_files":list(p for p in sUdimFileList
-                                           if p != sTexAbsPath),
+                                            if p != sTexAbsPath),
                          "publishable":False,
                          "drc_file":None,
                          "exists":bExists,
@@ -540,24 +546,32 @@ def _setPublishableState(resultDct):
 Wait for the next file synchronization and retry publishing."""
         scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
     else:
-        bPublishable = True
+        sSrcFilePath = resultDct["abs_path"]
+        sPubFilePath = pubFile.absPath()
+        bModified = not filecmp.cmp(sPubFilePath, sSrcFilePath, shallow=True)
+        #bDiffers, sSrcChecksum = pubFile.differsFrom(sPubFilePath)
+        if not bModified:
+            scanLogDct.setdefault("info", []).append(("Not Modified", "File has not been modified"))
+        else:
+            bPublishable = True
 
-        sMsg = ""
-        sBuddyFileList = resultDct["buddy_files"]
-        if sBuddyFileList:
-            sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
-            sMsg = (", ".join(s.upper() for s in sExtList) + " found"
-                    if sBuddyFileList else "")
-        elif inDevMode():
-            sMsg = resultDct["abs_path"]
+            sMsg = ""
+            sBuddyFileList = resultDct["buddy_files"]
+            if sBuddyFileList:
+                sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
+                sMsg = (", ".join(s.upper() for s in sExtList) + " found"
+                        if sBuddyFileList else "")
+            elif inDevMode():
+                sMsg = resultDct["abs_path"]
 
-        scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
+            scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
 
     resultDct["publishable"] = bPublishable
 
 dialog = None
 
-def launch(damEntity=None, scanResults=None, modal=False):
+def launch(damEntity=None, scanResults=None, modal=False, okLabel="OK",
+           expandTree=False):
 
     global dialog
 
@@ -592,10 +606,10 @@ def launch(damEntity=None, scanResults=None, modal=False):
         btn.setText("Close")
     else:
         if modal:
-            okBtn.setText("Publish")
+            okBtn.setText(okLabel)
 
     dialog.show()
-    dialog.setupTreeData(scanResults)
+    dialog.setupTreeData(scanResults, allExpanded=expandTree)
 
     if modal:
         if err:
