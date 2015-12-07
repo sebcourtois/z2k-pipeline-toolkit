@@ -1,0 +1,225 @@
+# Debug path variables
+DEBUGFILE_PREVIZ_CHR='//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Previz_CHR_Release_debug.txt'
+DEBUGFILE_PREVIZ_PRP='//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Previz_PRP_Release_debug.txt'
+DEBUGFILE_PREVIZ_SET='//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Previz_SET_Release_debug.txt'
+DEBUGFILE= '//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Previz_Result_Release_debug.txt'
+
+# GUI
+Z2K_ICONPATH = "zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/"
+
+TESTLIST= [
+"chr_devTeam_testing",
+"chr_testSeb_default",
+]
+DONE= [
+'prp_apnCompact_default' ,
+'prp_apnReflex_default' ,
+'prp_bottesPaille_default',
+'prp_carteControleur_aurelien' ,
+'prp_carteCorpHumain_default' ,
+'prp_cartes_jeu1' ,
+'prp_cartes_jeu2' ,
+'prp_cartouche_fusilSylvain' ,
+'prp_casquette_zombillenium' ,
+'prp_cercueil_casse' ,
+'prp_cercueil_default' ,
+'prp_chaiseBureauBlaise_roulettes' ,
+'prp_chapeletGousseAil_default' ,
+'prp_chrysantheme_default' ,
+'prp_cintre_default' ,
+'prp_cintreHautGretchen_default' ,
+'prp_clefMolette_default' ,
+'prp_contratEmbauche_zombillenium' ,
+'prp_contratEmbauche_zombilleniumSigne' ,
+'prp_craie_cassee' ,
+'prp_craie_default' ,
+'prp_crane_default' ,
+'prp_crane_sirius' ,
+'prp_crayon_default' ,
+'prp_crayonCouleur_vert' ,
+'prp_dentZombie_default' ,
+'prp_dossiers_francis' ,
+'prp_douille_fusilSylvain' ,
+'prp_ecranOrdinateur_bureauFrancis' ,
+'prp_exctincteur_bureauFrancis' ,
+'prp_feuille_dessinMonstreLucie' ,
+'prp_feuille_dessinMonstreLucieMorcx' ,
+'prp_feuille_eleve' ,
+'prp_feuilleFroissee_dessinTombe' ,
+'prp_feuilleFroissee_dessinTombeModifie' ,
+'prp_feuilles_miranda' ,
+'prp_feuRouge_bar' ,
+'prp_flasque_calva' ,
+'prp_fusil_sylvain' ,
+'prp_gobelet_cafe' ,
+'prp_gobelet_default' ,
+'prp_gomme_default' ,
+'prp_gousseAil_croque' ,
+'prp_gousseAil_default' ,
+'prp_hache_default' ,
+'prp_hautGretchen_default' ,
+'prp_humerus_sirius' ,
+'prp_limeOngle_default' ,
+'prp_manette_jeu' ,
+'prp_manetteThriller_default' ,
+'prp_metreRuban_default' ,
+'prp_miroirCasierVestiaire_default' ,
+'prp_montre_blaise' ,
+'prp_morceauxVerre_sol' ,
+'prp_morceauxVerre_tableClasse' ,
+'prp_mouchoirFrancis_default' ,
+'prp_mug_default' ,
+'prp_murBureauFrancis_fissure' ,
+'prp_orduresPoubelle_default' ,
+'prp_panneauZ2kRteVillageParc_default' ,
+'prp_panneauZ2kRteVillageParc_eclate' ,
+'prp_paquetChewingGum_default' ,
+'prp_parapluie_default' ,
+'prp_pareBriseCamionSylvain_eclate' ,
+'prp_petalesRose_noire' ,
+'prp_plateau_rond' ,
+'prp_poireau_default' ,
+'prp_porteCle_crabe' ,
+'prp_poubelleVillage_default' ,
+'prp_regleMaitresse_default' ,
+'prp_ressortThriller_default' ,
+'prp_rose_noire' ,
+'prp_sacoche_assistanteSociale' ,
+'prp_sacoche_aurelien' ,
+'prp_sirius_lambdaMain' ,
+'prp_smartphone_ado' ,
+'prp_smartphone_aurelien' ,
+'prp_smartphone_default' ,
+'prp_stickChauvSou_mauve' ,
+'prp_stickers_default' ,
+'prp_storeBaguette_default' ,
+'prp_stylo_blaise' ,
+'prp_stylo_eleve' ,
+'prp_stylo_miranda' ,
+'prp_tableauBureauFrancis_brise' ,
+'prp_tableauBureauFrancis_default' ,
+'prp_tableauClasse_ecriture1' ,
+'prp_tablette_newAfficheZ2K' ,
+'prp_ticketZ2k_default' ,
+'prp_tige_barbaPapa' ,
+'prp_torchon_barman' ,
+'prp_valiseRoulette_lucie' ,
+'prp_verreBallonRouge_default' ,
+'prp_verreCognac_default' ,
+'prp_vitrePensionClasse_brisee' ,
+'prp_witchboard_default' ,
+
+'set_barExt_default' ,
+'set_barInt_default' ,
+'set_cheminChamps_default' ,
+'set_cimetiere_default' ,
+'set_dortoirsZombies_default' ,
+'set_eglise_default' ,
+'set_entreeVillage_default' ,
+'set_lotissementBarEst_default' ,
+'set_lotissementBarNord_default' ,
+'set_lotissementBarOuest_default' ,
+'set_lotissementBarSud_default' ,
+'set_lotissementPensionEst_default' ,
+'set_lotissementPensionOuest_default' ,
+'set_lotissementSortieVillage_default' ,
+'set_mainStreet_default' ,
+'set_pensionClasse_default' ,
+'set_pensionExt_default' ,
+'set_quartierGrandeRoue_default' ,
+'set_routeParcVillage_default' ,
+'set_routePylones_default' ,
+'set_rueEntreeVillage_default' ,
+'set_ruePrincipaleVillage_default' ,
+'set_rueSortieVillage_default' ,
+'set_salleReunion_default' ,
+'set_salleSyndic_default' ,
+'set_tours_default' ,
+'set_trainMineThriller_default' ,
+'set_vestiaires_default' ,
+
+'set_bureauBlaise_default' ,
+'set_cageAscenseur_dortoirsZombies' ,
+'set_cageAscenseur_staff' ,
+'set_campagneVueVillage_default' ,
+'set_entreeParc_default' ,
+'set_maisonBank01_LBN' ,
+'set_maisonBank01_LBO' ,
+'set_maisonBank01_LPE' ,
+'set_maisonBank02_LBE' ,
+'set_maisonBank02_LBN' ,
+'set_maisonBank02_LPE' ,
+'set_maisonBank03_LBE' ,
+'set_maisonBank03_LBN' ,
+'set_maisonBank03_LPE' ,
+'set_maisonBank04_LBE' ,
+'set_maisonBank04_LPE' ,
+'set_maisonBank05_LPE' ,
+'set_quartierTrainMine_default' ,
+
+'vhl_ascenseurInt_default',
+'vhl_voiture_default',
+'vhl_voitureAurelien_accidente',
+'vhl_voitureAurelien_default',
+'vhl_tracteur_default', 
+
+]
+# donner ici la list des assets du meme type to release
+TODO = [
+
+]
+
+BATCH_ASSET_LIST =[
+
+'prp_cercueil_rafitstole' ,
+'prp_balaiSeau_default',
+'prp_crayonCouleur_rouge',
+'prp_feuille_dessinMonstreLucieDech',
+'prp_grandeRoue_default',
+'prp_grandeRoueNacelle_default',
+'prp_journal_mortAurelien',
+'prp_storePensionClasse_default',
+'set_bureauFrancis_default', 
+'set_campagneVueParc_default', 
+'set_eoliennes_default', 
+'set_maisonBank01_LBE', 
+'set_parcStreets_default',
+'vhl_roulotteBarbapapa_default', 
+'vhl_trainMine_default',
+
+
+]
+failL=[
+'prp_cercueil_rafitstole' ,
+'prp_balaiSeau_default',
+'prp_crayonCouleur_rouge',
+'prp_feuille_dessinMonstreLucieDech',
+'prp_grandeRoue_default',
+'prp_grandeRoueNacelle_default',
+'prp_journal_mortAurelien',
+'prp_storePensionClasse_default',
+'set_bureauFrancis_default', 
+'set_campagneVueParc_default', 
+'set_eoliennes_default', 
+'set_maisonBank01_LBE', 
+'set_parcStreets_default',
+'vhl_roulotteBarbapapa_default', 
+'vhl_trainMine_default',
+]
+# Batch parameters - All configuration is Done Here.
+ASSETCAT = "vhl" #"chr","set","prp","vhl","c2d","env","fxp
+SOURCE_ASSET_TYPE="previz_scene"
+DESTINATION_ASSET_TYPE= "previz_ref"
+SGTASK= "Rig_Previz" # wip not in use "Rig Auto"
+THECOMMENT= "Auto_Release_rockTheCasbah" #"Auto_Release_rockTheCasbah !","First_publish_RockTheCasbah"
+OPENINMAYA= 1 
+READONLY= 1
+PUBLISHMAYAFILE= 0
+RELEASEMAYAFILE=0
+UNLOCKFILE= 0
+PREPUBLISH_PYSCRIPTL = [
+"C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py",
+]
+PRERELEASE_PYSCRIPTL=[
+"C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Previz_aladin_check_batch.py",
+]

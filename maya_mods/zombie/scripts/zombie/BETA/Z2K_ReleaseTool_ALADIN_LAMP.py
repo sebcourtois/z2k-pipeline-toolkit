@@ -35,7 +35,7 @@ import maya.cmds as cmds
 import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
 
-import dminutes.Z2K_ReleaseTool.Z2K_ReleaseTool as z2kR
+import dminutes.Z2K_ReleaseTool.Z2K_ReleaseTool_batchable as z2kR
 reload (z2kR)
 
 
