@@ -97,6 +97,7 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
         self.setTreeWidget(DependencyTree(self))
         self.resize(900, 600)
 
+        self.scanResults = None
         self.__scanFunc = scanFunc if scanFunc else scanTextureDependency
 
         self.refreshBtn = self.buttonBox.addButton("Refresh", QtGui.QDialogButtonBox.ResetRole)
@@ -107,6 +108,10 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
         self.setupTreeData(self.__scanFunc(entityFromScene()))
 
     def setupTreeData(self, scanResults, allExpanded=False):
+
+        self.scanResults = scanResults
+        if not scanResults:
+            return
 
         treeWidget = self.treeWidget
 
@@ -591,10 +596,10 @@ def launch(damEntity=None, scanFunc=None, modal=False, okLabel="OK",
     else:
         scanResults = scanFunc(damEntity)
 
-    if not forceDialog:
-        if not scanResults:
-            return scanResults
+    if not scanResults:
+        return scanResults
 
+    if not forceDialog:
         sScanSeverities = scanResults[-1]["scan_severities"]
         if not sScanSeverities:
             return scanResults
@@ -637,7 +642,7 @@ def launch(damEntity=None, scanFunc=None, modal=False, okLabel="OK",
 
         dialog.close()
         if dialog.exec_():
-            return scanResults
+            return dialog.scanResults
 
     return None
 

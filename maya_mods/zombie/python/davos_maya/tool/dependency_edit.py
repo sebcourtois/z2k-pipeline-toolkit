@@ -55,6 +55,15 @@ def fileNodesFromSelection():
 @setWaitCursor
 def scanTexturesToEdit(damEntity):
 
+    preEditResults = []
+    sAllSeveritySet = set()
+
+    def addResult(res):
+#        for k, v in res.iteritems(): print k, v
+#        print ""
+        preEditResults.append(res)
+        sAllSeveritySet.update(res["scan_log"].iterkeys())
+
     pubLib = damEntity.getLibrary()
     pubTexDir = damEntity.getResource("public", "texture_dir", fail=True)
     sPubTexDirPath = pubTexDir.absPath()
@@ -74,15 +83,6 @@ def scanTexturesToEdit(damEntity):
 
 #    sDate = datetime.now().strftime("%Y-%m-%d_%HH%M")
 #    sBkupTexDirName = "texture_edit_backup"
-
-    preEditResults = []
-    sAllSeveritySet = set()
-
-    def addResult(res):
-#        for k, v in res.iteritems(): print k, v
-#        print ""
-        preEditResults.append(res)
-        sAllSeveritySet.update(res["scan_log"].iterkeys())
 
     sSelUdimFileSet = set()
     for srcRes in scanResults:
