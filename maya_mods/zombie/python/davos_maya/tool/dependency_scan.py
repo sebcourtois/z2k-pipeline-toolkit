@@ -579,7 +579,7 @@ Wait for the next file synchronization and retry publishing."""
 dialog = None
 
 def launch(damEntity=None, scanFunc=None, modal=False, okLabel="OK",
-           expandTree=False):
+           expandTree=False, forceDialog=False):
 
     global dialog
 
@@ -591,12 +591,13 @@ def launch(damEntity=None, scanFunc=None, modal=False, okLabel="OK",
     else:
         scanResults = scanFunc(damEntity)
 
-    if not scanResults:
-        return scanResults
+    if not forceDialog:
+        if not scanResults:
+            return scanResults
 
-    sScanSeverities = scanResults[-1]["scan_severities"]
-    if not sScanSeverities:
-        return scanResults
+        sScanSeverities = scanResults[-1]["scan_severities"]
+        if not sScanSeverities:
+            return scanResults
 
     dialog = DependencyTreeDialog(scanFunc=scanFunc)
 

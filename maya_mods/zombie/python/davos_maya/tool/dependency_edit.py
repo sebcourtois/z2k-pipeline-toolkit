@@ -13,6 +13,7 @@ from davos_maya.tool.general import entityFromScene
 
 from pytaya.core.rendering import fileNodesFromObjects, fileNodesFromShaders
 from pytd.util.fsutils import pathResolve, normCase
+from pytd.util.qtutils import setWaitCursor
 
 #from pytd.util.sysutils import toStr
 
@@ -51,7 +52,7 @@ def fileNodesFromSelection():
 
     return oFileNodeList
 
-
+@setWaitCursor
 def scanTexturesToEdit(damEntity):
 
     pubLib = damEntity.getLibrary()
@@ -162,8 +163,9 @@ File needs to be synced before you can edit it."""
 #                        except OSError as e:
 #                            sMsg = toStr(e)
 #                            scanLogDct.setdefault("error", []).append(('FileInUse', sMsg))
-                    else:
-                        scanLogDct.setdefault("info", []).append(('ReadyToEdit', ""))
+
+            if "error" not in scanLogDct:
+                scanLogDct.setdefault("info", []).append(('ReadyToEdit', ""))
 
             addResult(resultDct)
 
@@ -190,7 +192,8 @@ def editTextureFiles(dryRun=False):
     preEditResults = dependency_scan.launch(damEntity, scanFunc=scanTexturesToEdit,
                                             modal=True,
                                             okLabel="Edit",
-                                            expandTree=True)
+                                            expandTree=True,
+                                            forceDialog=True)
     if preEditResults is None:
         pm.displayInfo("Canceled !")
         return
