@@ -1,4 +1,5 @@
 
+import os
 import os.path as osp
 import re
 
@@ -89,18 +90,21 @@ class DependencyTree(QuickTree):
 
 class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, scanFunc=None):
         super(DependencyTreeDialog, self).__init__(parent=parent)
+
         self.setAttribute(Qt.WA_DeleteOnClose, True)
         self.setTreeWidget(DependencyTree(self))
         self.resize(900, 600)
+
+        self.__scanFunc = scanFunc if scanFunc else scanTextureDependency
 
         self.refreshBtn = self.buttonBox.addButton("Refresh", QtGui.QDialogButtonBox.ResetRole)
         self.refreshBtn.clicked.connect(self.refresh)
 
     def refresh(self):
         self.treeWidget.clear()
-        self.setupTreeData(scanTextureDependency(entityFromScene()))
+        self.setupTreeData(self.__scanFunc(entityFromScene()))
 
     def setupTreeData(self, scanResults, allExpanded=False):
 
@@ -257,22 +261,22 @@ def scanTextureDependency(damEntity):
         if not sNodePath:
             continue
 
-        iTilingMode = fileNode.getAttr("uvTilingMode")
-        bUvTileOn = (iTilingMode != 0)
-        bUdim = (iTilingMode == UDIM_MODE)
-
         sNodeAbsPath = pathResolve(sNodePath)
         sNodeNormPath = normCase(sNodeAbsPath)
 
-        sUdimFileList = []
+        iTilingMode = fileNode.getAttr("uvTilingMode")
+        bUvTileOn = (iTilingMode != 0)
+        bUdimMode = (iTilingMode == UDIM_MODE)
+
+        sUdimPathList = []
         sTexAbsPathList = (sNodeAbsPath,)
-        if bUdim:
+        if bUdimMode and osp.isfile(sNodeAbsPath):
             sUdimPat = makeUdimFilePattern(sNodeAbsPath)
             sTexAbsPathList = sorted(iterPaths(osp.dirname(sNodeAbsPath), dirs=False,
                                                recursive=False,
                                                keepFiles=ignorePatterns(sUdimPat)
                                                ))
-            sUdimFileList = sTexAbsPathList[:]
+            sUdimPathList = sTexAbsPathList[:]
 
         for sTexAbsPath in sTexAbsPathList:
 
@@ -289,7 +293,7 @@ def scanTextureDependency(damEntity):
             else:
                 fileNodeDct[sTexNormPath] = [fileNode] if bNodePath else []
 
-            if bUvTileOn and (not bUdim):
+            if bUvTileOn and (not bUdimMode):
                 sMsg = "Only UDIM (Mari) accepted"
                 scanLogDct.setdefault("error", []).append(('BadUVTilingMode', sMsg))
 
@@ -299,14 +303,13 @@ def scanTextureDependency(damEntity):
             bPublicFile = False
             sHighSeverity = "error"
             texFile = None
-            bExists = bUdim or osp.isfile(sTexAbsPath)
+            bExists = osp.isfile(sTexAbsPath)
 
             resultDct = {"abs_path":sTexAbsPath,
                          "scan_log":scanLogDct,
                          "file_nodes":fileNodeDct[sTexNormPath],
-                         "buddy_files":[],
-                         "udim_files":list(p for p in sUdimFileList
-                                            if p != sTexAbsPath),
+                         "buddy_paths":[],
+                         "udim_paths":sUdimPathList,
                          "publishable":False,
                          "drc_file":None,
                          "exists":bExists,
@@ -335,12 +338,12 @@ def scanTextureDependency(damEntity):
 
             sTiling = ""
             if len(re.findall(UDIM_RGX, sTexFilename)) != 1:
-                if bUdim:
+                if bUdimMode:
                     sMsg = "Must match 'name.1###.ext' pattern"
                     scanLogDct.setdefault(sHighSeverity, []).append(('BadUDIMFilename', sMsg))
             else:
                 sBasePath, sTiling = sBasePath.rsplit('.', 1)
-                if not bUdim:
+                if not bUdimMode:
                     sMsg = "UDIM mode is OFF"
                     scanLogDct.setdefault(sHighSeverity, []).append(('BadUVTilingMode', sMsg))
 
@@ -417,8 +420,8 @@ def scanTextureDependency(damEntity):
                         budResultDct = {"abs_path":sBuddyPath,
                                         "scan_log":budScanLogDct,
                                         "file_nodes":[],
-                                        "buddy_files":[],
-                                        "udim_files":[],
+                                        "buddy_paths":[],
+                                        "udim_paths":[],
                                         "publishable":False,
                                         "drc_file":budFile,
                                         "exists":True,
@@ -460,7 +463,7 @@ def scanTextureDependency(damEntity):
             if foundBudResList:
                 resultDctList.extend(foundBudResList)
                 sBuddyFileList = list(brd["abs_path"] for brd in foundBudResList)
-                resultDct["buddy_files"] = sBuddyFileList
+                resultDct["buddy_paths"] = sBuddyFileList
 
             for resDct in resultDctList:
                 if resDct["exists"]:
@@ -496,8 +499,8 @@ def scanTextureDependency(damEntity):
             resultDct = {"abs_path":p,
                          "scan_log":scanLogDct,
                          "file_nodes":[],
-                         "buddy_files":[],
-                         "udim_files":[],
+                         "buddy_paths":[],
+                         "udim_paths":[],
                          "publishable":False,
                          "drc_file":None,
                          }
@@ -524,8 +527,10 @@ def _setPublishableState(resultDct):
 
     bPublishable = False
 
+    bUpToDate = True
     pubFile = drcFile.getPublicFile(weak=True)
-    bUpToDate = pubFile.isUpToDate()
+    if pubFile.exists():
+        bUpToDate = pubFile.isUpToDate()
 
 #    bOldPrivFile = False
 #    privFsMtime = drcFile.fsMtime
@@ -550,15 +555,16 @@ Wait for the next file synchronization and retry publishing."""
         bModified = True
         if pubFile.exists():
             sPubFilePath = pubFile.absPath()
-            bModified = not filecmp.cmp(sPubFilePath, sSrcFilePath, shallow=True)
+            bModified = (not filecmp.cmp(sSrcFilePath, sPubFilePath))
             #bDiffers, sSrcChecksum = pubFile.differsFrom(sPubFilePath)
+
         if not bModified:
             scanLogDct.setdefault("info", []).append(("Not Modified", "File has not been modified"))
         else:
             bPublishable = True
 
             sMsg = ""
-            sBuddyFileList = resultDct["buddy_files"]
+            sBuddyFileList = resultDct["buddy_paths"]
             if sBuddyFileList:
                 sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
                 sMsg = (", ".join(s.upper() for s in sExtList) + " found"
@@ -572,7 +578,7 @@ Wait for the next file synchronization and retry publishing."""
 
 dialog = None
 
-def launch(damEntity=None, scanResults=None, modal=False, okLabel="OK",
+def launch(damEntity=None, scanFunc=None, modal=False, okLabel="OK",
            expandTree=False):
 
     global dialog
@@ -580,8 +586,10 @@ def launch(damEntity=None, scanResults=None, modal=False, okLabel="OK",
     if not damEntity:
         damEntity = entityFromScene()
 
-    if scanResults is None:
+    if scanFunc is None:
         scanResults = scanTextureDependency(damEntity)
+    else:
+        scanResults = scanFunc(damEntity)
 
     if not scanResults:
         return scanResults
@@ -590,7 +598,7 @@ def launch(damEntity=None, scanResults=None, modal=False, okLabel="OK",
     if not sScanSeverities:
         return scanResults
 
-    dialog = DependencyTreeDialog()
+    dialog = DependencyTreeDialog(scanFunc=scanFunc)
 
     l = ("Dependencies Status", damEntity.name, damEntity.project.name.capitalize())
     dialog.setWindowTitle(" - ".join(l))

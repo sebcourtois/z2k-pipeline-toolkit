@@ -2,7 +2,9 @@
 import os
 import subprocess
 from tempfile import NamedTemporaryFile
-import itertools as itr
+
+from itertools import izip, chain
+from collections import OrderedDict
 
 import pymel.core as pm
 
@@ -20,6 +22,7 @@ from .general import entityFromScene
 from davos_maya.tool import dependency_scan
 from pytd.util.sysutils import toStr, inDevMode
 from pytd.gui.dialogs import confirmDialog
+from pytd.util.fsutils import normCase
 #from pytd.util.fsutils import pathRelativeTo
 
 bDevDryRun = False
@@ -30,121 +33,133 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
     proj = damEntity.project
 
+    sPublishPathList = []
+    sBuddyPathList = []
     sTexPathList = []
-    allFileNodesList = []
-    allBuddyPathsList = []
+    depDataDct = {}
     for result in scanResults:
+
+        sAbsPath = result["abs_path"]
+        depDataDct[normCase(sAbsPath)] = result
 
         if not result["publishable"]:
             continue
 
-        fileNodes = result["file_nodes"]
-        sUdimFileList = result["udim_files"]
-        if fileNodes or sUdimFileList:
-            sTexPathList.append(result["abs_path"])
-            allFileNodesList.append(fileNodes)
-            allBuddyPathsList.append(result["buddy_files"])
+        if result["file_nodes"] or result["udim_paths"]:
+            sTexPathList.append(sAbsPath)
+        else:
+            sBuddyPathList.append(sAbsPath)
+
+        sPublishPathList.append(sAbsPath)
+
 
     if sTexPathList:
 
         pm.mel.ScriptEditor()
         pm.mel.handleScriptEditorAction("maximizeHistory")
 
-        print "\n" + " Publishing texture files ".center(100, '-')
+        print "\n" + " Publishing texture files ".center(120, '-')
 
-        publishedFileItems = proj.publishDependencies("texture_dep",
+        publishItemsList = proj.publishDependencies("texture_dep",
                                                       damEntity,
                                                       sTexPathList,
                                                       sComment,
                                                       dryRun=bDryRun,
                                                       **kwargs)
-        pubFiles = (f for f, _ in publishedFileItems)
+
+        publishItemsDct = OrderedDict(izip((normCase(p) for p in sTexPathList),
+                                           publishItemsList))
+
+        sMsgFmt = "\nRelinking '{}' node: \n    from '{}'\n      to '{}'"
 
         sUpdNodeList = []
-        sMsgFmt = "\nUpdating {} path: \nfrom '{}'\n  to '{}'"
+        for sTexPath, publishItems in publishItemsDct.iteritems():
 
-        for fileNodes, pubFile in zip(allFileNodesList, pubFiles):
+            sTexNormPath = normCase(sTexPath)
 
-            sEnvPath = pubFile.envPath("ZOMB_TEXTURE_PATH")
+            pubFile = None
+            depData = depDataDct[sTexNormPath]
 
-            for fileNode in fileNodes:
+            sUdimPathList = depData["udim_paths"]
+            if sUdimPathList:
+                sUdimPath = sUdimPathList[0]
+                sUdimNormPath = normCase(sUdimPath)
+                if sUdimNormPath != sTexNormPath:
+                    pubFile = publishItemsDct.get(sUdimNormPath, (None, None))[0]
+                    if not pubFile:
+                        pubFile = proj.entryFromPath(sUdimPath, dbNode=False)
+                    depData = depDataDct[sUdimNormPath]
+
+            if pubFile is None:
+                pubFile = publishItems[0]
+
+            sPubEnvPath = pubFile.envPath("ZOMB_TEXTURE_PATH")
+
+            fileNodeList = depData["file_nodes"]
+            for fileNode in fileNodeList:
 
                 sNodeName = fileNode.name()
                 if sNodeName in sUpdNodeList:
                     continue
 
-                sMsg = (sMsgFmt.format(repr(fileNode),
+                sMsg = (sMsgFmt.format(sNodeName,
                                        fileNode.getAttr("fileTextureName"),
-                                       sEnvPath))
+                                       sPubEnvPath))
                 print sMsg
 
                 if not bDryRun:
-                    fileNode.setAttr("fileTextureName", sEnvPath)
+                    fileNode.setAttr("fileTextureName", sPubEnvPath)
 
                 sUpdNodeList.append(sNodeName)
 
-    if not allBuddyPathsList:
-        return (not bDryRun)
+    if sBuddyPathList:
+        bUseSubprocess = False
+        if not bUseSubprocess:
 
-    sAllBuddyFileList = list(itr.chain(*allBuddyPathsList))
+            print "\n" + " Publishing related files (.psd, .tx, etc...) ".center(120, '-')
 
-    bUseSubprocess = False
-    if not bUseSubprocess:
+            proj.publishDependencies("texture_dep",
+                                     damEntity,
+                                     sBuddyPathList,
+                                     sComment,
+                                     dryRun=bDryRun,
+                                     **kwargs)
+        else:
+            sMsg = """
+    Opening a new process to publish associated files: .psd, .tx, etc...
+        """
+            pm.displayWarning(sMsg)
 
-        print "\n" + " Publishing associated files (.psd, .tx) ".center(100, '-')
+            with NamedTemporaryFile(suffix=".txt", delete=False) as tmpFile:
+                tmpFile.write("\n".join(sBuddyPathList))
 
-        publishedFileItems = proj.publishDependencies("texture_dep",
-                                                      damEntity,
-                                                      sAllBuddyFileList,
-                                                      sComment,
-                                                      dryRun=bDryRun,
-                                                      **kwargs)
+            p = publish_dependencies.__file__
 
+            sPython27Path = r"C:\Python27\python.exe"
+            sScriptPath = p[:-1]if p.endswith("c") else p
+            sCmdArgs = [sPython27Path,
+                        os.environ["Z2K_LAUNCH_SCRIPT"],
+                        "launch", "--update", "0", "--renew", "1",
+                        sPython27Path,
+                        sScriptPath,
+                        proj.name, "texture_dep",
+                        damEntity.sgEntityType.lower(),
+                        damEntity.name, tmpFile.name,
+                        sComment, "--dryRun", str(int(bDryRun)),
+                        ]
 
-        print "\n" + " Publishing report ".center(100, '-')
+            sCmdArgs = list(toStr(a)for a in sCmdArgs)
+            if inDevMode():
+                print sCmdArgs
 
-        count = len(sTexPathList) + len(sAllBuddyFileList)
-        sSep = "\n"
-        sMsgFiles = ""
-        for sTexPath, sBuddyPathList in itr.izip(sTexPathList, allBuddyPathsList):
+            subprocess.Popen(sCmdArgs)
 
-            sMsgFiles += sSep + sTexPath
-            if sBuddyPathList:
-                sMsgFiles += (sSep + sSep.join(sBuddyPathList))
+    print "\n" + " Publishing Report ".center(120, '-')
 
-            sMsgFiles += "\n"
-
-        print sMsgFiles + "\n- Published files: {}".format(count)
-
-    else:
-        sMsg = """
-Opening a new process to publish associated files: .psd, .tx, etc...
-    """
-        pm.displayWarning(sMsg)
-
-        with NamedTemporaryFile(suffix=".txt", delete=False) as tmpFile:
-            tmpFile.write("\n".join(sAllBuddyFileList))
-
-        p = publish_dependencies.__file__
-
-        sPython27Path = r"C:\Python27\python.exe"
-        sScriptPath = p[:-1]if p.endswith("c") else p
-        sCmdArgs = [sPython27Path,
-                    os.environ["Z2K_LAUNCH_SCRIPT"],
-                    "launch", "--update", "0", "--renew", "1",
-                    sPython27Path,
-                    sScriptPath,
-                    proj.name, "texture_dep",
-                    damEntity.sgEntityType.lower(),
-                    damEntity.name, tmpFile.name,
-                    sComment, "--dryRun", str(int(bDryRun)),
-                    ]
-
-        sCmdArgs = list(toStr(a)for a in sCmdArgs)
-        if inDevMode():
-            print sCmdArgs
-
-        subprocess.Popen(sCmdArgs)
+    count = len(sPublishPathList)
+    sSep = "\n"
+    sMsgFiles = sSep.join(sPublishPathList)
+    print sMsgFiles + sSep + " Published files: {} ".format(count).center(120, '-')
 
     return (not bDryRun)
 

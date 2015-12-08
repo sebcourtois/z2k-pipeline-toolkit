@@ -52,21 +52,9 @@ def fileNodesFromSelection():
     return oFileNodeList
 
 
-def editTextureFiles(dryRun=False):
+def scanTexturesToEdit(damEntity):
 
-    sCurScnPath = pm.sceneName()
-    damEntity = entityFromScene(sCurScnPath)
-
-    proj = damEntity.project
     pubLib = damEntity.getLibrary()
-    privLib = damEntity.getLibrary("private")
-
-    privScnFile = privLib.getEntry(sCurScnPath)
-    pubScnFile = privScnFile.getPublicFile(fail=True)
-
-    pubScnFile.assertEditedVersion(privScnFile)
-    pubScnFile.ensureLocked()
-
     pubTexDir = damEntity.getResource("public", "texture_dir", fail=True)
     sPubTexDirPath = pubTexDir.absPath()
     pubTexDir.loadChildDbNodes()
@@ -95,15 +83,13 @@ def editTextureFiles(dryRun=False):
         preEditResults.append(res)
         sAllSeveritySet.update(res["scan_log"].iterkeys())
 
-    pubFileItems = []
-
     sSelUdimFileSet = set()
     for srcRes in scanResults:
         if srcRes["abs_path"] in sSelTexPathSet:
-            l = srcRes["udim_files"]
+            l = srcRes["udim_paths"]
             if l:
                 sSelUdimFileSet.update(l)
-                #print srcRes["abs_path"], srcRes["buddy_files"]
+                #print srcRes["abs_path"], srcRes["buddy_paths"]
 
     for srcRes in scanResults:
 
@@ -127,7 +113,7 @@ def editTextureFiles(dryRun=False):
             if sPubTexPath not in sSelUdimFileSet:
                 continue
 
-        sPubPathList = [sPubTexPath] + srcRes["buddy_files"]
+        sPubPathList = [sPubTexPath] + srcRes["buddy_paths"]
         for i, sPubFilePath in enumerate(sPubPathList):
 
             scanLogDct = {}
@@ -146,10 +132,12 @@ def editTextureFiles(dryRun=False):
                 resultDct = {"abs_path":sPubFilePath,
                              "scan_log":scanLogDct,
                              "file_nodes":[],
-                             "buddy_files":[],
+                             "buddy_paths":[],
                              "publishable":False,
                              "drc_file":None,
                              }
+
+            resultDct["public_file"] = pubFile
 
             if not pubFile.isUpToDate(refresh=False):
                 sMsg = """The file appears to have been modified from another site.
@@ -179,21 +167,38 @@ File needs to be synced before you can edit it."""
 
             addResult(resultDct)
 
-            if "error" not in scanLogDct:
-                pubFileItems.append((pubFile, resultDct["file_nodes"]))
-
     if preEditResults:
         preEditResults[-1]["scan_severities"] = sAllSeveritySet
         preEditResults[-1]["publish_count"] = 0
 
-    if not pubFileItems:
-        pm.displayWarning("No public textures to edit !")
+    return preEditResults
+
+def editTextureFiles(dryRun=False):
+
+    sCurScnPath = pm.sceneName()
+    damEntity = entityFromScene(sCurScnPath)
+
+    proj = damEntity.project
+    privLib = damEntity.getLibrary("private")
+
+    privScnFile = privLib.getEntry(sCurScnPath)
+    pubScnFile = privScnFile.getPublicFile(fail=True)
+
+    pubScnFile.assertEditedVersion(privScnFile)
+    pubScnFile.ensureLocked()
+
+    preEditResults = dependency_scan.launch(damEntity, scanFunc=scanTexturesToEdit,
+                                            modal=True,
+                                            okLabel="Edit",
+                                            expandTree=True)
+    if preEditResults is None:
+        pm.displayInfo("Canceled !")
         return
 
-    res = dependency_scan.launch(damEntity, scanResults=preEditResults, modal=True,
-                                 okLabel="Edit", expandTree=True)
-    if res is None:
-        pm.displayInfo("Canceled !")
+    pubFileItems = tuple((r["public_file"], r["file_nodes"]) for r in preEditResults
+                         if "error" not in r["scan_log"])
+    if not pubFileItems:
+        pm.displayWarning("No public textures to edit !")
         return
 
     def showScriptEditor():
