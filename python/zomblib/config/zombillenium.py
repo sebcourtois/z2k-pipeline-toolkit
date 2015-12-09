@@ -154,7 +154,7 @@ class asset_lib(object):
     "anim_scene":{"create_sg_version":True,
                   "sg_steps":("Rigging",), },
     "anim_ref":{"create_sg_version":True,
-                "sg_steps":("Rigging",), },
+                "sg_tasks":("Rig_Anim",), },
 
     "render_scene":{"create_sg_version":True,
                     "sg_tasks":("Shading",), },

@@ -294,28 +294,30 @@ def deleteAovs():
     if mc.ls("defaultArnoldRenderOptions"):
         myAOVs = aovs.AOVInterface()
         aovList = myAOVs.getAOVs()
-        print"prout" + aovList
         if aovList:
             myAOVs.removeAOVs(aovList)
             aovs.refreshAliases()
-            print "#### {:>7}: 'deleteAovs' has deleted {} aovs".format("Info",len(aovList))
+            print "#### {:>7}: 'deleteAovs' has deleted {} aovs".format("Info")
     else:
-        print "#### {:>7}: 'deleteAovs' no 'defaultArnoldRenderOptions' found in the scene cannot delete aovs".format("Info",len(aovList))
+        print "#### {:>7}: 'deleteAovs' no 'defaultArnoldRenderOptions' found in the scene cannot delete aovs".format("Info")
 
 
 
 def createAovs():
-    myAOVs = aovs.AOVInterface()
-    #create aovs, type = rgb
-    #unUsedAovNameList = [ "dmn_lambert", "dmn_toon", "dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour"  ],"dmn_rimToon_na1_na2"
-    aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon"]
-    for eachAovName in aovNameList: 
-        if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
-            myAOVs.addAOV( eachAovName, aovType='rgb')
-    if not 'aiAOV_Z' in mc.ls( type = "aiAOV"):
-        myAOVs.addAOV( "Z", aovType='float')
-    aovs.refreshAliases()
-    print "#### {:>7}: 'createAovs' has created {} aovs".format("Info",len(aovNameList))
+    if mc.ls("defaultArnoldRenderOptions"):
+        myAOVs = aovs.AOVInterface()
+        #create aovs, type = rgb
+        #unUsedAovNameList = [ "dmn_lambert", "dmn_toon", "dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour"  ],"dmn_rimToon_na1_na2"
+        aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon"]
+        for eachAovName in aovNameList: 
+            if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
+                myAOVs.addAOV( eachAovName, aovType='rgb')
+        if not 'aiAOV_Z' in mc.ls( type = "aiAOV"):
+            myAOVs.addAOV( "Z", aovType='float')
+        aovs.refreshAliases()
+        print "#### {:>7}: 'createAovs' has created {} aovs".format("Info",len(aovNameList))
+    else:
+        print "#### {:>7}: 'createAovs' no 'defaultArnoldRenderOptions' found in the scene cannot create aovs".format("Info")
 
 
 

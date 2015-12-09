@@ -4,62 +4,67 @@ import os.path as osp
 import filecmp
 #from datetime import datetime
 
+import maya.cmds as mc
 import maya.utils as mu
 import pymel.core as pm
 
 from . import dependency_scan
 from davos_maya.tool.general import entityFromScene
 
-from pytaya.core.rendering import fileNodesFromObjects
+from pytaya.core.rendering import fileNodesFromObjects, fileNodesFromShaders
 from pytd.util.fsutils import pathResolve, normCase
-import subprocess
+from pytd.util.qtutils import setWaitCursor
 
 #from pytd.util.sysutils import toStr
 
 
 def fileNodesFromSelection():
 
-    oSelList = pm.selected(transforms=True, shapes=True)
+    sSelList = mc.ls(sl=True)
 
     oFileNodeList = []
+    sConfirmMsg = ""
 
-    if not oSelList:
+    if not sSelList:
         oFileNodeList = pm.ls("*", r=True, type="file")
         sConfirmMsg = "Edit All Texture Files ??"
     else:
-        oFileNodeList = fileNodesFromObjects(pm.selected(dag=True, shapes=True))
-        sConfirmMsg = "Edit {} Texture Files from selection ?".format(len(oFileNodeList))
+        oFileNodeList = pm.ls(sSelList, type='file')
+        oFileNodeList.extend(fileNodesFromShaders(pm.ls(sSelList, type=mc.listNodeTypes('shader', ex="texture"))))
+        oFileNodeList.extend(fileNodesFromObjects(pm.ls(sSelList, dag=True, shapes=True)))
+
+        #sFiles = '\n'.join("'{}'".format(osp.basename(n.getAttr('fileTextureName'))) for n in oFileNodeList)
+        #sConfirmMsg = "Edit {} selected textures:\n\n".format(len(oFileNodeList))
+        #sConfirmMsg += sFiles
 
     if not oFileNodeList:
-        pm.warning("No Texture File found from current selection !")
+        pm.warning("No File node found in current selection !")
         return
 
-    sConfirm = pm.confirmDialog(title='QUESTION !'
-                                , message=sConfirmMsg
-                                , button=['OK', 'Cancel'])
+    if sConfirmMsg:
+        sConfirm = pm.confirmDialog(title='QUESTION !',
+                                    message=sConfirmMsg,
+                                    button=['OK', 'Cancel'])
 
-    if sConfirm == 'Cancel':
-        pm.warning("Canceled !")
-        return
+        if sConfirm == 'Cancel':
+            pm.warning("Canceled !")
+            return
 
     return oFileNodeList
 
+@setWaitCursor
+def scanTexturesToEdit(damEntity):
 
-def editTextureFiles(dryRun=False):
+    preEditResults = []
+    sAllSeveritySet = set()
 
-    sCurScnPath = pm.sceneName()
-    damEntity = entityFromScene(sCurScnPath)
+    def addResult(res):
+#        for k, v in res.iteritems(): print k, v
+#        print ""
+        preEditResults.append(res)
+        sAllSeveritySet.update(res["scan_log"].iterkeys())
 
-    proj = damEntity.project
     pubLib = damEntity.getLibrary()
-    privLib = damEntity.getLibrary("private")
-
-    privScnFile = privLib.getEntry(sCurScnPath)
-    pubScnFile = privScnFile.getPublicFile(fail=True)
-
-    pubScnFile.assertEditedVersion(privScnFile)
-    pubScnFile.ensureLocked()
-
     pubTexDir = damEntity.getResource("public", "texture_dir", fail=True)
     sPubTexDirPath = pubTexDir.absPath()
     pubTexDir.loadChildDbNodes()
@@ -79,24 +84,13 @@ def editTextureFiles(dryRun=False):
 #    sDate = datetime.now().strftime("%Y-%m-%d_%HH%M")
 #    sBkupTexDirName = "texture_edit_backup"
 
-    preEditResults = []
-    sAllSeveritySet = set()
-
-    def addResult(res):
-#        for k, v in res.iteritems(): print k, v
-#        print ""
-        preEditResults.append(res)
-        sAllSeveritySet.update(res["scan_log"].iterkeys())
-
-    pubFileItems = []
-
     sSelUdimFileSet = set()
     for srcRes in scanResults:
         if srcRes["abs_path"] in sSelTexPathSet:
-            l = srcRes["udim_files"]
+            l = srcRes["udim_paths"]
             if l:
                 sSelUdimFileSet.update(l)
-                #print srcRes["abs_path"], srcRes["buddy_files"]
+                #print srcRes["abs_path"], srcRes["buddy_paths"]
 
     for srcRes in scanResults:
 
@@ -120,7 +114,7 @@ def editTextureFiles(dryRun=False):
             if sPubTexPath not in sSelUdimFileSet:
                 continue
 
-        sPubPathList = [sPubTexPath] + srcRes["buddy_files"]
+        sPubPathList = [sPubTexPath] + srcRes["buddy_paths"]
         for i, sPubFilePath in enumerate(sPubPathList):
 
             scanLogDct = {}
@@ -139,10 +133,12 @@ def editTextureFiles(dryRun=False):
                 resultDct = {"abs_path":sPubFilePath,
                              "scan_log":scanLogDct,
                              "file_nodes":[],
-                             "buddy_files":[],
+                             "buddy_paths":[],
                              "publishable":False,
                              "drc_file":None,
                              }
+
+            resultDct["public_file"] = pubFile
 
             if not pubFile.isUpToDate(refresh=False):
                 sMsg = """The file appears to have been modified from another site.
@@ -168,22 +164,44 @@ File needs to be synced before you can edit it."""
 #                            sMsg = toStr(e)
 #                            scanLogDct.setdefault("error", []).append(('FileInUse', sMsg))
 
-            addResult(resultDct)
-
             if "error" not in scanLogDct:
-                pubFileItems.append((pubFile, resultDct["file_nodes"]))
+                scanLogDct.setdefault("info", []).append(('ReadyToEdit', ""))
+
+            addResult(resultDct)
 
     if preEditResults:
         preEditResults[-1]["scan_severities"] = sAllSeveritySet
         preEditResults[-1]["publish_count"] = 0
 
-    res = dependency_scan.launch(damEntity, scanResults=preEditResults, modal=True)
-    if res is None:
+    return preEditResults
+
+def editTextureFiles(dryRun=False):
+
+    sCurScnPath = pm.sceneName()
+    damEntity = entityFromScene(sCurScnPath)
+
+    proj = damEntity.project
+    privLib = damEntity.getLibrary("private")
+
+    privScnFile = privLib.getEntry(sCurScnPath)
+    pubScnFile = privScnFile.getPublicFile(fail=True)
+
+    pubScnFile.assertEditedVersion(privScnFile)
+    pubScnFile.ensureLocked()
+
+    preEditResults = dependency_scan.launch(damEntity, scanFunc=scanTexturesToEdit,
+                                            modal=True,
+                                            okLabel="Edit",
+                                            expandTree=True,
+                                            forceDialog=True)
+    if preEditResults is None:
         pm.displayInfo("Canceled !")
         return
 
+    pubFileItems = tuple((r["public_file"], r["file_nodes"]) for r in preEditResults
+                         if "error" not in r["scan_log"])
     if not pubFileItems:
-        pm.displayWarning("No public textures to edit in current scene !")
+        pm.displayWarning("No public textures to edit !")
         return
 
     def showScriptEditor():

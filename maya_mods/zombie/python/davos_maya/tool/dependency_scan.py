@@ -1,4 +1,5 @@
 
+import os
 import os.path as osp
 import re
 
@@ -6,6 +7,7 @@ from PySide import QtGui
 from PySide.QtCore import Qt, QSize
 
 import PIL.Image
+import filecmp
 pilimage = PIL.Image
 
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
@@ -88,20 +90,28 @@ class DependencyTree(QuickTree):
 
 class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, scanFunc=None):
         super(DependencyTreeDialog, self).__init__(parent=parent)
+
         self.setAttribute(Qt.WA_DeleteOnClose, True)
         self.setTreeWidget(DependencyTree(self))
         self.resize(900, 600)
+
+        self.scanResults = None
+        self.__scanFunc = scanFunc if scanFunc else scanTextureDependency
 
         self.refreshBtn = self.buttonBox.addButton("Refresh", QtGui.QDialogButtonBox.ResetRole)
         self.refreshBtn.clicked.connect(self.refresh)
 
     def refresh(self):
         self.treeWidget.clear()
-        self.setupTreeData(scanTextureDependency(entityFromScene()))
+        self.setupTreeData(self.__scanFunc(entityFromScene()))
 
-    def setupTreeData(self, scanResults):
+    def setupTreeData(self, scanResults, allExpanded=False):
+
+        self.scanResults = scanResults
+        if not scanResults:
+            return
 
         treeWidget = self.treeWidget
 
@@ -196,10 +206,15 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
 
         treeWidget.createTree(treeData)
 
+        if len(sFileGrpItems) == 1:
+            allExpanded = True
+
         c = sHeaderList.index("Summary")
         for sItemPath in sFileGrpItems:
             item = treeWidget.itemFromPath(sItemPath)
             item.setText(c, "{} files".format(item.childCount()))
+            if allExpanded:
+                item.setExpanded(True)
 
         for i in xrange(treeWidget.topLevelItemCount()):
             item = treeWidget.topLevelItem(i)
@@ -251,22 +266,22 @@ def scanTextureDependency(damEntity):
         if not sNodePath:
             continue
 
-        iTilingMode = fileNode.getAttr("uvTilingMode")
-        bUvTileOn = (iTilingMode != 0)
-        bUdim = (iTilingMode == UDIM_MODE)
-
         sNodeAbsPath = pathResolve(sNodePath)
         sNodeNormPath = normCase(sNodeAbsPath)
 
-        sUdimFileList = []
+        iTilingMode = fileNode.getAttr("uvTilingMode")
+        bUvTileOn = (iTilingMode != 0)
+        bUdimMode = (iTilingMode == UDIM_MODE)
+
+        sUdimPathList = []
         sTexAbsPathList = (sNodeAbsPath,)
-        if bUdim:
+        if bUdimMode and osp.isfile(sNodeAbsPath):
             sUdimPat = makeUdimFilePattern(sNodeAbsPath)
             sTexAbsPathList = sorted(iterPaths(osp.dirname(sNodeAbsPath), dirs=False,
-                                             recursive=False,
-                                             keepFiles=ignorePatterns(sUdimPat)
-                                             ))
-            sUdimFileList = sTexAbsPathList[:]
+                                               recursive=False,
+                                               keepFiles=ignorePatterns(sUdimPat)
+                                               ))
+            sUdimPathList = sTexAbsPathList[:]
 
         for sTexAbsPath in sTexAbsPathList:
 
@@ -283,7 +298,7 @@ def scanTextureDependency(damEntity):
             else:
                 fileNodeDct[sTexNormPath] = [fileNode] if bNodePath else []
 
-            if bUvTileOn and (not bUdim):
+            if bUvTileOn and (not bUdimMode):
                 sMsg = "Only UDIM (Mari) accepted"
                 scanLogDct.setdefault("error", []).append(('BadUVTilingMode', sMsg))
 
@@ -293,14 +308,13 @@ def scanTextureDependency(damEntity):
             bPublicFile = False
             sHighSeverity = "error"
             texFile = None
-            bExists = bUdim or osp.isfile(sTexAbsPath)
+            bExists = osp.isfile(sTexAbsPath)
 
             resultDct = {"abs_path":sTexAbsPath,
                          "scan_log":scanLogDct,
                          "file_nodes":fileNodeDct[sTexNormPath],
-                         "buddy_files":[],
-                         "udim_files":list(p for p in sUdimFileList
-                                           if p != sTexAbsPath),
+                         "buddy_paths":[],
+                         "udim_paths":sUdimPathList,
                          "publishable":False,
                          "drc_file":None,
                          "exists":bExists,
@@ -329,12 +343,12 @@ def scanTextureDependency(damEntity):
 
             sTiling = ""
             if len(re.findall(UDIM_RGX, sTexFilename)) != 1:
-                if bUdim:
+                if bUdimMode:
                     sMsg = "Must match 'name.1###.ext' pattern"
                     scanLogDct.setdefault(sHighSeverity, []).append(('BadUDIMFilename', sMsg))
             else:
                 sBasePath, sTiling = sBasePath.rsplit('.', 1)
-                if not bUdim:
+                if not bUdimMode:
                     sMsg = "UDIM mode is OFF"
                     scanLogDct.setdefault(sHighSeverity, []).append(('BadUVTilingMode', sMsg))
 
@@ -411,8 +425,8 @@ def scanTextureDependency(damEntity):
                         budResultDct = {"abs_path":sBuddyPath,
                                         "scan_log":budScanLogDct,
                                         "file_nodes":[],
-                                        "buddy_files":[],
-                                        "udim_files":[],
+                                        "buddy_paths":[],
+                                        "udim_paths":[],
                                         "publishable":False,
                                         "drc_file":budFile,
                                         "exists":True,
@@ -454,7 +468,7 @@ def scanTextureDependency(damEntity):
             if foundBudResList:
                 resultDctList.extend(foundBudResList)
                 sBuddyFileList = list(brd["abs_path"] for brd in foundBudResList)
-                resultDct["buddy_files"] = sBuddyFileList
+                resultDct["buddy_paths"] = sBuddyFileList
 
             for resDct in resultDctList:
                 if resDct["exists"]:
@@ -490,8 +504,8 @@ def scanTextureDependency(damEntity):
             resultDct = {"abs_path":p,
                          "scan_log":scanLogDct,
                          "file_nodes":[],
-                         "buddy_files":[],
-                         "udim_files":[],
+                         "buddy_paths":[],
+                         "udim_paths":[],
                          "publishable":False,
                          "drc_file":None,
                          }
@@ -518,8 +532,10 @@ def _setPublishableState(resultDct):
 
     bPublishable = False
 
+    bUpToDate = True
     pubFile = drcFile.getPublicFile(weak=True)
-    bUpToDate = pubFile.isUpToDate()
+    if pubFile.exists():
+        bUpToDate = pubFile.isUpToDate()
 
 #    bOldPrivFile = False
 #    privFsMtime = drcFile.fsMtime
@@ -540,41 +556,55 @@ def _setPublishableState(resultDct):
 Wait for the next file synchronization and retry publishing."""
         scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
     else:
-        bPublishable = True
+        sSrcFilePath = resultDct["abs_path"]
+        bModified = True
+        if pubFile.exists():
+            sPubFilePath = pubFile.absPath()
+            bModified = (not filecmp.cmp(sSrcFilePath, sPubFilePath))
+            #bDiffers, sSrcChecksum = pubFile.differsFrom(sPubFilePath)
 
-        sMsg = ""
-        sBuddyFileList = resultDct["buddy_files"]
-        if sBuddyFileList:
-            sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
-            sMsg = (", ".join(s.upper() for s in sExtList) + " found"
-                    if sBuddyFileList else "")
-        elif inDevMode():
-            sMsg = resultDct["abs_path"]
+        if not bModified:
+            scanLogDct.setdefault("info", []).append(("Not Modified", "File has not been modified"))
+        else:
+            bPublishable = True
 
-        scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
+            sMsg = ""
+            sBuddyFileList = resultDct["buddy_paths"]
+            if sBuddyFileList:
+                sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
+                sMsg = (", ".join(s.upper() for s in sExtList) + " found"
+                        if sBuddyFileList else "")
+            elif inDevMode():
+                sMsg = resultDct["abs_path"]
+
+            scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
 
     resultDct["publishable"] = bPublishable
 
 dialog = None
 
-def launch(damEntity=None, scanResults=None, modal=False):
+def launch(damEntity=None, scanFunc=None, modal=False, okLabel="OK",
+           expandTree=False, forceDialog=False):
 
     global dialog
 
     if not damEntity:
         damEntity = entityFromScene()
 
-    if scanResults is None:
+    if scanFunc is None:
         scanResults = scanTextureDependency(damEntity)
+    else:
+        scanResults = scanFunc(damEntity)
 
     if not scanResults:
         return scanResults
 
-    sScanSeverities = scanResults[-1]["scan_severities"]
-    if not sScanSeverities:
-        return scanResults
+    if not forceDialog:
+        sScanSeverities = scanResults[-1]["scan_severities"]
+        if not sScanSeverities:
+            return scanResults
 
-    dialog = DependencyTreeDialog()
+    dialog = DependencyTreeDialog(scanFunc=scanFunc)
 
     l = ("Dependencies Status", damEntity.name, damEntity.project.name.capitalize())
     dialog.setWindowTitle(" - ".join(l))
@@ -592,10 +622,10 @@ def launch(damEntity=None, scanResults=None, modal=False):
         btn.setText("Close")
     else:
         if modal:
-            okBtn.setText("Publish")
+            okBtn.setText(okLabel)
 
     dialog.show()
-    dialog.setupTreeData(scanResults)
+    dialog.setupTreeData(scanResults, allExpanded=expandTree)
 
     if modal:
         if err:
@@ -612,7 +642,7 @@ def launch(damEntity=None, scanResults=None, modal=False):
 
         dialog.close()
         if dialog.exec_():
-            return scanResults
+            return dialog.scanResults
 
     return None
 
