@@ -651,13 +651,13 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         if  not  self.debug:
 
             cmds.rowLayout(self.sourceRowL, e=1, enable=0)
-            cmds.optionMenu(self.BcategoryMenu,e=1,m=0)
-            cmds.optionMenu(self.BsourceAssetMenu,e=1,m=0)
+            cmds.optionMenu(self.BcategoryMenu,e=1, m=0)
+            cmds.optionMenu(self.BsourceAssetMenu,e=1, m=0)
 
             cmds.rowLayout(self.destiRowL, e=1, enable=0)
-            cmds.optionMenu(self.BdestinationAssetMenu,e=1,m=0)
+            cmds.optionMenu(self.BdestinationAssetMenu, e=1, m=0)
 
-            cmds.button(self.BforceRelease,e=1,m=0)
+            cmds.button(self.BforceRelease,e=1, m=0)
             cmds.rowLayout(self.commentRowL,e=1,  enable=0)
         # show the window
         # cmds.showWindow(self.cf)
