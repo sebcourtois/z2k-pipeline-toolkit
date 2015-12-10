@@ -249,10 +249,12 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
     else:
         print csv
 
-if len(sys.argv) < 3:
-    print "Two arguments must be given (Source_video_path, edl_path) !"
-else:
-    args = list(sys.argv)
-    args.pop(0)
-    print "splitMovie" + ",".join(args)
-    splitMovie(*args)
+if __name__ == "__main__":
+
+    if len(sys.argv) < 3:
+        print "Two arguments must be given (Source_video_path, edl_path) !"
+    else:
+        args = list(sys.argv)
+        args.pop(0)
+        print "splitMovie:\n    " + "\n    ".join(args)
+        splitMovie(*args)
