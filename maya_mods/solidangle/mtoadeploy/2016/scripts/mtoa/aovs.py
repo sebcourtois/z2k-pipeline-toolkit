@@ -458,7 +458,7 @@ def createAliases(sg):
         
     if pm.hasAttr(sg, "attributeAliasList"):
         alias_list = sg.attributeAliasList
-        if alias_list.exists() and alias_list.get() is None:
+        if alias_list.exists() and not sg.listAliases() :
             print "Shading Group %s with bad Attribute Alias list detected. Fixing!" % sg.name()
             alias_list.delete()
         

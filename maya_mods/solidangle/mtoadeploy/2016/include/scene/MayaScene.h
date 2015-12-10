@@ -81,6 +81,8 @@ public:
    static void Init();
    static void DeInit();
 
+   static void UpdateSceneChanges();
+
 private:
 
    static MStatus SetupIPRCallbacks();
@@ -88,10 +90,16 @@ private:
 
    static void IPRNewNodeCallback(MObject & node, void *);
    static void IPRIdleCallback(void *);
+   static void QuitApplicationCallback(void *);
+   static void FileOpenCallback(void *);
+
 
    static std::vector< CNodeTranslator * > s_translatorsToIPRUpdate;
    static MCallbackId s_IPRIdleCallbackId;
    static MCallbackId s_NewNodeCallbackId;
+   static MCallbackId s_QuitApplicationCallbackId;
+   static MCallbackId s_FileOpenCallbackId;
+
    
    // Currently there can be only one export and render session
    // but when it changes, CMayaScene will manage them

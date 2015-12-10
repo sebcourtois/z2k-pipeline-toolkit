@@ -13,7 +13,7 @@
 #include <maya/MComputation.h>
 
 class MImage;
-
+class CRenderView;
 /** CRenderSession handles the management of Arnold and rendering.
  * 
  * This is an important class. It handles rendering as well
@@ -63,6 +63,8 @@ public:
    static void SetCallback(RenderCallbackType callback);
    static void ClearCallback();
    static RenderCallbackType GetCallback();
+
+   static void DeleteRenderView();
    
 
    // Render Methods.
@@ -70,6 +72,7 @@ public:
    void DoInteractiveRender(const MString& postRenderMel="");
    /// Render in the background of Maya.
    int DoBatchRender();
+
    /// Get a valid ass name
    MString GetAssName(const MString& customName,
                       const MCommonRenderSettingsData& renderGlobals,
@@ -95,8 +98,9 @@ public:
    static void InteractiveRenderCallback(float, float, void* data);
 
    /// Stop a render, leaving Arnold univierse active.
-   void InterruptRender();
+   void InterruptRender(bool waitFinished = false);
 
+   void RunRenderView();
    /// Start and IPR render.
    void DoIPRRender();
    void StopIPR();
@@ -104,6 +108,12 @@ public:
    void PauseIPR();
    /// Start off rendering again.
    void UnPauseIPR();
+
+   void StartRenderView();
+   void UpdateRenderView();
+
+   void ObjectNameChanged(MObject& node, const MString& str);
+
 
    /// Get memory usage from Arnold.
    /// \return memory used in MB.
@@ -153,6 +163,8 @@ public:
    inline bool IsActive() const { return m_is_active; }
 
    static void ClearIdleRenderViewCallback();
+   
+   static void sleep(AtUInt64 usecs);
 
 
 private:
@@ -162,6 +174,7 @@ private:
       , m_is_active(false)
       , m_render_thread(NULL)
       , m_rendering(0)
+      //, m_renderView(NULL)
    {
    }
 
@@ -175,9 +188,12 @@ private:
    /// This is the static method for performing a progressive render.
    /// data should be a CRenderSession pointer.
    static unsigned int ProgressiveRenderThread(void* data);
+
    /// This is the static method for performing an interactive render.
    /// data should be a CRenderSession pointer.
    static unsigned int InteractiveRenderThread(void* data);
+
+
 
 private:
 
@@ -200,4 +216,6 @@ private:
    static MComputation*   s_comp;
    MString        m_postRenderMel;
 
+   //CRenderView  *m_renderView;
+   
 }; // class CRenderSession

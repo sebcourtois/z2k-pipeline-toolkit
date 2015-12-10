@@ -134,7 +134,7 @@ public:
    // Updates
    void QueueForUpdate(CNodeTranslator * translator);
    void QueueForUpdate(const CNodeAttrHandle & handle);
-   void RequestUpdate();
+   void RequestUpdate(bool forceUpdate = false);
 
    // Instances
    inline void AddMasterInstanceHandle(MObjectHandle handle, MDagPath dagPath){m_masterInstances[handle] = dagPath;};
@@ -157,6 +157,9 @@ public:
    float& ScaleArea(float& area) const;
    float& ScaleLightExposure(float& exposure) const;
    MVector GetOrigin() const;
+   void SetContinuousUpdates(bool b);
+   bool GetContinuousUpdates() const { return m_continuousUpdates;}
+   bool HasObjectsToUpdate() const {return !m_objectsToUpdate.empty();}
    
 /*
    bool IsActiveAOV(CAOV &aov) const
@@ -188,6 +191,8 @@ private:
       ,  m_requestUpdate(false)
       ,  m_optionsTranslator(NULL)
       ,  m_is_active(false)
+      ,  m_continuousUpdates(true)
+
    {
    }
 
@@ -214,11 +219,13 @@ private:
 
    inline bool NeedsUpdate() const { return m_requestUpdate; }
 
+
    void DoUpdate();
    void ClearUpdateCallbacks();
 
    inline bool IsActive() const { return m_is_active; }
    //void ProcessAOVs();
+
 
 private:
 
@@ -248,5 +255,6 @@ protected:
 
    COptionsTranslator*  m_optionsTranslator;
    bool                 m_is_active;
+   bool                 m_continuousUpdates;
    //AOVSet m_aovs;
 };  // class CArnoldSession
