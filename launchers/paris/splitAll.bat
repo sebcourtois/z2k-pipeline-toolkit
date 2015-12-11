@@ -1,0 +1,1 @@
+"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch "%~dp0\..\..\movSplitter\splitAll.bat" %*

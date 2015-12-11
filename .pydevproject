@@ -10,5 +10,6 @@
 <path>/${PROJECT_DIR_NAME}/maya_mods/zombie/scripts</path>
 <path>/${PROJECT_DIR_NAME}/python</path>
 <path>/${PROJECT_DIR_NAME}/launchers</path>
+<path>/${PROJECT_DIR_NAME}/movSplitter</path>
 </pydev_pathproperty>
 </pydev_project>

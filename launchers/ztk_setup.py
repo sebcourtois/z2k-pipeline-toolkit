@@ -81,7 +81,11 @@ class Z2kToolkit(object):
 
         #print "\n----------------", sAppPath
 
+        bNeedPy27Site = True
+
         if sAppName in ("maya", "mayabatch", "render", "mayapy"):
+
+            bNeedPy27Site = False
 
             print "\nLoading Maya environment:"
 
@@ -93,18 +97,24 @@ class Z2kToolkit(object):
                 updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_mayapy2016_site"),
                        conflict="add")
 
-        elif sAppName in ("python", "pythonw"):
-
-            print "\nLoading Python environment:"
-
-            updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
-                   conflict="add")
-
         elif sAppName in ("rv", "rvpush"):
+
+            bNeedPy27Site = False
 
             print "\nLoading RV environment:"
 
             updEnv("MU_MODULE_PATH", pathJoin(self.rootPath, "RV", "Mu"),
+                   conflict="add")
+
+#        elif sAppName in ("python", "pythonw"):
+#
+#            print "\nLoading Python environment:"
+#
+#            updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
+#                   conflict="add")
+
+        if bNeedPy27Site:
+            updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
                    conflict="add")
 
         # initializing an empty DamProject to have project's environ loaded
