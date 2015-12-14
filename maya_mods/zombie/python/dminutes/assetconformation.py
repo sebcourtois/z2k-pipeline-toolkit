@@ -347,6 +347,7 @@ class Asset_File_Conformer:
             self.mainFilePathElem = self.mainFilePath.split("/")
             self.assetName = self.mainFilePathElem[-2]
             self.assetType = self.mainFilePathElem[-3]
+            self.assetFileType = self.mainFilePathElem[-1].split("-")[0].split("_")[-1]
             self.sourceList =[]
             self.targetList =[]
             self.sourceTargetListMatch = False
@@ -379,15 +380,14 @@ class Asset_File_Conformer:
             mc.file( self.renderFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True )
 
 
-    def cleanFile(self):
+    def cleanFile(self, verbose = False):
         refNodeList = mc.ls(type = "reference")
         for each in refNodeList:
-            print each
             if re.match('^render[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^anim[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^modeling[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^previz[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each):
                 fileRef= pm.FileReference(each)
                 #fileRef = mc.referenceQuery(each,filename=True)# other way to do it
                 try:
-                    print "#### {:>7}:removing reference '{}'".format("Info",fileRef.path)
+                    if verbose: print "#### {:>7}:removing reference '{}'".format("Info",fileRef.path)
                     fileRef.remove()
                 except :
                     pass
@@ -402,7 +402,7 @@ class Asset_File_Conformer:
         nameSpaceList = mc.namespaceInfo(listOnlyNamespaces=True)
         for each in nameSpaceList:
             if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each) or re.match('^previz[0-9]{0,3}', each):
-                print "#### {:>7}:removing namespace and its content: '{:<10}' ".format("Info",each)
+                if verbose: print "#### {:>7}:removing namespace and its content: '{:<10}' ".format("Info",each)
                 mc.namespace(removeNamespace=each, deleteNamespaceContent=True)
 
 
@@ -420,7 +420,7 @@ class Asset_File_Conformer:
         errorOnTarget = 0
         errorOnSource = 0
         if sourceFile == "":
-            souceFile = self.sourceFile
+            sourceFile = self.sourceFile
 
         if targetObjects == "set_meshCache" or isinstance(targetObjects, (list,tuple,set)):
             if targetObjects == "set_meshCache":
@@ -509,7 +509,7 @@ class Asset_File_Conformer:
         if self.sourceTargetListMatch == True:
             i = 0
             topoMismatch = 0
-            while i < len(self.targetList):
+            while  i < len(self.targetList):
 
                 sourceVrtxCnt = len(mc.getAttr(self.sourceList[i]+".vrts[:]"))
                 targetVrtxCnt = len(mc.getAttr(self.targetList[i]+".vrts[:]"))
@@ -738,131 +738,6 @@ class Asset_File_Conformer:
             return True
         else:
             return False
-
-
-    def shadingGroupsForObject(self, oObj, warn=True):
-        oShdGrpList = []
-        oShape = None
-        if isinstance(oObj, pm.general.MeshFace):
-            indiceList = oObj.indices()
-            for oShdEng in oObj.listHistory(type="shadingEngine"):
-                if set(indiceList).intersection(set(oShdEng.members()[0].indices())):
-                    oShdGrpList.append(oShdEng)
-
-        elif isinstance(oObj, pm.general.NurbsSurfaceFace):
-            oShape = oObj.node()
-
-        elif isinstance(oObj, pm.nt.Transform):
-            oShape = oObj.getShape()
-
-        elif isinstance(oObj, (pm.nt.Mesh, pm.nt.NurbsSurface)):
-            oShape = oObj
-
-        elif warn:
-            logMsg("Can't get shading groups from {}".format(repr(oObj)) , warning=True)
-
-        if not oShdGrpList:
-            if oShape:
-                oShdGrpList = oShape.shadingGroups()
-                if not oShdGrpList:
-                    oShdGrpList = oShape.connections(type="shadingEngine")
-        return oShdGrpList
-
-
-    def conformShadingNetworkToNamespace(self, oMeshList, sNamespaceToMatch , **kwargs):
-        bForce = kwargs.get("force", False)
-        oShadingGroupMembersDct = {}
-        oMatNotConformList = []
-
-        for oShape in oMeshList:
-            print "\nfor shape: ", oShape
-            oMatSGList = self.shadingGroupsForObject(oShape)
-            for oMatSG in oMatSGList:
-                print "for shadingGroup: ", oMatSG
-
-                oMatList = pm.ls(oMatSG.inputs(), type=mc.listNodeTypes('shader', ex="texture"))
-                oMat = oMatList[0]
-
-                ##ignore shadingGroups where materials are defaultNode
-                if oMat.isDefaultNode():
-                    continue
-
-                ##ignore shadingGroups where materials are already in namespace to match
-                sMatNamespace = oMat.namespace()
-                print "sMatNamespace", sMatNamespace
-                print "sNamespaceToMatch", sNamespaceToMatch
-                if sMatNamespace == sNamespaceToMatch:
-                    continue
-                else:
-                    oMatNotConformList.append(oMat)
-
-                oMembers = oMatSG.members()
-                for oMember in oMembers:
-                    print "member :", oMember
-
-                    if oMember.node() == oShape:
-                        oShadingGroupMembersDct.setdefault(oMatSG, []).append(oMember)
-
-        for k, v in oShadingGroupMembersDct.iteritems():
-            print "for shadingGroup: ", k, ", specific members are: ", v
-
-        if oMatNotConformList:
-            if bForce:
-                pass
-            else:
-                result = pm.confirmDialog(title='Materials not conform to Namespace...'
-                                        , message="Found materials not conform to Namespace,\nCopy Shading Network, Conform to Namespace & Assign ?"
-                                        , button=["OK", 'Cancel']
-                                        , defaultButton='Cancel'
-                                        , cancelButton='Cancel'
-                                        , dismissString='Cancel')
-
-                if result == "Cancel":
-                    pm.warning("Materials Namespace conformation cancelled.")
-                    return bForce
-                else:
-                    bForce = True
-
-        else:
-            if sNamespaceToMatch:
-                logMsg('Materials already conformed to Namespace: "{0}"'.format(sNamespaceToMatch) , warning=True)
-            return bForce
-
-
-        ##Force current namespace to the one to match to duplicate in this namespace
-        mc.namespace(set=":")
-        mc.namespace(set=sNamespaceToMatch if sNamespaceToMatch else ":")
-
-        oMatNotConformList = []
-
-        oShapeAssignedList = []
-        for oMatSG, oMembers in oShadingGroupMembersDct.iteritems():
-
-            oNewMatSGs = pm.duplicate(oMatSG, rr=True, un=True)
-            oNewMatSG = oNewMatSGs[0]
-            print "old shadingGroup: ", oMatSG
-            print "new shadingGroup: ", oNewMatSGs[0]
-            print "oMembers", oMembers
-            print oMembers[0]
-            for oMember in oMembers:
-                oShape = oMember.node()
-                if oShape not in oShapeAssignedList:
-                    oShapeAssignedList.append(oShape)
-                    try:
-                        pm.sets(oNewMatSG, e=True, forceElement=oShape)
-                        logMsg('Material "{0}" assigned first to: "{1}"'.format(oNewMatSG, oShape) , warning=True)
-                    except:
-                        logMsg('Could not assign material "{0}" first to: "{1}"'.format(oNewMatSG, oShape) , warning=True)
-
-            try:
-                pm.sets(oNewMatSG, e=True, forceElement=oMembers)
-                logMsg('Material "{0}" assigned to: "{1}"'.format(oNewMatSG, oMembers) , warning=True)
-            except:
-                logMsg('Could not assign material "{0}" to: "{1}"'.format(oNewMatSG, oMembers) , warning=True)
-
-        mc.namespace(set=":")
-
-        return bForce
 
 
 
