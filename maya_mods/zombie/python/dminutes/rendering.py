@@ -234,6 +234,8 @@ def createBatchRender():
         davosUser = os.environ["DAVOS_USER"]
     except:
         raise ValueError("#### Error: DAVOS_USER environement variable is not defined, please log to davos")
+
+
     workingFile = mc.file(q=True, list = True)[0]
     workingDir = os.path.dirname(workingFile)
     renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","renderBatch_help.txt"))
@@ -241,8 +243,11 @@ def createBatchRender():
     renderBatch_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","renderBatch.bat"))
     renderBatch_trg = miscUtils.normPath(os.path.join(workingDir,"renderBatch.bat"))
     setupEnvTools = os.path.normpath(os.path.join(os.environ["Z2K_LAUNCH_SCRIPT"]))
-    location = miscUtils.normPath(setupEnvTools).split("/")[-2]
-    setupEnvToolsNetwork = os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","launchers",location,"setup_env_tools.py")
+    #location = miscUtils.normPath(setupEnvTools).split("/")[-2]
+    #setupEnvToolsNetwork = os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","launchers",location,"setup_env_tools.py")
+    #setupEnvToolsNetwork = os.path.join('%USERPROFILE%'+'"',"DEVSPACE","git","z2k-pipeline-toolkit","launchers",location,"setup_env_tools.py")
+    userprofile =  os.path.normpath(os.path.join(os.environ["USERPROFILE"]))
+    setupEnvToolsNetwork = setupEnvTools.replace(userprofile,'%USERPROFILE%')
     renderDesc = os.environ["MAYA_RENDER_DESC_PATH"]
     mayaPlugInPath = os.environ["MAYA_PLUG_IN_PATH"]
     arnoldPluginPath = os.environ["ARNOLD_PLUGIN_PATH"]
@@ -251,7 +256,9 @@ def createBatchRender():
     outputFilePath, outputImageName = getRenderOutput()
 
     zombToolsPath = os.environ["ZOMB_TOOL_PATH"]
-    arnoldToolPath = os.path.normpath(zombToolsPath+"/z2k-pipeline-toolkit/maya_mods/solidangle/mtoadeploy/2016")
+    #arnoldToolPath = os.path.normpath(zombToolsPath+"/z2k-pipeline-toolkit/maya_mods/solidangle/mtoadeploy/2016")
+    #arnoldToolPath = os.path.normpath('%USERPROFILE%'+"/DEVSPACE/git/z2k-pipeline-toolkit/maya_mods/solidangle/mtoadeploy/2016")
+    arnoldToolPath = os.path.normpath(setupEnvToolsNetwork.split("z2k-pipeline-toolkit")[0]+"z2k-pipeline-toolkit/maya_mods/solidangle/mtoadeploy/2016")
 
     renderCmd = os.path.normpath(os.path.join(os.environ["MAYA_LOCATION"],"bin","Render.exe"))
     renderCmd = '"{}"'.format(renderCmd)
@@ -282,7 +289,8 @@ def createBatchRender():
     renderBatch_obj.write('set path=-rd '+os.path.normpath(outputFilePath)+'\n')
     workingFile = os.path.normpath(workingFile)
     renderBatch_obj.write("set scene="+workingFile+"\n")
-    finalCommand = r'"C:\Python27\python.exe" "'+setupEnvToolsNetwork+'" launch %render% %option% %path% %image% %scene%'
+    setupEnvToolsNetwork = setupEnvToolsNetwork.replace('%USERPROFILE%','%USERPROFILE%"')
+    finalCommand = r'"C:\Python27\python.exe" '+setupEnvToolsNetwork+'" launch %render% %option% %path% %image% %scene%'
     renderBatch_obj.write(finalCommand+"\n")
     renderBatch_obj.write("\n")
     renderBatch_obj.write("pause\n")
@@ -297,7 +305,7 @@ def deleteAovs():
         if aovList:
             myAOVs.removeAOVs(aovList)
             aovs.refreshAliases()
-            print "#### {:>7}: 'deleteAovs' has deleted {} aovs".format("Info")
+            print "#### {:>7}: 'deleteAovs' has deleted {} aovs".format("Info", len(aovList))
     else:
         print "#### {:>7}: 'deleteAovs' no 'defaultArnoldRenderOptions' found in the scene cannot delete aovs".format("Info")
 
