@@ -75,11 +75,11 @@ class shot_lib(object):
                      "{name}_previz.ma -> previz_scene":None,
                      "{name}_previz.mov -> previz_capture":None,
                     },
-                 "{step:02_layout} -> layout_dir":
-                    {
-                     "{name}_layout.ma -> layout_scene":None,
-                     "{name}_layout.mov -> layout_capture":None,
-                    },
+#                 "{step:02_layout} -> layout_dir":
+#                    {
+#                     "{name}_layout.ma -> layout_scene":None,
+#                     "{name}_layout.mov -> layout_capture":None,
+#                    },
                 },
             },
         }
