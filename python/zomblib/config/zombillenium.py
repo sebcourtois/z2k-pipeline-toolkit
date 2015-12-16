@@ -90,8 +90,11 @@ class shot_lib(object):
                     "sg_tasks":("previz 3D",),
                     "upload_to_sg":"previz_capture"
                     },
-#    "previz_capture":{"editable":False,
-#                      },
+    "animatic_capture":{#"outcomes":("previz_capture",),
+                        "create_sg_version":True,
+                        "sg_tasks":("animatic",),
+                        #"upload_to_sg":"previz_capture"
+                        },
     }
 
 

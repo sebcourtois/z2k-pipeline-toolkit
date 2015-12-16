@@ -18,4 +18,4 @@ while not sPwd:
 
 h = hashlib.md5()
 h.update(sPwd)
-print h.hexdigest()
+print h.hexdigest(), sPwd
