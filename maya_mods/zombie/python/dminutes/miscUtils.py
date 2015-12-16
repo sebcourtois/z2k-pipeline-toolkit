@@ -176,3 +176,21 @@ def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, empt
                     break
 
         return [toReturnB]
+
+
+
+
+def getShape(objectList =  [], failIfNoShape = False):
+        shapeList = []
+        for eachObject in objectList:
+            if not mc.objectType(eachObject,isAType = "shape"):
+                eachObjectShapes = mc.ls(mc.listRelatives(eachObject, noIntermediate = True, shapes = True, fullPath = True),l=False)
+                if not eachObjectShapes and failIfNoShape:
+                    raise ValueError("'{}' has no shape".format(eachObject))
+                if len(eachObjectShapes)>1: 
+                    raise ValueError("'{}' has several shapes".format(eachObject))
+                shapeList.append(eachObjectShapes[0])
+            else:
+                shapeList.append(eachObject)
+        return shapeList if shapeList != [] else  None
+            
