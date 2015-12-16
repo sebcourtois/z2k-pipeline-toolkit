@@ -52,6 +52,9 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
         sAllPathList.append(sAbsPath)
 
+    if not sAllPathList:
+        pm.displayInfo("No dependencies to publish.")
+        return (not bDryRun)
 
     if sTexPathList:
 
