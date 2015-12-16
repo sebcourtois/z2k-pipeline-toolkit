@@ -193,4 +193,15 @@ def getShape(objectList =  [], failIfNoShape = False):
             else:
                 shapeList.append(eachObject)
         return shapeList if shapeList != [] else  None
+
+
             
+def deleteAllColorSet(inParent = "*"):
+    sTransList = getAllTransfomMeshes(inParent = inParent)
+    sMeshList = mc.ls(sTransList, type='mesh')
+    nbOfDeleteDone=0
+    for each in sTransList:
+        if mc.polyColorSet(each, query=True, allColorSets=True):       
+            mc.polyColorSet(each, delete=True)
+            nbOfDeleteDone +=1
+    print "#### {:>7}: color sets have been deleted on  {} objects".format("Info",nbOfDeleteDone )
