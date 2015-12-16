@@ -13,6 +13,13 @@ def loadProject():
     proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=bBatchMode)
     proj.loadEnviron()
 
+def projectFromScene(scenePath=""):
+
+    sCurScnPath = scenePath if scenePath else pm.sceneName()
+    if not sCurScnPath:
+        raise ValueError("Invalid scene name: '{}'".format(sCurScnPath))
+
+    return DamProject.fromPath(sCurScnPath, fail=True)
 
 def entityFromScene(scenePath=""):
 

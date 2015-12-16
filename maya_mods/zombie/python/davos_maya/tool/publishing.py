@@ -3,7 +3,7 @@ import os
 import subprocess
 from tempfile import NamedTemporaryFile
 
-from itertools import izip, chain
+from itertools import izip
 from collections import OrderedDict
 
 import pymel.core as pm
@@ -18,7 +18,7 @@ from pytaya.core import system as myasys
 
 from davos.tools import publish_dependencies
 
-from .general import entityFromScene
+from .general import entityFromScene, projectFromScene
 from davos_maya.tool import dependency_scan
 from pytd.util.sysutils import toStr, inDevMode
 from pytd.gui.dialogs import confirmDialog
@@ -33,7 +33,7 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
     proj = damEntity.project
 
-    sPublishPathList = []
+    sAllPathList = []
     sBuddyPathList = []
     sTexPathList = []
     depDataDct = {}
@@ -50,7 +50,7 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
         else:
             sBuddyPathList.append(sAbsPath)
 
-        sPublishPathList.append(sAbsPath)
+        sAllPathList.append(sAbsPath)
 
 
     if sTexPathList:
@@ -68,12 +68,17 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
                                                       **kwargs)
 
         publishItemsDct = OrderedDict(izip((normCase(p) for p in sTexPathList),
-                                           publishItemsList))
+                                            publishItemsList))
 
         sMsgFmt = "\nRelinking '{}' node: \n    from '{}'\n      to '{}'"
 
+        sUnchangedList = []
         sUpdNodeList = []
-        for sTexPath, publishItems in publishItemsDct.iteritems():
+        for sTexPath, publishItems in izip(sTexPathList, publishItemsList):
+
+            versionFile = publishItems[1]
+            if not versionFile:
+                sUnchangedList.append(sTexPath)
 
             sTexNormPath = normCase(sTexPath)
 
@@ -118,12 +123,18 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
             print "\n" + " Publishing related files (.psd, .tx, etc...) ".center(120, '-')
 
-            proj.publishDependencies("texture_dep",
-                                     damEntity,
-                                     sBuddyPathList,
-                                     sComment,
-                                     dryRun=bDryRun,
-                                     **kwargs)
+            publishItemsList = proj.publishDependencies("texture_dep",
+                                                         damEntity,
+                                                         sBuddyPathList,
+                                                         sComment,
+                                                         dryRun=bDryRun,
+                                                         **kwargs)
+
+            for sBuddyPath, publishItems in izip(sBuddyPathList, publishItemsList):
+                versionFile = publishItems[1]
+                if not versionFile:
+                    sUnchangedList.append(sBuddyPath)
+
         else:
             sMsg = """
     Opening a new process to publish associated files: .psd, .tx, etc...
@@ -154,12 +165,25 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
 
             subprocess.Popen(sCmdArgs)
 
-    print "\n" + " Publishing Report ".center(120, '-')
-
-    count = len(sPublishPathList)
+    total = len(sAllPathList)
     sSep = "\n"
-    sMsgFiles = sSep.join(sPublishPathList)
-    print sMsgFiles + sSep + " Published files: {} ".format(count).center(120, '-')
+
+    w = len(max(sAllPathList, key=len))
+
+    sUpdatedList = sAllPathList
+    if sUnchangedList:
+        count = len(sUnchangedList)
+        sMsgTag = " Unchanged files: {}/{} ".format(count, total).center(w, '-')
+        sMsgFiles = sSep.join(sUnchangedList)
+        print sSep + sSep.join((sMsgTag, sMsgFiles, sMsgTag))
+
+        sUpdatedList = list(p for p in sAllPathList if p not in sUnchangedList)
+
+    if sUpdatedList:
+        count = len(sUpdatedList)
+        sMsgTag = " Updated files: {}/{} ".format(count, total).center(w, '-')
+        sMsgFiles = sSep.join(sUpdatedList)
+        print sSep + sSep.join((sMsgTag, sMsgFiles, sMsgTag))
 
     return (not bDryRun)
 
@@ -172,7 +196,10 @@ def publishCurrentScene(*args, **kwargs):
 
     sCurScnPath = pm.sceneName()
     damEntity = entityFromScene(sCurScnPath)
-    proj = damEntity.project
+    if damEntity:
+        proj = damEntity.project
+    else:
+        proj = projectFromScene(sCurScnPath)
 
     _, curPubFile = proj.assertEditedVersion(sCurScnPath)
 
@@ -191,10 +218,12 @@ def publishCurrentScene(*args, **kwargs):
         if sConfirm == 'Cancel':
             raise
 
-    scanResults = dependency_scan.launch(damEntity, modal=True, okLabel="Publish")
-    if scanResults is None:
-        pm.displayInfo("Canceled !")
-        return
+    scanResults = []
+    if damEntity:
+        scanResults = dependency_scan.launch(damEntity, modal=True, okLabel="Publish")
+        if scanResults is None:
+            pm.displayInfo("Canceled !")
+            return
 
     bSgVersion = True
     try:
@@ -209,8 +238,9 @@ def publishCurrentScene(*args, **kwargs):
     if not sgTaskInfo:
         bSgVersion = False
 
-    if not publishSceneDependencies(damEntity, scanResults, sComment):
-        return
+    if damEntity:
+        if not publishSceneDependencies(damEntity, scanResults, sComment):
+            return
 
     sSavedScnPath = myasys.saveScene(confirm=False)
     if not sSavedScnPath:

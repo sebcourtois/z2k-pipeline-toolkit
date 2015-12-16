@@ -1,6 +1,6 @@
 
 import os
-import os.path as osp
+osp = os.path
 import re
 
 from PySide import QtGui
@@ -18,7 +18,7 @@ from pytd.gui.widgets import QuickTree, QuickTreeItem
 #from pytd.util.logutils import logMsg
 from pytaya.core.general import lsNodes
 
-from pytd.util.fsutils import pathResolve, normCase, pathJoin
+from pytd.util.fsutils import pathResolve, normCase, pathJoin, pathReSub
 from pytd.util.fsutils import ignorePatterns, iterPaths
 from pytd.util.strutils import labelify, assertChars
 from pytd.util.qtutils import setWaitCursor
@@ -221,10 +221,14 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
             item.setExpanded(True)
 
 UDIM_MODE = 3
-UDIM_RGX = r"\.1\d{3}\."
+UDIM_SEQ_RGX = r"\.1\d{3}\."
+IMG_SEQ_RGX = r"\.0\d+\."
 
 def makeUdimFilePattern(p):
-    return re.sub(UDIM_RGX, ".1*.", osp.basename(p))
+    return pathReSub(UDIM_SEQ_RGX, ".1???.", osp.basename(p))
+
+def makeSequenceFilePattern(p):
+    return pathReSub(IMG_SEQ_RGX, ".0*.", osp.basename(p))
 
 @setWaitCursor
 def scanTextureDependency(damEntity):
@@ -252,6 +256,7 @@ def scanTextureDependency(damEntity):
     sFoundFileList = []
     sPrivFileList = []
     publishCount = 0
+    bImgSeqSupport = False
 
     def addResult(res):
 #        for k, v in res.iteritems(): print k, v
@@ -272,6 +277,8 @@ def scanTextureDependency(damEntity):
         iTilingMode = fileNode.getAttr("uvTilingMode")
         bUvTileOn = (iTilingMode != 0)
         bUdimMode = (iTilingMode == UDIM_MODE)
+
+        bImgSeq = fileNode.getAttr("useFrameExtension")
 
         sUdimPathList = []
         sTexAbsPathList = (sNodeAbsPath,)
@@ -320,10 +327,10 @@ def scanTextureDependency(damEntity):
                          "exists":bExists,
                          }
 
+
             if not bExists:
                 scanLogDct.setdefault("error", []).append(('FileNotFound', sTexAbsPath))
-                addResult(resultDct)
-                continue
+                addResult(resultDct); continue
             else:
                 sFoundFileList.append(sTexNormPath)
                 texFile = proj.entryFromPath(sTexAbsPath)
@@ -341,16 +348,37 @@ def scanTextureDependency(damEntity):
                         privFile = texFile.getPrivateFile(weak=True)
                         sPrivFileList.append(normCase(privFile.absPath()))
 
-            sTiling = ""
-            if len(re.findall(UDIM_RGX, sTexFilename)) != 1:
-                if bUdimMode:
-                    sMsg = "Must match 'name.1###.ext' pattern"
-                    scanLogDct.setdefault(sHighSeverity, []).append(('BadUDIMFilename', sMsg))
-            else:
-                sBasePath, sTiling = sBasePath.rsplit('.', 1)
+
+            sFoundList = re.findall(UDIM_SEQ_RGX, sTexFilename)
+            sUdimSeqExt = sFoundList[0].rstrip('.') if sFoundList else ""
+            sFoundList = re.findall(IMG_SEQ_RGX, sTexFilename)
+            sImgSeqExt = sFoundList[0].rstrip('.') if sFoundList else ""
+
+            sSeqsExt = ""
+            if sUdimSeqExt or sImgSeqExt:
+                sBasePath = sBasePath.rsplit('.', 1)[0]
+                sSeqsExt = sUdimSeqExt + sImgSeqExt
+
+            if sUdimSeqExt:
                 if not bUdimMode:
-                    sMsg = "UDIM mode is OFF"
+                    sMsg = "File is UDIM sequence but UDIM mode is disabled"
                     scanLogDct.setdefault(sHighSeverity, []).append(('BadUVTilingMode', sMsg))
+            elif bUdimMode:
+                    sMsg = "UDIM sequence must match 'name.1###.ext'"
+                    scanLogDct.setdefault(sHighSeverity, []).append(('BadFilename', sMsg))
+
+            if bImgSeqSupport:
+                if sImgSeqExt:
+                    if not bImgSeq:
+                        sMsg = "File is Image sequence but 'Use Image Sequence' is disabled"
+                        scanLogDct.setdefault(sHighSeverity, []).append(('ImageSequenceDisabled', sMsg))
+                elif bImgSeq:
+                    sMsg = "Image sequence must match 'name.0###.ext'"
+                    scanLogDct.setdefault(sHighSeverity, []).append(('BadFilename', sMsg))
+            elif sImgSeqExt:
+                sMsg = "Image sequence not publishable yet"
+                scanLogDct.setdefault("info", []).append(('Ignored', sMsg))
+                addResult(resultDct); continue
 
             sBaseName = osp.basename(sBasePath)
 
@@ -396,16 +424,16 @@ def scanTextureDependency(damEntity):
                 if bColor:
                     sBuddyItems.append(("HD.jpg", "info"))
 
-                for sBuddySfx, sBudSeverity in sBuddyItems:
+                for sBuddySufx, sBudSeverity in sBuddyItems:
 
-                    sSuffix = sBuddySfx
-                    if sTiling and ("." in sBuddySfx):
-                        sSuffix = sBuddySfx.replace(".", "." + sTiling + ".")
+                    sSuffix = sBuddySufx
+                    if sSeqsExt and ("." in sBuddySufx):
+                        sSuffix = sBuddySufx.replace(".", "." + sSeqsExt + ".")
                     sBuddyPath = "".join((sBasePath, sSuffix))
 
                     if not osp.isfile(sBuddyPath):
                         if not bPublicFile:
-                            sBuddyLabel = "".join(s.capitalize()for s in sBuddySfx.split("."))
+                            sBuddyLabel = "".join(s.capitalize()for s in sBuddySufx.split("."))
                             sStatusCode = sBuddyLabel.upper() + "FileNotFound"
                             if sBudSeverity != "info":
                                 scanLogDct.setdefault(sBudSeverity, []).append((sStatusCode, sBuddyPath))
@@ -563,11 +591,10 @@ Wait for the next file synchronization and retry publishing."""
             bModified = (not filecmp.cmp(sSrcFilePath, sPubFilePath))
             #bDiffers, sSrcChecksum = pubFile.differsFrom(sPubFilePath)
 
+        bPublishable = True
         if not bModified:
             scanLogDct.setdefault("info", []).append(("Not Modified", "File has not been modified"))
         else:
-            bPublishable = True
-
             sMsg = ""
             sBuddyFileList = resultDct["buddy_paths"]
             if sBuddyFileList:
