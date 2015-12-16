@@ -95,7 +95,7 @@ def switchSelectedReferences(dryRun=False, **kwargs):
             continue
 
         if sRcPath == "current":
-            sMsg = "Reference already switched as '{}'".format(sChosenRcName)
+            sMsg = "Reference already switched to '{}'".format(sChosenRcName)
             nonSwitchedRefList.append((oFileRef, sMsg))
             print sMsg
             continue
@@ -148,7 +148,7 @@ def switchSelectedReferences(dryRun=False, **kwargs):
 
         sMsg = '\n' + sMsgHeader.center(100, "-") + sSep + sMsgBody + '\n' + sMsgEnd
         print sMsg
-        pm.displayWarning(sMsgHeader + "More details in Script Editor --" + (100 * ">"))
+        pm.displayWarning(sMsgHeader + "More details in Script Editor ----" + (80 * ">"))
 
         #pm.mel.ScriptEditor()
     else:

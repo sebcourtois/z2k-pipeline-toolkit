@@ -75,11 +75,11 @@ class shot_lib(object):
                      "{name}_previz.ma -> previz_scene":None,
                      "{name}_previz.mov -> previz_capture":None,
                     },
-#                 "{step:02_layout} -> layout_dir":
-#                    {
-#                     "{name}_layout.ma -> layout_scene":None,
-#                     "{name}_layout.mov -> layout_capture":None,
-#                    },
+                "{step:02_layout} -> layout_dir":
+                   {
+                    "{name}_layout.ma -> layout_scene":None,
+                    "{name}_layout.mov -> layout_capture":None,
+                   },
                 },
             },
         }
@@ -89,6 +89,11 @@ class shot_lib(object):
                     "create_sg_version":True,
                     "sg_tasks":("previz 3D",),
                     "upload_to_sg":"previz_capture"
+                    },
+    "layout_scene":{"outcomes":("layout_capture",),
+                    "create_sg_version":True,
+                    "sg_tasks":("layout",),
+                    "upload_to_sg":"layout_capture"
                     },
     "animatic_capture":{#"outcomes":("previz_capture",),
                         "create_sg_version":True,

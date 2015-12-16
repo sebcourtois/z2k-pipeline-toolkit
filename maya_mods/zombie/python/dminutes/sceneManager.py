@@ -533,10 +533,11 @@ class SceneManager():
 
             os.system("start " + capturePath.replace("/", "\\"))
 
-    def edit(self, editInPlace=None, onBase=False):
+    def edit(self, editInPlace=None, onBase=False, createFolders=False):
         privFile = None
 
         entity = self.context['entity']
+        proj = self.context['damProject']
 
         lib = LIBS[entity['type']]
         if lib == "asset_lib":
@@ -555,33 +556,43 @@ class SceneManager():
             tokens['assetType'] = entity[nameKey].split('_')[0]
 
         if 'task' in self.context:
-            if self.context['task']['content'] in TASK_FILE_REL:
-                s_inFileTag = TASK_FILE_REL[self.context['task']['content']]
+            sgTask = self.context['task']
+            if sgTask['content'] in TASK_FILE_REL:
+                s_inFileTag = TASK_FILE_REL[sgTask['content']]
 
                 path = None
                 try:
-                    path = self.context['damProject'].getPath('public', lib, s_inFileTag, tokens=tokens)
+                    path = proj.getPath('public', lib, s_inFileTag, tokens=tokens)
                 except Exception, e:
                     pc.warning('damProject.getPath failed : {0}'.format(e))
 
                 if path != None:
-                    entry = self.context['damProject'].entryFromPath(path)
-                    if entry == None:
-                        msg = 'Entity "{0}"" does not exists, do yout want to create it ?'.format(entity[nameKey])
-                        result = pc.confirmDialog(title='Non existing entity',
-                                                  message=msg,
-                                                  button=['Yes', 'No'],
-                                                  defaultButton='Yes',
-                                                  cancelButton='No',
-                                                  dismissString='No')
-                        if result == "Yes":
-                            self.createFolder()
-                            entry = self.context['damProject'].entryFromPath(path)
-                            if entry == None:
-                                pc.error("Problem editing the entity !")
+                    entry = proj.entryFromPath(path)
+                    if not entry:
+                        if createFolders:
+                            msg = "Entity '{0}' does not exists, do yout want to create it ?".format(entity[nameKey])
+                            result = pc.confirmDialog(title='Non existing entity',
+                                                      message=msg,
+                                                      button=['Yes', 'No'],
+                                                      defaultButton='Yes',
+                                                      cancelButton='No',
+                                                      dismissString='No')
+                            if result == "Yes":
+                                self.createFolder()
+                                entry = proj.entryFromPath(path)
+                                if entry == None:
+                                    pc.error("Problem editing the entity !")
+                            else:
+                                pc.warning('Edit cancelled by user !')
+                                return ''
                         else:
-                            pc.warning('Edit cancelled by user !')
-                            return ''
+                            sMsg = "No such file: '{}'".format(path)
+                            pc.confirmDialog(title='SORRY !',
+                                             message=sMsg,
+                                             button=["OK"],
+                                             icon="critical",
+                                            )
+                            raise EnvironmentError(sMsg)
 
                     result = "Yes" if editInPlace else "No"
 
@@ -632,13 +643,16 @@ class SceneManager():
         return privFile
 
     def publish(self):
+
+        proj = self.context['damProject']
+
         currentScene = os.path.abspath(pc.sceneName())
         if currentScene != '':
-            entry = self.context['damProject'].entryFromPath(currentScene)
+            entry = proj.entryFromPath(currentScene)
             if entry == None:
                 pc.error()
 
-            rslt = self.context['damProject'].publishEditedVersion(currentScene)
+            rslt = proj.publishEditedVersion(currentScene)
 
             # here is incerted the publish of the camera of the scene
             print "exporting the camera of the shot"

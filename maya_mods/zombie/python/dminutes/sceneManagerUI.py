@@ -571,21 +571,25 @@ def doSaveWip(*args):
         doDetect(args)
 
 def doSwitchContext(*args):
-    """Use the current scene for an edition on the entry currently showing in the UI (basically an edit, creating folders if needed)"""
+    """Use the current scene for an edition on the entry currently showing in the UI 
+    (basically an edit, creating folders if needed)"""
+
     if SCENE_MANAGER.refreshSceneContext():
         pc.warning("Your context is already matching !!")
         return
 
-    if not SCENE_MANAGER.isEditable() and SCENE_MANAGER.context["lock"] == "Error":
-        #Maybe this is because folders does not exists ?
-        SCENE_MANAGER.createFolder()
-        doRefreshFileStatus()
+#    if not SCENE_MANAGER.isEditable() and SCENE_MANAGER.context["lock"] == "Error":
+#        #Maybe this is because folders does not exists ?
+#        SCENE_MANAGER.createFolder()
+#        doRefreshFileStatus()
+#
+#    if not SCENE_MANAGER.isEditable():
+#        pc.warning("Your entity is locked by {0}".format(SCENE_MANAGER.context["lock"]))
+#        return
 
-    if not SCENE_MANAGER.isEditable():
-        pc.warning("Your entity is locked by {0}".format(SCENE_MANAGER.context["lock"]))
-        return
-
-    if len(SCENE_MANAGER.getVersions()) == 0 or pc.confirmDialog(title="Entity override", message="Your entity already have published versions, are you sure you want to use current scene ?") == "Confirm":
+    sMsg = "Your entity already have published versions, are you sure you want to use current scene ?"
+    if (len(SCENE_MANAGER.getVersions()) == 0
+        or pc.confirmDialog(title="Entity override", message=sMsg) == "Confirm"):
         SCENE_MANAGER.edit(True)
         doTaskChanged()
     else:
