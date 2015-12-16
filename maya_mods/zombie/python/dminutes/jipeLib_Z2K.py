@@ -6,7 +6,10 @@
 # Description : all Z2K'scripts related functions
 # Author : Jean-Philippe Descoins
 # Date : 2015_09_10
-# Comment : WIP
+# Comment : WIP# TO DO:
+# - spped up the check structure
+# - ADD CHECK for DOUBLE NAMES
+
 ################################################################
 #    ! Toute utilisation de ce se script sans autorisation     #
 #                         est interdite !                      #
@@ -21,8 +24,6 @@ import maya.cmds as cmds
 from dminutes import assetconformation
 
 # general function 
-
-# ADD CHECK for DOUBLE NAMES
 
 
 
@@ -293,6 +294,39 @@ def Ltest(objL,*args,**kwargs):
 
     return objL
 
+
+def getChilds(cursel=[], mode="transform", *args):
+    # mode = type filter shape/set/dagObjects
+    listOut = []
+    # renvoie la list correspondante aux enfants, si il n'y en a pas renvoie l'obj lui meme
+    if type(cursel) is not list:
+        cursel = [cursel]
+
+    try:
+        Childs = cmds.listRelatives(cursel, c=True, ni=True, type=mode)
+    except:
+        Childs = cursel
+    return Childs
+
+def addAttr(inObj = "", theAttrName="",theValue=1,
+    theAttrType="long",keyable=True,theMin = 0, theMax=1, *args, **kwargs):
+    """ Description: add the specied attribut to the speciefied obj
+        Return : True
+        Dependencies : cmds - 
+    """
+
+    print "addAttr()"
+    toReturnB = True
+    if cmds.objExists(inObj):
+        if not cmds.objExists(inObj + "." + theAttrName):
+            cmds.addAttr(inObj, longName=theAttrName, attributeType = theAttrType, keyable=keyable, min = theMin, max=theMax) 
+            cmds.setAttr(inObj + "." + theAttrName,theValue)
+        else:
+            print "    attrib allready exists"
+    else:
+        print "    Object doesn't exists"
+    return toReturnB
+
 def matchByXformMatrix(cursel=[], mode=0, *args, **kwargs):
     ''' Description : Match SRT in world cursel objects to the first one
                     mode : - 0/first = the first object is the reference
@@ -345,6 +379,7 @@ def setFilterTest(setName="",includedSetL=["objectSet","textureBakeSet","vertexB
             Return : BOOL
             Dependencies : cmds - 
         """
+        # print "setFilterTest()"
         # #plugin object sets
         # try:
         #     apiNodeType = cmds.nodeType(setName, api=True)
@@ -359,27 +394,27 @@ def setFilterTest(setName="",includedSetL=["objectSet","textureBakeSet","vertexB
         except RuntimeError:
             return False
             
-        # accepted sets
-        if not nodeType in  includedSetL:
+        # accepted sets # Rendering - dispLayers - LayerTurttle
+        if (not nodeType in  includedSetL) or (nodeType in excludedSetL) :
             return False
 
-        # Rendering - dispLayers - LayerTurttle
-        if nodeType in excludedSetL:
-            return False
+        # # Rendering - dispLayers - LayerTurttle
+        # if nodeType in excludedSetL:
+        #     return False
 
         # bookmarks
-        if not bookmarksSets:
+        if not bookmarksSets :
             if cmds.getAttr(setName+"."+ "annotation") in ["bookmarkAnimCurves"]:
                 return False
 
         # maya default sets
         if not defaultSets:
-            if setName in cmds.ls(defaultNodes=True):
+            if setName in cmds.ls(defaultNodes=True) :
                 return False
         
         # locked sets
         if not lockedSets:
-            if setName in cmds.ls(lockedNodes=True):
+            if setName in cmds.ls(lockedNodes=True) :
                 return False
 
         # others filtered by attribs
@@ -392,12 +427,14 @@ def setFilterTest(setName="",includedSetL=["objectSet","textureBakeSet","vertexB
         return True
 
 def getOutlinerSets(*args, **kwargs):
-        """ Description: return the outliner visible filtered objects sets 
-            Return : [LIST]
-            Dependencies : cmds -  setFilterTest()
-        """
-        
-        return [setName for setName in cmds.ls(sets=True) if setFilterTest(setName=setName)]
+    """ Description: return the outliner visible filtered objects sets 
+        Return : [LIST]
+        Dependencies : cmds -  setFilterTest()
+    """
+
+    outL = (set( cmds.ls(type="objectSet")  ) -set( jlistSets(type=1) ) -set( jlistSets(type=2) ) -set( cmds.ls(defaultNodes=1) )  -set( cmds.ls(lockedNodes=True) ) -set(cmds.ls(undeletable=1))  )
+    #return [setName for setName in cmds.ls(sets=True) if setFilterTest(setName=setName)]
+    return outL
 
 def getSetContent ( inSetL=[],*args,**kwargs):
         """
@@ -507,7 +544,7 @@ def UnusedNodeAnalyse( execptionTL = [], specificTL= [], mode = "delete",verbose
     
     toReturnB = True
     nodeL = NodeTypeScanner(execptionTL=execptionTL, specificTL=specificTL)
-    print "*nodeL=", len(nodeL)
+    # print "*nodeL=", len(nodeL)
     unconectedCL =[]
     # loop
     for node in nodeL:
@@ -524,7 +561,7 @@ def UnusedNodeAnalyse( execptionTL = [], specificTL= [], mode = "delete",verbose
 
     if len(unconectedCL):
         for node in unconectedCL:
-            print "////",node
+            # print "////",node
             try:
                 if not cmds.lockNode(node, q=1)[0]:
                     print "try deleting",node,cmds.lockNode(node,q=1)[0]
@@ -852,13 +889,13 @@ def isSkinned(inObjL=[], verbose=False, printOut = False,*args,**kwargs):
         tab = "    "
         if len(inObjL):
             for obj in inObjL:
-                print "  obj =", obj
+                # print "  obj =", obj
                 skinClusterList = []
                 history = cmds.listHistory(obj, il=2)
                 # print "    history = ", history
                 if history not in [None,"None"]:
                     for node in history:
-                        print "   node=",node
+                        # print "   node=",node
                         if cmds.nodeType(node) == "skinCluster":
                             skinClusterList.append(node)
                             outSkinClusterL.append(node)
@@ -1069,6 +1106,44 @@ def disableShapeOverrides(inObjL=[],*args, **kwargs):
     return [toReturnB,debugD]
 
 
+
+
+def connectVisibility(connectOnShape=True, force=True,driverObj="Global_SRT", driverAttr= "showMesh", *args, **kwargs):
+    """ Description: cree et connect un attrib "showMesh" au visibility des shape du "set_meshCache"
+        Return : True
+        Dependencies : cmds - 
+    """
+    print "connectVisibility()"
+    toReturnB = True
+    debug= ""
+    try :
+        # driverObj= "Global_SRT"
+        # driverAttr= "showMesh"
+        addAttr(inObj = driverObj, theAttrName=driverAttr,)
+        cmds.setAttr(driverObj+"."+driverAttr,1)
+        targetObjL=getSetContent(inSetL=["set_meshCache"] )
+
+        finalTargetObjL=[]
+        if len(targetObjL):
+            for obj in targetObjL:
+
+                # get shpae obj
+                if connectOnShape:
+                    finalTargetObjL = getChilds(cursel=[obj], mode="shape",)
+                else:
+                    finalTargetObjL = targetObjL
+                # finally connect
+                for target in finalTargetObjL:
+                    if not cmds.connectionInfo(target + "." +"visibility", isDestination=True):
+                        cmds.connectAttr(driverObj + "." + driverAttr,  target + "." +"visibility", f=force)
+                    else:
+                        print "Attribute allready Connected"
+    except Exception,err:
+        toReturnB = False
+        print Exception,err
+        debug = err
+
+    return toReturnB,debug
 
 # scene cleaning
 def cleanMentalRayNodes ( toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ########################################################
-# Name    : Z2K_Previz_PROPS_checks
+# Name    : Z2K_Chr_Previz_checks
 # Version : v010
 # Description : Create previz maya file in .mb with some cleaning one the leadAsset
 # Comment : BASE SCRIPT OUT OF Z2K in v002
@@ -9,7 +9,9 @@
 # Date : 2015-26-08
 # Comment : wip
 # TO DO:
-#       - Add debug file in input of th e class ; a reporter sur les check des autres
+#       x connect shape visibility to a control -> btn_specialSettings
+#       - add set all dynamic OFF
+#       x Add debug file in input of th e class ; a reporter sur les check des autres
 #       x add turttle check
 #       x Handle versioning problems if edti it's incremented/ if readonly it's not (if edit and if not publish add please publish edited)
 #       WIP mettage en lIB et nouveau path and names
@@ -76,7 +78,7 @@ class checkModule(object):
     cf = name
 
     basePath = jpZ.getBaseModPath()
-    ICONPATH = Z2K_ICONPATH + "Z2K_PROP_LOGO_A1.bmp"
+    ICONPATH = Z2K_ICONPATH + "Z2K_ANIM_LOGO_A3.bmp"
     upImg= basePath + ICONPATH
 
 
@@ -522,6 +524,41 @@ class checkModule(object):
         return boolResult
 
 
+
+    @jpZ.waiter
+    def btn_specialSettings(self, controlN="", *args, **kwargs):
+        print "btn_specialSettings()"
+        boolResult=True
+
+        # set progress bar
+        self.pBar_upd(step=1, maxValue=1, e=True)
+
+
+        # 1 connectVisibility ()
+        result,debugS = jpZ.connectVisibility()
+        # prints -------------------
+        self.printF("connectVisibility()", st="t")
+        self.printF(result, st="r")
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,) 
+
+
+        # 2 -----
+
+
+
+
+        # colors
+        print "*btn_specialSettings:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+
+
+
+
+        return boolResult
+
     def btn_clearAll(self, *args, **kwargs):
         print "btn_clearAll()"
 
@@ -533,7 +570,7 @@ class checkModule(object):
         cmds.button(self.BCleanScene, e=1, bgc= defCol)
         cmds.button(self.BCleanObjects, e=1, bgc= defCol)
         cmds.button(self.BCleanAll, e=1, bgc= defCol)
-
+        cmds.button(self.BSpecialSettings, e=1, bgc= defCol)
 
     def btn_cleanAll(self,  *args, **kwargs):
         print "btn_cleanAll()"
@@ -542,15 +579,16 @@ class checkModule(object):
         boolResult = True
         if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
             boolResult = False
-        print "*1",boolResult
+        
         if not self.btn_CleanScene(controlN=self.BCleanScene, ):
             boolResult = False
-        print "*2",boolResult
+        
         if not self.btn_CleanObjects(controlN=self.BCleanObjects, ):
+            boolResult = False
+        if not self.btn_specialSettings(controlN=self.BSpecialSettings, ):
             boolResult = False
         
         # colors
-        print "*3",boolResult
         self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""],)
         return boolResult
 
@@ -637,6 +675,11 @@ class checkModule(object):
         self.BCleanObjects = cmds.button("CleanObjects",)
         cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects) )
         
+        self.BSpecialSettings = cmds.button("Apply Special_Settings",)
+        cmds.button(self.BSpecialSettings,e=1,c= partial( self.btn_specialSettings,self.BSpecialSettings) )
+        
+        
+
         self.BValidationPBar = cmds.progressBar(maxValue=3,s=1 )
 
         self.BDebugBoardF= cmds.frameLayout("DebugBoard",cll=True,cl=True)

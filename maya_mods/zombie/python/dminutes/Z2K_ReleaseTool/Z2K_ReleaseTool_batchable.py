@@ -10,7 +10,7 @@
 # Comment : wip
 #
 # TO DO:
-#   - implement new scene type: ANIM, RENDER, MASTER
+#   WIP implement new scene type: ANIM, RENDER, MASTER
 #   - add check for doubles in scene dans les checks sript voir scriptLib
 #   x add comment from version for now it's alway the edited version wich is alway a public n+1 version (auto increment probleme)
 #   - add release and unLock btn
@@ -61,6 +61,8 @@ reload(Z2K_Pcheck_CHAR)
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_SET_checks as Z2K_Pcheck_SET
 reload(Z2K_Pcheck_SET)
 
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Anim_checks as  Z2K_Pcheck_ANIM
+reload(Z2K_Pcheck_ANIM)
 
 
 class Z2K_ReleaseTool (object):
@@ -131,7 +133,7 @@ class Z2K_ReleaseTool (object):
 
             elif self.sourceAssetType in ["anim_scene"]:
                 print tab, "anim-> same as props"
-                Z2K_Pcheck = Z2K_Pcheck_PROP
+                Z2K_Pcheck = Z2K_Pcheck_ANIM
                 # set DEBUG FILE here
                 theDebugFile  = DEBUGFILE_ANIM_CHR
 
@@ -162,10 +164,11 @@ class Z2K_ReleaseTool (object):
                 print tab, "anim"
                 # set DEBUG FILE here
                 theDebugFile  = DEBUGFILE_ANIM_PRP
-                Z2K_Pcheck = Z2K_Pcheck_PROP
+                Z2K_Pcheck = Z2K_Pcheck_ANIM
                 
             
         elif  self.assetCat in ["set"]:
+            # a voir avec maybe master_scene
             print "It' is a SET test"
             if self.sourceAssetType in ["modeling_scene"]:
                 print tab, "modeling, test not ready"
@@ -438,20 +441,20 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             print "CONTEXT IS OK"
 
 
-            print "X",self.sourceAsset,"->",self.destinationAsset, self.sourceAssetType,"->",self.destinationAssetType
-            try :
-                exportedFileZ2K = self.release_Asset( destinationAsset= self.destinationAsset ,destinationAssetType = self.destinationAssetType,
-                                        theComment= self.theComment)
-                cmds.confirmDialog(title= "ASSET RELEASE DONE",message= exportedFileZ2K,button="OK", messageAlign="center", icon="information")
+            # print "X",self.sourceAsset,"->",self.destinationAsset, self.sourceAssetType,"->",self.destinationAssetType
+            # try :
+            exportedFileZ2K = self.release_Asset( destinationAsset= self.destinationAsset ,destinationAssetType = self.destinationAssetType,
+                                    theComment= self.theComment)
+            cmds.confirmDialog(title= "ASSET RELEASE DONE",message= exportedFileZ2K,button="OK", messageAlign="center", icon="information")
 
-                # disable l'UI, elle ne peut etre reactived que avec le boutton get_context
-                # cmds.layout(self.layToEn,e=1,en=0)
-                cmds.layout(self.layToEnB,e=1,en=0)
+            # disable l'UI, elle ne peut etre reactived que avec le boutton get_context
+            # cmds.layout(self.layToEn,e=1,en=0)
+            cmds.layout(self.layToEnB,e=1,en=0)
 
-            except Exception,err:
-                msg= str(err)
-                cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
-
+            # except Exception,err:
+                # print Exception,err
+                # msg= str(err)
+                # cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
             
 
         else:
