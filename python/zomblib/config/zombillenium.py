@@ -166,9 +166,9 @@ class asset_lib(object):
                 "sg_tasks":("Rig_Anim",), },
 
     "render_scene":{"create_sg_version":True,
-                    "sg_tasks":("Shading",), },
+                    "sg_steps":("Surfacing",), },
     "render_ref":{"create_sg_version":True,
-                  "sg_tasks":("Shading",), },
+                  "sg_tasks":("Rig_Render",), },
     }
 
     dependency_types = {
