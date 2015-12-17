@@ -1,7 +1,5 @@
 
 #import os.path as osp
-from fnmatch import fnmatch
-
 import pymel.core as pm
 
 from pytaya.util.sysutils import withSelectionRestored
@@ -10,6 +8,7 @@ from pytd.util.fsutils import pathResolve, normCase
 from itertools import izip
 from davos_maya.tool.general import entityFromScene
 from pytd.util.sysutils import toStr
+from pytd.gui.dialogs import confirmDialog
 
 
 
@@ -19,14 +18,10 @@ def listMayaRcForSelectedRefs(oFileRef, project, **kwargs):
     sRefPath = pathResolve(oFileRef.path)
     asset = project.entityFromPath(sRefPath)
 
-    sRcFilter = kwargs.get("filter", "*")
-
     mayaRcDct = dict()
     if asset:
         mayaRcDct = dict((rc, p if normCase(p) != normCase(sRefPath) else "current")
-                                    for rc, p in asset.iterMayaRcItems()
-                                        if fnmatch(rc, sRcFilter))
-
+                                    for rc, p in asset.iterMayaRcItems(**kwargs))
     res = (asset, mayaRcDct)
 
     resultList = kwargs.pop("processResults")
@@ -41,8 +36,10 @@ def switchSelectedReferences(dryRun=False, **kwargs):
     kwargs.update(confirm=False, allIfNoSelection=True, topReference=True)
 
     oSelRefList, assetRcList = listMayaRcForSelectedRefs(proj, **kwargs)
-    if not oSelRefList:
-        pm.displayWarning("No references selected !")
+
+    assetList = tuple(ast for ast, _ in assetRcList if ast)
+    if not assetList:
+        pm.displayWarning("No Asset References selected !")
         return
 
     sRcNameSet = set()
@@ -52,16 +49,17 @@ def switchSelectedReferences(dryRun=False, **kwargs):
     if not sRcNameSet:
         pm.displayWarning("No available resources on which to switch !")
 
-    sortedRcNames = sorted(sRcNameSet)#, key=lambda s:"_".join(reversed(s.rsplit("_"))))
+    sortedRcNames = sorted(sRcNameSet)
 
     numRefs = len(oSelRefList)
-    sMsg = 'Switch {} References as...'.format(numRefs)
+    sMsg = 'Switch {} Asset References to...'.format(numRefs)
     sChosenRcName = pm.confirmDialog(title="Hey, mon ami !",
                                      message=sMsg,
                                      button=sortedRcNames + ['Cancel'],
                                      defaultButton='Cancel',
                                      cancelButton='Cancel',
-                                     dismissString='Cancel')
+                                     dismissString='Cancel',
+                                     icon="question")
 
     if sChosenRcName == 'Cancel':
         pm.warning("Canceled !")
@@ -77,6 +75,18 @@ def switchSelectedReferences(dryRun=False, **kwargs):
         i += 1
         print "Switching {}/{}: '{}' ...".format(i, numRefs, oFileRef.refNode.name())
 
+        if not asset:
+            sMsg = "Unknown asset: '{}'".format(oFileRef.path)
+            nonSwitchedRefList.append((oFileRef, sMsg))
+            print sMsg
+            continue
+
+        if not oFileRef.isLoaded():
+            sMsg = "Reference not loaded"
+            nonSwitchedRefList.append((oFileRef, sMsg))
+            print sMsg
+            continue
+
         sRcPath = rcDct.get(sChosenRcName)
         if not sRcPath:
             sMsg = "{} has no such resource: '{}'".format(asset, sChosenRcName)
@@ -85,7 +95,7 @@ def switchSelectedReferences(dryRun=False, **kwargs):
             continue
 
         if sRcPath == "current":
-            sMsg = "Reference already switched as '{}'".format(sChosenRcName)
+            sMsg = "Reference already switched to '{}'".format(sChosenRcName)
             nonSwitchedRefList.append((oFileRef, sMsg))
             print sMsg
             continue
@@ -133,14 +143,14 @@ def switchSelectedReferences(dryRun=False, **kwargs):
         numFails = len(nonSwitchedRefList)
         sSep = "\n- "
         sMsgHeader = " Failed to switch {}/{} references: ".format(numFails, numRefs)
-        sMsgHeader = sMsgHeader.center(100, "-")
         sMsgBody = sSep.join(f(r, m) for r, m in nonSwitchedRefList)
         sMsgEnd = "".center(100, "-")
 
-        pm.displayWarning('\n' + sMsgHeader + sSep + sMsgBody + '\n' + sMsgEnd)
+        sMsg = '\n' + sMsgHeader.center(100, "-") + sSep + sMsgBody + '\n' + sMsgEnd
+        print sMsg
+        pm.displayWarning(sMsgHeader + "More details in Script Editor ----" + (80 * ">"))
 
-        pm.mel.ScriptEditor()
-
+        #pm.mel.ScriptEditor()
     else:
         pm.displayInfo("Successfully switched {} references as '{}'"
                           .format(numRefs, sChosenRcName))

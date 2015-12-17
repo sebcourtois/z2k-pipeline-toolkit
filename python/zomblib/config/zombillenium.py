@@ -75,11 +75,11 @@ class shot_lib(object):
                      "{name}_previz.ma -> previz_scene":None,
                      "{name}_previz.mov -> previz_capture":None,
                     },
-#                 "{step:02_layout} -> layout_dir":
-#                    {
-#                     "{name}_layout.ma -> layout_scene":None,
-#                     "{name}_layout.mov -> layout_capture":None,
-#                    },
+                "{step:02_layout} -> layout_dir":
+                   {
+                    "{name}_layout.ma -> layout_scene":None,
+                    "{name}_layout.mov -> layout_capture":None,
+                   },
                 },
             },
         }
@@ -89,6 +89,11 @@ class shot_lib(object):
                     "create_sg_version":True,
                     "sg_tasks":("previz 3D",),
                     "upload_to_sg":"previz_capture"
+                    },
+    "layout_scene":{"outcomes":("layout_capture",),
+                    "create_sg_version":True,
+                    "sg_tasks":("layout",),
+                    "upload_to_sg":"layout_capture"
                     },
     "animatic_capture":{#"outcomes":("previz_capture",),
                         "create_sg_version":True,
@@ -144,15 +149,16 @@ class asset_lib(object):
     entity_dir = "{assetType}/{name}"
 
     resources_settings = {
+    "modeling_scene":{"create_sg_version":True,
+                      "sg_steps":("Model HD", "Surfacing"), },
+
+    "master_scene":{"create_sg_version":True,
+                    "sg_steps":("Model HD", "Surfacing"), },
+
     "previz_scene":{"create_sg_version":True,
                     "sg_steps":("Model Previz",), },
     "previz_ref":{"create_sg_version":True,
                   "sg_tasks":("Rig_Previz",), },
-
-    "modeling_scene":{"create_sg_version":True,
-                      "sg_steps":("Model HD", "Surfacing"), },
-    "modeling_ref":{"create_sg_version":True,
-                    "sg_steps":("Model HD", "Surfacing"), },
 
     "anim_scene":{"create_sg_version":True,
                   "sg_steps":("Rigging",), },
@@ -160,14 +166,9 @@ class asset_lib(object):
                 "sg_tasks":("Rig_Anim",), },
 
     "render_scene":{"create_sg_version":True,
-                    "sg_tasks":("Shading",), },
+                    "sg_steps":("Surfacing",), },
     "render_ref":{"create_sg_version":True,
-                  "sg_tasks":("Shading",), },
-
-    "master_scene":{"create_sg_version":True,
-                    "sg_steps":("Model HD", "Surfacing"), },
-    "master_ref":{"create_sg_version":True,
-                  "sg_steps":("Model HD", "Surfacing"), },
+                  "sg_tasks":("Rig_Render",), },
     }
 
     dependency_types = {
