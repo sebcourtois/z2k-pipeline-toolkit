@@ -1853,8 +1853,8 @@ class: ReviewAppMinorMode : MinorMode
             
                     int choice = alertPanel(true,
                                             InfoAlert,
-                                            "Do you want to create",
-                                            "a new Viewable Sequence ?",
+                                            "Do you want to play in a",
+                                            "new Viewable Sequence ?",
                                             "Yes",
                                             "No",
                                             nil);
