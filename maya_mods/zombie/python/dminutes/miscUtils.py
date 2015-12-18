@@ -1,7 +1,9 @@
 import maya.cmds as mc
 import pymel.core as pm
 import os
-
+import re
+import subprocess
+import datetime
 
 def getAllTransfomMeshes(inParent = "*"):
     """
@@ -193,4 +195,86 @@ def getShape(objectList =  [], failIfNoShape = False):
             else:
                 shapeList.append(eachObject)
         return shapeList if shapeList != [] else  None
+
+
             
+def deleteAllColorSet(inParent = "*"):
+    sTransList = getAllTransfomMeshes(inParent = inParent)
+    sMeshList = mc.ls(sTransList, type='mesh')
+    nbOfDeleteDone=0
+    for each in sTransList:
+        if mc.polyColorSet(each, query=True, allColorSets=True):       
+            mc.polyColorSet(each, delete=True)
+            nbOfDeleteDone +=1
+    print "#### {:>7}: color sets have been deleted on  {} objects".format("Info",nbOfDeleteDone )
+
+
+
+def h264ToProres(inSeqList = ['sq0230', 'sq0150'], shotStep = '01_previz'):
+    """
+    There are 4 profiles that exist within Prores: Proxy, LT, SQ and HQ (and then optionally 4444). In ffmpeg these profiles are assigned numbers (0 is Proxy and 3 is HQ)
+    """
+    ffmpegCommand = os.path.normpath(os.path.join(os.environ["Z2K_LAUNCH_SCRIPT"].split("launchers")[0],"movSplitter","ffmpeg","bin","ffmpeg.exe"))
+    shotDir = os.path.normpath(os.path.join(os.environ["ZOMB_SHOT_LOC"],"zomb","shot"))
+    montageDir = "//Zombiwalk/z2k/11_EXCHANGE_MONTAGE"
+    sSeqShotDict = {}
+
+
+    if shotStep == "01_previz" or shotStep == "02_layout":
+        profile = 0
+        shotExt = shotStep.split("_")[-1]
+    else:
+        raise ValueError("'{}' shotStep is not valid".format(shotStep))
+
+
+
+    for eachSeq in os.listdir(shotDir):
+        if re.match('^sq[0-9]{4}$', eachSeq) and (eachSeq in inSeqList or not inSeqList):
+            for eachShot in os.listdir(os.path.normpath(os.path.join(shotDir,eachSeq))):
+                if re.match('^sq[0-9]{4}_sh[0-9]{4}a$', eachShot):
+                    #sSeqShotDict[eachSeq].append(eachShot)
+                    sSeqShotDict.setdefault(eachSeq,[]).append(eachShot)
+
+    for each in inSeqList:
+        if each not in sSeqShotDict.keys():
+            raise ValueError("'{}' sequence could not be found".format(each))
+
+    tempBatFile = os.path.normpath(os.path.join(os.environ["temp"],"conv2prores.bat"))
+    print "#### {:>7}: writing temp batch file: '{}'".format("Info",tempBatFile )
+    conv2prores_obj = open(tempBatFile, "w")
+
+    for seqName, shotNameList in sSeqShotDict.items():
+        oDate = datetime.datetime.today()
+        sDate = str(oDate.year)+"-"+str(oDate.month)+"-"+str(oDate.day)
+        outDir = os.path.normpath(os.path.join(montageDir, shotStep, seqName, sDate))
+
+        conv2prores_obj.write("\n")
+
+        if  not os.path.isdir(outDir):
+            #print "#### {:>7}: Create directory: '{}'".format("Info",outDir )
+            os.makedirs(outDir)
+
+        for shotName in shotNameList:
+            inDir = os.path.normpath(os.path.join(shotDir, seqName, shotName, shotStep,"_version"))
+            if  not os.path.isdir(inDir):
+                raise ValueError("Directory could not be found: '{}'".format(inDir))
+            videoList = []
+            for each in os.listdir(inDir):
+                if re.match('^sq[0-9]{4}_sh[0-9]{4}[a-z]{1}_[a-zA-Z0-9\-]{1,24}.mov$', each):
+                    videoList.append(each)
+            if len (videoList) < 2:
+                print "#### {:>7}: no video found in directory: '{}'".format("Warning",inDir )
+                continue
+            videoList.sort()
+            inFile = os.path.normpath(os.path.join(inDir,videoList[-1]))
+            outFile = os.path.normpath(os.path.join(outDir,videoList[-1]))
+            finalCommand = "{0} -i {1} -c:v prores_ks -profile:v {2} {3}".format(ffmpegCommand,inFile,profile,outFile)
+            conv2prores_obj.write(finalCommand+"\n")
+
+    conv2prores_obj.write("\n")
+    conv2prores_obj.write("pause\n")
+    conv2prores_obj.close()
+
+
+    #subprocess.call([tempBatFile])
+
