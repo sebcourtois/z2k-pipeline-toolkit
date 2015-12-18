@@ -111,7 +111,9 @@ def infosFromMayaScene(*args, **kwargs):
     print ("infosFromMayaScene()")
     testOk = True
     outD = {}
-    scenePathTmp = cmds.file(q=1 , sceneName=True)
+    # scenePathTmp = cmds.file(q=1 , sceneName=True)
+    scenePathTmp = cmds.file(q=1 , expandName=True)
+    
     print "scenePathTmp=", scenePathTmp
     if   "asset" in scenePathTmp :
         print "folder asset ok"
@@ -120,8 +122,10 @@ def infosFromMayaScene(*args, **kwargs):
         print "categoryL=", categoryL
         print "assetTypeL=", assetTypeL
         #path and short name
-        outD["scenePath"]= cmds.file(q=1,sceneName=True)
-        outD["fileName"]= cmds.file(q=1,sceneName=True,shortName=True)
+        outD["scenePath"]= cmds.file(q=1 , expandName=True)
+        # outD["fileName"]= cmds.file(q=1,sceneName=True,shortName=True)
+        outD["fileName"]= outD["scenePath"].rsplit("/",1)[-1]
+        
         outD["assetName"] = outD["fileName"].rsplit("_",1)[0]
         outD["assetCat"] = outD["fileName"].split("_",1)[0]
         outD["assetType"] = outD["fileName"].rsplit("_",1)[1].split("-",1)[0]

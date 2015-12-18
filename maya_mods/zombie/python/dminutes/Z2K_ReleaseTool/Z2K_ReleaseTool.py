@@ -3,7 +3,7 @@
 ########################################################
 # Name    : Z2K_ReleaseTool
 # Version : v100
-# Description : Create previz maya file in .mb with some cleaning script called inside
+# Description : OLD ! voir batchable ! Create previz maya file in .mb with some cleaning script called inside
 # Comment : BASE SCRIPT OUT OF Z2K in v002
 # Author : Jean-Philippe Descoins
 # Date : 2015-26-08
@@ -200,8 +200,9 @@ class Z2K_ReleaseTool (object):
             print "curVersFile=", curVersFile
             curSgVers = curVersFile.getSgVersion()
             print "curSgVers=", curSgVers
-            # publishing this file to the public
-            exportedFileZ2K = Z2K.publishFile(proj=self.proj, path_private_toPublish=path_private_toPublish, comment=theComment)
+            # publishing this file to the public sgTask=""
+            exportedFileZ2K = Z2K.publishFile(proj=self.proj, path_private_toPublish=path_private_toPublish, comment=theComment,
+                                                 sgTask="")
             
             # feeding SG #2
             rlsVersFile = self.proj.versionFileFromPrivatePath(exportedFileZ2K)
@@ -210,7 +211,7 @@ class Z2K_ReleaseTool (object):
             print "rlsSgVers=", rlsSgVers
 
             # feeding SG #3 (final step)
-            self.proj.updateSgEntity(curSgVers,sg_current_release_version=rlsSgVers, sg_released=True)
+            self.proj.updateSgEntity(curSgVers, sg_current_release_version=rlsSgVers, sg_released=True)
 
             # re open the publish file for checking
             cmds.file(os.path.normpath(exportedFileZ2K), open=True,f=True)

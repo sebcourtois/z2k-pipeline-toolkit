@@ -443,7 +443,7 @@ class Z2K_ReleaseBatch(object):
                 try:
                     if self.publishMayaFile in [True,1]:
                         print "\n","* PUBLISHING"
-                        # Z2KR.publishScene(pathType=self.destinationAssetType , comment=self.theComment, self.sgTask=self.sgTask)
+                        # Z2KR.publishScene(pathType=self.destinationAssetType , comment=self.theComment, sgTask=self.sgTask)
                         self.printF(texta="PUBLISHING SCENE:{0}".format(scene), openMode="a")
                         outfile = Z2K.publishEditedVersionSG(proj=self.Z2K_ReleaseToolI.proj, path_private_toPublish=path_private_toEdit, comment=self.theComment, 
                                                     sgTask=self.sgTask,)
@@ -519,10 +519,11 @@ class Z2K_ReleaseBatch(object):
 
 
                         outfile = self.Z2K_ReleaseToolI.release_Asset( destinationAsset=scene, destinationAssetType = self.destinationAssetType,
-                                                        theComment="")
+                                                        theComment="",sgTask=self.sgTask)
                         self.releasedL.append(scene)
                         self.outputD[scene]["released"]= True
-                        self.outputD[scene]["released_file"]= outfile     
+                        self.outputD[scene]["released_file"]= outfile  
+                        self.outputD[scene]["sgTask"]= self.sgTask     
                         print "RELEASED"
                         
                         

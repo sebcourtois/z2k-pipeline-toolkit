@@ -100,11 +100,16 @@ def editFile(proj="" , Path_publish_public="", autoAction="overwrite", *args, **
 
     return privFile
 
-def publishFile(proj="", path_private_toPublish="",comment="test the cashbah moda foka!",*args, **kwargs):
+def publishFile(proj="", path_private_toPublish="",comment="test the cashbah moda foka!",sgTask="",*args, **kwargs):
+    """ Description: publish file with davos and SG
+        Return : STING
+        Dependencies :  - publishEditedVersion
+    """
+    
     print "Z2K_publishFile()" 
     tab= "    "
     sPrivPath = path_private_toPublish.absPath()
-    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment=comment, autoLock=True)[0]
+    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment=comment, autoLock=True, sgTask=sgTask)[0]
     PublishedFile_absPath = PublishedMrc.absPath()
     PublishedFile_shortName = PublishedMrc.fileName() 
     # PublishedFile_Comment = PublishedMrc.comment()
