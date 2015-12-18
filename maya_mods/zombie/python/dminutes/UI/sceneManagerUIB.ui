@@ -6,110 +6,148 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>698</width>
-    <height>594</height>
+    <width>950</width>
+    <height>700</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Scene Manager</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_3">
+  <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,0">
+   <property name="spacing">
+    <number>4</number>
+   </property>
+   <property name="sizeConstraint">
+    <enum>QLayout::SetDefaultConstraint</enum>
+   </property>
+   <property name="margin">
+    <number>4</number>
+   </property>
    <item>
-    <widget class="QGroupBox" name="groupBox_4">
+    <widget class="QSplitter" name="splitter">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="title">
-      <string>User Info</string>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_4">
-      <item>
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Logged User</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="sm_user_bt">
-        <property name="text">
-         <string>NONE</string>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label_8">
-        <property name="text">
-         <string>Project</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="sm_project_bt">
-        <property name="text">
-         <string>NONE</string>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="sm_disconnect_bt">
-        <property name="text">
-         <string>Disconnect</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QSplitter" name="splitter">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
+     <property name="handleWidth">
+      <number>6</number>
+     </property>
      <property name="childrenCollapsible">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <widget class="QFrame" name="verticalFrame_2">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-        <horstretch>1</horstretch>
+        <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
       <property name="minimumSize">
        <size>
-        <width>200</width>
+        <width>0</width>
         <height>0</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>800</width>
+        <width>16777215</width>
         <height>16777215</height>
        </size>
       </property>
       <property name="baseSize">
        <size>
-        <width>150</width>
+        <width>0</width>
         <height>0</height>
        </size>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <property name="spacing">
-        <number>2</number>
+        <number>4</number>
        </property>
-       <property name="margin">
+       <property name="sizeConstraint">
+        <enum>QLayout::SetDefaultConstraint</enum>
+       </property>
+       <property name="leftMargin">
         <number>0</number>
        </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>4</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QPushButton" name="sm_disconnect_bt">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>Disconnect</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="sm_user_bt">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>NONE</string>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="sm_project_bt">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>NONE</string>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="sm_detect_bt">
+         <property name="text">
+          <string>Detect context from scene</string>
+         </property>
+        </widget>
+       </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
@@ -132,6 +170,12 @@
        </item>
        <item>
         <widget class="QGroupBox" name="sm_asset_chooser_grp">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="title">
           <string>Asset chooser</string>
          </property>
@@ -230,6 +274,12 @@
        </item>
        <item>
         <widget class="QPushButton" name="sm_switchContext_bt">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>Switch context of current scene !</string>
          </property>
@@ -255,6 +305,12 @@
             </item>
             <item>
              <widget class="QLineEdit" name="sm_lock_tb">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="readOnly">
                <bool>true</bool>
               </property>
@@ -336,14 +392,14 @@
      </widget>
      <widget class="QFrame" name="verticalFrame">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-        <horstretch>2</horstretch>
-        <verstretch>0</verstretch>
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>1</horstretch>
+        <verstretch>1</verstretch>
        </sizepolicy>
       </property>
       <property name="minimumSize">
        <size>
-        <width>300</width>
+        <width>0</width>
         <height>0</height>
        </size>
       </property>
@@ -356,23 +412,28 @@
        </property>
        <item>
         <widget class="QGroupBox" name="groupBox_2">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="title">
-          <string>Scene Info</string>
+          <string/>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_7">
           <property name="spacing">
            <number>2</number>
           </property>
           <property name="margin">
-           <number>0</number>
+           <number>2</number>
           </property>
-          <item>
-           <widget class="QPushButton" name="sm_detect_bt">
-            <property name="text">
-             <string>Detect context from scene</string>
-            </property>
-           </widget>
-          </item>
           <item>
            <widget class="QListWidget" name="sm_sceneInfo_lb">
             <property name="font">
@@ -383,17 +444,46 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="sm_refreshScene_bt">
-            <property name="text">
-             <string>Refresh</string>
+           <layout class="QHBoxLayout" name="horizontalLayout_13">
+            <property name="spacing">
+             <number>6</number>
             </property>
-           </widget>
+            <item>
+             <widget class="QPushButton" name="sm_refreshScene_bt">
+              <property name="text">
+               <string>Refresh</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="sm_selectRefs_bt">
+              <property name="text">
+               <string>Select References</string>
+              </property>
+              <property name="checkable">
+               <bool>false</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+              <property name="flat">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox_3">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="title">
           <string>Scene Operations</string>
          </property>
@@ -487,6 +577,12 @@
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox_5">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="title">
           <string>Entity Operations</string>
          </property>
