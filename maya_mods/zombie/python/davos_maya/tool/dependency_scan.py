@@ -428,7 +428,7 @@ def scanTextureDependency(damEntity):
 
                     sSuffix = sBuddySufx
                     if sSeqsExt and ("." in sBuddySufx):
-                        sSuffix = sBuddySufx.replace(".", "." + sSeqsExt + ".")
+                        sSuffix = sBuddySufx.replace(".", sSeqsExt + ".")
                     sBuddyPath = "".join((sBasePath, sSuffix))
 
                     if not osp.isfile(sBuddyPath):
