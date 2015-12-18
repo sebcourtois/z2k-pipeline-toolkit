@@ -273,6 +273,9 @@ class Z2kToolkit(object):
 #        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 #        subprocess.call(cmdArgs, startupinfo=startupinfo)
 
+        if self.isDev:
+            print cmdArgs
+
         return callCmd(cmdArgs)
 
     def runFromCmd(self):
