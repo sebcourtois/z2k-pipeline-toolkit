@@ -519,8 +519,11 @@ class SceneManager():
             #Detect if activePanel is an imageplane and change to 'modelPanel4' if True
             curPanel = pc.playblast(activeEditor=True)
             curCam = pc.modelEditor(curPanel, query=True, camera=True)
-            if len(pc.PyNode(curCam).getShape().getChildren()) > 0:
-                pc.setFocus('modelPanel4')
+            if curCam:
+                if curCam.type() == "transform":
+                    curCam = curCam.getShape()
+                if len(curCam.getChildren()) > 0:
+                    pc.setFocus('modelPanel4')
 
             makeCapture(capturePath, captureStart, captureEnd, 1280, 720, useCamera=cam,
                         format="qt", compression="H.264", ornaments=True, play=True,
