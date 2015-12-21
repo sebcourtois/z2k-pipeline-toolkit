@@ -7,8 +7,8 @@
 #               contenant les blendshapes concernees.
 # Author : Jean-Philippe Descoins
 # Date : 2014-12-01
-# Comment : a executer une fois le .ma contenant les blendShapes importe dans la scene sans namespace.
-# TO DO : Fixe bug delettre old BS, ligne 153
+# Comment : a executer une fois le .ma contenant les blendShapes imported dans la scene sans namespace.
+# TO DO : Fixe bug delette old BS, ligne 153
 ################################################################
 #    ! Toute utilisation de ce se script sans autorisation     #
 #                         est interdite !                      #
@@ -22,84 +22,60 @@
 
 
 
-# table pour blendShape Tertiaire
+
 ############### Importing other LIBS ####################
 import maya.cmds as cmds
 import ast,os
 import maya.mel as mel
 #########################################################
-# TO DO
-# x doit marcher sur plusisuers objs avec differents param de inbetween or not
+import dminutes.Z2K_BS_Tertiaire_Check_mayaFile as BS_check
+reload(BS_check)
+import RIG_WORKGROUP.jipe_lib.lib.mayaFunc as jpm
+reload(jpm)
 
-
-# dictL = [
-#     {
-#     "squ_001":{
-#         "attrN":"L_brow_upDown",
-#         "attrParamL": ["double",-2, 0, 2, True, False],
-#         "drivenMesh": {
-#             "geo_bodyDefault"   : ["bs_body",[ (-1,"L_brows_up"),(1,"L_brows_down")  ] ],
-#             "geo_eyebrowscouette":["bs_eyeBrows",[ (-1,"L_eyebrows_up"),(1,"L_eyebrows_down")  ] ],
-#                     },      
-#                 },
-#             },
-#     {
-#     "squ_001":{
-#         "attrN":"R_brow_upDown",
-#         "attrParamL": ["double",-2, 0, 2, True, False],
-#         "drivenMesh": {
-#             "geo_bodyDefault"   : ["bs_body",[ (-1,"R_brows_up"),(1,"R_brows_down")  ] ],
-#             "geo_eyebrowscouette":["bs_eyeBrows",[ (-1,"L_eyebrows_up"),(1,"L_eyebrows_down")  ] ],
-#                     },      
-#                 },
-#             },
-#     {
-#     "squ_001":{
-#         "attrN":"mouth_upDown",
-#         "attrParamL": ["double",-2, 0, 2, True, False],
-#         "drivenMesh": {
-#             "geo_bodyDefault"   : ["bs_body",[ (-1,"lips_up"),(1,"lips_down")  ] ],
-            
-#                     },      
-#                 },
-#             },
-#     {
-#     "squ_001":{
-#         "attrN":"lips_kiss",
-#         "attrParamL": ["double",-2, 0, 2, True, False],
-#         "drivenMesh": {
-#             "geo_bodyDefault"   : ["bs_body",[ (1,"lips_kiss")  ] ],
-            
-#                     },      
-#                 },
-#             },
-  
-  
-
-                
-                
-#     # "AttribName": {
-#     #     "attrHodler": "squ_001",
-#     #     "attrParamL": ["double",min, defaultValue, max, keyable, lock],
-#     #     "drivenMesh": {
-#     #         "targetObj": ["targetBS",[ (1,"targetShape1"), (-1,"targetShape2"),etc...  ] ],
-#     #                  }
-#     #     }
-
-# ]
-
-
-def jipe_multiAttr_BSConnector(tableD={},importNS="BS",connectTargetShapeOnly=False,connectAttrToBsOnly=False, *args, **kwargs):
-    """ Description: Connect les Objs et BlendShapes selon les parametres donnés dans le dictionnaire tableD
+def jipe_multiAttr_BSConnector(tableDL={},importNS="BS",connectTargetShapeOnly=False,connectAttrToBsOnly=False, *args, **kwargs):
+    """ Description: Connect les Objs et BlendShapes selon les parametres donnés dans le dictionnaire tableDL
         Return : -
         Dependencies : cmds - 
     """
+    # importNS : not implemented
+    # connectTargetShapeOnly: not implemented
+    # connectAttrToBsOnly : not implemented
+    result =True
     
+    # pre-loop check for connected Target BS:
+    for attrHodlerD in tableDL: 
+        for attrHodler,dico in attrHodlerD.iteritems():
+            drivenMeshD = dico.get("drivenMesh",{"defaultObj":[]})
+            try:
+                for drivenMesh,valL in drivenMeshD.iteritems():
+                        print "        drivenMesh:",drivenMesh
+                        BS_Node = valL[0]
+                        print "# ",BS_Node
 
-    # loop in tableD
-    #for attrN,dico in tableD.iteritems():
-    for attrHodlerD in tableD:  
+                        # check for connected targets
+                        objTargetD = jpm.get_BS_TargetObjD(BS_Node=BS_Node)
+                        print "    ",objTargetD
+
+                        if len(objTargetD):
+                            cmds.confirmDialog( title='bsd check', message="Some Blend_Shape Targets are still connected, please delete BS_attr or disconnect them\n{0}".format(objTargetD.keys()),
+                                    button=['OK'], defaultButton='OK', cancelButton='OK', dismissString='OK' )
+                            result = False
+                            return
+
+            except:
+                pass
+
+
+
+
+
+
+    # loop in tableDL ------------------------------------------------
+    #for attrN,dico in tableDL.iteritems():
+    for attrHodlerD in tableDL:  
         print "attrHodler=", attrHodlerD  
+
         for attrHodler,dico in attrHodlerD.iteritems():
             attrN= dico.get("attrN", "BS_default" )
             attrParamL = dico.get("attrParamL",["float",0,1,1,True,False] )
@@ -150,15 +126,25 @@ def jipe_multiAttr_BSConnector(tableD={},importNS="BS",connectTargetShapeOnly=Fa
 
                     
 
+                    # create the BS node if it doesn t exists
+                    if not cmds.objExists(BS_Node):
+                        cmds.blendShape(drivenMesh, name=BS_Node)
+                    # enable negative values on BS node
+                    cmds.setAttr( BS_Node+ ".supportNegativeWeights", 1)
+
 
                     # delete all not connected old BS ------------------------- FOIREUX BUG bUG
+                    # mel.eval("blendShapeDeleteTargetGroup {0} {1}".format(BS_Node,i) )
 
-                    # construct current BS attr Dict
-                    bsAttrL = cmds.aliasAttr( BS_Node, query=True )
-                    bsAttrD = {}
-                    if bsAttrL:
-                        for a,i in zip( bsAttrL[::2], bsAttrL[1::2] ):
-                            bsAttrD[a] = int(i.split("[",1)[-1].split("]",1)[0] )
+                   
+                    #     if 
+
+                    #     cmds.blendShape (BS_Node, e=1, remove=True, t= ( drivenMesh,  bsAttrD[name]  ,  objTargetD[i],0)
+
+                        # print taget shape table
+                        # for tName,wi in bsAttrD.iteritems():
+                        #     print tName,"->",wi
+                        
                         # # delete BSattr  bugged
                         # for a,i in bsAttrD.iteritems():
                         #     print "deleting:",a,i
@@ -181,17 +167,9 @@ def jipe_multiAttr_BSConnector(tableD={},importNS="BS",connectTargetShapeOnly=Fa
                         #         cmds.blendShape (BS_Node, e=1, remove=True, t= (drivenMesh,i,a,0)  )
                         #     except Exception,err:
                         #         print "*",err
-
-                    #-----------------------------------------------------------
-                    print "BS PART ----------------------------------"
-                    # create the BS node if it doesn t exists
-                    if not cmds.objExists(BS_Node):
-                        cmds.blendShape(drivenMesh, name=BS_Node)
-                    # enable negative values on BS node
-                    cmds.setAttr( BS_Node+ ".supportNegativeWeights", 1)
-
+                        # cmds.blendShape (BS_Node, e=1, remove=True, t= (drivenMesh,bsAttrD[targetShapeParamL[-1][-1] ],targetShapeParamL[-1][-1],0)  )
                     
-                    # get the total index length, this isthe indice where to plug the new blendShape
+                    # get the total index length, this is the indice where to plug the new blendShape
                     index = len( cmds.getAttr(BS_Node+"."+"w")[0] )+1
                     print "            index=", index
 
@@ -228,26 +206,57 @@ def jipe_multiAttr_BSConnector(tableD={},importNS="BS",connectTargetShapeOnly=Fa
 
 
         print "Connection is fucking DONE! :)"
+    return result
         
 
+def readConnexionDictL(filename="",*args, **kwargs):
+    print "readConnexionDict()"
+    if os.path.isfile(filename):
+            print"read"
+            content=""
+            with open(filename, 'rU') as f:
+                for line in f.readlines():
+                    if "#" not in line[0]:
+                        content+= line.strip()
+            print ( content )
+            bsDictL = ast.literal_eval(content)
 
-# getFile and read
-filename = cmds.fileDialog2(fileMode=1, caption="Select the BS_setting_file", fileFilter="", dialogStyle=1, okc="OPEN")[0]
-print "filename=", filename
+            for i in bsDictL:
+                for k,l in i.iteritems():
+                    print k,l
+    return bsDictL
 
-if os.path.isfile(filename):
-    print"read"
-    content=""
-    with open(filename, 'rU') as f:
-        for line in f.readlines():
-            if "#" not in line[0]:
-                content+= line.strip()
-    print ( content )
-    bsDictL = ast.literal_eval(content)
+def connectDialog(*args, **kwargs):
+    print "connectDialog()"
+    # getFile and read
+    filename=""
+    result = cmds.fileDialog2(fileMode=1, caption="Select the '.bsd' BS_setting_file", fileFilter="", dialogStyle=1, okc="OPEN")
+    if result:
+        filename = result[0]
+        if ".bsd" in filename:
+            print "filename=", filename
+            bsDictL= readConnexionDictL(filename=filename)
+            
+            # check nameCorrespondance:
+            chResultL = BS_check.checkNameCorrespondance(filename=filename) 
+            print "chResultL[0]=", chResultL[0]
+            print "chResultL[0]=", chResultL[-1]
+            if chResultL[0]:   
+                # apply the connection dict
+                result = jipe_multiAttr_BSConnector(tableDL=bsDictL, importNS="BS") 
+                if result:
+                    cmds.confirmDialog( title='', message="The blendShapes are successfully CONNECTED\n        Don't apply it again !",
+                                         button=['OK'], defaultButton='OK', cancelButton='OK', dismissString='OK' )
+                else:
 
-    for i in bsDictL:
-        for k,l in i.iteritems():
-            print k,l
-    
-    # apply the connection dict
-    jipe_multiAttr_BSConnector(tableD=bsDictL, importNS="BS")
+                    cmds.confirmDialog( title='bsd check', message="Connection failed, some problems occured!",
+                                         button=['OK'], defaultButton='OK', cancelButton='OK', dismissString='OK' )
+            else:
+                cmds.confirmDialog( title='bsd check', message="Connection IMPOSSIBLE, Name Correspondance ERROR:\nNot found: {0}".format(chResultL[1]),
+                                         button=['OK'], defaultButton='OK', cancelButton='OK', dismissString='OK' )
+                print "Name Correspondance ERROR:/n {0}".format(chResultL[1])
+
+        else:
+            print "Execution aboarded: bad file type selected, please select a .bsd file!"
+    else:
+        print "Execution aboarded!"
