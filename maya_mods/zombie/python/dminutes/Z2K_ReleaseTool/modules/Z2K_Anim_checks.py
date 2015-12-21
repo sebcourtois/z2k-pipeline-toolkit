@@ -9,7 +9,9 @@
 # Date : 2015-26-08
 # Comment : wip
 # TO DO:
-#       - Add debug file in input of th e class ; a reporter sur les check des autres
+#       x connect shape visibility to a control -> btn_specialSettings
+#       - add set all dynamic OFF
+#       x Add debug file in input of th e class ; a reporter sur les check des autres
 #       x add turttle check
 #       x Handle versioning problems if edti it's incremented/ if readonly it's not (if edit and if not publish add please publish edited)
 #       WIP mettage en lIB et nouveau path and names
@@ -76,7 +78,7 @@ class checkModule(object):
     cf = name
 
     basePath = jpZ.getBaseModPath()
-    ICONPATH = Z2K_ICONPATH + "Z2K_CHECKS_A1.bmp"
+    ICONPATH = Z2K_ICONPATH + "Z2K_ANIM_LOGO_A3.bmp"
     upImg= basePath + ICONPATH
 
 
@@ -93,8 +95,8 @@ class checkModule(object):
         print "GUI=",self.GUI
         if self.GUI in [False,0]:
             self.BcheckStructure=""
-            self.BCheckScene=""
-            self.BCheckObjects=""
+            self.BCleanScene=""
+            self.BCleanObjects=""
             self.BDebugBoardF=""
             self.BDebugBoard = ""
             self.BCleanAll=""
@@ -106,6 +108,12 @@ class checkModule(object):
         # decorating functions
         self.printF= self.Z2KprintDeco(jpZ.printF)
         
+        # print scene NAME
+        infoDict = jpZ.infosFromMayaScene()
+        self.printF("ASSET_NAME: {0}  -Version: {1}    - Categorie: {2}".format( infoDict["assetName"],infoDict["version"], infoDict["assetCat"] ) , st="t")
+
+
+
     # decorators ---------------------------
     def Z2KprintDeco(self, func, *args, **kwargs):
         print "func=", func.__name__
@@ -170,12 +178,7 @@ class checkModule(object):
 
 
         # 3   isSet_meshCache_OK()
-        infoDict = jpZ.infosFromMayaScene()
-        if infoDict["assetCat"] in ["set"]:
-            theType = "setPreviz"
-        else :
-            theType = ""
-        result,details = jpZ.isSet_meshCache_OK (theType = theType)
+        result,details = jpZ.isSet_meshCache_OK ()
         # prints -------------------
         self.printF("isSetMeshCacheOK()", st="t")
         self.printF(result, st="r")
@@ -194,41 +197,37 @@ class checkModule(object):
         return boolResult
 
     @jpZ.waiter
-    def btn_CheckScene(self, controlN="", *args, **kwargs):
+    def btn_CleanScene(self, controlN="", *args, **kwargs):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=7, e=True)
+        self.pBar_upd(step=1, maxValue=10, e=True)
 
         # steps
 
+
+
         # 1 Apply_Delete_setSubdiv()
-        # result,setSub,deletedL = jpZ.Apply_Delete_setSubdiv()
-        # # prints -------------------
-        # self.printF("Apply_Delete_setSubdiv()", st="t")
-        # self.printF(result, st="r")
-        # self.printF("Set Subdiv applyed: {0}".format(setSub) )
-        # if len(deletedL):
-        #     self.printF("deleted: {0} - {1}".format(len(deletedL),deletedL ) )
-        # # --------------------------
-        # if not result:
-        #     boolResult = False
-        # self.pBar_upd(step= 1,)
-
-
-
-        #2 checkRefNodes()
-        objtoDeleteL = cmds.ls(type='reference')
-        result= True
-        if len(objtoDeleteL):
-            result = False
+        result,setSub,deletedL = jpZ.Apply_Delete_setSubdiv()
         # prints -------------------
-        self.printF("checkRefNodes()", st="t")
+        self.printF("Apply_Delete_setSubdiv()", st="t")
         self.printF(result, st="r")
-        self.printF("to_delete:")
-        for i in objtoDeleteL:
-            self.printF("    -{0}".format(i))
-        self.printF( "total to_delete = {0}".format( len(objtoDeleteL) ) )
+        self.printF("Set Subdiv applyed: {0}".format(setSub) )
+        if len(deletedL):
+            self.printF("deleted: {0} - {1}".format(len(deletedL),deletedL ) )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # 2 cleanRefNodes()
+        result,objtoDeleteL,deletedL = jpZ.cleanRefNodes()
+        # prints -------------------
+        self.printF("cleanRefNodes()", st="t")
+        self.printF(result, st="r")
+        self.printF( "objectDeleted={0}/{1}".format( len(objtoDeleteL),len(deletedL)  ) )
         # --------
         if not result:
             boolResult = False
@@ -237,55 +236,52 @@ class checkModule(object):
 
  
         # 3 cleanMentalRayNodes()
-        # result,toDeleteL,deletedL,failL = jpZ.cleanMentalRayNodes()
-        # # prints -------------------
-        # self.printF("cleanMentalRayNodes()", st="t")
-        # self.printF(result, st="r")
-        # self.printF( "objectDeleted={0}/{1}".format( len(deletedL),len(toDeleteL)  ) )
-        # for i in deletedL:
-        #     self.printF("- deleted: {0}".format(i))
-
-        # if len(failL):
-        #     self.printF( "failL= {0}".format( failL  ) )
-        # # --------------------------
-        # if not result:
-        #     boolResult = False
-        # self.pBar_upd(step= 1,)
-
-
-        # 4 check_NS()
-        result,debugL = jpZ.check_NS()
+        result,toDeleteL,deletedL,failL = jpZ.cleanMentalRayNodes()
         # prints -------------------
-        self.printF("check_NS()", st="t")
+        self.printF("cleanMentalRayNodes()", st="t")
         self.printF(result, st="r")
-        self.printF("to_delete:")
+        self.printF( "objectDeleted={0}/{1}".format( len(deletedL),len(toDeleteL)  ) )
+        for i in deletedL:
+            self.printF("- deleted: {0}".format(i))
+
+        if len(failL):
+            self.printF( "failL= {0}".format( failL  ) )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 4 remove_All_NS()
+        result= jpZ.remove_All_NS(NSexclusionL=[""], limit=100)[0]
+        # prints -------------------
+        self.printF("remove_All_NS()", st="t")
+        self.printF(result, st="r")
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # 5 cleanDisplayLayerWithSet()
+        result,debugL = jpZ.cleanDisplayLayerWithSet(setL=["set_meshCache","set_control"],layerL=["geometry","control"])
+        # prints -------------------
+        self.printF("cleanDisplayLayerWithSet()", st="t")
+        self.printF(result, st="r")
         for i in debugL:
-            self.printF("    -{0}".format(i))
+            self.printF(i)
         # --------------------------
         if not result :
             boolResult = False
         self.pBar_upd(step= 1,)
 
 
-        # # 5 cleanDisplayLayerWithSet()
-        # result,debugL = jpZ.cleanDisplayLayerWithSet(setL=["set_meshCache","set_control"],layerL=["geometry","control"])
-        # # prints -------------------
-        # self.printF("cleanDisplayLayerWithSet()", st="t")
-        # self.printF(result, st="r")
-        # for i in debugL:
-        #     self.printF(i)
-        # # --------------------------
-        # if not result :
-        #     boolResult = False
-        # self.pBar_upd(step= 1,)
 
-
-
-        # # 6 checkUnUsedAnimCurves()
-        result,debugD = jpZ. UnusedNodeAnalyse(execptionTL = [], specificTL=["animCurve"], mode="check")
-
+        # 6 cleanUnUsedAnimCurves()
+        result,debugD = jpZ.cleanUnUsedAnimCurves( )
         # prints -------------------
-        self.printF( "checkUnUsedAnimCurves()", st="t")
+        self.printF( "cleanUnUsedAnimCurves()", st="t")
         # prints inside-------------------
         self.printF(result, st="r")
         if len(debugD["errorL"]):
@@ -295,10 +291,10 @@ class checkModule(object):
         self.printF("total errored = {0}".format( len(debugD["errorL"] ) ) )
         
         if len(debugD["deletedL"]):
-            self.printF("to_delete:")
+            self.printF("deletedL:")
             for i in debugD["deletedL"]:
-                self.printF("    -{0}".format(i))
-        self.printF("total to_delete = {0}".format(len(debugD["deletedL"]) ) )
+                self.printF("    -{0} deleted".format(i))
+        self.printF("total deleted = {0}".format(len(debugD["deletedL"]) ) )
         # --------------------------
         # --------------------------
         if not result:
@@ -307,12 +303,11 @@ class checkModule(object):
 
 
 
-        # 7 checkUnusedConstraint()
-        result,debugD = jpZ.UnusedNodeAnalyse(execptionTL = [], specificTL=["constraint",], mode="check")
-    
+        # 7 cleanUnusedConstraint()
+        result,debugD = jpZ.cleanUnusedConstraint()
         # prints -------------------
-        self.printF( "checkUnusedConstraint()", st="t")
-        # prints inside-------------------
+        self.printF( "cleanUnusedConstraint()", st="t")
+       # prints inside-------------------
         self.printF(result, st="r")
         if len(debugD["errorL"]):
             self.printF("erroredL:")
@@ -321,10 +316,10 @@ class checkModule(object):
         self.printF("total errored = {0}".format( len(debugD["errorL"] ) ) )
         
         if len(debugD["deletedL"]):
-            self.printF("to_delete:")
+            self.printF("deletedL:")
             for i in debugD["deletedL"]:
-                self.printF("    -{0}".format(i))
-        self.printF("total to_delete = {0}".format(len(debugD["deletedL"]) ) )
+                self.printF("    -{0} deleted".format(i))
+        self.printF("total deleted = {0}".format(len(debugD["deletedL"]) ) )
         # --------------------------
         # --------------------------
         if not result:
@@ -333,11 +328,10 @@ class checkModule(object):
 
 
 
-        # 8 checkDisconnectedNodes()
-        result,debugD = jpZ.UnusedNodeAnalyse(execptionTL = ["dagNode","defaultRenderUtilityList","partition"], specificTL=[], mode="check")
-
+        # 8 CleanDisconnectedNodes()
+        result,debugD = jpZ.CleanDisconnectedNodes()
         # prints -------------------
-        self.printF( "checkDisconnectedNodes()", st="t")
+        self.printF( "CleanDisconnectedNodes()", st="t")
         # prints inside-------------------
         self.printF(result, st="r")
         if len(debugD["errorL"]):
@@ -347,10 +341,10 @@ class checkModule(object):
         self.printF("total errored = {0}".format( len(debugD["errorL"] ) ) )
         
         if len(debugD["deletedL"]):
-            self.printF("to_deleteL:")
+            self.printF("deletedL:")
             for i in debugD["deletedL"]:
-                self.printF("    -{0}".format(i))
-        self.printF("total to_delete = {0}".format(len(debugD["deletedL"]) ) )
+                self.printF("    -{0} deleted".format(i))
+        self.printF("total deleted = {0}".format(len(debugD["deletedL"]) ) )
         # --------------------------
         # --------------------------
         if not result:
@@ -360,7 +354,7 @@ class checkModule(object):
 
 
         # 9 cleanTurtleNodes
-        result,toDeleteL,deletedL,failL = jpZ.cleanTurtleNodes(check=True)
+        result,toDeleteL,deletedL,failL = jpZ.cleanTurtleNodes()
         # prints -------------------
         self.printF("cleanTurtleNodes()", st="t")
         self.printF(result, st="r")
@@ -378,17 +372,17 @@ class checkModule(object):
 
 
         # colors
-        print "*btn_CheckScene:",boolResult
+        print "*btn_CleanScene:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
         
         return boolResult
         
-    # @jpZ.waiter
-    def btn_CheckObjects(self, controlN="", *args, **kwargs):
+    @jpZ.waiter
+    def btn_CleanObjects(self, controlN="", *args, **kwargs):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=5, e=True)
+        self.pBar_upd(step=1, maxValue=10, e=True)
 
         meshCacheObjL = jpZ.getSetContent(inSetL=["set_meshCache"] )
         controlObjL = jpZ.getSetContent(inSetL=["set_control"] )
@@ -398,53 +392,94 @@ class checkModule(object):
 
 
         # 1 isSkinned (meshCacheObjL)
-        infoDict = jpZ.infosFromMayaScene()
-        print "******",infoDict["assetCat"]
-        if not infoDict["assetCat"] in ["set"]:
+        result,outSkinClusterL,noSkinL = jpZ.isSkinned(inObjL= meshCacheObjL,)
+        # prints -------------------
+        self.printF("isSkinned()", st="t")
+        self.printF(result, st="r")
+        self.printF("skinned_object = {0} / {1}".format(len(outSkinClusterL),len(meshCacheObjL) ) )
+        for i in noSkinL:
+            self.printF("    No skin on: {0}".format(i) )
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
 
-            result,outSkinClusterL,noSkinL = jpZ.isSkinned(inObjL= meshCacheObjL,)
+
+
+        # 2 cleanUnusedInfluence (meshCacheObjL)
+        result,totalSkinClusterL,deletedDict = jpZ.cleanUnusedInfluence(inObjL=meshCacheObjL)
+        # prints -------------------
+        self.printF("cleanUnusedInfluance()", st="t")
+        self.printF(result, st="r")
+        self.printF ( "total cleaned skinCluster: {0}/{1}".format( len(deletedDict), len(totalSkinClusterL) ) )
+        for i,j in deletedDict.iteritems():
+            self.printF ( "{2} influances Deleted on {0}: {1}".format( i.ljust(15), j, str(len(j) ).zfill(2) ) )
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # 3 setSmoothness (meshCacheObjL)
+        result,debugD = jpZ.setSmoothness(inObjL=meshCacheObjL, mode=0)
+        # prints -------------------
+        self.printF("setSmoothness()", st="t")
+        self.printF(result, st="r")
+        self.printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(meshCacheObjL) ) )
+        for i,j in debugD.iteritems():
+            self.printF ( "     - {0}: {1}".format( i.ljust(15),j ) )
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # 4 disableShapeOverrides (meshCacheObjL)
+        result,debugD = jpZ.disableShapeOverrides(inObjL=meshCacheObjL)
+        # prints -------------------
+        self.printF("disableShapeOverrides()", st="t")
+        self.printF(result, st="r")
+        self.printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(meshCacheObjL), ) )
+        for i,j in debugD.iteritems():
+            self.printF ( "     - {0}: {1}".format( i.ljust(15),j ) )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # 5 checkSRT (meshCacheObjL)
+        result,debugD = jpZ.checkSRT(inObjL = meshCacheObjL, )
+        # prints -------------------
+        self.printF("checkSRT()", st="t")
+        self.printF(result, st="r")
+        self.printF ( " not zero total: {0}/{1}".format( len(debugD.keys()),len(meshCacheObjL), ) )
+        for i,j in debugD.iteritems():
+            self.printF ( "    - {0} : {1}".format( i.ljust(15), " ".join(j) ) )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # 6 cleanKeys (controlObjL)
+        result,cleanedL,debugD = jpZ.cleanKeys(inObjL=controlObjL,verbose=True)
+        if not result:
             # prints -------------------
-            self.printF("isSkinned()", st="t")
+            self.printF("cleanKeys()", st="t")
             self.printF(result, st="r")
-            self.printF("skinned_object = {0} / {1}".format(len(outSkinClusterL),len(meshCacheObjL) ) )
-            for i in noSkinL:
-                self.printF("    No skin on: {0}".format(i) )
-            # --------------------------
-            if not result :
-                boolResult = False
-            self.pBar_upd(step= 1,)
-
-
-            # 5 checkSRT (controlObjL)
-            result,debugD = jpZ.checkSRT(inObjL = controlObjL, )
-            # prints -------------------
-            self.printF("checkSRT(controlObjL)", st="t")
-            self.printF(result, st="r")
-            self.printF ( " not zero total: {0}/{1}".format( len(debugD.keys()),len(meshCacheObjL), ) )
+            self.printF ( " Cleaned : {0}/{1}".format( len(cleanedL),len(controlObjL), ) )
+            self.printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(controlObjL), ) )
             for i,j in debugD.iteritems():
-                self.printF ( "    - {0} : {1}".format( i.ljust(15), " ".join(j) ) )
+                self.printF ( "     - {0}: {1}".format( i.ljust(15),j.values() ) )
             # --------------------------
-            if not result:
-                boolResult = False
-            self.pBar_upd(step= 1,)
+            boolResult = False
+        self.pBar_upd(step= 1,)
 
-            # 6 checkSRT (meshCacheObjL)
-            result,debugD = jpZ.checkSRT(inObjL = meshCacheObjL, )
-            # prints -------------------
-            self.printF("checkSRT(meshCacheObj)", st="t")
-            self.printF(result, st="r")
-            self.printF ( " not zero total: {0}/{1}".format( len(debugD.keys()),len(meshCacheObjL), ) )
-            for i,j in debugD.iteritems():
-                self.printF ( "    - {0} : {1}".format( i.ljust(15), " ".join(j) ) )
-            # --------------------------
-            if not result:
-                boolResult = False
-            self.pBar_upd(step= 1,)
-
-        else:
-            self.pBar_upd(step= 1,)
-            self.pBar_upd(step= 1,)
-            self.pBar_upd(step= 1,)
 
 
         # 7 checkKeys (controlObjL)
@@ -460,16 +495,69 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
+
+
+        # 8 resetSRT (controlObjL)
+        result,debugD = jpZ.resetSRT(inObjL=controlObjL)
+        # prints -------------------
+        self.printF("resetSRT()", st="t")
+        self.printF(result, st="r")
+        self.printF ( " Reseted : {0}/{1}".format( len(debugD["resetedL"]),len(controlObjL), ) )
+        self.printF ( " error on: {0}/{1}".format( len(debugD["errors"]),len(controlObjL), ) )
+        for j in debugD["errors"]:
+            self.printF ( "     on : {0}".format( j.ljust(15) ) )
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 9 checkSRT (controlObjL)
+        if not jpZ.checkSRT(inObjL =controlObjL, verbose=True)[0] :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
         # colors
-        print "*btn_CheckObjects:",boolResult
+        print "*btn_CleanObjects:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
-        
 
-        
+        return boolResult
 
 
-        
 
+    @jpZ.waiter
+    def btn_specialSettings(self, controlN="", *args, **kwargs):
+        print "btn_specialSettings()"
+        boolResult=True
+
+        # set progress bar
+        self.pBar_upd(step=1, maxValue=1, e=True)
+
+
+        # 1 connectVisibility ()
+        result,debugS = jpZ.connectVisibility()
+        # prints -------------------
+        self.printF("connectVisibility()", st="t")
+        self.printF(result, st="r")
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,) 
+
+
+        # 2 -----
+
+
+
+
+        # colors
+        print "*btn_specialSettings:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+
+
+
+
+        return boolResult
 
     def btn_clearAll(self, *args, **kwargs):
         print "btn_clearAll()"
@@ -479,9 +567,31 @@ class checkModule(object):
 
         defCol = [0.40,0.40,0.40]
         cmds.button(self.BcheckStructure, e=1, bgc= defCol)
-        cmds.button(self.BCheckScene, e=1, bgc= defCol)
-        cmds.button(self.BCheckObjects, e=1, bgc= defCol)
-        # cmds.button(self.BCleanAll, e=1, bgc= defCol)
+        cmds.button(self.BCleanScene, e=1, bgc= defCol)
+        cmds.button(self.BCleanObjects, e=1, bgc= defCol)
+        cmds.button(self.BCleanAll, e=1, bgc= defCol)
+        cmds.button(self.BSpecialSettings, e=1, bgc= defCol)
+
+    def btn_cleanAll(self,  *args, **kwargs):
+        print "btn_cleanAll()"
+        
+
+        boolResult = True
+        if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
+            boolResult = False
+        
+        if not self.btn_CleanScene(controlN=self.BCleanScene, ):
+            boolResult = False
+        
+        if not self.btn_CleanObjects(controlN=self.BCleanObjects, ):
+            boolResult = False
+        if not self.btn_specialSettings(controlN=self.BSpecialSettings, ):
+            boolResult = False
+        
+        # colors
+        self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""],)
+        return boolResult
+
 
    
 
@@ -554,20 +664,25 @@ class checkModule(object):
 
         cmds.image(image=self.upImg)
         cmds.columnLayout("layoutImportModule",columnOffset= ["both",0],adj=True,)
-        # self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= partial(self.btn_cleanAll),en=1)
+        self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= partial(self.btn_cleanAll),en=1)
 
         self.BcheckStructure = cmds.button("checkStructure", )
         cmds.button(self.BcheckStructure,e=1,c= partial( self.btn_checkStructure,self.BcheckStructure) )
 
-        self.BCheckScene = cmds.button("CheckScene",)
-        cmds.button(self.BCheckScene,e=1,c= partial( self.btn_CheckScene,self.BCheckScene))
+        self.BCleanScene = cmds.button("CleanScene",)
+        cmds.button(self.BCleanScene,e=1,c= partial( self.btn_CleanScene,self.BCleanScene))
 
-        self.BCheckObjects = cmds.button("CheckObjects",)
-        cmds.button(self.BCheckObjects,e=1,c= partial( self.btn_CheckObjects,self.BCheckObjects) )
+        self.BCleanObjects = cmds.button("CleanObjects",)
+        cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects) )
         
+        self.BSpecialSettings = cmds.button("Apply Special_Settings",)
+        cmds.button(self.BSpecialSettings,e=1,c= partial( self.btn_specialSettings,self.BSpecialSettings) )
+        
+        
+
         self.BValidationPBar = cmds.progressBar(maxValue=3,s=1 )
 
-        self.BDebugBoardF= cmds.frameLayout("DebugBoard",cll=False,cl=True)
+        self.BDebugBoardF= cmds.frameLayout("DebugBoard",cll=True,cl=True)
         self.BDebugBoard = cmds.scrollField(w=250,h=300,)
         
         cmds.setParent("..")
@@ -579,5 +694,5 @@ class checkModule(object):
 #--------------------- EXEC -------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------
 
-Z2K_Pcheck = checkModule(GUI=True )
-Z2K_Pcheck.insertLayout( parent="" )
+# Z2K_Pcheck = checkModule(GUI=True )
+# Z2K_Pcheck.insertLayout( parent="" )

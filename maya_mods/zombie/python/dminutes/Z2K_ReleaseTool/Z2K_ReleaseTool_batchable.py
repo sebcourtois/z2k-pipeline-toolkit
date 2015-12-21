@@ -2,15 +2,18 @@
 # -*- coding: utf-8 -*-
 ########################################################
 # Name    : Z2K_ReleaseTool
-# Version : v100
-# Description : OLD ! voir batchable ! Create previz maya file in .mb with some cleaning script called inside
+# Version : v110
+# Description : Handle the release process of all assets.Create previz maya file in .mb with some cleaning script called inside
 # Comment : BASE SCRIPT OUT OF Z2K in v002
 # Author : Jean-Philippe Descoins
 # Date : 2015-26-08
 # Comment : wip
 #
 # TO DO:
-#   WIP add comment from version for now it's alway the edited version wich is alway a public n+1 version (auto increment probleme)
+#   WIP implement new scene type: ANIM, RENDER, MASTER
+#   >< sgTask, pas forcement necessaire...
+#   - add check for doubles in scene dans les checks sript voir scriptLib
+#   x add comment from version for now it's alway the edited version wich is alway a public n+1 version (auto increment probleme)
 #   - add release and unLock btn
 #   - finish integrating aladin_lamp swith here
 #   x Make it contextual (add mode contextual) this is done outside in the ReleaseTool_ALADIN_LAMP.py
@@ -22,7 +25,7 @@
 #   x Dockable
 #   x debug/advanced mode
 #   - add save debug file
-#   - add filter ability for big menu list
+#   x add filter ability for big menu list
 #   
 ########################################################
 
@@ -46,36 +49,48 @@ reload(jpZ)
 # reload(Batch_CONFIG)
 # from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
 
-# import   constant
+# import   constant debug path
 import dminutes.Z2K_ReleaseTool.modules as ini
 reload(ini)
 from dminutes.Z2K_ReleaseTool.modules import *
 
+# previz checks
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_PROP_checks as Z2K_check_PREVIZ_PROP
+reload(Z2K_check_PREVIZ_PROP)
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_CHAR_checks as Z2K_check_PREVIZ_CHAR
+reload(Z2K_check_PREVIZ_CHAR)
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_SET_checks as Z2K_check_PREVIZ_SET
+reload(Z2K_check_PREVIZ_SET)
 
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_PROP_checks as Z2K_Pcheck_PROP
-reload(Z2K_Pcheck_PROP)
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_CHAR_checks as Z2K_Pcheck_CHAR
-reload(Z2K_Pcheck_CHAR)
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_SET_checks as Z2K_Pcheck_SET
-reload(Z2K_Pcheck_SET)
+# anim checks
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Anim_checks as  Z2K_check_ANIM
+reload(Z2K_check_ANIM)
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Anim_checks as  Z2K_check_ANIM_SET # script à remplacer par le vrai
+reload(Z2K_check_ANIM_SET)
+
+# render checks
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_checks as  Z2K_check_RENDER
+reload(Z2K_check_RENDER)
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_checks as  Z2K_check_RENDER_SET  # script à remplacer par le vrai
+reload(Z2K_check_RENDER_SET)
 
 
 
 class Z2K_ReleaseTool (object):
     
-    version = "_v010"            
+    version = "_v011"            
     name = "Z2K_ReleaseTool"
     categoryL = jpZ.getCatL()
 
-    def __init__(self, sourceAsset="", assetCat = "chr", SourceAssetType="previz_scene", destinationAsset = "", destinationAssetType= "previz_ref", 
-        projConnectB= True,theProject="zombtest",theComment= "auto rock the casbah release !", debug=False, *args, **kwargs):
+    def __init__(self, sourceAsset="", assetCat = "chr", sourceAssetType="previz_scene", destinationAsset = "", destinationAssetType= "previz_ref", 
+        projConnectB= True,theProject="zombtest",theComment= "auto rock the casbah release !", debug=False, sgTask="", *args, **kwargs):
         print "__init__"
         
-
+        self.sgTask = sgTask
         self.debug = debug
         self.assetCat = assetCat
         self.sourceAsset = sourceAsset
-        self.sourceAssetType = SourceAssetType
+        self.sourceAssetType = sourceAssetType
         self.destinationAsset = destinationAsset
         self.destinationAssetType = destinationAssetType
         self.theProject = theProject
@@ -94,56 +109,148 @@ class Z2K_ReleaseTool (object):
 
         # self.createWin()
 
-
+        print "intit END OK"
 
     # ------------------------ JIPE_LIB Functions ------------------------------------
 
+    def  Aladin_CheckSwitch(self, *args, **kwargs):
+        print "Aladin_CheckSwitch()"
+        # parent the new good one
+        tab = "    "
+        Z2K_check="NADA"
+        theDebugFile = "NADATODEBUG"
+        print tab,'self.assetCat=',self.assetCat
+        print "*self.destinationAssetType ===",self.destinationAssetType
 
+        # THIS IS FOR NOW ONLY OK FOR THE PREVIZ, IT DOESN'T TEST infoDict["assetType"] but only infoDict["assetCat"]
+        if  self.assetCat in ["chr"]:
+            print "It' is a CHAR test"
+
+            if self.destinationAssetType in ["modeling_ref"]:
+                print tab, "No modeling test, no release for modeling_scene"
+                theDebugFile  = DEBUGFILE_MODELING_CHR
+
+            elif self.destinationAssetType in ["render_ref"]:
+                print tab, "render, test not ready"
+                theDebugFile  = DEBUGFILE_RENDER_CHR
+                Z2K_check = Z2K_check_RENDER
+
+            elif self.destinationAssetType in ["previz_ref"]:
+                print tab, "previz"
+                theDebugFile  = DEBUGFILE_PREVIZ_CHR
+                Z2K_check = Z2K_check_PREVIZ_CHAR
+
+            elif self.destinationAssetType in ["anim_ref"]:
+                print tab, "anim"
+                theDebugFile  = DEBUGFILE_ANIM_CHR
+                Z2K_check = Z2K_check_ANIM
+
+            else:
+                print tab, "unknown test or not specific test ready"
+
+
+
+        elif  self.assetCat in ["prp","vhl","c2d","env","fxp"]:
+            print "It' is a PROP test"
+            if self.destinationAssetType in ["modeling_ref"]:
+                print tab, "No modeling test, no release for modeling_scene"
+                theDebugFile  = DEBUGFILE_MODELING_PRP
+
+            elif self.destinationAssetType in ["render_ref"]:
+                print tab, "render, test not ready"
+                theDebugFile  = DEBUGFILE_RENDER_PRP
+                Z2K_check = Z2K_check_RENDER
+
+            elif self.destinationAssetType in ["previz_ref"]:
+                print tab, "previz"
+                theDebugFile  = DEBUGFILE_PREVIZ_PRP
+                Z2K_check = Z2K_check_PREVIZ_PROP
+
+            elif self.destinationAssetType in ["anim_ref"]:
+                print tab, "anim"
+                theDebugFile  = DEBUGFILE_ANIM_PRP
+                Z2K_check = Z2K_check_ANIM
+                
+            
+        elif  self.assetCat in ["set"]:
+            # a voir avec maybe master_ref
+            print "It' is a SET test"
+            if self.destinationAssetType in ["modeling_ref"]:
+                print tab, "No modeling test, no release for modeling_scene"
+                theDebugFile  = DEBUGFILE_MODELING_SET
+
+            elif self.destinationAssetType in ["render_ref"]:
+                print tab, "render, test not ready"
+                theDebugFile  = DEBUGFILE_RENDER_SET
+                Z2K_check = Z2K_check_RENDER_SET
+
+            elif self.destinationAssetType in ["previz_ref"]:
+                print tab, "previz"
+                theDebugFile  = DEBUGFILE_PREVIZ_SET
+                Z2K_check = Z2K_check_PREVIZ_SET
+                
+            elif self.destinationAssetType in ["anim_ref"]:
+                print tab, "anim, test not ready"
+                theDebugFile  = DEBUGFILE_ANIM_SET
+                Z2K_check = Z2K_check_ANIM_SET
+
+        return Z2K_check,theDebugFile
         
+    def handleSpecialMasterCase(self, sourceAssetType="", forceType="", *args, **kwargs):
+        print "handleSpecialMasterCase()"
+        toReturn = sourceAssetType
+        if not forceType in ["", None]:
+            if sourceAssetType in ["master_scene"]:
+                toReturn = forceType
 
-    def openAsset(self, sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene", readOnly=False, autoUnlock=True, seeRef=False, *args,**kwargs):
+        return toReturn
 
+    def openAsset(self, sourceAsset="chr_aurelien_manteau", sourceAssetType="previz_scene", readOnly=False, autoUnlock=True, seeRef=False, *args,**kwargs):
+        print "openAsset()"
         # get char from mayascene
         assetN=""
         sceneN = cmds.file(q=1,sceneName=True)
+
         # lock handling
         if len(sceneN)>0:
             assetN = os.path.normpath(sceneN).rsplit(os.sep,1)[-1].rsplit("-v",1)[0]
-            print "assetN=", assetN
-            print "*",assetN.rsplit("_",1)[0]
-            print "*",assetN.rsplit("_",1)[-1] + "_" + SourceAssetType.rsplit("_",1)[-1]
+            print "    assetN=", assetN
+            print "    *",assetN.rsplit("_",1)[0]
+            print "    *",assetN.rsplit("_",1)[-1] + "_" + sourceAssetType.rsplit("_",1)[-1]
             try:
                 drcF=Z2K.getDrcF(proj=self.proj, assetName=assetN.rsplit("_",1)[0], pathType= self.sourceAssetType )
-                print "drcF=", drcF
+                print "    drcF=", drcF
                 theLock=Z2K.getLock(drcF)
-                print "theLock=", theLock
-                if len(theLock)>0:
+                print "    theLock=", theLock
+                if len(theLock)>0 and not readOnly:
                     if not autoUnlock:
                         booboo=cmds.confirmDialog(message="Current Asset : {0} \ris LOCKED by :'{1}' \rDo you want to UNLOCK it before loading?!".format(assetN,theLock),
                                                     messageAlign="center", defaultButton="YES", cancelButton="NO" , b="YES", button="NO",
                                                     icon="warning")
-                        print "booboo=",booboo
+                        print "    booboo=",booboo
                         if booboo in ["YES"]:
                             Z2K.unlock(drcF)
                         else:
-                            print assetN + " not unlocked"
+                            print "    "+ assetN + " not unlocked"
                     else:
                         Z2K.unlock(drcF)
             except Exception,err:
-                print "the file in not really a nice clean Z2K file Dude!",err
+                print "    the file in not really a nice clean Z2K file Dude!",err
                 
 
 
         #  opening asset
         if seeRef:
-            SourceAssetType = SourceAssetType.rsplit("_",1)[0] + "_ref"
+            sourceAssetType = sourceAssetType.rsplit("_",1)[0] + "_ref"
             
-        path_public,path_private = Z2K.getPath(proj=self.proj, assetName=sourceAsset,pathType=SourceAssetType)
+        path_public,path_private = Z2K.getPath(proj=self.proj, assetName=sourceAsset,pathType=sourceAssetType)
         if os.path.isfile(path_public):
 
             if readOnly :
-                print "/readOnly"
+                print "***readOnly"
+                cmds.file(new=1,f=1)
                 path_private_toEdit = Z2K.openFileReadOnly(proj=self.proj, Path_publish_public=path_public)
+                print "*** path_private_toEdit=", path_private_toEdit
             else:
                 print "/edit"
                 path_private_toEditC = Z2K.editFile(proj=self.proj, Path_publish_public=path_public)
@@ -158,8 +265,8 @@ class Z2K_ReleaseTool (object):
         return path_private_toEdit
 
 
-    def release_Asset(self,destinationAsset="chr_aurelien_manteau", destinationAssetType = "previz_ref",
-        theComment= "auto rock the casbah release !", autoUnlock = False,
+    def release_Asset(self, destinationAsset="chr_aurelien_manteau", destinationAssetType = "previz_ref",
+        theComment= "", autoUnlock = False, sgTask="",
         *args, **kwargs):
         print "release_Asset()"
         
@@ -170,7 +277,8 @@ class Z2K_ReleaseTool (object):
         print "path_private_toPublish=", path_private_toPublishAbs
         
         # check if current file is published
-        path_public,path_private = Z2K.getPath(proj=self.proj, assetName=self.sourceAsset, pathType=self.SourceAssetType)
+        print "self.sourceAsset=", self.sourceAsset, "  type=",self.sourceAssetType
+        path_public,path_private = Z2K.getPath(proj=self.proj, assetName=self.sourceAsset, pathType=self.sourceAssetType)
         print "path_public=", path_public
         print "path_private=", path_private
         #pubFile is a MrcFile
@@ -192,29 +300,34 @@ class Z2K_ReleaseTool (object):
 
             # auto comment DAVOS if not given
             if theComment in ["",None]:
-                thecomment = "released From " + curVersion
+                print "TATATATA","released From " + curVersion
+                theComment = "released From " + curVersion
 
             # feeding SG #1
             
             curVersFile = self.proj.versionFileFromPrivatePath(scenePathSG)
             print "curVersFile=", curVersFile
-            curSgVers = curVersFile.getSgVersion()
-            print "curSgVers=", curSgVers
-            # publishing this file to the public sgTask=""
-            exportedFileZ2K = Z2K.publishFile(proj=self.proj, path_private_toPublish=path_private_toPublish, comment=theComment,
-                                                 sgTask="")
-            
-            # feeding SG #2
-            rlsVersFile = self.proj.versionFileFromPrivatePath(exportedFileZ2K)
-            print "rlsVersFile=", rlsVersFile
-            rlsSgVers = rlsVersFile.getSgVersion()
-            print "rlsSgVers=", rlsSgVers
+            if not curVersFile in [None,"None"]:
+                curSgVers = curVersFile.getSgVersion(create=True)
+                print "curSgVers=", curSgVers
+                # publishing this file to the public
+                exportedFileZ2K = Z2K.publishFile(  proj=self.proj, path_private_toPublish=path_private_toPublish, 
+                                                    sgTask=sgTask, comment=theComment)
+                
+                # feeding SG #2
+                rlsVersFile = self.proj.versionFileFromPrivatePath(exportedFileZ2K)
+                print "rlsVersFile=", rlsVersFile
+                rlsSgVers = rlsVersFile.getSgVersion(create=True)
+                print "rlsSgVers=", rlsSgVers
 
-            # feeding SG #3 (final step)
-            self.proj.updateSgEntity(curSgVers, sg_current_release_version=rlsSgVers, sg_released=True)
+                # feeding SG #3 (final step)
+                self.proj.updateSgEntity(curSgVers, sg_current_release_version=rlsSgVers, sg_released=True)
 
-            # re open the publish file for checking
-            cmds.file(os.path.normpath(exportedFileZ2K), open=True,f=True)
+                # re open the publish file for checking
+                cmds.file(os.path.normpath(exportedFileZ2K), open=True,f=True)
+            else:
+                print "Not RELEAZED: Pleaze publish at leat 1 version of your asset!"
+                exportedFileZ2K = "Not RELEAZED: Pleaze publish at leat 1 version of your asset!"
         else:
             print "Not RELEAZED: Edited version was not published!"
             exportedFileZ2K = "NOT RELEAZED: Edited version was not published before release!"
@@ -222,7 +335,7 @@ class Z2K_ReleaseTool (object):
         return exportedFileZ2K
 
 
-# Z2K_OpenA=Z2K_ReleaseTool(sourceAsset="chr_aurelien_manteau", SourceAssetType="previz_scene",
+# Z2K_OpenA=Z2K_ReleaseTool(sourceAsset="chr_aurelien_manteau", sourceAssetType="previz_scene",
 #                         destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
 #                          projConnectB= 1,)
 
@@ -245,11 +358,11 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
     upImg= basePath + ICONPATH
         
     
-    def __init__(self, sourceAsset="", assetCat="", SourceAssetType="", destinationAsset="", destinationAssetType="", projConnectB="",theProject="",theComment="",debug="",*args, **kwargs):
+    def __init__(self, sourceAsset="", assetCat="", sourceAssetType="", destinationAsset="", destinationAssetType="", projConnectB="",theProject="",theComment="",debug="",sgTask="",*args, **kwargs):
         # self = Z2K_ReleaseTool
-        Z2K_ReleaseTool.__init__(self,sourceAsset,assetCat,SourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject,theComment,debug)
+        Z2K_ReleaseTool.__init__(self,sourceAsset,assetCat,sourceAssetType, destinationAsset, destinationAssetType, projConnectB,theProject,theComment,debug,sgTask)
         # self.sourceAsset = sourceAsset
-        # self.SourceAssetType = SourceAssetType
+        # self.sourceAssetType = sourceAssetType
         # self.destinationAsset = destinationAsset
         # self.destinationAssetType = destinationAssetType
         # self.projConnectB = projConnectB
@@ -307,39 +420,33 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         curAsset= cmds.optionMenu(self.BdestinationAssetMenu,q=1,v=True)
         cmds.textField(self.BdestinationAsset,e=1, text=curAsset)
 
-    @jpZ.waiter
     def btn_open_Asset( self,*args,**kwargs):
         print "btn_open_Asset()"
         self.getInterfaceValues()
-        self.sourceAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType,readOnly=False,autoUnlock=False, seeRef=False)
+        self.sourceAssetPath = self.openAsset(sourceAsset= self.sourceAsset, sourceAssetType=self.sourceAssetType,readOnly=False,autoUnlock=False, seeRef=False)
         cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
 
         # update UI with current scene informations
         self.updateUI()
 
-    @jpZ.waiter
     def btn_open_Asset_readOnly(self, *args, **kwargs):
         print "btn_open_Asset_readOnly()"
         self.getInterfaceValues()
-        self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType, readOnly=True, autoUnlock=False, seeRef=False)
+        self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, sourceAssetType=self.sourceAssetType,readOnly=True,autoUnlock=False, seeRef=False)
         cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
 
         # update UI with current scene informations
         self.updateUI()
 
-    @jpZ.waiter
     def btn_see_Ref(self, *args, **kwargs):
         print "btn_see_Ref()"
         self.getInterfaceValues()
-        self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, SourceAssetType=self.sourceAssetType, readOnly=True, autoUnlock=False, seeRef=True)
+        self.readOnlyAssetPath = self.openAsset(sourceAsset= self.sourceAsset, sourceAssetType=self.sourceAssetType,readOnly=True,autoUnlock=False, seeRef=True)
         cmds.textField(self.BdestinationAsset,e=1, text=self.sourceAsset)
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.sourceAsset)
 
-
-
-    @jpZ.waiter
     def btn_release_Asset( self, force=False, *args,**kwargs):
         print "btn_release_Asset()",force
         self.getInterfaceValues()
@@ -350,30 +457,26 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             print "CONTEXT IS OK"
 
 
-            print "X",self.sourceAsset,"->",self.destinationAsset, self.sourceAssetType,"->",self.destinationAssetType
-            try :
-                exportedFileZ2K = self.release_Asset( destinationAsset= self.destinationAsset ,destinationAssetType = self.destinationAssetType,
-                                        theComment= self.theComment)
-                cmds.confirmDialog(title= "ASSET RELEASE DONE",message= exportedFileZ2K,button="OK", messageAlign="center", icon="information")
+            # print "X",self.sourceAsset,"->",self.destinationAsset, self.sourceAssetType,"->",self.destinationAssetType
+            # try :
+            exportedFileZ2K = self.release_Asset( destinationAsset= self.destinationAsset ,destinationAssetType = self.destinationAssetType,
+                                    theComment= self.theComment, sgTask=self.sgTask)
+            cmds.confirmDialog(title= "ASSET RELEASE DONE",message= exportedFileZ2K,button="OK", messageAlign="center", icon="information")
 
-                # disable l'UI, elle ne peut etre reactived que avec le boutton get_context
-                # cmds.layout(self.layToEn,e=1,en=0)
-                cmds.layout(self.layToEnB,e=1,en=0)
+            # disable l'UI, elle ne peut etre reactived que avec le boutton get_context
+            # cmds.layout(self.layToEn,e=1,en=0)
+            cmds.layout(self.layToEnB,e=1,en=0)
 
-            except Exception,err:
-                msg= str(err)
-                cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
-
+            # except Exception,err:
+                # print Exception,err
+                # msg= str(err)
+                # cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
             
 
         else:
             msg= "BAD CONTEXT ! \n do a get_context"
             print msg
             cmds.confirmDialog(title= "ERROR",message= msg,button="OK", messageAlign="center", icon="warning")
-
-        
-
-
 
     def updateUI(self, *args, **kwargs):
         # cascade
@@ -383,7 +486,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         
         cmds.optionMenu(self.BsourceAssetMenu ,e=True, value=self.sourceAsset)
         cmds.textField(self.BsourceAsset,e=1, text=self.sourceAsset)
-        cmds.textField(self.BsourceAssetType, e=1, text=self.SourceAssetType)
+        cmds.textField(self.BsourceAssetType, e=1, text=self.sourceAssetType)
 
         cmds.optionMenu(self.BdestinationAssetMenu ,e=True, value=self.destinationAsset)
         cmds.textField(self.BdestinationAsset,e=1, text=self.destinationAsset)
@@ -399,6 +502,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             print "deleteUI():",err
 
 
+
     def btn_get_context(self, *args, **kwargs):
         print "btn_get_context"
         # get scene info
@@ -406,110 +510,46 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         infoDict = self.SceneInfoDict
         print "infoDict=", infoDict 
         if infoDict and not "Ref" in infoDict["assetType"][-3:] :
+
+            
             # set inReleaseTool context
             self.assetCat = infoDict["assetCat"]
             self.sourceAsset =infoDict["assetName"]
-            self.SourceAssetType =infoDict["assetType"]+"_scene"
+            self.sourceAssetType =infoDict["assetType"] + "_scene"
             self.destinationAsset =infoDict["assetName"]
-            self.destinationAssetType = infoDict["assetType"]+"_ref"
+            # self.destinationAssetType = infoDict["assetType"]+"_ref"
+            
+
             self.theComment = "released From " + infoDict["version"] 
             self.assetL = jpZ.getAssetL ( assetCat= self.assetCat )
 
+
+            # handle le cas special du set /master asset cat, et le transforme ici en anim_set ou render_set
+            if infoDict["assetType"] in ["master"]:
+                userChoosenType = cmds.confirmDialog( title='Switch Type', message='choose Release Type', button=['render_ref','anim_ref',"None"],  dismissString='None', )
+                print "userChoosenType=", userChoosenType
+                self.destinationAssetType = self.handleSpecialMasterCase(sourceAssetType=infoDict["assetType"]+"_scene", forceType=userChoosenType)
+            else:
+                self.destinationAssetType =infoDict["assetType"] + "_ref"
+
+
+            # wippp
+            # self.get_context()
             # update UI with current scene informations
             self.updateUI()
 
             
-
+            # lauch the auto check swith function from daddy class
+            Z2K_check,theDebugFile = self.Aladin_CheckSwitch()
             # parent the new good one
-            Z2K_Pcheck="NADA"
-            print 'self.assetCat=',self.assetCat
-            # THIS IS FOR NOW ONLY OK FOR THE PREVIZ, IT DOESN'T TEST infoDict["assetType"] but only infoDict["assetCat"]
-            tab = "    "
-            if  self.assetCat in ["chr"]:
-                print "It' is a CHAR test"
-                if self.SourceAssetType in ["modeling_scene"]:
-                    print tab, "modeling, test not ready"
-                    # set DEBUG FILE here
-                    theDebugFile  = DEBUGFILE_MODELING_CHR
-
-                elif self.SourceAssetType in ["render_scene"]:
-                    print tab, "render, test not ready"
-                    # set DEBUG FILE here
-                    theDebugFile  = DEBUGFILE_RENDER_CHR
-
-                elif self.SourceAssetType in ["previz_scene"]:
-                    print tab, "previz"
-                    Z2K_Pcheck = Z2K_Pcheck_CHAR
-                    # set DEBUG FILE here
-                    theDebugFile  = DEBUGFILE_PREVIZ_CHR
-
-                elif self.SourceAssetType in ["anim_scene"]:
-                    print tab, "anim-> same as props"
-                    Z2K_Pcheck = Z2K_Pcheck_PROP
-                    # set DEBUG FILE here
-                    theDebugFile  = DEBUGFILE_ANIM_CHR
-
-                else:
-                    print tab, "unknown test or not specific test ready"
 
 
-
-            elif  self.assetCat in ["prp","vhl","c2d","env","fxp"]:
-                print "It' is a PROP test"
-                if self.SourceAssetType in ["modeling_scene"]:
-                    print tab, "modeling, test not ready"
-                    # set DEBUG FILE here
-                    theDebugFile  = DEBUGFILE_MODELING_PRP
-
-                elif self.SourceAssetType in ["render_scene"]:
-                    print tab, "render, test not ready"
-                    # set DEBUG FILE here
-                    theDebugFile  = DEBUGFILE_RENDER_PRP
-
-                elif self.SourceAssetType in ["previz_scene"]:
-                    print tab, "previz"
-                    # set DEBUG FILE here
-                    theDebugFile  = DEBUGFILE_PREVIZ_PRP
-                    Z2K_Pcheck = Z2K_Pcheck_PROP
-
-                elif self.SourceAssetType in ["anim_scene"]:
-                    print tab, "anim"
-                    # set DEBUG FILE here
-                    theDebugFile  = DEBUGFILE_ANIM_PRP
-                    Z2K_Pcheck = Z2K_Pcheck_PROP
-                    
-                
-            elif  self.assetCat in ["set"]:
-                print "It' is a SET test"
-                if self.SourceAssetType in ["modeling_scene"]:
-                    print tab, "modeling, test not ready"
-                    # set DEBUG FILE here
-                    theDebugFile  = DEBUGFILE_MODELING_SET
-
-                elif self.SourceAssetType in ["render_scene"]:
-                    print tab, "render, test not ready"
-                    # set DEBUG FILE here
-                    theDebugFile  = DEBUGFILE_RENDER_SET
-
-                elif self.SourceAssetType in ["previz_scene"]:
-                    print tab, "previz"
-                    # set DEBUG FILE here
-                    theDebugFile  = DEBUGFILE_PREVIZ_SET
-                    Z2K_Pcheck = Z2K_Pcheck_SET
-                    
-                elif self.SourceAssetType in ["anim_scene"]:
-                    print tab, "anim, test not ready"
-                    # set DEBUG FILE here
-                    theDebugFile  = DEBUGFILE_ANIM_SET
-
-                
-
-
-            if Z2K_Pcheck in ["NADA"]:
-                raise Exception("PAS DE MODULE DE CHECK POUR CET ASSET")
+            if Z2K_check in ["NADA"]:
+                # raise Exception("PAS DE MODULE DE CHECK POUR CET ASSET")
+                print "PAS DE MODULE DE CHECK POUR CET ASSET"
             else:
-                print "Z2K_Pcheck=", Z2K_Pcheck
-                Z2K_Pcheck = Z2K_Pcheck.checkModule(GUI=True, parent=self.layoutImportModule, debugFile = theDebugFile )
+                print "Z2K_check=", Z2K_check
+                Z2K_check = Z2K_check.checkModule(GUI=True, parent=self.layoutImportModule, debugFile = theDebugFile )
 
             # Enable l'UI, 
             cmds.layout(self.layToEn,e=1,en=1)
@@ -606,7 +646,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         # self.layoutImportModule = cmds.tabLayout(tabsVisible=0,borderStyle="full")
         self.layoutImportModule = cmds.frameLayout(lv=0)
         
-        # Z2K_Pcheck.insertLayout(parent=self.layoutImportModule )
+        # Z2K_check.insertLayout(parent=self.layoutImportModule )
 
 
 
@@ -646,13 +686,13 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
         if  not  self.debug:
 
             cmds.rowLayout(self.sourceRowL, e=1, enable=0)
-            cmds.optionMenu(self.BcategoryMenu,e=1,m=0)
-            cmds.optionMenu(self.BsourceAssetMenu,e=1,m=0)
+            cmds.optionMenu(self.BcategoryMenu,e=1, m=0)
+            cmds.optionMenu(self.BsourceAssetMenu,e=1, m=0)
 
             cmds.rowLayout(self.destiRowL, e=1, enable=0)
-            cmds.optionMenu(self.BdestinationAssetMenu,e=1,m=0)
+            cmds.optionMenu(self.BdestinationAssetMenu, e=1, m=0)
 
-            cmds.button(self.BforceRelease,e=1,m=0)
+            cmds.button(self.BforceRelease,e=1, m=0)
             cmds.rowLayout(self.commentRowL,e=1,  enable=0)
         # show the window
         # cmds.showWindow(self.cf)
@@ -673,7 +713,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
 
 
-# Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", assetCat = "chr", SourceAssetType="previz_scene",
+# Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", assetCat = "chr", sourceAssetType="previz_scene",
 #                       destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
 #                       projConnectB= True, theProject="zombtest",debug=False,
 #                       theComment= "auto rock the casbah release !")

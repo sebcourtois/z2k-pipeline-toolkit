@@ -106,6 +106,12 @@ class checkModule(object):
         # decorating functions
         self.printF= self.Z2KprintDeco(jpZ.printF)
         
+        # print scene NAME
+        infoDict = jpZ.infosFromMayaScene()
+        self.printF("ASSET_NAME: {0}  -Version: {1}    - Categorie: {2}".format( infoDict["assetName"],infoDict["version"], infoDict["assetCat"] ) , st="t")
+
+
+
     # decorators ---------------------------
     def Z2KprintDeco(self, func, *args, **kwargs):
         print "func=", func.__name__

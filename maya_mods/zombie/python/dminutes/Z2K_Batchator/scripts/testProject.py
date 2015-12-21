@@ -1,7 +1,9 @@
 # TEST PROJECT ENV
 import os
 toReturnB = False
-from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG import *
+import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG_v13 as Batch_CONFIG
+reload(Batch_CONFIG)
+from dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG_v13 import *
 
 def printF(texta="",openMode = "a",printN=True,*args,**kwargs):
     debugFile=DEBUGFILE
@@ -26,3 +28,5 @@ if curproj:
     toReturnB = True
 
 result= toReturnB
+
+

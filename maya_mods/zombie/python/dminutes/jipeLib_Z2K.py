@@ -6,7 +6,10 @@
 # Description : all Z2K'scripts related functions
 # Author : Jean-Philippe Descoins
 # Date : 2015_09_10
-# Comment : WIP
+# Comment : WIP# TO DO:
+# - spped up the check structure
+# - ADD CHECK for DOUBLE NAMES
+
 ################################################################
 #    ! Toute utilisation de ce se script sans autorisation     #
 #                         est interdite !                      #
@@ -21,8 +24,6 @@ import maya.cmds as cmds
 from dminutes import assetconformation
 
 # general function 
-
-
 
 
 
@@ -107,9 +108,12 @@ def infosFromMayaScene(*args, **kwargs):
         Return : dict
         Dependencies : cmds - getCatL - getAssetTypeL
     """
+    print ("infosFromMayaScene()")
     testOk = True
     outD = {}
-    scenePathTmp = cmds.file(q=1 ,sceneName=True)
+    # scenePathTmp = cmds.file(q=1 , sceneName=True)
+    scenePathTmp = cmds.file(q=1 , expandName=True)
+    
     print "scenePathTmp=", scenePathTmp
     if   "asset" in scenePathTmp :
         print "folder asset ok"
@@ -118,8 +122,10 @@ def infosFromMayaScene(*args, **kwargs):
         print "categoryL=", categoryL
         print "assetTypeL=", assetTypeL
         #path and short name
-        outD["scenePath"]= cmds.file(q=1,sceneName=True)
-        outD["fileName"]= cmds.file(q=1,sceneName=True,shortName=True)
+        outD["scenePath"]= cmds.file(q=1 , expandName=True)
+        # outD["fileName"]= cmds.file(q=1,sceneName=True,shortName=True)
+        outD["fileName"]= outD["scenePath"].rsplit("/",1)[-1]
+        
         outD["assetName"] = outD["fileName"].rsplit("_",1)[0]
         outD["assetCat"] = outD["fileName"].split("_",1)[0]
         outD["assetType"] = outD["fileName"].rsplit("_",1)[1].split("-",1)[0]
@@ -227,7 +233,7 @@ def createIncrementedFilePath( filePath="", vSep= "_v",extSep=".ma", digits=3, *
 
 # printer  -------------------------------------------------------
 def printF( text="", st="main", toScrollF="", toFile = "", inc=False, GUI= True,
-    openMode="a+", *args, **kwargs):
+    openMode="a+",versionning=True, *args, **kwargs):
     """ Description: printer avec mise en forme integrer et link vers file or maya layout
         Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
         Dependencies : cmds - 
@@ -292,6 +298,39 @@ def Ltest(objL,*args,**kwargs):
 
     return objL
 
+
+def getChilds(cursel=[], mode="transform", *args):
+    # mode = type filter shape/set/dagObjects
+    listOut = []
+    # renvoie la list correspondante aux enfants, si il n'y en a pas renvoie l'obj lui meme
+    if type(cursel) is not list:
+        cursel = [cursel]
+
+    try:
+        Childs = cmds.listRelatives(cursel, c=True, ni=True, type=mode)
+    except:
+        Childs = cursel
+    return Childs
+
+def addAttr(inObj = "", theAttrName="",theValue=1,
+    theAttrType="long",keyable=True,theMin = 0, theMax=1, *args, **kwargs):
+    """ Description: add the specied attribut to the speciefied obj
+        Return : True
+        Dependencies : cmds - 
+    """
+
+    print "addAttr()"
+    toReturnB = True
+    if cmds.objExists(inObj):
+        if not cmds.objExists(inObj + "." + theAttrName):
+            cmds.addAttr(inObj, longName=theAttrName, attributeType = theAttrType, keyable=keyable, min = theMin, max=theMax) 
+            cmds.setAttr(inObj + "." + theAttrName,theValue)
+        else:
+            print "    attrib allready exists"
+    else:
+        print "    Object doesn't exists"
+    return toReturnB
+
 def matchByXformMatrix(cursel=[], mode=0, *args, **kwargs):
     ''' Description : Match SRT in world cursel objects to the first one
                     mode : - 0/first = the first object is the reference
@@ -344,6 +383,7 @@ def setFilterTest(setName="",includedSetL=["objectSet","textureBakeSet","vertexB
             Return : BOOL
             Dependencies : cmds - 
         """
+        # print "setFilterTest()"
         # #plugin object sets
         # try:
         #     apiNodeType = cmds.nodeType(setName, api=True)
@@ -358,27 +398,27 @@ def setFilterTest(setName="",includedSetL=["objectSet","textureBakeSet","vertexB
         except RuntimeError:
             return False
             
-        # accepted sets
-        if not nodeType in  includedSetL:
+        # accepted sets # Rendering - dispLayers - LayerTurttle
+        if (not nodeType in  includedSetL) or (nodeType in excludedSetL) :
             return False
 
-        # Rendering - dispLayers - LayerTurttle
-        if nodeType in excludedSetL:
-            return False
+        # # Rendering - dispLayers - LayerTurttle
+        # if nodeType in excludedSetL:
+        #     return False
 
         # bookmarks
-        if not bookmarksSets:
+        if not bookmarksSets :
             if cmds.getAttr(setName+"."+ "annotation") in ["bookmarkAnimCurves"]:
                 return False
 
         # maya default sets
         if not defaultSets:
-            if setName in cmds.ls(defaultNodes=True):
+            if setName in cmds.ls(defaultNodes=True) :
                 return False
         
         # locked sets
         if not lockedSets:
-            if setName in cmds.ls(lockedNodes=True):
+            if setName in cmds.ls(lockedNodes=True) :
                 return False
 
         # others filtered by attribs
@@ -391,12 +431,14 @@ def setFilterTest(setName="",includedSetL=["objectSet","textureBakeSet","vertexB
         return True
 
 def getOutlinerSets(*args, **kwargs):
-        """ Description: return the outliner visible filtered objects sets 
-            Return : [LIST]
-            Dependencies : cmds -  setFilterTest()
-        """
-        
-        return [setName for setName in cmds.ls(sets=True) if setFilterTest(setName=setName)]
+    """ Description: return the outliner visible filtered objects sets 
+        Return : [LIST]
+        Dependencies : cmds -  setFilterTest()
+    """
+
+    outL = (set( cmds.ls(type="objectSet")  ) -set( jlistSets(type=1) ) -set( jlistSets(type=2) ) -set( cmds.ls(defaultNodes=1) )  -set( cmds.ls(lockedNodes=True) ) -set(cmds.ls(undeletable=1))  )
+    #return [setName for setName in cmds.ls(sets=True) if setFilterTest(setName=setName)]
+    return outL
 
 def getSetContent ( inSetL=[],*args,**kwargs):
         """
@@ -452,49 +494,49 @@ def createDisplayLayer ( n="default_Name", inObjL=[], displayType=0, hideOnPlayb
 
 
 def NodeTypeScanner( execptionTL = [], exceptDerived= True, specificTL=[], specificDerived=False,
-        mayaDefaultObjL=["characterPartition","defaultLightList1","dynController1","globalCacheControl",
-        "hardwareRenderGlobals","hardwareRenderingGlobals","defaultHardwareRenderGlobals","hyperGraphInfo",
-        "hyperGraphLayout","ikSystem","characterPartition","char_aurelienPolo_wip_18_sceneConfigurationScriptNode",
-        "char_aurelienPolo_wip_18_uiConfigurationScriptNode","sequenceManager1","strokeGlobals","time1","defaultViewColorManager",
-        "defaultColorMgtGlobals","defaultObjectSet","defaultTextureList1","lightList1","defaultObjectSet",
-        "sceneConfigurationScriptNode","uiConfigurationScriptNode"],
-        *args, **kwargs):
-        """ Description: Return Node list base on specific type /excepted type filtered
-                        If nothing it give evrething in scene
-                        basic type herited coulb be "dagNode" / "transform" /
-            Return : LIST
-            Dependencies : cmds - 
-        """
+    mayaDefaultObjL=["characterPartition","defaultLightList1","dynController1","globalCacheControl",
+    "hardwareRenderGlobals","hardwareRenderingGlobals","defaultHardwareRenderGlobals","hyperGraphInfo",
+    "hyperGraphLayout","ikSystem","characterPartition","char_aurelienPolo_wip_18_sceneConfigurationScriptNode",
+    "char_aurelienPolo_wip_18_uiConfigurationScriptNode","sequenceManager1","strokeGlobals","time1","defaultViewColorManager",
+    "defaultColorMgtGlobals","defaultObjectSet","defaultTextureList1","lightList1","defaultObjectSet",
+    "sceneConfigurationScriptNode","uiConfigurationScriptNode"],
+    *args, **kwargs):
+    """ Description: Return Node list base on specific type /excepted type filtered
+                    If nothing it give evrething in scene
+                    basic type herited coulb be "dagNode" / "transform" /
+        Return : LIST
+        Dependencies : cmds - 
+    """
 
-        theTypeL =[]
-        allTypeL = cmds.ls(nodeTypes=1)
-        toReturnL = []
-        if not len(specificTL) >0:
-                theTypeL = allTypeL
-        else:
-            theTypeL = specificTL
+    theTypeL =[]
+    allTypeL = cmds.ls(nodeTypes=1)
+    toReturnL = []
+    if not len(specificTL) >0:
+            theTypeL = allTypeL
+    else:
+        theTypeL = specificTL
 
-        for typ in theTypeL:
-            # print "****",typ
-            if len(theTypeL)>0:
-                filtered = [x for x in cmds.ls(type=typ) if  x not in mayaDefaultObjL ]
-                if len(filtered)>0:
-                    for obj in filtered:
-                        if not obj in mayaDefaultObjL:
-                            testB = False
-                            if len(execptionTL)>0:
-                                for ex in execptionTL:
-                                    if  cmds.nodeType(obj) in  cmds.nodeType(ex, derived=exceptDerived, isTypeName=True,):
-                                        # print "#######",cmds.nodeType(obj), "is bad"
-                                        testB = True
-                                        break
-                                if not testB:
-                                    toReturnL.append(obj)
-                                        
-                            else:
+    for typ in theTypeL:
+        # print "****",typ
+        if len(theTypeL)>0:
+            filtered = [x for x in cmds.ls(type=typ) if  x not in mayaDefaultObjL ]
+            if len(filtered)>0:
+                for obj in filtered:
+                    if not obj in mayaDefaultObjL:
+                        testB = False
+                        if len(execptionTL)>0:
+                            for ex in execptionTL:
+                                if  cmds.nodeType(obj) in  cmds.nodeType(ex, derived=exceptDerived, isTypeName=True,):
+                                    # print "#######",cmds.nodeType(obj), "is bad"
+                                    testB = True
+                                    break
+                            if not testB:
                                 toReturnL.append(obj)
+                                    
+                        else:
+                            toReturnL.append(obj)
 
-        return toReturnL
+    return toReturnL
 
 # wip to make faster
 def UnusedNodeAnalyse( execptionTL = [], specificTL= [], mode = "delete",verbose=True, *args, **kwargs):
@@ -506,7 +548,7 @@ def UnusedNodeAnalyse( execptionTL = [], specificTL= [], mode = "delete",verbose
     
     toReturnB = True
     nodeL = NodeTypeScanner(execptionTL=execptionTL, specificTL=specificTL)
-    print "*nodeL=", len(nodeL)
+    # print "*nodeL=", len(nodeL)
     unconectedCL =[]
     # loop
     for node in nodeL:
@@ -523,7 +565,7 @@ def UnusedNodeAnalyse( execptionTL = [], specificTL= [], mode = "delete",verbose
 
     if len(unconectedCL):
         for node in unconectedCL:
-            print "////",node
+            # print "////",node
             try:
                 if not cmds.lockNode(node, q=1)[0]:
                     print "try deleting",node,cmds.lockNode(node,q=1)[0]
@@ -574,7 +616,7 @@ def checkBaseStructure(*args,**kwargs):
 
         # check if asset gp and set here
 
-        baseExcludeL = ["persp","top","front","side","left","back","bottom","defaultCreaseDataSet","defaultLayer"]
+        baseExcludeL = ["persp","top","top1","front","front1","side","side1","left","left1","back","back1","bottom1","bottom","defaultCreaseDataSet","defaultLayer"]
         baseObjL = ["asset",]
         baseSetL = ["set_meshCache","set_control",]
         additionnalSetL = ["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"]
@@ -659,23 +701,25 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig","grp_geo"],
             Return : [result,debugDict]
             Dependencies : cmds - 
         """
-        print "checkAssetStructure()"
-
+        print "checkAssetStructure()",
+        extendedL = expectedL[:]
         # switch expeted list depending on the name of the scene
         sceneName = cmds.file(q=1,sceneName=True, shortName=True)
         if sceneName[:3] in ["set"]:
-            expectedL.extend(additionalL)
+            print "it's a set"
+            extendedL.extend(additionalL)
         toReturnB = False
         debugD = {}
         tab="    "
-        expect_str = " - ".join(expectedL)
+        expect_str = " - ".join(extendedL)
         if cmds.objExists(assetgpN):
             childL = cmds.listRelatives(assetgpN,  c=True)
             print tab,expect_str, childL
             debugD[expect_str] = {}
             print "*",sorted(expectedL) 
             print "*",sorted(childL)
-            if sorted(expectedL) == sorted(childL):
+            print "*",sorted(extendedL) 
+            if (sorted(expectedL) == sorted(childL) ) or ( sorted(extendedL) == sorted(childL) ) :
                 toReturnB = True
                 debugD[ expect_str ]["result"] = "OK"
                 print tab, toReturnB
@@ -778,7 +822,7 @@ def isSet_meshCache_OK (theSet="set_meshCache",theType="prop",*args, **kwargs):
                 # is a set donc on doit avoir seulement des group pour le moement
                 for i in setContentL:
                     sL= cmds.listRelatives(i,s=1,ni=1)
-                    print "sL=", sL,cmds.objectType(i)
+                    # print "sL=", sL,cmds.objectType(i)
                     if  sL or not cmds.objectType(i) in ["transform"] :
                         toReturn =False
                         debug ="certain object ne sont pas des Groups"
@@ -849,13 +893,13 @@ def isSkinned(inObjL=[], verbose=False, printOut = False,*args,**kwargs):
         tab = "    "
         if len(inObjL):
             for obj in inObjL:
-                print "  obj =", obj
+                # print "  obj =", obj
                 skinClusterList = []
                 history = cmds.listHistory(obj, il=2)
                 # print "    history = ", history
                 if history not in [None,"None"]:
                     for node in history:
-                        print "   node=",node
+                        # print "   node=",node
                         if cmds.nodeType(node) == "skinCluster":
                             skinClusterList.append(node)
                             outSkinClusterL.append(node)
@@ -1067,6 +1111,44 @@ def disableShapeOverrides(inObjL=[],*args, **kwargs):
 
 
 
+
+def connectVisibility(connectOnShape=True, force=True,driverObj="Global_SRT", driverAttr= "showMesh", *args, **kwargs):
+    """ Description: cree et connect un attrib "showMesh" au visibility des shape du "set_meshCache"
+        Return : True
+        Dependencies : cmds - 
+    """
+    print "connectVisibility()"
+    toReturnB = True
+    debug= ""
+    try :
+        # driverObj= "Global_SRT"
+        # driverAttr= "showMesh"
+        addAttr(inObj = driverObj, theAttrName=driverAttr,)
+        cmds.setAttr(driverObj+"."+driverAttr,1)
+        targetObjL=getSetContent(inSetL=["set_meshCache"] )
+
+        finalTargetObjL=[]
+        if len(targetObjL):
+            for obj in targetObjL:
+
+                # get shpae obj
+                if connectOnShape:
+                    finalTargetObjL = getChilds(cursel=[obj], mode="shape",)
+                else:
+                    finalTargetObjL = targetObjL
+                # finally connect
+                for target in finalTargetObjL:
+                    if not cmds.connectionInfo(target + "." +"visibility", isDestination=True):
+                        cmds.connectAttr(driverObj + "." + driverAttr,  target + "." +"visibility", f=force)
+                    else:
+                        print "Attribute allready Connected"
+    except Exception,err:
+        toReturnB = False
+        print Exception,err
+        debug = err
+
+    return toReturnB,debug
+
 # scene cleaning
 def cleanMentalRayNodes ( toDeleteL=['mentalrayGlobals','mentalrayItemsList','miDefaultFramebuffer','miDefaultOptions',
     'Draft','DraftMotionBlur','DraftRapidMotion','Preview','PreviewCaustics','PreviewFinalGather','PreviewGlobalIllum',
@@ -1099,7 +1181,7 @@ def cleanMentalRayNodes ( toDeleteL=['mentalrayGlobals','mentalrayItemsList','mi
 
     return [toReturnB,toDeleteL,deletedL,failL]
 
-def cleanTurtleNodes ( toDeleteL=["TurtleDefaultBakeLayer"], *args, **kwargs):
+def cleanTurtleNodes ( toDeleteL=["TurtleDefaultBakeLayer"], check=False, *args, **kwargs):
     """ Description: Delete all turtle in toDeleteL
         Return : [toReturnB,toDeleteL,deletedL,failL]
         Dependencies : cmds - 
@@ -1116,7 +1198,8 @@ def cleanTurtleNodes ( toDeleteL=["TurtleDefaultBakeLayer"], *args, **kwargs):
         if cmds.objExists(i):
             try:
                 cmds.lockNode(i, lock=False)
-                cmds.delete(i)
+                if not check:
+                    cmds.delete(i)
                 deletedL.append(i)
             except:
                 toReturnB=False

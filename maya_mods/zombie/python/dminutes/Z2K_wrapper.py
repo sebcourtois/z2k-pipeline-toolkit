@@ -8,7 +8,7 @@ from davos.core.damtypes import DamAsset
 import os, sys
 import maya.cmds as cmds
 import maya.mel as mel
-
+import pymel.core as pm
 
 def projConnect(theProject="zombtest",*args,**kwargs):
     """
@@ -65,6 +65,7 @@ def getPath(proj="", assetName="", pathType="previz_ref", *args, **kwargs):
 
 def openFileReadOnly(proj="",Path_publish_public="", autoAction="overwrite", *args, **kwargs):
     print "openFileReadOnly()"
+    # BUGGED EN MODE BATCH A CHECKER
     tab= "    "
     if not os.path.exists(Path_publish_public):
         with open(Path_publish_public, 'w') as f:
@@ -75,7 +76,8 @@ def openFileReadOnly(proj="",Path_publish_public="", autoAction="overwrite", *ar
     # privFile = pubFile.__class__.__base__.edit(pubFile)
     print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!pubFile=", pubFile
     privFile = pubFile.mayaOpen(existing=autoAction)
-
+    # wip test avant prifPath = mayaopen...
+    # privFile = proj.entryFromPath(cmds.file(q=1,sceneName = True))
     print tab,"public_file_Version=",pubFile.currentVersion
     print tab, "privFile=",privFile
 
@@ -98,20 +100,18 @@ def editFile(proj="" , Path_publish_public="", autoAction="overwrite", *args, **
 
     return privFile
 
-def publishFile(proj="", path_private_toPublish="",comment="test the cashbah moda foka!",*args, **kwargs):
+def publishFile(proj="", path_private_toPublish="",comment="test the cashbah moda foka!",sgTask="",*args, **kwargs):
+    """ Description: publish file with davos and SG
+        Return : STING
+        Dependencies :  - publishEditedVersion
+    """
+    
     print "Z2K_publishFile()" 
     tab= "    "
     sPrivPath = path_private_toPublish.absPath()
-    print "*"
-    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment=comment, autoLock=True)[0]
-    print "*"
-
+    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment=comment, autoLock=True, sgTask=sgTask)[0]
     PublishedFile_absPath = PublishedMrc.absPath()
-    print "*"
-
     PublishedFile_shortName = PublishedMrc.fileName() 
-    print "*"
-    
     # PublishedFile_Comment = PublishedMrc.comment()
     
     print tab,"DONE","->",PublishedFile_shortName
@@ -122,6 +122,17 @@ def feedSG_Release(proj="", releasedRefFileP="", fromVersion="042", *args, **kwa
     # waiting for Seb
     pass
 
+def unlockAllUserLock(theUser="jipe",*args, **kwargs):
+    DamProject = damproject.DamProject
+    proj = DamProject(os.environ["DAVOS_INIT_PROJECT"])
+    print "proj=", proj
+
+    dbNodes = proj.findDbNodes("lock:{0}".format(theUser))
+
+    for n in dbNodes:
+        print drcFile
+        drcFile = proj.entryFromDbNode(n)
+        drcFile.setLocked(False)
 
 # WIP ----------------------- ajout du SG publish
 def publishEditedVersionSG(proj="", path_private_toPublish="", comment="test the cashbah moda foka!", 

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ########################################################
-# Name    : Z2K_Chr_Previz_checks
+# Name    : Z2K_Previz_PROPS_checks
 # Version : v010
 # Description : Create previz maya file in .mb with some cleaning one the leadAsset
 # Comment : BASE SCRIPT OUT OF Z2K in v002
@@ -106,6 +106,12 @@ class checkModule(object):
         # decorating functions
         self.printF= self.Z2KprintDeco(jpZ.printF)
         
+        # print scene NAME
+        infoDict = jpZ.infosFromMayaScene()
+        self.printF("ASSET_NAME: {0}  -Version: {1}    - Categorie: {2}".format( infoDict["assetName"],infoDict["version"], infoDict["assetCat"] ) , st="t")
+
+
+
     # decorators ---------------------------
     def Z2KprintDeco(self, func, *args, **kwargs):
         print "func=", func.__name__
@@ -405,7 +411,7 @@ class checkModule(object):
         self.printF(result, st="r")
         self.printF ( "total cleaned skinCluster: {0}/{1}".format( len(deletedDict), len(totalSkinClusterL) ) )
         for i,j in deletedDict.iteritems():
-            self.printF ( "influance Deleted on {0}: {1}".format( i.ljust(15),j ) )
+            self.printF ( "{2} influances Deleted on {0}: {1}".format( i.ljust(15), j, str(len(j) ).zfill(2) ) )
         # --------------------------
         if not result :
             boolResult = False
