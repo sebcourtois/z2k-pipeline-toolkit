@@ -3,6 +3,7 @@ import tkMayaCore as tkc
 import pymel.core.datatypes as dt
 
 import maya.cmds as cmds
+
 import re
 import string
 from dminutes import miscUtils
@@ -631,6 +632,34 @@ def compareHDToPreviz():
 
     else:
          print ("\n***** please select both asset hi-def and asset previz and try again") 
+
+def combineSelectedGeo():
+    """
+    this script merge selected objects only if they are under the same group.
+    It ensure that the resulting object is under the intial group.
+    """
+    print "modeling.combineSelectedGeo()"
+    sSelectionList = cmds.ls(selection = True,l = True)
+    if len(sSelectionList)<2:
+        return
+
+    path = sSelectionList[-1].split(sSelectionList[-1].split("|")[-1])[0].rstrip("|")
+    finalObjectName = sSelectionList[-1].split("|")[-1]
+
+    for each in sSelectionList:
+        if path != each.split(each.split("|")[-1])[0].rstrip("|"):
+            raise ValueError("#### Error: cannot merge 2 elements of a different group")
+
+    mergedObjectName = cmds.polyUnite(sSelectionList,ch=False, mergeUVSets = True, name = finalObjectName )[0]
+
+    groupName = path.split("|")[-1]
+    parentName = path.split(groupName)[0].rstrip("|")
+    if not cmds.ls(path):
+        cmds.group(mergedObjectName, name= groupName, parent = parentName)
+    else:
+        cmds.parent(mergedObjectName, groupName )
+        
+    cmds.select(mergedObjectName)
 
 
 

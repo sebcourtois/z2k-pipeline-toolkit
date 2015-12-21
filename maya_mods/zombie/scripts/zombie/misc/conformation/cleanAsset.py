@@ -14,6 +14,8 @@ reload (miscUtils)
 
 
 
+
+
 answer =  mc.confirmDialog( title='Confirm', message="You are about to delete all the nodes that are not related to the asset structure,\n delete geometry history, all the colors sets and clean the namespaces", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
 if answer != "Cancel": 
 	rendering.deleteAovs()

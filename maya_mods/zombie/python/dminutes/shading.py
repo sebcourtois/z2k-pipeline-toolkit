@@ -881,6 +881,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
         return
 
     conformShaderName("all", selectWrongShadEngine = False, verbose = False )
+    mc.arnoldFlushCache(textures=True)
 
     if fileNodeList == "all":
         fileNodeList = mc.ls("mat_*",type ="file")
