@@ -4,6 +4,7 @@
 
 import os
 import re
+from collections import OrderedDict
 
 import pymel.core as pc
 import maya.cmds as cmds
@@ -18,12 +19,14 @@ from davos.core.damtypes import DamShot, DamAsset
 from davos.core.utils import versionFromName
 
 from zomblib import shotgunengine
+
 import dminutes.maya_scene_operations as mop
 import dminutes.jipeLib_Z2K as jpZ
-reload(jpZ)
 import dminutes.camImpExp as camIE
-reload(camIE)
 import dminutes.infoSetExp as infoE
+
+reload(jpZ)
+reload(camIE)
 reload(infoE)
 
 # get zomb project
@@ -685,9 +688,9 @@ class SceneManager():
         """Compare Shotgun shot<=>assets linking and scene content"""
         logMsg(log='all')
 
-        sgAssets = self.getShotgunContent()
+        sgAstShotConns = self.getShotgunContent()
+        assetShotConnDct = dict((d['asset']['name'], d) for d in sgAstShotConns)
 
-        shotAssetsDct = dict((d['asset']['name'], d) for d in sgAssets)
         assetDataList = []
 
         proj = self.context['damProject']
@@ -695,10 +698,12 @@ class SceneManager():
 
         initData = {'name':'',
                     'sg_info':noneValue,
+                    'sg_asset_shot_conn':None,
                     'resource':noneValue,
                     'path':"",
                     'maya_refs':{},
-                    'file_refs':[] }
+                    'file_refs':[],
+                    'occurences':0 }
 
         sFoundAstList = []
         oFileRefDct = {}
@@ -725,16 +730,16 @@ class SceneManager():
             astData.update(pathData)
 
             sAstName = astData["name"]
-            if sAstName in shotAssetsDct:
-                astData['sg_info'] = okValue
+            if sAstName in assetShotConnDct:
+                astData.update(sg_info=okValue, sg_asset_shot_conn=assetShotConnDct[sAstName])
                 sFoundAstList.append(sAstName)
 
             assetDataList.append(astData)
 
-        for sAstName in shotAssetsDct.iterkeys():
+        for sAstName, astShotConn in assetShotConnDct.iteritems():
             if sAstName not in sFoundAstList:
                 astData = initData.copy()
-                astData.update(name=sAstName, sg_info=okValue)
+                astData.update(name=sAstName, sg_info=okValue, sg_asset_shot_conn=astShotConn)
                 assetDataList.append(astData)
 
         for astData in assetDataList:
@@ -776,16 +781,20 @@ class SceneManager():
                     continue
 
             astData["maya_refs"] = astRcDct
+            astData["occurences"] = len(astData["file_refs"])
 
         return assetDataList
 
     def updateScene(self, addOnly=True):
         """Updates scene Assets from shotgun shot<=>assets linking"""
+
+        sgEntity = self.context["entity"]
+        if sgEntity["type"].lower() != "shot":
+            raise NotImplementedError("Only applies to shots.")
+
         # WIP CORRECTION collapseVariables (ERROR)
         assetDataList = self.listAssetData()
         errorL = []
-        #proj = self.context["damProject"]
-        #astLib = proj.getLibrary("public", "asset_lib")
         sCurRefTag = self.getCurrentTaskRefTag()
 
         count = 0
@@ -831,6 +840,54 @@ class SceneManager():
 
         return True if count else False
 
+    def updateShotgun(self, addOnly=True):
+
+        sgEntity = self.context["entity"]
+        if sgEntity["type"].lower() != "shot":
+            raise NotImplementedError("Only applies to shots.")
+
+        #sShotCode = sgEntity["code"]
+        sMsg = "You're about to update related assets in Shotgun.\n\nUpdate DB from Scene ?"
+        sRes = pc.confirmDialog(title='ARE YOU SURE ?',
+                                message=sMsg,
+                                button=['OK', 'Cancel'],
+                                defaultButton='Cancel',
+                                cancelButton='Cancel',
+                                dismissString='Cancel',
+                                icon="warning")
+        if sRes == "Cancel":
+            pc.displayInfo("Canceled !")
+            return
+
+        proj = self.context['damProject']
+
+        assetDataList = self.listAssetData()
+        assetDataDct = OrderedDict((astData['name'], astData)
+                                        for astData in assetDataList
+                                            if astData["resource"] != noneValue)
+        sAstNameList = assetDataDct.keys()
+
+        sgProj = {"type":"Project", "id":proj._shotgundb._getProjectId()}
+        filters = [["project", "is", sgProj],
+                   ["code", "in", sAstNameList],
+                   ]
+
+        sg = proj._shotgundb.sg
+
+        sgAssetList = sg.find("Asset", filters, ["code"])
+#        sAstCodeList = tuple(sgAst["code"] for sgAst in sgAssetList)
+#        sAstNotInSgList = tuple(s for s in sAstNameList if s not in sAstCodeList)
+
+        proj.updateSgEntity(sgEntity, assets=sgAssetList)
+
+        filters = [["shot", "is", sgEntity],
+                   ]
+        astShotConnList = sg.find("AssetShotConnection", filters, ["sg_occurences", "asset"])
+        for astShotConn in astShotConnList:
+            sAstName = astShotConn["asset"]["name"]
+            iOccur = assetDataDct[sAstName]["occurences"]
+            proj.updateSgEntity(astShotConn, sg_occurences=iOccur)
+
     def getCurrentTaskRefTag(self):
 
         sRefTag = ""
@@ -842,9 +899,6 @@ class SceneManager():
             raise EnvironmentError("No resource file associated with task: '{}'"
                                    .format(sTaskName))
         return sRefTag
-
-    def updateShotgun(self, addOnly=True):
-        pass
 
     def do(self, s_inCmd):
         mop.do(s_inCmd, self.context['task']['content'], self)

@@ -58,7 +58,7 @@ def sceneManagerUI():
 
     initialize()
     pc.showWindow(ui)
-    updateButtons()
+    refreshContextUI()
 
 def initialize(d_inContext=None):
     """Initialize default values (Operator AllowedSteps and CurrentStep...), hide forbidden buttons"""
@@ -111,6 +111,9 @@ def refreshContextUI():
     pc.control('sm_capture_bt', edit=True, enable=contextMatches)
     pc.control('sm_saveWip_bt', edit=True, enable=contextMatches)
     pc.control('sm_publish_bt', edit=True, enable=contextMatches)
+    pc.control('sm_upscene_bt', edit=True, enable=contextMatches)
+    pc.control('sm_updb_bt', edit=True, enable=contextMatches)
+
 
 def setContextUI():
     """Initialize UI from scene"""
@@ -478,10 +481,9 @@ def doRefreshSceneInfo(*args):
     for astData in assetDataList:
 
         oFileRefList = astData["file_refs"]
-        sNumFileRef = str(sum(1 for r in oFileRefList if r.isLoaded()))
 
         sAstName = astData["name"]
-        rowData = [sNumFileRef,
+        rowData = [ str(astData["occurences"]),
                     sAstName,
                     astData["resource"],
                     astData["sg_info"],
@@ -550,11 +552,15 @@ def doUpdateScene(*args):
     if SCENE_MANAGER.updateScene(addOnly):
         doRefreshSceneInfo(args)
 
+    pc.displayWarning("Done !")
+
 def doUpdateShotgun(*args):
     """Matches Shotgun Assets with scene Assets (NOT IMPLEMENTED)"""
     addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
     SCENE_MANAGER.updateShotgun(addOnly)
     doRefreshSceneInfo(args)
+
+    pc.displayWarning("Done !")
 
 def doCapture(*args):
     if SCENE_MANAGER.assert_isEditable():
