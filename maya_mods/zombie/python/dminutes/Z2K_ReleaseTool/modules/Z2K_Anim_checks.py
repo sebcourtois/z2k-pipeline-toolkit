@@ -201,7 +201,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=10, e=True)
+        self.pBar_upd(step=1, maxValue=11, e=True)
 
         # steps
 
@@ -364,6 +364,16 @@ class checkModule(object):
 
         if len(failL):
             self.printF( "failL= {0}".format( failL  ) )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+        # 10 delete Active Blend_shape_grp
+        result = jpZ.deleteActiveBlendShape_grp()
+        # prints -------------------
+        self.printF("deleteActiveBlendShape_grp()", st="t")
+        self.printF(result, st="r")
         # --------------------------
         if not result:
             boolResult = False
@@ -546,7 +556,7 @@ class checkModule(object):
 
 
         # 2 -----
-
+        
 
 
 

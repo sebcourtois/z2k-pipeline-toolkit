@@ -1363,3 +1363,14 @@ def CleanDisconnectedNodes(*args, **kwargs):
 
 
 
+def deleteActiveBlendShape_grp(*args, **kwargs):
+    print "deleteActiveBlendShape_grp()"
+
+    toReturnB = False
+    try:
+        cmds.delete("grp_activeBS")
+        toReturnB=True
+    except Exception,err:
+       print err
+
+    return True
