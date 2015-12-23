@@ -205,7 +205,7 @@ def cleanSet(inRoot):
     return
 
 def createSetControlRecur(inGrp, inRoot, b_inRecursive=True):
-    createdObjs = ([], [],[])
+    createdObjs = ([], [],[],[])
     
     ctrlName = inGrp.name().replace("grp_", "ctrl_")
     icon = None
@@ -228,6 +228,8 @@ def createSetControlRecur(inGrp, inRoot, b_inRecursive=True):
     tkc.setNeutralPose(icon)
     createdObjs[2].append( tkc.constrain(inGrp, icon, "Pose") )
     createdObjs[2].append( tkc.constrain(inGrp, icon, "Scaling") )
+
+    
 
 
     if isRootControl:
@@ -257,6 +259,7 @@ def createSetControlRecur(inGrp, inRoot, b_inRecursive=True):
 
     createdObjs[0].append(icon)
     
+
     if b_inRecursive:
         children = tkc.getChildren(inGrp, False)
         grpsChildren = []
@@ -270,10 +273,15 @@ def createSetControlRecur(inGrp, inRoot, b_inRecursive=True):
                 pc.warning('Unmanaged object {}'.format(child.name()))
 
         for grpChild in grpsChildren:
+            print "grpChild=", grpChild
             subCreatedObjs = createSetControlRecur(grpChild, icon)
             createdObjs[0].extend(subCreatedObjs[0])
             createdObjs[1].extend(subCreatedObjs[1])
             createdObjs[2].extend(subCreatedObjs[2])
+
+            
+             
+
 
     return createdObjs
 
@@ -298,9 +306,37 @@ def rigSet(inRoot):
     
     grp_rig = pc.group(name="grp_rig", empty=True, parent=inRoot)
     
-    ctrls, geos,cstL = createSetControlRecur(children[0], grp_rig)
+    ctrls, geos,cstL,grpL = createSetControlRecur(children[0], grp_rig)
 
-    #We can try to reApply displays if saved
+    # add and connect the visibility attributes on the CTR of each groups -------------------------
+    for ctr in ctrls: 
+        
+
+        conL=cmds.listConnections(ctr+".parentMatrix[0]",d=1,)
+        if conL:
+            if len(conL):
+                con=conL[0]
+           
+                theSource = cmds.listConnections(con.split(".",1)[0], d=1)[0]
+                # print ctr,"->",theSource
+                    
+                theAttr = "camera_visibility"
+                if not cmds.objExists(ctr+"."+theAttr):
+                    print "creating visibility Attr"
+                    cmds.addAttr( str(ctr), longName=theAttr, attributeType= "long", min=0, dv=1, max=1, keyable=True,) 
+                    cmds.setAttr(str(ctr) + "."+theAttr, l=False,)
+                    # connect attr
+                    print "connecting visibility"
+                    cmds.connectAttr(ctr+"."+theAttr,theSource+".v",f=1)
+                
+                theAttr = "global_visibility"
+                if not cmds.objExists(str(ctr)+"."+theAttr):
+                    cmds.addAttr( str(ctr), longName=theAttr, attributeType= "long", min=0, dv=1, max=1, keyable=True,) 
+                    cmds.setAttr(str(ctr) + "."+theAttr, l=False,)
+
+
+
+    #We can try to reApply displays if saved ------------------------------------------------------------
     if pc.attributeQuery(DISPLAYS_CACHE_ATTRNAME, node=inRoot, exists=True):
         try:
             displaysDict = eval(pc.getAttr(inRoot.name() + "." + DISPLAYS_CACHE_ATTRNAME))
@@ -312,6 +348,10 @@ def rigSet(inRoot):
                     tkc.setObjectColor(ctrl, realColor)
         except:
             pc.warning('Cannot reapply displays !')
+
+
+
+
 
     #Put all controls in a set
     if pc.objExists(CTRL_SETNAME):

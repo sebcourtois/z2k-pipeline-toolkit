@@ -1,3 +1,25 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+################################################################
+# Name    : Z2K_BS_Tertiaire_Check_mayaFile
+# Version : 001
+# Description :
+# Author : Jean-Philippe Descoins
+# Date : 2014-04-01
+# Comment : WIP
+################################################################
+#    ! Toute utilisation de ce se script sans autorisation     #
+#                         est interdite !                      #
+#    ! All use of this script without authorization is         #
+#                           forbidden !                        #
+#                                                              #
+#                                                              #
+#                 © Jean-Philippe Descoins                     #
+################################################################
+
+
+
+
 # check maya file, for consistency with .bsd file
 
 import maya.mel as mel
