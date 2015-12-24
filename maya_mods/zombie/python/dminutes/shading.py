@@ -1306,7 +1306,28 @@ def dmnToonMode (mode = ""):
             raise ValueError("#### Error: this mode is only avalayble for 'env' and 'c2d', you are working on a: "+assetType) 
 
 
-            
+
+def importLightRig(lgtRig = "lgtRig_outdoor"):
+
+    if mc.ls("|asset"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        assetName = mainFilePathElem[-2]
+        assetType = mainFilePathElem[-3]
+        assetFileType = mainFilePathElem[-1].split("-")[0].split("_")[-1]
+        if  mainFilePathElem[-4] == "asset":
+            lgtRigFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_MISC_PATH","shading","lightRigs",lgtRig+".ma"))
+            lgtRigFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(lgtRigFilePath)))
+        else:
+            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+    else :
+        raise ValueError("#### Error: no '|asset' could be found in this scene")
+
+
+
+    print "#### {:>7}: importing '{}'".format("Info",lgtRigFilePath_exp)
+    mc.file( lgtRigFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace="lgtRig", preserveReferences= True )
+
  
 
 

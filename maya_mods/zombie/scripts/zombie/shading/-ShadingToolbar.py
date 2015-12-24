@@ -12,6 +12,10 @@ reload(assetconformation)
 from functools import partial
 
 
+def buttonUnused(*args):
+	shading.dmnToonPreset( preset = "")
+
+
 #shading camera
 def buttonDefaultShadingCamGet(*args):
 	shading.referenceShadingCamera()
@@ -27,6 +31,9 @@ def buttonSetRenderOptionJpg(*args):
 	rendering.setArnoldRenderOption("jpg")
 
 
+#light rigs
+def buttonImportLgtRigOutdoor(*args):
+	shading.importLightRig(lgtRig = "lgtRig_outdoor")
 
 #conform texture path
 def buttonConformAllTexturePath(*args):
@@ -84,8 +91,7 @@ def buttonDmnToonConstant(*args):
 	shading.dmnToonPreset( preset = "constant")
 def buttonDmnToonOutline(*args):
 	shading.dmnToonPreset( preset = "outline")
-def buttonUnused(*args):
-	shading.dmnToonPreset( preset = "")
+
 
 
 #shading presets
@@ -109,7 +115,7 @@ if mc.window( "shadingToolBox", exists = True ):
 
 
 window = mc.window( "shadingToolBox", title="Shading Toolbox", iconName='Shading',toolbox = True, sizeable = False )
-mc.window(window, e = True, widthHeight=(260, 755))
+mc.window(window, e = True, widthHeight=(260, 775))
 
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 
@@ -123,6 +129,16 @@ mc.setParent( '..' )
 mc.flowLayout()
 mc.button( label='Remove', recomputeSize = False, width = 250, c= buttonDefaultShadingCamRemove )
 mc.setParent( '..' )
+
+
+#import light rigs
+mc.separator(style = 'in', h = 5  )
+mc.text(label="shading light rigs", align='center')
+mc.flowLayout( )
+mc.button( label='import outdoor', c= buttonImportLgtRigOutdoor, recomputeSize = False, width = 125 )
+mc.button( label='unused', c= buttonUnused, recomputeSize = False, width = 125 )
+mc.setParent( '..' )
+
 
 #Render Settings
 mc.separator(style = 'in', h = 5  )
