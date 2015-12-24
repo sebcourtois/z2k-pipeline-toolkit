@@ -43,6 +43,8 @@ class project(object):
     allowed_texture_formats = (".tga", ".jpg", ".exr")
     sg_versions_mandatory = True
 
+    all_sync_sites = ("dmn_paris", "dmn_angouleme", "online", "dream_wall", "pipangai")
+
 class shot_lib(object):
 
     entity_class = "davos.core.damtypes.DamShot"
@@ -95,11 +97,15 @@ class shot_lib(object):
                     "sg_tasks":("layout",),
                     "upload_to_sg":"layout_capture"
                     },
-    "animatic_capture":{#"outcomes":("previz_capture",),
-                        "create_sg_version":True,
+    "animatic_capture":{"create_sg_version":True,
                         "sg_tasks":("animatic",),
-                        #"upload_to_sg":"previz_capture"
                         },
+    "data_dir":{"default_sync_rules":"all_sites",
+                },
+    "previz_dir":{"default_sync_rules":"all_sites",
+                  },
+    "layout_dir":{"default_sync_rules":"all_sites",
+                  },
     }
 
 
