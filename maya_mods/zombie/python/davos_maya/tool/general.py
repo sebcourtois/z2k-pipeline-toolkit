@@ -21,13 +21,13 @@ def projectFromScene(scenePath=""):
 
     return DamProject.fromPath(sCurScnPath, fail=True)
 
-def entityFromScene(scenePath=""):
+def entityFromScene(scenePath="", fail=True):
 
     sCurScnPath = scenePath if scenePath else pm.sceneName()
     if not sCurScnPath:
         raise ValueError("Invalid scene name: '{}'".format(sCurScnPath))
 
     proj = DamProject.fromPath(sCurScnPath, fail=True)
-    damEntity = proj.entityFromPath(sCurScnPath, fail=True)
+    damEntity = proj.entityFromPath(sCurScnPath, fail=fail)
 
     return damEntity
