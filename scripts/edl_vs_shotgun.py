@@ -20,7 +20,7 @@ def launch():
         sEdlPath = sys.argv[1]
         sPath, sExt = os.path.splitext(sEdlPath)
         if sExt.lower() == ".edl":
-            sCsvPath = sPath + "_status.csv"
+            sCsvPath = sPath + "_EDLvsSG.csv"
 
     if not (sCsvPath and sEdlPath):
         raise RuntimeError("Please, drag and drop an EDL file on me.")
