@@ -3,6 +3,9 @@
 import pymel.core as pm
 import pymel.util as pmu
 
+import pymel.versions
+pmv = pymel.versions
+
 from functools import partial
 
 from pytaya.util.toolsetup import ToolSetup
@@ -66,6 +69,31 @@ class DavosSetup(ToolSetup):
             pm.menuItem(label="Publish...", c=publishing.publishCurrentScene)
 
         ToolSetup.populateMenu(self)
+
+    def beforeBuildingMenu(self):
+
+        if not ToolSetup.beforeBuildingMenu(self):
+            return False
+
+        sPluginList = ("AbcExport.mll",
+                       "AbcImport.mll",
+                       "atomImportExport.mll",
+                       "matrixNodes.mll" if (pmv.current() > pmv.v2013) else "decomposeMatrix.mll",
+                       )
+
+        for sPlugin in sPluginList:
+
+            if not pm.pluginInfo(sPlugin, q=True, loaded=True):
+
+                try:
+                    pm.loadPlugin(sPlugin)
+                except Exception, msg:
+                    pm.displayWarning(msg)
+                    continue
+
+                pm.pluginInfo(sPlugin, e=True, autoload=True)
+
+        return True
 
     def afterBuildingMenu(self):
         ToolSetup.afterBuildingMenu(self)

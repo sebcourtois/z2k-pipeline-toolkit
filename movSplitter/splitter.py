@@ -1,145 +1,26 @@
+
 import sys
-import re
 import os
 #import subprocess
 
 from pytd.util.sysutils import inDevMode
+from pytd.util.fsutils import copyFile
+
 from davos.core.damproject import DamProject
 from davos.core.damtypes import DamShot
-from pytd.util.fsutils import copyFile
+
+from zomblib.editing import parseEdl, convertTcToSeconds, convertTcToSecondsTc
+from zomblib.editing import FPS
 
 if inDevMode():
     SHOT_FOLDER = "C:\\Users\\sebcourtois\\zombillenium\\shot\\"
 else:
     SHOT_FOLDER = "\\\\Zombiwalk\\Projects\\zomb\\shot\\"
-SHOT_TEMPLATE = "{sequence}\\{sequence}_{shot}\\00_data"
 
-FPS = 24.0
-TC_SEPARATOR = ":"
+SHOT_TEMPLATE = "{sequence}\\{sequence}_{shot}\\00_data"
 
 def getShotFolder(in_sSequence, in_sShot):
     return SHOT_FOLDER + SHOT_TEMPLATE.format(sequence=in_sSequence, shot=in_sShot)
-
-def convertTcToSecondsTc(in_Tc, in_fps=FPS, in_iHoursOffset=0, in_iMinutesOffset=0,
-                         in_iSecondsOffset=0, in_iFramesOffset=0):
-
-    hours, minutes, seconds, frames = [int(val) for val in in_Tc.split(TC_SEPARATOR)]
-
-    frames += in_iFramesOffset
-    if frames < 0:
-        frames += FPS
-        in_iSecondsOffset -= 1
-    elif frames >= FPS:
-        frames -= FPS
-        in_iSecondsOffset += 1
-
-    seconds += in_iSecondsOffset
-    if seconds < 0:
-        seconds += 60
-        in_iMinutesOffset -= 1
-    elif seconds >= 60:
-        seconds -= 60
-        in_iMinutesOffset += 1
-
-    minutes += in_iMinutesOffset
-    if minutes < 0:
-        minutes += 60
-        in_iHoursOffset -= 1
-    elif minutes >= 60:
-        minutes -= 60
-        in_iHoursOffset += 1
-
-    hours += in_iHoursOffset
-
-    #print "{0} {1} {2} {3}".format(hours, minutes, seconds, frames)
-
-    return "{1}{0}{2}{0}{3}".format(TC_SEPARATOR, hours, minutes, seconds + frames / FPS)
-
-def convertTcToSeconds(in_Tc, in_fps=FPS, in_iHoursOffset=0, in_iMinutesOffset=0,
-                       in_iSecondsOffset=0, in_iFramesOffset=0):
-
-    hours, minutes, seconds, frames = [int(val) for val in in_Tc.split(TC_SEPARATOR)]
-
-    frames += in_iFramesOffset
-    if frames < 0:
-        frames += FPS
-        in_iSecondsOffset -= 1
-    elif frames >= FPS:
-        frames -= FPS
-        in_iSecondsOffset += 1
-
-    seconds += in_iSecondsOffset
-    if seconds < 0:
-        seconds += 60
-        in_iMinutesOffset -= 1
-    elif seconds >= 60:
-        seconds -= 60
-        in_iMinutesOffset += 1
-
-    minutes += in_iMinutesOffset
-    if minutes < 0:
-        minutes += 60
-        in_iHoursOffset -= 1
-    elif minutes >= 60:
-        minutes -= 60
-        in_iHoursOffset += 1
-
-    hours += in_iHoursOffset
-
-    return hours * 3600 + minutes * 60 + seconds + frames / FPS
-
-def parseEdl(in_sEdlPath, in_sSeqFilter=None):
-    f = None
-    lines = []
-    shots = []
-
-    try:
-        f = open(in_sEdlPath, 'r')
-        lines = f.readlines()
-    except Exception as e:
-        print "Cannot load edl file from " + in_sEdlPath + " : " + str(e)
-    finally:
-        if f != None:
-            f.close()
-
-    if len(lines) == 0:
-        print "Can't read edl lines, empty file ?"
-        return shots
-
-    tcRegEx = re.compile("(\d{3})\s+GEN\s+V\s+C\s+\d{2}:\d{2}:\d{2}:\d{2}\s+\d{2}:\d{2}:\d{2}:\d{2}\s+(\d{2}:\d{2}:\d{2}:\d{2})\s+(\d{2}:\d{2}:\d{2}:\d{2})")
-    shotRegEx = re.compile(".*FROM CLIP NAME:  (SQ\d{4}[a-zA-Z]?)\s\s(P\d{4}[a-zA-Z]?)")
-    seqRegEx = re.compile(".*FROM CLIP NAME:  (SQ\d{4}[a-zA-Z]?)")
-
-    fileLength = len(lines)
-
-    for counter in range(fileLength):
-        matchObj = tcRegEx.match(lines[counter])
-        if matchObj:
-            shotMatchObj = shotRegEx.match(lines[counter + 1])
-
-            if shotMatchObj:
-                shots.append({
-                            "index":matchObj.group(1).strip(),
-                            "sequence":shotMatchObj.group(1).strip(),
-                            "shot":shotMatchObj.group(2).strip(),
-                            "start":matchObj.group(2).strip(),
-                            "end":matchObj.group(3).strip()
-                            })
-            else:
-                seqMatchObj = seqRegEx.match(lines[counter + 1])
-                if seqMatchObj:
-                    shots.append({
-                                "index":matchObj.group(1).strip(),
-                                "sequence":seqMatchObj.group(1).strip(),
-                                "shot":'P0000A',
-                                "start":matchObj.group(2).strip(),
-                                "end":matchObj.group(3).strip()
-                                })
-                else:
-                    print ("Error reading shot info for line {0} ({1})"
-                            .format(counter, lines[counter + 1].replace('\n', '')))
-                    return None
-    return shots
 
 def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideName=None,
                 doSplit=True, exportCsv=True, in_sShotSuffix="", in_bExportInShotFolders=True):
@@ -197,9 +78,7 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
                 cmdLine += " {0}\\".format(sPrivOutDirPath)
 
             if doSplit:
-
                 os.system(cmdLine)
-
             else:
                 print cmdLine
 
@@ -234,11 +113,12 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
                     .format(counter, lenShots, percent, "".join(bar)))
             counter += 1
 
-        fmtFields = (sequenceCode + "_" + shotCode, startseconds * FPS,
-                    endseconds * FPS,
-                    (endseconds - startseconds) * FPS + 1,
-                    101,
-                    101 + (endseconds - startseconds) * FPS)
+        fmtFields = (sequenceCode + "_" + shotCode,
+                     startseconds * FPS,
+                     endseconds * FPS,
+                     (endseconds - startseconds) * FPS + 1,
+                     101,
+                     101 + (endseconds - startseconds) * FPS)
         csv += "{0},{1:.0f},{2:.0f},{3:.0f},{4:.0f},{5:.0f}\n".format(*fmtFields)
 
     if exportCsv:

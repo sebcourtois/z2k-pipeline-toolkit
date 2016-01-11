@@ -12,6 +12,10 @@ reload(assetconformation)
 from functools import partial
 
 
+def buttonUnused(*args):
+	shading.dmnToonPreset( preset = "")
+
+
 #shading camera
 def buttonDefaultShadingCamGet(*args):
 	shading.referenceShadingCamera()
@@ -27,6 +31,9 @@ def buttonSetRenderOptionJpg(*args):
 	rendering.setArnoldRenderOption("jpg")
 
 
+#light rigs
+def buttonImportLgtRigOutdoor(*args):
+	shading.importLightRig(lgtRig = "lgtRig_outdoor")
 
 #conform texture path
 def buttonConformAllTexturePath(*args):
@@ -77,17 +84,27 @@ def buttonTxUpdateSelection(*args):
 	shading.generateTxForRender( fileNodeList = 'selection', updateOnly=True)
 
 
-#dmnToon presets
+#shading presets
 def buttonDmnToonReflectingGlass(*args):
 	shading.dmnToonPreset( preset = "reflectingGlass")
 def buttonDmnToonConstant(*args):
 	shading.dmnToonPreset( preset = "constant")
 def buttonDmnToonOutline(*args):
 	shading.dmnToonPreset( preset = "outline")
-def buttonDmnToonSetIllum(*args):
-	shading.dmnToonPreset( preset = "setIllum")
 
 
+
+#shading presets
+def buttonDmnToonSetIndoor(*args):
+	shading.dmnToonMode( mode = "setIndoor")
+def buttonDmnToonSetOutdoor(*args):
+	shading.dmnToonMode( mode = "setOutdoor")
+def buttonDmnToonPropsToon(*args):
+	shading.dmnToonMode( mode = "propsToon")
+def buttonDmnToonPropsLambert(*args):
+	shading.dmnToonMode( mode = "propsLambert")
+def buttonDmnToonPrpC2d(*args):
+	shading.dmnToonMode( mode = "2Delement")
 
 
 # Make a new window
@@ -98,7 +115,7 @@ if mc.window( "shadingToolBox", exists = True ):
 
 
 window = mc.window( "shadingToolBox", title="Shading Toolbox", iconName='Shading',toolbox = True, sizeable = False )
-mc.window(window, e = True, widthHeight=(260, 650))
+mc.window(window, e = True, widthHeight=(260, 775))
 
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 
@@ -112,6 +129,16 @@ mc.setParent( '..' )
 mc.flowLayout()
 mc.button( label='Remove', recomputeSize = False, width = 250, c= buttonDefaultShadingCamRemove )
 mc.setParent( '..' )
+
+
+#import light rigs
+mc.separator(style = 'in', h = 5  )
+mc.text(label="shading light rigs", align='center')
+mc.flowLayout( )
+mc.button( label='import outdoor', c= buttonImportLgtRigOutdoor, recomputeSize = False, width = 125 )
+mc.button( label='unused', c= buttonUnused, recomputeSize = False, width = 125 )
+mc.setParent( '..' )
+
 
 #Render Settings
 mc.separator(style = 'in', h = 5  )
@@ -183,17 +210,32 @@ mc.button( label='Update Selection',  recomputeSize = False, width = 125, c= but
 mc.setParent( '..' )
 
 
-#dmnToon presets
+#shading presets
 mc.separator(style = 'in', h = 5  )
-mc.text(label="dmnToon presets", align='center')
+mc.text(label="shading presets (selected dmnToon)", align='center')
 mc.flowLayout( )
 mc.button( label='Reflecting Glass', recomputeSize = False, width = 125, c= buttonDmnToonReflectingGlass )
 mc.button( label='Constant', recomputeSize = False, width = 125, c= buttonDmnToonConstant )
 mc.setParent( '..' )
 mc.flowLayout()
 mc.button( label='Outline', recomputeSize = False, width = 125, c=buttonDmnToonOutline )
-mc.button( label='Set Illumination',  recomputeSize = False, width = 125, c= buttonDmnToonSetIllum )
+mc.button( label='unused',  recomputeSize = False, width = 125, c=buttonUnused )
 mc.setParent( '..' )
+
+#shading modes
+mc.separator(style = 'in', h = 5  )
+mc.text(label="shading modes (all dmnToon)", align='center')
+mc.flowLayout( )
+mc.button( label='set Indoor', recomputeSize = False, width = 125, c= buttonDmnToonSetIndoor )
+mc.button( label='set Outdoor', recomputeSize = False, width = 125, c= buttonDmnToonSetOutdoor )
+mc.setParent( '..' )
+mc.flowLayout()
+mc.button( label='prp vhl Toon', recomputeSize = False, width = 125, c=buttonDmnToonPropsToon )
+mc.button( label='prp vhl Lambert', recomputeSize = False, width = 125, c=buttonDmnToonPropsLambert )
+mc.setParent( '..' )
+mc.flowLayout()
+mc.button( label='env c2d', recomputeSize = False, width = 125, c=buttonDmnToonPrpC2d )
+mc.button( label='unused',  recomputeSize = False, width = 125, c=buttonUnused )
 
 mc.showWindow( window )
 

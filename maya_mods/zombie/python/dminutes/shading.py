@@ -1149,13 +1149,6 @@ def dmnToonPreset (preset = ""):
     elif preset == "constant":
         for each in dmnToonNodeList:
             print "####info: setting dmnToon node: "+each+" as "+preset
-            miscUtils.setAttrC(each+".diffuseIntensity", 1)
-            miscUtils.setAttrC(each+".ambientIntensity", 1)
-
-            miscUtils.setAttrC(each+".shadowMaskWeight", 0)
-            miscUtils.setAttrC(each+".shadowMaskWeight01", 0)
-            miscUtils.setAttrC(each+".shadowMaskWeight02", 0)
-            miscUtils.setAttrC(each+".shadowMaskWeight03", 0)
 
             miscUtils.setAttrC(each+".rimToonWeight", 0)
             miscUtils.setAttrC(each+".lambertWeight", 0)
@@ -1164,8 +1157,10 @@ def dmnToonPreset (preset = ""):
             miscUtils.setAttrC(each+".toonWeight", 0)
             miscUtils.setAttrC(each+".contourWeight", 0)
 
-            miscUtils.setAttrC(each+".reflectionWeight", 0)
-            miscUtils.setAttrC(each+".specularWeight", 0)
+            miscUtils.setAttrC(each+".ambientIntensity", 0)
+            miscUtils.setAttrC(each+".diffuseIntensity", 1)
+
+
 
 
     elif preset == "outline":
@@ -1187,20 +1182,6 @@ def dmnToonPreset (preset = ""):
             except: pass
 
 
-    elif preset == "setIllum":
-        for each in dmnToonNodeList:
-            print "####info: setting dmnToon node: "+each+" as "+preset
-
-            miscUtils.setAttrC(each+".shadowMaskWeight", 0)
-            miscUtils.setAttrC(each+".shadowMaskWeight01", 0)
-            miscUtils.setAttrC(each+".shadowMaskWeight02", 0)
-            miscUtils.setAttrC(each+".shadowMaskWeight03", 0)
-
-            miscUtils.setAttrC(each+".rimToonWeight", 0)
-            miscUtils.setAttrC(each+".incidenceWeight", 0)
-            miscUtils.setAttrC(each+".contourWeight", 0)
-
-            miscUtils.setAttrC(each+".toonSoftness", 1)
 
     else:
         print "#### {:>7}: preset '"+preset+"' is not defined ".format("Error")
@@ -1209,10 +1190,145 @@ def dmnToonPreset (preset = ""):
 
 
 
+def dmnToonMode (mode = ""):
+
+    dmnToonNodeList = mc.ls( type ="dmnToon")
+
+    mainFilePath = mc.file(q=True, list = True)[0]
+    mainFilePathElem = mainFilePath.split("/")
+    assetType =  mainFilePathElem [-3]
+
+    if not dmnToonNodeList:
+        print "#### {:>7}: no dmnToon node selected, please select at least one of them and run again the script".format("Warning")
+        return
+
+ 
+    elif mode == "setIndoor":
+        if assetType ==  "set":
+            myMessage = "You are about to set the following defaut values on all the dmnToon in the scene:\n   - rimToonWeight = 0\n   - incidenceWeight = 0\n   - contourWeight = 0\n   - occlusionWeight = 0.666\n   - toonSoftness = 1\n   - occlusionMaxDist = 10\n    Do you want to continue?"
+            answer =  mc.confirmDialog( title='Confirm : setIndoor', message=myMessage, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+            if answer == "Cancel": 
+                return
+            for each in dmnToonNodeList:
+                miscUtils.setAttrC(each+".rimToonWeight", 0)
+                miscUtils.setAttrC(each+".incidenceWeight", 0)
+                miscUtils.setAttrC(each+".contourWeight", 0)
+                miscUtils.setAttrC(each+".occlusionWeight", 0.666)
+                miscUtils.setAttrC(each+".toonSoftness", 1)
+
+                miscUtils.setAttrC(each+".occlusionMaxDist", 10)
+
+            print "#### {:>7}: {} dmnToon nodes switched to {} mode".format("Info",len(dmnToonNodeList),mode)
+        else:  
+            raise ValueError("#### Error: this mode is only avalayble for 'set', you are working on a: "+assetType) 
 
 
-  
 
+    elif mode == "setOutdoor":
+        if assetType ==  "set":
+            myMessage = "You are about to set the following defaut values on all the dmnToon in the scene:\n   - rimToonWeight = 0\n   - incidenceWeight = 0\n   - contourWeight = 0\n   - occlusionWeight = 0.666\n   - toonSoftness = 1\n   - occlusionMaxDist = 100\n    Do you want to continue?"
+            answer =  mc.confirmDialog( title='Confirm: setOutdoor', message=myMessage, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+            if answer == "Cancel": 
+                return
+            for each in dmnToonNodeList:
+                miscUtils.setAttrC(each+".rimToonWeight", 0)
+                miscUtils.setAttrC(each+".incidenceWeight", 0)
+                miscUtils.setAttrC(each+".contourWeight", 0)
+                miscUtils.setAttrC(each+".occlusionWeight", 0.666)
+                miscUtils.setAttrC(each+".toonSoftness", 1)
+
+                miscUtils.setAttrC(each+".occlusionMaxDist", 100)
+
+            print "#### {:>7}: {} dmnToon nodes switched to {} mode".format("Info",len(dmnToonNodeList),mode)
+        else:  
+            raise ValueError("#### Error: this mode is only avalayble for 'set', you are working on a: "+assetType) 
+
+
+    elif mode == "propsLambert":
+        if assetType ==  "prp" or assetType ==  "vhl":
+            myMessage = "You are about to set the following defaut values on all the dmnToon in the scene:\n   - rimToonWeight = 1\n   - incidenceWeight = 0.333\n   - contourWeight = 0\n   - occlusionWeight = 0.666\n   - toonSoftness = 1\n   - occlusionMaxDist = 5\n    Do you want to continue?"
+            answer =  mc.confirmDialog( title='Confirm: propsLambert', message=myMessage, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+            if answer == "Cancel": 
+                return
+            for each in dmnToonNodeList:
+                miscUtils.setAttrC(each+".rimToonWeight", 1)
+                miscUtils.setAttrC(each+".incidenceWeight", 0.333)
+                miscUtils.setAttrC(each+".contourWeight", 0)
+                miscUtils.setAttrC(each+".occlusionWeight", 0.666)
+                miscUtils.setAttrC(each+".toonSoftness", 1)
+
+                miscUtils.setAttrC(each+".occlusionMaxDist", 5)
+
+            print "#### {:>7}: {} dmnToon nodes switched to {} mode".format("Info",len(dmnToonNodeList),mode)
+        else:  
+            raise ValueError("#### Error: this mode is only avalayble for 'prp' and 'vhl', you are working on a: "+assetType)
+
+
+    elif mode == "propsToon":
+        if assetType ==  "prp" or assetType ==  "vhl":
+            myMessage = "You are about to set the following defaut values on all the dmnToon in the scene:\n   - rimToonWeight = 1\n   - incidenceWeight = 0.333\n   - contourWeight = 1\n   - occlusionWeight = 0.333\n   - toonSoftness = 0\n   - occlusionMaxDist = 5\n    Do you want to continue?"
+            answer =  mc.confirmDialog( title='Confirm: propsToon', message=myMessage, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+            if answer == "Cancel": 
+                return
+            for each in dmnToonNodeList:
+                miscUtils.setAttrC(each+".rimToonWeight", 1)
+                miscUtils.setAttrC(each+".incidenceWeight", 0.333)
+                miscUtils.setAttrC(each+".contourWeight", 1)
+                miscUtils.setAttrC(each+".occlusionWeight", 0.333)
+                miscUtils.setAttrC(each+".toonSoftness", 0)
+
+                miscUtils.setAttrC(each+".occlusionMaxDist", 5)
+
+            print "#### {:>7}: {} dmnToon nodes switched to {} mode".format("Info",len(dmnToonNodeList),mode)
+        else:  
+            raise ValueError("#### Error: this mode is only avalayble for 'prp' and 'vhl', you are working on a: "+assetType)
+
+
+    elif mode == "2Delement":
+        if assetType ==  "env" or assetType ==  "c2d":
+            myMessage = "You are about to set the following defaut values on all the dmnToon in the scene:\n   - rimToonWeight = 0\n   - incidenceWeight = 0\n   - contourWeight = 0\n   - occlusionWeight = 0\n   - toonWeight = 0\n   - lambertWeight = 0\n   - ambientIntensity = 0\n   - diffuseIntensity = 1\n    Do you want to continue?"
+            answer =  mc.confirmDialog( title='Confirm: propsToon', message=myMessage, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+            if answer == "Cancel": 
+                return
+            for each in dmnToonNodeList:
+                miscUtils.setAttrC(each+".rimToonWeight", 0)
+                miscUtils.setAttrC(each+".incidenceWeight", 0)
+                miscUtils.setAttrC(each+".contourWeight", 0)
+                miscUtils.setAttrC(each+".occlusionWeight", 0)
+                miscUtils.setAttrC(each+".toonWeight", 0)
+                miscUtils.setAttrC(each+".lambertWeight", 0)
+
+                miscUtils.setAttrC(each+".ambientIntensity", 0)
+                miscUtils.setAttrC(each+".diffuseIntensity", 1)
+
+            print "#### {:>7}: {} dmnToon nodes switched to {} mode".format("Info",len(dmnToonNodeList),mode)
+        else:  
+            raise ValueError("#### Error: this mode is only avalayble for 'env' and 'c2d', you are working on a: "+assetType) 
+
+
+
+def importLightRig(lgtRig = "lgtRig_outdoor"):
+
+    if mc.ls("|asset"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        assetName = mainFilePathElem[-2]
+        assetType = mainFilePathElem[-3]
+        assetFileType = mainFilePathElem[-1].split("-")[0].split("_")[-1]
+        if  mainFilePathElem[-4] == "asset":
+            lgtRigFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_MISC_PATH","shading","lightRigs",lgtRig+".ma"))
+            lgtRigFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(lgtRigFilePath)))
+        else:
+            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+    else :
+        raise ValueError("#### Error: no '|asset' could be found in this scene")
+
+
+
+    print "#### {:>7}: importing '{}'".format("Info",lgtRigFilePath_exp)
+    mc.file( lgtRigFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace="lgtRig", preserveReferences= True )
+
+ 
 
 
 

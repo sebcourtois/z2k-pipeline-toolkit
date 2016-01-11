@@ -69,23 +69,25 @@ class MrcFile(DrcFile):
 
     def mayaImportScene(self, *args, **kwargs):
 
-        sNamespace = ""
-        p = self.absPath()
+        sNamespace = kwargs.pop("namespace", kwargs.pop("ns", ""))
 
         if self.isPublic():
 
             p = self.envPath()
 
-            damEntity = self.getEntity()
-            if damEntity:
-                refDir = damEntity.getResource("public", "ref_dir", None)
-                if refDir and (normCase(self.parentDir().absPath()) == normCase(refDir.absPath())):
-                    sNamespace = underJoin((damEntity.name, padded(1, 2)))
+            if not sNamespace:
+                damEntity = self.getEntity()
+                if damEntity:
+                    refDir = damEntity.getResource("public", "ref_dir", None)
+                    if refDir and (normCase(self.parentDir().absPath()) == normCase(refDir.absPath())):
+                        sNamespace = underJoin((damEntity.name, padded(1, 2)))
+        else:
+            p = self.absPath()
 
         if not sNamespace:
             sNamespace = underJoin((self.name.split(".", 1)[0], padded(1, 2)))
 
-        return myasys.importFile(p, reference=True, ns=sNamespace, **kwargs)
+        return myasys.importFile(p, reference=True, namespace=sNamespace, **kwargs)
 
     def mayaImportImage(self):
 

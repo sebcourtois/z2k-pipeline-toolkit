@@ -364,7 +364,7 @@ def init_previz_scene(o_inSceneManager):
 
     camDefaultPath = o_inSceneManager.context['damProject'].getPath('public', 'camera', 'scene', tokens={'name':'cam_shot_default'})
 
-    camName = 'cam_{0}'.format(o_inSceneManager.context['entity']['code'])
+    sCamNspace = o_inSceneManager.getShotCamNamespace()
 
     #rename any other shot camera
     remainingCamera = None
@@ -377,7 +377,7 @@ def init_previz_scene(o_inSceneManager):
                 if camsLength == 1:
                     remainingCamera = otherCam
                     break
-                if not camName in otherCam.namespace():
+                if sCamNspace not in otherCam.namespace():
                     oldNs = otherCam.namespace()
                     otherRoot = getRoot(otherCam)
                     pc.delete(otherRoot)
@@ -386,15 +386,15 @@ def init_previz_scene(o_inSceneManager):
         else:
             remainingCamera = otherCams[0]
 
-        if remainingCamera != None and remainingCamera.namespace() != '{0}:'.format(camName):
+        if remainingCamera != None and remainingCamera.namespace() != '{0}:'.format(sCamNspace):
             #rename camera
-            pc.namespace(rename=(remainingCamera.namespace(), camName))
+            pc.namespace(rename=(remainingCamera.namespace(), sCamNspace))
 
-    camObjs = pc.ls('{0}:*'.format(camName), type='camera')
+    camObjs = pc.ls('{0}:*'.format(sCamNspace), type='camera')
     if len(camObjs) == 0:
         if os.path.isfile(camDefaultPath):
-            importAsset(camDefaultPath, camName, False)
-            camObjs = pc.ls('{0}:*'.format(camName), type='camera')
+            importAsset(camDefaultPath, sCamNspace, False)
+            camObjs = pc.ls('{0}:*'.format(sCamNspace), type='camera')
         else:
             pc.warning('Default camera file cannot be found ({0})'.format(camDefaultPath))
 
@@ -402,7 +402,7 @@ def init_previz_scene(o_inSceneManager):
         perspPanel = mc.getPanel(withLabel='Persp View')
         pc.modelPanel(perspPanel, edit=True, camera=camObjs[0])
     else:
-        pc.warning("Cannot find the shot camera {0} !!".format(camName))
+        pc.warning("Cannot find the shot camera {0} !!".format(sCamNspace))
 
     #image plane "Y:\shot\...\00_data\sqXXXX_shXXXXa_animatic.mov"
     imgPlanePath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_capture')
@@ -446,7 +446,70 @@ COMMANDS = {
     }
 }
 
+def switchPrevizCamToRef(sceneManager):
 
+    oShotCam = sceneManager.getShotCamera()
+    if not oShotCam:
+        return
+
+    if oShotCam.isReferenced():
+        return
+
+    from tempfile import NamedTemporaryFile
+    tmpFile = NamedTemporaryFile(suffix=".atom", delete=False)
+    sAtomFilePath = os.path.normpath(tmpFile.name).replace("\\", "/")
+    tmpFile.close()
+
+    try:
+        
+        from pytaya.core import system as myasys
+
+        sCamNs = oShotCam.parentNamespace()
+        sCamAstGrp = sCamNs + ":asset"
+
+        oCamAstGrp = pc.PyNode(sCamAstGrp)
+        oParent = oCamAstGrp.getParent()
+
+        mc.select(sCamAstGrp)
+
+        myasys.exportAtomFile(sAtomFilePath,
+                              SDK=True,
+                              constraints=True,
+                              animLayers=True,
+                              statics=True,
+                              baked=True,
+                              points=False,
+                              hierarchy="below",
+                              channels="all_keyable",
+                              timeRange="all",
+                              )
+
+        sOldCamNs = sCamNs + "_OLD"
+        mc.namespace(rename=(sCamNs, sOldCamNs), parent=':')
+        mc.refresh()
+
+        damCam = sceneManager.context["damProject"].getAsset("cam_shot_default")
+        camFile = damCam.getResource("public", "scene")
+        camFile.mayaImportScene(ns=sCamNs)
+        mc.refresh()
+
+        oCamAstGrp = pc.PyNode(sCamAstGrp)
+        pc.parent(oCamAstGrp, oParent)
+
+        mc.select(sCamAstGrp)
+
+        myasys.importAtomFile(sAtomFilePath,
+                              targetTime="from_file",
+                              option="replace",
+                              match="string",
+                              selected="childrenToo")
+
+        oOldCam = pc.PyNode(sOldCamNs + ":cam_shot_default")
+        oOldCam.getShape().setAttr("renderable", False)
+        mc.setAttr(sOldCamNs + ":asset.visibility", False)
+
+    finally:
+        os.remove(sAtomFilePath)
 
 def exportCam(sceneName="", *args, **kwargs):
     """ Description: export la camera du given shot

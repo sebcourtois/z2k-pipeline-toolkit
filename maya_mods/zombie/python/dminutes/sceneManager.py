@@ -663,7 +663,7 @@ class SceneManager():
             # here is incerted the publish of the camera of the scene
             print "exporting the camera of the shot"
             camImpExpI = camIE.camImpExp()
-            camImpExpI.exportCam (sceneName=jpZ.getShotName(),)
+            camImpExpI.exportCam(sceneName=jpZ.getShotName())
 
             # here is the publish of the infoSet file with the position of the global and local srt of sets assets
             infoSetExpI = infoE.infoSetExp()
@@ -916,6 +916,20 @@ class SceneManager():
             raise ValueError("Invalid shot duration: {}".format(duration))
 
         return duration
+
+    def getShotCamNamespace(self):
+        return 'cam_{0}'.format(self.context['entity']['code'])
+
+    def getShotCamera(self):
+        sCamName = self.getShotCamNamespace() + ":cam_shot_default"
+        sCamList = cmds.ls(sCamName)
+        if not sCamList:
+            return None
+
+        if len(sCamList) == 1:
+            return pc.PyNode(sCamList[0])
+        else:
+            raise RuntimeError("Multiple cameras named '{}'".format(sCamName))
 
 # capture
 CAPTUREINFO = {}
