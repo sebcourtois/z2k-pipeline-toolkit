@@ -198,14 +198,13 @@ def quickSceneCleanUp():
 def publishCurrentScene(*args, **kwargs):
 
     sCurScnPath = pm.sceneName()
-    damEntity = entityFromScene(sCurScnPath)
+    damEntity = entityFromScene(sCurScnPath, fail=False)
     if damEntity:
         proj = damEntity.project
     else:
         proj = projectFromScene(sCurScnPath)
 
     _, curPubFile = proj.assertEditedVersion(sCurScnPath)
-
     curPubFile.ensureLocked(autoLock=False)
 
     try:
