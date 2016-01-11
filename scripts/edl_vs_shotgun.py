@@ -33,7 +33,10 @@ def launch():
     sSeqList = []
     edlShotDct = OrderedDict()
 
+    print "Parsing EDL data..."
     for edlShot in parseEdl(sEdlPath):
+
+        print edlShot
 
         sSeqCode = edlShot["sequence"].lower()
         sShotName = "sh" + edlShot["shot"].lstrip("P").lower()

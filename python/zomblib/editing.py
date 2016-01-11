@@ -83,7 +83,7 @@ def parseEdl(in_sEdlPath, in_sSeqFilter=None):
     with open(in_sEdlPath, 'r') as f:
         lines = f.readlines()
 
-    tcRegEx = re.compile("(\d{3})\s+GEN\s+V\s+C\s+\d{2}:\d{2}:\d{2}:\d{2}\s+\d{2}:\d{2}:\d{2}:\d{2}\s+(\d{2}:\d{2}:\d{2}:\d{2})\s+(\d{2}:\d{2}:\d{2}:\d{2})")
+    tcRegEx = re.compile("(\d+)\s+GEN\s+V\s+C\s+\d{2}:\d{2}:\d{2}:\d{2}\s+\d{2}:\d{2}:\d{2}:\d{2}\s+(\d{2}:\d{2}:\d{2}:\d{2})\s+(\d{2}:\d{2}:\d{2}:\d{2})")
     shotRegEx = re.compile(".*FROM CLIP NAME:  (SQ\d{4}[a-zA-Z]?)\s\s(P\d{4}[a-zA-Z]?)")
     seqRegEx = re.compile(".*FROM CLIP NAME:  (SQ\d{4}[a-zA-Z]?)")
 
