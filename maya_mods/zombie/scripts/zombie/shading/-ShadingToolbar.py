@@ -115,7 +115,7 @@ if mc.window( "shadingToolBox", exists = True ):
 
 
 window = mc.window( "shadingToolBox", title="Shading Toolbox", iconName='Shading',toolbox = True, sizeable = False )
-mc.window(window, e = True, widthHeight=(260, 775))
+mc.window(window, e = True, widthHeight=(260, 810))
 
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 
