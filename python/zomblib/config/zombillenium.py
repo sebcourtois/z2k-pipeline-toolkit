@@ -39,7 +39,7 @@ class project(object):
     else:
         damas_server_addr = "https://62.210.104.42:8443/api"
 
-    editable_file_patterns = ("*.ma", "*.mb", "*.psd", "*.nk", "*.py")
+    editable_file_patterns = ("*.ma", "*.mb", "*.nk", "*.py")#, "*.psd"
     allowed_texture_formats = (".tga", ".jpg", ".exr")
     sg_versions_mandatory = True
 
@@ -69,6 +69,8 @@ class shot_lib(object):
                      "{name}_sound.wav -> animatic_sound":None,
                      "{name}_animatic.mov -> animatic_capture":None,
                      "{name}_camera.ma -> camera_scene":None,
+                     "{name}_camera.atom -> camera_atom":None,
+                     "{name}_camera.abc -> camera_abc":None,
                      "{name}_infoSet.txt -> infoSet_file":None,
                     },
                  "{step:01_previz} -> previz_dir":
@@ -227,13 +229,17 @@ class charbase(object):
             "{name}_previz.mov -> previz_review":None,
             "{name}_render.mov -> render_review":None,
             },
-        "script -> script_dir":{},
+        "script -> script_dir":
+            {
+             "{name}_blendShape.bsd -> blendShape_bsd":None
+             },
         "texture -> texture_dir":{},
 
         "{name}_anim.ma -> anim_scene":None,
         "{name}_modeling.ma -> modeling_scene":None,
         "{name}_previz.ma -> previz_scene":None,
         "{name}_render.ma -> render_scene":None,
+        "{name}_blendShape.ma -> blendShape_scene":None
 
         #"{name}_preview.jpg -> preview_image":None,
         },
