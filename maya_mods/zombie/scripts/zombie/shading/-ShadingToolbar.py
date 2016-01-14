@@ -34,6 +34,10 @@ def buttonSetRenderOptionJpg(*args):
 #light rigs
 def buttonImportLgtRigOutdoor(*args):
 	shading.importLightRig(lgtRig = "lgtRig_outdoor")
+def buttonImportLgtRigIndoor(*args):
+	shading.importLightRig(lgtRig = "lgtRig_indoor")
+def buttonDefaultLgtRigRemove(*args):
+	shading.cleanlgtRig()
 
 #conform texture path
 def buttonConformAllTexturePath(*args):
@@ -115,7 +119,7 @@ if mc.window( "shadingToolBox", exists = True ):
 
 
 window = mc.window( "shadingToolBox", title="Shading Toolbox", iconName='Shading',toolbox = True, sizeable = False )
-mc.window(window, e = True, widthHeight=(260, 775))
+mc.window(window, e = True, widthHeight=(260, 840))
 
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 
@@ -135,8 +139,11 @@ mc.setParent( '..' )
 mc.separator(style = 'in', h = 5  )
 mc.text(label="shading light rigs", align='center')
 mc.flowLayout( )
-mc.button( label='import outdoor', c= buttonImportLgtRigOutdoor, recomputeSize = False, width = 125 )
-mc.button( label='unused', c= buttonUnused, recomputeSize = False, width = 125 )
+mc.button( label='outdoor', c= buttonImportLgtRigOutdoor, recomputeSize = False, width = 125 )
+mc.button( label='indoor', c= buttonImportLgtRigIndoor, recomputeSize = False, width = 125 )
+mc.setParent( '..' )
+mc.flowLayout()
+mc.button( label='Remove', recomputeSize = False, width = 250, c= buttonDefaultLgtRigRemove )
 mc.setParent( '..' )
 
 

@@ -56,6 +56,7 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('opacity', label='Opacity')
         self.addControl('refraction', label='Refraction')
         self.addControl('ior', label='IOR')
+        self.addControl('shadow_opacity', label='Shadow Opacity Mult.')
         self.endLayout()
 
         self.beginLayout('Masks', collapse=True)
@@ -82,6 +83,7 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('toon_normal_map', label='Normal Map')
         self.addControl('toon_normal_map_weight', label='Normal Map Weight')
         self.addControl('toon_as_float', label='As Float')
+        self.addControl('self_shadows', label='Self-Shadows')
 		
         self.beginLayout('Mid-tone', collapse=True)
         self.addControl('toon_midtone', label='Enable Mid-tone')
@@ -133,7 +135,7 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('occlusion_min_dist', label='Min. Dist')
         self.addControl('occlusion_max_dist', label='Max. Dist')
         self.addControl('occlusion_falloff', label='Falloff')
-		        
+        self.addControl('occlusion_saturate', label='Saturation Factor')		        
 
         self.endLayout()
 
@@ -179,10 +181,20 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('remapCurvature_factor', label='Size Factor')
         self.endLayout()
 
-        self.addControl('contour_id', label='ID')
         self.endLayout()
 
+		
+        self.beginLayout('Fast Shader', collapse=True)
+        self.addControl('diffuse_fast_bounces', label='Diffuse Fast Bounces')
+        self.addControl('diffuse_fast_color', label='Diffuse Fast Color')
+        self.addControl('glossy_fast_bounces', label='Glossy Fast Bounces')
+        self.addControl('glossy_fast_color', label='Glossy Fast Color')
         self.endLayout()
+		
+        self.addControl('contour_id', label='ID')
+        self.addControl('id_transparency', label='ID Transparency')
+        self.endLayout()
+
 
 
         # include/call base class/node attributes
