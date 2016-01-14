@@ -19,8 +19,20 @@ TESTLIST= [
 
 # donner ici la list des assets du meme type to release
 BATCH_ASSET_LIST =[
-"set_devTest_default",
-
+'set_quartierGrandeRoue_vampirama',
+'set_entreeParc_vampirama',
+'set_rueMainStreetPaves_default',
+'set_parcStreets_vampirama',
+'set_parcStreets_vampiramaTrous',
+'set_eoliennes_default',
+'set_mainStreet_vampirama',
+'set_couloirs_bureaux',
+'set_pensionDortoirs_default',
+'set_pensionExt_default',
+'set_pcSecurite_default',
+'set_maisonBank01_LBE',
+'set_salleSyndic_training',
+'set_salleSyndic_thriller',
 ]
 
 # Batch parameters - All configuration is Done Here.

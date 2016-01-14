@@ -1374,3 +1374,20 @@ def deleteActiveBlendShape_grp(*args, **kwargs):
        print err
 
     return True
+
+def get_BS_TargetObjD(BS_Node="",*args, **kwargs):
+    # construction correspondance dictionnary {ObjName:corresponding BS index}
+
+    connectedL=cmds.listConnections(BS_Node, d=1,t="mesh",skipConversionNodes=1, p=1)
+    # print connectedL
+    outDict = {}
+    if connectedL:
+        for i in connectedL:
+            if "worldMesh" in i:
+                conL = cmds.listConnections(i,s=1,p=1)
+                for j in conL:
+                    if BS_Node in j:
+                        index = j.split("inputTargetGroup[",1)[-1].split("]",1)[0]
+                        tObj= cmds.listRelatives( i.split(".",1)[0],p=1)[0]
+                        outDict[str(index)]= tObj
+    return outDict

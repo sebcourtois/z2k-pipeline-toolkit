@@ -26,9 +26,10 @@ import maya.mel as mel
 import os,ast
 import maya.cmds as cmds
 
-def checkNameCorrespondance(GUI=False,filename="", *args, **kwargs):
+def checkNameCorrespondance(GUI=True, filename="", *args, **kwargs):
     # return: Bool,debugList
     # getFile and read
+    print "GUI=", GUI
     theResult = False
     print "filename=", filename
     WrongObjNameL =[]
@@ -58,6 +59,7 @@ def checkNameCorrespondance(GUI=False,filename="", *args, **kwargs):
         theResult = False
         for k in WrongObjNameL:
             print "Not found:",k
+        print "GUI=", GUI
         if GUI:
             cmds.confirmDialog( title='bsd check', message="The blendShape Names are NOT conform with the selected .bsd file\n    {0}".format(WrongObjNameL),
                                  button=['OK'], defaultButton='OK', cancelButton='OK', dismissString='OK' )
@@ -74,7 +76,12 @@ def checkDialog(GUI=True,*args, **kwargs):
     print "checkDialog()"
     # getFile and read
     filename=""
-    result = cmds.fileDialog2(fileMode=1, caption="Select the '.bsd' BS_setting_file", fileFilter="", dialogStyle=1, okc="OPEN")
+    startDir =cmds.optionVar( q="Z2K_BS_tertiairePath" )
+    if not startDir:
+        startDir = "c:"
+
+    result = cmds.fileDialog2(dir= startDir, fileMode=1, caption="Select the '.bsd' BS_setting_file", fileFilter="*.bsd", dialogStyle=1, okc="OPEN")
+    print "result=", result
     if result:
         filename = result[0]
         if ".bsd" in filename:
@@ -83,5 +90,9 @@ def checkDialog(GUI=True,*args, **kwargs):
             return resultL[0]
         else:
             print "Execution aboarded: bad file type selected, please select a .bsd file!"
+            cmds.confirmDialog( title='', message="Execution aboarded: bad file type selected, please select a .bsd file!",
+                                         button=['OK'], defaultButton='OK', cancelButton='OK', dismissString='OK' )
     else:
-        print "Execution aboarded!"
+        print "Execution aboarded!" 
+        cmds.confirmDialog( title='', message="Execution aboarded",
+                                         button=['OK'], defaultButton='OK', cancelButton='OK', dismissString='OK' )
