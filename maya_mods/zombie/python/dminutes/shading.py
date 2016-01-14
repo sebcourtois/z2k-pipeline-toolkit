@@ -1319,20 +1319,55 @@ def importLightRig(lgtRig = "lgtRig_outdoor"):
         if  mainFilePathElem[-4] == "asset":
             lgtRigFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_MISC_PATH","shading","lightRigs",lgtRig+".ma"))
             lgtRigFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(lgtRigFilePath)))
+
+            myEnv = "env_skyDay_greyCloudy"
+            envFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_ASSET_PATH","env",myEnv,myEnv+"_master.ma"))
+            envFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(envFilePath)))
         else:
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
         raise ValueError("#### Error: no '|asset' could be found in this scene")
 
-
+    #hide le camera light 
+    allLights = mc.ls(type = "light")
+    for each in allLights:
+        if "cam_shading_default" in each and "lgt_key" in each:
+            camLightTransf =  mc.listRelatives (each, parent = True, fullPath = True, type = "transform")[0]
+            mc.setAttr(camLightTransf+".visibility",0)
 
     print "#### {:>7}: importing '{}'".format("Info",lgtRigFilePath_exp)
     mc.file( lgtRigFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace="lgtRig", preserveReferences= True )
 
+    print "#### {:>7}: reference '{}'".format("Info",envFilePath_exp)
+    mc.file( envFilePath_exp, type= "mayaAscii", ignoreVersion=True, namespace="tmpEnv", preserveReferences= True, reference = True )
  
 
 
 
+def cleanlgtRig( verbose = False):
+    refNodeList = mc.ls(type = "reference")
+    for each in refNodeList:
+        if re.match('^lgtRig[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^tmpEnv[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) :
+            fileRef= pm.FileReference(each)
+            #fileRef = mc.referenceQuery(each,filename=True)# other way to do it
+            try:
+                if verbose: print "#### {:>7}:removing reference '{}'".format("Info",fileRef.path)
+                fileRef.remove()
+            except :
+                pass
+
+    nameSpaceList = mc.namespaceInfo(listOnlyNamespaces=True,r=True)
+    for each in nameSpaceList:
+        if re.match('^lgtRig[0-9]{0,3}', each) or re.match('^tmpEnv[0-9]{0,3}', each):
+            node2deleteList = mc.ls(each+":*")
+            for node2delete in node2deleteList:
+                mc.lockNode(node2delete,lock = False)
+
+    nameSpaceList = mc.namespaceInfo(listOnlyNamespaces=True)
+    for each in nameSpaceList:
+        if re.match('^lgtRig[0-9]{0,3}', each) or re.match('^tmpEnv[0-9]{0,3}', each):
+            if verbose: print "#### {:>7}:removing namespace and its content: '{:<10}' ".format("Info",each)
+            mc.namespace(removeNamespace=each, deleteNamespaceContent=True)
 
 
 
