@@ -353,15 +353,21 @@ class Z2K_BS_Tertiaire_Tool_GUI (object):
 
     def importClean_underGP(self, GPName="imported_gp",*args, **kwargs):
         print "importClean_underGP()"
-        pathPublic= self.getBSD_File(pathType="blendShape_scene")
-        print "pathPublic=", pathPublic
 
-        # import in scene with the good configuration of NS etc
-        if os.path.isfile(pathPublic):
-            curRef=cmds.file( pathPublic, groupReference=True, groupName=GPName ,i=True)
-            print "curRef=", curRef
+        if not cmds.objExists(GPName):
+            pathPublic= self.getBSD_File(pathType="blendShape_scene")
+            print "pathPublic=", pathPublic
+
+            # import in scene with the good configuration of NS etc
+            if os.path.isfile(pathPublic):
+                curRef=cmds.file( pathPublic, groupReference=True, groupName=GPName ,i=True)
+                print "curRef=", curRef
+            else:
+                print "No valid File found"
         else:
-            print "No valid File found"
+            cmds.confirmDialog( title='Warning', message="BlendShape file allready imported,\n Please clean you scene before importing again",
+                                             button=['OK'], defaultButton='OK', cancelButton='OK', dismissString='OK',
+                                             icon= "information")
 
     def btn_jipe_multiAttr_BSConnector(self, *args, **kwargs):
         print "connectDialog()"
@@ -412,20 +418,32 @@ class Z2K_BS_Tertiaire_Tool_GUI (object):
         cmds.frameLayout(lv=0)
         cmds.separator(3)
         cmds.text(self.WNAME.replace("_"," ")+":",font="boldLabelFont")
-        cmds.columnLayout(adj=1)
         cmds.tabLayout(tabsVisible=0,borderStyle="full")
+        cmds.columnLayout(adj=1)
         
-        cmds.button("BS_File    : Check Naming correspondance         ".ljust(50),c= partial(self.btn_check_NameCorespondance,True ) )
+        cmds.columnLayout(adj=1)
+
+        cmds.rowLayout(nc=2,adj=2)
+        cmds.text("  BS_File    : ")
         cmds.setParent("..")
+
+        cmds.tabLayout(tabsVisible=0,borderStyle="full")
+        cmds.button("Check Naming correspondance with .bsd file".ljust(50),c= partial(self.btn_check_NameCorespondance,True ) )
+        cmds.setParent("..")
+
+        cmds.rowLayout(nc=2,adj=2)
+        cmds.text("  Asset_file    : ")
+        cmds.setParent("..")
+
         cmds.tabLayout(tabsVisible=0,borderStyle="full")
         cmds.columnLayout(adj=1)
-        cmds.button("Asset_file : import blendShape_File              ".ljust(50), c= partial(self.importClean_underGP ,"imported_gp")  )
+        cmds.button("import blendShape_File in current scene".ljust(50), c= partial(self.importClean_underGP ,"imported_gp")  )
         cmds.separator(3)
-        cmds.button("Asset_file : Connect imported BS to current asset".ljust(50),c= self.btn_jipe_multiAttr_BSConnector,  )
+        cmds.button("Connect imported BS to current asset".ljust(50),c= self.btn_jipe_multiAttr_BSConnector,  )
         cmds.setParent("..")
         cmds.setParent("..")
         
-        cmds.text(" info: Browse for the corresponding '.bsd' file ",)
+        # cmds.text(" info: Browse for the corresponding '.bsd' file ",)
         # show Window
         cmds.showWindow()
 
