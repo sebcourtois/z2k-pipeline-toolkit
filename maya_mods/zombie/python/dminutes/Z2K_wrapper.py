@@ -56,6 +56,7 @@ def getPath(proj="", assetName="", pathType="previz_ref", *args, **kwargs):
     print "Z2K_getPath()"
     tab= "    "
     damAst =DamAsset(proj,name=assetName)
+    print damAst
     path_public = damAst.getPath("public", pathType)
     path_private = damAst.getPath("private", pathType)
     print tab,"path_public=", path_public
@@ -88,6 +89,8 @@ def editFile(proj="" , Path_publish_public="", autoAction="overwrite", *args, **
     print "Z2K_editFile()"
     tab= "    "
     if not os.path.exists(Path_publish_public):
+        if not os.path.isdir( os.path.dirname(Path_publish_public) ):
+            os.makedirs(os.path.dirname(Path_publish_public) )
         with open(Path_publish_public, 'w') as f:
             f.write('')
         
