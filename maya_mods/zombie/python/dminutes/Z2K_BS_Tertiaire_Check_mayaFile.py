@@ -96,3 +96,5 @@ def checkDialog(GUI=True,*args, **kwargs):
         print "Execution aboarded!" 
         cmds.confirmDialog( title='', message="Execution aboarded",
                                          button=['OK'], defaultButton='OK', cancelButton='OK', dismissString='OK' )
+
+

@@ -117,12 +117,13 @@ class infoSetExp(object):
 
         # get shot version 
         shotVersion = cmds.file(q=1,sceneName=True,shortName=True).split("-",1)[1][:4]
+        fromTxt= cmds.file(q=1,sceneName=True,shortName=True).split(".",1)[0].rsplit("_",1)[-1]
         if shotVersion[0]  in ["v"] and not len(shotVersion)in [4]:
             print "* bad version"
             shotVersion = "UNKNWON"
         print "shotVersion=", shotVersion
         # publish Davos from private exported file
-        result=self.publishInfoSetFile( currentScene=sceneName,comment= "From "+shotVersion)
+        result=self.publishInfoSetFile( currentScene=sceneName,comment= "From "+fromTxt)
         print "result=", result
 
 
