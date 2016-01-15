@@ -286,6 +286,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="sm_shotgun_bt">
+         <property name="text">
+          <string>Go To Shogun Page</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="fileStatusGroup">
          <property name="title">
           <string>File Status</string>
@@ -495,8 +502,21 @@
             </property>
             <item>
              <widget class="QPushButton" name="sm_init_bt">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="text">
                <string>Shot Setup</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="sm_editCam_bt">
+              <property name="text">
+               <string>Edit Shot Camera</string>
               </property>
              </widget>
             </item>
@@ -510,6 +530,12 @@
               </property>
               <item>
                <widget class="QPushButton" name="sm_upscene_bt">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>Update Scene from DB</string>
                 </property>
@@ -553,6 +579,22 @@
             <property name="topMargin">
              <number>0</number>
             </property>
+            <item>
+             <widget class="QCheckBox" name="sm_imgPlane_chk">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Animatic</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
             <item>
              <widget class="QPushButton" name="sm_capture_bt">
               <property name="text">
