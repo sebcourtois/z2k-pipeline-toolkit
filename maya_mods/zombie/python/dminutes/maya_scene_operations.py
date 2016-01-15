@@ -6,7 +6,7 @@ import pymel.core as pc
 import maya.cmds as mc
 from pytd.util.sysutils import toStr
 
-CAMPATTERN = 'cam_sq*sh*:*'
+CAMPATTERN = 'cam_sq????_sh?????:*'
 CAM_GLOBAL = 'Global_SRT'
 CAM_LOCAL = 'Local_SRT'
 CAM_DOLLY = 'Dolly'
@@ -41,19 +41,24 @@ def getSceneContent(o_inSceneManager):
 
     return sceneContent
 
-def createImgPlane():
+def getImagePlaneItems(create=False):
     IMGP = None
 
     IMGPs = pc.ls("cam_animatic:assetShape->imgPlane_animatic*")
     if len(IMGPs) > 0:
         IMGP = IMGPs[0]
 
-    if IMGP is not None:
-        cam_animatic = pc.ls("cam_animatic:*")
-        if len(cam_animatic) > 0:
-            return (IMGP, cam_animatic[0])
-        else:
+    if (not IMGP) and (not create):
+        return None, None
+
+    cam_animatic = pc.ls("cam_animatic:*")
+    if len(cam_animatic) > 0:
+        return (IMGP, cam_animatic[0])
+    else:
+        if create:
             pc.delete(IMGP)
+        else:
+            return None, None
 
     # - Remove previous Animatic Camera
     cam_animatic = pc.ls("cam_animatic:*")
@@ -358,11 +363,30 @@ def init_scene_base(o_inSceneManager):
 
     importSceneStructure(o_inSceneManager)
 
+def arrangeViews(oShotCam, oImgPlaneCam=None):
 
+    # Set Viewport
+    #pc.mel.eval('setNamedPanelLayout("Four View")')
+    pc.mel.eval('ThreeRightSplitViewArrangement')
+
+    #Image plane
+    sidePanel = ""
+    if oImgPlaneCam:
+        sidePanel = mc.getPanel(withLabel='Side View')
+        pc.modelPanel(sidePanel, edit=True, camera=oImgPlaneCam)
+    #Camera
+    perspPanel = mc.getPanel(withLabel='Persp View')
+    pc.modelPanel(perspPanel, edit=True, camera=oShotCam)
+    #Work view
+    workPanel = mc.getPanel(withLabel='Top View')
+    pc.modelPanel(workPanel, edit=True, camera='persp')
+
+    if sidePanel:
+        pc.modelEditor(sidePanel, edit=True, allObjects=0, imagePlane=True, grid=False)
+
+    pc.setFocus(perspPanel)
 
 def init_previz_scene(o_inSceneManager):
-    # - Create imagePlane
-    IMGP = createImgPlane()
 
     # --- Set Viewport 2.0 AO default Value
     pc.setAttr('hardwareRenderingGlobals.ssaoAmount', 0.3)
@@ -370,69 +394,53 @@ def init_previz_scene(o_inSceneManager):
     pc.setAttr('hardwareRenderingGlobals.ssaoFilterRadius', 8)
     pc.setAttr('hardwareRenderingGlobals.ssaoSamples', 16)
 
-    # Set Viewport
-    pc.mel.eval('setNamedPanelLayout("Four View")')
-    pc.mel.eval('ThreeRightSplitViewArrangement')
-
-    #Image plane
-    sidePanel = mc.getPanel(withLabel='Side View')
-    pc.modelPanel(sidePanel, edit=True, camera=IMGP[1])
-    #Camera
-    perspPanel = mc.getPanel(withLabel='Persp View')
-    pc.modelPanel(perspPanel, edit=True, camera='persp')
-    #Work view
-    workPanel = mc.getPanel(withLabel='Top View')
-    pc.modelPanel(workPanel, edit=True, camera='persp')
-
-    pc.modelEditor(sidePanel, edit=True, allObjects=0, imagePlane=True, grid=False)
-
-    #Import camera  "X:\asset\cam\cam_shot_default\cam_shot_default.ma"
-
     sTaskName = o_inSceneManager.context["task"]["content"]
     sShotCamNspace = o_inSceneManager.mkShotCamNamespace()
     proj = o_inSceneManager.context["damProject"]
     shotLib = proj.getLibrary("public", "shot_lib")
 
     #rename any other shot camera
-#    remainingCamera = None
+    remainingCamera = None
 
     otherCams = pc.ls(CAMPATTERN, type='camera')
     camsLength = len(otherCams)
     if camsLength > 0:
         if camsLength > 1:#Delete cameras except first
             for otherCam in otherCams:
-#                if camsLength == 1:
-#                    remainingCamera = otherCam
-#                    break
+                if camsLength == 1:
+                    remainingCamera = otherCam
+                    break
                 sCamNs = otherCam.parentNamespace()
                 if sShotCamNspace != sCamNs:
                     otherCam.setAttr("renderable", False)
                     mc.setAttr(sCamNs + ":asset.visibility", False)
                     camsLength -= 1
-#        else:
-#            remainingCamera = otherCams[0]
+        else:
+            remainingCamera = otherCams[0]
 
-#        if remainingCamera != None and remainingCamera.parentNamespace() != sShotCamNspace:
-#            #rename camera
-#            pc.namespace(rename=(remainingCamera.namespace(), sShotCamNspace))
+        if remainingCamera and remainingCamera.parentNamespace() != sShotCamNspace:
+            #rename camera
+            pc.namespace(rename=(remainingCamera.namespace(), sShotCamNspace))
 
     oShotCam = o_inSceneManager.getShotCamera()
     if not oShotCam:
         oShotCam = o_inSceneManager.importShotCam()
     elif not oShotCam.isReferenced():
-        oShotCam = switchShotCamToRef(o_inSceneManager, oShotCam)
-        if sTaskName.lower() == "layout":
+        if sTaskName.lower() != "previz 3d":
+            oShotCam = switchShotCamToRef(o_inSceneManager, oShotCam)
             if (not o_inSceneManager.camAnimFilesExist()):
                 o_inSceneManager.exportCamAnimFiles()
                 o_inSceneManager.importShotCamAbcFile()
 
-    setCamAsPerspView(oShotCam)
+    #setCamAsPerspView(oShotCam)
 
     sgEntity = o_inSceneManager.context['entity']
     #image plane "Y:\shot\...\00_data\sqXXXX_shXXXXa_animatic.mov"
     imgPlanePath = o_inSceneManager.getPath(sgEntity, 'animatic_capture')
     imgPlaneEnvPath = shotLib.absToEnvPath(imgPlanePath)
-    IMGP = createImgPlane()
+    IMGP = getImagePlaneItems(create=True)
+
+    arrangeViews(oShotCam.getShape(), IMGP[1])
 
     if os.path.isfile(imgPlanePath):
         pc.currentTime(101)

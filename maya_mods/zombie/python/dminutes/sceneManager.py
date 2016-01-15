@@ -25,7 +25,7 @@ import dminutes.maya_scene_operations as mop
 import dminutes.jipeLib_Z2K as jpZ
 import dminutes.camImpExp as camIE
 import dminutes.infoSetExp as infoE
-from dminutes.miscUtils import deleteUnknownNodes
+#from dminutes.miscUtils import deleteUnknownNodes
 from pytd.util.sysutils import toStr
 
 reload(jpZ)
@@ -322,7 +322,7 @@ class SceneManager():
         self.context['sceneState'] = ""
         contextEntry = self.getEntry()
 
-        if contextEntry == None or self.context['sceneEntry'] == None:
+        if contextEntry is None or self.context['sceneEntry'] is None:
             self.context['sceneState'] = "Cannot autodetect context !"
             return False
 
@@ -502,83 +502,86 @@ class SceneManager():
         else:
             savedFile = self.save(b_inForce=False)
 
-        if savedFile != None:
+        if savedFile is None:
+            raise RuntimeError("Could not save current scene !")
 
-            sCamFile = ""
-            damShot = self.getDamShot()
-            sAbcPath = damShot.getPath("public", "camera_abc")
-            abcFile = damShot.getLibrary()._weakFile(sAbcPath)
+        sCamFile = ""
+        damShot = self.getDamShot()
+        sAbcPath = damShot.getPath("public", "camera_abc")
+        abcFile = damShot.getLibrary()._weakFile(sAbcPath)
 
-            bShotCamEdited = self.isShotCamEdited()
+        bShotCamEdited = self.isShotCamEdited()
 
-            oCamAbcNode = self.getShotCamAbcNode()
-            if oCamAbcNode:
-                sAbcNodePath = pathResolve(oCamAbcNode.getAttr("abc_File"))
-                if osp.normcase(sAbcNodePath) != osp.normcase(abcFile.absPath()):
-                    raise RuntimeError("Unexpected path on '{}' node: \n         got: '{}'\n    expected: '{}'")
+        oCamAbcNode = self.getShotCamAbcNode()
+        if oCamAbcNode:
+            sAbcNodePath = pathResolve(oCamAbcNode.getAttr("abc_File"))
+            if osp.normcase(sAbcNodePath) != osp.normcase(abcFile.absPath()):
+                raise RuntimeError("Unexpected path on '{}' node: \n         got: '{}'\n    expected: '{}'")
 
-            if bShotCamEdited:
-                sCamFile = abcFile.nextVersionName()
-            else:
-                latestAbcFile = abcFile.getLatestBackupFile()
-                if latestAbcFile:
-                    sCamFile = latestAbcFile.name
+        if bShotCamEdited:
+            sCamFile = abcFile.nextVersionName()
+        else:
+            latestAbcFile = abcFile.getLatestBackupFile()
+            if latestAbcFile:
+                sCamFile = latestAbcFile.name
 
-            CAPTURE_INFOS['cam_file'] = sCamFile#.rsplit(".", 1)[0]
-            CAPTURE_INFOS['user'] = self.context['damProject']._shotgundb.currentUser['name']
-            #Infer capture path
-            scenePath = pc.sceneName()
-            CAPTURE_INFOS['scene'] = os.path.basename(scenePath)
+        CAPTURE_INFOS['cam_file'] = sCamFile#.rsplit(".", 1)[0]
+        CAPTURE_INFOS['user'] = self.context['damProject']._shotgundb.currentUser['name']
+        #Infer capture path
+        scenePath = pc.sceneName()
+        CAPTURE_INFOS['scene'] = os.path.basename(scenePath)
 
-            capturePath = scenePath.replace(".ma", ".mov")
+        capturePath = scenePath.replace(".ma", ".mov")
 
-            #Get start/end from shotgun
-            captureStart = 101
-            CAPTURE_INFOS['start'] = captureStart
-            duration = self.getDuration()
-            captureEnd = captureStart + duration - 1
-            CAPTURE_INFOS['end'] = captureEnd
+        #Get start/end from shotgun
+        captureStart = 101
+        CAPTURE_INFOS['start'] = captureStart
+        duration = self.getDuration()
+        captureEnd = captureStart + duration - 1
+        CAPTURE_INFOS['end'] = captureEnd
 
-            oldValues = createHUD()
 
-            bImgPlnViz = mop.isImgPlaneVisible()
-            mop.setImgPlaneVisible(False)
+        oImgPlaneCam = mop.getImagePlaneItems(create=False)[1]
 
-            if oCamRef:
-                bWasLocked = oCamRef.refNode.getAttr("locked")
-                mop.setReferenceLocked(oCamRef, False)
-                mop.setCamAsPerspView(oShotCam)
+        oldValues = createHUD()
 
+        bImgPlnViz = mop.isImgPlaneVisible()
+        mop.setImgPlaneVisible(False)
+
+        if oCamRef:
+            bWasLocked = oCamRef.refNode.getAttr("locked")
+            mop.setReferenceLocked(oCamRef, False)
+
+        try:
+            oShotCam.setAttr('aspectRatio', 1.85)
+
+            mop.arrangeViews(oShotCam, oImgPlaneCam)
             pc.refresh()
 
-            try:
-                oShotCam.setAttr('aspectRatio', 1.85)
+#            #Detect if activePanel is an imageplane and change to 'modelPanel4' if True
+#            curPanel = pc.playblast(activeEditor=True)
+#            curCam = pc.modelEditor(curPanel, query=True, camera=True)
+#            if curCam:
+#                if curCam.type() == "transform":
+#                    curCam = curCam.getShape()
+#                if len(curCam.getChildren()) > 0:
+#                    pc.setFocus('modelPanel4')
 
-                #Detect if activePanel is an imageplane and change to 'modelPanel4' if True
-                curPanel = pc.playblast(activeEditor=True)
-                curCam = pc.modelEditor(curPanel, query=True, camera=True)
-                if curCam:
-                    if curCam.type() == "transform":
-                        curCam = curCam.getShape()
-                    if len(curCam.getChildren()) > 0:
-                        pc.setFocus('modelPanel4')
+            makeCapture(capturePath, captureStart, captureEnd, 1280, 720, useCamera=oShotCam,
+                        format="qt", compression="H.264", ornaments=True, play=True,
+                        i_inFilmFit=1, i_inDisplayFilmGate=1, i_inSafeAction=1,
+                        i_inSafeTitle=0, i_inGateMask=1, f_inMaskOpacity=1.0)
+        finally:
+            oShotCam.setAttr('aspectRatio', 1.7778)
 
-                makeCapture(capturePath, captureStart, captureEnd, 1280, 720, useCamera=oShotCam,
-                            format="qt", compression="H.264", ornaments=True, play=True,
-                            i_inFilmFit=1, i_inDisplayFilmGate=1, i_inSafeAction=1,
-                            i_inSafeTitle=0, i_inGateMask=1, f_inMaskOpacity=1.0)
-            finally:
+            if oCamRef and bWasLocked:
+                mop.setReferenceLocked(oCamRef, True)
+                mop.setCamAsPerspView(oShotCam)
 
-                oShotCam.setAttr('aspectRatio', 1.7778)
+            restoreHUD(oldValues)
+            mop.setImgPlaneVisible(bImgPlnViz)
 
-                if oCamRef and bWasLocked:
-                    mop.setReferenceLocked(oCamRef, True)
-                    mop.setCamAsPerspView(oShotCam)
-
-                restoreHUD(oldValues)
-                mop.setImgPlaneVisible(bImgPlnViz)
-
-            os.system("start " + capturePath.replace("/", "\\"))
+        os.system("start " + capturePath.replace("/", "\\"))
 
     def edit(self, editInPlace=None, onBase=False, createFolders=False):
         privFile = None
@@ -689,7 +692,7 @@ class SceneManager():
 
         return privFile
 
-    def prePublish(self, publishCtx, **kwargs):
+    def prePublishCurrentScene(self, publishCtx, **kwargs):
 
         # here is incerted the publish of the camera of the scene
         print "exporting the camera of the shot"
@@ -700,7 +703,9 @@ class SceneManager():
         infoSetExpI = infoE.infoSetExp()
         infoSetExpI.export(sceneName=jpZ.getShotName())
 
-        if self.isShotCamEdited():
+        if self.context["task"]["content"].lower() == "previz 3d":
+            self.exportCamAnimFiles()
+        elif self.isShotCamEdited():
             self.exportCamAnimFiles()
             self.importShotCamAbcFile()
             mop.setCamAsPerspView(self.getShotCamera())
@@ -715,10 +720,19 @@ class SceneManager():
             if entry == None:
                 pc.error()
 
-            self.getShotCamera(fail=True)
+            sFixMsg = " Please, apply a 'Shot Setup' and retry."
+            oShotCam = None
+            try:
+                oShotCam = self.getShotCamera(fail=True)
+            except RuntimeError as e:
+                raise RuntimeError(toStr(e) + sFixMsg)
+
+            if self.context["task"]["content"].lower() != "previz 3d":
+                if not oShotCam.isReferenced():
+                    raise RuntimeError("Shot Camera is not referenced !" + sFixMsg)
 
             rslt = publishCurrentScene(dependencies=False,
-                                       prePublishFunc=self.prePublish)
+                                       prePublishFunc=self.prePublishCurrentScene)
             if rslt is None:
                 return
 
@@ -980,7 +994,7 @@ class SceneManager():
 
         if not sCamList:
             if fail:
-                raise RuntimeError("Shot camera not found: '{}'".format(sCamName))
+                raise RuntimeError("Shot Camera not found: '{}'".format(sCamName))
             return None
 
         if len(sCamList) == 1:
@@ -1077,8 +1091,8 @@ class SceneManager():
 
         pc.select(oCamAstGrp)
         myasys.exportAtomFile(sPrivAtomPath,
-                              SDK=True,
-                              constraints=True,
+                              SDK=False,
+                              constraints=False,
                               animLayers=True,
                               statics=True,
                               baked=True,
@@ -1186,6 +1200,10 @@ class SceneManager():
             return (not oFileRef.refNode.getAttr("locked")) and (not self.getShotCamAbcNode())
         else:
             return True
+
+    def showInShotgun(self):
+        self.context['damProject']._shotgundb.showInBrowser(self.context['entity'])
+
 # capture
 CAPTURE_INFOS = {}
 
@@ -1221,13 +1239,13 @@ def createHUD():
 
     pc.headsUpDisplay('HUD_ZOMBUser', section=0, block=pc.headsUpDisplay(nextFreeBlock=0),
                       blockSize='small', label='', labelFontSize='small', dataFontSize='small',
-                      command=userInfo, attachToRefresh=False)
+                      command=userInfo, attachToRefresh=True)
     pc.headsUpDisplay('HUD_ZOMBScene', section=2, block=pc.headsUpDisplay(nextFreeBlock=2),
                       blockSize='small', label='', labelFontSize='small', dataFontSize='small',
-                      command=sceneInfo, attachToRefresh=False)
+                      command=sceneInfo, attachToRefresh=True)
     pc.headsUpDisplay('HUD_ZOMBStep', section=4, block=pc.headsUpDisplay(nextFreeBlock=4),
                       blockSize='small', label='', labelFontSize='small', dataFontSize='small',
-                      command=stepInfo, attachToRefresh=False)
+                      command=stepInfo, attachToRefresh=True)
     pc.headsUpDisplay('HUD_ZOMBFrame', section=5, block=pc.headsUpDisplay(nextFreeBlock=5),
                       blockSize='small', label='', labelFontSize='small', dataFontSize='small',
                       command=frameInfo, attachToRefresh=True)

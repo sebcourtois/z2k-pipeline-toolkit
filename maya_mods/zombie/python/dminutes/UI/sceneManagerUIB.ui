@@ -286,6 +286,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="sm_shotgun_bt">
+         <property name="text">
+          <string>Go To Shogun Page</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="fileStatusGroup">
          <property name="title">
           <string>File Status</string>
@@ -507,6 +514,13 @@
              </widget>
             </item>
             <item>
+             <widget class="QPushButton" name="sm_editCam_bt">
+              <property name="text">
+               <string>Edit Shot Camera</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <layout class="QHBoxLayout" name="horizontalLayout_3">
               <property name="spacing">
                <number>2</number>
@@ -578,13 +592,6 @@
               </property>
               <property name="checked">
                <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="sm_editCam_bt">
-              <property name="text">
-               <string>Edit Shot Camera</string>
               </property>
              </widget>
             </item>

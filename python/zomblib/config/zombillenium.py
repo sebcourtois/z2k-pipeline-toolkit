@@ -161,7 +161,7 @@ class asset_lib(object):
                       "sg_steps":("Model HD", "Surfacing"), },
 
     "master_scene":{"create_sg_version":True,
-                    "sg_steps":("Model HD", "Surfacing"), },
+                    "sg_steps":("Model HD", "Rigging", "Surfacing"), },
 
     "previz_scene":{"create_sg_version":True,
                     "sg_steps":("Model Previz",), },

@@ -275,6 +275,7 @@ def connectCallbacks():
     pc.button('sm_saveWip_bt', edit=True, c=doSaveWip)
 
     pc.button('sm_switchContext_bt', edit=True, c=doSwitchContext)
+    pc.button('sm_shotgun_bt', edit=True, c=doShowInShotgun)
 
     #davos
     pc.button('sm_unlock_bt', edit=True, c=doUnlock)
@@ -295,6 +296,9 @@ def connectCallbacks():
     #pc.button(buttonName, edit=True, c=doCreate)
     #ACTION_BUTTONS.append(buttonName)
 
+
+def doShowInShotgun(*args):
+    SCENE_MANAGER.showInShotgun()
 
 def doShowImagePlane(bShow):
     mop.setImgPlaneVisible(bShow)
@@ -637,6 +641,10 @@ def doCreateFolder(*args):
 #action buttons
 def doInit(*args):
     """Button is named 'Shot Setup'"""
+
+    if not SCENE_MANAGER.contextIsMatching():
+        raise RuntimeError("Sorry, context does not match current scene")
+
     SCENE_MANAGER.do('init')
     doRefreshSceneInfo()
 
