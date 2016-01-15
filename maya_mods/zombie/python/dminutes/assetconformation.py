@@ -825,11 +825,51 @@ def softClean(struct2CleanList=["asset"]):
     miscUtils.removeAllNamespace(emptyOnly=True)
 
 
+def importGrpLgt(lgtRig = "lgtRig_character"):
+
+    if mc.ls("|asset"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        assetName = mainFilePathElem[-2]
+        assetType = mainFilePathElem[-3]
+        assetFileType = mainFilePathElem[-1].split("-")[0].split("_")[-1]
+        if  mainFilePathElem[-4] == "asset":
+            lgtRigFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_MISC_PATH","shading","lightRigs",lgtRig+".ma"))
+            lgtRigFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(lgtRigFilePath)))
+
+        else:
+            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+    else :
+        raise ValueError("#### Error: no '|asset' could be found in this scene")
+
+    grpLgt =  mc.ls("grp_lgt*", l=True)
+    mc.delete(grpLgt)
+
+    print "#### {:>7}: importing '{}'".format("Info",lgtRigFilePath_exp)
+    myImport = mc.file( lgtRigFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, preserveReferences= True )
+    mc.parent("grp_lgt","asset")
+
+
+    lgtDefault =  mc.ls("lgt_default*", l=True, type = "light")
+    if len(lgtDefault)!=1:
+        raise ValueError("#### {:>7}: '{}' 'lgt_default' light has been found, proceeding with the first one".format("Error", len(lgtDefault)))
+    lgtDefault = lgtDefault[0]    
+
+    shadingEngineList =  mc.ls("*",type = "shadingEngine")
+    shadingEngine2LinkList = []
+    for each in shadingEngineList:
+        if each == "initialParticleSE" or each == "initialShadingGroup":
+            continue
+        elif not re.match('^sgr_[a-zA-Z0-9]{1,24}$', each):
+                print "#### {:>7}: Skipping '{}' light linking, since it does not match naming convention 'sgr_materialName'".format("Warning",each)
+                continue
+        else:
+            shadingEngine2LinkList.append(each)
+
+    mc.lightlink( light=lgtDefault, object=shadingEngine2LinkList )
+    print "#### {:>7}: '{}' light linked  to '{}' shaders".format("Info",lgtDefault, len(shadingEngine2LinkList))
+    return True
 
 
 
 
-
-
-
-   
