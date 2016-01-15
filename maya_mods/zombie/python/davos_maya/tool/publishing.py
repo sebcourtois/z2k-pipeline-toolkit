@@ -23,13 +23,22 @@ from davos_maya.tool import dependency_scan
 from pytd.util.sysutils import toStr, inDevMode
 from pytd.gui.dialogs import confirmDialog
 from pytd.util.fsutils import normCase
+from davos.core.damtypes import DamAsset
 #from pytd.util.fsutils import pathRelativeTo
 
 bDevDryRun = False
 
-def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
+class PublishContext(object):
+
+    def __init__(self, proj, prePublishInfos, **kwargs):
+        self.project = proj
+        self.prePublishInfos = prePublishInfos
+        self.entity = kwargs.get("entity")
+
+def publishSceneDependencies(damEntity, depScanResults, prePublishInfos, **kwargs):
 
     bDryRun = kwargs.pop("dryRun", False if not inDevMode() else bDevDryRun)
+    sComment = prePublishInfos["comment"]
 
     proj = damEntity.project
 
@@ -37,7 +46,7 @@ def publishSceneDependencies(damEntity, scanResults, sComment, **kwargs):
     sBuddyPathList = []
     sTexPathList = []
     depDataDct = {}
-    for result in scanResults:
+    for result in depScanResults:
 
         sAbsPath = result["abs_path"]
         depDataDct[normCase(sAbsPath)] = result
@@ -197,6 +206,10 @@ def quickSceneCleanUp():
 
 def publishCurrentScene(*args, **kwargs):
 
+    bWithDeps = kwargs.pop("dependencies", True)
+    prePublishFunc = kwargs.pop("prePublishFunc", None)
+    postPublishFunc = kwargs.pop("postPublishFunc", None)
+
     sCurScnPath = pm.sceneName()
     damEntity = entityFromScene(sCurScnPath, fail=False)
     if damEntity:
@@ -207,41 +220,47 @@ def publishCurrentScene(*args, **kwargs):
     _, curPubFile = proj.assertEditedVersion(sCurScnPath)
     curPubFile.ensureLocked(autoLock=False)
 
-    try:
-        quickSceneCleanUp()
-    except Exception, e:
-        sConfirm = confirmDialog(title='INFO !',
-                                 message="Quick cleanup failed !\n\n{0}".format(toStr(e)),
-                                 button=['Continue', 'Cancel'],
-                                 defaultButton='Continue',
-                                 cancelButton='Cancel',
-                                 dismissString='Continue',
-                                 icon="information")
-        if sConfirm == 'Cancel':
-            raise
+    if isinstance(damEntity, DamAsset):
+        try:
+            quickSceneCleanUp()
+        except Exception, e:
+            sConfirm = confirmDialog(title='INFO !',
+                                     message="Quick cleanup failed !\n\n{0}".format(toStr(e)),
+                                     button=['Continue', 'Cancel'],
+                                     defaultButton='Continue',
+                                     cancelButton='Cancel',
+                                     dismissString='Continue',
+                                     icon="information")
+            if sConfirm == 'Cancel':
+                raise
 
-    scanResults = []
-    if damEntity:
-        scanResults = dependency_scan.launch(damEntity, modal=True, okLabel="Publish")
-        if scanResults is None:
+    depScanResults = []
+    if damEntity and bWithDeps:
+        depScanResults = dependency_scan.launch(damEntity, modal=True, okLabel="Publish")
+        if depScanResults is None:
             pm.displayInfo("Canceled !")
             return
 
     bSgVersion = True
     try:
-        infos = curPubFile.beginPublish(sCurScnPath, checkLock=False, **kwargs)
-        if infos is None:
+        prePublishInfos = curPubFile.beginPublish(sCurScnPath, checkLock=False, **kwargs)
+        if prePublishInfos is None:
             return
-        sComment, iNextVers, sgTaskInfo = infos
     except Exception, e:
         curPubFile._abortPublish(e, None, None)
         raise
 
+    sgTaskInfo = prePublishInfos["sgTask"]
     if not sgTaskInfo:
         bSgVersion = False
 
-    if damEntity:
-        if not publishSceneDependencies(damEntity, scanResults, sComment):
+    publishCtx = PublishContext(proj, prePublishInfos, entity=damEntity)
+
+    if prePublishFunc:
+        prePublishFunc(publishCtx)
+
+    if damEntity and depScanResults:
+        if not publishSceneDependencies(damEntity, depScanResults, prePublishInfos):
             return
 
     sSavedScnPath = myasys.saveScene(confirm=False)
@@ -249,11 +268,14 @@ def publishCurrentScene(*args, **kwargs):
         raise RuntimeError("Could not save your current scene !")
 
     res = proj.publishEditedVersion(sSavedScnPath,
-                                    version=iNextVers,
-                                    comment=sComment,
+                                    version=prePublishInfos["version"],
+                                    comment=prePublishInfos["comment"],
                                     sgTask=sgTaskInfo,
                                     withSgVersion=bSgVersion,
                                     **kwargs)
+
+    if postPublishFunc:
+        postPublishFunc(publishCtx)
 
     pm.displayWarning("Publishing completed !")
 
