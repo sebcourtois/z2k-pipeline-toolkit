@@ -49,6 +49,7 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('reflection_additive', label='Additive')
         self.addControl('reflection_color', label='Color')
         self.addControl('reflection_roughness', label='Roughness')
+        self.addControl('reflection_look_at_fast', label='Look at Fast Shader')
         self.endLayout()
 
 
