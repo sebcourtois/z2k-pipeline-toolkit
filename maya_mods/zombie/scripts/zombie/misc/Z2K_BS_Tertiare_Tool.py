@@ -442,6 +442,7 @@ class Z2K_BS_Tertiaire_Tool_GUI (object):
         cmds.button("Connect imported BS to current asset".ljust(50),c= self.btn_jipe_multiAttr_BSConnector,  )
         cmds.setParent("..")
         cmds.setParent("..")
+        cmds.text("Cleaner la scene")
         
         # cmds.text(" info: Browse for the corresponding '.bsd' file ",)
         # show Window
