@@ -703,9 +703,8 @@ class SceneManager():
         infoSetExpI = infoE.infoSetExp()
         infoSetExpI.export(sceneName=jpZ.getShotName())
 
-        if self.context["task"]["content"].lower() == "previz 3d":
-            self.exportCamAnimFiles()
-        elif self.isShotCamEdited():
+        bPreviz = self.context["task"]["content"].lower() == "previz 3d"
+        if (not bPreviz) and self.isShotCamEdited():
             self.exportCamAnimFiles()
             self.importShotCamAbcFile()
             mop.setCamAsPerspView(self.getShotCamera())

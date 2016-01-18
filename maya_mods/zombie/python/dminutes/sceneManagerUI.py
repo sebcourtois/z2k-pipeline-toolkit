@@ -114,7 +114,10 @@ def refreshContextUI():
     pc.control('sm_publish_bt', edit=True, enable=contextMatches)
     pc.control('sm_upscene_bt', edit=True, enable=contextMatches)
     pc.control('sm_updb_bt', edit=True, enable=contextMatches)
-    pc.control('sm_editCam_bt', edit=True, enable=contextMatches)
+
+    sTaskName = SCENE_MANAGER.context["task"]["content"].lower()
+    bEnabled = (sTaskName != "previz 3d") and contextMatches
+    pc.control('sm_editCam_bt', edit=True, enable=bEnabled)
 
     pc.checkBox('sm_imgPlane_chk', edit=True, value=mop.isImgPlaneVisible())
 
