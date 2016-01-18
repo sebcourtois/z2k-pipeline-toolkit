@@ -694,6 +694,8 @@ class SceneManager():
 
     def prePublishCurrentScene(self, publishCtx, **kwargs):
 
+        bPreviz = self.context["task"]["content"].lower() == "previz 3d"
+
         # here is incerted the publish of the camera of the scene
         print "exporting the camera of the shot"
         camImpExpI = camIE.camImpExp()
@@ -703,7 +705,6 @@ class SceneManager():
         infoSetExpI = infoE.infoSetExp()
         infoSetExpI.export(sceneName=jpZ.getShotName())
 
-        bPreviz = self.context["task"]["content"].lower() == "previz 3d"
         if (not bPreviz) and self.isShotCamEdited():
             self.exportCamAnimFiles()
             self.importShotCamAbcFile()
