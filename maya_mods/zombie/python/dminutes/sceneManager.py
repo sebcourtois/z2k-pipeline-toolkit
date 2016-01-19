@@ -751,7 +751,7 @@ class SceneManager():
         """Detect the filetag (resource) from an asset path, when we don't have the shotgun info, right now it'll just say 'NONE'"""
         return notFoundvalue
 
-    def listAssetData(self):
+    def listRelatedAssets(self):
         """Compare Shotgun shot<=>assets linking and scene content"""
         logMsg(log='all')
 
@@ -860,7 +860,7 @@ class SceneManager():
             raise NotImplementedError("Only applies to shots.")
 
         # WIP CORRECTION collapseVariables (ERROR)
-        assetDataList = self.listAssetData()
+        assetDataList = self.listRelatedAssets()
         errorL = []
         sCurRefTag = self.getCurrentTaskRefTag()
 
@@ -928,7 +928,7 @@ class SceneManager():
 
         proj = self.context['damProject']
 
-        assetDataList = self.listAssetData()
+        assetDataList = self.listRelatedAssets()
         assetDataDct = OrderedDict((astData['name'], astData)
                                         for astData in assetDataList
                                             if astData["resource"] != noneValue)

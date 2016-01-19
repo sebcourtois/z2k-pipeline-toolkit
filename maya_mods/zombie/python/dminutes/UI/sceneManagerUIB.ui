@@ -429,14 +429,20 @@
           </sizepolicy>
          </property>
          <property name="title">
-          <string/>
+          <string>Related Assets</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+         </property>
+         <property name="flat">
+          <bool>false</bool>
          </property>
          <property name="checkable">
           <bool>false</bool>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_7">
           <property name="spacing">
-           <number>2</number>
+           <number>4</number>
           </property>
           <property name="margin">
            <number>2</number>
