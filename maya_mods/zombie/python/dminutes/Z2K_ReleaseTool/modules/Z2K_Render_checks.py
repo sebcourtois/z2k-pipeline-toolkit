@@ -574,3 +574,4 @@ class checkModule(object):
 
 # Z2K_Pcheck = checkModule(GUI=True )
 # Z2K_Pcheck.insertLayout( parent="" )
+print 'caca'
