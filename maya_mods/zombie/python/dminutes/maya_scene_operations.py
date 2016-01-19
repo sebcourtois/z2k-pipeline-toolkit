@@ -1,8 +1,12 @@
+
+import os
+import re
+
 import pymel.core as pc
 import maya.cmds as mc
-import os
+from pytd.util.sysutils import toStr
 
-CAMPATTERN = 'cam_sq*sh*:*'
+CAMPATTERN = 'cam_sq????_sh?????:*'
 CAM_GLOBAL = 'Global_SRT'
 CAM_LOCAL = 'Local_SRT'
 CAM_DOLLY = 'Dolly'
@@ -24,7 +28,7 @@ def setSubdivPref(i_inSubDiv=0):
 
     pc.polyOptions(newPolymesh=True, smoothDrawType=i_inSubDiv)
 
-def getSceneContent(o_inSceneManager):
+def getSceneContent(sceneManager):
     sceneContent = []
 
     #Collect references
@@ -33,23 +37,28 @@ def getSceneContent(o_inSceneManager):
         ns = ref[0]
         path = ref[1]
 
-        sceneContent.append({'name':'_'.join(ns.split("_")[:-1]), 'path':str(ref[1])})
+        sceneContent.append({'name':'_'.join(ns.split("_")[:-1]), 'path':str(path)})
 
     return sceneContent
 
-def createImgPlane():
+def getImagePlaneItems(create=False):
     IMGP = None
 
     IMGPs = pc.ls("cam_animatic:assetShape->imgPlane_animatic*")
     if len(IMGPs) > 0:
         IMGP = IMGPs[0]
 
-    if IMGP != None:
-        cam_animatic = pc.ls("cam_animatic:*")
-        if len(cam_animatic) > 0:
-            return (IMGP, cam_animatic[0])
-        else:
+    if (not IMGP) and (not create):
+        return None, None
+
+    cam_animatic = pc.ls("cam_animatic:*")
+    if len(cam_animatic) > 0:
+        return (IMGP, cam_animatic[0])
+    else:
+        if create:
             pc.delete(IMGP)
+        else:
+            return None, None
 
     # - Remove previous Animatic Camera
     cam_animatic = pc.ls("cam_animatic:*")
@@ -83,6 +92,23 @@ def createImgPlane():
     pc.setAttr(cam_animatic[1] + ".displayGateMaskColor", [0, 0, 0])
 
     return (IMGP[1], cam_animatic[0])
+
+def setImgPlaneVisible(bVisible):
+
+    oImgPlaneList = pc.ls("imgPlane_animatic*", type="imagePlane")
+    for oImgPlane in oImgPlaneList:
+        try: oImgPlane.setAttr("visibility", bVisible)
+        except Exception as e: pc.displayWarning(toStr(e))
+
+def isImgPlaneVisible():
+
+    bVisible = False
+
+    oImgPlaneList = pc.ls("imgPlane_animatic*", type="imagePlane")
+    for oImgPlane in oImgPlaneList:
+        bVisible = (bVisible or oImgPlane.getAttr("visibility"))
+
+    return bVisible
 
 def importAsset(s_inPath, s_inNS='', b_inRef=True):
     importedAsset = None
@@ -162,9 +188,8 @@ def reArrangeAssets():
         'prp':'grp_prop',
         'env':'grp_environment',
         'c2d':'grp_character2D',
-        'vhl':'grp_vehicule',
-
-    }
+        'vhl':'grp_vehicle',
+        }
 
     #Collect references
     refs = pc.listReferences(namespaces=True)
@@ -236,7 +261,7 @@ def canDo(s_inCommand, s_inTask):
 
     return None
 
-def do(s_inCommand, s_inTask, o_inSceneManager):
+def do(s_inCommand, s_inTask, sceneManager):
     cmd = COMMANDS.get(s_inCommand)
     if cmd == None:
         pc.error('Command "{0}" does not exists !'.format(s_inCommand))
@@ -247,19 +272,21 @@ def do(s_inCommand, s_inTask, o_inSceneManager):
 
     cmdBaseCallable = cmd.get('BASE')
     if cmdBaseCallable != None:
-        cmdBaseCallable(o_inSceneManager)
+        cmdBaseCallable(sceneManager)
+        print '{} initialization done ! ({})'.format("base", sceneManager.context)
 
-    cmdCallable(o_inSceneManager)
+    cmdCallable(sceneManager)
+    print '{} initialization done ! ({})'.format(s_inTask, sceneManager.context)
 
-def importSceneStructure(o_inSceneManager):
+def importSceneStructure(sceneManager):
     #Import only if does not exists...
     if pc.objExists('shot'):
         return
 
-    sEntityType = o_inSceneManager.context['entity']['type']
+    sEntityType = sceneManager.context['entity']['type']
 
     #Import scene structure
-    template_path = o_inSceneManager.context['damProject'].getPath('template', 'project')
+    template_path = sceneManager.context['damProject'].getPath('template', 'project')
     strucure_path = os.path.join(template_path, "{0}_layout_tree.ma".format(sEntityType.lower()))
 
     if os.path.isfile(strucure_path):
@@ -267,43 +294,47 @@ def importSceneStructure(o_inSceneManager):
     else:
         pc.warning("Base file structure not found for entity type : {0}".format(sEntityType))
 
+def setCamAsPerspView(oCamXfm):
+    perspPanel = mc.getPanel(withLabel='Persp View')
+    pc.modelPanel(perspPanel, edit=True, camera=oCamXfm.getShape())
+
 #Creates
-def create_scene_base(o_inSceneManager):
+def create_scene_base(sceneManager):
     mc.file(force=True, new=True)
 
-    print 'base creation done ! ({0})'.format(o_inSceneManager.context)
+    print 'base creation done ! ({0})'.format(sceneManager.context)
 
-def create_previz_scene(o_inSceneManager):
-    o_inSceneManager.updateScene()
+def create_previz_scene(sceneManager):
+    sceneManager.updateScene()
 
-    init_scene_base(o_inSceneManager)
-    init_previz_scene(o_inSceneManager)
+    init_scene_base(sceneManager)
+    init_previz_scene(sceneManager)
 
     reArrangeAssets()
 
     #lock previz, save v001 in private, here ?
-    privFile = o_inSceneManager.edit(onBase=True)
+    privFile = sceneManager.edit(onBase=True)
 
     if privFile != None:
         #save the created file on the private
         pc.saveAs(privFile.absPath())
 
-        print 'previz creation done ! ({0})'.format(o_inSceneManager)
+        print 'previz creation done ! ({0})'.format(sceneManager)
     else:
         print 'previz creation failed to Edit and save !'
 
 #Inits
-def init_shot_constants(o_inSceneManager):
+def init_shot_constants(sceneManager):
     start = 101
 
-    duration = o_inSceneManager.getDuration()
+    duration = sceneManager.getDuration()
 
     pc.playbackOptions(edit=True, minTime=start)
     pc.playbackOptions(edit=True, animationStartTime=start)
     pc.playbackOptions(edit=True, maxTime=start + duration - 1)
     pc.playbackOptions(edit=True, animationEndTime=start + duration - 1)
 
-def init_scene_base(o_inSceneManager):
+def init_scene_base(sceneManager):
     #Set units
     angle = 'degree'
     linear = 'centimeter'
@@ -327,16 +358,35 @@ def init_scene_base(o_inSceneManager):
     mc.setAttr("hardwareRenderingGlobals.textureMaxResolution", 1024)
 
     #entity specific initialisation
-    if o_inSceneManager.context['entity']['type'] == 'Shot':
-        init_shot_constants(o_inSceneManager)
+    if sceneManager.context['entity']['type'] == 'Shot':
+        init_shot_constants(sceneManager)
 
-    importSceneStructure(o_inSceneManager)
+    importSceneStructure(sceneManager)
 
-    print 'base initialization done ! ({0})'.format(o_inSceneManager.context)
+def arrangeViews(oShotCam, oImgPlaneCam=None):
 
-def init_previz_scene(o_inSceneManager):
-    # - Create imagePlane
-    IMGP = createImgPlane()
+    # Set Viewport
+    pc.mel.eval('setNamedPanelLayout("Four View")')
+    pc.mel.eval('ThreeRightSplitViewArrangement')
+
+    #Image plane
+    sidePanel = ""
+    if oImgPlaneCam:
+        sidePanel = mc.getPanel(withLabel='Side View')
+        pc.modelPanel(sidePanel, edit=True, camera=oImgPlaneCam)
+    #Camera
+    perspPanel = mc.getPanel(withLabel='Persp View')
+    pc.modelPanel(perspPanel, edit=True, camera=oShotCam)
+    #Work view
+    workPanel = mc.getPanel(withLabel='Top View')
+    pc.modelPanel(workPanel, edit=True, camera='persp')
+
+    if sidePanel:
+        pc.modelEditor(sidePanel, edit=True, allObjects=0, imagePlane=True, grid=False)
+
+    pc.setFocus(perspPanel)
+
+def init_previz_scene(sceneManager):
 
     # --- Set Viewport 2.0 AO default Value
     pc.setAttr('hardwareRenderingGlobals.ssaoAmount', 0.3)
@@ -344,27 +394,10 @@ def init_previz_scene(o_inSceneManager):
     pc.setAttr('hardwareRenderingGlobals.ssaoFilterRadius', 8)
     pc.setAttr('hardwareRenderingGlobals.ssaoSamples', 16)
 
-    # Set Viewport
-    pc.mel.eval('setNamedPanelLayout("Four View")')
-    pc.mel.eval('ThreeRightSplitViewArrangement')
-
-    #Image plane
-    sidePanel = mc.getPanel(withLabel='Side View')
-    pc.modelPanel(sidePanel, edit=True, camera=IMGP[1])
-    #Camera
-    perspPanel = mc.getPanel(withLabel='Persp View')
-    pc.modelPanel(perspPanel, edit=True, camera='persp')
-    #Work view
-    workPanel = mc.getPanel(withLabel='Top View')
-    pc.modelPanel(workPanel, edit=True, camera='persp')
-
-    pc.modelEditor(sidePanel, edit=True, allObjects=0, imagePlane=True, grid=False)
-
-    #Import camera  "X:\asset\cam\cam_shot_default\cam_shot_default.ma"
-
-    camDefaultPath = o_inSceneManager.context['damProject'].getPath('public', 'camera', 'scene', tokens={'name':'cam_shot_default'})
-
-    sCamNspace = o_inSceneManager.getShotCamNamespace()
+    sTaskName = sceneManager.context["task"]["content"]
+    sShotCamNspace = sceneManager.mkShotCamNamespace()
+    proj = sceneManager.context["damProject"]
+    shotLib = proj.getLibrary("public", "shot_lib")
 
     #rename any other shot camera
     remainingCamera = None
@@ -377,53 +410,55 @@ def init_previz_scene(o_inSceneManager):
                 if camsLength == 1:
                     remainingCamera = otherCam
                     break
-                if sCamNspace not in otherCam.namespace():
-                    oldNs = otherCam.namespace()
-                    otherRoot = getRoot(otherCam)
-                    pc.delete(otherRoot)
-                    pc.namespace(removeNamespace=oldNs, mergeNamespaceWithRoot=True)
+                sCamNs = otherCam.parentNamespace()
+                if sShotCamNspace != sCamNs:
+                    otherCam.setAttr("renderable", False)
+                    mc.setAttr(sCamNs + ":asset.visibility", False)
                     camsLength -= 1
         else:
             remainingCamera = otherCams[0]
 
-        if remainingCamera != None and remainingCamera.namespace() != '{0}:'.format(sCamNspace):
+        if remainingCamera and remainingCamera.parentNamespace() != sShotCamNspace:
             #rename camera
-            pc.namespace(rename=(remainingCamera.namespace(), sCamNspace))
+            pc.namespace(rename=(remainingCamera.namespace(), sShotCamNspace))
 
-    camObjs = pc.ls('{0}:*'.format(sCamNspace), type='camera')
-    if len(camObjs) == 0:
-        if os.path.isfile(camDefaultPath):
-            importAsset(camDefaultPath, sCamNspace, False)
-            camObjs = pc.ls('{0}:*'.format(sCamNspace), type='camera')
-        else:
-            pc.warning('Default camera file cannot be found ({0})'.format(camDefaultPath))
+    oShotCam = sceneManager.getShotCamera()
+    if not oShotCam:
+        oShotCam = sceneManager.importShotCam()
 
-    if len(camObjs) > 0:
-        perspPanel = mc.getPanel(withLabel='Persp View')
-        pc.modelPanel(perspPanel, edit=True, camera=camObjs[0])
-    else:
-        pc.warning("Cannot find the shot camera {0} !!".format(sCamNspace))
+    if sTaskName.lower() != "previz 3d":
 
+        if not oShotCam.isReferenced():
+            oShotCam = switchShotCamToRef(sceneManager, oShotCam)
+
+        if (not sceneManager.isShotCamEdited()) and sceneManager.camAnimFilesExist():
+            sceneManager.importShotCamAbcFile()
+
+    sgEntity = sceneManager.context['entity']
     #image plane "Y:\shot\...\00_data\sqXXXX_shXXXXa_animatic.mov"
-    imgPlanePath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_capture')
-    IMGP = createImgPlane()
+    imgPlanePath = sceneManager.getPath(sgEntity, 'animatic_capture')
+    imgPlaneEnvPath = shotLib.absToEnvPath(imgPlanePath)
+    IMGP = getImagePlaneItems(create=True)
+
+    arrangeViews(oShotCam.getShape(), IMGP[1])
 
     if os.path.isfile(imgPlanePath):
         pc.currentTime(101)
         pc.refresh()
-        pc.imagePlane(IMGP[0], edit=True, fileName=imgPlanePath)
+        pc.imagePlane(IMGP[0], edit=True, fileName=imgPlaneEnvPath)
     else:
         pc.warning('Image plane file cannot be found ({0})'.format(imgPlanePath))
-        pc.setAttr(IMGP[0] + ".imageName", imgPlanePath, type="string")
+        pc.setAttr(IMGP[0] + ".imageName", imgPlaneEnvPath, type="string")
         #pc.imagePlane(IMGP[0], edit=True, fileName="")
 
     #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
-    soundPath = o_inSceneManager.getPath(o_inSceneManager.context['entity'], 'animatic_sound')
+    soundPath = sceneManager.getPath(sgEntity, 'animatic_sound')
     pc.mel.DeleteAllSounds()
     if os.path.isfile(soundPath):
         # --- Import Sound
         # - Import current shot Sound
-        audio_shot = pc.sound(offset=101, file=soundPath, name='audio')
+        soundEnvPath = shotLib.absToEnvPath(soundPath)
+        audio_shot = pc.sound(offset=101, file=soundEnvPath, name='audio')
 
         # - Show Sound in Timeline
         aPlayBackSliderPython = pc.mel.eval('$tmpVar=$gPlayBackSlider')
@@ -433,7 +468,6 @@ def init_previz_scene(o_inSceneManager):
         pc.warning('Sound file cannot be found ({0})'.format(soundPath))
 
     reArrangeAssets()
-    print 'previz initialization done ! ({0})'.format(o_inSceneManager.context)
 
 COMMANDS = {
     'create':{
@@ -442,26 +476,56 @@ COMMANDS = {
     },
     'init':{
         'BASE':init_scene_base,
-        'previz 3D':init_previz_scene
+        'previz 3D':init_previz_scene,
+        'layout':init_previz_scene,
     }
 }
 
-def switchPrevizCamToRef(sceneManager):
+def exportCamAlembic(**kwargs):
 
-    oShotCam = sceneManager.getShotCamera()
-    if not oShotCam:
-        return
+    timeRange = (pc.playbackOptions(q=True, animationStartTime=1),
+                 pc.playbackOptions(q=True, animationEndTime=1))
+
+    sFrameRange = " ".join((re.sub("0+$", "", "{:.4f}".format(t)).rstrip(".") for t in timeRange))
+
+    sAbcJobArgs = """-frameRange {frameRange}
+-attr horizontalFilmAperture
+-attr verticalFilmAperture
+-attr focalLength
+-attr lensSqueezeRatio
+-attr fStop
+-attr focusDistance
+-attr shutterAngle
+-attr centerOfInterest
+-dataFormat ogawa
+-root {root}
+-file {file}""".format(frameRange=sFrameRange, **kwargs)
+
+    sHeader = " Alembic Export ".center(100, "-")
+    print "\n", sHeader
+    print sAbcJobArgs
+
+    bImgPlnViz = isImgPlaneVisible()
+    setImgPlaneVisible(False)
+    try:
+        res = mc.AbcExport(j=sAbcJobArgs.replace("\n", " "))
+    finally:
+        setImgPlaneVisible(bImgPlnViz)
+
+    print sHeader
+
+    return res
+
+def switchShotCamToRef(scnMng, oShotCam):
 
     if oShotCam.isReferenced():
-        return
+        raise RuntimeError("{} is already a reference.".format(oShotCam))
 
     from tempfile import NamedTemporaryFile
-    tmpFile = NamedTemporaryFile(suffix=".atom", delete=False)
-    sAtomFilePath = os.path.normpath(tmpFile.name).replace("\\", "/")
-    tmpFile.close()
+    with NamedTemporaryFile(suffix=".atom", delete=False) as f:
+        sAtomFilePath = os.path.normpath(f.name).replace("\\", "/")
 
     try:
-        
         from pytaya.core import system as myasys
 
         sCamNs = oShotCam.parentNamespace()
@@ -471,7 +535,6 @@ def switchPrevizCamToRef(sceneManager):
         oParent = oCamAstGrp.getParent()
 
         mc.select(sCamAstGrp)
-
         myasys.exportAtomFile(sAtomFilePath,
                               SDK=True,
                               constraints=True,
@@ -484,40 +547,77 @@ def switchPrevizCamToRef(sceneManager):
                               timeRange="all",
                               )
 
-        sOldCamNs = sCamNs + "_OLD"
-        mc.namespace(rename=(sCamNs, sOldCamNs), parent=':')
+        mc.namespace(rename=(sCamNs, sCamNs + "_OLD#"), parent=':')
         mc.refresh()
 
-        damCam = sceneManager.context["damProject"].getAsset("cam_shot_default")
-        camFile = damCam.getResource("public", "scene")
-        camFile.mayaImportScene(ns=sCamNs)
-        mc.refresh()
+        sOldCamNs = oCamAstGrp.parentNamespace()
+        oOldCam = pc.PyNode(sOldCamNs + ":cam_shot_default")
+        oOldCam.getShape().setAttr("renderable", False)
+        mc.setAttr(sOldCamNs + ":asset.visibility", False)
+
+        oShotCam = scnMng.importShotCam()
 
         oCamAstGrp = pc.PyNode(sCamAstGrp)
         pc.parent(oCamAstGrp, oParent)
 
         mc.select(sCamAstGrp)
-
         myasys.importAtomFile(sAtomFilePath,
                               targetTime="from_file",
                               option="replace",
                               match="string",
                               selected="childrenToo")
 
-        oOldCam = pc.PyNode(sOldCamNs + ":cam_shot_default")
-        oOldCam.getShape().setAttr("renderable", False)
-        mc.setAttr(sOldCamNs + ":asset.visibility", False)
-
     finally:
         os.remove(sAtomFilePath)
+
+    return oShotCam
+
+def setReferenceLocked(oFileRef, bLocked):
+
+    oRefNode = oFileRef.refNode
+
+    if oRefNode.getAttr("locked") != bLocked:
+
+        bLoaded = oFileRef.isLoaded()
+
+        if bLoaded:
+            mc.file(unloadReference=oRefNode.name(), force=True)
+
+        oRefNode.setAttr("locked", bLocked)
+
+        if bLoaded:
+            mc.file(loadReference=oRefNode.name())
+
+def saveDisplayLayersState():
+
+    savedAttrs = {}
+
+    for sLayer in mc.ls(type="displayLayer"):
+        for sAttr in mc.listAttr(sLayer, settable=True, visible=True, scalar=True):
+            sNodeAttrName = sLayer + "." + sAttr
+            try:
+                savedAttrs[sNodeAttrName] = (mc.getAttr(sNodeAttrName),
+                                             mc.getAttr(sNodeAttrName, type=True))
+            except Exception as e:
+                pc.displayWarning(toStr(e))
+
+    return savedAttrs
+
+def restoreDisplayLayersState(savedAttrs):
+
+    for sNodeAttrName, state in savedAttrs.iteritems():
+        value, sType = state
+        try:
+            mc.setAttr(sNodeAttrName, value, type=sType)
+        except Exception as e:
+            pc.displayWarning(toStr(e))
+
 
 def exportCam(sceneName="", *args, **kwargs):
     """ Description: export la camera du given shot
         Return : BOOL
         Dependencies : cmds - 
     """
-
-
 
     # get camera_group
 

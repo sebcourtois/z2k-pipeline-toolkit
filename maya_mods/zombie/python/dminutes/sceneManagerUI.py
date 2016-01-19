@@ -26,7 +26,7 @@ SG = None
 
 """Various caches for UI lists"""
 CATEG_ITEMS = {}
-TASKS = {}
+CURRENT_ENTITY_TASKS = {}
 VERSIONS = {}
 
 ACTION_BUTTONS = []
@@ -85,6 +85,7 @@ def initialize(d_inContext=None):
     pc.control("fileStatusGroup", edit=True, visible=False)
     pc.control("sm_createFolder_bt", edit=True, visible=False)
     pc.control("sm_edit_bt", edit=True, visible=False)
+    pc.control("sm_addOnly_bt", edit=True, visible=False)
     #pc.control("sm_disconnect_bt", edit=True, visible=False)
     if not inDevMode():
         pc.control("sm_pouet_bt", edit=True, visible=False)
@@ -114,6 +115,11 @@ def refreshContextUI():
     pc.control('sm_upscene_bt', edit=True, enable=contextMatches)
     pc.control('sm_updb_bt', edit=True, enable=contextMatches)
 
+    sTaskName = SCENE_MANAGER.context["task"]["content"].lower()
+    bEnabled = (sTaskName != "previz 3d") and contextMatches
+    pc.control('sm_editCam_bt', edit=True, enable=bEnabled)
+
+    pc.checkBox('sm_imgPlane_chk', edit=True, value=mop.isImgPlaneVisible())
 
 def setContextUI():
     """Initialize UI from scene"""
@@ -272,6 +278,7 @@ def connectCallbacks():
     pc.button('sm_saveWip_bt', edit=True, c=doSaveWip)
 
     pc.button('sm_switchContext_bt', edit=True, c=doSwitchContext)
+    pc.button('sm_shotgun_bt', edit=True, c=doShowInShotgun)
 
     #davos
     pc.button('sm_unlock_bt', edit=True, c=doUnlock)
@@ -284,11 +291,20 @@ def connectCallbacks():
     pc.button(buttonName, edit=True, c=doInit)
     ACTION_BUTTONS.append(buttonName)
 
+    pc.button('sm_editCam_bt', edit=True, c=doEditCam)
+    pc.checkBox('sm_imgPlane_chk', edit=True, cc=doShowImagePlane)
+
     pc.button('sm_pouet_bt', edit=True, c=doPouet)
     #buttonName = 'sm_create_bt'
     #pc.button(buttonName, edit=True, c=doCreate)
     #ACTION_BUTTONS.append(buttonName)
 
+
+def doShowInShotgun(*args):
+    SCENE_MANAGER.showInShotgun()
+
+def doShowImagePlane(bShow):
+    mop.setImgPlaneVisible(bShow)
 
 def doDisconnect(*args):
     SG.logoutUser()
@@ -338,20 +354,20 @@ def doEntityChanged(*args, **kwargs):
 
     #print "doEntityChanged", getCaller(fo=0)
 
-    global TASKS
+    global CURRENT_ENTITY_TASKS
     entityCtrlName = 'sm_shot_dd' if SCENE_MANAGER.context['step']['entity_type'] == 'Shot' else 'sm_asset_dd'
 
     entityName = pc.optionMenu(entityCtrlName, query=True, value=True)
     SCENE_MANAGER.context['entity'] = CATEG_ITEMS[SCENE_MANAGER.context['categ']][entityName]
 
     #get tasks on entity
-    TASKS = {}
-    tasks = SCENE_MANAGER.getTasks()
+    CURRENT_ENTITY_TASKS = {}
+    sgTasks = SCENE_MANAGER.getTasks()
 
-    for task in tasks:
-        TASKS[task['content']] = task
+    for sgTask in sgTasks:
+        CURRENT_ENTITY_TASKS[sgTask['content']] = sgTask
 
-    refreshOptionMenu('sm_task_dd', sorted(TASKS.keys()))
+    refreshOptionMenu('sm_task_dd', sorted(CURRENT_ENTITY_TASKS.keys()))
 
     if kwargs.get("runTaskChanged", True):
         doTaskChanged(*args)
@@ -363,8 +379,8 @@ def doTaskChanged(*args, **kwargs):
     logMsg(log="all")
 
     global VERSIONS
-    taskName = pc.optionMenu('sm_task_dd', query=True, value=True)
-    SCENE_MANAGER.context['task'] = TASKS[taskName]
+    sTaskName = pc.optionMenu('sm_task_dd', query=True, value=True)
+    SCENE_MANAGER.context['task'] = CURRENT_ENTITY_TASKS[sTaskName]
 
     #get Versions on task
     VERSIONS = {}
@@ -380,7 +396,7 @@ def doTaskChanged(*args, **kwargs):
 
 #    doRefreshSceneInfo(*args)
     doRefreshFileStatus()
-    doVersionChanged(*args)
+    doVersionChanged()
 
 def doVersionChanged(*args):
     """I don't use versions at all in the end..."""
@@ -598,6 +614,7 @@ def doSwitchContext(*args):
         or pc.confirmDialog(title="Entity override", message=sMsg) == "Confirm"):
         SCENE_MANAGER.edit(True)
         doTaskChanged()
+        #print "after", SCENE_MANAGER.context['task']['content']
     else:
         pc.warning("Switch context aborted !")
 
@@ -627,6 +644,10 @@ def doCreateFolder(*args):
 #action buttons
 def doInit(*args):
     """Button is named 'Shot Setup'"""
+
+    if not SCENE_MANAGER.contextIsMatching():
+        raise RuntimeError("Sorry, context does not match current scene")
+
     SCENE_MANAGER.do('init')
     doRefreshSceneInfo()
 
@@ -635,6 +656,22 @@ def doCreate(*args):
     SCENE_MANAGER.do('create')
     doRefreshSceneInfo()
     doRefreshFileStatus()
+
+def doEditCam(*args):
+
+    sMsg = "Edit the shot camera ??"
+    sRes = pc.confirmDialog(title='ARE YOU SURE ?',
+                            message=sMsg,
+                            button=['OK', 'Cancel'],
+                            defaultButton='Cancel',
+                            cancelButton='Cancel',
+                            dismissString='Cancel',
+                            icon="warning")
+    if sRes == "Cancel":
+        pc.displayInfo("Canceled !")
+        return
+
+    SCENE_MANAGER.editShotCam()
 
 def doPouet(*args, **kwargs):
     """Best function ever"""
