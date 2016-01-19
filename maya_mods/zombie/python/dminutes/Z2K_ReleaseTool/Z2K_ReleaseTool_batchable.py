@@ -713,13 +713,13 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
 
 
 
-# Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", assetCat = "chr", sourceAssetType="previz_scene",
-#                       destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
-#                       projConnectB= True, theProject="zombtest",debug=False,
-#                       theComment= "auto rock the casbah release !")
+Z2K_ReleaseTool_GuiI = Z2K_ReleaseTool_Gui(sourceAsset="chr_aurelien_manteau", assetCat = "chr", sourceAssetType="previz_scene",
+                      destinationAsset="chr_aurelien_manteau", destinationAssetType= "previz_ref",
+                      projConnectB= True, theProject="zombtest",debug=True,
+                      theComment= "auto rock the casbah release !")
 
 
-# Z2K_ReleaseTool_GuiI.createWin()
+Z2K_ReleaseTool_GuiI.createWin()
 
 
 
