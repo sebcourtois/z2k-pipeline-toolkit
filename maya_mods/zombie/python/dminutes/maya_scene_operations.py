@@ -1,10 +1,18 @@
 
 import os
 import re
+from functools import partial
 
 import pymel.core as pc
 import maya.cmds as mc
 from pytd.util.sysutils import toStr
+
+from pytaya.core.reference import listReferences
+from davos_maya.tool.reference import listMayaRcForSelectedRefs
+from davos_maya.tool.general import entityFromScene
+#from pytd.util.strutils import upperFirst
+from PySide import QtGui, QtCore
+
 
 CAMPATTERN = 'cam_sq????_sh?????:*'
 CAM_GLOBAL = 'Global_SRT'
@@ -593,38 +601,297 @@ def saveDisplayLayersState():
     savedAttrs = {}
 
     for sLayer in mc.ls(type="displayLayer"):
-        for sAttr in mc.listAttr(sLayer, settable=True, visible=True, scalar=True):
+
+        if sLayer.endswith("defaultLayer"):
+            continue
+
+        for sAttr in mc.listAttr(sLayer, settable=True, visible=True, scalar=True,
+                                 unlocked=True):
+
+            if sAttr == "identification":
+                continue
+
             sNodeAttrName = sLayer + "." + sAttr
             try:
                 savedAttrs[sNodeAttrName] = (mc.getAttr(sNodeAttrName),
                                              mc.getAttr(sNodeAttrName, type=True))
             except Exception as e:
-                pc.displayWarning(toStr(e))
+                pc.displayWarning(toStr(e).rstrip())
 
     return savedAttrs
 
 def restoreDisplayLayersState(savedAttrs):
 
     for sNodeAttrName, state in savedAttrs.iteritems():
-        value, sType = state
+
+        if not mc.objExists(sNodeAttrName):
+            continue
+
+        value, _ = state
         try:
-            mc.setAttr(sNodeAttrName, value, type=sType)
+            if value != mc.getAttr(sNodeAttrName):
+                mc.setAttr(sNodeAttrName, value)
         except Exception as e:
-            pc.displayWarning(toStr(e))
+            pc.displayWarning(toStr(e).rstrip())
+
+def setGeometryLayersSelectable(bSelectable):
+
+    value = 0 if bSelectable else 2
+
+    for sLayer in mc.ls(type="displayLayer"):
+        if not sLayer.endswith("geometry"):
+            continue
+        try:
+            mc.setAttr(sLayer + "." + "displayType", value)
+        except RuntimeError as e:
+            pc.displayWarning(toStr(e).rstrip())
+
+REFNODE_ATTR = "defaultAssetFile"
+
+def setDefaultAssetFileForSelectedRefs(assetFile="NoInput", **kwargs):
+
+    damEntity = entityFromScene()
+    proj = damEntity.project
+
+    kwargs.update(confirm=False, allIfNoSelection=False, topReference=True)
+    oSelRefList, assetRcList = listMayaRcForSelectedRefs(proj,
+                                                         filter="previz_ref",
+                                                         **kwargs)
+
+    assetList = tuple(ast for ast, _ in assetRcList if ast)
+    if not assetList:
+        #pc.displayWarning("No Asset References selected !")
+        return
+
+    sRcNameSet = set()
+    for _, rcDct in assetRcList:
+        sRcNameSet.update(rcDct.iterkeys())
+
+    if not sRcNameSet:
+        pc.displayWarning("No available resources on which to switch !")
+
+    sAstRcName = None
+
+    sortedRcNames = sorted(sRcNameSet)
+    allowedValues = sortedRcNames + ["offloaded", ""]
+    if assetFile != "NoInput":
+        if assetFile not in allowedValues:
+            raise ValueError("Bad value for 'assetFile' kwarg: '{}'. Are valid: {}"
+                             .format(assetFile, allowedValues))
+        sAstRcName = assetFile
+        sChoiceList = ["OK"]
+    else:
+        sChoiceList = sortedRcNames + ["offloaded", "Clear"]
+
+    numRefs = len(oSelRefList)
+    if sAstRcName is None:
+        sMsg = "Set default asset file for {} references to...".format(numRefs)
+    else:
+        sMsg = ("Set default asset file for {} references to '{}'"
+                .format(numRefs, sAstRcName))
+
+    sChoice = pc.confirmDialog(title="Hey, mon ami !",
+                               message=sMsg,
+                               button=sChoiceList + ["Cancel"],
+                               defaultButton='Cancel',
+                               cancelButton='Cancel',
+                               dismissString='Cancel',
+                               icon="question")
+
+    if sChoice == "Cancel":
+        pc.displayWarning("Canceled !")
+        return
+    elif sChoice == "Clear":
+        sAstRcName = ""
+    elif sAstRcName is None:
+        sAstRcName = sChoice
+
+    for oFileRef in oSelRefList:
+
+        oRefNode = oFileRef.refNode
+
+        bHasAttr = oRefNode.hasAttr(REFNODE_ATTR)
+        bAddAttr = True if sAstRcName and (not bHasAttr) else False
+
+        if bAddAttr:
+            pc.lockNode(oRefNode, lock=False)
+            try:
+                oRefNode.addAttr(REFNODE_ATTR, dt="string", k=False, r=True, w=True, s=True)
+                bHasAttr = True
+            finally:
+                pc.lockNode(oRefNode, lock=True)
+
+        if bHasAttr:
+            print "set {}.{} to '{}'".format(oRefNode, REFNODE_ATTR, sAstRcName)
+            oRefNode.setAttr(REFNODE_ATTR, sAstRcName)
+
+def selectRefsWithDefaultAssetFile(assetFile="NoInput"):
+
+    oRefNodeDct = {}
+    for oFileRef in listReferences(loaded=True):
+        oRefNode = oFileRef.refNode
+
+        if not oRefNode.hasAttr(REFNODE_ATTR):
+            continue
+
+        sValue = oRefNode.getAttr(REFNODE_ATTR)
+        if not sValue:
+            continue
+
+        oRefNodeDct.setdefault(sValue, []).append(oRefNode)
+
+    sFoundValues = sorted(oRefNodeDct.iterkeys())
+
+    if not sFoundValues:
+        pc.displayWarning("No asset references to select !")
+
+    if assetFile != "NoInput":
+        if assetFile not in sFoundValues:
+            pc.displayWarning("No refs with default asset file set to '{}'. Found {}."
+                              .format(assetFile, sFoundValues))
+            return
+        sAstRcName = assetFile
+    else:
+        sChoice = pc.confirmDialog(title="Hey, mon ami !",
+                                   message="",
+                                   button=sFoundValues + ["Cancel"],
+                                   defaultButton='Cancel',
+                                   cancelButton='Cancel',
+                                   dismissString='Cancel',
+                                   icon="question")
+
+        if sChoice == "Cancel":
+            pc.displayWarning("Canceled !")
+            return
+        else:
+            sAstRcName = sChoice
+
+    sSelList = []
+    count = 0
+    for oRefNode in oRefNodeDct[sAstRcName]:
+
+        sRefNode = oRefNode.name()
+        sNodeList = mc.referenceQuery(sRefNode, nodes=True, dagPath=True)
+        if sNodeList:
+            sDagNodeList = mc.ls(sNodeList, type="dagNode")
+            if sDagNodeList:
+                sNodeList = sDagNodeList
+            sNodeList = [sNodeList[0], sRefNode]
+        else:
+            sNodeList = [sRefNode]
+
+        sSelList.extend(sNodeList)
+        count += 1
+
+    if sSelList:
+        mc.select(sSelList, replace=True, noExpand=True)
+        pc.displayInfo("{} references selected.".format(count))
+    else:
+        pc.displayWarning("No references to select !")
+
+    return sSelList
 
 
-def exportCam(sceneName="", *args, **kwargs):
-    """ Description: export la camera du given shot
-        Return : BOOL
-        Dependencies : cmds - 
-    """
+from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 
-    # get camera_group
+class SelectRefDialog(MayaQWidgetDockableMixin, QtGui.QDialog):
 
-    # check if valid
+    def __init__(self, *args, **kwargs):
+        super(SelectRefDialog, self).__init__(*args, **kwargs)
 
-    # export to specified data folder
+        self.setObjectName("SelectRefDialog")
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+        self.setWindowTitle("Select Refs With Default Asset File")
 
-    # return
+        layout = QtGui.QVBoxLayout(self)
+        self.setLayout(layout)
 
+        buttonBox = QtGui.QDialogButtonBox(self)
+        buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        buttonBox.setObjectName("buttonBox")
 
+        btn = buttonBox.addButton("Close", QtGui.QDialogButtonBox.AcceptRole)
+        btn.clicked.connect(self.accept)
+        btn = buttonBox.addButton("Refresh", QtGui.QDialogButtonBox.ResetRole)
+        btn.clicked.connect(self.refresh)
+
+        layout.addWidget(buttonBox)
+
+        self.refNodes = {}
+
+        self.selectionButtons = self.createButtons()
+
+    def createButtons(self):
+
+        oRefNodeDct = {}
+        for oFileRef in listReferences(loaded=True):
+            oRefNode = oFileRef.refNode
+
+            if not oRefNode.hasAttr(REFNODE_ATTR):
+                continue
+
+            sValue = oRefNode.getAttr(REFNODE_ATTR)
+            if not sValue:
+                continue
+
+            oRefNodeDct.setdefault(sValue, []).append(oRefNode)
+
+        sFoundValues = sorted(oRefNodeDct.iterkeys())
+
+        buttonList = []
+        layout = self.layout()
+
+        if not sFoundValues:
+#            btn = QtGui.QPushButton("No ref with default asset file.", self)
+#            layout.insertWidget(0, btn)
+#            buttonList.append(btn)
+            return buttonList
+
+        self.refNodes = oRefNodeDct
+
+        for sValue in sFoundValues:
+            btn = QtGui.QPushButton(sValue, self)
+            buttonList.append(btn)
+
+            layout.insertWidget(0, btn)
+            slot = partial(self.selectReferences, sValue)
+            btn.clicked.connect(slot)
+
+        return buttonList
+
+    def selectReferences(self, sAstRcName):
+
+        oRefNodeDct = self.refNodes
+
+        sSelList = []
+        count = 0
+        for oRefNode in oRefNodeDct[sAstRcName]:
+
+            sRefNode = oRefNode.name()
+            sNodeList = mc.referenceQuery(sRefNode, nodes=True, dagPath=True)
+            if sNodeList:
+                sDagNodeList = mc.ls(sNodeList, type="dagNode")
+                if sDagNodeList:
+                    sNodeList = sDagNodeList
+                sNodeList = [sNodeList[0], sRefNode]
+            else:
+                sNodeList = [sRefNode]
+
+            sSelList.extend(sNodeList)
+            count += 1
+
+        if sSelList:
+            mc.select(sSelList, replace=True, noExpand=True)
+            pc.displayInfo("{} references selected.".format(count))
+        else:
+            pc.displayWarning("No references to select !")
+
+    def refresh(self):
+
+        layout = self.layout()
+        for btn in self.selectionButtons:
+            btn.close()
+            layout.removeWidget(btn)
+            btn.deleteLater()
+
+        self.selectionButtons = self.createButtons()

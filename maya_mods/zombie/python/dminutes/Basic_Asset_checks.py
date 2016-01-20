@@ -334,7 +334,7 @@ class checkModule(object):
 
 
         # 8 checkDisconnectedNodes()
-        result,debugD = jpZ.UnusedNodeAnalyse(execptionTL = ["dagNode","defaultRenderUtilityList","partition"], specificTL=[], mode="check")
+        result,debugD = jpZ.UnusedNodeAnalyse(execptionTL = ["dagNode","defaultRenderUtilityList","partition","objectSet"], specificTL=[], mode="check")
 
         # prints -------------------
         self.printF( "checkDisconnectedNodes()", st="t")

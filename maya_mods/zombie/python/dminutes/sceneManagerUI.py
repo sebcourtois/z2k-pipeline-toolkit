@@ -462,7 +462,7 @@ def doSelectRefs(*args):
         cmds.select(sSelList, replace=True, noExpand=True)
         pc.displayInfo("{} references selected.".format(count))
     else:
-        pc.displayWarning("No selectable references !")
+        pc.displayWarning("No references to select !")
 
     return sSelList
 
@@ -476,9 +476,9 @@ def doRefreshSceneInfo(*args):
     LIST_WIDGET.clear()
     pc.refresh()
 
-    assetDataList = SCENE_MANAGER.listAssetData()
+    assetDataList = SCENE_MANAGER.listRelatedAssets()
 
-    headerData = ["NB", "ASSET NAME", "SCENE REF", "SHOTGUN LINK"]
+    headerData = ["NB", "ASSET NAME", "ASSET FILE", "SHOTGUN LINK"]
 
     sRcNameList = set()
     for astData in assetDataList:

@@ -37,18 +37,18 @@ BATCH_ASSET_LIST =[
 
 # Batch parameters - All configuration is Done Here.
 ASSETCAT = "set" #"chr","set","prp","vhl","c2d","env","fxp
-SOURCE_ASSET_TYPE="previz_scene"
-DESTINATION_ASSET_TYPE= "previz_ref"
+SOURCE_ASSET_TYPE="anim_scene"
+DESTINATION_ASSET_TYPE= "anim_ref"
 SGTASK= "Rig_Previz" # wip not in use "Rig Auto" or ""
 THECOMMENT= "Auto_Release_rockTheCasbah" #"Auto_Release_rockTheCasbah !","First_publish_RockTheCasbah"
 OPENINMAYA= 1 
 READONLY= 1
 PUBLISHMAYAFILE= 0
-RELEASEMAYAFILE=1
+RELEASEMAYAFILE=0
 UNLOCKFILE= 0
 PREPUBLISH_PYSCRIPTL = [
 "C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py",
 ]
 PRERELEASE_PYSCRIPTL=[
-"C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Previz_aladin_check_batch.py",
+"C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/Aladin_check_batch.py",
 ]
