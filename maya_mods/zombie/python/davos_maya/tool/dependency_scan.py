@@ -310,7 +310,8 @@ def scanTextureDependency(damEntity):
                 scanLogDct.setdefault("error", []).append(('BadUVTilingMode', sMsg))
 
             sTexDirPath, sTexFilename = osp.split(sTexAbsPath)
-            sBasePath, sExt = osp.splitext(sTexAbsPath)
+            sBasePath, sTexExt = osp.splitext(sTexAbsPath)
+            sTexExt = sTexExt.lower()
 
             bPublicFile = False
             sHighSeverity = "error"
@@ -382,7 +383,7 @@ def scanTextureDependency(damEntity):
 
             sBaseName = osp.basename(sBasePath)
 
-            if sExt.lower() not in sAllowedTexTypes:
+            if sTexExt not in sAllowedTexTypes:
                 sMsg = ("Only accepts: '{}'".format("' '".join(sAllowedTexTypes)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadTextureFormat', sMsg))
 
@@ -415,82 +416,85 @@ def scanTextureDependency(damEntity):
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadFilename', sMsg))
                 sMsg = ""
 
-            if sExt == ".tga":
-
+            # list buddy (associated) files
+            sBuddyItems = []
+            if sTexExt == ".tga":
                 bColor = (sChannel == "col")
                 sPsdSeverity = sHighSeverity if bColor else "info"
                 sBuddyItems = [(".tx", "warning"), (".psd", sPsdSeverity)]
 
-                if bColor:
-                    sBuddyItems.append(("HD.jpg", "info"))
+            elif sTexExt == ".jpg":
+                sBuddyItems.append(("HD.jpg", "info"))
 
-                for sBuddySufx, sBudSeverity in sBuddyItems:
+            for sBuddySufx, sBudSeverity in sBuddyItems:
 
-                    sSuffix = sBuddySufx
-                    if sSeqsExt and ("." in sBuddySufx):
-                        sSuffix = sBuddySufx.replace(".", sSeqsExt + ".")
-                    sBuddyPath = "".join((sBasePath, sSuffix))
+                sSuffix = sBuddySufx
+                if sSeqsExt and ("." in sBuddySufx):
+                    sSuffix = sBuddySufx.replace(".", sSeqsExt + ".")
+                sBuddyPath = "".join((sBasePath, sSuffix))
+                print sBuddyPath
 
-                    if not osp.isfile(sBuddyPath):
-                        if not bPublicFile:
-                            sBuddyLabel = "".join(s.capitalize()for s in sBuddySufx.split("."))
-                            sStatusCode = sBuddyLabel.upper() + "FileNotFound"
-                            if sBudSeverity != "info":
-                                scanLogDct.setdefault(sBudSeverity, []).append((sStatusCode, sBuddyPath))
+                if not osp.isfile(sBuddyPath):
+                    if not bPublicFile:
+                        sBuddyLabel = "".join(s.capitalize()for s in sBuddySufx.split("."))
+                        sStatusCode = sBuddyLabel.upper() + "FileNotFound"
+                        if sBudSeverity != "info":
+                            scanLogDct.setdefault(sBudSeverity, []).append((sStatusCode, sBuddyPath))
+                else:
+                    sFoundFileList.append(normCase(sBuddyPath))
+
+                    budScanLogDct = {}
+                    budFile = proj.entryFromPath(sBuddyPath)
+                    if budFile and budFile.isPublic():
+
+                        budScanLogDct.setdefault("info", []).append(('PublicFiles', sBuddyPath))
+
+                        if normCase(osp.dirname(sBuddyPath)) == normCase(sPubTexDirPath):
+                            privBudFile = budFile.getPrivateFile(weak=True)
+                            sPrivFileList.append(normCase(privBudFile.absPath()))
+
+                    budResultDct = {"abs_path":sBuddyPath,
+                                    "scan_log":budScanLogDct,
+                                    "file_nodes":[],
+                                    "buddy_paths":[],
+                                    "udim_paths":[],
+                                    "publishable":False,
+                                    "drc_file":budFile,
+                                    "exists":True,
+                                    }
+                    foundBudResList.append(budResultDct)
+
+            # targa format check
+            if sTexExt == ".tga" and (not bPublicFile):
+                tgaImg = None
+                try:
+                    tgaImg = pilimage.open(sTexAbsPath)
+                    tileInfo = tgaImg.tile[0]
+                    sCompress = tileInfo[0]
+                    sMode = tileInfo[-1][0]
+
+                    bRgb24 = (sMode == "BGR")
+                    bCompr = (sCompress == "tga_rle")
+
+                    sMsgList = []
+                    if not bCompr:
+                        sMsgList.append("NOT COMPRESSED")
+
+                    if not bRgb24:
+                        depthDct = {"BGR;5": 16, "BGR":24, "BGRA":32,
+                                    "RGB;5": 16, "RGB":24, "RGBA":32}
+                        sMsg = "Expected 24 bits, got {} bits".format(depthDct[sMode])
+                        sMsgList.append(sMsg)
+
+                    if sMsgList:
+                        sMsg = "\n".join(sMsgList)
+                        scanLogDct.setdefault(sHighSeverity, []).append(("BadTargaFormat", sMsg))
+                finally:
+                    if tgaImg:
+                        tgaImg.close()
                     else:
-                        sFoundFileList.append(normCase(sBuddyPath))
-
-                        budScanLogDct = {}
-                        budFile = proj.entryFromPath(sBuddyPath)
-                        if budFile and budFile.isPublic():
-
-                            budScanLogDct.setdefault("info", []).append(('PublicFiles', sBuddyPath))
-
-                            if normCase(osp.dirname(sBuddyPath)) == normCase(sPubTexDirPath):
-                                privBudFile = budFile.getPrivateFile(weak=True)
-                                sPrivFileList.append(normCase(privBudFile.absPath()))
-
-                        budResultDct = {"abs_path":sBuddyPath,
-                                        "scan_log":budScanLogDct,
-                                        "file_nodes":[],
-                                        "buddy_paths":[],
-                                        "udim_paths":[],
-                                        "publishable":False,
-                                        "drc_file":budFile,
-                                        "exists":True,
-                                        }
-                        foundBudResList.append(budResultDct)
-
-                if (not bPublicFile):
-                    tgaImg = None
-                    try:
-                        tgaImg = pilimage.open(sTexAbsPath)
-                        tileInfo = tgaImg.tile[0]
-                        sCompress = tileInfo[0]
-                        sMode = tileInfo[-1][0]
-
-                        bRgb24 = (sMode == "BGR")
-                        bCompr = (sCompress == "tga_rle")
-
-                        sMsgList = []
-                        if not bCompr:
-                            sMsgList.append("NOT COMPRESSED")
-
-                        if not bRgb24:
-                            depthDct = {"BGR;5": 16, "BGR":24, "BGRA":32,
-                                        "RGB;5": 16, "RGB":24, "RGBA":32}
-                            sMsg = "Expected 24 bits, got {} bits".format(depthDct[sMode])
-                            sMsgList.append(sMsg)
-
-                        if sMsgList:
-                            sMsg = "\n".join(sMsgList)
-                            scanLogDct.setdefault(sHighSeverity, []).append(("BadTargaFormat", sMsg))
-                    finally:
-                        if tgaImg:
-                            tgaImg.close()
-                        else:
-                            sMsg = "Could not read the file"
-                            scanLogDct.setdefault(sHighSeverity, []).append(("BadTargaFormat", sMsg))
+                        sMsg = "Could not read the file"
+                        scanLogDct.setdefault(sHighSeverity, []).append(("BadTargaFormat", sMsg))
 
             resultDctList = [resultDct]
             if foundBudResList:
