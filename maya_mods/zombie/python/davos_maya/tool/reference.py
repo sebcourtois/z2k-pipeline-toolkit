@@ -1,5 +1,6 @@
 
 #import os.path as osp
+#import maya.cmds as mc
 import pymel.core as pm
 
 from pytaya.util.sysutils import withSelectionRestored
@@ -8,8 +9,7 @@ from pytd.util.fsutils import pathResolve, normCase
 from itertools import izip
 from davos_maya.tool.general import entityFromScene
 from pytd.util.sysutils import toStr
-from pytd.gui.dialogs import confirmDialog
-
+#from pytd.gui.dialogs import confirmDialog
 
 
 @processSelectedReferences
@@ -34,7 +34,6 @@ def switchSelectedReferences(dryRun=False, **kwargs):
     proj = damEntity.project
 
     kwargs.update(confirm=False, allIfNoSelection=True, topReference=True)
-
     oSelRefList, assetRcList = listMayaRcForSelectedRefs(proj, **kwargs)
 
     assetList = tuple(ast for ast, _ in assetRcList if ast)
@@ -137,13 +136,13 @@ def switchSelectedReferences(dryRun=False, **kwargs):
     if nonSwitchedRefList:
 
         w = len(max((r.refNode.name() for r, _ in nonSwitchedRefList), key=len))
-        def f(r, m):
+        def fmt(r, m):
             return "{0:<{2}}: {1}".format(r.refNode.name(), m, w)
 
         numFails = len(nonSwitchedRefList)
         sSep = "\n- "
         sMsgHeader = " Failed to switch {}/{} references: ".format(numFails, numRefs)
-        sMsgBody = sSep.join(f(r, m) for r, m in nonSwitchedRefList)
+        sMsgBody = sSep.join(fmt(r, m) for r, m in nonSwitchedRefList)
         sMsgEnd = "".center(100, "-")
 
         sMsg = '\n' + sMsgHeader.center(100, "-") + sSep + sMsgBody + '\n' + sMsgEnd
