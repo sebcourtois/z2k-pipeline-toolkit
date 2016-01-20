@@ -539,7 +539,7 @@ def NodeTypeScanner( execptionTL = [], exceptDerived= True, specificTL=[], speci
     return toReturnL
 
 # wip to make faster
-def UnusedNodeAnalyse( execptionTL = [], specificTL= [], mode = "delete",verbose=True, *args, **kwargs):
+def UnusedNodeAnalyse( execptionTL = [], specificTL= [] , mode = "delete", verbose=True, exculdeNameFilterL=["Arnold"], *args, **kwargs):
     """ Description: Test if nodes have connections based on type and excluded_type in all the scene and either delete/select/print it.
                     mode = "check" /"delete" / "select" / "print"
         Return : [BOOL,Dict]
@@ -549,6 +549,13 @@ def UnusedNodeAnalyse( execptionTL = [], specificTL= [], mode = "delete",verbose
     toReturnB = True
     nodeL = NodeTypeScanner(execptionTL=execptionTL, specificTL=specificTL)
     # print "*nodeL=", len(nodeL)
+
+    #filter exculededNames
+    for excluN in exculdeNameFilterL:
+        for i in nodeL:
+            if excluN in i:
+                nodeL.remove(i)
+
     unconectedCL =[]
     # loop
     for node in nodeL:
@@ -805,7 +812,7 @@ def isSet_meshCache_OK (theSet="set_meshCache",theType="prop",*args, **kwargs):
         setContentL = getSetContent(inSetL=[theSet])
         print "setContentL=", setContentL
         if setContentL:
-            if theType not in ["setPreviz"]:
+            if theType not in ["setPreviz","set"]:
                 # cas general on veut seulement des mesh dans le set
                 for i in setContentL:
                     sL= cmds.listRelatives(i,s=1,ni=1)

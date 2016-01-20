@@ -258,13 +258,13 @@ def startRender():
     if core.ACTIVE_CAMERA != None:
         cmds.arnoldRender(cam=core.ACTIVE_CAMERA)
 
-def startRenderView():
+def arnoldMtoARenderView():
     # core.ACTIVE_CAMERA is not set, anything we could do here ?
     #if core.ACTIVE_CAMERA != None:
     #    cmds.arnoldRenderView(cam=core.ACTIVE_CAMERA)
     # so instead we're calling it without any argument
-    core.createOptions()
 
+    core.createOptions()
     cmds.arnoldRenderView()
 
 def startIpr():
@@ -283,6 +283,10 @@ def createArnoldMenu():
     # Add an Arnold menu in Maya main window
     if not pm.about(b=1):
         pm.menu('ArnoldMenu', label='Arnold', parent='MayaWindow', tearOff=True )
+
+        pm.menuItem('ArnoldMtoARenderView', label='Arnold RenderView', parent='ArnoldMenu',
+                    c=lambda *args: arnoldMtoARenderView())
+        pm.menuItem(parent='ArnoldMenu', divider=True)
 
         pm.menuItem('ArnoldStandIn', label='StandIn', parent='ArnoldMenu', subMenu=True, tearOff=True)
         pm.menuItem('ArnoldCreateStandIn', parent='ArnoldStandIn', label="Create",
@@ -374,10 +378,7 @@ def createArnoldMenu():
                     c=lambda *args: cmds.launch(webPage='https://support.solidangle.com/display/ARP/Arnoldpedia'))
 
         pm.menuItem('ArnoldExperimentalMenu', label='Experimental', parent='ArnoldMenu', subMenu=True, tearOff=True)
-        pm.menuItem('ArnoldRenderView', label='MtoA RenderView', parent='ArnoldExperimentalMenu',
-                    c=lambda *args: startRenderView())
-
-
+        
         pm.menuItem('ArnoldRender', label='Houdini MPlay', parent='ArnoldExperimentalMenu', subMenu=True, tearOff=True)
         pm.menuItem('ArnoldSelectCamera', label='Select Camera', parent='ArnoldRender', subMenu=True, tearOff=False, 
                     postMenuCommand=lambda *args: populateSelectCamera())

@@ -481,6 +481,8 @@ def getMeshesWithSameName(inVerbose = True, inParent = "*"):
     multipleMesh = []
 
     for eachTrasnMesh in allTransMesh:
+        if len(cmds.ls(cmds.listRelatives(eachTrasnMesh, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True)) > 1:
+            raise ValueError("#### {:>7}:'getMeshesWithSameName': {} has multiple shapes, please clean this mesh and run the script again".format("Error",eachTrasnMesh))
         shortName = eachTrasnMesh.split("|")[-1]
         if str(allTransMesh).count(shortName+"'") > 1:
             multipleMesh.append(eachTrasnMesh)
