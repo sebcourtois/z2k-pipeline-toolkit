@@ -805,7 +805,7 @@ def isSet_meshCache_OK (theSet="set_meshCache",theType="prop",*args, **kwargs):
         setContentL = getSetContent(inSetL=[theSet])
         print "setContentL=", setContentL
         if setContentL:
-            if theType not in ["setPreviz"]:
+            if theType not in ["setPreviz","set"]:
                 # cas general on veut seulement des mesh dans le set
                 for i in setContentL:
                     sL= cmds.listRelatives(i,s=1,ni=1)
