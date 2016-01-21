@@ -211,7 +211,9 @@ def publishCurrentScene(*args, **kwargs):
     prePublishFunc = kwargs.pop("prePublishFunc", None)
     postPublishFunc = kwargs.pop("postPublishFunc", None)
 
-    sCurScnPath = myasys.currentScene(checkOpeningError=False)
+    myasys.assertCurrentSceneReadWithoutDataLoss()
+
+    sCurScnPath = pm.sceneName()
     if not sCurScnPath:
         raise ValueError("Current scene is untitled.".format(sCurScnPath))
 
@@ -267,7 +269,7 @@ def publishCurrentScene(*args, **kwargs):
         if not publishSceneDependencies(damEntity, depScanResults, prePublishInfos):
             return
 
-    sSavedScnPath = myasys.saveScene(prompt=False, checkOpeningError=False)
+    sSavedScnPath = myasys.saveScene(prompt=False, checkError=False)
     if not sSavedScnPath:
         raise RuntimeError("Failed to save current scene !")
 
