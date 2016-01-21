@@ -299,15 +299,23 @@ def createBatchRender():
 
 
 def deleteAovs():
+    toReturn =True
+    infoS =""
     if mc.ls("defaultArnoldRenderOptions"):
         myAOVs = aovs.AOVInterface()
         aovList = myAOVs.getAOVs()
         if aovList:
             myAOVs.removeAOVs(aovList)
             aovs.refreshAliases()
-            print "#### {:>7}: 'deleteAovs' has deleted {} aovs".format("Info", len(aovList))
+            infoS =  "#### {:>7}: 'deleteAovs' has deleted {} aovs".format("Info", len(aovList))
+            print infoS
+        else:
+            infoS =  "#### {:>7}: 'deleteAovs' no AOVs to delete".format("Info")
+            print infoS
     else:
-        print "#### {:>7}: 'deleteAovs' no 'defaultArnoldRenderOptions' found in the scene cannot delete aovs".format("Info")
+        infoS =  "#### {:>7}: 'deleteAovs' no 'defaultArnoldRenderOptions' found in the scene cannot delete aovs".format("Info")
+        print infoS
+    return toReturn, infoS
 
 
 

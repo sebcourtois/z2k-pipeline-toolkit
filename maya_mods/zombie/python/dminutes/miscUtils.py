@@ -146,6 +146,7 @@ def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, empt
         tab= "    "
         #print "removeAllNamespace()"
         toReturnB = True
+        delNameSpaceL = []
         # "UI","shared" NS are used by maya itself
         NS_exclusionBL=["UI","shared"]
         NS_exclusionBL.extend(NSexclusionL)
@@ -162,10 +163,12 @@ def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, empt
                     if emptyOnly == False:
                         if verbose: print tab+"ns:",ns
                         mc.namespace( removeNamespace =ns, mergeNamespaceWithRoot=True)
+                        delNameSpaceL.append(ns)
                     else:
                         if not mc.namespaceInfo(ns,  listOnlyDependencyNodes= True):
                             if verbose: print tab+"ns:",ns
                             mc.namespace( removeNamespace =ns, mergeNamespaceWithRoot=True)
+                            delNameSpaceL.append(ns)
 
         # recursive
         if emptyOnly==False:
@@ -177,7 +180,7 @@ def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, empt
                 if count > limit:
                     break
 
-        return [toReturnB]
+        return [toReturnB, delNameSpaceL]
 
 
 
@@ -226,8 +229,6 @@ def h264ToProres(inSeqList = ['sq0230', 'sq0150'], shotStep = '01_previz'):
     else:
         raise ValueError("'{}' shotStep is not valid".format(shotStep))
 
-
-
     for eachSeq in os.listdir(shotDir):
         if re.match('^sq[0-9]{4}$', eachSeq) and (eachSeq in inSeqList or not inSeqList):
             for eachShot in os.listdir(os.path.normpath(os.path.join(shotDir,eachSeq))):
@@ -274,7 +275,6 @@ def h264ToProres(inSeqList = ['sq0230', 'sq0150'], shotStep = '01_previz'):
     conv2prores_obj.write("\n")
     conv2prores_obj.write("pause\n")
     conv2prores_obj.close()
-
 
     #subprocess.call([tempBatFile])
 
