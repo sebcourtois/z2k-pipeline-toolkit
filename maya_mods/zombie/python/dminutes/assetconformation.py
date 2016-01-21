@@ -381,13 +381,17 @@ class Asset_File_Conformer:
 
 
     def cleanFile(self, verbose = False):
+        toReturnB = True
+        outLogL = []
         refNodeList = mc.ls(type = "reference")
         for each in refNodeList:
             if re.match('^render[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^anim[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^modeling[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^previz[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each):
                 fileRef= pm.FileReference(each)
                 #fileRef = mc.referenceQuery(each,filename=True)# other way to do it
                 try:
-                    if verbose: print "#### {:>7}:removing reference '{}'".format("Info",fileRef.path)
+                    logMessage ="#### {:>7}: 'cleanFile' removing reference '{}'".format("Info",fileRef.path)
+                    if verbose == True : print logMessage
+                    outLogL.append(logMessage)
                     fileRef.remove()
                 except :
                     pass
@@ -402,8 +406,18 @@ class Asset_File_Conformer:
         nameSpaceList = mc.namespaceInfo(listOnlyNamespaces=True)
         for each in nameSpaceList:
             if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each) or re.match('^previz[0-9]{0,3}', each):
-                if verbose: print "#### {:>7}:removing namespace and its content: '{:<10}' ".format("Info",each)
                 mc.namespace(removeNamespace=each, deleteNamespaceContent=True)
+
+                logMessage ="#### {:>7}: 'cleanFile' removing namespace and its content: '{:<10}' ".format("Info",each)
+                if verbose == True : print logMessage
+                outLogL.append(logMessage)
+
+        if not outLogL:
+            logMessage ="#### {:>7}: 'cleanFile' nothing to clean, no '_render', '_anim', '_previz' or '_modeling' reference found".format("Info",each)
+            if verbose == True : print logMessage
+            outLogL.append(logMessage)
+
+        return toReturnB, outLogL
 
 
     
@@ -766,11 +780,14 @@ class Asset_File_Conformer:
 
 
 
-def softClean(struct2CleanList=["asset"]):
+def softClean(struct2CleanList=["asset"], verbose = True):
     """
     this script intend to remove from the scene every node that do not has a link with the selected structure.
     It also clean the empty namespaces
     """
+    outSucceedB = True
+    outLogL = []
+
     undeletable = ['sideShape','frontShape','front','sideShape','side','perspShape','perspShape','persp','topShape','top','topShape','frontShape','characterPartition',
                 'defaultObjectSet','initialShadingGroup','defaultLightSet','renderPartition','initialParticleSE','strokeGlobals','defaultRenderQuality','defaultRenderingList1',
                 'defaultTextureList1','renderLayerManager','particleCloud1','hyperGraphInfo','shaderGlow1','hardwareRenderingGlobals','globalCacheControl','postProcessList1',
@@ -779,22 +796,37 @@ def softClean(struct2CleanList=["asset"]):
                 'initialMaterialInfo','renderGlobalsList1','dof1','hardwareRenderGlobals','defaultRenderLayer','defaultRenderUtilityList1']
 
     doNotDelete = ["set_control","set_meshCache","set_subdiv_0", "set_subdiv_1","set_subdiv_2","set_subdiv_3","set_subdiv_init","par_subdiv","defaultArnoldRenderOptions","defaultArnoldFilter","defaultArnoldDriver","defaultArnoldDisplayDriver"]
+    doNotDelete =  mc.ls(doNotDelete)
     intiSelection = mc.ls(selection = True)
     deletedNodes = 0
 
     #remove from any namespace all the nodes of my structre to clean
-    mc.container (name="asset1", includeNetwork = True, includeShaders=True, includeHierarchyBelow=True, includeTransform=True, preview=True, addNode= struct2CleanList, force= True)
-    myAssetNodeList = mc.ls(selection = True)+doNotDelete
+    mc.select(struct2CleanList, replace = True, ne = True)
+    myAssetNodeList = mc.file(exportSelected = True, preview = True, preserveReferences=True, constructionHistory=True, channels=True, constraints= True, expressions=True, shader =True, force=True)
+    myAssetNodeList = myAssetNodeList + doNotDelete
+
+    # replace with the above code (too slow on large scene)
+    #mc.container (name="asset1", includeNetwork = True, includeShaders=True, includeHierarchyBelow=True, includeTransform=True, preview=True, addNode= struct2CleanList, force= True)
+    #myAssetNodeList = mc.ls(selection = True)+doNotDelete
+
     for each in myAssetNodeList:
         if ":"in each:
             mc.lockNode(each, lock=False)
             newEach= mc.rename(each,each.split(":")[-1],ignoreShape=True)
-            print "#### {:>7}: Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
+            logMessage = "#### {:>7}: Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
+            if verbose == True : print logMessage
+            outLogL.append(logMessage)
 
 
     #delete all nodes that do not belong to my structure
-    mc.container (name="asset1", includeNetwork = True, includeShaders=True, includeHierarchyBelow=True, includeTransform=True, preview=True, addNode= struct2CleanList, force= True)
-    myAssetNodeList = mc.ls(selection = True)+doNotDelete
+    mc.select(struct2CleanList, replace = True, ne = True)
+    myAssetNodeList = mc.file(exportSelected = True, preview = True, preserveReferences=True, constructionHistory=True, channels=True, constraints= True, expressions=True, shader =True, force=True)
+    myAssetNodeList = myAssetNodeList + doNotDelete
+
+    # replace with the above code (too slow on large scene)
+    #mc.container (name="asset1", includeNetwork = True, includeShaders=True, includeHierarchyBelow=True, includeTransform=True, preview=True, addNode= struct2CleanList, force= True)
+    #myAssetNodeList = mc.ls(selection = True)+doNotDelete
+
     toDelete = list(set(mc.ls()) - set(myAssetNodeList)-set(mc.ls(lockedNodes = True))-set(mc.ls(referencedNodes = True))-set(mc.ls(type = "reference"))-set(undeletable))
     if toDelete:
         mc.delete(toDelete)
@@ -812,7 +844,17 @@ def softClean(struct2CleanList=["asset"]):
             mc.delete(each)
             deletedNodes += 1
 
-    print "#### {:>7}: 'softClean' has deleted {} nodes".format("Info",deletedNodes)
+    failedToDeleteNodeL = mc.ls(toDelete)
+    deletedNodeL = list(set(toDelete) - set(failedToDeleteNodeL))
+    
+
+    logMessage ="#### {:>7}: 'softClean' has deleted {} nodes: {}".format("Info",len(deletedNodeL), deletedNodeL)
+    if verbose == True : print logMessage
+    outLogL.append(logMessage)
+
+    logMessage ="#### {:>7}: 'softClean' failed to delete {} nodes: {}".format("Info",len(failedToDeleteNodeL),failedToDeleteNodeL)
+    if verbose == True : print logMessage
+    outLogL.append(logMessage)
 
     #try to get back to the initial selection
     try:
@@ -822,7 +864,12 @@ def softClean(struct2CleanList=["asset"]):
 
 
     ## remove all namespaces
-    miscUtils.removeAllNamespace(emptyOnly=True)
+    returnL = miscUtils.removeAllNamespace(emptyOnly=True)
+    logMessage ="#### {:>7}: 'softClean' has deleted {} namespaces: {}".format("Info",len(returnL[1]),returnL[1])
+    if verbose == True : print logMessage
+    outLogL.append(logMessage)
+
+    return outSucceedB, outLogL
 
 
 def importGrpLgt(lgtRig = "lgtRig_character"):
