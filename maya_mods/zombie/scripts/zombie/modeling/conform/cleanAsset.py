@@ -44,3 +44,4 @@ if answer != "Cancel":
 	modeling.makeAllMeshesUnique(inParent="|asset|grp_geo")
 	modeling.meshShapeNameConform(inParent = "|asset|grp_geo")
 	miscUtils.deleteUnknownNodes()
+	assetconformation.fixMaterialInfo()
