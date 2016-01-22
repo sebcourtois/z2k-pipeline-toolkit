@@ -278,3 +278,36 @@ def h264ToProres(inSeqList = ['sq0230', 'sq0150'], shotStep = '01_previz'):
 
     #subprocess.call([tempBatFile])
 
+def getShapeOrig(TransformS = ""):
+    shapeOrigList=[]
+    shapeL = mc.ls(mc.listRelatives(TransformS, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=False)
+    for each in shapeL:
+        if mc.getAttr(each+".intermediateObject") == 1 and not mc.listConnections( each+".inMesh",source=True) and "ShapeOrig" in each:
+            shapeOrigList.append(each)
+    return shapeOrigList
+
+
+def fixMaterialInfo (shadingEngineL = []):
+    returnB = True
+    logL = []
+    fixedEhadingEngineL=[]
+
+    if not shadingEngineL:
+        shadingEngineL = mc.ls(type='shadingEngine')
+        if "initialParticleSE" in shadingEngineL: shadingEngineL.remove("initialParticleSE")
+        if "initialShadingGroup" in shadingEngineL: shadingEngineL.remove("initialShadingGroup")
+
+    for each in shadingEngineL:
+        if not mc.ls(mc.listConnections(each+".message",destination = True), type = "materialInfo"):
+            matInfoNodeS = mc.shadingNode("materialInfo", asShader=True, name="sho_"+each.replace("sgr_","")+"_each")
+            mc.connectAttr(each+".message",matInfoNodeS+".shadingGroup",force=True)
+            fixedEhadingEngineL.append(each)
+
+    logMessage ="#### {:>7}: 'fixMaterialInfo' regenerated materialInfo for {} SE nodes: {}".format("Info",len(fixedEhadingEngineL),fixedEhadingEngineL)
+    print logMessage
+    logL.append(logMessage)
+
+    return [returnB, logL]
+
+
+

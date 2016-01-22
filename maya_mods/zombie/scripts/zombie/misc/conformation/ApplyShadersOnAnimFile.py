@@ -26,7 +26,9 @@ if r2a.sourceTargetListMatch and r2a.sourceTargetTopoMatch:
 	r2a.transferSG()
 	r2a.removeNameSpaceFromShadNodes(r2a.targetList)
 	r2a.cleanFile()
+	assetconformation.fixMaterialInfo()
 	pm.mel.MLdeleteUnused()
+
 else:
 	r2a.cleanFile()
 	#raise ValueError( "Asset is not conform, please fix and run the script again")

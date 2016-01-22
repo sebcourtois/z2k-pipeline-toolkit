@@ -576,7 +576,7 @@ class Asset_File_Conformer:
                 else:
                     shapeOrigList =[]
                     for each in targetShapeList:
-                        if mc.getAttr(each+".intermediateObject") == 1 and len(mc.listHistory(each+".inMesh"))==1 and "ShapeOrig" in each:
+                        if mc.getAttr(each+".intermediateObject") == 1 and not mc.listConnections( each+".inMesh",source=True) and "ShapeOrig" in each:
                             shapeOrigList.append(each)
                     if len(shapeOrigList) == 1:
                         targetShape = shapeOrigList[0]
@@ -698,12 +698,26 @@ class Asset_File_Conformer:
             mc.disconnectAttr(matShadNode[1],matShadNode[0])
 
 
-    def smoothPolyDisplay(self, inMeshList = [], verbose = False):
+    def smoothPolyDisplay(self, inMeshList = [], verbose = False, shapeOrigOnly = True):
         intSel = mc.ls(selection=True)
         for each in inMeshList:
-                mc.polySoftEdge (each, angle=180, constructionHistory=True)
-                mc.bakePartialHistory( each, prePostDeformers=True)
-                if verbose == True: print "#### {:>7}: polySoftEdge -> '{:^30}'".format("Info",each)
+                shapeOrigL = miscUtils.getShapeOrig(TransformS = each)
+                if len(shapeOrigL)==0:
+                    if shapeOrigOnly:
+                        print "#### {:>7}: 'smoothPolyDisplay' no shapeOrig found under '{}' skipping operation on this mesh ".format("Warning",len(shapeOrigL),each, shapeOrigL)
+                        continue
+                    else:
+                        print "#### {:>7}: 'smoothPolyDisplay' no shapeOrig found under '{}', proceeding with the shape".format("Warning",len(shapeOrigL),each, shapeOrigL)
+                        target = each
+                elif len(shapeOrigL)==1:
+                    target = shapeOrigL[0]
+                elif len(shapeOrigL)>1: 
+                    target = shapeOrigL[0]
+                    print "#### {:>7}: 'smoothPolyDisplay' {} shapeOrig found under '{}', proceeding with the first one: '{}'".format("Warning",len(shapeOrigL),each, target)
+
+                mc.polySoftEdge (target, angle=180, constructionHistory=True)
+                mc.bakePartialHistory(target, prePostDeformers=True)
+                if verbose == True: print "#### {:>7}: smoothPolyDisplay -> '{:^30}'".format("Info",each)
         print ("#### {:>7}: smoothPolyDisplay done on {} object(s)".format("Info",len(inMeshList)))
         mc.select(intSel, replace=True)
 
@@ -917,6 +931,29 @@ def importGrpLgt(lgtRig = "lgtRig_character"):
     print "#### {:>7}: '{}' light linked  to '{}' shaders".format("Info",lgtDefault, len(shadingEngine2LinkList))
     return True
 
+def fixMaterialInfo (shadingEngineL = []):
+    returnB = True
+    logL = []
+    fixedEhadingEngineL=[]
 
+    if not shadingEngineL:
+        shadingEngineL = mc.ls(type='shadingEngine')
+        if "initialParticleSE" in shadingEngineL: shadingEngineL.remove("initialParticleSE")
+        if "initialShadingGroup" in shadingEngineL: shadingEngineL.remove("initialShadingGroup")
+
+    for each in shadingEngineL:
+        if not mc.ls(mc.listConnections(each+".message",destination = True), type = "materialInfo"):
+            matInfoNodeS = mc.shadingNode("materialInfo", asShader=True, name="sho_"+each.replace("sgr_","")+"_materialInfo")
+            mc.connectAttr(each+".message",matInfoNodeS+".shadingGroup",force=True)
+            if not mc.listConnections(matInfoNodeS+".texture[0]" , source = True):
+                lambertS = mc.listConnections(each+".surfaceShader" , source = True)[-1]
+                mc.connectAttr(lambertS+".message",matInfoNodeS+".texture[0]",force=True)
+            fixedEhadingEngineL.append(each)
+
+    logMessage ="#### {:>7}: 'fixMaterialInfo' regenerated materialInfo for {} SE nodes: {}".format("Info",len(fixedEhadingEngineL),fixedEhadingEngineL)
+    print logMessage
+    logL.append(logMessage)
+
+    return [returnB, logL]
 
 
