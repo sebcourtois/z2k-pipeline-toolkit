@@ -541,7 +541,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=1, e=True)
+        self.pBar_upd(step=1, maxValue=2, e=True)
 
 
         # 1 connectVisibility ()
@@ -555,9 +555,18 @@ class checkModule(object):
         self.pBar_upd(step= 1,) 
 
 
-        # 2 -----
-        
-
+        # 2 ----- fixTKFacialRig_EyeBrow_Middle ()
+        result,debugL = jpZ.fixTKFacialRig_EyeBrow_Middle()
+        # prints -------------------
+        self.printF("fixTKFacialRig_EyeBrow_Middle()", st="t")
+        self.printF(result, st="r")
+        for i in debugL:
+            self.printF(i)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,) 
 
 
         # colors
