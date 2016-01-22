@@ -1398,3 +1398,64 @@ def get_BS_TargetObjD(BS_Node="",*args, **kwargs):
                         tObj= cmds.listRelatives( i.split(".",1)[0],p=1)[0]
                         outDict[str(index)]= tObj
     return outDict
+
+
+
+def fixTKFacialRig_EyeBrow_Middle (*args, **kwargs):
+    """ Description: Fix le rig facial en ajoutant un blend param sur le ctr "EyeBrow_Middle"
+                    Adouci son comportement de following des eyeBrows
+        Return : [BOOL,DebugList]
+        Dependencies : cmds - 
+    """ 
+    print "fixTKFacialRig_EyeBrow_Middle()"
+    objA = "Head_FK"
+    objB = "TK_EyeBrow_switcher_Child"
+    theCTR = "EyeBrow_Middle"
+    attrN = "Attenuation"
+    attMaxV = 100
+    attrMinV = 0
+    attrDefaultV = 1.5
+    attrType = "double"
+    cstAttrTarget= ""
+    canDo = True
+    toReturnB = True # finally the result is allways True
+    debugL = []
+    # constraining
+    for obj in [objA,objB,theCTR]:
+        if not cmds.objExists(obj):
+            canDo = False
+
+    if canDo:
+        try:
+            # apply constraint
+            theCst=cmds.parentConstraint(objA,objB,mo=True,w=1)[0]
+            print "theCst=",theCst
+            
+            #get the connection port
+            cstAttrL= cmds.listAttr(theCst,ud=1)
+            print cstAttrL
+            for i in cstAttrL:
+                if objA in i:
+                    print i
+                    cstAttrTarget = i
+            
+            # addThe Attr
+            cmds.addAttr( theCTR, longName=attrN, attributeType= attrType, min=attrMinV,dv= attrDefaultV, max= attMaxV,
+                                                    keyable=True,) 
+                                                    
+            # connect the Attr
+            cmds.connectAttr(theCTR+"."+attrN,theCst + "."+ cstAttrTarget, f=1)
+
+            # result handling
+            toReturnB = True
+        except:
+            info = "FixRig Allready Applyed"
+            print "info=", info
+            debugL.append(info)
+    else:
+        info = "the needed objects are not present in the scene"
+        print "info=", info
+        debugL.append(info)
+
+    return toReturnB,debugL
+
