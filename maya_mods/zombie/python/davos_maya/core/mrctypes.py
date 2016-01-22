@@ -8,7 +8,7 @@ from davos.core.drctypes import DrcDir, DrcFile
 from pytaya.core import system as myasys
 from pytd.util.strutils import padded, underJoin
 from pytd.util.fsutils import normCase
-from davos.core.utils import versionFromName
+from davos.core.utils import mkVersionSuffix
 #from pytd.util.fsutils import pathSuffixed
 
 
@@ -52,8 +52,8 @@ class MrcFile(DrcFile):
 
         if self.isPublic():
             sVersSuffix = ""
-            if versionFromName(self.name) is None:
-                sVersSuffix = self.versionSuffix(self.currentVersion)
+            if self.versionFromName() is None:
+                sVersSuffix = mkVersionSuffix(self.currentVersion)
 
             sWordList = (sVersSuffix, '-', 'readonly')
             sSuffix = "".join(sWordList)

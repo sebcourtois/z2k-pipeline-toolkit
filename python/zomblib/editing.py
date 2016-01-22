@@ -2,6 +2,8 @@
 import os
 import re
 from datetime import datetime
+from collections import OrderedDict
+import subprocess
 
 osp = os.path
 
@@ -119,20 +121,20 @@ def parseEdl(in_sEdlPath, in_sSeqFilter=None):
     return shots
 
 
-def h264ToProres(inSeqList=['sq0230', 'sq0150'], shotStep='01_previz'):
+def h264ToProres(inSeqList, shotStep='01_previz'):
     """
     There are 4 profiles that exist within Prores: Proxy, LT, SQ and HQ (and then optionally 4444). In ffmpeg these profiles are assigned numbers (0 is Proxy and 3 is HQ)
     """
     ffmpegCommand = osp.normpath(osp.join(os.environ["Z2K_LAUNCH_SCRIPT"].split("launchers")[0], "movSplitter", "ffmpeg", "bin", "ffmpeg.exe"))
     shotDir = osp.normpath(osp.join(os.environ["ZOMB_SHOT_LOC"], "zomb", "shot"))
     montageDir = "//Zombiwalk/z2k/11_EXCHANGE_MONTAGE"
-    sSeqShotDict = {}
+    sSeqShotDict = OrderedDict()
 
-    if shotStep == "01_previz" or shotStep == "02_layout":
+    if shotStep in ("01_previz", "02_layout"):
         profile = 0
         shotExt = shotStep.split("_")[-1]
     else:
-        raise ValueError("'{}' shotStep is not valid".format(shotStep))
+        raise ValueError("shotStep is not valid: '{}'.".format(shotStep))
 
     for eachSeq in os.listdir(shotDir):
         if re.match('^sq[0-9]{4}$', eachSeq) and (eachSeq in inSeqList or not inSeqList):
@@ -145,19 +147,19 @@ def h264ToProres(inSeqList=['sq0230', 'sq0150'], shotStep='01_previz'):
         if each not in sSeqShotDict.keys():
             raise ValueError("'{}' sequence could not be found".format(each))
 
-    tempBatFile = osp.normpath(osp.join(os.environ["temp"], "conv2prores.bat"))
-    print "#### {:>7}: writing temp batch file: '{}'".format("Info", tempBatFile)
+    sTmpBatPath = osp.normpath(osp.join(os.environ["temp"], "conv2prores.bat"))
+    print "#### {:>7}: writing temp batch file: '{}'".format("Info", sTmpBatPath)
 
     oDate = datetime.today()
 
-    with open(tempBatFile, "w") as conv2prores_obj:
+    with open(sTmpBatPath, "w") as tmpBatFile:
 
         for seqName, shotNameList in sSeqShotDict.items():
 
             sDate = str(oDate.year) + "-" + str(oDate.month) + "-" + str(oDate.day)
             outDir = osp.normpath(osp.join(montageDir, shotStep, seqName, sDate))
 
-            conv2prores_obj.write("\n")
+            tmpBatFile.write("\n")
 
             if  not osp.isdir(outDir):
                 #print "#### {:>7}: Create directory: '{}'".format("Info",outDir )
@@ -179,9 +181,9 @@ def h264ToProres(inSeqList=['sq0230', 'sq0150'], shotStep='01_previz'):
                 outFile = osp.normpath(osp.join(outDir, videoList[-1]))
                 finalCommand = ("{0} -i {1} -c:v prores_ks -profile:v {2} {3}"
                                 .format(ffmpegCommand, inFile, profile, outFile))
-                conv2prores_obj.write(finalCommand + "\n")
+                tmpBatFile.write(finalCommand + "\n")
 
-        conv2prores_obj.write("\n")
-        conv2prores_obj.write("pause\n")
+        tmpBatFile.write("\n")
+        tmpBatFile.write("pause\n")
 
-    #subprocess.call([tempBatFile])
+    subprocess.call("explorer /select, {}".format(sTmpBatPath))
