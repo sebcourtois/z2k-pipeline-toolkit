@@ -19,33 +19,21 @@ TESTLIST= [
 
 # donner ici la list des assets du meme type to release
 BATCH_ASSET_LIST =[
-'set_quartierGrandeRoue_vampirama',
-'set_entreeParc_vampirama',
-'set_rueMainStreetPaves_default',
-'set_parcStreets_vampirama',
-'set_parcStreets_vampiramaTrous',
-'set_eoliennes_default',
-'set_mainStreet_vampirama',
-'set_couloirs_bureaux',
-'set_pensionDortoirs_default',
-'set_pensionExt_default',
-'set_pcSecurite_default',
-'set_maisonBank01_LBE',
-'set_salleSyndic_training',
-'set_salleSyndic_thriller',
+'chr_aurelien_polo',
+
 ]
 
 # Batch parameters - All configuration is Done Here.
-ASSETCAT = "set" #"chr","set","prp","vhl","c2d","env","fxp
+ASSETCAT = "chr" #"chr","set","prp","vhl","c2d","env","fxp
 SOURCE_ASSET_TYPE="anim_scene"
 DESTINATION_ASSET_TYPE= "anim_ref"
-SGTASK= "Rig_Previz" # wip not in use "Rig Auto" or ""
+SGTASK= "" # wip not in use "Rig Auto" or ""
 THECOMMENT= "Auto_Release_rockTheCasbah" #"Auto_Release_rockTheCasbah !","First_publish_RockTheCasbah"
 OPENINMAYA= 1 
 READONLY= 1
 PUBLISHMAYAFILE= 0
-RELEASEMAYAFILE=0
-UNLOCKFILE= 0
+RELEASEMAYAFILE=1
+UNLOCKFILE= 1
 PREPUBLISH_PYSCRIPTL = [
 "C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py",
 ]

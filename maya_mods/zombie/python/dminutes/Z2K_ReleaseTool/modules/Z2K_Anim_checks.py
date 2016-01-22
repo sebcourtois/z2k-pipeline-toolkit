@@ -97,6 +97,7 @@ class checkModule(object):
             self.BcheckStructure=""
             self.BCleanScene=""
             self.BCleanObjects=""
+            self.BSpecialSettings =""
             self.BDebugBoardF=""
             self.BDebugBoard = ""
             self.BCleanAll=""
