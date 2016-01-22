@@ -2,6 +2,7 @@
 
 #include "render/RenderOptions.h"
 
+
 #include <maya/MGlobal.h>
 
 #include <ai_nodes.h>
@@ -13,7 +14,7 @@
 #include <maya/MComputation.h>
 
 class MImage;
-class CRenderView;
+
 /** CRenderSession handles the management of Arnold and rendering.
  * 
  * This is an important class. It handles rendering as well
@@ -163,10 +164,7 @@ public:
    inline bool IsActive() const { return m_is_active; }
 
    static void ClearIdleRenderViewCallback();
-   
-   static void sleep(AtUInt64 usecs);
-
-
+      
 private:
 
    CRenderSession()
@@ -215,7 +213,6 @@ private:
    
    static MComputation*   s_comp;
    MString        m_postRenderMel;
-
-   //CRenderView  *m_renderView;
+   
    
 }; // class CRenderSession

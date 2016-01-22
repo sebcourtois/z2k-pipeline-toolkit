@@ -74,6 +74,7 @@ class AEaiStandardTemplate(ShaderAETemplate):
         self.addControl("specular_roughness", label="Roughness")
         self.addControl("specular_anisotropy", label="Anisotropy")
         self.addControl("specular_rotation", label="Rotation")        
+        self.addControl("specular_distribution", label="Microfacet Distribution")
         # depreciated
         # self.addControl("Phong_exponent", label="Glossiness")
         self.addSeparator()
@@ -121,6 +122,7 @@ class AEaiStandardTemplate(ShaderAETemplate):
         self.addControl("Ksss_color", label="Color")
         self.addControl("Ksss", label="Weight")
         self.addControl("sss_radius", label="Radius")
+        self.addControl("sss_profile", label="Diffusion Profile")
         self.endLayout() # End SSS Layout
 
         self.beginLayout("Emission", collapse=True)

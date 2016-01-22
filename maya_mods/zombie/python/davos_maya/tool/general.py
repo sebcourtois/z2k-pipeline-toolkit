@@ -17,7 +17,7 @@ def projectFromScene(scenePath=""):
 
     sCurScnPath = scenePath if scenePath else pm.sceneName()
     if not sCurScnPath:
-        raise ValueError("Invalid scene name: '{}'".format(sCurScnPath))
+        raise ValueError("Current scene is untitled.".format(sCurScnPath))
 
     return DamProject.fromPath(sCurScnPath, fail=True)
 
@@ -25,7 +25,7 @@ def entityFromScene(scenePath="", fail=True):
 
     sCurScnPath = scenePath if scenePath else pm.sceneName()
     if not sCurScnPath:
-        raise ValueError("Invalid scene name: '{}'".format(sCurScnPath))
+        raise ValueError("Current scene is untitled.".format(sCurScnPath))
 
     proj = DamProject.fromPath(sCurScnPath, fail=True)
     damEntity = proj.entityFromPath(sCurScnPath, fail=fail)

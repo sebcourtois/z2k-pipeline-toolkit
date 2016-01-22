@@ -7,6 +7,7 @@ from itertools import izip
 from collections import OrderedDict
 
 import pymel.core as pm
+import maya.cmds as mc
 
 #from pytd.util.logutils import logMsg
 from pytaya.core import system as myasys
@@ -210,7 +211,12 @@ def publishCurrentScene(*args, **kwargs):
     prePublishFunc = kwargs.pop("prePublishFunc", None)
     postPublishFunc = kwargs.pop("postPublishFunc", None)
 
+    myasys.assertCurrentSceneReadWithoutDataLoss()
+
     sCurScnPath = pm.sceneName()
+    if not sCurScnPath:
+        raise ValueError("Current scene is untitled.".format(sCurScnPath))
+
     damEntity = entityFromScene(sCurScnPath, fail=False)
     if damEntity:
         proj = damEntity.project
@@ -263,9 +269,9 @@ def publishCurrentScene(*args, **kwargs):
         if not publishSceneDependencies(damEntity, depScanResults, prePublishInfos):
             return
 
-    sSavedScnPath = myasys.saveScene(confirm=False)
+    sSavedScnPath = myasys.saveScene(prompt=False, checkError=False)
     if not sSavedScnPath:
-        raise RuntimeError("Could not save your current scene !")
+        raise RuntimeError("Failed to save current scene !")
 
     res = proj.publishEditedVersion(sSavedScnPath,
                                     version=prePublishInfos["version"],

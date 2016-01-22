@@ -190,6 +190,9 @@ class LightTemplate(AttributeTemplate, ColorTemperatureTemplate):
         self.addControl("aiVolume", label="Volume")
         self.addControl("aiMaxBounces", label="Max Bounces")
 
+        self.addSeparator()
+        self.addControl("aiAov", label="AOV Light Group")
+        
         self.lightFiltersLayout()
         
         if addUserOptions:
