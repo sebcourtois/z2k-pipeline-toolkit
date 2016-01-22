@@ -3,4 +3,4 @@ reload(modeling)
 
 
 
-modeling.combineSelectedGeo()
+modeling.combineGeo(GUI = True)

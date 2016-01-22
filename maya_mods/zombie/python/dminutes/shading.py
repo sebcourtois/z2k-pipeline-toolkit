@@ -135,12 +135,15 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
     return wrongShadEngine if wrongShadEngine != [] else  None
 
 
-def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", remove = False):
+def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", remove = False, GUI = True):
     """
     reference a camera for shading purpose. This tools is not to use for shot bulding.
         cameraName (string): the camera name you want to reference
         fileType(string): specify if the '.ma' or '.mb' file is to reference
     """
+    toReturn =True
+    debugS =""
+
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
@@ -150,9 +153,21 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
             publicMapdir = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
             publicMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(privateMapdir)))
         else:
-            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+            debugS = "#### {:>7}: you are not working in an 'asset' structure directory".format("Error")
+            toReturn = False
+            if GUI == True:
+                raise ValueError(debugS)
+            else:
+                print debugS
+                return toReturn, debugS
     else :
-        raise ValueError("#### Error: no '|asset' could be found in this scene")
+        debugS = "#### {:>7}: no '|asset' could be found in this scene".format("Error")
+        toReturn = False
+        if GUI == True:
+            raise ValueError(debugS)
+        else:
+            print debugS
+            return toReturn, debugS
 
 
     zombie_asset_dir =  os.environ["ZOMB_ASSET_PATH"]
@@ -190,10 +205,12 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
     else:
         if "cam_shading_" in  str(mc.file(query=True, list=True, reference = True)):
             mc.currentTime(1)
+            removedCameraI = 0
             for each in  mc.file(query=True, list=True, reference = True):
                 if "cam_shading_" in each:
                     mc.file(each, removeReference = True)
                     print "#### info 'referenceShadingCamera': remove camera '"+each+""
+                    removedCameraI += 1
             if mc.ls("|asset|*",type = "orientConstraint"):
                 mc.delete(mc.ls("|asset|*",type = "orientConstraint"))
             #mc.makeIdentity ("|asset",apply= False, n=0, pn=1)
@@ -203,13 +220,16 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
             mc.setAttr ("|asset.rotateX", 0)
             mc.setAttr ("|asset.rotateY", 0)
             mc.setAttr ("|asset.rotateZ", 0)
+            debugS = "#### {:>7}: {} camera removed".format("Info", removedCameraI ) 
 
         else:
             print "#### info 'referenceShadingCamera': no 'cam_shading_*' to remove"
+            debugS = "#### {:>7}: no 'cam_shading_*' to remove".format("Info") 
         try:    
             mc.delete(mc.listConnections('defaultArnoldRenderOptions.background',connections = False))
         except:
             pass
+    return toReturn, debugS
 
 
 
@@ -1345,15 +1365,22 @@ def importLightRig(lgtRig = "lgtRig_outdoor"):
 
 
 def cleanlgtRig( verbose = False):
+    toReturn =True
+    errorL = []
+    infoL =[]
+    nameSpaceInt = 0
     refNodeList = mc.ls(type = "reference")
+
     for each in refNodeList:
         if re.match('^lgtRig[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^tmpEnv[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) :
             fileRef= pm.FileReference(each)
             #fileRef = mc.referenceQuery(each,filename=True)# other way to do it
             try:
-                if verbose: print "#### {:>7}:removing reference '{}'".format("Info",fileRef.path)
                 fileRef.remove()
-            except :
+                message = "#### {:>7}:removing reference '{}'".format("Info",fileRef.path)
+                print message
+                infoL.append(message)      
+            except:
                 pass
 
     nameSpaceList = mc.namespaceInfo(listOnlyNamespaces=True,r=True)
@@ -1368,6 +1395,38 @@ def cleanlgtRig( verbose = False):
         if re.match('^lgtRig[0-9]{0,3}', each) or re.match('^tmpEnv[0-9]{0,3}', each):
             if verbose: print "#### {:>7}:removing namespace and its content: '{:<10}' ".format("Info",each)
             mc.namespace(removeNamespace=each, deleteNamespaceContent=True)
+            nameSpaceInt += 1
+    if nameSpaceInt != 0:
+        message = "#### {:>7}:'{}' 'lgtRig:*' or 'tmpEnv:*' nameSace removed".format("Info",nameSpaceInt)
+        print message
+        infoL.append(message)
+
+    if not infoL: infoL.append("#### {:>7}: nothing done".format("Info"))
+    return toReturn, errorL, infoL
+
+
+def fixMaterialInfo (shadingEngineL = []):
+    returnB = True
+    logL = []
+    fixedEhadingEngineL=[]
+
+    if not shadingEngineL:
+        shadingEngineL = mc.ls(type='shadingEngine')
+        if "initialParticleSE" in shadingEngineL: shadingEngineL.remove("initialParticleSE")
+        if "initialShadingGroup" in shadingEngineL: shadingEngineL.remove("initialShadingGroup")
+
+    for each in shadingEngineL:
+        if not mc.ls(mc.listConnections(each+".message",destination = True), type = "materialInfo"):
+            matInfoNodeS = mc.shadingNode("materialInfo", asShader=True, name="sho_"+each.replace("sgr_","")+"_each")
+            mc.connectAttr(each+".message",matInfoNodeS+".shadingGroup",force=True)
+            fixedEhadingEngineL.append(each)
+
+    logMessage ="#### {:>7}: 'fixMaterialInfo' regenerated materialInfo for {} SE nodes: {}".format("Info",len(fixedEhadingEngineL),fixedEhadingEngineL)
+    print logMessage
+    logL.append(logMessage)
+
+    return [returnB, logL]
+
 
 
 
