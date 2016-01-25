@@ -27,7 +27,7 @@ if r2a.sourceTargetListMatch and r2a.sourceTargetTopoMatch:
 	r2a.transferSG()
 	r2a.removeNameSpaceFromShadNodes(r2a.targetList)
 	r2a.cleanFile()
-	pm.mel.MLdeleteUnused()
+	#pm.mel.MLdeleteUnused()
 	assetconformation.fixMaterialInfo()
 
 else:
