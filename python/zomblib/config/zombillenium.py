@@ -45,6 +45,13 @@ class project(object):
 
     all_sync_sites = ("dmn_paris", "dmn_angouleme", "online", "dream_wall", "pipangai")
 
+    sg_publish_statuses = ("ip", "rev", "wfa", "omt")
+
+    sg_tasks_settings = {"model_hd":{"upd_status_art":True},
+                        "texture":{"upd_status_art":True},
+                        "shading":{"upd_status_art":True},
+                        }
+
 class shot_lib(object):
 
     entity_class = "davos.core.damtypes.DamShot"
@@ -91,16 +98,20 @@ class shot_lib(object):
     resources_settings = {
     "previz_scene":{"outcomes":("previz_capture",),
                     "create_sg_version":True,
+                    "upload_to_sg":"previz_capture",
                     "sg_tasks":("previz 3D",),
-                    "upload_to_sg":"previz_capture"
+                    "sg_status":"rev",
+
                     },
     "layout_scene":{"outcomes":("layout_capture",),
                     "create_sg_version":True,
+                    "upload_to_sg":"layout_capture",
                     "sg_tasks":("layout",),
-                    "upload_to_sg":"layout_capture"
+                    "sg_status":"rev",
                     },
     "animatic_capture":{"create_sg_version":True,
                         "sg_tasks":("animatic",),
+                        "sg_status":"rev",
                         },
     "data_dir":{"default_sync_rules":"all_sites",
                 },
@@ -158,25 +169,36 @@ class asset_lib(object):
 
     resources_settings = {
     "modeling_scene":{"create_sg_version":True,
-                      "sg_steps":("Model HD", "Surfacing"), },
+                      "sg_steps":("Model HD", "Surfacing"),
+                      },
 
     "master_scene":{"create_sg_version":True,
-                    "sg_steps":("Model HD", "Rigging", "Surfacing"), },
+                    "sg_steps":("Model HD", "Rigging", "Surfacing"),
+                    },
 
     "previz_scene":{"create_sg_version":True,
-                    "sg_steps":("Model Previz",), },
+                    "sg_steps":("Model Previz",),
+                    },
     "previz_ref":{"create_sg_version":True,
-                  "sg_tasks":("Rig_Previz",), },
+                  "sg_tasks":("Rig_Previz",),
+                  "sg_status":"rev",
+                  },
 
     "anim_scene":{"create_sg_version":True,
-                  "sg_steps":("Rigging",), },
+                  "sg_steps":("Rigging",),
+                  },
     "anim_ref":{"create_sg_version":True,
-                "sg_tasks":("Rig_Anim",), },
+                "sg_tasks":("Rig_Anim",),
+                "sg_status":"rev",
+                },
 
     "render_scene":{"create_sg_version":True,
-                    "sg_steps":("Surfacing",), },
+                    "sg_steps":("Surfacing",),
+                    },
     "render_ref":{"create_sg_version":True,
-                  "sg_tasks":("Rig_Render",), },
+                  "sg_tasks":("Rig_Render",),
+                  "sg_status":"rev",
+                  },
     }
 
     dependency_types = {
