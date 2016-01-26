@@ -277,6 +277,7 @@ class Z2K_ReleaseBatch(object):
         theDict={"theProject":self.theProject,
                 "publishMayaFile":self.publishMayaFile,
                 "releaseMayaFile":self.releaseMayaFile,
+                "forceRelease": self.forceReleaseDude,
                 "unlockFile":self.unlockFile,
                 "theComment":self.theComment,
                 "debugFile":self.debugFile,

@@ -319,7 +319,7 @@ def getChilds(cursel=[], mode="transform", *args):
     return listOut
 
 def addAttr(inObj = "", theAttrName="",theValue=1,
-    theAttrType="long",keyable=True,theMin = 0, theMax=1, *args, **kwargs):
+    theAttrType="long",keyable=True,theMin = 0, theMax=1, dv=1, *args, **kwargs):
     """ Description: add the specied attribut to the speciefied obj
         Return : True
         Dependencies : cmds - 
@@ -329,7 +329,7 @@ def addAttr(inObj = "", theAttrName="",theValue=1,
     toReturnB = True
     if cmds.objExists(inObj):
         if not cmds.objExists(inObj + "." + theAttrName):
-            cmds.addAttr(inObj, longName=theAttrName, attributeType = theAttrType, keyable=keyable, min = theMin, max=theMax) 
+            cmds.addAttr(inObj, longName=theAttrName, attributeType = theAttrType, keyable=keyable,dv=1, min = theMin, max=theMax) 
             cmds.setAttr(inObj + "." + theAttrName,theValue)
         else:
             print "    attrib allready exists"
@@ -1133,7 +1133,7 @@ def disableShapeOverrides(inObjL=[],*args, **kwargs):
 def connectVisibility(connectOnShape=True, force=True,driverObj="Global_SRT", driverAttr= "showMesh", *args, **kwargs):
     """ Description: cree et connect un attrib "showMesh" au visibility des shape du "set_meshCache"
         Return : True
-        Dependencies : cmds - addAttr()
+        Dependencies : cmds - addAttr() - getSetContent() - getChilds()
     """
     print "connectVisibility()"
     toReturnB = True
@@ -1141,7 +1141,7 @@ def connectVisibility(connectOnShape=True, force=True,driverObj="Global_SRT", dr
     try :
         # driverObj= "Global_SRT"
         # driverAttr= "showMesh"
-        addAttr(inObj = driverObj, theAttrName=driverAttr,)
+        addAttr(inObj = driverObj, theAttrName=driverAttr,dv=1,)
         cmds.setAttr(driverObj+"."+driverAttr,1)
         targetObjL=getSetContent(inSetL=["set_meshCache"] )
 
@@ -1452,7 +1452,7 @@ def chr_fixTKFacialRig_EyeBrow_Middle (*args, **kwargs):
                     cstAttrTarget = i
             
             # addThe Attr
-            cmds.addAttr( theCTR, longName=attrN, attributeType= attrType, min=attrMinV,dv= attrDefaultV, max= attMaxV,
+            cmds.addAttr( theCTR, longName=attrN, attributeType= attrType, min=attrMinV, dv= attrDefaultV, max= attMaxV,
                                                     keyable=True,) 
                                                     
             # connect the Attr
