@@ -542,7 +542,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=3, e=True)
+        self.pBar_upd(step=1, maxValue=4, e=True)
 
 
         # 1 connectVisibility ()
@@ -571,7 +571,7 @@ class checkModule(object):
 
 
         # 3 ----- fixTKFacialRig_EyeBrow_Middle ()
-        result,debugL = jpZ.chr_facialUnlockSRT()
+        result,debugL = jpZ.chr_UnlockForgottenSRT()
         # prints -------------------
         self.printF("chr_facialUnlockSRT()", st="t")
         self.printF(result, st="r")
@@ -582,7 +582,17 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,) 
 
-
+        # 4 ----- fixTKFacialRig_EyeBrow_Middle ()
+        result,debugL = jpZ.set_grp_geo_SmoothLevel()
+        # prints -------------------
+        self.printF("set_grp_geo_SmoothLevel()", st="t")
+        self.printF(result, st="r")
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,) 
+        
 
         # colors
         print "*btn_specialSettings:",boolResult

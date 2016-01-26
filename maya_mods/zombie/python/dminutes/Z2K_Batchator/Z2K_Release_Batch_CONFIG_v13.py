@@ -2,7 +2,8 @@
 DEBUGFILE_PREVIZ_CHR='//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Previz_CHR_Release_debug.txt'
 DEBUGFILE_PREVIZ_PRP='//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Previz_PRP_Release_debug.txt'
 DEBUGFILE_PREVIZ_SET='//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Previz_SET_Release_debug.txt'
-DEBUGFILE= '//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Previz_Result_Release_debug.txt'
+
+DEBUGFILE= '//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Result_Release_debug.txt'
 
 # GUI
 Z2K_ICONPATH = "zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/"
@@ -13,16 +14,17 @@ TESTLIST= [
 "set_devTest_default",
 ]
 
-
+tookOff = [
+'chr_maitresse_default',
+'chr_aurelien_polo',
+]
 
 
 
 # donner ici la list des assets du meme type to release
 BATCH_ASSET_LIST =[
-'chr_aurelien_polo',
 'chr_barman_default',
 'chr_sylvain_default',
-'chr_maitresse_default',
 'chr_gamin1_afro',
 'chr_gamin1_default',
 'chr_gamin1_roux',
@@ -72,6 +74,7 @@ OPENINMAYA= 1
 READONLY= 1
 PUBLISHMAYAFILE= 0
 RELEASEMAYAFILE=1
+FORCERELEASE = 1
 UNLOCKFILE= 1
 PREPUBLISH_PYSCRIPTL = [
 "C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/zombie/python/dminutes/Z2K_Batchator/scripts/testProject.py",
