@@ -7,6 +7,7 @@ import maya.cmds as cmds
 import re
 import string
 from dminutes import miscUtils
+reload (miscUtils)
 import dminutes.jipeLib_Z2K as jpm
 reload(jpm)
 
@@ -402,7 +403,11 @@ def checkMeshNamingConvention(printInfo = True, inParent = "*"):
         - return (list) : wrongMeshNamingConvention, all the meshes with a bad naming convetion
     """
     wrongMeshNamingConvention = []
-    geoTransformList = miscUtils.getAllTransfomMeshes(inParent)
+    geoTransformList, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+    if instanceTransformL:
+        print "#### {:>7}: 'checkMeshNamingConvention': {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+        geoTransformList = geoTransformList+ instanceTransformL
+
     if geoTransformList is None: geoTransformList = []
     
     for each in geoTransformList:
@@ -432,7 +437,11 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
     """
 
     if not myTransMesh:
-        myTransMesh = miscUtils.getAllTransfomMeshes(inParent)
+        myTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+
+        if instanceTransformL:
+            print "#### {:>7}: 'meshShapeNameConform': {} objects ignored since they are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+
         if myTransMesh is None: myTransMesh = []
         checkAllScene = True
     else:
@@ -477,7 +486,7 @@ def getMeshesWithSameName(inVerbose = True, inParent = "*"):
         - return (list) : multipleMesh
     """
 
-    allTransMesh = miscUtils.getAllTransfomMeshes(inParent)
+    allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
     multipleMesh = []
 
     for eachTrasnMesh in allTransMesh:
@@ -505,7 +514,8 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
     myMesh  (string) : the long name of a mesh (a transform parent of a mesh shape) that has to be renamed to have a unique short name in the scene
 
     """
-    allTransMesh = miscUtils.getAllTransfomMeshes(inParent)
+    allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+
     shortName = myMesh.split("|")[-1]
     digit = re.findall('([0-9]+$)', myMesh)
     if digit:
@@ -516,9 +526,12 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
         while str(allTransMesh).count(newShortName+newDigit) > 0:
             newDigit = string.zfill(str(int(digit)+i), len(digit))
             i = i+1
+            if i>20:
+                print "#### {:>7}:'renameMeshAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
+                break
         cmds.rename(myMesh,newShortName+newDigit)
         print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+string.rstrip(myMesh,digit)+newDigit
-        meshShapeNameConform(fixShapeName = True, myTransMesh = [string.rstrip(myMesh,digit)+newDigit], forceInfoOff = True )
+        if myMesh in allTransMesh: meshShapeNameConform(fixShapeName = True, myTransMesh = [string.rstrip(myMesh,digit)+newDigit], forceInfoOff = True )
         
     else:
         digit = "1"
@@ -526,21 +539,35 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
         while str(allTransMesh).count(shortName+digit) > 0:
             digit = str(int(digit)+1)
             i = i+1
+            if i>20:
+                print "#### {:>7}:'renameMeshAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
+                break
         myMeshNew = [cmds.rename(myMesh,shortName+digit)]
         print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+myMesh+digit
-        meshShapeNameConform(fixShapeName = True, myTransMesh = myMeshNew, forceInfoOff = True)
+        if myMesh in allTransMesh: meshShapeNameConform(fixShapeName = True, myTransMesh = myMeshNew, forceInfoOff = True)
 
                         
 def makeAllMeshesUnique(inParent = "*"):
     """
     makes all the meshes short names unique by adding a digit and/or incrementing it till the short name is unique in the scene
     then makes sure the shapes names are corrects
-    """           
+    """
+
+    allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+    if instanceTransformL:
+        print "#### {:>7}:'makeAllMeshesUnique' {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+
+
     multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
     if multipleMesh :
+        i=0
         while multipleMesh:
             renameMeshAsUnique(multipleMesh[0], inParent)
             multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
+            i = i+1
+            if i>20:
+                print "#### {:>7}:'makeAllMeshesUnique' while loop has reached the security limit, program has been stopped".format("Error")
+                break
     else:
         if inParent == "*":
             print "#### {:>7}:'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name".format("Info")
@@ -552,7 +579,11 @@ def geoGroupDeleteHistory():
     """
     gets all the mesh transformms under the '|asset|grp_geo', delete their history and delete any intermediate unconnected shape 
     """
-    geoTransformList = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
+    geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
+    if instanceTransformL:
+        print "#### {:>7}: 'geoGroupDeleteHistory': {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+        geoTransformList = geoTransformList+ instanceTransformL
+
     cmds.delete(geoTransformList,ch =True)
     print "#### {:>7}:'geoGroupDeleteHistory': deteted history on {} geometries".format("Info",len(geoTransformList))
     
@@ -577,7 +608,10 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
     print "#### {:>7}: modeling.freezeResetTransforms(inParent = {}, inVerbose = {}, inConform = {})".format("Info",inParent, inVerbose, inConform)
     unFreezedTransfomList = []
     freezedTransfomList = []
-    geoTransformList = miscUtils.getAllTransfomMeshes(inParent)
+    geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+    if instanceTransformL:
+        print "#### {:>7}: 'freezeResetTransforms': {} objects ignored since they are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+
     for each in geoTransformList:
         if (cmds.xform( each, os=True, q=True,  ro=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  t=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  s=True, r = True )!=[1,1,1] or 
             cmds.xform( each, os=True, q=True, rp=True)!=[0,0,0] or cmds.xform( each, os=True, q=True, sp=True)!=[0,0,0]):
@@ -789,13 +823,12 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
                 parentName = path.split(groupName)[0].rstrip("|")
                 #parent back the merged object under the initial group 
                 if not cmds.ls(path):
-                    mergedObjectShortName = mergedObjectName.split("|")[-1]
                     newGroupName = cmds.group(mergedObjectName, name= groupName, parent = parentName)
                     mergedObjectName = newGroupName+"|"+mergedObjectShortName
                 else:
-                    mergedObjectName = cmds.parent(mergedObjectName, path )
-                
-                if autoRenameI == 1 : mergedObjectName = cmds.rename(mergedObjectName,groupName.replace("grp_","geo_")+"_merged00" )
+                    mergedObjectName = cmds.parent(mergedObjectName, path )[0]
+                if autoRenameI ==0 : mergedObjectName = cmds.rename(mergedObjectName,mergedObjectName.rstrip("Shape"))
+                elif autoRenameI == 1 : mergedObjectName = cmds.rename(mergedObjectName,groupName.replace("grp_","geo_")+"_merged00" )
                 resultObjL.append(mergedObjectName)
 
     logMessage = "#### {:>7}: 'combineGeoGroup' {} objects combined in : {} objects".format("Info",len(combinedObjL),len(resultObjL))

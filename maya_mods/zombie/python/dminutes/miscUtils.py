@@ -20,11 +20,25 @@ def getAllTransfomMeshes(inParent = "*"):
     else:
         oParent = "*"
         
-    geoShapeList = mc.ls(mc.listRelatives(oParent, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
-    allTransMesh = mc.listRelatives (geoShapeList, parent = True, fullPath = True, type = "transform")
-    if allTransMesh is None: allTransMesh = []
+    allGeoShapeList = mc.ls(mc.listRelatives(oParent, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
 
-    return allTransMesh
+    geoShapeList =[]
+    instancedGeoShapeList =[]
+
+    for each in allGeoShapeList:
+        if len(mc.listRelatives(each,allParents =True))>1:
+            instancedGeoShapeList.append(each)
+        else:
+            geoShapeList.append(each)
+
+    transMeshL = mc.listRelatives (geoShapeList, parent = True, fullPath = True, type = "transform")
+    InstanciedtransMeshL = mc.listRelatives (instancedGeoShapeList, allParents = True, fullPath = True, type = "transform")
+
+
+    if transMeshL is None: transMeshL = []
+    if InstanciedtransMeshL is None: InstanciedtransMeshL = []
+
+    return transMeshL, InstanciedtransMeshL
 
 
 def pathJoin(*args):
