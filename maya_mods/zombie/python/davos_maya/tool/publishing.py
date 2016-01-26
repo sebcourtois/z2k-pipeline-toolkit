@@ -252,12 +252,13 @@ def publishCurrentScene(*args, **kwargs):
         prePublishInfos = curPubFile.beginPublish(sCurScnPath, checkLock=False, **kwargs)
         if prePublishInfos is None:
             return
+        sgVersionData = prePublishInfos["sg_version_data"]
     except Exception, e:
         curPubFile._abortPublish(e, None, None)
         raise
 
-    sgTaskInfo = prePublishInfos["sgTask"]
-    if not sgTaskInfo:
+#    sgTask = sgVersionData["sg_task"]
+    if not sgVersionData.get("sg_task"):
         bSgVersion = False
 
     publishCtx = PublishContext(proj, prePublishInfos, entity=damEntity)
@@ -276,8 +277,9 @@ def publishCurrentScene(*args, **kwargs):
     res = proj.publishEditedVersion(sSavedScnPath,
                                     version=prePublishInfos["version"],
                                     comment=prePublishInfos["comment"],
-                                    sgTask=sgTaskInfo,
+                                    #sgTask=sgTask,
                                     withSgVersion=bSgVersion,
+                                    sgVersionData=sgVersionData,
                                     **kwargs)
 
     if postPublishFunc:
