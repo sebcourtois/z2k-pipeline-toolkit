@@ -1,5 +1,6 @@
 
-
+from dminutes import miscUtils
+reload (miscUtils)
 
 import maya.cmds as mc
 import pymel.core as pm
@@ -26,10 +27,15 @@ if r2a.sourceTargetListMatch and r2a.sourceTargetTopoMatch:
 	r2a.transferSG()
 	r2a.removeNameSpaceFromShadNodes(r2a.targetList)
 	r2a.cleanFile()
-	pm.mel.MLdeleteUnused()
+	#pm.mel.MLdeleteUnused()
+	assetconformation.fixMaterialInfo()
+
 else:
 	r2a.cleanFile()
 	#raise ValueError( "Asset is not conform, please fix and run the script again")
 	mc.confirmDialog( title='Confirm', message="Asset is not conform, please fix and run the script again", button=['Ok'], defaultButton='Ok',)
+
+
+
 
 

@@ -146,6 +146,7 @@ def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, empt
         tab= "    "
         #print "removeAllNamespace()"
         toReturnB = True
+        delNameSpaceL = []
         # "UI","shared" NS are used by maya itself
         NS_exclusionBL=["UI","shared"]
         NS_exclusionBL.extend(NSexclusionL)
@@ -162,10 +163,12 @@ def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, empt
                     if emptyOnly == False:
                         if verbose: print tab+"ns:",ns
                         mc.namespace( removeNamespace =ns, mergeNamespaceWithRoot=True)
+                        delNameSpaceL.append(ns)
                     else:
                         if not mc.namespaceInfo(ns,  listOnlyDependencyNodes= True):
                             if verbose: print tab+"ns:",ns
                             mc.namespace( removeNamespace =ns, mergeNamespaceWithRoot=True)
+                            delNameSpaceL.append(ns)
 
         # recursive
         if emptyOnly==False:
@@ -177,7 +180,7 @@ def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, empt
                 if count > limit:
                     break
 
-        return [toReturnB]
+        return [toReturnB, delNameSpaceL]
 
 
 
@@ -226,8 +229,6 @@ def h264ToProres(inSeqList = ['sq0230', 'sq0150'], shotStep = '01_previz'):
     else:
         raise ValueError("'{}' shotStep is not valid".format(shotStep))
 
-
-
     for eachSeq in os.listdir(shotDir):
         if re.match('^sq[0-9]{4}$', eachSeq) and (eachSeq in inSeqList or not inSeqList):
             for eachShot in os.listdir(os.path.normpath(os.path.join(shotDir,eachSeq))):
@@ -275,6 +276,38 @@ def h264ToProres(inSeqList = ['sq0230', 'sq0150'], shotStep = '01_previz'):
     conv2prores_obj.write("pause\n")
     conv2prores_obj.close()
 
-
     #subprocess.call([tempBatFile])
+
+def getShapeOrig(TransformS = ""):
+    shapeOrigList=[]
+    shapeL = mc.ls(mc.listRelatives(TransformS, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=False)
+    for each in shapeL:
+        if mc.getAttr(each+".intermediateObject") == 1 and not mc.listConnections( each+".inMesh",source=True) and "ShapeOrig" in each:
+            shapeOrigList.append(each)
+    return shapeOrigList
+
+
+def fixMaterialInfo (shadingEngineL = []):
+    returnB = True
+    logL = []
+    fixedEhadingEngineL=[]
+
+    if not shadingEngineL:
+        shadingEngineL = mc.ls(type='shadingEngine')
+        if "initialParticleSE" in shadingEngineL: shadingEngineL.remove("initialParticleSE")
+        if "initialShadingGroup" in shadingEngineL: shadingEngineL.remove("initialShadingGroup")
+
+    for each in shadingEngineL:
+        if not mc.ls(mc.listConnections(each+".message",destination = True), type = "materialInfo"):
+            matInfoNodeS = mc.shadingNode("materialInfo", asShader=True, name="sho_"+each.replace("sgr_","")+"_each")
+            mc.connectAttr(each+".message",matInfoNodeS+".shadingGroup",force=True)
+            fixedEhadingEngineL.append(each)
+
+    logMessage ="#### {:>7}: 'fixMaterialInfo' regenerated materialInfo for {} SE nodes: {}".format("Info",len(fixedEhadingEngineL),fixedEhadingEngineL)
+    print logMessage
+    logL.append(logMessage)
+
+    return [returnB, logL]
+
+
 

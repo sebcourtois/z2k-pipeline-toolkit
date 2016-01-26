@@ -706,34 +706,54 @@ def compareHDToPreviz():
 
 
 
-def combineSelectedGeo():
+def combineGeoGroup(toCombineObjL = [], combineByMaterial = False, GUI = True, autoRename = False):
     """
     this script merge selected objects only if they are under the same group.
     It ensure that the resulting object is under the intial group.
     """
-    print "modeling.combineSelectedGeo()"
-    sSelectionList = cmds.ls(selection = True,l = True)
-    if len(sSelectionList)<2:
-        return
+    resultB = True
+    logL = []
+    combinedObjL = []
 
-    path = sSelectionList[-1].split(sSelectionList[-1].split("|")[-1])[0].rstrip("|")
-    finalObjectName = sSelectionList[-1].split("|")[-1]
+    if not toCombineObjL:
+        toCombineObjL = cmds.ls(selection = True,l = True)
+    if len(toCombineObjL)<2:
+        return [resultB, logL, combinedObjL] 
 
-    for each in sSelectionList:
+    path = toCombineObjL[-1].split(toCombineObjL[-1].split("|")[-1])[0].rstrip("|")
+    finalObjectName = toCombineObjL[-1].split("|")[-1]
+
+    # checj that all the meshes belong to the same group
+    for each in toCombineObjL:
         if path != each.split(each.split("|")[-1])[0].rstrip("|"):
-            raise ValueError("#### Error: cannot merge 2 elements of a different group")
+            logMessage = "#### {:>7}: 'combineGeo' Cannot merge 2 elements of a different group: {} is not under '{}'".format("Error", each, path)
+            if GUI == True : raise ValueError (logMessage)
+            resultB = False
+            logL.append(logMessage)
 
-    mergedObjectName = cmds.polyUnite(sSelectionList,ch=False, mergeUVSets = True, name = finalObjectName )[0]
+    if combineByMaterial:
+        for each in combinedObjL:
+            print"tt"
 
-    groupName = path.split("|")[-1]
-    parentName = path.split(groupName)[0].rstrip("|")
-    if not cmds.ls(path):
-        cmds.group(mergedObjectName, name= groupName, parent = parentName)
-    else:
-        cmds.parent(mergedObjectName, groupName )
+
+
+    # mergedObjectName = cmds.polyUnite(toCombineObjL, ch=False, mergeUVSets = True, name = finalObjectName )[0]
+
+    # groupName = path.split("|")[-1]
+    # parentName = path.split(groupName)[0].rstrip("|")
+
+    # if not cmds.ls(path):
+    #     mergedObjectShortName = mergedObjectName.split("|")[-1]
+    #     newGroupName = cmds.group(mergedObjectName, name= groupName, parent = parentName)
+    #     mergedObjectName = newGroupName+"|"+mergedObjectShortName
+    # else:
+    #     mergedObjectName = cmds.parent(mergedObjectName, path )
+
+    # if autoRename : mergedObjectName = cmds.rename(mergedObjectName,groupName.replace("grp_","geo_")+"_merged00" )
         
-    cmds.select(mergedObjectName)
+    # cmds.select(mergedObjectName)
 
+    return [resultB, logL, toCombineObjL, combinedObjL] 
 
 
 # -------------------------- RIG SUPPLEMENT -------------------------------------------------------------------
