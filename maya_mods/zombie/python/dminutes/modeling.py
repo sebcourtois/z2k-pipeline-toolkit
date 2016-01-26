@@ -706,54 +706,117 @@ def compareHDToPreviz():
 
 
 
-def combineGeoGroup(toCombineObjL = [], combineByMaterial = False, GUI = True, autoRename = False):
+def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, autoRenameI = 0):
     """
     this script merge selected objects only if they are under the same group.
     It ensure that the resulting object is under the intial group.
+        toCombineObjL: a list of shapes ot transform objects to combine, groups are not accepeted. if nothing in input try with the selection
+        combineByMaterialB: if True il merge only objects that share the same material
+        GUI: if True wil log messages and select merged object when combined 
+        autoRenameI:    0: do not rename the combined objects, name is the first selected object or first of the list
+                        1: rename combined object as the group he's under, '_mergedxx' extention is added at the extend
+
     """
     resultB = True
     logL = []
+    resultObjL = []
     combinedObjL = []
+    shaderAssignationD = {'multiMaterial':[]}
+
 
     if not toCombineObjL:
         toCombineObjL = cmds.ls(selection = True,l = True)
-    if len(toCombineObjL)<2:
-        return [resultB, logL, combinedObjL] 
 
-    path = toCombineObjL[-1].split(toCombineObjL[-1].split("|")[-1])[0].rstrip("|")
-    finalObjectName = toCombineObjL[-1].split("|")[-1]
+    toCombineShapesL = cmds.ls(toCombineObjL,l = True, shapes = True)+ cmds.ls(cmds.listRelatives(toCombineObjL, children = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
 
-    # checj that all the meshes belong to the same group
-    for each in toCombineObjL:
-        if path != each.split(each.split("|")[-1])[0].rstrip("|"):
+    if len(toCombineShapesL)<2:
+        return [resultB, logL, toCombineObjL, resultObjL] 
+
+    #path = toCombineShapesL[-1].split(toCombineShapesL[-1].split("|")[-1])[0].rstrip("|")
+    path = cmds.listRelatives(cmds.listRelatives(toCombineShapesL[-1], parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
+    finalObjectName = toCombineShapesL[-1].split("|")[-1]
+
+    # check that all the meshes belong to the same group
+    for each in toCombineShapesL:
+        eachPath = cmds.listRelatives(cmds.listRelatives(each, parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
+        if path != eachPath:
             logMessage = "#### {:>7}: 'combineGeo' Cannot merge 2 elements of a different group: {} is not under '{}'".format("Error", each, path)
             if GUI == True : raise ValueError (logMessage)
             resultB = False
             logL.append(logMessage)
 
-    if combineByMaterial:
-        for each in combinedObjL:
-            print"tt"
+    # create a dictionnary to gather all the shapes that share the same material. 
+    # every key correspond to a shading engine and reference the objects this SE is connected to:
+    if combineByMaterialB:
+        shadingEngineL = []
+        for each in toCombineShapesL:
+            shadEngEachL = cmds.listConnections(each, destination = True, source = False, type = "shadingEngine")
+            if not shadEngEachL or len(shadEngEachL)>1:
+                continue
+            else:
+                if shadEngEachL[0] not in shadingEngineL:
+                    shadingEngineL.append(shadEngEachL[0])
 
+        for eachSE in shadingEngineL:
+            shapeShareMatL = cmds.ls(cmds.listConnections(eachSE, source = True, destination = False, shapes = True ),l=True)
+            shapeToCombineL = list(set(shapeShareMatL).intersection(set(toCombineShapesL)))
+            for eachShareMat in shapeToCombineL:
+                if len(cmds.listConnections(eachShareMat, destination = True, source = False, type = "shadingEngine"))>1:
+                    shaderAssignationD['multiMaterial'].append(eachShareMat)
+                else:
+                    if not eachSE in shaderAssignationD:
+                        shaderAssignationD[eachSE]=[eachShareMat]
+                    else:
+                        shaderAssignationD[eachSE].append(eachShareMat)
+    else:
+        if not 'miscSE' in shaderAssignationD:
+            shaderAssignationD['miscSE']=toCombineShapesL
+        else:
+            shaderAssignationD['miscSE'].append(toCombineShapesL)
 
+    #combine objects depending on the key they are referenced under
+    for each in shaderAssignationD:
+        if each == 'multiMaterial' :
+            if shaderAssignationD['multiMaterial']:
+                logMessage = "#### {:>7}: 'combineGeoGroup' {} objects have several materials assigned hence cannot be combined".format("Warning",len(shaderAssignationD['multiMaterial']))
+                logL.append(logMessage)
+                if GUI == True: print logMessage
+        else:
+            if len(shaderAssignationD[each])>1:
+                combinedObjL.extend(shaderAssignationD[each]) 
+                mergedObjectName = cmds.polyUnite(shaderAssignationD[each], ch=False, mergeUVSets = True, name = finalObjectName )[0]
+                groupName = path.split("|")[-1]
+                parentName = path.split(groupName)[0].rstrip("|")
+                #parent back the merged object under the initial group 
+                if not cmds.ls(path):
+                    mergedObjectShortName = mergedObjectName.split("|")[-1]
+                    newGroupName = cmds.group(mergedObjectName, name= groupName, parent = parentName)
+                    mergedObjectName = newGroupName+"|"+mergedObjectShortName
+                else:
+                    mergedObjectName = cmds.parent(mergedObjectName, path )
+                
+                if autoRenameI == 1 : mergedObjectName = cmds.rename(mergedObjectName,groupName.replace("grp_","geo_")+"_merged00" )
+                resultObjL.append(mergedObjectName)
 
-    # mergedObjectName = cmds.polyUnite(toCombineObjL, ch=False, mergeUVSets = True, name = finalObjectName )[0]
-
-    # groupName = path.split("|")[-1]
-    # parentName = path.split(groupName)[0].rstrip("|")
-
-    # if not cmds.ls(path):
-    #     mergedObjectShortName = mergedObjectName.split("|")[-1]
-    #     newGroupName = cmds.group(mergedObjectName, name= groupName, parent = parentName)
-    #     mergedObjectName = newGroupName+"|"+mergedObjectShortName
-    # else:
-    #     mergedObjectName = cmds.parent(mergedObjectName, path )
-
-    # if autoRename : mergedObjectName = cmds.rename(mergedObjectName,groupName.replace("grp_","geo_")+"_merged00" )
+    logMessage = "#### {:>7}: 'combineGeoGroup' {} objects combined in : {} objects".format("Info",len(combinedObjL),len(resultObjL))
+    logL.append(logMessage)
         
-    # cmds.select(mergedObjectName)
+    if GUI == True: 
+        cmds.select(resultObjL)
+        print logMessage
 
-    return [resultB, logL, toCombineObjL, combinedObjL] 
+    return [resultB, logL, toCombineObjL, resultObjL] 
+
+
+
+def combineAllGroups():
+ 
+    transformL = mc.ls(mc.listRelatives("asset|grp_geo", allDescendents = True, fullPath = True, type = "transform"), l=True, exactType="transform")
+    for each in transformL:
+        if re.match('^grp_', each.split("|")[-1]):
+            meshL = mc.listRelatives(each, allDescendents = True, fullPath = True, type = "mesh")
+            modeling.combineGeoGroup(toCombineObjL = meshL, GUI = False, autoRenameI= 1, combineByMaterialB = True)
+
 
 
 # -------------------------- RIG SUPPLEMENT -------------------------------------------------------------------
