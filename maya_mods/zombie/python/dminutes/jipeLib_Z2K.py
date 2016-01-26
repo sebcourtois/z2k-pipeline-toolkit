@@ -21,6 +21,7 @@
 ################################################################
 import os
 import maya.cmds as cmds
+import itertools
 from dminutes import assetconformation
 
 # general function 
@@ -273,7 +274,8 @@ def waiter (func,*args, **kwargs):
             print func
             result = func(self,*args, **kwargs)
         except Exception,err:
-            print "#ERROR in waiter():",err
+            print "#ERROR in {0}(): {1}".format(func.__name__,err)
+            print "     ->",Exception
 
             # cmds.waitCursor( state=False )
         
@@ -493,14 +495,15 @@ def createDisplayLayer ( n="default_Name", inObjL=[], displayType=0, hideOnPlayb
     cmds.editDisplayLayerMembers(n, inObjL,nr=True)
 
 
-def NodeTypeScanner( execptionTL = [], exceptDerived= True, specificTL=[], specificDerived=False,
+def NodeTypeScanner( execptionTL = [], exceptDerived= True, specificTL=[], specificDerived=True,
     mayaDefaultObjL=["characterPartition","defaultLightList1","dynController1","globalCacheControl",
     "hardwareRenderGlobals","hardwareRenderingGlobals","defaultHardwareRenderGlobals","hyperGraphInfo",
     "hyperGraphLayout","ikSystem","characterPartition","char_aurelienPolo_wip_18_sceneConfigurationScriptNode",
     "char_aurelienPolo_wip_18_uiConfigurationScriptNode","sequenceManager1","strokeGlobals","time1","defaultViewColorManager",
     "defaultColorMgtGlobals","defaultObjectSet","defaultTextureList1","lightList1","defaultObjectSet",
-    "sceneConfigurationScriptNode","uiConfigurationScriptNode"],
-    *args, **kwargs):
+    "sceneConfigurationScriptNode","uiConfigurationScriptNode",
+    "persp","top","front","side","left","back","bottom","defaultCreaseDataSet","defaultLayer"
+    ],*args, **kwargs):
     """ Description: Return Node list base on specific type /excepted type filtered
                     If nothing it give evrething in scene
                     basic type herited coulb be "dagNode" / "transform" /
@@ -511,44 +514,48 @@ def NodeTypeScanner( execptionTL = [], exceptDerived= True, specificTL=[], speci
     theTypeL =[]
     allTypeL = cmds.ls(nodeTypes=1)
     toReturnL = []
+    toLoopL = []
+    # specificTypeList
     if not len(specificTL) >0:
-            theTypeL = allTypeL
+
+        theTypeL = allTypeL
     else:
-        theTypeL = specificTL
+        theTypeL = [cmds.nodeType(x, derived=specificDerived, isTypeName=True) for x in specificTL]
+    print "specificTL=", specificTL
+    print "theTypeL=", theTypeL
 
-    for typ in theTypeL:
+    # exclude exceptionType List
+    if len(execptionTL)>0:
+        derivedTypeTmpL = [ cmds.nodeType(x, derived=exceptDerived, isTypeName=True) for x in execptionTL]
+        execptionTL_derived = list(itertools.chain.from_iterable(derivedTypeTmpL) )
+        toLoopL = list(set(theTypeL) -set(execptionTL_derived)- set(execptionTL) )
+        print "execptionTL=", execptionTL
+        print "execptionTL_derived=",execptionTL_derived
+        print "toLoopL=", toLoopL
+    else:
+        toLoopL = theTypeL
+
+    for typ in sorted(toLoopL):
         # print "****",typ
-        if len(theTypeL)>0:
-            filtered = [x for x in cmds.ls(type=typ) if  x not in mayaDefaultObjL ]
-            if len(filtered)>0:
-                for obj in filtered:
-                    if not obj in mayaDefaultObjL:
-                        testB = False
-                        if len(execptionTL)>0:
-                            for ex in execptionTL:
-                                if  cmds.nodeType(obj) in  cmds.nodeType(ex, derived=exceptDerived, isTypeName=True,):
-                                    # print "#######",cmds.nodeType(obj), "is bad"
-                                    testB = True
-                                    break
-                            if not testB:
-                                toReturnL.append(obj)
-                                    
-                        else:
-                            toReturnL.append(obj)
+        toReturnL.extend( [x for x in cmds.ls(type=typ) if  x not in mayaDefaultObjL ] )
 
+                                
+
+    # assure que les objects sont une seul fois dans la list
+    toReturnL = list(set(toReturnL) )
     return toReturnL
 
 # wip to make faster
-def UnusedNodeAnalyse( execptionTL = [], specificTL= [] , mode = "delete", verbose=True, exculdeNameFilterL=["Arnold"], *args, **kwargs):
+def UnusedNodeAnalyse( execptionTL = ['containerBase', 'entity'], specificTL= [] , mode = "delete", verbose=True, exculdeNameFilterL=["Arnold"], *args, **kwargs):
     """ Description: Test if nodes have connections based on type and excluded_type in all the scene and either delete/select/print it.
                     mode = "check" /"delete" / "select" / "print"
         Return : [BOOL,Dict]
         Dependencies : cmds - NodeTypeScanner() - isConnected()
     """
-    
+    print "UnusedNodeAnalyse()"
     toReturnB = True
     nodeL = NodeTypeScanner(execptionTL=execptionTL, specificTL=specificTL)
-    # print "*nodeL=", len(nodeL)
+    print "*nodeL=", len(nodeL)
 
     #filter exculededNames
     for excluN in exculdeNameFilterL:
@@ -559,7 +566,7 @@ def UnusedNodeAnalyse( execptionTL = [], specificTL= [] , mode = "delete", verbo
     unconectedCL =[]
     # loop
     for node in nodeL:
-        if not isConnected(node=node)[0]:
+        if not isConnected(node=node,exceptionL=["nodeGraphEditorInfo","defaultRenderUtilityList"])[0]:
             # print "-","toDELETe:",node
             unconectedCL.append(node)
 
@@ -597,7 +604,7 @@ def UnusedNodeAnalyse( execptionTL = [], specificTL= [] , mode = "delete", verbo
     elif mode in ["check"]:
         if len(deletedL):
             toReturnB = False
-    print "tatata",len(unconectedCL)
+    print "unconectedCL=",len(unconectedCL)
     
 
     return [toReturnB,debugD]
@@ -623,7 +630,7 @@ def checkBaseStructure(*args,**kwargs):
 
         # check if asset gp and set here
 
-        baseExcludeL = ["persp","top","top1","front","front1","side","side1","left","left1","back","back1","bottom1","bottom","defaultCreaseDataSet","defaultLayer"]
+        baseExcludeL = ["persp","top","front","side","left","back","bottom","defaultCreaseDataSet","defaultLayer"]
         baseObjL = ["asset",]
         baseSetL = ["set_meshCache","set_control",]
         additionnalSetL = ["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"]
@@ -1105,11 +1112,11 @@ def disableShapeOverrides(inObjL=[],*args, **kwargs):
     for obj in inObjL:
         for attr in attrL:
             try:
-                cmds.setAttr (cmds.listRelatives(obj, c=True, ni=True, type="shape", fullPath=True)[0]+"."+ attr,0)
+                cmds.setAttr ( cmds.listRelatives(obj, c=True, ni=True, type="shape", fullPath=True)[0]+"."+ attr,0)
             except Exception,err:
                 toReturnB = False
                 debugD[obj]= attr
-
+                # print Exception,err
     print tab,"DONE",toReturnB
 
     
@@ -1364,7 +1371,7 @@ def CleanDisconnectedNodes(*args, **kwargs):
     """
     print "CleanDisconnectedNodes()"
     
-    toReturnB,debugD = UnusedNodeAnalyse(execptionTL = ["dagNode","defaultRenderUtilityList"], specificTL=[], mode="delete")
+    toReturnB,debugD = UnusedNodeAnalyse(execptionTL = ['containerBase', 'entity', "dagNode","defaultRenderUtilityList","partition","constraint","animCurve",], specificTL=[], mode="delete")
 
     return [toReturnB,debugD]
 
@@ -1401,7 +1408,7 @@ def get_BS_TargetObjD(BS_Node="",*args, **kwargs):
 
 
 
-def fixTKFacialRig_EyeBrow_Middle (*args, **kwargs):
+def chr_fixTKFacialRig_EyeBrow_Middle (*args, **kwargs):
     """ Description: Fix le rig facial en ajoutant un blend param sur le ctr "EyeBrow_Middle"
                     Adouci son comportement de following des eyeBrows
         Return : [BOOL,DebugList]
@@ -1458,4 +1465,32 @@ def fixTKFacialRig_EyeBrow_Middle (*args, **kwargs):
         debugL.append(info)
 
     return toReturnB,debugL
+
+def chr_facialUnlockSRT():
+    """ Description: Unlock the forgotten srt lock on ToonKit rig, only if all Objects of the list exists in the scene
+        Return : [BOOL,LIST]
+        Dependencies : cmds - 
+    """
+    
+    scLockL = ['Right_LowerEye_2_Ctrl', 'Noze_Main_Ctrl', 'Right_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_EyeBrow_in_1', 'Right_Eye', 'Left_nostril', 'Right_Eyelid_In', 'Left_Brow_ridge_out', 'Left_EyeBrow_out', 'Right_EyeBrow_out_1', 'Left_EyeBrow_Global', 'Left_LowerEye_0_Ctrl', 'Left_Brow_ridge_out_1', 'Right_UpperEye_1_Ctrl', 'Right_LowerEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Left_Eye', 'Left_Cheek', 'Left_EyeBrow_in', 'Left_CheekBone', 'EyeBrow_Middle', 'Right_nostril', 'Right_Brow_ridge_out_1', 'Left_EyeBrow_out_1', 'Left_Brow_ridge_in', 'Right_LowerEye_3_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_out', 'Left_LowerEye_3_Ctrl', 'Right_Brow_ridge_in', 'Right_CheekBone', 'Right_Cheek', 'Left_UpperEye_1_Ctrl', 'Right_Brow_ridge_in_1', 'Right_Ear_Bone_Ctrl', 'Right_UpperEye_3_Ctrl', 'Left_Eyelid_Out', 'Right_EyeBrow_in', 'Left_UpperLid_Main_Ctrl', 'Left_UpperEye_0_Ctrl', 'Left_LowerEye_2_Ctrl', 'Right_EyeBrow_in_1', 'Left_Eye_Bulge', 'Left_Eyelid_In', 'Right_Brow_ridge_out', 'Right_UpperLid_Main_Ctrl', 'Left_UpperEye_3_Ctrl', 'Left_Brow_ridge_in_1', 'Left_Ear_Bone_Ctrl', 'Right_Eyelid_Out', 'Right_LowerLid_Main_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_Base_Depressor1', 'Right_Bottom_Teeth', 'Right_UpperLip_1_Ctrl', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Right_LowerLip_1_Ctrl', 'Top_Teeth', 'Tongue_1', 'Tongue_0', 'Tongue_3', 'Tongue_2', 'Base_UpperLip_Main_Ctrl', 'LowerLip_Center', 'Right_Base_Depressor', 'Right_LowerLip_2_Ctrl', 'Left_Base_Levator1', 'Left_Base_Depressor', 'Jaw_Bone_Ctrl', 'Left_UpperLip_2_Ctrl', 'Right_Base_Levator1', 'Right_Base_Levator', 'Right_UpperLip_2_Ctrl', 'Top_Teeth_Global', 'Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator', 'Left_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Tongue_2', 'Right_Tongue_3', 'Bottom_Teeth', 'Right_Tongue_1', 'Left_LowerLip_1_Ctrl', 'Right_Top_Teeth', 'Bottom_Teeth_Global', 'UpperLip_Center', 'Left_UpperLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 'chin']
+    canDo=True
+    updatedL = []
+    for obj in scLockL:
+        if not cmds.objExists(obj):
+            canDo = False
+            print "BOOOM"
+    if canDo:
+        print "scene valid for scalingFreeman()"
+        attrL = ["sx","sy","sz"]
+        for i in sorted(scLockL):
+            for attr in attrL:
+                lockState = cmds.getAttr(i + "." + attr,l=1)
+                if lockState:
+                    print i.ljust(40),attr,lockState
+                    cmds.setAttr(i + "." + attr,l=0,k=1)
+                    updatedL.append(i+"."+attr)
+    
+    print "total updated=",len(updatedL)
+
+    return True,updatedL
 
