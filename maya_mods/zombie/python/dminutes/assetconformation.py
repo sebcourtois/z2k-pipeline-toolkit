@@ -359,6 +359,7 @@ class Asset_File_Conformer:
 
     def loadFile(self,sourceFile = "render", reference = True):
 
+        mc.refresh()
         if sourceFile in ["render","anim","modeling","previz"]:
             self.sourceFile = sourceFile
         else:
@@ -377,12 +378,17 @@ class Asset_File_Conformer:
             mc.file( self.renderFilePath_exp, type= "mayaAscii", ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True, reference = True )
         else:
             print "#### {:>7}: importing '{}'".format("Info",self.renderFilePath_exp)
-            mc.file( self.renderFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True )
+            mc.file( self.renderFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace=self.sourceFile, preserveReferences= False )
+        mc.refresh()
 
 
     def cleanFile(self, verbose = False):
         toReturnB = True
         outLogL = []
+        # mc.select("persp")
+        # mc.select(clear=True)
+        mc.refresh()
+
         refNodeList = mc.ls(type = "reference")
         for each in refNodeList:
             if re.match('^render[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^anim[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^modeling[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^previz[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each):
@@ -416,6 +422,7 @@ class Asset_File_Conformer:
             logMessage ="#### {:>7}: 'cleanFile' nothing to clean, no '_render', '_anim', '_previz' or '_modeling' reference found".format("Info",each)
             if verbose == True : print logMessage
             outLogL.append(logMessage)
+        mc.refresh()
 
         return toReturnB, outLogL
 
@@ -680,6 +687,7 @@ class Asset_File_Conformer:
                         renamedShadNodeNb += 1
                         if verbose: print "#### {:>7}: Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
         print ("#### {:>7}: name space removed from {} shading nodes(s)".format("Info",renamedShadNodeNb))
+        mc.refresh()
 
 
 
@@ -687,6 +695,7 @@ class Asset_File_Conformer:
         """
         not finished yet
         """
+        mc.refresh()
         shadEngineList = mc.ls("*",type = "shadingEngine")
         shadEngineList.remove("initialParticleSE")
         shadEngineList.remove("initialShadingGroup")
@@ -788,7 +797,58 @@ class Asset_File_Conformer:
                             disconnectShapes.append(eachShape)
                         if verbose == True: print result
                     if i>200: break
-        print "#### {:>7}: shader have been disconnected on {} object(s) ".format("Info", len(disconnectShapes)) 
+        print "#### {:>7}: shader have been disconnected on {} object(s) ".format("Info", len(disconnectShapes))
+
+
+
+    def deleteUnusedShadingNodes(self):
+        # mc.select("persp")
+        # mc.select(clear=True)
+        mc.refresh()
+
+        ignoredShadEngL = [u'initialParticleSE', u'initialShadingGroup']
+        ignoredNodeTypeL = [u'colorManagementGlobals', u'mesh']
+
+        ignoredShadNodeL = mc.ls("*",type= ignoredNodeTypeL)
+        if not ignoredShadNodeL: ignoredShadNodeL=[]
+
+        ignoredShadNodeL = ignoredShadEngL+ignoredShadNodeL
+        for each in ignoredShadEngL:
+            ignoredShadNodeL.extend(mc.hyperShade (listUpstreamNodes= each))
+        #ignoredShadNodeL  = list(set(ignoredShadNodeL)|set(mc.ls("*",type= ignoredNodeTypeL)))#union
+
+        allShadEngL = mc.ls("*",type="shadingEngine")
+        if not allShadEngL: allShadEngL=[]
+        allShadNodeL = list(allShadEngL)
+        for each in allShadEngL:
+            allShadNodeL.extend(mc.hyperShade (listUpstreamNodes= each))
+
+
+        usedShadEnL = mc.listConnections(mc.ls("*",type="mesh"), destination = True, source = False, type = "shadingEngine")
+        if not usedShadEnL: usedShadEnL=[]
+        usedShadNodeL = list(usedShadEnL)
+        for each in usedShadEnL:
+            usedShadNodeL.extend(mc.hyperShade (listUpstreamNodes= each))
+
+
+        unusedShadNodeL = list(set(allShadNodeL)-set(usedShadNodeL)-set(ignoredShadNodeL))
+
+
+        if unusedShadNodeL:
+            mc.lockNode(unusedShadNodeL,lock=False)
+            deletedNodeList = []
+            undeletableNodeList = []
+
+            for each in unusedShadNodeL:
+                try:
+                    mc.delete(each)
+                    deletedNodeList.append(each)
+                except:
+                    undeletableNodeList.append(each)
+
+            if deletedNodeList : print "#### {:>7}: {:>4} unused shading nodes deleted: {}".format("Info",  len(deletedNodeList), deletedNodeList)
+            if undeletableNodeList: print "#### {:>7}: {:>4} unused shading nodes could not be deleted: {}".format("Info",  len(undeletableNodeList), undeletableNodeList)
+        mc.refresh()
 
 
 
@@ -801,7 +861,7 @@ def softClean(struct2CleanList=["asset"], verbose = True):
     """
     outSucceedB = True
     outLogL = []
-
+    mc.refresh()
     undeletable = ['sideShape','frontShape','front','sideShape','side','perspShape','perspShape','persp','topShape','top','topShape','frontShape','characterPartition',
                 'defaultObjectSet','initialShadingGroup','defaultLightSet','renderPartition','initialParticleSE','strokeGlobals','defaultRenderQuality','defaultRenderingList1',
                 'defaultTextureList1','renderLayerManager','particleCloud1','hyperGraphInfo','shaderGlow1','hardwareRenderingGlobals','globalCacheControl','postProcessList1',
