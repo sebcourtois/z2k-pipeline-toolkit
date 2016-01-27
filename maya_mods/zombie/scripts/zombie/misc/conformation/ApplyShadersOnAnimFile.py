@@ -25,10 +25,12 @@ if r2a.sourceTargetListMatch and r2a.sourceTargetTopoMatch:
 	r2a.transferUV()
 	r2a.disconnectAllShadEng(r2a.targetList)
 	r2a.transferSG()
+	r2a.deleteUnusedShadingNodes()
 	r2a.removeNameSpaceFromShadNodes(r2a.targetList)
 	r2a.cleanFile()
-	#pm.mel.MLdeleteUnused()
+	mc.refresh()
 	assetconformation.fixMaterialInfo()
+	r2a.deleteUnusedShadingNodes()
 
 else:
 	r2a.cleanFile()

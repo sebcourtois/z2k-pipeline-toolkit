@@ -20,11 +20,25 @@ def getAllTransfomMeshes(inParent = "*"):
     else:
         oParent = "*"
         
-    geoShapeList = mc.ls(mc.listRelatives(oParent, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
-    allTransMesh = mc.listRelatives (geoShapeList, parent = True, fullPath = True, type = "transform")
-    if allTransMesh is None: allTransMesh = []
+    allGeoShapeList = mc.ls(mc.listRelatives(oParent, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
 
-    return allTransMesh
+    geoShapeList =[]
+    instancedGeoShapeList =[]
+
+    for each in allGeoShapeList:
+        if len(mc.listRelatives(each,allParents =True))>1:
+            instancedGeoShapeList.append(each)
+        else:
+            geoShapeList.append(each)
+
+    transMeshL = mc.listRelatives (geoShapeList, parent = True, fullPath = True, type = "transform")
+    InstanciedtransMeshL = mc.listRelatives (instancedGeoShapeList, allParents = True, fullPath = True, type = "transform")
+
+
+    if transMeshL is None: transMeshL = []
+    if InstanciedtransMeshL is None: InstanciedtransMeshL = []
+
+    return transMeshL, InstanciedtransMeshL
 
 
 def pathJoin(*args):
@@ -143,6 +157,7 @@ def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, empt
             Return : nothing
             Dependencies : cmds - 
         """
+        mc.refresh()
         tab= "    "
         #print "removeAllNamespace()"
         toReturnB = True
@@ -179,7 +194,7 @@ def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, empt
                 count += 1
                 if count > limit:
                     break
-
+        mc.refresh()
         return [toReturnB, delNameSpaceL]
 
 
@@ -287,27 +302,7 @@ def getShapeOrig(TransformS = ""):
     return shapeOrigList
 
 
-def fixMaterialInfo (shadingEngineL = []):
-    returnB = True
-    logL = []
-    fixedEhadingEngineL=[]
 
-    if not shadingEngineL:
-        shadingEngineL = mc.ls(type='shadingEngine')
-        if "initialParticleSE" in shadingEngineL: shadingEngineL.remove("initialParticleSE")
-        if "initialShadingGroup" in shadingEngineL: shadingEngineL.remove("initialShadingGroup")
-
-    for each in shadingEngineL:
-        if not mc.ls(mc.listConnections(each+".message",destination = True), type = "materialInfo"):
-            matInfoNodeS = mc.shadingNode("materialInfo", asShader=True, name="sho_"+each.replace("sgr_","")+"_each")
-            mc.connectAttr(each+".message",matInfoNodeS+".shadingGroup",force=True)
-            fixedEhadingEngineL.append(each)
-
-    logMessage ="#### {:>7}: 'fixMaterialInfo' regenerated materialInfo for {} SE nodes: {}".format("Info",len(fixedEhadingEngineL),fixedEhadingEngineL)
-    print logMessage
-    logL.append(logMessage)
-
-    return [returnB, logL]
 
 
 

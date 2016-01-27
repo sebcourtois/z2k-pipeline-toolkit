@@ -6,7 +6,10 @@ import maya.cmds as cmds
 
 import re
 import string
+import math
+
 from dminutes import miscUtils
+reload (miscUtils)
 import dminutes.jipeLib_Z2K as jpm
 reload(jpm)
 
@@ -402,7 +405,11 @@ def checkMeshNamingConvention(printInfo = True, inParent = "*"):
         - return (list) : wrongMeshNamingConvention, all the meshes with a bad naming convetion
     """
     wrongMeshNamingConvention = []
-    geoTransformList = miscUtils.getAllTransfomMeshes(inParent)
+    geoTransformList, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+    if instanceTransformL:
+        print "#### {:>7}: 'checkMeshNamingConvention': {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+        geoTransformList = geoTransformList+ instanceTransformL
+
     if geoTransformList is None: geoTransformList = []
     
     for each in geoTransformList:
@@ -432,7 +439,11 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
     """
 
     if not myTransMesh:
-        myTransMesh = miscUtils.getAllTransfomMeshes(inParent)
+        myTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+
+        if instanceTransformL:
+            print "#### {:>7}: 'meshShapeNameConform': {} objects ignored since they are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+
         if myTransMesh is None: myTransMesh = []
         checkAllScene = True
     else:
@@ -477,7 +488,7 @@ def getMeshesWithSameName(inVerbose = True, inParent = "*"):
         - return (list) : multipleMesh
     """
 
-    allTransMesh = miscUtils.getAllTransfomMeshes(inParent)
+    allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
     multipleMesh = []
 
     for eachTrasnMesh in allTransMesh:
@@ -505,7 +516,8 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
     myMesh  (string) : the long name of a mesh (a transform parent of a mesh shape) that has to be renamed to have a unique short name in the scene
 
     """
-    allTransMesh = miscUtils.getAllTransfomMeshes(inParent)
+    allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+
     shortName = myMesh.split("|")[-1]
     digit = re.findall('([0-9]+$)', myMesh)
     if digit:
@@ -516,9 +528,12 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
         while str(allTransMesh).count(newShortName+newDigit) > 0:
             newDigit = string.zfill(str(int(digit)+i), len(digit))
             i = i+1
+            if i>20:
+                print "#### {:>7}:'renameMeshAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
+                break
         cmds.rename(myMesh,newShortName+newDigit)
         print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+string.rstrip(myMesh,digit)+newDigit
-        meshShapeNameConform(fixShapeName = True, myTransMesh = [string.rstrip(myMesh,digit)+newDigit], forceInfoOff = True )
+        if myMesh in allTransMesh: meshShapeNameConform(fixShapeName = True, myTransMesh = [string.rstrip(myMesh,digit)+newDigit], forceInfoOff = True )
         
     else:
         digit = "1"
@@ -526,21 +541,35 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
         while str(allTransMesh).count(shortName+digit) > 0:
             digit = str(int(digit)+1)
             i = i+1
+            if i>20:
+                print "#### {:>7}:'renameMeshAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
+                break
         myMeshNew = [cmds.rename(myMesh,shortName+digit)]
         print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+myMesh+digit
-        meshShapeNameConform(fixShapeName = True, myTransMesh = myMeshNew, forceInfoOff = True)
+        if myMesh in allTransMesh: meshShapeNameConform(fixShapeName = True, myTransMesh = myMeshNew, forceInfoOff = True)
 
                         
 def makeAllMeshesUnique(inParent = "*"):
     """
     makes all the meshes short names unique by adding a digit and/or incrementing it till the short name is unique in the scene
     then makes sure the shapes names are corrects
-    """           
+    """
+
+    allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+    if instanceTransformL:
+        print "#### {:>7}:'makeAllMeshesUnique' {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+
+
     multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
     if multipleMesh :
+        i=0
         while multipleMesh:
             renameMeshAsUnique(multipleMesh[0], inParent)
             multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
+            i = i+1
+            if i>20:
+                print "#### {:>7}:'makeAllMeshesUnique' while loop has reached the security limit, program has been stopped".format("Error")
+                break
     else:
         if inParent == "*":
             print "#### {:>7}:'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name".format("Info")
@@ -552,7 +581,11 @@ def geoGroupDeleteHistory():
     """
     gets all the mesh transformms under the '|asset|grp_geo', delete their history and delete any intermediate unconnected shape 
     """
-    geoTransformList = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
+    geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
+    if instanceTransformL:
+        print "#### {:>7}: 'geoGroupDeleteHistory': {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+        geoTransformList = geoTransformList+ instanceTransformL
+
     cmds.delete(geoTransformList,ch =True)
     print "#### {:>7}:'geoGroupDeleteHistory': deteted history on {} geometries".format("Info",len(geoTransformList))
     
@@ -577,7 +610,10 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
     print "#### {:>7}: modeling.freezeResetTransforms(inParent = {}, inVerbose = {}, inConform = {})".format("Info",inParent, inVerbose, inConform)
     unFreezedTransfomList = []
     freezedTransfomList = []
-    geoTransformList = miscUtils.getAllTransfomMeshes(inParent)
+    geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+    if instanceTransformL:
+        print "#### {:>7}: 'freezeResetTransforms': {} objects ignored since they are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+
     for each in geoTransformList:
         if (cmds.xform( each, os=True, q=True,  ro=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  t=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  s=True, r = True )!=[1,1,1] or 
             cmds.xform( each, os=True, q=True, rp=True)!=[0,0,0] or cmds.xform( each, os=True, q=True, sp=True)!=[0,0,0]):
@@ -609,10 +645,52 @@ def compareHDToPreviz():
     run the script and read the log
     """
 
-    # compare asset_hi to asset_previz ( compare translate-rotate of group are the same and local pivot rotate-scale of hi must be 0).
-    #import maya.cmds as cmds
-
     DECIMAL_NB = 3
+    BOX_SCALE = 0.1 # 10%
+    listWarning=[]
+
+    def bboxPrintWarning(listWarning):
+        print("\n*** Bbox warning if more than " + str(1./BOX_SCALE) + " % different between Hi and Previz ***")
+        for warning in listWarning:
+            print("\tWARNING: "+warning)
+
+    def compareMinMaxHiToPreviz(hiMin, hiMax, previzMin, previzMax, boxScale):
+        ##print("hiMin = " + str(hiMin) + " hiMax = " + str(hiMax) + " previzMin = " + str(previzMin) + " previzMax = " + str(previzMax) + " boxScale = " + str(boxScale))
+        errMin = False
+        errMax = False
+        center = (previzMin + previzMax) / 2.
+        delta = math.fabs(previzMax-previzMin)
+        deltaHalf = delta / 2.
+        if math.fabs(hiMin-previzMin) > delta*boxScale:
+            errMin = True
+        if math.fabs(hiMax-previzMax) > delta*boxScale:
+            errMax = True
+        return errMin, errMax
+
+    def compareBboxHiToPreviz(groupHi, groupPreviz, boxScale, listWarning): # ex. boxScale = 0.1 (10%)
+        hiBbox = cmds.exactWorldBoundingBox(groupHi)
+        ##print("\tbbox hi = %f" % hiBbox[0], "%f" % hiBbox[1], "%f" % hiBbox[2], "%f" % hiBbox[3], "%f" % hiBbox[4], "%f" % hiBbox[5])
+        previzBbox = cmds.exactWorldBoundingBox(groupPreviz)
+        ##print("\tbbox previz = %f" % previzBbox[0], "%f" % previzBbox[1], "%f" % previzBbox[2], "%f" % previzBbox[3], "%f" % previzBbox[4], "%f" % previzBbox[5])
+
+        errMin, errMax = compareMinMaxHiToPreviz(hiBbox[0], hiBbox[3], previzBbox[0], previzBbox[3], boxScale)
+        if errMin:
+            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[0],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[0],2)))
+        if errMax:
+            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[3],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[3],2)))
+
+        errMin, errMax = compareMinMaxHiToPreviz(hiBbox[1], hiBbox[4], previzBbox[1], previzBbox[4], boxScale)
+        if errMin:
+            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[1],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[1],2)))
+        if errMax:
+            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[4],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[4],2)))
+            
+        errMin, errMax = compareMinMaxHiToPreviz(hiBbox[2], hiBbox[5], previzBbox[2], previzBbox[5], boxScale)
+        if errMin:
+            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[2],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[2],2)))
+        if errMax:
+            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[5],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[5],2)))
+            
 
     #print(cmds.nodeType("grp_bureauArriere_grp_livre_to_ctrl_livre_prCns"))
 
@@ -621,9 +699,9 @@ def compareHDToPreviz():
             return False
         children = cmds.listRelatives(c=True, f=True)
         for child in children:
-            if cmds.nodeType(child) != 'transform':
-                return False
-        return True
+            if cmds.nodeType(child) == 'transform':
+                return True
+        return False
 
     def floatLimitDecimal(value, decimalNb):
         return float(format(value, "."+str(decimalNb)+"f"))
@@ -635,125 +713,215 @@ def compareHDToPreviz():
 
     namespacePreviz = ""
     errorCount = 0;
-    sel = cmds.ls(sl=True, type='transform') # get the transform(s) selected
-    #print sel
+    sel = cmds.ls(sl=True, type='transform') # get the transform(s) selecte
+    print sel
     if len(sel) == 2: # test if current selection has 2 nodes
-         assetPreviz = sel[1]
-         assetHi = sel[0]
-         if "previz" in sel[0]:
-             assetPreviz = sel[0]
-             assetHi = sel[1]
+        assetPreviz = sel[1]
+        assetHi = sel[0]
+        if "previz" in sel[0]:
+            assetPreviz = sel[0]
+            assetHi = sel[1]
              
-         if "previz:" in assetPreviz:
-             namespacePreviz = assetPreviz.split(":")[0] # get namespace
+        if "previz:" in assetPreviz:
+            namespacePreviz = assetPreviz.split(":")[0] + ":" # get namespace
 
-         print("\n***** comparing translations and rotations value from " + assetHi + " to reference " + assetPreviz)
-         groupsPreviz = cmds.listRelatives(assetPreviz, ad=True, f=True,type='transform') # get all transforms with ful path
-         #print ("* " + str(groupsPreviz))
-         for groupPreviz in groupsPreviz:
-             #print (groupPreviz + " " + groupPreviz.split("|")[-1])
+        print("\n***** comparing translations and rotations value from " + assetHi + " to reference " + assetPreviz)
+        groupsPreviz = cmds.listRelatives(assetPreviz, ad=True, f=True,type='transform') # get all transforms with ful path
+        #print ("* " + str(groupsPreviz))
+        for groupPreviz in groupsPreviz:
+            #print (groupPreviz + " " + groupPreviz.split("|")[-1])
              
-             if is_group(groupPreviz) and "grp_" in groupPreviz.split("|")[-1] and not "grp_geo_" in groupPreviz.split("|")[-1]: # if the transform is a group
-                 # get positions, rotations of locator
-                 rotPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,ws=1,ro=1), DECIMAL_NB) #get rotations
-                 posPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,ws=1,t=1), DECIMAL_NB) # gettranslations
-                 #print rotPreviz
-                 #print posPreviz
-                 groupHi=""
-                 if namespacePreviz != "": # if namespace, remove it to build groupHi
-                     groupHi = groupPreviz.replace(assetPreviz, assetHi).replace(namespacePreviz, "") #build groupPreviz name 
-                 else:
-                     groupHi = groupPreviz.replace(assetPreviz, assetHi) #build groupPreviz name
-                 #print("groupHi = " + groupHi)
-                 if cmds.objExists(groupHi): # test if group exists ?
-                     rotHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,ws=1,ro=1), DECIMAL_NB) # get rotations
-                     posHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,ws=1,t=1), DECIMAL_NB) # get translations
-                     error = False
-                     if cmp(rotHi, rotPreviz):
-                         print("\tERROR in group: " + groupHi + " has different rotate values: " + str(rotHi) + " instead of previz : " +str(rotPreviz))
-                         error = True
-                         errorCount += 1
-                     if cmp(posHi, posPreviz):
-                         print("\tERROR in group: " + groupHi + " has different translation values: " + str(posHi) + " instead of previz : "+ str(posPreviz))
-                         error = True
-                         errorCount += 1
-                     # test local pivot rotate and scale
-                     localPivotRotateHi =cmds.xform(groupHi,q=True,os=1,rp=1) # get local rotate pivot
-                     localPivotScaleHi =cmds.xform(groupHi,q=True,os=1,sp=1) # get local scale pivot
-                     if cmp(localPivotRotateHi, [0,0,0]):
-                         print("\tERROR in group: " + groupHi + " has local pivot rotate values: " + str(localPivotRotateHi))
-                         error = True
-                         errorCount += 1
-                     if cmp(localPivotScaleHi, [0,0,0]):
-                         print("\tERROR in group: " + groupHi + " has local pivot scale values: " + str(localPivotScaleHi))
-                         error = True
-                         errorCount += 1
+            if is_group(groupPreviz) and "grp_" in groupPreviz.split("|")[-1] and not "grp_geo_" in groupPreviz.split("|")[-1]: # if the transform is a group
+                ##print("\tgroupPreviz = " + str(groupPreviz))
+                # get positions, rotations of locator
+                rotPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,ws=1,ro=1), DECIMAL_NB) #get rotations
+                posPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,ws=1,t=1), DECIMAL_NB) # gettranslations
+                #print rotPreviz
+                #print posPreviz
+                groupHi=""
+                if namespacePreviz != "": # if namespace, remove it to build groupHi
+                    groupHi = groupPreviz.replace(assetPreviz, assetHi).replace(namespacePreviz, "") #build groupPreviz name 
+                else:
+                    groupHi = groupPreviz.replace(assetPreviz, assetHi) #build groupPreviz name
+                #print("\tgroupHi = " + groupHi)
+                if cmds.objExists(groupHi): # test if group exists ?
+                    rotHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,ws=1,ro=1), DECIMAL_NB) # get rotations
+                    posHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,ws=1,t=1), DECIMAL_NB) # get translations
+                    error = False
+                    if cmp(rotHi, rotPreviz):
+                        print("\tERROR in group: " + groupHi + " has different rotate values: " + str(rotHi) + " instead of previz : " +str(rotPreviz))
+                        error = True
+                        errorCount += 1
+                    if cmp(posHi, posPreviz):
+                        print("\tERROR in group: " + groupHi + " has different translation values: " + str(posHi) + " instead of previz : "+ str(posPreviz))
+                        error = True
+                        errorCount += 1
+                    # test local pivot rotate and scale
+                    localPivotRotateHi =cmds.xform(groupHi,q=True,os=1,rp=1) # get local rotate pivot
+                    localPivotScaleHi =cmds.xform(groupHi,q=True,os=1,sp=1) # get local scale pivot
+                    if cmp(localPivotRotateHi, [0,0,0]):
+                        print("\tERROR in group: " + groupHi + " has local pivot rotate values: " + str(localPivotRotateHi))
+                        error = True
+                        errorCount += 1
+                    if cmp(localPivotScaleHi, [0,0,0]):
+                        print("\tERROR in group: " + groupHi + " has local pivot scale values: " + str(localPivotScaleHi))
+                        error = True
+                        errorCount += 1
 
-                 else:
-                     print("\tERROR: group: " + groupHi + " is missing")
+                    compareBboxHiToPreviz(groupHi, groupPreviz, BOX_SCALE, listWarning)
+                     
+                else:
+                    print("\tERROR: group: " + groupHi + " is missing")
 
+        bboxPrintWarning(listWarning) # print list warning for bbox.
 
-         if (errorCount != 0):
-             if (errorCount == 1):
-                 print("**** " + str(errorCount) + " error found ")
-             else:
-                 print("**** " + str(errorCount) + " errors found ")
-         else:
-             print("**** checking done, no error")
+        if (errorCount != 0):
+            if (errorCount == 1):
+                print("**** " + str(errorCount) + " error found ")
+            else:
+                print("**** " + str(errorCount) + " errors found ")
+                  
+        warningCount = len(listWarning)
+        if (warningCount != 0):
+            if (warningCount == 1):
+                print("**** " + str(warningCount) + " warning found ")
+            else:
+                print("**** " + str(warningCount) + " warnings found ")
 
+        print("**** checking done")
     else:
-         print ("\n***** please select both asset hi-def and asset previz and try again")
+        print ("\n***** please select both asset hi-def and asset previz and try again")
 
 
 
-def combineGeoGroup(toCombineObjL = [], combineByMaterial = False, GUI = True, autoRename = False):
+
+def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, autoRenameI = 0, verbose = True):
     """
     this script merge selected objects only if they are under the same group.
     It ensure that the resulting object is under the intial group.
+        toCombineObjL: a list of shapes ot transform objects to combine, groups are not accepeted. if nothing in input try with the selection
+        combineByMaterialB: if True il merge only objects that share the same material
+        GUI: if True wil log messages and select merged object when combined 
+        autoRenameI:    0: do not rename the combined objects, name is the first selected object or first of the list
+                        1: rename combined object as the group he's under, '_mergedxx' extention is added at the extend
+
     """
     resultB = True
     logL = []
+    resultObjL = []
     combinedObjL = []
+    shaderAssignationD = {'multiMaterial':[]}
+
 
     if not toCombineObjL:
         toCombineObjL = cmds.ls(selection = True,l = True)
-    if len(toCombineObjL)<2:
-        return [resultB, logL, combinedObjL] 
 
-    path = toCombineObjL[-1].split(toCombineObjL[-1].split("|")[-1])[0].rstrip("|")
-    finalObjectName = toCombineObjL[-1].split("|")[-1]
+    toCombineShapesL = cmds.ls(toCombineObjL,l = True, shapes = True)+ cmds.ls(cmds.listRelatives(toCombineObjL, children = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
 
-    # checj that all the meshes belong to the same group
-    for each in toCombineObjL:
-        if path != each.split(each.split("|")[-1])[0].rstrip("|"):
+    if len(toCombineShapesL)<2:
+        return [resultB, logL, toCombineObjL, resultObjL] 
+
+    #path = toCombineShapesL[-1].split(toCombineShapesL[-1].split("|")[-2])[0].rstrip("|")
+    path = cmds.listRelatives(cmds.listRelatives(toCombineShapesL[-1], parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
+    finalObjectName = toCombineShapesL[-1].split("|")[-1]
+
+    # check that all the meshes belong to the same group
+    for each in toCombineShapesL:
+        eachPath = cmds.listRelatives(cmds.listRelatives(each, parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
+        if path != eachPath:
             logMessage = "#### {:>7}: 'combineGeo' Cannot merge 2 elements of a different group: {} is not under '{}'".format("Error", each, path)
             if GUI == True : raise ValueError (logMessage)
             resultB = False
             logL.append(logMessage)
 
-    if combineByMaterial:
-        for each in combinedObjL:
-            print"tt"
+    # create a dictionnary to gather all the shapes that share the same material. 
+    # every key correspond to a shading engine and reference the objects this SE is connected to:
+    if combineByMaterialB:
+        shadingEngineL = []
+        for each in toCombineShapesL:
+            shadEngEachL = cmds.listConnections(each, destination = True, source = False, type = "shadingEngine")
+            if not shadEngEachL or len(shadEngEachL)>1:
+                continue
+            else:
+                if shadEngEachL[0] not in shadingEngineL:
+                    shadingEngineL.append(shadEngEachL[0])
 
+        for eachSE in shadingEngineL:
+            shapeShareMatL = cmds.ls(cmds.listConnections(eachSE, source = True, destination = False, shapes = True ),l=True)
+            shapeToCombineL = list(set(shapeShareMatL).intersection(set(toCombineShapesL)))
+            for eachShareMat in shapeToCombineL:
+                if len(cmds.listConnections(eachShareMat, destination = True, source = False, type = "shadingEngine"))>1:
+                    shaderAssignationD['multiMaterial'].append(eachShareMat)
+                else:
+                    if not eachSE in shaderAssignationD:
+                        shaderAssignationD[eachSE]=[eachShareMat]
+                    else:
+                        shaderAssignationD[eachSE].append(eachShareMat)
+    else:
+        if not 'miscSE' in shaderAssignationD:
+            shaderAssignationD['miscSE']=toCombineShapesL
+        else:
+            shaderAssignationD['miscSE'].append(toCombineShapesL)
 
+    #combine objects depending on the key they are referenced under
+    for each in shaderAssignationD:
+        if each == 'multiMaterial' :
+            if shaderAssignationD['multiMaterial']:
+                logMessage = "#### {:>7}: 'combineGeoGroup' {} objects have several materials assigned hence cannot be combined".format("Warning",len(shaderAssignationD['multiMaterial']))
+                logL.append(logMessage)
+                if GUI == True: print logMessage
+        else:
+            if len(shaderAssignationD[each])>1:
+                combinedObjL.extend(shaderAssignationD[each]) 
+                mergedObjectName = cmds.polyUnite(shaderAssignationD[each], ch=False, mergeUVSets = True, name = finalObjectName )[0]
+                groupName = path.split("|")[-1]
+                parentName = path.split(groupName)[0].rstrip("|")
+                #parent back the merged object under the initial group 
+                if not cmds.ls(path):
+                    newGroupName = cmds.group(mergedObjectName, name= groupName, parent = parentName)
+                    mergedObjectName = newGroupName+"|"+mergedObjectShortName
+                else:
+                    mergedObjectName = cmds.parent(mergedObjectName, path )[0]
+                if autoRenameI ==0 : mergedObjectName = cmds.rename(mergedObjectName,mergedObjectName.rstrip("Shape"))
+                elif autoRenameI == 1 : mergedObjectName = cmds.rename(mergedObjectName,groupName.replace("grp_","geo_")+"_merged00" )
+                resultObjL.append(mergedObjectName)
 
-    # mergedObjectName = cmds.polyUnite(toCombineObjL, ch=False, mergeUVSets = True, name = finalObjectName )[0]
-
-    # groupName = path.split("|")[-1]
-    # parentName = path.split(groupName)[0].rstrip("|")
-
-    # if not cmds.ls(path):
-    #     mergedObjectShortName = mergedObjectName.split("|")[-1]
-    #     newGroupName = cmds.group(mergedObjectName, name= groupName, parent = parentName)
-    #     mergedObjectName = newGroupName+"|"+mergedObjectShortName
-    # else:
-    #     mergedObjectName = cmds.parent(mergedObjectName, path )
-
-    # if autoRename : mergedObjectName = cmds.rename(mergedObjectName,groupName.replace("grp_","geo_")+"_merged00" )
+    logMessage = "#### {:>7}: 'combineGeoGroup' {} objects combined in : {} objects".format("Info",len(combinedObjL),len(resultObjL))
+    logL.append(logMessage)
         
-    # cmds.select(mergedObjectName)
+    if GUI == True: 
+        cmds.select(resultObjL)
+        if verbose == True: print logMessage
 
-    return [resultB, logL, toCombineObjL, combinedObjL] 
+    return [resultB, logL, toCombineObjL, resultObjL] 
+
+
+
+def combineAllGroups(inParent = "asset|grp_geo", GUI = True, autoRenameI= 1, combineByMaterialB = True):
+    resultB = True
+    logL = []
+
+    meshNbBeforeConbineI = len(cmds.listRelatives(inParent, allDescendents = True, type = "mesh"))
+    transformL = cmds.ls(cmds.listRelatives("asset|grp_geo", allDescendents = True, fullPath = True, type = "transform"), l=True, exactType="transform")
+    for each in transformL:
+        if re.match('^grp_', each.split("|")[-1]):
+            #meshL = cmds.listRelatives(each, children = True, fullPath = True, type = "mesh")
+            meshL = cmds.listRelatives(cmds.listRelatives(each, children = True, fullPath = True), children = True, fullPath = True, type = "mesh")
+            if meshL and len(meshL)>1 :
+                resultL = combineGeoGroup(toCombineObjL = meshL, GUI = GUI,verbose = False, autoRenameI= autoRenameI, combineByMaterialB = combineByMaterialB)
+                if GUI == True:
+                    logMessage = "#### {:>7}: 'combineAllGroups' '{:>4}' meshes combined in '{:>4}' meshe(s) under group: {}:".format("Info", len(resultL[2]),len(resultL[3]),each)
+                    #print logMessage
+                    logL.append(logMessage)
+
+    meshNbAfterConbineI = len(cmds.listRelatives(inParent, allDescendents = True, type = "mesh"))
+
+    logMessage = "#### {:>7}: 'combineAllGroups' final result: '{:>4}' meshes combined in : '{:>4}' meshes".format("Info",meshNbBeforeConbineI,meshNbAfterConbineI)
+    print logMessage
+    logL.append(logMessage)
+
+    return [resultB, logL] 
+
 
 
 # -------------------------- RIG SUPPLEMENT -------------------------------------------------------------------
