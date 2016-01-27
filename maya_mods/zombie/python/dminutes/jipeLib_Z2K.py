@@ -1521,3 +1521,13 @@ def set_grp_geo_SmoothLevel(*args, **kwargs):
             pass
     return [True,debugL]
 
+
+def chr_delete_BS_active_group (*args, **kwargs):
+    # delete le group " BS_ACTIVES_grp"
+    debugL =[]
+    try:
+        cmds.delete (" BS_ACTIVES_grp")
+    except Exception,err:
+        print err
+        debugL.append("    nothing to delete")
+    return True,debugL

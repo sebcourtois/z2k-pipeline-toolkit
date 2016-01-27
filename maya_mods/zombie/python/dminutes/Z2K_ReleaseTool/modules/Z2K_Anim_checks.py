@@ -542,7 +542,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=4, e=True)
+        self.pBar_upd(step=1, maxValue=5, e=True)
 
 
         # 1 connectVisibility ()
@@ -592,12 +592,24 @@ class checkModule(object):
         if not result :
             boolResult = False
         self.pBar_upd(step= 1,) 
+
+
+        # 5 ----- chr_delete_BS_active_group ()
+        result,debugL = jpZ.chr_delete_BS_active_group()
+        # prints -------------------
+        self.printF("chr_delete_BS_active_group()", st="t")
+        self.printF(result, st="r")
+        self.printF(debugL)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,) 
         
 
         # colors
         print "*btn_specialSettings:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
-
 
 
 
