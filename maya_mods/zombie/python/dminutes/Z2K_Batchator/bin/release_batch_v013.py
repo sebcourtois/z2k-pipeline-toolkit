@@ -191,7 +191,7 @@ print "curproj=", curproj
 class Z2K_ReleaseBatch(object):
 
     def __init__(self,
-        sceneL =[] , openInMaya=True, readOnly=True, publishMayaFile=False, releaseMayaFile =False,  backupfiles=True,unlockFile = True,
+        sceneL =[] , openInMaya=True, readOnly=True, publishMayaFile=False, releaseMayaFile =False,forceReleaseDude=False, backupfiles=True, unlockFile = True,
         preRelease_pyScriptL=[], prePublish_pyScriptL=[], backupSuffix= "_backup", deleteBackuped=True,
         sourceAssetType="previz_scene", assetCat = "chr",
         destinationAssetType= "previz_ref",
@@ -213,6 +213,7 @@ class Z2K_ReleaseBatch(object):
         self.readOnly= readOnly
         self.publishMayaFile= publishMayaFile
         self.releaseMayaFile= releaseMayaFile
+        self.forceReleaseDude = forceReleaseDude
         self.backupfiles= backupfiles
         self.unlockFile= unlockFile
         self.preRelease_pyScriptL= preRelease_pyScriptL
@@ -276,6 +277,7 @@ class Z2K_ReleaseBatch(object):
         theDict={"theProject":self.theProject,
                 "publishMayaFile":self.publishMayaFile,
                 "releaseMayaFile":self.releaseMayaFile,
+                "forceRelease": self.forceReleaseDude,
                 "unlockFile":self.unlockFile,
                 "theComment":self.theComment,
                 "debugFile":self.debugFile,
@@ -450,9 +452,10 @@ class Z2K_ReleaseBatch(object):
                         self.publishedL.append(scene)
                         self.outputD[scene]["published"]= True 
                         self.outputD[scene]["published_file"]= outfile 
-                        
+                        print "********************* PUBLISHED *********************"
                 
                 except Exception,err:
+                    print "ERRRRROR OCCURED IN PUBLISH"
                     self.printF(texta="ERROR_publish: \r\t{0}".format(err), openMode="a", printN=True)
                     self.outputD[scene]["ERROR_publish"]=  "\r\t{0}".format(err)
 
@@ -492,7 +495,9 @@ class Z2K_ReleaseBatch(object):
 
                     self.preRelease_result= False  
                     self.failL.append(scene) 
+
             except Exception,err:
+                print "ERRRRROR OCCURED IN PRE-RELEASE"
                 self.preRelease_result =False
                 self.scrTextOUTL.append( "ERROR:"+str(err) )
                 self.failL.append(scene) 
@@ -509,8 +514,16 @@ class Z2K_ReleaseBatch(object):
             # Release file ---------------------------------------------------------
             # if (pubres == 1 and relres==1) or (pub ==0 and relres==1):
             # if self.prePublish_result and self.preRelease_result:
-            if (self.prePublish_result in [True,1] and self.preRelease_result in [True,1]) or (self.publishMayaFile in [False,0] and self.preRelease_result in [True,1]):
-                self.finalOKL.append(scene)
+            ReleaseAssetB = False
+            if self.forceReleaseDude in [True,1]:
+                ReleaseAssetB =True
+                print "********************* YOU ARE FORCING DA RELEASE DUDE *********************\n\n"
+            else:
+                if (self.prePublish_result in [True,1] and self.preRelease_result in [True,1]) or (self.publishMayaFile in [False,0] and self.preRelease_result in [True,1]):
+                    self.finalOKL.append(scene)
+                    ReleaseAssetB =True
+
+            if ReleaseAssetB:
                 try:
                     # releasing
                     if self.releaseMayaFile in [True,1]:
@@ -524,11 +537,11 @@ class Z2K_ReleaseBatch(object):
                         self.outputD[scene]["released"]= True
                         self.outputD[scene]["released_file"]= outfile  
                         self.outputD[scene]["sgTask"]= self.sgTask     
-                        print "RELEASED"
+                        print "********************* RELEASED *********************"
                         
                         
                 except Exception, err:
-                    print "ERRRRROR OCCURED"
+                    print "ERRRRROR OCCURED IN RELEASE"
                     # print "    *", self.sourceAsset, self.sourceAssetType
                     print "    *", scene, self.destinationAssetType, self.theComment
                     print "    ", Exception, err
@@ -616,12 +629,14 @@ Z2K_ReleaseBatchI = Z2K_ReleaseBatch(
     openInMaya= OPENINMAYA, readOnly= READONLY, 
     publishMayaFile= PUBLISHMAYAFILE, 
     releaseMayaFile = RELEASEMAYAFILE,  
+    forceReleaseDude = FORCERELEASE,
     unlockFile = UNLOCKFILE,
     backupfiles=0, backupSuffix= "_backup", deleteBackuped=0,
     prePublish_pyScriptL = PREPUBLISH_PYSCRIPTL,
     preRelease_pyScriptL= PRERELEASE_PYSCRIPTL,
     debugFile = DEBUGFILE,# CHANGE THIS PATH ALSO DANS   DEBUGFILE_PREVIZ_SET
     userConfirm = True,
+
     )
 
 

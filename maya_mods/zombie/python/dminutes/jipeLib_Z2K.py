@@ -302,6 +302,7 @@ def Ltest(objL,*args,**kwargs):
 
 
 def getChilds(cursel=[], mode="transform", *args):
+    print "getChilds()"
     # mode = type filter shape/set/dagObjects
     listOut = []
     # renvoie la list correspondante aux enfants, si il n'y en a pas renvoie l'obj lui meme
@@ -310,12 +311,15 @@ def getChilds(cursel=[], mode="transform", *args):
 
     try:
         Childs = cmds.listRelatives(cursel, c=True, ni=True, type=mode)
+        for i in Childs:
+            if not cmds.getAttr(i+".intermediateObject"):
+                listOut.append(i)
     except:
-        Childs = cursel
-    return Childs
+        listOut = cursel
+    return listOut
 
 def addAttr(inObj = "", theAttrName="",theValue=1,
-    theAttrType="long",keyable=True,theMin = 0, theMax=1, *args, **kwargs):
+    theAttrType="long",keyable=True,theMin = 0, theMax=1, dv=1, *args, **kwargs):
     """ Description: add the specied attribut to the speciefied obj
         Return : True
         Dependencies : cmds - 
@@ -325,7 +329,7 @@ def addAttr(inObj = "", theAttrName="",theValue=1,
     toReturnB = True
     if cmds.objExists(inObj):
         if not cmds.objExists(inObj + "." + theAttrName):
-            cmds.addAttr(inObj, longName=theAttrName, attributeType = theAttrType, keyable=keyable, min = theMin, max=theMax) 
+            cmds.addAttr(inObj, longName=theAttrName, attributeType = theAttrType, keyable=keyable,dv=1, min = theMin, max=theMax) 
             cmds.setAttr(inObj + "." + theAttrName,theValue)
         else:
             print "    attrib allready exists"
@@ -1129,7 +1133,7 @@ def disableShapeOverrides(inObjL=[],*args, **kwargs):
 def connectVisibility(connectOnShape=True, force=True,driverObj="Global_SRT", driverAttr= "showMesh", *args, **kwargs):
     """ Description: cree et connect un attrib "showMesh" au visibility des shape du "set_meshCache"
         Return : True
-        Dependencies : cmds - 
+        Dependencies : cmds - addAttr() - getSetContent() - getChilds()
     """
     print "connectVisibility()"
     toReturnB = True
@@ -1137,7 +1141,7 @@ def connectVisibility(connectOnShape=True, force=True,driverObj="Global_SRT", dr
     try :
         # driverObj= "Global_SRT"
         # driverAttr= "showMesh"
-        addAttr(inObj = driverObj, theAttrName=driverAttr,)
+        addAttr(inObj = driverObj, theAttrName=driverAttr,dv=1,)
         cmds.setAttr(driverObj+"."+driverAttr,1)
         targetObjL=getSetContent(inSetL=["set_meshCache"] )
 
@@ -1148,6 +1152,7 @@ def connectVisibility(connectOnShape=True, force=True,driverObj="Global_SRT", dr
                 # get shpae obj
                 if connectOnShape:
                     finalTargetObjL = getChilds(cursel=[obj], mode="shape",)
+                    print "finalTargetObjL=",finalTargetObjL
                 else:
                     finalTargetObjL = targetObjL
                 # finally connect
@@ -1158,7 +1163,7 @@ def connectVisibility(connectOnShape=True, force=True,driverObj="Global_SRT", dr
                         print "Attribute allready Connected"
     except Exception,err:
         toReturnB = False
-        print Exception,err
+        print obj, Exception, err
         debug = err
 
     return toReturnB,debug
@@ -1447,7 +1452,7 @@ def chr_fixTKFacialRig_EyeBrow_Middle (*args, **kwargs):
                     cstAttrTarget = i
             
             # addThe Attr
-            cmds.addAttr( theCTR, longName=attrN, attributeType= attrType, min=attrMinV,dv= attrDefaultV, max= attMaxV,
+            cmds.addAttr( theCTR, longName=attrN, attributeType= attrType, min=attrMinV, dv= attrDefaultV, max= attMaxV,
                                                     keyable=True,) 
                                                     
             # connect the Attr
@@ -1466,19 +1471,21 @@ def chr_fixTKFacialRig_EyeBrow_Middle (*args, **kwargs):
 
     return toReturnB,debugL
 
-def chr_facialUnlockSRT():
+def chr_UnlockForgottenSRT():
     """ Description: Unlock the forgotten srt lock on ToonKit rig, only if all Objects of the list exists in the scene
         Return : [BOOL,LIST]
         Dependencies : cmds - 
     """
     
-    scLockL = ['Right_LowerEye_2_Ctrl', 'Noze_Main_Ctrl', 'Right_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_EyeBrow_in_1', 'Right_Eye', 'Left_nostril', 'Right_Eyelid_In', 'Left_Brow_ridge_out', 'Left_EyeBrow_out', 'Right_EyeBrow_out_1', 'Left_EyeBrow_Global', 'Left_LowerEye_0_Ctrl', 'Left_Brow_ridge_out_1', 'Right_UpperEye_1_Ctrl', 'Right_LowerEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Left_Eye', 'Left_Cheek', 'Left_EyeBrow_in', 'Left_CheekBone', 'EyeBrow_Middle', 'Right_nostril', 'Right_Brow_ridge_out_1', 'Left_EyeBrow_out_1', 'Left_Brow_ridge_in', 'Right_LowerEye_3_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_out', 'Left_LowerEye_3_Ctrl', 'Right_Brow_ridge_in', 'Right_CheekBone', 'Right_Cheek', 'Left_UpperEye_1_Ctrl', 'Right_Brow_ridge_in_1', 'Right_Ear_Bone_Ctrl', 'Right_UpperEye_3_Ctrl', 'Left_Eyelid_Out', 'Right_EyeBrow_in', 'Left_UpperLid_Main_Ctrl', 'Left_UpperEye_0_Ctrl', 'Left_LowerEye_2_Ctrl', 'Right_EyeBrow_in_1', 'Left_Eye_Bulge', 'Left_Eyelid_In', 'Right_Brow_ridge_out', 'Right_UpperLid_Main_Ctrl', 'Left_UpperEye_3_Ctrl', 'Left_Brow_ridge_in_1', 'Left_Ear_Bone_Ctrl', 'Right_Eyelid_Out', 'Right_LowerLid_Main_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_Base_Depressor1', 'Right_Bottom_Teeth', 'Right_UpperLip_1_Ctrl', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Right_LowerLip_1_Ctrl', 'Top_Teeth', 'Tongue_1', 'Tongue_0', 'Tongue_3', 'Tongue_2', 'Base_UpperLip_Main_Ctrl', 'LowerLip_Center', 'Right_Base_Depressor', 'Right_LowerLip_2_Ctrl', 'Left_Base_Levator1', 'Left_Base_Depressor', 'Jaw_Bone_Ctrl', 'Left_UpperLip_2_Ctrl', 'Right_Base_Levator1', 'Right_Base_Levator', 'Right_UpperLip_2_Ctrl', 'Top_Teeth_Global', 'Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator', 'Left_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Tongue_2', 'Right_Tongue_3', 'Bottom_Teeth', 'Right_Tongue_1', 'Left_LowerLip_1_Ctrl', 'Right_Top_Teeth', 'Bottom_Teeth_Global', 'UpperLip_Center', 'Left_UpperLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 'chin']
+    faceL = ['Right_LowerEye_2_Ctrl', 'Noze_Main_Ctrl', 'Right_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_EyeBrow_in_1', 'Right_Eye', 'Left_nostril', 'Right_Eyelid_In', 'Left_Brow_ridge_out', 'Left_EyeBrow_out', 'Right_EyeBrow_out_1', 'Left_EyeBrow_Global', 'Left_LowerEye_0_Ctrl', 'Left_Brow_ridge_out_1', 'Right_UpperEye_1_Ctrl', 'Right_LowerEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Left_Eye', 'Left_Cheek', 'Left_EyeBrow_in', 'Left_CheekBone', 'EyeBrow_Middle', 'Right_nostril', 'Right_Brow_ridge_out_1', 'Left_EyeBrow_out_1', 'Left_Brow_ridge_in', 'Right_LowerEye_3_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_out', 'Left_LowerEye_3_Ctrl', 'Right_Brow_ridge_in', 'Right_CheekBone', 'Right_Cheek', 'Left_UpperEye_1_Ctrl', 'Right_Brow_ridge_in_1', 'Right_Ear_Bone_Ctrl', 'Right_UpperEye_3_Ctrl', 'Left_Eyelid_Out', 'Right_EyeBrow_in', 'Left_UpperLid_Main_Ctrl', 'Left_UpperEye_0_Ctrl', 'Left_LowerEye_2_Ctrl', 'Right_EyeBrow_in_1', 'Left_Eye_Bulge', 'Left_Eyelid_In', 'Right_Brow_ridge_out', 'Right_UpperLid_Main_Ctrl', 'Left_UpperEye_3_Ctrl', 'Left_Brow_ridge_in_1', 'Left_Ear_Bone_Ctrl', 'Right_Eyelid_Out', 'Right_LowerLid_Main_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_Base_Depressor1', 'Right_Bottom_Teeth', 'Right_UpperLip_1_Ctrl', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Right_LowerLip_1_Ctrl', 'Top_Teeth', 'Tongue_1', 'Tongue_0', 'Tongue_3', 'Tongue_2', 'Base_UpperLip_Main_Ctrl', 'LowerLip_Center', 'Right_Base_Depressor', 'Right_LowerLip_2_Ctrl', 'Left_Base_Levator1', 'Left_Base_Depressor', 'Jaw_Bone_Ctrl', 'Left_UpperLip_2_Ctrl', 'Right_Base_Levator1', 'Right_Base_Levator', 'Right_UpperLip_2_Ctrl', 'Top_Teeth_Global', 'Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator', 'Left_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Tongue_2', 'Right_Tongue_3', 'Bottom_Teeth', 'Right_Tongue_1', 'Left_LowerLip_1_Ctrl', 'Right_Top_Teeth', 'Bottom_Teeth_Global', 'UpperLip_Center', 'Left_UpperLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 'chin']
+    bodyFunkyL=['Left_Leg_Extra_0', 'Left_Leg_Extra_1', 'Left_Leg_Extra_2', 'Left_Leg_Extra_3', 'Left_Leg_Extra_4', 'Left_Leg_Extra_5', 'Left_Leg_Extra_6', 'Spine_IK_Extra_6_Ctrl', 'Spine_IK_Extra_5_Ctrl', 'Spine_IK_Extra_4_Ctrl', 'Spine_IK_Extra_3_Ctrl', 'Spine_IK_Extra_2_Ctrl', 'Left_Arm_Extra_0', 'Left_Arm_Extra_1', 'Left_Arm_Extra_2', 'Left_Arm_Extra_3', 'Left_Arm_Extra_4', 'Left_Arm_Extra_5', 'Left_Arm_Extra_6', 'Right_Arm_Extra_0', 'Right_Arm_Extra_1', 'Right_Arm_Extra_2', 'Right_Arm_Extra_3', 'Right_Arm_Extra_4', 'Right_Arm_Extra_5', 'Right_Arm_Extra_6', 'Right_Leg_Extra_0', 'Right_Leg_Extra_1', 'Right_Leg_Extra_2', 'Right_Leg_Extra_3', 'Right_Leg_Extra_4', 'Right_Leg_Extra_5', 'Right_Leg_Extra_6', 'Spine_IK_Extra_1_Ctrl']
+    scLockL =faceL + bodyFunkyL
     canDo=True
     updatedL = []
     for obj in scLockL:
         if not cmds.objExists(obj):
             canDo = False
-            print "BOOOM"
+            # print "BOOOM"
     if canDo:
         print "scene valid for scalingFreeman()"
         attrL = ["sx","sy","sz"]
@@ -1493,4 +1500,24 @@ def chr_facialUnlockSRT():
     print "total updated=",len(updatedL)
 
     return True,updatedL
+
+def set_grp_geo_SmoothLevel(*args, **kwargs):
+    """ Description: Set les attr de smoothness des anim_REF à leur valeurs smother pour pouvoir utiliser les raccouci clavier
+                     de smooth display
+        Return : [BOOL]
+        Dependencies : cmds - 
+    """
+    debugL = []
+    canDo = True
+    for i in ["grp_geo.smoothLevel1","grp_geo.smoothLevel2"]:
+        if not cmds.objExists(i):
+            canDo = False
+    if canDo:
+        try:
+            cmds.setAttr ("grp_geo.smoothLevel1", 1)
+            cmds.setAttr ("grp_geo.smoothLevel2", 2)
+            cmds.displaySmoothness( "set_meshCache", polygonObject=0 )
+        except:
+            pass
+    return [True,debugL]
 
