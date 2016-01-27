@@ -157,6 +157,7 @@ def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, empt
             Return : nothing
             Dependencies : cmds - 
         """
+        mc.refresh()
         tab= "    "
         #print "removeAllNamespace()"
         toReturnB = True
@@ -193,7 +194,7 @@ def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, empt
                 count += 1
                 if count > limit:
                     break
-
+        mc.refresh()
         return [toReturnB, delNameSpaceL]
 
 
