@@ -6,6 +6,8 @@ import maya.cmds as cmds
 
 import re
 import string
+import math
+
 from dminutes import miscUtils
 reload (miscUtils)
 import dminutes.jipeLib_Z2K as jpm
@@ -643,10 +645,52 @@ def compareHDToPreviz():
     run the script and read the log
     """
 
-    # compare asset_hi to asset_previz ( compare translate-rotate of group are the same and local pivot rotate-scale of hi must be 0).
-    #import maya.cmds as cmds
-
     DECIMAL_NB = 3
+    BOX_SCALE = 0.1 # 10%
+    listWarning=[]
+
+    def bboxPrintWarning(listWarning):
+        print("\n*** Bbox warning if more than " + str(1./BOX_SCALE) + " % different between Hi and Previz ***")
+        for warning in listWarning:
+            print("\tWARNING: "+warning)
+
+    def compareMinMaxHiToPreviz(hiMin, hiMax, previzMin, previzMax, boxScale):
+        ##print("hiMin = " + str(hiMin) + " hiMax = " + str(hiMax) + " previzMin = " + str(previzMin) + " previzMax = " + str(previzMax) + " boxScale = " + str(boxScale))
+        errMin = False
+        errMax = False
+        center = (previzMin + previzMax) / 2.
+        delta = math.fabs(previzMax-previzMin)
+        deltaHalf = delta / 2.
+        if math.fabs(hiMin-previzMin) > delta*boxScale:
+            errMin = True
+        if math.fabs(hiMax-previzMax) > delta*boxScale:
+            errMax = True
+        return errMin, errMax
+
+    def compareBboxHiToPreviz(groupHi, groupPreviz, boxScale, listWarning): # ex. boxScale = 0.1 (10%)
+        hiBbox = cmds.exactWorldBoundingBox(groupHi)
+        ##print("\tbbox hi = %f" % hiBbox[0], "%f" % hiBbox[1], "%f" % hiBbox[2], "%f" % hiBbox[3], "%f" % hiBbox[4], "%f" % hiBbox[5])
+        previzBbox = cmds.exactWorldBoundingBox(groupPreviz)
+        ##print("\tbbox previz = %f" % previzBbox[0], "%f" % previzBbox[1], "%f" % previzBbox[2], "%f" % previzBbox[3], "%f" % previzBbox[4], "%f" % previzBbox[5])
+
+        errMin, errMax = compareMinMaxHiToPreviz(hiBbox[0], hiBbox[3], previzBbox[0], previzBbox[3], boxScale)
+        if errMin:
+            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[0],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[0],2)))
+        if errMax:
+            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[3],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[3],2)))
+
+        errMin, errMax = compareMinMaxHiToPreviz(hiBbox[1], hiBbox[4], previzBbox[1], previzBbox[4], boxScale)
+        if errMin:
+            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[1],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[1],2)))
+        if errMax:
+            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[4],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[4],2)))
+            
+        errMin, errMax = compareMinMaxHiToPreviz(hiBbox[2], hiBbox[5], previzBbox[2], previzBbox[5], boxScale)
+        if errMin:
+            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[2],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[2],2)))
+        if errMax:
+            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[5],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[5],2)))
+            
 
     #print(cmds.nodeType("grp_bureauArriere_grp_livre_to_ctrl_livre_prCns"))
 
@@ -655,9 +699,9 @@ def compareHDToPreviz():
             return False
         children = cmds.listRelatives(c=True, f=True)
         for child in children:
-            if cmds.nodeType(child) != 'transform':
-                return False
-        return True
+            if cmds.nodeType(child) == 'transform':
+                return True
+        return False
 
     def floatLimitDecimal(value, decimalNb):
         return float(format(value, "."+str(decimalNb)+"f"))
@@ -669,74 +713,85 @@ def compareHDToPreviz():
 
     namespacePreviz = ""
     errorCount = 0;
-    sel = cmds.ls(sl=True, type='transform') # get the transform(s) selected
-    #print sel
+    sel = cmds.ls(sl=True, type='transform') # get the transform(s) selecte
+    print sel
     if len(sel) == 2: # test if current selection has 2 nodes
-         assetPreviz = sel[1]
-         assetHi = sel[0]
-         if "previz" in sel[0]:
-             assetPreviz = sel[0]
-             assetHi = sel[1]
+        assetPreviz = sel[1]
+        assetHi = sel[0]
+        if "previz" in sel[0]:
+            assetPreviz = sel[0]
+            assetHi = sel[1]
              
-         if "previz:" in assetPreviz:
-             namespacePreviz = assetPreviz.split(":")[0] # get namespace
+        if "previz:" in assetPreviz:
+            namespacePreviz = assetPreviz.split(":")[0] + ":" # get namespace
 
-         print("\n***** comparing translations and rotations value from " + assetHi + " to reference " + assetPreviz)
-         groupsPreviz = cmds.listRelatives(assetPreviz, ad=True, f=True,type='transform') # get all transforms with ful path
-         #print ("* " + str(groupsPreviz))
-         for groupPreviz in groupsPreviz:
-             #print (groupPreviz + " " + groupPreviz.split("|")[-1])
+        print("\n***** comparing translations and rotations value from " + assetHi + " to reference " + assetPreviz)
+        groupsPreviz = cmds.listRelatives(assetPreviz, ad=True, f=True,type='transform') # get all transforms with ful path
+        #print ("* " + str(groupsPreviz))
+        for groupPreviz in groupsPreviz:
+            #print (groupPreviz + " " + groupPreviz.split("|")[-1])
              
-             if is_group(groupPreviz) and "grp_" in groupPreviz.split("|")[-1] and not "grp_geo_" in groupPreviz.split("|")[-1]: # if the transform is a group
-                 # get positions, rotations of locator
-                 rotPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,ws=1,ro=1), DECIMAL_NB) #get rotations
-                 posPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,ws=1,t=1), DECIMAL_NB) # gettranslations
-                 #print rotPreviz
-                 #print posPreviz
-                 groupHi=""
-                 if namespacePreviz != "": # if namespace, remove it to build groupHi
-                     groupHi = groupPreviz.replace(assetPreviz, assetHi).replace(namespacePreviz, "") #build groupPreviz name 
-                 else:
-                     groupHi = groupPreviz.replace(assetPreviz, assetHi) #build groupPreviz name
-                 #print("groupHi = " + groupHi)
-                 if cmds.objExists(groupHi): # test if group exists ?
-                     rotHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,ws=1,ro=1), DECIMAL_NB) # get rotations
-                     posHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,ws=1,t=1), DECIMAL_NB) # get translations
-                     error = False
-                     if cmp(rotHi, rotPreviz):
-                         print("\tERROR in group: " + groupHi + " has different rotate values: " + str(rotHi) + " instead of previz : " +str(rotPreviz))
-                         error = True
-                         errorCount += 1
-                     if cmp(posHi, posPreviz):
-                         print("\tERROR in group: " + groupHi + " has different translation values: " + str(posHi) + " instead of previz : "+ str(posPreviz))
-                         error = True
-                         errorCount += 1
-                     # test local pivot rotate and scale
-                     localPivotRotateHi =cmds.xform(groupHi,q=True,os=1,rp=1) # get local rotate pivot
-                     localPivotScaleHi =cmds.xform(groupHi,q=True,os=1,sp=1) # get local scale pivot
-                     if cmp(localPivotRotateHi, [0,0,0]):
-                         print("\tERROR in group: " + groupHi + " has local pivot rotate values: " + str(localPivotRotateHi))
-                         error = True
-                         errorCount += 1
-                     if cmp(localPivotScaleHi, [0,0,0]):
-                         print("\tERROR in group: " + groupHi + " has local pivot scale values: " + str(localPivotScaleHi))
-                         error = True
-                         errorCount += 1
+            if is_group(groupPreviz) and "grp_" in groupPreviz.split("|")[-1] and not "grp_geo_" in groupPreviz.split("|")[-1]: # if the transform is a group
+                ##print("\tgroupPreviz = " + str(groupPreviz))
+                # get positions, rotations of locator
+                rotPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,ws=1,ro=1), DECIMAL_NB) #get rotations
+                posPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,ws=1,t=1), DECIMAL_NB) # gettranslations
+                #print rotPreviz
+                #print posPreviz
+                groupHi=""
+                if namespacePreviz != "": # if namespace, remove it to build groupHi
+                    groupHi = groupPreviz.replace(assetPreviz, assetHi).replace(namespacePreviz, "") #build groupPreviz name 
+                else:
+                    groupHi = groupPreviz.replace(assetPreviz, assetHi) #build groupPreviz name
+                #print("\tgroupHi = " + groupHi)
+                if cmds.objExists(groupHi): # test if group exists ?
+                    rotHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,ws=1,ro=1), DECIMAL_NB) # get rotations
+                    posHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,ws=1,t=1), DECIMAL_NB) # get translations
+                    error = False
+                    if cmp(rotHi, rotPreviz):
+                        print("\tERROR in group: " + groupHi + " has different rotate values: " + str(rotHi) + " instead of previz : " +str(rotPreviz))
+                        error = True
+                        errorCount += 1
+                    if cmp(posHi, posPreviz):
+                        print("\tERROR in group: " + groupHi + " has different translation values: " + str(posHi) + " instead of previz : "+ str(posPreviz))
+                        error = True
+                        errorCount += 1
+                    # test local pivot rotate and scale
+                    localPivotRotateHi =cmds.xform(groupHi,q=True,os=1,rp=1) # get local rotate pivot
+                    localPivotScaleHi =cmds.xform(groupHi,q=True,os=1,sp=1) # get local scale pivot
+                    if cmp(localPivotRotateHi, [0,0,0]):
+                        print("\tERROR in group: " + groupHi + " has local pivot rotate values: " + str(localPivotRotateHi))
+                        error = True
+                        errorCount += 1
+                    if cmp(localPivotScaleHi, [0,0,0]):
+                        print("\tERROR in group: " + groupHi + " has local pivot scale values: " + str(localPivotScaleHi))
+                        error = True
+                        errorCount += 1
 
-                 else:
-                     print("\tERROR: group: " + groupHi + " is missing")
+                    compareBboxHiToPreviz(groupHi, groupPreviz, BOX_SCALE, listWarning)
+                     
+                else:
+                    print("\tERROR: group: " + groupHi + " is missing")
 
+        bboxPrintWarning(listWarning) # print list warning for bbox.
 
-         if (errorCount != 0):
-             if (errorCount == 1):
-                 print("**** " + str(errorCount) + " error found ")
-             else:
-                 print("**** " + str(errorCount) + " errors found ")
-         else:
-             print("**** checking done, no error")
+        if (errorCount != 0):
+            if (errorCount == 1):
+                print("**** " + str(errorCount) + " error found ")
+            else:
+                print("**** " + str(errorCount) + " errors found ")
+                  
+        warningCount = len(listWarning)
+        if (warningCount != 0):
+            if (warningCount == 1):
+                print("**** " + str(warningCount) + " warning found ")
+            else:
+                print("**** " + str(warningCount) + " warnings found ")
 
+        print("**** checking done")
     else:
-         print ("\n***** please select both asset hi-def and asset previz and try again")
+        print ("\n***** please select both asset hi-def and asset previz and try again")
+
 
 
 
