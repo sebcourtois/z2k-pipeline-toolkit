@@ -795,7 +795,7 @@ def compareHDToPreviz():
 
 
 
-def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, autoRenameI = 0):
+def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, autoRenameI = 0, verbose = True):
     """
     this script merge selected objects only if they are under the same group.
     It ensure that the resulting object is under the intial group.
@@ -821,7 +821,7 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
     if len(toCombineShapesL)<2:
         return [resultB, logL, toCombineObjL, resultObjL] 
 
-    #path = toCombineShapesL[-1].split(toCombineShapesL[-1].split("|")[-1])[0].rstrip("|")
+    #path = toCombineShapesL[-1].split(toCombineShapesL[-1].split("|")[-2])[0].rstrip("|")
     path = cmds.listRelatives(cmds.listRelatives(toCombineShapesL[-1], parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
     finalObjectName = toCombineShapesL[-1].split("|")[-1]
 
@@ -891,19 +891,36 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
         
     if GUI == True: 
         cmds.select(resultObjL)
-        print logMessage
+        if verbose == True: print logMessage
 
     return [resultB, logL, toCombineObjL, resultObjL] 
 
 
 
-def combineAllGroups():
- 
-    transformL = mc.ls(mc.listRelatives("asset|grp_geo", allDescendents = True, fullPath = True, type = "transform"), l=True, exactType="transform")
+def combineAllGroups(inParent = "asset|grp_geo", GUI = True, autoRenameI= 1, combineByMaterialB = True):
+    resultB = True
+    logL = []
+
+    meshNbBeforeConbineI = len(cmds.listRelatives(inParent, allDescendents = True, type = "mesh"))
+    transformL = cmds.ls(cmds.listRelatives("asset|grp_geo", allDescendents = True, fullPath = True, type = "transform"), l=True, exactType="transform")
     for each in transformL:
         if re.match('^grp_', each.split("|")[-1]):
-            meshL = mc.listRelatives(each, allDescendents = True, fullPath = True, type = "mesh")
-            modeling.combineGeoGroup(toCombineObjL = meshL, GUI = False, autoRenameI= 1, combineByMaterialB = True)
+            #meshL = cmds.listRelatives(each, children = True, fullPath = True, type = "mesh")
+            meshL = cmds.listRelatives(cmds.listRelatives(each, children = True, fullPath = True), children = True, fullPath = True, type = "mesh")
+            if meshL and len(meshL)>1 :
+                resultL = combineGeoGroup(toCombineObjL = meshL, GUI = GUI,verbose = False, autoRenameI= autoRenameI, combineByMaterialB = combineByMaterialB)
+                if GUI == True:
+                    logMessage = "#### {:>7}: 'combineAllGroups' '{:>4}' meshes combined in '{:>4}' meshe(s) under group: {}:".format("Info", len(resultL[2]),len(resultL[3]),each)
+                    #print logMessage
+                    logL.append(logMessage)
+
+    meshNbAfterConbineI = len(cmds.listRelatives(inParent, allDescendents = True, type = "mesh"))
+
+    logMessage = "#### {:>7}: 'combineAllGroups' final result: '{:>4}' meshes combined in : '{:>4}' meshes".format("Info",meshNbBeforeConbineI,meshNbAfterConbineI)
+    print logMessage
+    logL.append(logMessage)
+
+    return [resultB, logL] 
 
 
 
