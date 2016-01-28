@@ -985,6 +985,47 @@ def resetSRT( inObjL=[], *args,**kwargs):
     # print tab,"DONE",toReturnB
     return [toReturnB,debugD]
 
+def resetCTR( inObjL=[],userDefined=True,SRT=True, *args,**kwargs):
+    """ Description: remet les valeur SRT a (1,1,1) (0,0,0) (0,0,0) et user defined attr to default
+        Return : [toReturnB,debugD]
+        Dependencies : cmds - checkSRT()
+    """
+    print "resetSRT()"
+
+    tab = "    "
+    cursel = inObjL
+    debugD = {}
+    debugL = []
+    resetedL = []
+    toReturnB = True
+    
+    for i in cursel:
+        
+        if SRT:
+            if  not checkSRT([i])[0]:
+                # print "    reseting",i
+                try:
+                    cmds.xform(i, ro=(0, 0, 0), t=(0, 0, 0), s=(1, 1, 1))
+                    resetedL.append(i)
+                except Exception,err:
+                    toReturnB=False
+                    debugL.append(err)
+        if userDefined:
+            udAttrL = cmds.listAttr(i, ud=1, k=1)
+            if udAttrL:
+                for attr in udAttrL:
+                    dv = cmds.addAttr(i+"."+attr, q=True, defaultValue=True)
+                    if not dv in [None] and cmds.getAttr(i+"."+attr,settable=1):
+                        cmds.setAttr(i+"."+attr,dv)
+
+    debugD["errors"] = debugL
+    debugD["resetedL"]= resetedL
+
+
+    # print tab,"DONE",toReturnB
+    return [toReturnB,debugD]
+
+
 def checkKeys(inObjL=[],*args, **kwargs):
     """ Description: check if there is some keys on keyables of inObjL
         Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
