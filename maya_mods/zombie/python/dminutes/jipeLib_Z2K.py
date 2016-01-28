@@ -1014,9 +1014,14 @@ def resetCTR( inObjL=[],userDefined=True,SRT=True, *args,**kwargs):
             udAttrL = cmds.listAttr(i, ud=1, k=1)
             if udAttrL:
                 for attr in udAttrL:
-                    dv = cmds.addAttr(i+"."+attr, q=True, defaultValue=True)
-                    if not dv in [None] and cmds.getAttr(i+"."+attr,settable=1):
-                        cmds.setAttr(i+"."+attr,dv)
+                    try:
+                        dv = cmds.addAttr(i+"."+attr, q=True, defaultValue=True)
+                        if not dv in [None] and cmds.getAttr(i+"."+attr,settable=1):
+                            cmds.setAttr(i+"."+attr,dv)
+                    except Exception,err:
+                        toReturnB=False
+                        debugL.append(err)
+
 
     debugD["errors"] = debugL
     debugD["resetedL"]= resetedL
