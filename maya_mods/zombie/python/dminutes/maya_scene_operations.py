@@ -197,6 +197,8 @@ def reArrangeAssets():
         'env':'grp_environment',
         'c2d':'grp_character2D',
         'vhl':'grp_vehicle',
+        'fxp':'grp_fx',
+        'cwp':'grp_crowd',
         }
 
     #Collect references
@@ -214,7 +216,7 @@ def reArrangeAssets():
                     pc.warning('Can"t find root of asset with namespace {0}'.format(ns))
                     continue
                 rootParent = root.getParent()
-                if rootParent == None or rootParent.name() != structParent:
+                if (not rootParent) or (rootParent.name() != structParent):
                     pc.parent(root, structParent)
 
     #We could also have local cameras (cam_animatic and/or cam_sq####_sh####)
@@ -352,9 +354,6 @@ def init_scene_base(sceneManager):
     #color management
     pc.colorManagementPrefs(edit=True, cmEnabled=False)
 
-    #Subdiv
-    setSubdivPref(0)
-
     #Swatches size
     mc.optionVar(iv=('maxImageSizeForSwatchGen', 1000))
 
@@ -382,9 +381,11 @@ def arrangeViews(oShotCam, oImgPlaneCam=None):
     if oImgPlaneCam:
         sidePanel = mc.getPanel(withLabel='Side View')
         pc.modelPanel(sidePanel, edit=True, camera=oImgPlaneCam)
+
     #Camera
     perspPanel = mc.getPanel(withLabel='Persp View')
     pc.modelPanel(perspPanel, edit=True, camera=oShotCam)
+
     #Work view
     workPanel = mc.getPanel(withLabel='Top View')
     pc.modelPanel(workPanel, edit=True, camera='persp')
@@ -402,13 +403,14 @@ def init_previz_scene(sceneManager):
     pc.setAttr('hardwareRenderingGlobals.ssaoFilterRadius', 8)
     pc.setAttr('hardwareRenderingGlobals.ssaoSamples', 16)
 
-    sTaskName = sceneManager.context["task"]["content"]
-    sShotCamNspace = sceneManager.mkShotCamNamespace()
+    sStepName = sceneManager.context["step"]["code"]
     proj = sceneManager.context["damProject"]
     shotLib = proj.getLibrary("public", "shot_lib")
 
     #rename any other shot camera
     remainingCamera = None
+
+    sShotCamNspace = sceneManager.mkShotCamNamespace()
 
     otherCams = pc.ls(CAMPATTERN, type='camera')
     camsLength = len(otherCams)
@@ -434,7 +436,7 @@ def init_previz_scene(sceneManager):
     if not oShotCam:
         oShotCam = sceneManager.importShotCam()
 
-    if sTaskName.lower() != "previz 3d":
+    if sStepName.lower() != "previz 3d":
 
         if not oShotCam.isReferenced():
             oShotCam = switchShotCamToRef(sceneManager, oShotCam)

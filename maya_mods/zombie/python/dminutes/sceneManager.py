@@ -42,12 +42,52 @@ noneValue = 'MISSING'
 notFoundvalue = 'NOT FOUND'
 
 #FROM DAVOS !!!!
-STEP_FILE_REL = {'Previz 3D':'previz_scene', 'Layout':'layout_scene'}
-TASK_FILE_REL = {'previz 3D':'previz_scene', 'layout':'layout_scene'}
-REF_FOR_TASK = {'previz 3D':'previz_ref', 'layout':'anim_ref', 'animation':'anim_ref'}
+FILE_FOR_STEP = {'Previz 3D':'previz_scene',
+                 'Layout':'layout_scene',
+                 'Animation':'anim_scene',
+                 }
+FILE_FOR_TASK = {}#{'previz 3D':'previz_scene', 'layout':'layout_scene'}
+
+REF_FOR_STEP = {'Previz 3D':'previz_ref',
+                'Layout':'anim_ref',
+                'Animation':'anim_ref',
+                }
+
+REF_FOR_TASK = {}
 
 LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
 
+def fileFromTask(sgTask, fail=False):
+
+    sTask = sgTask['content']
+    sStep = sgTask['step']['name']
+
+    sName = FILE_FOR_TASK.get(sTask, FILE_FOR_STEP.get(sStep, ""))
+
+    if (not sName):
+        sMsg = ("No resource file associated with task: {}".format(sgTask))
+        if fail:
+            raise EnvironmentError(sMsg)
+        else:
+            pc.displayError(sMsg)
+
+    return sName
+
+def refFromTask(sgTask, fail=False):
+
+    sTask = sgTask['content']
+    sStep = sgTask['step']['name']
+
+    sName = REF_FOR_TASK.get(sTask, REF_FOR_STEP.get(sStep, ""))
+
+    if (not sName):
+        sMsg = ("No reference file associated with task: {}".format(sgTask))
+        if fail:
+            raise EnvironmentError(sMsg)
+        else:
+            pc.displayError(sMsg)
+
+    return sName
 
 def getReversedDict(in_dict):
     """Get a copy of a dictionary key<=>value (Beware of identical values)"""
@@ -281,22 +321,32 @@ class SceneManager():
     def getContextFromDavosData(self):
         """format davos data (contained in self.context['sceneData']) to match with UI Data to allow detection of current loaded scene"""
         davosContext = {}
-        if not "resource" in self.context['sceneData'] or not "section" in self.context['sceneData'] or not "name" in self.context['sceneData']:
+        proj = self.context['damProject']
+        ctxSceneData = self.context['sceneData']
+        #print "-------------", ctxSceneData
+        if (("resource" not in ctxSceneData) or ("section" not in ctxSceneData)
+            or ("name" not in ctxSceneData)):
             return None
 
-        if self.context['sceneData']["section"] == "shot_lib":
-            file_step_rel = getReversedDict(STEP_FILE_REL)
-            if self.context['sceneData']["resource"] in file_step_rel:
-                davosContext['step'] = file_step_rel[self.context['sceneData']["resource"]]
+        sSection = ctxSceneData["section"]
+        if sSection == "shot_lib":
 
-            davosContext['seq'] = self.context['sceneData']["sequence"]
-            davosContext['shot'] = self.context['sceneData']["name"]
+            sStepDir = ctxSceneData.get("step", "")
+            if not sStepDir:
+                return None
 
-        elif self.context['sceneData']["section"] == "asset_lib":
+            sSgStepDct = proj.getVar("shot_lib", "sg_step_map")
+            if sStepDir in sSgStepDct:
+                davosContext['step'] = sSgStepDct[sStepDir]
+
+            davosContext['seq'] = ctxSceneData["sequence"]
+            davosContext['shot'] = ctxSceneData["name"]
+
+        elif sSection == "asset_lib":
             pc.warning("asset_lib section not managed yet !!")
             return None
         else:
-            pc.warning("Unknown section {0}".format(self.context['sceneData']["section"]))
+            pc.warning("Unknown section {0}".format(ctxSceneData["section"]))
             return None
 
         return davosContext
@@ -371,38 +421,38 @@ class SceneManager():
         if entry != None:
             self.context['lock'] = entry.getLockOwner()
 
+    def getDamEntity(self):
+
+        sgEntity = self.context['entity']
+        sEntityType = sgEntity['type']
+        sEntityName = sgEntity['code']
+
+        proj = self.context['damProject']
+
+        if sEntityType == 'Shot':
+            damEntity = proj.getShot(sEntityName)
+        elif sEntityType == 'Asset':
+            damEntity = proj.getAsset(sEntityName)
+        else:
+            raise TypeError("Unexpected entity type: '{}'".format(sEntityType))
+
+        return damEntity
+
     def getEntry(self):
         """Get davos entry from UI data"""
+
         entry = None
 
-        lib = LIBS[self.context['entity']['type']]
-        if lib == "asset_lib":
-            lib = self.context['entity']['sg_asset_type']
+        if 'task' not in self.context:
+            return
 
-        tokens = {}
-
-        nameKey = 'code'
-
-        if self.context['entity']['type'] == 'Shot':
-            tokens['name'] = self.context['entity'][nameKey]
-            tokens['sequence'] = self.context['entity']['sg_sequence']['name']
-        elif self.context['entity']['type'] == 'Asset':
-            print self.context['entity']
-            tokens['name'] = self.context['entity'][nameKey]
-            tokens['assetType'] = self.context['entity'][nameKey].split('_')[0]
-
-        if 'task' in self.context:
-            if self.context['task']['content'] in TASK_FILE_REL:
-                s_inFileTag = TASK_FILE_REL[self.context['task']['content']]
-
-                path = None
-                try:
-                    path = self.context['damProject'].getPath('public', lib, s_inFileTag, tokens=tokens)
-                except Exception, e:
-                    pc.warning('damProject.getPath failed : {0}'.format(e))
-
-                if path != None:
-                    entry = self.context['damProject'].entryFromPath(path)
+        s_inFileTag = fileFromTask(self.context['task'])
+        if s_inFileTag:
+            try:
+                damEntity = self.getDamEntity()
+                entry = damEntity.getResource("public", s_inFileTag)
+            except Exception as e:
+                pc.warning(toStr(e))
 
         return entry
 
@@ -495,7 +545,13 @@ class SceneManager():
         CAPTURE_INFOS['cam'] = oShotCam.getShape().name()
         oCamRef = oShotCam.referenceFile()
 
-        CAPTURE_INFOS['task'] = self.context['task']['content']
+        sStep = self.context['step']['code']
+        sTask = self.context['task']['content']
+
+        if sStep.lower() == sTask.lower():
+            CAPTURE_INFOS['task'] = sTask
+        else:
+            CAPTURE_INFOS['task'] = sStep + " | " + sTask
 
         if increment:
             savedFile = self.saveIncrement(b_inForce=False)
@@ -558,15 +614,6 @@ class SceneManager():
             mop.arrangeViews(oShotCam, oImgPlaneCam)
             pc.refresh()
 
-#            #Detect if activePanel is an imageplane and change to 'modelPanel4' if True
-#            curPanel = pc.playblast(activeEditor=True)
-#            curCam = pc.modelEditor(curPanel, query=True, camera=True)
-#            if curCam:
-#                if curCam.type() == "transform":
-#                    curCam = curCam.getShape()
-#                if len(curCam.getChildren()) > 0:
-#                    pc.setFocus('modelPanel4')
-
             makeCapture(capturePath, captureStart, captureEnd, 1280, 720, useCamera=oShotCam,
                         format="qt", compression="H.264", ornaments=True, play=True,
                         i_inFilmFit=1, i_inDisplayFilmGate=1, i_inSafeAction=1,
@@ -586,115 +633,102 @@ class SceneManager():
     def edit(self, editInPlace=None, onBase=False, createFolders=False):
         privFile = None
 
-        entity = self.context['entity']
-        proj = self.context['damProject']
+        damEntity = self.getDamEntity()
+        proj = damEntity.project
 
-        lib = LIBS[entity['type']]
-        if lib == "asset_lib":
-            lib = entity['sg_asset_type']
+        if 'task' not in self.context:
+            pc.displayError('Task missing from current context !')
+            return
 
-        tokens = {}
+        sgTask = self.context['task']
+        s_inFileTag = fileFromTask(sgTask)
+        if not s_inFileTag:
+            return
 
-        nameKey = 'name'
+        path = None
+        try:
+            path = damEntity.getPath('public', s_inFileTag)
+        except Exception, e:
+            pc.warning('damProject.getPath failed : {0}'.format(e))
 
-        if entity['type'] == 'Shot':
-            nameKey = 'code'
-            tokens['name'] = entity[nameKey]
-            tokens['sequence'] = entity['sg_sequence']['name']
-        elif entity['type'] == 'Asset':
-            tokens['name'] = entity[nameKey]
-            tokens['assetType'] = entity[nameKey].split('_')[0]
+        if not path:
+            return
 
-        if 'task' in self.context:
-            sgTask = self.context['task']
-            if sgTask['content'] in TASK_FILE_REL:
-                s_inFileTag = TASK_FILE_REL[sgTask['content']]
-
-                path = None
-                try:
-                    path = proj.getPath('public', lib, s_inFileTag, tokens=tokens)
-                except Exception, e:
-                    pc.warning('damProject.getPath failed : {0}'.format(e))
-
-                if path != None:
+        entry = proj.entryFromPath(path)
+        if not entry:
+            if createFolders:
+                msg = ("Entity '{0}' does not exists, do yout want to create it ?"
+                       .format(damEntity.name))
+                result = pc.confirmDialog(title='Non existing entity',
+                                          message=msg,
+                                          button=['Yes', 'No'],
+                                          defaultButton='Yes',
+                                          cancelButton='No',
+                                          dismissString='No')
+                if result == "Yes":
+                    self.createFolder()
                     entry = proj.entryFromPath(path)
-                    if not entry:
-                        if createFolders:
-                            msg = "Entity '{0}' does not exists, do yout want to create it ?".format(entity[nameKey])
-                            result = pc.confirmDialog(title='Non existing entity',
-                                                      message=msg,
-                                                      button=['Yes', 'No'],
-                                                      defaultButton='Yes',
-                                                      cancelButton='No',
-                                                      dismissString='No')
-                            if result == "Yes":
-                                self.createFolder()
-                                entry = proj.entryFromPath(path)
-                                if entry == None:
-                                    pc.error("Problem editing the entity !")
-                            else:
-                                pc.warning('Edit cancelled by user !')
-                                return ''
-                        else:
-                            sMsg = "No such file: '{}'".format(path)
-                            pc.confirmDialog(title='SORRY !',
-                                             message=sMsg,
-                                             button=["OK"],
-                                             icon="critical",
-                                            )
-                            raise EnvironmentError(sMsg)
-
-                    result = "Yes" if editInPlace else "No"
-
-                    if editInPlace == None:
-                        result = pc.confirmDialog(title='Edit options',
-                                                  message='Do you want to use current scene for this edit ?',
-                                                  button=['Yes', 'No'],
-                                                  defaultButton='Yes',
-                                                  cancelButton='No',
-                                                  dismissString='No')
-
-                    if result == "Yes":
-                        privFile = entry.edit(openFile=False, existing="keep")#existing values = choose, fail, keep, abort, overwrite
-
-                        rootPath, filename = os.path.split(privFile.absPath())
-                        vSplit = filename.split('.')
-                        if len(vSplit) != 3:
-                            pc.error("Unrecognized file pattern ! {0}".format(filename))
-
-                        version = vSplit[1]
-                        elements = os.listdir(rootPath)
-
-                        for element in elements:
-                            fullpath = os.path.join(rootPath, element)
-                            if vSplit[0] in element and os.path.isfile(fullpath):
-                                dSplit = element.split('.')
-                                if len(dSplit) == 3 and dSplit[1] > version:
-                                    version = dSplit[1]
-
-                        iversion = int(version) + 1
-
-                        newpath = os.path.join(rootPath, vSplit[0] + ".{0:03}.ma".format(iversion))
-                        cmds.file(rename=newpath)
-                        cmds.file(save=True)
-                    else:
-                        privFile = entry.edit(openFile=not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
-
-                    if privFile is None:
-                        pc.warning('There was a problem with the edit !')
-                    else:
-                        pass
-                        #print "privFile " + str(privFile.absPath())
+                    if entry == None:
+                        pc.error("Problem editing the entity !")
+                else:
+                    pc.warning('Edit cancelled by user !')
+                    return ''
             else:
-                pc.warning('Given task "{0}" is unknown (choose from {1}) !'.format(TASK_FILE_REL.keys()))
+                sMsg = "No such file: '{}'".format(path)
+                pc.confirmDialog(title='SORRY !',
+                                 message=sMsg,
+                                 button=["OK"],
+                                 icon="critical",
+                                )
+                raise EnvironmentError(sMsg)
+
+        result = "Yes" if editInPlace else "No"
+
+        if editInPlace == None:
+            result = pc.confirmDialog(title='Edit options',
+                                      message='Do you want to use current scene for this edit ?',
+                                      button=['Yes', 'No'],
+                                      defaultButton='Yes',
+                                      cancelButton='No',
+                                      dismissString='No')
+
+        if result == "Yes":
+            privFile = entry.edit(openFile=False, existing="keep")#existing values = choose, fail, keep, abort, overwrite
+
+            rootPath, filename = os.path.split(privFile.absPath())
+            vSplit = filename.split('.')
+            if len(vSplit) != 3:
+                pc.error("Unrecognized file pattern ! {0}".format(filename))
+
+            version = vSplit[1]
+            elements = os.listdir(rootPath)
+
+            for element in elements:
+                fullpath = os.path.join(rootPath, element)
+                if vSplit[0] in element and os.path.isfile(fullpath):
+                    dSplit = element.split('.')
+                    if len(dSplit) == 3 and dSplit[1] > version:
+                        version = dSplit[1]
+
+            iversion = int(version) + 1
+
+            newpath = os.path.join(rootPath, vSplit[0] + ".{0:03}.ma".format(iversion))
+            cmds.file(rename=newpath)
+            cmds.file(save=True)
         else:
-            pc.warning('No task given !')
+            privFile = entry.edit(openFile=not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
+
+        if privFile is None:
+            pc.warning('There was a problem with the edit !')
+        else:
+            pass
+            #print "privFile " + str(privFile.absPath())
 
         return privFile
 
     def prePublishCurrentScene(self, publishCtx, **kwargs):
 
-        bPreviz = self.context["task"]["content"].lower() == "previz 3d"
+        bPreviz = self.context["step"]["code"].lower() == "previz 3d"
 
         # here is incerted the publish of the camera of the scene
         print "exporting the camera of the shot"
@@ -727,7 +761,7 @@ class SceneManager():
             except RuntimeError as e:
                 raise RuntimeError(toStr(e) + sFixMsg)
 
-            if self.context["task"]["content"].lower() != "previz 3d":
+            if self.context["step"]["code"].lower() != "previz 3d":
                 if not oShotCam.isReferenced():
                     raise RuntimeError("Shot Camera is not referenced !" + sFixMsg)
 
@@ -747,7 +781,7 @@ class SceneManager():
         content = self.context['damProject']._shotgundb.getShotAssets(self.context['entity']['code'])
         return content if content != None else []
 
-    def getFiletagFromPath(self, in_sPath):
+    def getFileTagFromPath(self, in_sPath):
         """Detect the filetag (resource) from an asset path, when we don't have the shotgun info, right now it'll just say 'NONE'"""
         return notFoundvalue
 
@@ -862,7 +896,7 @@ class SceneManager():
         # WIP CORRECTION collapseVariables (ERROR)
         assetDataList = self.listRelatedAssets()
         errorL = []
-        sCurRefTag = self.getCurrentTaskRefTag()
+        sCurRefTag = refFromTask(self.context["task"], fail=True)
 
         count = 0
         for astData in assetDataList:
@@ -955,18 +989,6 @@ class SceneManager():
             iOccur = assetDataDct[sAstName]["occurences"]
             proj.updateSgEntity(astShotConn, sg_occurences=iOccur)
 
-    def getCurrentTaskRefTag(self):
-
-        sRefTag = ""
-
-        sTaskName = self.context['task']['content']
-        if sTaskName in REF_FOR_TASK:
-            sRefTag = REF_FOR_TASK[sTaskName]
-        else:
-            raise EnvironmentError("No resource file associated with task: '{}'"
-                                   .format(sTaskName))
-        return sRefTag
-
     def do(self, s_inCmd):
         mop.do(s_inCmd, self.context['task']['content'], self)
 
@@ -1018,7 +1040,7 @@ class SceneManager():
     def getDamShot(self):
         sEntityType = self.context['entity']['type'].lower()
         if sEntityType != 'shot':
-            raise TypeError("Unsupported entity type: '{}'".format(sEntityType))
+            raise TypeError("Unexpected entity type: '{}'".format(sEntityType))
 
         sShotCode = self.context['entity']['code'].lower()
         proj = self.context["damProject"]
