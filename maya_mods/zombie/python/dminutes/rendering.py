@@ -298,6 +298,32 @@ def createBatchRender():
     print "#### Info: renderBatch.bat created: {}".format(os.path.normpath(renderBatch_trg))
 
 
+def toggleCameraAspectRatio(cameraPatternS = 'cam_shading_*:*'):
+    
+    shadingCamL = mc.ls(cameraPatternS,type='camera')
+    initAspectRatio= mc.getAttr(shadingCamL[0]+".aspectRatio")
+   
+    if initAspectRatio == 1:
+        aspectRatio = 1.85
+    else:
+        aspectRatio = 1
+
+    for each in shadingCamL:
+        mc.setAttr(each+".aspectRatio",aspectRatio)
+
+    #change render options
+    mc.setAttr("defaultResolution.pixelAspect",1)
+    mc.setAttr("defaultResolution.deviceAspectRatio",aspectRatio)
+    if aspectRatio != 1:
+        mc.setAttr("defaultResolution.width",1920)
+        mc.setAttr("defaultResolution.height",1920/aspectRatio)
+    else:
+        mc.setAttr("defaultResolution.width",1080)
+        mc.setAttr("defaultResolution.height",1080)
+
+    print "#### Info: 'toggleCameraAspectRatio' aspect ratio changed from {} to {} on following cameras: {}".format(initAspectRatio, aspectRatio, shadingCamL)
+
+
 def deleteAovs():
     toReturn =True
     infoS =""

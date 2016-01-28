@@ -866,7 +866,7 @@ class Asset_File_Conformer:
 
 
 
-def softClean(struct2CleanList=["asset"], verbose = True):
+def softClean(struct2CleanList=["asset"], verbose = True, keepRenderLayers = True):
     """
     this script intend to remove from the scene every node that do not has a link with the selected structure.
     It also clean the empty namespaces
@@ -883,8 +883,17 @@ def softClean(struct2CleanList=["asset"], verbose = True):
 
     doNotDelete = ["set_control","set_meshCache","set_subdiv_0", "set_subdiv_1","set_subdiv_2","set_subdiv_3","set_subdiv_init","par_subdiv","defaultArnoldRenderOptions","defaultArnoldFilter","defaultArnoldDriver","defaultArnoldDisplayDriver"]
     doNotDelete =  mc.ls(doNotDelete)
+
+    if keepRenderLayers == True:
+        doNotDelete = doNotDelete + mc.ls(type='renderLayer')
+    else:
+        mc.editRenderLayerGlobals( currentRenderLayer='defaultRenderLayer' )    
+
+
     intiSelection = mc.ls(selection = True)
     deletedNodes = 0
+
+
 
     #remove from any namespace all the nodes of my structre to clean
     mc.select(struct2CleanList, replace = True, ne = True)
@@ -956,6 +965,8 @@ def softClean(struct2CleanList=["asset"], verbose = True):
     outLogL.append(logMessage)
 
     return outSucceedB, outLogL
+
+
 
 
 def importGrpLgt(lgtRig = "lgtRig_character"):
