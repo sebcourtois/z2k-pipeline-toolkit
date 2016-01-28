@@ -115,8 +115,8 @@ def refreshContextUI():
     pc.control('sm_upscene_bt', edit=True, enable=contextMatches)
     pc.control('sm_updb_bt', edit=True, enable=contextMatches)
 
-    sTaskName = SCENE_MANAGER.context["task"]["content"].lower()
-    bEnabled = (sTaskName != "previz 3d") and contextMatches
+    sStepName = SCENE_MANAGER.context["step"]["code"].lower()
+    bEnabled = (sStepName != "previz 3d") and contextMatches
     pc.control('sm_editCam_bt', edit=True, enable=bEnabled)
 
     pc.checkBox('sm_imgPlane_chk', edit=True, value=mop.isImgPlaneVisible())
@@ -364,10 +364,13 @@ def doEntityChanged(*args, **kwargs):
     CURRENT_ENTITY_TASKS = {}
     sgTasks = SCENE_MANAGER.getTasks()
 
+    sTaskList = []
     for sgTask in sgTasks:
-        CURRENT_ENTITY_TASKS[sgTask['content']] = sgTask
+        sTask = sgTask['content']
+        CURRENT_ENTITY_TASKS[sTask] = sgTask
+        sTaskList.append(sTask)
 
-    refreshOptionMenu('sm_task_dd', sorted(CURRENT_ENTITY_TASKS.keys()))
+    refreshOptionMenu('sm_task_dd', sTaskList)
 
     if kwargs.get("runTaskChanged", True):
         doTaskChanged(*args)

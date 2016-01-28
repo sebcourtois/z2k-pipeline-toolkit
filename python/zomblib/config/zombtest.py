@@ -35,6 +35,9 @@ class environment3d(zomb.environment3d):
 class fx_previz(zomb.fx_previz):
     pass
 
+class crowd_previz(zomb.crowd_previz):
+    pass
+
 class shot_lib(zomb.shot_lib):
     pass
 

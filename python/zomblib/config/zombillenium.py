@@ -95,6 +95,12 @@ class shot_lib(object):
             },
         }
 
+    sg_step_map = {"01_previz":"Previz 3D",
+                   "02_layout":"Layout",
+                   "03_blocking":"Blocking",
+                   "04_anim":"Animation",
+                   }
+
     resources_settings = {
     "previz_scene":{"outcomes":("previz_capture",),
                     "create_sg_version":True,
@@ -120,7 +126,6 @@ class shot_lib(object):
     "layout_dir":{"default_sync_rules":"all_sites",
                   },
     }
-
 
 class output_lib(object):
 
@@ -152,16 +157,16 @@ class asset_lib(object):
     public_path_envars = ('ZOMB_ASSET_PATH', 'ZOMB_TEXTURE_PATH')
     private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
-    asset_types = (
-        "camera",
-        "character3d",
-        "character2d",
-        "prop3d",
-        "vehicle3d",
-        "set3d",
-        "environment3d",
-        "fx_previz",
-        )
+    asset_types = ("camera",
+                   "character3d",
+                   "character2d",
+                   "prop3d",
+                   "vehicle3d",
+                   "set3d",
+                   "environment3d",
+                   "fx_previz",
+                   "crowd_previz",
+                   )
 
     child_sections = asset_types
 
@@ -333,12 +338,44 @@ class vehicle3d(prop3d):
 
     dependency_types = asset_lib.dependency_types
 
-class fx_previz(prop3d):
+class fx_previz(object):
 
     entity_class = "davos.core.damtypes.DamAsset"
 
     prefix = "fxp"
     aliases = (prefix, "FX")
+    assetType = prefix
+    template_dir = "asset_fxpCwp"
+
+    public_path = join(asset_lib.public_path, "{assetType}")
+    private_path = join(asset_lib.private_path, "{assetType}")
+    template_path = project.template_path
+
+    resource_tree = {
+    "{name} -> entity_dir":
+        {
+        "ref -> ref_dir":
+            {
+            "{name}_previzRef.mb -> previz_ref":None,
+            },
+        "review -> review_dir":
+            {
+            #"{name}_previz.mov -> previz_review":None,
+            },
+        "texture -> texture_dir":{},
+        "{name}_previz.ma -> previz_scene":None,
+        },
+    }
+
+    resources_settings = asset_lib.resources_settings
+    dependency_types = asset_lib.dependency_types
+
+class crowd_previz(fx_previz):
+
+    entity_class = "davos.core.damtypes.DamAsset"
+
+    prefix = "cwp"
+    aliases = (prefix, "Crowd Previz",)
     assetType = prefix
 
     dependency_types = asset_lib.dependency_types

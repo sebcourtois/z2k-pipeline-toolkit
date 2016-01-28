@@ -88,7 +88,7 @@ class checkModule(object):
         self.DebugPrintFile = debugFile
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
-
+        self.warnColor = self.colorLum(  [1,0.7,0] , -0.0)
         # trickage pour le batch mode goret
         print "GUI=",self.GUI
         if self.GUI in [False,0]:
@@ -196,7 +196,8 @@ class checkModule(object):
     @jpZ.waiter
     def btn_CheckScene(self, controlN="", *args, **kwargs):
         boolResult=True
-
+        boolResultL = []
+        warnB = False
         # set progress bar
         self.pBar_upd(step=1, maxValue=7, e=True)
 
@@ -232,6 +233,7 @@ class checkModule(object):
         # --------
         if not result:
             boolResult = False
+            boolResultL.append(boolResult)
         self.pBar_upd(step= 1,)
 
 
@@ -264,6 +266,7 @@ class checkModule(object):
         # --------------------------
         if not result :
             boolResult = False
+            boolResultL.append(boolResult)
         self.pBar_upd(step= 1,)
 
 
@@ -303,6 +306,7 @@ class checkModule(object):
         # --------------------------
         if not result:
             boolResult = False
+            boolResultL.append(boolResult)
         self.pBar_upd(step= 1,)
 
 
@@ -328,18 +332,21 @@ class checkModule(object):
         # --------------------------
         # --------------------------
         if not result:
-            boolResult = False 
+            boolResult = False
+            boolResultL.append(boolResult)
+
         self.pBar_upd(step= 1,)
 
 
 
         # 8 checkDisconnectedNodes()
-        result,debugD = jpZ.UnusedNodeAnalyse(execptionTL = ["dagNode","defaultRenderUtilityList","partition","objectSet"], specificTL=[], mode="check")
+        result,debugD = jpZ.UnusedNodeAnalyse(execptionTL = ['containerBase', 'entity', "dagNode","defaultRenderUtilityList","partition","constraint","animCurve",],
+                                             specificTL=[], mode="check")
 
         # prints -------------------
         self.printF( "checkDisconnectedNodes()", st="t")
         # prints inside-------------------
-        self.printF(result, st="r")
+        self.printF("INFORMATION: {0}".format(result) , st="r")
         if len(debugD["errorL"]):
             self.printF("erroredL:")
             for i in debugD["errorL"] :
@@ -354,7 +361,9 @@ class checkModule(object):
         # --------------------------
         # --------------------------
         if not result:
-            boolResult = False 
+            boolResult = False
+            boolResultL.append(boolResult)
+            warnB = True
         self.pBar_upd(step= 1,)
               
 
@@ -373,13 +382,17 @@ class checkModule(object):
         # --------------------------
         if not result:
             boolResult = False
+            boolResultL.append(boolResult)
         self.pBar_upd(step= 1,)
 
 
-
+        # dirty handling of the case of check disconnected node, if more than 1 false then the
+        # warning mode is desactivated and so the color will be red!
+        if boolResultL.count(False) >1:
+            warnB = False
         # colors
         print "*btn_CheckScene:",boolResult
-        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], warning= warnB )
         
         return boolResult
         
@@ -505,7 +518,7 @@ class checkModule(object):
         return outColor
 
     # -------------------------- interface function --------------------------------
-    def colorBoolControl(self, controlL=[], boolL=[],labelL=[""],  *args, **kwargs):
+    def colorBoolControl(self, controlL=[], boolL=[],labelL=[""], warning=False,  *args, **kwargs):
         # color the controlL depending on the given Bool
         if self.GUI:
             
@@ -513,7 +526,10 @@ class checkModule(object):
                     if j in [True,1]:
                         cmds.button(i, e=1, backgroundColor=self.trueColor, ebg=self.ebg)
                     else:
-                        cmds.button(i, e=1, backgroundColor=self.falseColor, ebg=self.ebg)
+                        if warning:
+                            cmds.button(i, e=1, backgroundColor=self.warnColor, ebg=self.ebg)
+                        else:
+                            cmds.button(i, e=1, backgroundColor=self.falseColor, ebg=self.ebg)
 
 
     def pBar_upd (self, step=0,maxValue=10,e=False, *args, **kwargs):
@@ -553,6 +569,7 @@ class checkModule(object):
         cmds.columnLayout("layoutModule",columnOffset= ["both",0],adj=True,)
 
         cmds.image(image=self.upImg)
+        cmds.text("Check for chars and props ( previz and anim steps )")
         cmds.columnLayout("layoutImportModule",columnOffset= ["both",0],adj=True,)
         # self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= partial(self.btn_cleanAll),en=1)
 
