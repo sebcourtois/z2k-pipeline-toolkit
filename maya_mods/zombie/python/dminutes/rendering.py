@@ -298,6 +298,32 @@ def createBatchRender():
     print "#### Info: renderBatch.bat created: {}".format(os.path.normpath(renderBatch_trg))
 
 
+def toggleCameraAspectRatio(cameraPatternS = 'cam_shading_*:*'):
+    
+    shadingCamL = mc.ls(cameraPatternS,type='camera')
+    initAspectRatio= mc.getAttr(shadingCamL[0]+".aspectRatio")
+   
+    if initAspectRatio == 1:
+        aspectRatio = 1.85
+    else:
+        aspectRatio = 1
+
+    for each in shadingCamL:
+        mc.setAttr(each+".aspectRatio",aspectRatio)
+
+    #change render options
+    mc.setAttr("defaultResolution.pixelAspect",1)
+    mc.setAttr("defaultResolution.deviceAspectRatio",aspectRatio)
+    if aspectRatio != 1:
+        mc.setAttr("defaultResolution.width",1920)
+        mc.setAttr("defaultResolution.height",1920/aspectRatio)
+    else:
+        mc.setAttr("defaultResolution.width",1080)
+        mc.setAttr("defaultResolution.height",1080)
+
+    print "#### Info: 'toggleCameraAspectRatio' aspect ratio changed from {} to {} on following cameras: {}".format(initAspectRatio, aspectRatio, shadingCamL)
+
+
 def deleteAovs():
     toReturn =True
     infoS =""
@@ -324,7 +350,7 @@ def createAovs():
         myAOVs = aovs.AOVInterface()
         #create aovs, type = rgb
         #unUsedAovNameList = [ "dmn_lambert", "dmn_toon", "dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour"  ],"dmn_rimToon_na1_na2"
-        aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon"]
+        aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon","dmn_mask_transp"]
         for eachAovName in aovNameList: 
             if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
                 myAOVs.addAOV( eachAovName, aovType='rgb')

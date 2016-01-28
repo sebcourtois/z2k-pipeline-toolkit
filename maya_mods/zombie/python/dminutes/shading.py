@@ -1405,27 +1405,7 @@ def cleanlgtRig( verbose = False):
     return toReturn, errorL, infoL
 
 
-def fixMaterialInfo (shadingEngineL = []):
-    returnB = True
-    logL = []
-    fixedEhadingEngineL=[]
 
-    if not shadingEngineL:
-        shadingEngineL = mc.ls(type='shadingEngine')
-        if "initialParticleSE" in shadingEngineL: shadingEngineL.remove("initialParticleSE")
-        if "initialShadingGroup" in shadingEngineL: shadingEngineL.remove("initialShadingGroup")
-
-    for each in shadingEngineL:
-        if not mc.ls(mc.listConnections(each+".message",destination = True), type = "materialInfo"):
-            matInfoNodeS = mc.shadingNode("materialInfo", asShader=True, name="sho_"+each.replace("sgr_","")+"_each")
-            mc.connectAttr(each+".message",matInfoNodeS+".shadingGroup",force=True)
-            fixedEhadingEngineL.append(each)
-
-    logMessage ="#### {:>7}: 'fixMaterialInfo' regenerated materialInfo for {} SE nodes: {}".format("Info",len(fixedEhadingEngineL),fixedEhadingEngineL)
-    print logMessage
-    logL.append(logMessage)
-
-    return [returnB, logL]
 
 
 

@@ -3,4 +3,4 @@ reload(modeling)
 
 
 
-modeling.combineGeo(GUI = True)
+modeling.combineGeoGroup(GUI = True)

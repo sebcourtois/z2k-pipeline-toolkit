@@ -68,6 +68,10 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('dmn_mask04', label='dmn_mask04')
         self.addControl('dmn_mask05', label='dmn_mask05')
         self.addControl('dmn_mask06', label='dmn_mask06')
+        self.addControl('dmn_mask07', label='dmn_mask07')
+        self.addControl('dmn_mask08', label='dmn_mask08')
+        self.addControl('dmn_mask09', label='dmn_mask09')
+
         self.endLayout()
 
         self.beginLayout('Advanced', collapse=True)
