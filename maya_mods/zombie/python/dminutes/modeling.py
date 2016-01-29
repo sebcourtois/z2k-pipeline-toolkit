@@ -874,15 +874,18 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
             if len(shaderAssignationD[each])>1:
                 combinedObjL.extend(shaderAssignationD[each]) 
                 mergedObjectName = cmds.polyUnite(shaderAssignationD[each], ch=False, mergeUVSets = True, name = finalObjectName )[0]
+                print mergedObjectName
                 groupName = path.split("|")[-1]
                 parentName = path.split(groupName)[0].rstrip("|")
                 #parent back the merged object under the initial group 
                 if not cmds.ls(path):
-                    newGroupName = cmds.group(mergedObjectName, name= groupName, parent = parentName)
-                    mergedObjectName = newGroupName+"|"+mergedObjectShortName
+                    if parentName =='':
+                        newGroupName = cmds.group(mergedObjectName, name= groupName)
+                    else:
+                        newGroupName = cmds.group(mergedObjectName, name= groupName, parent = parentName)
                 else:
                     mergedObjectName = cmds.parent(mergedObjectName, path )[0]
-                if autoRenameI ==0 : mergedObjectName = cmds.rename(mergedObjectName,mergedObjectName.rstrip("Shape"))
+                if autoRenameI ==0 : mergedObjectName = cmds.rename(mergedObjectName,mergedObjectName.split("Shape")[0])
                 elif autoRenameI == 1 : mergedObjectName = cmds.rename(mergedObjectName,groupName.replace("grp_","geo_")+"_merged00" )
                 resultObjL.append(mergedObjectName)
 
