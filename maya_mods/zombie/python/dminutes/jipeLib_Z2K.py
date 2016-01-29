@@ -1093,13 +1093,13 @@ def cleanUnusedInfluence(inObjL="",*args,**kwargs):
             # print tab,obj,skinned,skinClusterL,noSkinL
             if skinned in [True,1]:
                 for skinCluster in (skinClusterL):
-                    print tab,skinCluster
+                    # print tab,skinCluster
 
                     # get def list all and the unsused w
                     defL = cmds.skinCluster(skinCluster,q=1,  inf=True)
                     wDefL = cmds.skinCluster(skinCluster,q=1,  wi=True)
                     toDeleteL = list(set(defL)-set(wDefL))
-                    print tab,"toDeleteL=", toDeleteL
+                    # print tab,"toDeleteL=", toDeleteL
 
                     # turn of the skinNode for faster exec
                     baseSkinNState = cmds.getAttr (skinCluster +".nodeState")
@@ -1108,7 +1108,7 @@ def cleanUnusedInfluence(inObjL="",*args,**kwargs):
                     # removing loop
                     if len(toDeleteL)>0:
                         for i in toDeleteL:
-                            print tab,"**",skinCluster,i
+                            # print tab,"**",skinCluster,i
                             try:
                                 u=cmds.skinCluster(skinCluster,e=True,  ri=i, )
                             except Exception,err:
@@ -1117,7 +1117,7 @@ def cleanUnusedInfluence(inObjL="",*args,**kwargs):
                         
                         outCount +=1
                         deletedDict[skinCluster]= toDeleteL
-                        print outCount,len(deletedDict)
+                        # print outCount,len(deletedDict)
                     # turn on skinNode    
                     cmds.setAttr (skinCluster+".nodeState", 0)
 
@@ -1459,6 +1459,10 @@ def get_BS_TargetObjD(BS_Node="",*args, **kwargs):
 
 
 
+
+
+# apply special settings CHR / fixe TK rigs
+
 def chr_fixTKFacialRig_EyeBrow_Middle (*args, **kwargs):
     """ Description: Fix le rig facial en ajoutant un blend param sur le ctr "EyeBrow_Middle"
                     Adouci son comportement de following des eyeBrows
@@ -1576,4 +1580,83 @@ def chr_delete_BS_active_group (*args, **kwargs):
     except Exception,err:
         print err
         debugL.append("    nothing to delete")
+    return True,debugL
+
+
+def chr_rename_Teeth_BS_attribs(*args, **kwargs):
+    # reset all attr of selected controls
+
+    debugL = []
+    toRenameUpL= ["Top_Teeth_Global.upperteeth_gum", "Top_Teeth_Global.upperteeth_high", "Top_Teeth_Global.upperteeth_round","Top_Teeth_Global.uppertteeth_assymetry","Top_Teeth_Global.upperteeth_squeez"]
+    toRenameDnL= ["Bottom_Teeth_Global.lowerteeth_gum", "Bottom_Teeth_Global.lowerteeth_high", "Bottom_Teeth_Global.lowerteeth_round","Bottom_Teeth_Global.lowerteeth_assymetry","Bottom_Teeth_Global.lowerteeth_squeez",]
+    allRL = toRenameUpL + toRenameDnL
+    print allRL
+
+
+    # reorder attr a l arrache qui foiraient de TK
+    if cmds.objExists("Bottom_Teeth_Global.lowerteeth_assymetry"):
+        cmds.deleteAttr("Bottom_Teeth_Global.lowerteeth_assymetry")
+        cmds.undo()
+
+    for j in allRL:
+        if  cmds.objExists(j):
+            print "renaming",j
+            newName = j.replace("uppertteeth","upperteeth").replace("lower","").replace("upper","")
+            print j,newName
+            cmds.renameAttr(j ,newName.rsplit(".")[-1]  )
+            debugL.append("{0} has been renamed".format(j))
+
+    return True,debugL
+
+def getTypeInHierarchy(cursel=[],theType="mesh",*args,**kwargs):
+    listOut = []
+    cursel = Ltest(cursel)
+    if not len(cursel)>0 : 
+        cursel= cmds.ls(os=True, flatten=True, allPaths=True)
+    # select mesh in hierarchy
+    if theType in ["mesh"]:
+        cursel = cmds.listRelatives(cursel, allDescendents=True, path=True)
+        listOut = [a for a in cursel if cmds.listRelatives(a,c=1, type=theType, path=True)]
+    else:
+        listOut = cmds.listRelatives(cursel, allDescendents=True, path=True,type=theType,)
+        
+
+    return listOut
+
+def chr_TongueFix(*args, **kwargs):
+    print "chr_TongueFix()"
+    # fix le rig de la langue en supprimant toute les contrainte et en refaisant la hierarchy
+    debugL = []
+    if cmds.objExists("Tongue_3_Root_to_Tongue_2_Main_Ctrl_prCns"):
+        allCstL = getTypeInHierarchy(cursel=["TK_Tongue_System"], theType="constraint")
+        print len(allCstL),allCstL
+        
+        # delete cst
+        for cst in allCstL:
+            # print "cst=",cst
+            if not "Tongue_0_Root"  in cst:
+
+                if cmds.objExists(cst):
+                    
+
+                    # get cst conn
+                    if "_prCns" in cst:
+
+                        theParent = cmds.listConnections( cst+'.target[0].targetParentMatrix', d=False, s=True )[0]
+
+                        theChild = cmds.listConnections( cst+'.constraintTranslate.constraintTranslateX', d=True, s=False )[0]
+                        print theChild,"->",theParent
+
+                    try:
+                        # delete cst
+                        cmds.delete(cst)
+                        # re parent has it has to be
+                        cmds.parent (theChild,theParent)  
+                    except Exception,err:
+                        print "err",err
+
+        debugL.append("Rig_replaced, all cst deleted") 
+    else:
+        debugL.append("Nothing Done")
+        
     return True,debugL

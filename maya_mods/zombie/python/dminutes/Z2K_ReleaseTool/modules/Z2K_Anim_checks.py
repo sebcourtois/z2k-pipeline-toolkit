@@ -542,7 +542,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=5, e=True)
+        self.pBar_upd(step=1, maxValue=7, e=True)
 
 
         # 1 connectVisibility ()
@@ -606,6 +606,33 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,) 
         
+        # 6 ----- chr_delete_BS_active_group ()
+        result,debugL = jpZ.chr_rename_Teeth_BS_attribs()
+        # prints -------------------
+        self.printF("chr_rename_Teeth_BS_attribs()", st="t")
+        self.printF(result, st="r")
+        for debug in debugL:
+            self.printF(debug)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+        
+        # 7 ----- chr_delete_BS_active_group ()
+        result,debugL = jpZ.chr_TongueFix()
+        # prints -------------------
+        self.printF("chr_TongueFix()", st="t")
+        self.printF(result, st="r")
+        for debug in debugL:
+            self.printF(debug)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
 
         # colors
         print "*btn_specialSettings:",boolResult

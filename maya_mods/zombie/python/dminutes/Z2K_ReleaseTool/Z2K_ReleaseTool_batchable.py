@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ########################################################
 # Name    : Z2K_ReleaseTool
-# Version : v110
+# Version : v120
 # Description : Handle the release process of all assets.Create previz maya file in .mb with some cleaning script called inside
 # Comment : BASE SCRIPT OUT OF Z2K in v002
 # Author : Jean-Philippe Descoins
@@ -150,7 +150,7 @@ class Z2K_ReleaseTool (object):
 
 
 
-        elif  self.assetCat in ["prp","vhl","c2d","env","fxp"]:
+        elif  self.assetCat in ["prp","vhl","c2d","env","fxp",]:
             print "It' is a PROP test"
             if self.destinationAssetType in ["modeling_ref"]:
                 print tab, "No modeling test, no release for modeling_scene"
