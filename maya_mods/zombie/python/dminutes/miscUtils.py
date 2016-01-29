@@ -5,7 +5,7 @@ import re
 import subprocess
 import datetime
 
-def getAllTransfomMeshes(inParent = "*"):
+def getAllTransfomMeshes(inParent = "*", inType = "mesh"):
     """
     list all the transforms meshes , under de given 'inParent', 
     by default '*' means that any unreferenced transform mesh in the scene will be listed
@@ -20,7 +20,7 @@ def getAllTransfomMeshes(inParent = "*"):
     else:
         oParent = "*"
         
-    allGeoShapeList = mc.ls(mc.listRelatives(oParent, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
+    allGeoShapeList = mc.ls(mc.listRelatives(oParent, allDescendents = True, fullPath = True, type = inType), noIntermediate = True, l=True)
 
     geoShapeList =[]
     instancedGeoShapeList =[]
@@ -113,7 +113,7 @@ def deleteUnknownNodes():
             mentalRayDeletedNodeList.append(each)
             #print "#### {:>7}: '{}' Mental Ray node deleted".format("Info", each)
         except:
-            print "#### {:>7}: '{}' Mental Ray node could not be deleted".format("Warning", each)
+            print "#### {:>7}: 'deleteUnknownNodes' {} Mental Ray node could not be deleted".format("Warning", each)
 
     for each in turtleNodeList:
         try:
@@ -122,19 +122,20 @@ def deleteUnknownNodes():
             turtleDeletedNodeList.append(each)
             #print "#### {:>7}: '{}' Turtle node deleted".format("Info", each)
         except:
-            print "#### {:>7}: '{}' Turtle node could not be deleted".format("Warning", each)
+            print "#### {:>7}: 'deleteUnknownNodes' {} Turtle node could not be deleted".format("Warning", each)
 
     unknownNodes = mc.ls(type = "unknown")
     if unknownNodes:
-        print "#### {:>7}: '{}' unknown node has been found in the scene".format("Warning", len(unknownNodes))
-        print "#### {:>7}: unknown node list:'{}'".format("Warning", unknownNodes)
+        print "#### {:>7}: 'deleteUnknownNodes'  {} unknown node has been found in the scene: {}".format("Warning", len(unknownNodes), unknownNodes)
 
     if mentalRayDeletedNodeList:
-        print "#### {:>7}: '{}' Mental Ray node(s) deteled: '{}'".format("Warning", len(mentalRayDeletedNodeList), mentalRayDeletedNodeList)
+        print "#### {:>7}: 'deleteUnknownNodes'  {} Mental Ray node(s) deteled: '{}'".format("Info", len(mentalRayDeletedNodeList), mentalRayDeletedNodeList)
 
     if turtleDeletedNodeList:
-        print "#### {:>7}: '{}' Turtle node(s) deteled: '{}".format("Warning", len(turtleDeletedNodeList), turtleDeletedNodeList)
+        print "#### {:>7}: 'deleteUnknownNodes'  {} Turtle node(s) deteled: '{}".format("Info", len(turtleDeletedNodeList), turtleDeletedNodeList)
 
+    if not turtleDeletedNodeList and not turtleDeletedNodeList:
+        print "#### {:>7}: 'deleteUnknownNodes'  no Turtle or Mental Ray node deteled".format("Info")
 
     try:
         mc.unloadPlugin("Turtle",force = True)
@@ -217,7 +218,7 @@ def getShape(objectList =  [], failIfNoShape = False):
 
             
 def deleteAllColorSet(inParent = "*"):
-    sTransList = getAllTransfomMeshes(inParent = inParent)
+    sTransList, sSnstanceList = getAllTransfomMeshes(inParent = inParent)
     sMeshList = mc.ls(sTransList, type='mesh')
     nbOfDeleteDone=0
     for each in sTransList:

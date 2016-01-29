@@ -465,13 +465,13 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
             print "#### warning: 'meshShapeNameConform': '"+each+"' has a wrong shape name: '"+myShape.split("|")[-1]+"' --> should be renamed as: --> '"+myShapeCorrectName.split("|")[-1]+"'"
             shapesToFix.append(each)
     if renamedNumber != 0:
-        if forceInfoOff is False: print "#### {:>7}:'meshShapeNameConform': {} shape(s) fixed".format("Info",renamedNumber)    
+        if forceInfoOff is False: print "#### {:>7}: 'meshShapeNameConform': {} shape(s) fixed".format("Info",renamedNumber)    
         return None
     elif shapesToFix: 
-        if forceInfoOff is False: print "#### {:>7}:'meshShapeNameConform': {} shape(s) to be fixed".format("Info",shapesToFix)
+        if forceInfoOff is False: print "#### {:>7}: 'meshShapeNameConform': {} shape(s) to be fixed".format("Info",shapesToFix)
         return shapesToFix
     elif checkAllScene == True:
-        if forceInfoOff is False: print "#### {:>7}:'meshShapeNameConform': all meshes shapes names are correct".format("Info",shapesToFix)
+        if forceInfoOff is False: print "#### {:>7}: 'meshShapeNameConform': all meshes shapes names are correct".format("Info",shapesToFix)
         return None
     else:
         return None
@@ -529,7 +529,7 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
             newDigit = string.zfill(str(int(digit)+i), len(digit))
             i = i+1
             if i>20:
-                print "#### {:>7}:'renameMeshAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
+                print "#### {:>7}: 'renameMeshAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
                 break
         cmds.rename(myMesh,newShortName+newDigit)
         print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+string.rstrip(myMesh,digit)+newDigit
@@ -542,7 +542,7 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
             digit = str(int(digit)+1)
             i = i+1
             if i>20:
-                print "#### {:>7}:'renameMeshAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
+                print "#### {:>7}: 'renameMeshAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
                 break
         myMeshNew = [cmds.rename(myMesh,shortName+digit)]
         print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+myMesh+digit
@@ -568,13 +568,13 @@ def makeAllMeshesUnique(inParent = "*"):
             multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
             i = i+1
             if i>20:
-                print "#### {:>7}:'makeAllMeshesUnique' while loop has reached the security limit, program has been stopped".format("Error")
+                print "#### {:>7}: 'makeAllMeshesUnique' while loop has reached the security limit, program has been stopped".format("Error")
                 break
     else:
         if inParent == "*":
-            print "#### {:>7}:'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name".format("Info")
+            print "#### {:>7}: 'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name".format("Info")
         else :
-            print "#### {:>7}:'makeAllMeshesUnique' no multiple mesh found under '{}' all meshes have unique short name ".format("Info",inParent)
+            print "#### {:>7}: 'makeAllMeshesUnique' no multiple mesh found under '{}' all meshes have unique short name ".format("Info",inParent)
 
 
 def geoGroupDeleteHistory():
@@ -594,11 +594,11 @@ def geoGroupDeleteHistory():
     for eachGeoShape in geoShapeList:
         if cmds.getAttr(eachGeoShape+".intermediateObject") == True:
             if  len(cmds.listHistory (eachGeoShape, lv=1)+ cmds.listHistory (eachGeoShape,future = True, lv=1))>2:
-                print "#### warning :'geoGroupDeleteHistory': this intermediate mesh shape still has an history and cannot be deleted : "+eachGeoShape
+                print "#### warning : 'geoGroupDeleteHistory': this intermediate mesh shape still has an history and cannot be deleted : "+eachGeoShape
             else:
                 cmds.delete(eachGeoShape)
                 deletedShapeList.append(eachGeoShape)
-            print "#### info :'geoGroupDeleteHistory': deteted "+str(len(deletedShapeList))+" intermediate(s) mesh shape : "
+            print "#### info : 'geoGroupDeleteHistory': deteted "+str(len(deletedShapeList))+" intermediate(s) mesh shape : "
 
 
 def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
@@ -874,15 +874,18 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
             if len(shaderAssignationD[each])>1:
                 combinedObjL.extend(shaderAssignationD[each]) 
                 mergedObjectName = cmds.polyUnite(shaderAssignationD[each], ch=False, mergeUVSets = True, name = finalObjectName )[0]
+                print mergedObjectName
                 groupName = path.split("|")[-1]
                 parentName = path.split(groupName)[0].rstrip("|")
                 #parent back the merged object under the initial group 
                 if not cmds.ls(path):
-                    newGroupName = cmds.group(mergedObjectName, name= groupName, parent = parentName)
-                    mergedObjectName = newGroupName+"|"+mergedObjectShortName
+                    if parentName =='':
+                        newGroupName = cmds.group(mergedObjectName, name= groupName)
+                    else:
+                        newGroupName = cmds.group(mergedObjectName, name= groupName, parent = parentName)
                 else:
                     mergedObjectName = cmds.parent(mergedObjectName, path )[0]
-                if autoRenameI ==0 : mergedObjectName = cmds.rename(mergedObjectName,mergedObjectName.rstrip("Shape"))
+                if autoRenameI ==0 : mergedObjectName = cmds.rename(mergedObjectName,mergedObjectName.split("Shape")[0])
                 elif autoRenameI == 1 : mergedObjectName = cmds.rename(mergedObjectName,groupName.replace("grp_","geo_")+"_merged00" )
                 resultObjL.append(mergedObjectName)
 
@@ -922,6 +925,43 @@ def combineAllGroups(inParent = "asset|grp_geo", GUI = True, autoRenameI= 1, com
 
     return [resultB, logL] 
 
+
+def convertObjToInstance(transformL=[], GUI = True):
+    logL = []
+    resultB = True
+
+    transformL = cmds.ls(transformL,l = True)
+    print "transformL-1",transformL
+
+    #check if input, is a transform list 
+    noTransformL = list(set(transformL)-set(cmds.ls(transformL,type = "transform",l = True)))
+    if noTransformL:
+            logMessage = "#### {:>7}: 'convertObjToInstance' {} objects are not transform type : '{}'".format("Error", len(noTransformL), noTransformL)
+            if GUI == True : raise ValueError (logMessage)
+            resultB = False
+            logL.append(logMessage)
+    print "transformL-2",transformL
+    #exclude instances from the objects to process
+    ransMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes("*",inType = "shape")
+    toSkipL = list(set(transformL)&set(instanceTransformL))
+    if toSkipL:
+        logMessage = "#### {:>7}: 'convertObjToInstance' {} objects are instances already, they will be skipped: {}".format("Info",len(toSkipL),toSkipL)
+        print logMessage
+        logL.append(logMessage)
+        transformL = list(set(transformL)-set(toSkipL))
+
+    print "transformL",transformL
+    masterS = transformL[0]
+    toInstaciateL = transformL.remove(masterS)
+    print "toInstaciateL",toInstaciateL
+    print "masterS",masterS
+    for each in toInstaciateL:
+        eachParent = each.split(each.split("|")[-1])[0].rstrip("|")
+        print "eachParent",eachParent
+        #resultInstance = mc.instance( masterS , leaf=True) 
+
+# (10:39) sebastienc: mtx = mc.xform( sSourceXfm, q = True, ws = True, matrix = True )
+# (10:40) sebastienc: mc.xform( sTargetXfm, e = True, ws = True, matrix = mtx )
 
 
 # -------------------------- RIG SUPPLEMENT -------------------------------------------------------------------
@@ -1097,5 +1137,6 @@ def rigProps(inRoot):
     newLayer = pc.createDisplayLayer(name=CTRLS_LAYERNAME, noRecurse=True) #///////// crado use of pc.select()
 
     pc.select(clear=True)
+
 
 
