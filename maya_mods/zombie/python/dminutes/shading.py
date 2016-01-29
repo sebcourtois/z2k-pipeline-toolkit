@@ -7,6 +7,7 @@ import string
 import subprocess
 import miscUtils
 import modeling
+import shutil
 
 
 def connectedToSeveralSG(myNode = ""):
@@ -1125,9 +1126,9 @@ def printTextureFileName (fileNodeList = "all"):
         fileNodeList = mc.ls(selection = True, type ="file")
 
     for each in fileNodeList:
-       mapFilePath = os.path.normpath(miscUtils.normPath(mc.getAttr(each+".fileTextureName")))
-       mapFilePathExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePath))) 
-       print "#### Info: '{0:^30}' Image Name: '{1}'".format(each,mapFilePath) 
+        mapFilePath = os.path.normpath(miscUtils.normPath(mc.getAttr(each+".fileTextureName")))
+        mapFilePathExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(mapFilePath))) 
+        print "#### Info: '{0:^30}' Image Name: '{1}'".format(each,mapFilePath) 
 
 
 
