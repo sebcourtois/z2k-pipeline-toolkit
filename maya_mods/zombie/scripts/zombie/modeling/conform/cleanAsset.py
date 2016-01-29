@@ -1,5 +1,5 @@
-from dminutes import assetconformation
-reload(assetconformation)
+from dminutes import cleanAsset
+reload(cleanAsset)
 
 
-assetconformation.cleanAsset(GUI=True)
+cleanAsset.cleanAsset(GUI=True)
