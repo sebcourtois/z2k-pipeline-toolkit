@@ -306,7 +306,7 @@ class checkModule(object):
         # --------------------------
         if not result:
             boolResult = False
-            boolResultL.append(boolResult)
+            warnB = True
         self.pBar_upd(step= 1,)
 
 
@@ -333,8 +333,7 @@ class checkModule(object):
         # --------------------------
         if not result:
             boolResult = False
-            boolResultL.append(boolResult)
-
+            warnB = True
         self.pBar_upd(step= 1,)
 
 
@@ -362,7 +361,6 @@ class checkModule(object):
         # --------------------------
         if not result:
             boolResult = False
-            boolResultL.append(boolResult)
             warnB = True
         self.pBar_upd(step= 1,)
               
@@ -388,7 +386,7 @@ class checkModule(object):
 
         # dirty handling of the case of check disconnected node, if more than 1 false then the
         # warning mode is desactivated and so the color will be red!
-        if boolResultL.count(False) >1:
+        if boolResultL.count(False) >0:
             warnB = False
         # colors
         print "*btn_CheckScene:",boolResult
