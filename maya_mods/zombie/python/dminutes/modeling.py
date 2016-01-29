@@ -927,11 +927,12 @@ def combineAllGroups(inParent = "asset|grp_geo", GUI = True, autoRenameI= 1, com
 
 
 def convertObjToInstance(transformL=[], GUI = True):
+    #exemple of transform naming selection
+    #mc.listRelatives(mc.ls("geo_femmeFatyVisiteurA*",type='mesh'),parent =True, fullPath = True, type = "transform")
     logL = []
     resultB = True
 
     transformL = cmds.ls(transformL,l = True)
-    print "transformL-1",transformL
 
     #check if input, is a transform list 
     noTransformL = list(set(transformL)-set(cmds.ls(transformL,type = "transform",l = True)))
@@ -940,7 +941,6 @@ def convertObjToInstance(transformL=[], GUI = True):
             if GUI == True : raise ValueError (logMessage)
             resultB = False
             logL.append(logMessage)
-    print "transformL-2",transformL
     #exclude instances from the objects to process
     ransMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes("*",inType = "shape")
     toSkipL = list(set(transformL)&set(instanceTransformL))
@@ -950,18 +950,23 @@ def convertObjToInstance(transformL=[], GUI = True):
         logL.append(logMessage)
         transformL = list(set(transformL)-set(toSkipL))
 
-    print "transformL",transformL
     masterS = transformL[0]
-    toInstaciateL = transformL.remove(masterS)
-    print "toInstaciateL",toInstaciateL
-    print "masterS",masterS
-    for each in toInstaciateL:
-        eachParent = each.split(each.split("|")[-1])[0].rstrip("|")
-        print "eachParent",eachParent
-        #resultInstance = mc.instance( masterS , leaf=True) 
+    transformL.remove(masterS)
+    toReplace = transformL[1:]
 
-# (10:39) sebastienc: mtx = mc.xform( sSourceXfm, q = True, ws = True, matrix = True )
-# (10:40) sebastienc: mc.xform( sTargetXfm, e = True, ws = True, matrix = mtx )
+    for each in toReplace:
+        mtx = cmds.xform( each, q = True, ws = True, matrix = True )
+        eachParent = each.split(each.split("|")[-1])[0].rstrip("|")
+        resultInstance = cmds.instance( masterS , leaf=True)
+        cmds.delete(each)
+        resultParentedInstance= cmds.parent(resultInstance, eachParent )[0]
+        cmds.xform( resultParentedInstance,  ws = True, matrix = mtx )
+
+    logMessage = "#### {:>7}: 'convertObjToInstance' {} objects have been replaced with instance of '{}' master : {}".format("Info",len(transformL),masterS,transformL)
+    print logMessage
+    logL.append(logMessage)
+    
+    return [resultB, logL]
 
 
 # -------------------------- RIG SUPPLEMENT -------------------------------------------------------------------
