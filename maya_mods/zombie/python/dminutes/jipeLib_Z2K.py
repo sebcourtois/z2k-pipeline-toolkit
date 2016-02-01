@@ -282,7 +282,7 @@ def waiter (func,*args, **kwargs):
         cmds.waitCursor( state=False )
         print "...wait"
         if not result and self.GUI:
-            print "try GUI ANYWAY MOTHER fOCKER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            print "try GUI ANYWAY "
             cmds.frameLayout(self.BDebugBoardF,e=1,cll=True,cl=0)
 
         return result
@@ -549,7 +549,7 @@ def NodeTypeScanner( execptionTL = [], exceptDerived= True, specificTL=[], speci
     toReturnL = list(set(toReturnL) )
     return toReturnL
 
-# wip to make faster
+
 def UnusedNodeAnalyse( execptionTL = ['containerBase', 'entity'], specificTL= [] , mode = "delete", verbose=True, exculdeNameFilterL=["Arnold"], *args, **kwargs):
     """ Description: Test if nodes have connections based on type and excluded_type in all the scene and either delete/select/print it.
                     mode = "check" /"delete" / "select" / "print"
@@ -948,7 +948,25 @@ def isSkinned(inObjL=[], verbose=False, printOut = False,*args,**kwargs):
 
         return [toReturnB,outSkinClusterL,noSkinL]
 
+def isHiddenObjInSet(theSet="set_meshCache",*args, **kwargs):
+    """ Description: Check s'il y a des obj hidden dans le set
+        Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
+        Dependencies : cmds - 
+    """
+    print "isHiddenObjInSet()"
+    toReturnB = True
+    debugL = []
+    vL=[]
+    setContentL = getSetContent(inSetL=[theSet])
+    for i in setContentL:
+        v=cmds.getAttr(i+"."+"v")
+        if not v:
+            debugL.append(i)
+            vL.append(v)
+    if len(debugL):
+        toReturnB = False
 
+    return toReturnB,debugL
 
 # ------------------------ cleaning Function -----------------
 # object cleaning
@@ -1459,9 +1477,29 @@ def get_BS_TargetObjD(BS_Node="",*args, **kwargs):
 
 
 
+def getTypeInHierarchy(cursel=[],theType="mesh",*args,**kwargs):
+    listOut = []
+    cursel = Ltest(cursel)
+    if not len(cursel)>0 : 
+        cursel= cmds.ls(os=True, flatten=True, allPaths=True)
+    # select mesh in hierarchy
+    if theType in ["mesh"]:
+        cursel = cmds.listRelatives(cursel, allDescendents=True, path=True)
+        listOut = [a for a in cursel if cmds.listRelatives(a,c=1, type=theType, path=True)]
+    else:
+        listOut = cmds.listRelatives(cursel, allDescendents=True, path=True,type=theType,)
+        
+
+    return listOut
 
 
+
+#---------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------
 # apply special settings CHR / fixe TK rigs
+#---------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------
+
 
 def chr_fixTKFacialRig_EyeBrow_Middle (*args, **kwargs):
     """ Description: Fix le rig facial en ajoutant un blend param sur le ctr "EyeBrow_Middle"
@@ -1522,23 +1560,25 @@ def chr_fixTKFacialRig_EyeBrow_Middle (*args, **kwargs):
     return toReturnB,debugL
 
 def chr_UnlockForgottenSRT():
-    """ Description: Unlock the forgotten srt lock on ToonKit rig, only if all Objects of the list exists in the scene
+    """ Description: Unlock the forgotten srt lock on ToonKit rig, only if all Objects of the list exists in the scene and some lock also!
         Return : [BOOL,LIST]
         Dependencies : cmds - 
     """
     
     faceL = ['Right_LowerEye_2_Ctrl', 'Noze_Main_Ctrl', 'Right_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_EyeBrow_in_1', 'Right_Eye', 'Left_nostril', 'Right_Eyelid_In', 'Left_Brow_ridge_out', 'Left_EyeBrow_out', 'Right_EyeBrow_out_1', 'Left_EyeBrow_Global', 'Left_LowerEye_0_Ctrl', 'Left_Brow_ridge_out_1', 'Right_UpperEye_1_Ctrl', 'Right_LowerEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Left_Eye', 'Left_Cheek', 'Left_EyeBrow_in', 'Left_CheekBone', 'EyeBrow_Middle', 'Right_nostril', 'Right_Brow_ridge_out_1', 'Left_EyeBrow_out_1', 'Left_Brow_ridge_in', 'Right_LowerEye_3_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_out', 'Left_LowerEye_3_Ctrl', 'Right_Brow_ridge_in', 'Right_CheekBone', 'Right_Cheek', 'Left_UpperEye_1_Ctrl', 'Right_Brow_ridge_in_1', 'Right_Ear_Bone_Ctrl', 'Right_UpperEye_3_Ctrl', 'Left_Eyelid_Out', 'Right_EyeBrow_in', 'Left_UpperLid_Main_Ctrl', 'Left_UpperEye_0_Ctrl', 'Left_LowerEye_2_Ctrl', 'Right_EyeBrow_in_1', 'Left_Eye_Bulge', 'Left_Eyelid_In', 'Right_Brow_ridge_out', 'Right_UpperLid_Main_Ctrl', 'Left_UpperEye_3_Ctrl', 'Left_Brow_ridge_in_1', 'Left_Ear_Bone_Ctrl', 'Right_Eyelid_Out', 'Right_LowerLid_Main_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_Base_Depressor1', 'Right_Bottom_Teeth', 'Right_UpperLip_1_Ctrl', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Right_LowerLip_1_Ctrl', 'Top_Teeth', 'Tongue_1', 'Tongue_0', 'Tongue_3', 'Tongue_2', 'Base_UpperLip_Main_Ctrl', 'LowerLip_Center', 'Right_Base_Depressor', 'Right_LowerLip_2_Ctrl', 'Left_Base_Levator1', 'Left_Base_Depressor', 'Jaw_Bone_Ctrl', 'Left_UpperLip_2_Ctrl', 'Right_Base_Levator1', 'Right_Base_Levator', 'Right_UpperLip_2_Ctrl', 'Top_Teeth_Global', 'Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator', 'Left_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Tongue_2', 'Right_Tongue_3', 'Bottom_Teeth', 'Right_Tongue_1', 'Left_LowerLip_1_Ctrl', 'Right_Top_Teeth', 'Bottom_Teeth_Global', 'UpperLip_Center', 'Left_UpperLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 'chin']
     bodyFunkyL=['Left_Leg_Extra_0', 'Left_Leg_Extra_1', 'Left_Leg_Extra_2', 'Left_Leg_Extra_3', 'Left_Leg_Extra_4', 'Left_Leg_Extra_5', 'Left_Leg_Extra_6', 'Spine_IK_Extra_6_Ctrl', 'Spine_IK_Extra_5_Ctrl', 'Spine_IK_Extra_4_Ctrl', 'Spine_IK_Extra_3_Ctrl', 'Spine_IK_Extra_2_Ctrl', 'Left_Arm_Extra_0', 'Left_Arm_Extra_1', 'Left_Arm_Extra_2', 'Left_Arm_Extra_3', 'Left_Arm_Extra_4', 'Left_Arm_Extra_5', 'Left_Arm_Extra_6', 'Right_Arm_Extra_0', 'Right_Arm_Extra_1', 'Right_Arm_Extra_2', 'Right_Arm_Extra_3', 'Right_Arm_Extra_4', 'Right_Arm_Extra_5', 'Right_Arm_Extra_6', 'Right_Leg_Extra_0', 'Right_Leg_Extra_1', 'Right_Leg_Extra_2', 'Right_Leg_Extra_3', 'Right_Leg_Extra_4', 'Right_Leg_Extra_5', 'Right_Leg_Extra_6', 'Spine_IK_Extra_1_Ctrl']
+    toLockL = ["Head_FK"]
     scLockL =faceL + bodyFunkyL
     canDo=True
     updatedL = []
+    attrL = ["sx","sy","sz"]
     for obj in scLockL:
         if not cmds.objExists(obj):
             canDo = False
             # print "BOOOM"
     if canDo:
         print "scene valid for scalingFreeman()"
-        attrL = ["sx","sy","sz"]
+        
         for i in sorted(scLockL):
             for attr in attrL:
                 lockState = cmds.getAttr(i + "." + attr,l=1)
@@ -1547,6 +1587,11 @@ def chr_UnlockForgottenSRT():
                     cmds.setAttr(i + "." + attr,l=0,k=1)
                     updatedL.append(i+"."+attr)
     
+    # add some locks finally
+    for obj in toLockL:
+        if cmds.objExists(obj):
+            for attr in attrL:
+                cmds.setAttr(obj + "." + attr,l=1,k=0)
     print "total updated=",len(updatedL)
 
     return True,updatedL
@@ -1608,55 +1653,178 @@ def chr_rename_Teeth_BS_attribs(*args, **kwargs):
 
     return True,debugL
 
-def getTypeInHierarchy(cursel=[],theType="mesh",*args,**kwargs):
-    listOut = []
-    cursel = Ltest(cursel)
-    if not len(cursel)>0 : 
-        cursel= cmds.ls(os=True, flatten=True, allPaths=True)
-    # select mesh in hierarchy
-    if theType in ["mesh"]:
-        cursel = cmds.listRelatives(cursel, allDescendents=True, path=True)
-        listOut = [a for a in cursel if cmds.listRelatives(a,c=1, type=theType, path=True)]
-    else:
-        listOut = cmds.listRelatives(cursel, allDescendents=True, path=True,type=theType,)
-        
 
-    return listOut
 
 def chr_TongueFix(*args, **kwargs):
     print "chr_TongueFix()"
-    # fix le rig de la langue en supprimant toute les contrainte et en refaisant la hierarchy
+    # WIP 
+    # fix le rig de la langue en supprimant toute les contraintes et en refaisant la hierarchy avec des parentages + add bridge
+    # et refait la contrainte pour lier au reste proprement, afin d'enlever les problemes de scale.
     debugL = []
-    if cmds.objExists("Tongue_3_Root_to_Tongue_2_Main_Ctrl_prCns"):
+    bridgeName = "Tongue_Bridge"
+    if not cmds.objExists(bridgeName):
         allCstL = getTypeInHierarchy(cursel=["TK_Tongue_System"], theType="constraint")
         print len(allCstL),allCstL
         
         # delete cst
         for cst in allCstL:
-            # print "cst=",cst
-            if not "Tongue_0_Root"  in cst:
-
+            print "cst=",cst
+            
+            if not "Tongue_0_Root" in cst:
                 if cmds.objExists(cst):
                     
 
-                    # get cst conn
                     if "_prCns" in cst:
-
+                        # get cst conn
                         theParent = cmds.listConnections( cst+'.target[0].targetParentMatrix', d=False, s=True )[0]
-
                         theChild = cmds.listConnections( cst+'.constraintTranslate.constraintTranslateX', d=True, s=False )[0]
-                        print theChild,"->",theParent
+                        print theChild,"c->p",theParent
 
-                    try:
-                        # delete cst
-                        cmds.delete(cst)
                         # re parent has it has to be
-                        cmds.parent (theChild,theParent)  
-                    except Exception,err:
-                        print "err",err
+                        cmds.parent (theChild,theParent)       
+        # delete cst
+        for i in allCstL:
+            cmds.delete(i)
+                   
+                
+        # create bridge group parent it in the hierarchy and cst
+        print "BRIDGING:"
+        bridgeGp = cmds.group(name= bridgeName,world=1,em=1)
+        cmds.parent (bridgeGp,"TK_Tongue_System")
+        # matchByXformMatrix(cursel=["Jaw_Bone_Ctrl",bridgeGp], mode=0)
+        cmds.parentConstraint("Jaw_Bone_Ctrl",bridgeGp, mo=0)
+        cmds.scaleConstraint("Jaw_Bone_Ctrl",bridgeGp, )
+        cmds.parent ("TK_Tongue_0_Root",bridgeGp)
+
 
         debugL.append("Rig_replaced, all cst deleted") 
     else:
         debugL.append("Nothing Done")
         
     return True,debugL
+
+
+
+
+
+def chr_CstScaleandOptimFix(bridgeName = "Dn_Teeth_Bridge", RootPrefixeToCut = "TK_",rootL = [],*args, **kwargs):
+    print "chr_CstScaleandOptimFix()"
+    """ Description: fix le rig des Teeth up down, nozex3,earsx2,chin, et assimilé en supprimant toute les contraintes et en refaisant la hierarchy avec des parentages + add bridge
+                      et refait la contrainte pour lier au reste proprement, afin d'enlever les problemes de scale.
+    
+        Return : [BOOL,LIST]
+        Dependencies : cmds - 
+    """ 
+    print "chr_CstScaleandOptimFix()"
+    
+    canDo=True
+
+    debugL = [bridgeName.split("_Bridge",1)[0] + ":"]
+    for k in rootL:
+        if not cmds.objExists(k):
+            canDo = False
+
+
+    if canDo:
+        
+        theRootCstParent = ""
+
+        if not cmds.objExists(bridgeName):
+            theRootFilter = rootL[0].replace(RootPrefixeToCut,"")
+            allCstL = getTypeInHierarchy(cursel=rootL, theType="constraint")
+            print len(allCstL),allCstL
+            
+            # delete cst
+            for cst in allCstL:
+                print "cst=",cst
+                
+                print "    ",theRootFilter
+                if "_prCns" in cst:
+                    if cmds.objExists(cst):
+                        if not theRootFilter in cst:
+                            # get cst conn
+                            theParent = cmds.listConnections( cst+'.target[0].targetParentMatrix', d=False, s=True )[0]
+                            theChild = cmds.listConnections( cst+'.constraintTranslate.constraintTranslateX', d=True, s=False )[0]
+                            print theChild,"c->p",theParent
+
+                            # re parent has it has to be
+                            cmds.parent (theChild,theParent)   
+                        else:
+                            theRootCstParent = cmds.listConnections( cst+'.target[0].targetParentMatrix', d=False, s=True )[0]
+                    
+                            
+            # delete cst
+            print "Deleting CST"
+            for i in allCstL:
+                cmds.delete(i)
+                       
+                    
+            # create bridge group parent it in the hierarchy and cst
+            print "Bridging"
+            bridgeGp = cmds.group(name= bridgeName,world=1,em=1)
+            cmds.parent (bridgeGp, cmds.listRelatives(rootL[0], p=1 )[0]  )
+            # matchByXformMatrix(cursel=["Jaw_Bone_Ctrl",bridgeGp], mode =0)
+            cmds.parentConstraint( theRootCstParent, bridgeGp, mo=0)
+            cmds.scaleConstraint( theRootCstParent, bridgeGp, )
+            cmds.parent (rootL[0],bridgeGp)
+
+
+            debugL.append("    -Rig_replaced, all cst deleted") 
+        else:
+            debugL.append("    -Nothing Done")
+    else:
+        debugL.append ( "    -Nothing Done, the scene doesn't match")
+
+
+    return True , debugL
+
+
+def chr_TeethFix(*args, **kwargs):
+    """ Description: Fix le rig des dents
+        Return : [BOOL,LIST]
+        Dependencies : cmds - chr_CstScaleandOptimFix()
+    """
+    print "chr_TeethFix()"
+
+    result = ""
+    resultL = []
+    debugL = []
+    result,debugL = chr_CstScaleandOptimFix(bridgeName = "Dn_Teeth_Bridge", RootPrefixeToCut = "TK_",
+                rootL = ["TK_Bottom_Teeth_Global_Root",
+                "TK_Left_Bottom_Teeth_Root",
+                "TK_Right_Bottom_Teeth_Root",
+                "TK_Bottom_Teeth_Root"],)
+        
+
+    result2,debugL2 = chr_CstScaleandOptimFix(bridgeName = "Up_Teeth_Bridge", RootPrefixeToCut = "TK_",
+            rootL = ["TK_Top_Teeth_Global_Root",
+            "TK_Left_Top_Teeth_Root",
+            "TK_Right_Top_Teeth_Root",
+            "TK_Top_Teeth_Root"])
+
+    resultL = [result,result2]
+    debugL +=debugL2
+    return resultL,debugL
+
+def chr_chinEarsFix(*args, **kwargs):
+    """ Description: Fix le rig des ears et du chin
+        Return : [BOOL,LIST]
+        Dependencies : cmds - chr_CstScaleandOptimFix()
+    """
+    print "chr_chinEarsFix()"
+    result = ""
+    resultL = []
+    debugL = []
+    result,debugL = chr_CstScaleandOptimFix(bridgeName = "chin_Bridge", RootPrefixeToCut = "TK_",
+            rootL = ["TK_chin_Root",])
+            
+    result2,debugL2 = chr_CstScaleandOptimFix(bridgeName = "ear_R_Bridge", RootPrefixeToCut = "TK_",
+                rootL = ["TK_Right_Ear_Root",])
+
+    result3,debugL3 = chr_CstScaleandOptimFix(bridgeName = "ear_L_Bridge", RootPrefixeToCut = "TK_",
+                rootL = ["TK_Left_Ear_Root",])
+
+    resultL = [result,result2,result3]
+    print "resultL",resultL
+    debugL +=debugL2 + debugL3
+    return resultL,debugL
