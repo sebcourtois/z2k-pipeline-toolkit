@@ -799,6 +799,7 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
     """
     this script merge selected objects only if they are under the same group.
     It ensure that the resulting object is under the intial group.
+    instances will be skipped
         toCombineObjL: a list of shapes ot transform objects to combine, groups are not accepeted. if nothing in input try with the selection
         combineByMaterialB: if True il merge only objects that share the same material
         GUI: if True wil log messages and select merged object when combined 
@@ -812,9 +813,19 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
     combinedObjL = []
     shaderAssignationD = {'multiMaterial':[]}
 
-
     if not toCombineObjL:
         toCombineObjL = cmds.ls(selection = True,l = True)
+
+    transMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes("*")
+
+    InstanceL = list(set(toCombineObjL) & set(instanceTransformL))
+    if InstanceL:
+        logMessage = "#### {:>7}: 'combineGeo' {} elements cannot be combined since they are instances, they will be skipped: {}".format("Warning", len(InstanceL), InstanceL)
+        if GUI == True: print logMessage
+        logL.append(logMessage)
+        toCombineObjL = list(set(toCombineObjL) - set(InstanceL))
+
+
 
     toCombineShapesL = cmds.ls(toCombineObjL,l = True, shapes = True)+ cmds.ls(cmds.listRelatives(toCombineObjL, children = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
 
@@ -896,7 +907,7 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
         cmds.select(resultObjL)
         if verbose == True: print logMessage
 
-    return [resultB, logL, toCombineObjL, resultObjL] 
+    return [resultB, logL, toCombineObjL, resultObjL, InstanceL] 
 
 
 
@@ -942,7 +953,7 @@ def convertObjToInstance(transformL=[], GUI = True):
             resultB = False
             logL.append(logMessage)
     #exclude instances from the objects to process
-    ransMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes("*",inType = "shape")
+    transMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes("*",inType = "shape")
     toSkipL = list(set(transformL)&set(instanceTransformL))
     if toSkipL:
         logMessage = "#### {:>7}: 'convertObjToInstance' {} objects are instances already, they will be skipped: {}".format("Info",len(toSkipL),toSkipL)
@@ -965,7 +976,7 @@ def convertObjToInstance(transformL=[], GUI = True):
     logMessage = "#### {:>7}: 'convertObjToInstance' {} objects have been replaced with instance of '{}' master : {}".format("Info",len(transformL),masterS,transformL)
     print logMessage
     logL.append(logMessage)
-    
+
     return [resultB, logL]
 
 
