@@ -795,12 +795,14 @@ def compareHDToPreviz():
 
 
 
-def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, autoRenameI = 0, verbose = True):
+def combineGeoGroup(toCombineTransfL = [], combineByMaterialB = False, GUI = True, autoRenameI = 0, verbose = True):
     """
     this script merge selected objects only if they are under the same group.
     It ensure that the resulting object is under the intial group.
+    Warning: if GUI is False a part of the tests are skipped to speed up the process in larges scenes.
+    the tests mus be done in the callin script, see combineAllGroups for instance
     instances will be skipped
-        toCombineObjL: a list of shapes ot transform objects to combine, groups are not accepeted. if nothing in input try with the selection
+        toCombineTransfL: a list of transform objects to combine, groups are not accepeted. if nothing in input try with the selection
         combineByMaterialB: if True il merge only objects that share the same material
         GUI: if True wil log messages and select merged object when combined 
         autoRenameI:    0: do not rename the combined objects, name is the first selected object or first of the list
@@ -811,39 +813,57 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
     logL = []
     resultObjL = []
     combinedObjL = []
+    soloMeshToCombine = []
     shaderAssignationD = {'multiMaterial':[]}
 
-    if not toCombineObjL:
-        toCombineObjL = cmds.ls(selection = True,l = True)
+    if not toCombineTransfL:
+        toCombineTransfL = cmds.ls(selection = True,l = True)
+    else:
+        toCombineTransfL= cmds.ls(toCombineTransfL, l = True)
 
-    transMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes("*")
+    if GUI == True: 
+        #exclude instances from the input
+        transMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes("*")
+        instanceTransformL= cmds.ls(instanceTransformL, l = True)
+        InstanceToCombineL = list(set(toCombineTransfL) & set(instanceTransformL))
+        if InstanceToCombineL:
+            logMessage = "#### {:>7}: 'combineGeo' {} elements cannot be combined since they are instances, they will be skipped: {}".format("Warning", len(InstanceToCombineL), InstanceToCombineL)
+            if GUI == True: print logMessage
+            logL.append(logMessage)
+            toCombineTransfL = list(set(toCombineTransfL) - set(InstanceToCombineL))
 
-    InstanceL = list(set(toCombineObjL) & set(instanceTransformL))
-    if InstanceL:
-        logMessage = "#### {:>7}: 'combineGeo' {} elements cannot be combined since they are instances, they will be skipped: {}".format("Warning", len(InstanceL), InstanceL)
-        if GUI == True: print logMessage
-        logL.append(logMessage)
-        toCombineObjL = list(set(toCombineObjL) - set(InstanceL))
 
-
-
-    toCombineShapesL = cmds.ls(toCombineObjL,l = True, shapes = True)+ cmds.ls(cmds.listRelatives(toCombineObjL, children = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
-
-    if len(toCombineShapesL)<2:
-        return [resultB, logL, toCombineObjL, resultObjL] 
-
-    #path = toCombineShapesL[-1].split(toCombineShapesL[-1].split("|")[-2])[0].rstrip("|")
-    path = cmds.listRelatives(cmds.listRelatives(toCombineShapesL[-1], parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
-    finalObjectName = toCombineShapesL[-1].split("|")[-1]
-
-    # check that all the meshes belong to the same group
-    for each in toCombineShapesL:
-        eachPath = cmds.listRelatives(cmds.listRelatives(each, parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
-        if path != eachPath:
-            logMessage = "#### {:>7}: 'combineGeo' Cannot merge 2 elements of a different group: {} is not under '{}'".format("Error", each, path)
+        #fail if one input is not a transform
+        toCombineTransfFilteredL = cmds.ls(toCombineTransfL, type= 'transform', l=True)
+        if toCombineTransfFilteredL!= toCombineTransfL:
+            notTransformObjL = list(set(toCombineTransfL)-set(toCombineTransfFilteredL))
+            logMessage = "#### {:>7}: 'combineGeo' Cannot merge elements that are not transforms: {}".format("Error", notTransformObjL)
             if GUI == True : raise ValueError (logMessage)
             resultB = False
             logL.append(logMessage)
+            return [resultB, logL, toCombineTransfL, resultObjL] 
+
+
+    toCombineShapesL = cmds.ls(toCombineTransfL,l = True, shapes = True)+ cmds.ls(cmds.listRelatives(toCombineTransfL, children = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
+    if len(toCombineShapesL)<2:
+        print "combineGeoGroup: toCombineTransfL",toCombineTransfL
+        soloMeshToCombine= list(toCombineTransfL)
+        print "soloMeshToCombine",soloMeshToCombine
+        return [resultB, logL, toCombineTransfL, resultObjL] 
+
+    path = cmds.listRelatives(cmds.listRelatives(toCombineShapesL[-1], parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
+    finalObjectName = toCombineShapesL[-1].split("|")[-1]
+
+    if GUI == True:
+    # check that all the meshes belong to the same group
+        for each in toCombineShapesL:
+            eachPath = cmds.listRelatives(cmds.listRelatives(each, parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
+            if path != eachPath:
+                logMessage = "#### {:>7}: 'combineGeo' Cannot merge 2 elements of a different group: {} is not under '{}'".format("Error", each, path)
+                if GUI == True : raise ValueError (logMessage)
+                resultB = False
+                logL.append(logMessage)
+                return [resultB, logL, toCombineTransfL, resultObjL] 
 
     # create a dictionnary to gather all the shapes that share the same material. 
     # every key correspond to a shading engine and reference the objects this SE is connected to:
@@ -874,7 +894,7 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
         else:
             shaderAssignationD['miscSE'].append(toCombineShapesL)
 
-    #combine objects depending on the key they are referenced under
+    #combine objects depending on the dictionary key they are referenced under
     for each in shaderAssignationD:
         if each == 'multiMaterial' :
             if shaderAssignationD['multiMaterial']:
@@ -885,7 +905,6 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
             if len(shaderAssignationD[each])>1:
                 combinedObjL.extend(shaderAssignationD[each]) 
                 mergedObjectName = cmds.polyUnite(shaderAssignationD[each], ch=False, mergeUVSets = True, name = finalObjectName )[0]
-                print mergedObjectName
                 groupName = path.split("|")[-1]
                 parentName = path.split(groupName)[0].rstrip("|")
                 #parent back the merged object under the initial group 
@@ -907,32 +926,55 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
         cmds.select(resultObjL)
         if verbose == True: print logMessage
 
-    return [resultB, logL, toCombineObjL, resultObjL, InstanceL] 
+    return [resultB, logL, toCombineTransfL, resultObjL] 
 
 
 
 def combineAllGroups(inParent = "asset|grp_geo", GUI = True, autoRenameI= 1, combineByMaterialB = True):
     resultB = True
     logL = []
+    skippedInstanceL =[]
+    soloMeshToCombine=[]
+    resultL = []
+    CombineNbPerformedI = 0
 
-    meshNbBeforeConbineI = len(cmds.listRelatives(inParent, allDescendents = True, type = "mesh"))
-    transformL = cmds.ls(cmds.listRelatives("asset|grp_geo", allDescendents = True, fullPath = True, type = "transform"), l=True, exactType="transform")
+    #exclude instances from the input
+    transMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+    instanceTransformL= cmds.ls(instanceTransformL, l = True)
+
+
+
+    meshNbBeforeConbineI = len(cmds.listRelatives(cmds.listRelatives(inParent, allDescendents = True, type = "mesh"), allParents = True, type = "transform"))
+    transformL = cmds.ls(cmds.listRelatives(inParent, allDescendents = True, fullPath = True, type = "transform"), l=True, exactType="transform")
     for each in transformL:
         if re.match('^grp_', each.split("|")[-1]):
-            #meshL = cmds.listRelatives(each, children = True, fullPath = True, type = "mesh")
             meshL = cmds.listRelatives(cmds.listRelatives(each, children = True, fullPath = True), children = True, fullPath = True, type = "mesh")
-            if meshL and len(meshL)>1 :
-                resultL = combineGeoGroup(toCombineObjL = meshL, GUI = GUI,verbose = False, autoRenameI= autoRenameI, combineByMaterialB = combineByMaterialB)
-                if GUI == True:
-                    logMessage = "#### {:>7}: 'combineAllGroups' '{:>4}' meshes combined in '{:>4}' meshe(s) under group: {}:".format("Info", len(resultL[2]),len(resultL[3]),each)
-                    #print logMessage
-                    logL.append(logMessage)
+            toCombineTransfL = cmds.listRelatives(meshL, parent = True, fullPath = True, type = "transform")
+            if toCombineTransfL: skippedInstanceL.extend(list(set(toCombineTransfL)&set(instanceTransformL)))
+            if toCombineTransfL and len(toCombineTransfL)>1:
+                toCombineTransfL = list(set(toCombineTransfL)-set(instanceTransformL))
+                if len(toCombineTransfL)>1: 
+                    combineGeoGroup(toCombineTransfL = toCombineTransfL, GUI = False,verbose = False, autoRenameI= autoRenameI, combineByMaterialB = combineByMaterialB)
+                    CombineNbPerformedI += 1
+            elif toCombineTransfL:
+                soloMeshToCombine.extend(toCombineTransfL)
 
-    meshNbAfterConbineI = len(cmds.listRelatives(inParent, allDescendents = True, type = "mesh"))
 
-    logMessage = "#### {:>7}: 'combineAllGroups' final result: '{:>4}' meshes combined in : '{:>4}' meshes".format("Info",meshNbBeforeConbineI,meshNbAfterConbineI)
+    meshNbAfterConbineI = len(cmds.listRelatives(cmds.listRelatives("asset|grp_geo", allDescendents = True, fullPath = True,type = "mesh"), allParents = True))
+
+
+    logMessage = "#### {:>7}: 'combineAllGroups' {} meshes in the scene : {} meshes after conbine operation, {} combine performed".format("Info",meshNbBeforeConbineI,meshNbAfterConbineI,CombineNbPerformedI)
     print logMessage
     logL.append(logMessage)
+
+    logMessage = "#### {:>7}: 'combineAllGroups' --> {} could not be combined --> unique under their group".format("Info", len(soloMeshToCombine))
+    logL.append(logMessage)
+    print logMessage
+    if skippedInstanceL:
+        skippedInstanceL = cmds.ls(skippedInstanceL)
+        logMessage = "#### {:>7}: 'combineAllGroups' --> {} could not be combined --> instances".format("Info", len(skippedInstanceL))
+        logL.append(logMessage)
+        print logMessage
 
     return [resultB, logL] 
 
