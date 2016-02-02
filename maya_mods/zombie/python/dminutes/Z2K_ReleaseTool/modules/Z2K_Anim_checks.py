@@ -390,17 +390,17 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
-        # 10 delete Active Blend_shape_grp
-        result = jpZ.deleteActiveBlendShape_grp()
+        # 10 ----- chr_delete_BS_active_group ()
+        result,debugL = jpZ.chr_delete_BS_active_group()
         # prints -------------------
-        self.printF("deleteActiveBlendShape_grp()", st="t")
+        self.printF("chr_delete_BS_active_group()", st="t")
         self.printF(result, st="r")
+        self.printF(debugL)
         # --------------------------
-        if not result:
+        # --------------------------
+        if not result :
             boolResult = False
-        self.pBar_upd(step= 1,)
-
-
+        self.pBar_upd(step= 1,) 
         
 
 
@@ -615,20 +615,8 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,) 
 
-
-        # 5 ----- chr_delete_BS_active_group ()
-        result,debugL = jpZ.chr_delete_BS_active_group()
-        # prints -------------------
-        self.printF("chr_delete_BS_active_group()", st="t")
-        self.printF(result, st="r")
-        self.printF(debugL)
-        # --------------------------
-        # --------------------------
-        if not result :
-            boolResult = False
-        self.pBar_upd(step= 1,) 
         
-        # 6 ----- chr_delete_BS_active_group ()
+        # 5 ----- chr_delete_BS_active_group ()
         result,debugL = jpZ.chr_rename_Teeth_BS_attribs()
         # prints -------------------
         self.printF("chr_rename_Teeth_BS_attribs()", st="t")
@@ -643,7 +631,7 @@ class checkModule(object):
 
 
 
-        # 7 ----- chr_TeethFix ()
+        # 6 ----- chr_TeethFix ()
         resultL,debugL = jpZ.chr_TeethFix()
         # prints -------------------
         self.printF("chr_TeethFix()", st="t")
@@ -657,7 +645,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
     
-        # 8 ----- chr_chinEarsFix ()
+        # 7 ----- chr_chinEarsFix ()
         resultL,debugL = jpZ.chr_chinEarsFix()
         # prints -------------------
         self.printF("chr_chinEarsFix()", st="t")
@@ -669,9 +657,22 @@ class checkModule(object):
         if False in [resultL] :
             boolResult = False
         self.pBar_upd(step= 1,)
+
+        # 8 ----- chr_changeCtrDisplays ()
+        result,debugL = jpZ.chr_changeCtrDisplays()
+        # prints -------------------
+        self.printF("chr_changeCtrDisplays()", st="t")
+        self.printF(result, st="r")
+        for debug in debugL:
+            self.printF(debug)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
         
 
-        # # 9 ----- chr_TongueFix () WIP
+        # # 10 ----- chr_TongueFix () WIP
         # result,debugL = jpZ.chr_TongueFix()
         # # prints -------------------
         # self.printF("chr_TongueFix()", st="t")
@@ -683,6 +684,8 @@ class checkModule(object):
         # if not result :
         #     boolResult = False
         # self.pBar_upd(step= 1,)
+
+
 
 
         # colors

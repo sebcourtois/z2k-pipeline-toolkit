@@ -300,6 +300,31 @@ def Ltest(objL,*args,**kwargs):
 
     return objL
 
+def GetSel(mode="normal",order="sl", *args):
+    ''' Description : get selection List
+                    mode : -"normal" = shortest name path
+                           -"fullpath" = fullpath name
+                    order : -"sl" = basical aleatoire order
+                            -"os" = ordererd by selection time
+        Return : [List] : selectionList
+        Dependencies : cmds - 
+    ''' 
+    # recuperation de la selection
+    # Use : None
+    objlist=[]
+    if order in ["os"]:
+        if mode in ["normal"]:
+            objlist = cmds.ls( fl=True,os=True)
+        if mode in ["fullpath"]:
+            objlist = cmds.ls( fl=True, l=True, os=True)
+        # print objlist
+    if order in ["sl"]:
+        if mode in ["normal"]:
+            objlist = cmds.ls( fl=True,sl=True)
+        if mode in ["fullpath"]:
+            objlist = cmds.ls( fl=True, l=True, sl=True)
+        # print objlist
+    return objlist
 
 def getChilds(cursel=[], mode="transform", *args):
     print "getChilds()"
@@ -381,6 +406,39 @@ def jlistSets( *args,**kwargs):
 
         return toReturnL
 
+def OverideColor(theColor, mode="normal",TheSel = None, *args):
+    ''' Description : Override the color of the selected obj
+            Return : theColor
+            Dependencies : cmds - GetSel()
+    '''
+    # Override la color de la shape de l'obj selected
+    if mode in ["normal"]:
+        EnableSwith = True
+    if mode in ["default"]:
+        EnableSwith = False
+    if TheSel not in [None]:
+        cursel =list(TheSel)
+    else :
+        cursel = GetSel()
+    for obj in cursel:
+        shapeNodes = cmds.listRelatives(obj, shapes=True, path=True)
+        print " shapeNodes = ", shapeNodes
+        if type(shapeNodes) is not list:
+            shapeNodes = [shapeNodes]
+            print shapeNodes
+        
+            
+        for shape in shapeNodes:
+            try:
+                print " shape = ", shape
+                if shape in [ None,"None" ]:
+                    shape = obj
+                cmds.setAttr("%s.overrideEnabled" % (shape), EnableSwith)
+                cmds.setAttr("%s.overrideColor" % (shape), theColor)
+            except Exception, err:
+                print "erreur :", Exception, err
+    # print "theColor = ",theColor
+    return theColor
 def setFilterTest(setName="",includedSetL=["objectSet","textureBakeSet","vertexBakeSet","character"],
         excludedSetL=["shadingEngine","displayLayer","ilrBakeLayer"],
         bookmarksSets = False, defaultSets=False,lockedSets=False,
@@ -463,6 +521,30 @@ def getSetContent ( inSetL=[],*args,**kwargs):
 def getSel(*args, **kwargs):
         objL = cmds.ls( os=True, fl=True, l=True, )
         return objL
+
+def getPointsOnCurve(listcurves):
+    ''' Description : get the controls points on the curves of listcurves[]
+            Return : list of the points
+            Dependencies : cmds -
+    '''
+    if type(listcurves) is not list:
+        listcurves = [listcurves]
+
+    PointsOnCurves = []
+
+    try :
+        listcurves = cmds.listRelatives(listcurves,shapes=True,fullPath=True)
+    except:
+        pass
+    for curve in listcurves:
+
+        curvespoints = cmds.getAttr(curve + ".cv[*]")
+        for i in range(len(curvespoints)):
+            # print i
+            # print curvespoints[i]
+            PointsOnCurves.append(curve + ".cv[" + str(i) + "]")
+    print "getPointsOnCurve() outlist : \n", PointsOnCurves
+    return PointsOnCurves
 
 def getGeoInHierarchy(cursel=[],theType="mesh",*args,**kwargs):
     listOut = []
@@ -1828,3 +1910,129 @@ def chr_chinEarsFix(*args, **kwargs):
     print "resultL",resultL
     debugL +=debugL2 + debugL3
     return resultL,debugL
+
+
+
+
+def chr_changeCtrDisplays(*args, **kwargs):
+    """ Description: Change les colors des ctrs, et re-ajuste le display de certain ctrs
+        Return : [BOOL,LIST]
+        Dependencies : cmds - 
+    """
+    debugL = []
+
+    canDo = True
+    greenC = 23
+    greenL = ['Right_UpperEye_3_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_UpperEye_1_Ctrl', 'Right_UpperEye_0_Ctrl', 
+                'Right_LowerEye_2_Ctrl', 'Right_LowerEye_3_Ctrl', 'Right_LowerEye_0_Ctrl', 'Right_LowerEye_1_Ctrl', 
+                'Left_UpperEye_0_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_UpperEye_1_Ctrl', 'Left_UpperEye_3_Ctrl', 
+                'Left_LowerEye_2_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_LowerEye_3_Ctrl', 'Left_LowerEye_0_Ctrl', 
+                'Right_Levator_2_Ctrl', 'Left_Levator_2_Ctrl', 'Right_LowerLip_Inter', 'Right_UpperLip_Inter', 
+                'Left_UpperLip_Inter', 'Left_LowerLip_Inter',
+                'Left_Eye_Bulge', 'Right_Eye_Bulge', 'Right_nostril', 'Left_nostril',
+                'Fly_Main_Ctrl',
+                ]
+
+    brownLightC = 25
+    brownLightL = ['Spine_IK_Extra_6_Ctrl', 'Spine_IK_Extra_5_Ctrl', 'Spine_IK_Extra_4_Ctrl', 'Spine_IK_Extra_3_Ctrl',
+                'Spine_IK_Extra_2_Ctrl', 'Spine_IK_Extra_1_Ctrl', 'Left_Leg_Extra_0', 'Right_Arm_Extra_0', 'Right_Arm_Extra_1',
+                'Right_Arm_Extra_2', 'Right_Arm_Extra_3', 'Right_Arm_Extra_4', 'Right_Arm_Extra_5', 'Right_Arm_Extra_6',
+                'Right_Leg_Extra_0', 'Left_Arm_Extra_0', 'Left_Arm_Extra_1', 'Left_Arm_Extra_2', 'Left_Arm_Extra_3',
+                'Left_Arm_Extra_4', 'Left_Arm_Extra_5', 'Left_Arm_Extra_6', 'Left_Leg_Extra_1', 'Left_Leg_Extra_2',
+                'Left_Leg_Extra_3', 'Left_Leg_Extra_4', 'Left_Leg_Extra_5', 'Left_Leg_Extra_6', 'Right_Leg_Extra_1',
+                'Right_Leg_Extra_2', 'Right_Leg_Extra_3', 'Right_Leg_Extra_4', 'Right_Leg_Extra_5', 'Right_Leg_Extra_6',
+                'NECK_Deformers_ExtraCtrl_7', 'NECK_Deformers_ExtraCtrl_3', 'NECK_Deformers_ExtraCtrl_5',
+                'NECK_Deformers_ExtraCtrl_1', 'Spine_IK_Extra_7_Ctrl']
+    redDarkC = 4
+    redDarkL = ['Head_Bulge_Start_Ctrl', 'Head_Bulge_End_Handle_Ctrl', 'Head_Bulge_End_Ctrl',"BigDaddy"]
+    
+    redClearC = 13
+    redClearL = ["Global_SRT",]
+
+
+    yellowC = 17
+    yellowL = []
+
+    for k in greenL+brownLightL+redDarkL:
+        if not cmds.objExists(k):
+            canDo = False
+    if canDo:
+        # to green 
+        OverideColor(greenC, mode="normal",TheSel = greenL, )
+        # to brownLight
+        OverideColor(brownLightC, mode="normal",TheSel = brownLightL, )
+        # redDark
+        OverideColor(redDarkC, mode="normal",TheSel = redDarkL, )
+        # redClear
+        OverideColor(redClearC, mode="normal",TheSel = redClearL, )
+        # yellow
+        # OverideColor(yellowC, mode="normal",TheSel = yellowL, )
+        debugL.append("-Base Colors changed")
+
+
+    # special offset du display du fly -----------------------------------------------
+    print "fly display"
+    zooB = True
+    target = "Fly_Main_Ctrl"
+    refL = ['Global_SRT', 'LowerBody']
+    for i in refL+[target]:
+        if not  cmds.objExists(i):
+            zooB = False
+    if zooB:
+        pointL = getPointsOnCurve(target)
+        bbox = cmds.exactWorldBoundingBox(refL)
+        factor = 2.5
+        cmds.move(0, 0, - (bbox[3]-bbox[0])/factor ,pointL, r=1, os=1, wd=1,  )
+        debugL.append("-fly display changed")
+
+
+    # change foots display --------------------------------------------------------------
+    print "foots display"
+    zooB = True
+    footL = ['Right_Leg_IK','Left_Leg_IK']
+    for k in footL:
+        if not cmds.objExists(k):
+            zooB = False
+    if zooB:
+        for j in footL:
+            pointL = getPointsOnCurve(j)
+            bbox = cmds.exactWorldBoundingBox(pointL)
+            pivT = cmds.xform(j,t=1,q=1,ws=1,worldSpaceDistance=1)
+            cmds.scale( 1.3, 0.1, 1.3, pointL, p=( pivT[0],0,pivT[2], ) )
+        debugL.append("-foots display changed")
+
+
+    # move vis_Holder --------------------------------------------------------------
+    print "vis_Holder display"
+    zooB = True
+    visH = ["VisHolder_Main_Ctrl"]
+    refL = ['Local_SRT', 'VisHolder_Main_Ctrl']
+    for k in refL+visH :
+        if not cmds.objExists(k):
+            zooB = False
+    if zooB:
+        factor = 3.5
+        pointL = getPointsOnCurve(visH)
+        bbox = cmds.exactWorldBoundingBox(refL)
+        cmds.move( (bbox[3]-bbox[0])/factor , 1,0,pointL, r=1, os=1, wd=1,  )
+        debugL.append("-vis_Holder display changed")
+        debugL.append("-vis_Holder display changed")
+
+    return True,debugL
+
+
+def chr_teeth_Noze_BS_Fix(*args, **kwargs):
+    print "chr_teeth_squeezFix()"
+
+    # get asset BS path (have to contain all teeth and additif BS shapes)
+
+    # get asset bsd file
+
+    # check correspondance 
+
+    
+    # import BS  in the scene
+
+    # apply .bsd file
+
+    # delete importe objects
