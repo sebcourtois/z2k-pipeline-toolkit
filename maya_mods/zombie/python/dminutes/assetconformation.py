@@ -912,7 +912,7 @@ def softClean(struct2CleanList=["asset"], verbose = True, keepRenderLayers = Tru
         if ":"in each:
             mc.lockNode(each, lock=False)
             newEach= mc.rename(each,each.split(":")[-1],ignoreShape=True)
-            logMessage = "#### {:>7}: Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
+            logMessage = u"#### {:>7}: Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
             if verbose == True : print logMessage
             outLogL.append(logMessage)
 
