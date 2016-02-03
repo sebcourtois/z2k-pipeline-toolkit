@@ -1,30 +1,35 @@
 
 import os
-osp = os.path
 import re
+from itertools import groupby
 
 from PySide import QtGui
 from PySide.QtCore import Qt, QSize
 
 import PIL.Image
 import filecmp
-pilimage = PIL.Image
 
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 import pymel.core as pm
 
-from pytd.gui.dialogs import QuickTreeDialog, confirmDialog
-from pytd.gui.widgets import QuickTree, QuickTreeItem
-#from pytd.util.logutils import logMsg
-from pytaya.core.general import lsNodes
 
 from pytd.util.fsutils import pathResolve, normCase, pathJoin, pathReSub
 from pytd.util.fsutils import ignorePatterns, iterPaths
 from pytd.util.strutils import labelify, assertChars
 from pytd.util.qtutils import setWaitCursor
 from pytd.util.sysutils import argToTuple, toStr, inDevMode
+from pytd.gui.dialogs import QuickTreeDialog, confirmDialog
+from pytd.gui.widgets import QuickTree, QuickTreeItem
+#from pytd.util.logutils import logMsg
+
+from pytaya.core.general import lsNodes
+from pytaya.core.reference import listReferences
+from pytaya.core.system import iterNodeAttrFiles
 
 from .general import entityFromScene
+
+osp = os.path
+pilimage = PIL.Image
 
 mainWin = None
 
@@ -98,7 +103,7 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
         self.resize(900, 600)
 
         self.scanResults = None
-        self.__scanFunc = scanFunc if scanFunc else scanTextureDependency
+        self.__scanFunc = scanFunc if scanFunc else scanTextureFiles
 
         self.refreshBtn = self.buttonBox.addButton("Refresh", QtGui.QDialogButtonBox.ResetRole)
         self.refreshBtn.clicked.connect(self.refresh)
@@ -220,6 +225,107 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
             item = treeWidget.topLevelItem(i)
             item.setExpanded(True)
 
+
+def scanReferenceFiles(proj):
+
+    scanResults = []
+    fileNodeDct = {}
+    sAllSeveritySet = set()
+
+    for oFileRef in listReferences():
+
+        scanLogDct = {}
+
+        sAbsPath = pathResolve(oFileRef.path)
+
+        sNormPath = normCase(sAbsPath)
+        if sNormPath in fileNodeDct:
+            fileNodeDct[sNormPath].append(oFileRef)
+            continue
+        else:
+            fileNodeDct[sNormPath] = [oFileRef]
+
+        drcFile = None
+        drcLib = proj.libraryFromPath(sAbsPath)
+        if drcLib:
+            drcFile = drcLib._weakFile(sAbsPath, dbNode=False)
+
+        bExists = osp.isfile(sAbsPath)
+        if not bExists:
+            scanLogDct.setdefault("error", []).append(('FileNotFound', sAbsPath))
+
+        resultDct = {"abs_path":sAbsPath,
+                     "scan_log":scanLogDct,
+                     "file_nodes":fileNodeDct[sNormPath],
+                     "buddy_paths":[],
+                     "udim_paths":[],
+                     "publishable":False,
+                     "drc_file":drcFile,
+                     "exists":bExists,
+                     }
+
+        scanResults.append(resultDct)
+        sAllSeveritySet.update(resultDct["scan_log"].iterkeys())
+
+    if scanResults:
+        scanResults[-1]["scan_severities"] = sAllSeveritySet
+
+    return scanResults
+
+
+def scanNodeAttrFiles(proj, **kwargs):
+
+    scanResults = []
+    fileNodeDct = {}
+    sAllSeveritySet = set()
+
+    sortKey = lambda i: osp.normcase(osp.dirname(i[0]))
+    sSortedList = sorted(iterNodeAttrFiles(**kwargs), key=sortKey)
+
+    for sDirPath, sAbsPathGrp in groupby(sSortedList, sortKey):
+
+        drcLib = proj.libraryFromPath(sDirPath)
+
+        for sAbsPath, sNodeAttr in sAbsPathGrp:
+
+            scanLogDct = {}
+
+            fileAttr = pm.PyNode(sNodeAttr)
+            fileNode = fileAttr.node()
+
+            sNormPath = normCase(sAbsPath)
+            if sNormPath in fileNodeDct:
+                fileNodeDct[sNormPath].append(fileNode)
+                continue
+            else:
+                fileNodeDct[sNormPath] = [fileNode]
+
+            drcFile = None
+            if drcLib:
+                drcFile = drcLib._weakFile(sAbsPath, dbNode=False)
+
+            bExists = osp.isfile(sAbsPath)
+            if not bExists:
+                scanLogDct.setdefault("error", []).append(('FileNotFound', sAbsPath))
+
+            resultDct = {"abs_path":sAbsPath,
+                         "scan_log":scanLogDct,
+                         "file_nodes":fileNodeDct[sNormPath],
+                         "buddy_paths":[],
+                         "udim_paths":[],
+                         "publishable":False,
+                         "drc_file":drcFile,
+                         "exists":bExists,
+                         }
+
+            scanResults.append(resultDct)
+            sAllSeveritySet.update(resultDct["scan_log"].iterkeys())
+
+        if scanResults:
+            scanResults[-1]["scan_severities"] = sAllSeveritySet
+
+    return scanResults
+
 UDIM_MODE = 3
 UDIM_SEQ_RGX = r"\.1\d{3}\."
 IMG_SEQ_RGX = r"\.0\d+\."
@@ -231,7 +337,7 @@ def makeSequenceFilePattern(p):
     return pathReSub(IMG_SEQ_RGX, ".0*.", osp.basename(p))
 
 @setWaitCursor
-def scanTextureDependency(damEntity):
+def scanTextureFiles(damEntity):
 
     proj = damEntity.project
     sAstName = damEntity.name
@@ -432,7 +538,6 @@ def scanTextureDependency(damEntity):
                 if sSeqsExt and ("." in sBuddySufx):
                     sSuffix = sBuddySufx.replace(".", sSeqsExt + ".")
                 sBuddyPath = "".join((sBasePath, sSuffix))
-                print sBuddyPath
 
                 if not osp.isfile(sBuddyPath):
                     if not bPublicFile:
@@ -569,20 +674,6 @@ def _setPublishableState(resultDct):
     if pubFile.exists():
         bUpToDate = pubFile.isUpToDate()
 
-#    bOldPrivFile = False
-#    privFsMtime = drcFile.fsMtime
-#    pubDbMtime = pubFile.dbMtime
-#    if (pubFile.currentVersion > 0) and (privFsMtime < pubDbMtime):
-#        bOldPrivFile = True
-#        sFmt = "%Y-%m-%d %H:%M"
-#        sCurTime = privFsMtime.strftime(sFmt)
-#        sPubTime = pubDbMtime.strftime(sFmt)
-#
-#    if bOldPrivFile:
-#        sMsg = ("File is OBSOLETE: \n yours: {}\npublic: {}"
-#                .format(sCurTime, sPubTime))
-#        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
-
     if not bUpToDate:
         sMsg = """Public file appears to have been modified from another site.
 Wait for the next file synchronization and retry publishing."""
@@ -623,7 +714,7 @@ def launch(damEntity=None, scanFunc=None, modal=False, okLabel="OK",
         damEntity = entityFromScene()
 
     if scanFunc is None:
-        scanResults = scanTextureDependency(damEntity)
+        scanResults = scanTextureFiles(damEntity)
     else:
         scanResults = scanFunc(damEntity)
 

@@ -76,7 +76,7 @@ def scanTexturesToEdit(damEntity):
     sSelTexPathSet = set(pathResolve(n.getAttr("fileTextureName"))
                          for n in fileNodeList)
 
-    scanResults = dependency_scan.scanTextureDependency(damEntity)
+    scanResults = dependency_scan.scanTextureFiles(damEntity)
 
     sPrivTexDirPath = damEntity.getPath("private", "texture_dir")
     bPrivTexDirFound = osp.exists(sPrivTexDirPath)
