@@ -870,7 +870,7 @@ class Asset_File_Conformer:
 
 
 
-def softClean(struct2CleanList=["asset"], verbose = True, keepRenderLayers = True):
+def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = True,GUI = True):
     """
     this script intend to remove from the scene every node that do not has a link with the selected structure.
     It also clean the empty namespaces
@@ -907,14 +907,21 @@ def softClean(struct2CleanList=["asset"], verbose = True, keepRenderLayers = Tru
     # replace with the above code (too slow on large scene)
     #mc.container (name="asset1", includeNetwork = True, includeShaders=True, includeHierarchyBelow=True, includeTransform=True, preview=True, addNode= struct2CleanList, force= True)
     #myAssetNodeList = mc.ls(selection = True)+doNotDelete
-
+    objRemFromNameSpaceI = 0
     for each in myAssetNodeList:
         if ":"in each:
             mc.lockNode(each, lock=False)
             newEach= mc.rename(each,each.split(":")[-1],ignoreShape=True)
-            logMessage = u"#### {:>7}: Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
-            if verbose == True : print logMessage
-            outLogL.append(logMessage)
+            objRemFromNameSpaceI += 1
+            if verbose == True:
+                logMessage = u"#### {:>7}: 'softClean' Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
+                print logMessage
+                outLogL.append(logMessage)
+
+    if objRemFromNameSpaceI > 0:
+        logMessage ="#### {:>7}: 'softClean' {} nodes has been removed from name spaces".format("Info",objRemFromNameSpaceI)
+        if GUI == True : print logMessage
+        outLogL.append(logMessage)
 
 
     #delete all nodes that do not belong to my structure
@@ -948,12 +955,13 @@ def softClean(struct2CleanList=["asset"], verbose = True, keepRenderLayers = Tru
     
 
     logMessage ="#### {:>7}: 'softClean' has deleted {} nodes: {}".format("Info",len(deletedNodeL), deletedNodeL)
-    if verbose == True : print logMessage
+    if GUI == True : print logMessage
     outLogL.append(logMessage)
 
-    logMessage ="#### {:>7}: 'softClean' failed to delete {} nodes: {}".format("Info",len(failedToDeleteNodeL),failedToDeleteNodeL)
-    if verbose == True : print logMessage
-    outLogL.append(logMessage)
+    if failedToDeleteNodeL:
+        logMessage ="#### {:>7}: 'softClean' failed to delete {} nodes: {}".format("Info",len(failedToDeleteNodeL),failedToDeleteNodeL)
+        if GUI == True : print logMessage
+        outLogL.append(logMessage)
 
     #try to get back to the initial selection
     try:
@@ -964,9 +972,10 @@ def softClean(struct2CleanList=["asset"], verbose = True, keepRenderLayers = Tru
 
     ## remove all namespaces
     returnL = miscUtils.removeAllNamespace(emptyOnly=True)
-    logMessage ="#### {:>7}: 'softClean' has deleted {} namespaces: {}".format("Info",len(returnL[1]),returnL[1])
-    if verbose == True : print logMessage
-    outLogL.append(logMessage)
+    if returnL[1]:
+        logMessage ="#### {:>7}: 'softClean' has deleted {} namespaces: {}".format("Info",len(returnL[1]),returnL[1])
+        if GUI == True : print logMessage
+        outLogL.append(logMessage)
 
     return outSucceedB, outLogL
 

@@ -617,7 +617,7 @@ def geoGroupDeleteHistory(GUI=True):
         geoTransformList = geoTransformList+ instanceTransformL
 
     cmds.delete(geoTransformList,ch =True)
-    logMessage = "#### {:>7}:'geoGroupDeleteHistory': deteted history on {} geometries".format("Info",len(geoTransformList))
+    logMessage = "#### {:>7}: 'geoGroupDeleteHistory': deteted history on {} geometries".format("Info",len(geoTransformList))
     logL.append(logMessage)
     if GUI == True: print logMessage
     
