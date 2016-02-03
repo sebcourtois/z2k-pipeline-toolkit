@@ -145,7 +145,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=10, e=True)
+        self.pBar_upd(step=1, maxValue=11, e=True)
 
         # steps
 
@@ -284,6 +284,16 @@ class checkModule(object):
 
        
         # 11   freeze and reset translation
+        self.printF("modeling: freeze and reset all transforms ", st="t")
+        result,details = modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = True, GUI = False)
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in details:
+            self.printF( each )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
         
 
         # colors
