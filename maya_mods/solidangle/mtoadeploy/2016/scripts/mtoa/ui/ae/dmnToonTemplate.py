@@ -71,6 +71,7 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('dmn_mask07', label='dmn_mask07')
         self.addControl('dmn_mask08', label='dmn_mask08')
         self.addControl('dmn_mask09', label='dmn_mask09')
+        self.addControl('use_light_groups', label='use_light_groups')
 
         self.endLayout()
 
