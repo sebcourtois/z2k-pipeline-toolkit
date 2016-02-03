@@ -9,13 +9,12 @@
 # Date : 2015-26-08
 # Comment : wip
 # TO DO:
-#       x connect shape visibility to a control -> btn_specialSettings
 #       - add set all dynamic OFF
+#       x connect shape visibility to a control -> btn_specialSettings
 #       x Add debug file in input of th e class ; a reporter sur les check des autres
 #       x add turttle check
 #       x Handle versioning problems if edti it's incremented/ if readonly it's not (if edit and if not publish add please publish edited)
 #       WIP mettage en lIB et nouveau path and names
-#       - clean obj button have to be grayed if checkStructure not done (setSmoothness need good structure)
 #       - add auto remove camera if is camera du pipe
 #       - separate interface from base class
 #       - Ckeck les path de texture, tout doit être ecris avec la variable d environement non resolved
@@ -90,7 +89,7 @@ class checkModule(object):
         self.DebugPrintFile = debugFile
         self.trueColor = self.colorLum( [0,0.75,0],-0.2 )
         self.falseColor =  self.colorLum(  [0.75,0,0] , -0.2)
-
+        self.warnColor = self.colorLum(  [1,0.7,0] , -0.0)
         # trickage pour le batch mode goret
         print "GUI=",self.GUI
         if self.GUI in [False,0]:
@@ -131,7 +130,8 @@ class checkModule(object):
     @jpZ.waiter
     def btn_checkStructure(self, controlN="", *args, **kwargs):
         boolResult=True
-
+        boolResultL = []
+        warnB = False
         # set progress bar
         self.pBar_upd(step=1, maxValue=3, e=True)
 
@@ -158,6 +158,7 @@ class checkModule(object):
         # -------------------
         if not result:
             boolResult = False
+            boolResultL.append(boolResult)
         self.pBar_upd(step= 1,)
 
 
@@ -174,6 +175,7 @@ class checkModule(object):
         # --------------------------
         if not result:
             boolResult = False
+            boolResultL.append(boolResult)
         self.pBar_upd(step= 1,)
 
 
@@ -187,20 +189,38 @@ class checkModule(object):
         # --------------------------
         if not result:
             boolResult = False
+            boolResultL.append(boolResult)
         self.pBar_upd(step= 1,)
 
 
+        # 4   isHiddenObjInSet()
+        result,details = jpZ.isHiddenObjInSet (theSet="set_meshCache")
+        # prints -------------------
+        self.printF("isHiddenObjInSet(set_meshCache)", st="t")
+        self.printF(result, st="r")
+        for i in details:
+            self.printF("-" + i)
+        # --------------------------
+        if not result:
+            boolResult = False
+            warnB = True
+        self.pBar_upd(step= 1,)
+        
+        if boolResultL.count(False)>0:
+            warnB=False
+
 
         # colors
-        print "*btn_checkStructure:",boolResult
-        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+        print "*btn_checkStructure:",boolResult,
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], warning=warnB )
         
         return boolResult
 
     @jpZ.waiter
     def btn_CleanScene(self, controlN="", *args, **kwargs):
         boolResult=True
-
+        boolResultL = []
+        warnB=False
         # set progress bar
         self.pBar_upd(step=1, maxValue=11, e=True)
 
@@ -370,21 +390,23 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
-        # 10 delete Active Blend_shape_grp
-        result = jpZ.deleteActiveBlendShape_grp()
+        # 10 ----- chr_delete_BS_active_group ()
+        result,debugL = jpZ.chr_delete_BS_active_group()
         # prints -------------------
-        self.printF("deleteActiveBlendShape_grp()", st="t")
+        self.printF("chr_delete_BS_active_group()", st="t")
         self.printF(result, st="r")
+        self.printF(debugL)
         # --------------------------
-        if not result:
+        # --------------------------
+        if not result :
             boolResult = False
-        self.pBar_upd(step= 1,)
-
+        self.pBar_upd(step= 1,) 
+        
 
 
         # colors
         print "*btn_CleanScene:",boolResult
-        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""],warning=warnB )
         
         return boolResult
         
@@ -542,7 +564,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=7, e=True)
+        self.pBar_upd(step=1, maxValue=8, e=True)
 
 
         # 1 connectVisibility ()
@@ -593,20 +615,8 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,) 
 
-
-        # 5 ----- chr_delete_BS_active_group ()
-        result,debugL = jpZ.chr_delete_BS_active_group()
-        # prints -------------------
-        self.printF("chr_delete_BS_active_group()", st="t")
-        self.printF(result, st="r")
-        self.printF(debugL)
-        # --------------------------
-        # --------------------------
-        if not result :
-            boolResult = False
-        self.pBar_upd(step= 1,) 
         
-        # 6 ----- chr_delete_BS_active_group ()
+        # 5 ----- chr_delete_BS_active_group ()
         result,debugL = jpZ.chr_rename_Teeth_BS_attribs()
         # prints -------------------
         self.printF("chr_rename_Teeth_BS_attribs()", st="t")
@@ -619,11 +629,39 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
-        
-        # 7 ----- chr_delete_BS_active_group ()
-        result,debugL = jpZ.chr_TongueFix()
+
+
+        # 6 ----- chr_TeethFix ()
+        resultL,debugL = jpZ.chr_TeethFix()
         # prints -------------------
-        self.printF("chr_TongueFix()", st="t")
+        self.printF("chr_TeethFix()", st="t")
+        self.printF(result, st="r")
+        for debug in debugL:
+            self.printF(debug)
+        # --------------------------
+        # --------------------------
+        if False in[resultL] :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+    
+        # 7 ----- chr_chinEarsFix ()
+        resultL,debugL = jpZ.chr_chinEarsFix()
+        # prints -------------------
+        self.printF("chr_chinEarsFix()", st="t")
+        self.printF(result, st="r")
+        for debug in debugL:
+            self.printF(debug)
+        # --------------------------
+        # --------------------------
+        if False in [resultL] :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+        # 8 ----- chr_changeCtrDisplays ()
+        result,debugL = jpZ.chr_changeCtrDisplays()
+        # prints -------------------
+        self.printF("chr_changeCtrDisplays()", st="t")
         self.printF(result, st="r")
         for debug in debugL:
             self.printF(debug)
@@ -632,6 +670,22 @@ class checkModule(object):
         if not result :
             boolResult = False
         self.pBar_upd(step= 1,)
+        
+
+        # # 10 ----- chr_TongueFix () WIP
+        # result,debugL = jpZ.chr_TongueFix()
+        # # prints -------------------
+        # self.printF("chr_TongueFix()", st="t")
+        # self.printF(result, st="r")
+        # for debug in debugL:
+        #     self.printF(debug)
+        # # --------------------------
+        # # --------------------------
+        # if not result :
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
+
+
 
 
         # colors
@@ -698,7 +752,7 @@ class checkModule(object):
         return outColor
 
     # -------------------------- interface function --------------------------------
-    def colorBoolControl(self, controlL=[], boolL=[],labelL=[""],  *args, **kwargs):
+    def colorBoolControl(self, controlL=[], boolL=[],labelL=[""], warning=False,  *args, **kwargs):
         # color the controlL depending on the given Bool
         if self.GUI:
             
@@ -706,7 +760,10 @@ class checkModule(object):
                     if j in [True,1]:
                         cmds.button(i, e=1, backgroundColor=self.trueColor, ebg=self.ebg)
                     else:
-                        cmds.button(i, e=1, backgroundColor=self.falseColor, ebg=self.ebg)
+                        if warning:
+                            cmds.button(i, e=1, backgroundColor=self.warnColor, ebg=self.ebg)
+                        else:
+                            cmds.button(i, e=1, backgroundColor=self.falseColor, ebg=self.ebg)
 
 
     def pBar_upd (self, step=0,maxValue=10,e=False, *args, **kwargs):

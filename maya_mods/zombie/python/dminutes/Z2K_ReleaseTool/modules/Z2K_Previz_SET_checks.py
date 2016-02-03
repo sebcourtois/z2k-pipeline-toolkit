@@ -68,6 +68,21 @@ reload(ini)
 from dminutes.Z2K_ReleaseTool.modules import *
 
 
+from dminutes import shading
+reload(shading)
+
+from dminutes import rendering
+reload (rendering)
+
+from dminutes import miscUtils
+reload (miscUtils)
+
+from dminutes import assetconformation
+reload(assetconformation)
+r2a = assetconformation.Asset_File_Conformer()
+
+from dminutes import modeling
+reload(modeling)
 
 
 
@@ -125,6 +140,168 @@ class checkModule(object):
     # ---------------------------------------------------------------------------------------------------------
     #--------------------- Buttons functions ----------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
+    @jpZ.waiter
+    def btn_preClean(self, controlN="", *args, **kwargs):
+        boolResult=True
+
+        # set progress bar
+        self.pBar_upd(step=1, maxValue=11, e=True)
+
+        # steps
+
+        # 1   remove Camera
+        self.printF("shading:   remove Shading Camera", st="t")
+        result,debugS = shading.referenceShadingCamera( remove=True, GUI = False)
+        # prints -------------------
+        self.printF(result, st="r")
+        self.printF( debugS )
+        # -------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # 2   remove light rigs
+        self.printF("shading:   clean lgtRig", st="t")
+        result, errorL, infoL = shading.cleanlgtRig(verbose = False)
+        # prints -------------------
+
+        self.printF(result, st="r")
+        if infoL: 
+            for each in infoL:
+                self.printF( each )
+        if errorL:
+            for each in errorL:
+                self.printF( each )
+        # -------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 3   clean file (remove file comparator refs (previz, anim, render....))
+        self.printF("asset conformation: clean files ", st="t")
+        result,details = r2a.cleanFile()
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in details:
+            self.printF( each )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 4   delete aovs
+        self.printF("rendering:   delete AOVs", st="t")
+        result,details = rendering.deleteAovs()
+        # prints -------------------
+        self.printF(result, st="r")
+        self.printF(details)
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 5   soft clean
+        self.printF("asset conformation:   soft clean", st="t")
+        result, logL = assetconformation.softClean(struct2CleanList=["asset"])
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in logL:
+            self.printF( each )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 6   delete unused nodes
+        self.printF("miscUtils: delete unknown nodes ", st="t")
+        result,details = miscUtils.deleteUnknownNodes(GUI= False)
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in details:
+            self.printF( each )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+        
+
+        # 7   delete color sets
+        self.printF("miscUtils: delete all color set ", st="t")
+        result,details = miscUtils.deleteAllColorSet(GUI= False)
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in details:
+            self.printF( each )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+        
+        # 8   delete history
+        self.printF("modeling: delete all geo history ", st="t")
+        result,details = modeling.geoGroupDeleteHistory(GUI = False)
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in details:
+            self.printF( each )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+        
+        # 9   combine all geo groups 
+        self.printF("modeling: combine all objects under groups that share the same materials ", st="t")
+        result,details = modeling.combineAllGroups(GUI = False)
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in details:
+            self.printF( each )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 10   make all meshes unique
+        self.printF("modeling: make all meshes unique ", st="t")
+        result,details = modeling.makeAllMeshesUnique(inParent="|asset|grp_geo",GUI = False)
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in details:
+            self.printF( each )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+       
+        # 11   freeze and reset translation
+        self.printF("modeling: freeze and reset all transforms ", st="t")
+        result,details = modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = True, GUI = False)
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in details:
+            self.printF( each )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+        
+
+        # colors
+        print "*btn_preClean:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+        
+        return boolResult
+
     @jpZ.waiter
     def btn_checkStructure(self, controlN="", *args, **kwargs):
         boolResult=True
@@ -540,6 +717,8 @@ class checkModule(object):
         
 
         boolResult = True
+        if not self.btn_preClean(controlN=self.BpreClean, ):
+            boolResult = False
         if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
             boolResult = False
         print "*1",boolResult
@@ -627,6 +806,9 @@ class checkModule(object):
         cmds.image(image=self.upImg)
         cmds.columnLayout("layoutImportModule",columnOffset= ["both",0],adj=True,)
         self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= partial(self.btn_cleanAll),en=1)
+
+        self.BpreClean = cmds.button("pre-Clean",)
+        cmds.button(self.BpreClean,e=1,c= partial( self.btn_preClean,self.BpreClean))
 
         self.BcheckStructure = cmds.button("checkStructure", )
         cmds.button(self.BcheckStructure,e=1,c= partial( self.btn_checkStructure,self.BcheckStructure) )

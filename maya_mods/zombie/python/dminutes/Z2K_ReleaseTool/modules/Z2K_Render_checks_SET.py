@@ -33,9 +33,16 @@ reload(shading)
 from dminutes import rendering
 reload (rendering)
 
+from dminutes import miscUtils
+reload (miscUtils)
+
 from dminutes import assetconformation
 reload(assetconformation)
 r2a = assetconformation.Asset_File_Conformer()
+
+from dminutes import modeling
+reload(modeling)
+
 
 
 class checkModule(object):
@@ -93,12 +100,12 @@ class checkModule(object):
     #--------------------- Buttons functions ----------------------------------------------------------------------------
     #----------------------------------------------------------------------------------------------------------
 
-    #@jpZ.waiter
+    @jpZ.waiter
     def btn_preClean(self, controlN="", *args, **kwargs):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=6, e=True)
+        self.pBar_upd(step=1, maxValue=7, e=True)
 
         # steps
 
@@ -171,9 +178,9 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 6   clean file (remove file comparator refs (previz, anim, render....))
+        # 6   delete unused nodes
         self.printF("miscUtils: delete unknown nodes ", st="t")
-        result,details = miscUtils.deleteUnknownNodes()
+        result,details = miscUtils.deleteUnknownNodes(GUI= False)
         # prints -------------------
         self.printF(result, st="r")
         for each in details:
@@ -184,7 +191,18 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
         
 
-        #miscUtils.deleteAllColorSet()
+        # 7   delete unused nodes
+        self.printF("miscUtils: delete all color set ", st="t")
+        result,details = miscUtils.deleteAllColorSet(GUI= False)
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in details:
+            self.printF( each )
+        # --------------------------
+        if not result:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+        
 
 
         # colors

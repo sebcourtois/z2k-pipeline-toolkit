@@ -430,19 +430,23 @@ def checkMeshNamingConvention(printInfo = True, inParent = "*"):
     return wrongMeshNamingConvention
     
 
-def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = False, inParent = "*"):
+def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = False, inParent = "*", GUI = True):
     """
     This function, makes sure every mesh shape name is concistant with its transform name: "transformName+Shape"
     Only shapes of the main name space are taken into account, referenced shapes are therefore ignored
         - fixShapeName (boolean): fix invalid shapes names if True, only log info otherwise
         - return (list): the meshes list that still have an invalid shape name
     """
+    resultB = True
+    logL = []
 
     if not myTransMesh:
         myTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
 
         if instanceTransformL:
-            print "#### {:>7}: 'meshShapeNameConform': {} objects ignored since they are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+            logMessage = "#### {:>7}: 'meshShapeNameConform': {} objects ignored since they are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+            logL.append(logMessage)
+            if GUI == True: print logMessage
 
         if myTransMesh is None: myTransMesh = []
         checkAllScene = True
@@ -458,20 +462,30 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
         myShape = myShape[0]
         myShapeCorrectName = each+"|"+each.split("|")[-1]+"Shape"
         if myShape != myShapeCorrectName and fixShapeName == True:
-            if forceInfoOff is False: print "#### info: 'meshShapeNameConform': rename '"+myShape.split("|")[-1]+"' --> as --> '"+myShapeCorrectName.split("|")[-1]+"'"
+            logMessage = "#### info: 'meshShapeNameConform': rename '"+myShape.split("|")[-1]+"' --> as --> '"+myShapeCorrectName.split("|")[-1]+"'"
+            logL.append(logMessage)
+            if GUI == True: print logMessage
             cmds.rename(myShape,each.split("|")[-1]+"Shape")
             renamedNumber = renamedNumber +1
         elif myShape != myShapeCorrectName and fixShapeName == False:
-            print "#### warning: 'meshShapeNameConform': '"+each+"' has a wrong shape name: '"+myShape.split("|")[-1]+"' --> should be renamed as: --> '"+myShapeCorrectName.split("|")[-1]+"'"
+            logMessage = "#### warning: 'meshShapeNameConform': '"+each+"' has a wrong shape name: '"+myShape.split("|")[-1]+"' --> should be renamed as: --> '"+myShapeCorrectName.split("|")[-1]+"'"
+            logL.append(logMessage)
+            if GUI == True: print logMessage
             shapesToFix.append(each)
     if renamedNumber != 0:
-        if forceInfoOff is False: print "#### {:>7}: 'meshShapeNameConform': {} shape(s) fixed".format("Info",renamedNumber)    
+        logMessage = "#### {:>7}: 'meshShapeNameConform': {} shape(s) fixed".format("Info",renamedNumber) 
+        logL.append(logMessage)
+        if GUI == True: print logMessage 
         return None
     elif shapesToFix: 
-        if forceInfoOff is False: print "#### {:>7}: 'meshShapeNameConform': {} shape(s) to be fixed".format("Info",shapesToFix)
+        logMessage = "#### {:>7}: 'meshShapeNameConform': {} shape(s) to be fixed".format("Info",shapesToFix)
+        logL.append(logMessage)
+        if GUI == True: print logMessage
         return shapesToFix
     elif checkAllScene == True:
-        if forceInfoOff is False: print "#### {:>7}: 'meshShapeNameConform': all meshes shapes names are correct".format("Info",shapesToFix)
+        logMessage = "#### {:>7}: 'meshShapeNameConform': all meshes shapes names are correct".format("Info")
+        logL.append(logMessage)
+        if GUI == True: print logMessage
         return None
     else:
         return None
@@ -509,7 +523,7 @@ def getMeshesWithSameName(inVerbose = True, inParent = "*"):
         return None 
 
 
-def renameMeshAsUnique(myMesh, inParent = "*"):
+def renameMeshAsUnique(myMesh, inParent = "*", GUI = True):
     """
     Makes the given mesh name unique by adding a digit and/or incrementing it till the short name is unique in the scene. 
     Only meshes of the main name space are taken into account, referenced meshes are therefore ignored.
@@ -528,11 +542,11 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
         while str(allTransMesh).count(newShortName+newDigit) > 0:
             newDigit = string.zfill(str(int(digit)+i), len(digit))
             i = i+1
-            if i>20:
+            if i>300:
                 print "#### {:>7}: 'renameMeshAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
                 break
         cmds.rename(myMesh,newShortName+newDigit)
-        print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+string.rstrip(myMesh,digit)+newDigit
+        if GUI == True: print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+string.rstrip(myMesh,digit)+newDigit
         if myMesh in allTransMesh: meshShapeNameConform(fixShapeName = True, myTransMesh = [string.rstrip(myMesh,digit)+newDigit], forceInfoOff = True )
         
     else:
@@ -541,85 +555,111 @@ def renameMeshAsUnique(myMesh, inParent = "*"):
         while str(allTransMesh).count(shortName+digit) > 0:
             digit = str(int(digit)+1)
             i = i+1
-            if i>20:
+            if i>300:
                 print "#### {:>7}: 'renameMeshAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
                 break
         myMeshNew = [cmds.rename(myMesh,shortName+digit)]
-        print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+myMesh+digit
+        if GUI == True: print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+myMesh+digit
         if myMesh in allTransMesh: meshShapeNameConform(fixShapeName = True, myTransMesh = myMeshNew, forceInfoOff = True)
 
                         
-def makeAllMeshesUnique(inParent = "*"):
+def makeAllMeshesUnique(inParent = "*", GUI = True):
     """
     makes all the meshes short names unique by adding a digit and/or incrementing it till the short name is unique in the scene
     then makes sure the shapes names are corrects
     """
+    resultB = True
+    logL = []
 
     allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
     if instanceTransformL:
-        print "#### {:>7}:'makeAllMeshesUnique' {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
-
+        logMessage = "#### {:>7}:'makeAllMeshesUnique' {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+        logL.append(logMessage)
+        if GUI == True: print logMessage
 
     multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
     if multipleMesh :
         i=0
         while multipleMesh:
-            renameMeshAsUnique(multipleMesh[0], inParent)
+            renameMeshAsUnique(multipleMesh[0], inParent, GUI= False)
             multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
             i = i+1
-            if i>20:
-                print "#### {:>7}: 'makeAllMeshesUnique' while loop has reached the security limit, program has been stopped".format("Error")
+            if i>300:
+                print "#### {:>7}: 'makeAllMeshesUnique' while loop has reached the security limit, program has been stopped: {}".format("Error", multipleMesh)
                 break
     else:
         if inParent == "*":
-            print "#### {:>7}: 'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name".format("Info")
+            logMessage =  "#### {:>7}: 'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name".format("Info")
+            logL.append(logMessage)
+            if GUI == True: print logMessage
         else :
-            print "#### {:>7}: 'makeAllMeshesUnique' no multiple mesh found under '{}' all meshes have unique short name ".format("Info",inParent)
+            logMessage = "#### {:>7}: 'makeAllMeshesUnique' no multiple mesh found under '{}' all meshes have unique short name ".format("Info",inParent)
+            logL.append(logMessage)
+            if GUI == True: print logMessage
+
+    return resultB, logL
 
 
-def geoGroupDeleteHistory():
+
+
+
+def geoGroupDeleteHistory(GUI=True):
     """
     gets all the mesh transformms under the '|asset|grp_geo', delete their history and delete any intermediate unconnected shape 
     """
+    resultB = True
+    logL = []
     geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
     if instanceTransformL:
-        print "#### {:>7}: 'geoGroupDeleteHistory': {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+        logMessage = "#### {:>7}: 'geoGroupDeleteHistory': {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+        logL.append(logMessage)
+        if GUI == True: print logMessage
         geoTransformList = geoTransformList+ instanceTransformL
 
     cmds.delete(geoTransformList,ch =True)
-    print "#### {:>7}:'geoGroupDeleteHistory': deteted history on {} geometries".format("Info",len(geoTransformList))
+    logMessage = "#### {:>7}: 'geoGroupDeleteHistory': deteted history on {} geometries".format("Info",len(geoTransformList))
+    logL.append(logMessage)
+    if GUI == True: print logMessage
     
     geoShapeList = cmds.ls(cmds.listRelatives("|asset|grp_geo", allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
     deletedShapeList = []
     for eachGeoShape in geoShapeList:
         if cmds.getAttr(eachGeoShape+".intermediateObject") == True:
             if  len(cmds.listHistory (eachGeoShape, lv=1)+ cmds.listHistory (eachGeoShape,future = True, lv=1))>2:
-                print "#### warning : 'geoGroupDeleteHistory': this intermediate mesh shape still has an history and cannot be deleted : "+eachGeoShape
+                logMessage = "#### warning : 'geoGroupDeleteHistory': this intermediate mesh shape still has an history and cannot be deleted : "+eachGeoShape
+                logL.append(logMessage)
+                if GUI == True: print logMessage
             else:
                 cmds.delete(eachGeoShape)
                 deletedShapeList.append(eachGeoShape)
-            print "#### info : 'geoGroupDeleteHistory': deteted "+str(len(deletedShapeList))+" intermediate(s) mesh shape : "
+            logMessage = "#### info : 'geoGroupDeleteHistory': deteted "+str(len(deletedShapeList))+" intermediate(s) mesh shape : "
+            logL.append(logMessage)
+            if GUI == True: print logMessage
+    return resultB, logL
 
 
-def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
+def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False, GUI = True):
     """
     gets all the mesh transforms under de given inParent, an check that all the transforms values are set to 0 (1 for scales)
     logs infos in case inVerbose is true, freeze and reset the the transforms in case inConform is True.
     """
-    print ""
-    print "#### {:>7}: modeling.freezeResetTransforms(inParent = {}, inVerbose = {}, inConform = {})".format("Info",inParent, inVerbose, inConform)
+    resultB = True
+    logL = []
+    if GUI == True: print "#### {:>7}: modeling.freezeResetTransforms(inParent = {}, inVerbose = {}, inConform = {})".format("Info",inParent, inVerbose, inConform)
     unFreezedTransfomList = []
     freezedTransfomList = []
     geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
     if instanceTransformL:
-        print "#### {:>7}: 'freezeResetTransforms': {} objects ignored since they are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+        logMessage = "#### {:>7}: 'freezeResetTransforms': {} objects ignored since they are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+        logL.append(logMessage)
+        if GUI == True: print logMessage
 
     for each in geoTransformList:
         if (cmds.xform( each, os=True, q=True,  ro=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  t=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  s=True, r = True )!=[1,1,1] or 
             cmds.xform( each, os=True, q=True, rp=True)!=[0,0,0] or cmds.xform( each, os=True, q=True, sp=True)!=[0,0,0]):
             if inVerbose == True and inConform == False:
                 unFreezedTransfomList.append(each)
-                print "#### {:>7}: {:^28} --> has unfreezed tranform values".format("Info", each)
+                if GUI == True: print "#### {:>7}: {:^28} --> has unfreezed tranform values".format("Info", each)
             if inConform == True:
                 cmds.makeIdentity (each ,apply= True, n=0, pn=1)
                 cmds.makeIdentity (each ,apply= False, n=0, pn=1)
@@ -628,15 +668,21 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False):
 
     if unFreezedTransfomList !=[] and inVerbose == True:
         cmds.select(unFreezedTransfomList)
-        print "#### {:>7}: {} unfreezed transforms have been selected".format("Info", str(len(unFreezedTransfomList)))
+        logMessage = "#### {:>7}: {} unfreezed transforms have been selected".format("Info", str(len(unFreezedTransfomList)))
+        logL.append(logMessage)
+        if GUI == True: print logMessage
 
     if freezedTransfomList != []:
-        print "#### {:>7}: {} transforms have been freezed and reset".format("Info", len(freezedTransfomList))
+        logMessage = "#### {:>7}: {} transforms have been freezed and reset".format("Info", len(freezedTransfomList))
+        logL.append(logMessage)
+        if GUI == True: print logMessage
 
     if unFreezedTransfomList ==[] and inVerbose == True:
-        print "#### {:>7}: {} transforms checked successfully".format("Info", str(len(geoTransformList)))
+        logMessage = "#### {:>7}: {} transforms checked successfully".format("Info", str(len(geoTransformList)))
+        logL.append(logMessage)
+        if GUI == True: print logMessage
 
-    return unFreezedTransfomList if unFreezedTransfomList != [] else  None
+    return resultB, logL
 
 def compareHDToPreviz():
     """
@@ -795,11 +841,14 @@ def compareHDToPreviz():
 
 
 
-def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, autoRenameI = 0, verbose = True):
+def combineGeoGroup(toCombineTransfL = [], combineByMaterialB = False, GUI = True, autoRenameI = 0, verbose = True):
     """
     this script merge selected objects only if they are under the same group.
     It ensure that the resulting object is under the intial group.
-        toCombineObjL: a list of shapes ot transform objects to combine, groups are not accepeted. if nothing in input try with the selection
+    Warning: if GUI is False a part of the tests are skipped to speed up the process in larges scenes.
+    the tests mus be done in the callin script, see combineAllGroups for instance
+    instances will be skipped
+        toCombineTransfL: a list of transform objects to combine, groups are not accepeted. if nothing in input try with the selection
         combineByMaterialB: if True il merge only objects that share the same material
         GUI: if True wil log messages and select merged object when combined 
         autoRenameI:    0: do not rename the combined objects, name is the first selected object or first of the list
@@ -810,29 +859,57 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
     logL = []
     resultObjL = []
     combinedObjL = []
+    soloMeshToCombine = []
     shaderAssignationD = {'multiMaterial':[]}
 
+    if not toCombineTransfL:
+        toCombineTransfL = cmds.ls(selection = True,l = True)
+    else:
+        toCombineTransfL= cmds.ls(toCombineTransfL, l = True)
 
-    if not toCombineObjL:
-        toCombineObjL = cmds.ls(selection = True,l = True)
+    if GUI == True: 
+        #exclude instances from the input
+        transMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes("*")
+        instanceTransformL= cmds.ls(instanceTransformL, l = True)
+        InstanceToCombineL = list(set(toCombineTransfL) & set(instanceTransformL))
+        if InstanceToCombineL:
+            logMessage = "#### {:>7}: 'combineGeo' {} elements cannot be combined since they are instances, they will be skipped: {}".format("Warning", len(InstanceToCombineL), InstanceToCombineL)
+            if GUI == True: print logMessage
+            logL.append(logMessage)
+            toCombineTransfL = list(set(toCombineTransfL) - set(InstanceToCombineL))
 
-    toCombineShapesL = cmds.ls(toCombineObjL,l = True, shapes = True)+ cmds.ls(cmds.listRelatives(toCombineObjL, children = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
 
-    if len(toCombineShapesL)<2:
-        return [resultB, logL, toCombineObjL, resultObjL] 
-
-    #path = toCombineShapesL[-1].split(toCombineShapesL[-1].split("|")[-2])[0].rstrip("|")
-    path = cmds.listRelatives(cmds.listRelatives(toCombineShapesL[-1], parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
-    finalObjectName = toCombineShapesL[-1].split("|")[-1]
-
-    # check that all the meshes belong to the same group
-    for each in toCombineShapesL:
-        eachPath = cmds.listRelatives(cmds.listRelatives(each, parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
-        if path != eachPath:
-            logMessage = "#### {:>7}: 'combineGeo' Cannot merge 2 elements of a different group: {} is not under '{}'".format("Error", each, path)
+        #fail if one input is not a transform
+        toCombineTransfFilteredL = cmds.ls(toCombineTransfL, type= 'transform', l=True)
+        if toCombineTransfFilteredL!= toCombineTransfL:
+            notTransformObjL = list(set(toCombineTransfL)-set(toCombineTransfFilteredL))
+            logMessage = "#### {:>7}: 'combineGeo' Cannot merge elements that are not transforms: {}".format("Error", notTransformObjL)
             if GUI == True : raise ValueError (logMessage)
             resultB = False
             logL.append(logMessage)
+            return [resultB, logL, toCombineTransfL, resultObjL] 
+
+
+    toCombineShapesL = cmds.ls(toCombineTransfL,l = True, shapes = True)+ cmds.ls(cmds.listRelatives(toCombineTransfL, children = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
+    if len(toCombineShapesL)<2:
+        print "combineGeoGroup: toCombineTransfL",toCombineTransfL
+        soloMeshToCombine= list(toCombineTransfL)
+        print "soloMeshToCombine",soloMeshToCombine
+        return [resultB, logL, toCombineTransfL, resultObjL] 
+
+    path = cmds.listRelatives(cmds.listRelatives(toCombineShapesL[-1], parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
+    finalObjectName = toCombineShapesL[-1].split("|")[-1]
+
+    if GUI == True:
+    # check that all the meshes belong to the same group
+        for each in toCombineShapesL:
+            eachPath = cmds.listRelatives(cmds.listRelatives(each, parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
+            if path != eachPath:
+                logMessage = "#### {:>7}: 'combineGeo' Cannot merge 2 elements of a different group: {} is not under '{}'".format("Error", each, path)
+                if GUI == True : raise ValueError (logMessage)
+                resultB = False
+                logL.append(logMessage)
+                return [resultB, logL, toCombineTransfL, resultObjL] 
 
     # create a dictionnary to gather all the shapes that share the same material. 
     # every key correspond to a shading engine and reference the objects this SE is connected to:
@@ -863,7 +940,7 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
         else:
             shaderAssignationD['miscSE'].append(toCombineShapesL)
 
-    #combine objects depending on the key they are referenced under
+    #combine objects depending on the dictionary key they are referenced under
     for each in shaderAssignationD:
         if each == 'multiMaterial' :
             if shaderAssignationD['multiMaterial']:
@@ -874,7 +951,6 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
             if len(shaderAssignationD[each])>1:
                 combinedObjL.extend(shaderAssignationD[each]) 
                 mergedObjectName = cmds.polyUnite(shaderAssignationD[each], ch=False, mergeUVSets = True, name = finalObjectName )[0]
-                print mergedObjectName
                 groupName = path.split("|")[-1]
                 parentName = path.split(groupName)[0].rstrip("|")
                 #parent back the merged object under the initial group 
@@ -896,42 +972,66 @@ def combineGeoGroup(toCombineObjL = [], combineByMaterialB = False, GUI = True, 
         cmds.select(resultObjL)
         if verbose == True: print logMessage
 
-    return [resultB, logL, toCombineObjL, resultObjL] 
+    return [resultB, logL, toCombineTransfL, resultObjL] 
 
 
 
 def combineAllGroups(inParent = "asset|grp_geo", GUI = True, autoRenameI= 1, combineByMaterialB = True):
     resultB = True
     logL = []
+    skippedInstanceL =[]
+    soloMeshToCombine=[]
+    resultL = []
+    CombineNbPerformedI = 0
 
-    meshNbBeforeConbineI = len(cmds.listRelatives(inParent, allDescendents = True, type = "mesh"))
-    transformL = cmds.ls(cmds.listRelatives("asset|grp_geo", allDescendents = True, fullPath = True, type = "transform"), l=True, exactType="transform")
+    #exclude instances from the input
+    transMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+    instanceTransformL= cmds.ls(instanceTransformL, l = True)
+
+
+
+    meshNbBeforeConbineI = len(cmds.listRelatives(cmds.listRelatives(inParent, allDescendents = True, fullPath = True, type = "mesh"), allParents = True, fullPath = True, type = "transform"))
+    transformL = cmds.ls(cmds.listRelatives(inParent, allDescendents = True, fullPath = True, type = "transform"), l=True, exactType="transform")
     for each in transformL:
         if re.match('^grp_', each.split("|")[-1]):
-            #meshL = cmds.listRelatives(each, children = True, fullPath = True, type = "mesh")
             meshL = cmds.listRelatives(cmds.listRelatives(each, children = True, fullPath = True), children = True, fullPath = True, type = "mesh")
-            if meshL and len(meshL)>1 :
-                resultL = combineGeoGroup(toCombineObjL = meshL, GUI = GUI,verbose = False, autoRenameI= autoRenameI, combineByMaterialB = combineByMaterialB)
-                if GUI == True:
-                    logMessage = "#### {:>7}: 'combineAllGroups' '{:>4}' meshes combined in '{:>4}' meshe(s) under group: {}:".format("Info", len(resultL[2]),len(resultL[3]),each)
-                    #print logMessage
-                    logL.append(logMessage)
+            toCombineTransfL = cmds.listRelatives(meshL, parent = True, fullPath = True, type = "transform")
+            if toCombineTransfL: skippedInstanceL.extend(list(set(toCombineTransfL)&set(instanceTransformL)))
+            if toCombineTransfL and len(toCombineTransfL)>1:
+                toCombineTransfL = list(set(toCombineTransfL)-set(instanceTransformL))
+                if len(toCombineTransfL)>1: 
+                    combineGeoGroup(toCombineTransfL = toCombineTransfL, GUI = False,verbose = False, autoRenameI= autoRenameI, combineByMaterialB = combineByMaterialB)
+                    CombineNbPerformedI += 1
+            elif toCombineTransfL:
+                soloMeshToCombine.extend(toCombineTransfL)
 
-    meshNbAfterConbineI = len(cmds.listRelatives(inParent, allDescendents = True, type = "mesh"))
 
-    logMessage = "#### {:>7}: 'combineAllGroups' final result: '{:>4}' meshes combined in : '{:>4}' meshes".format("Info",meshNbBeforeConbineI,meshNbAfterConbineI)
-    print logMessage
+    meshNbAfterConbineI = len(cmds.listRelatives(cmds.listRelatives("asset|grp_geo", allDescendents = True, fullPath = True,type = "mesh"), allParents = True))
+
+
+    logMessage = "#### {:>7}: 'combineAllGroups' {} meshes in the scene : {} meshes after conbine operation, {} combine performed".format("Info",meshNbBeforeConbineI,meshNbAfterConbineI,CombineNbPerformedI)
+    if GUI == True: print logMessage
     logL.append(logMessage)
 
-    return [resultB, logL] 
+    logMessage = "#### {:>7}: 'combineAllGroups' --> {} could not be combined --> unique under their group".format("Info", len(soloMeshToCombine))
+    logL.append(logMessage)
+    if GUI == True: print logMessage
+    if skippedInstanceL:
+        skippedInstanceL = cmds.ls(skippedInstanceL)
+        logMessage = "#### {:>7}: 'combineAllGroups' --> {} could not be combined --> instances".format("Info", len(skippedInstanceL))
+        logL.append(logMessage)
+        if GUI == True: print logMessage
+
+    return resultB, logL
 
 
 def convertObjToInstance(transformL=[], GUI = True):
+    #exemple of transform naming selection
+    #mc.listRelatives(mc.ls("geo_femmeFatyVisiteurA*",type='mesh'),parent =True, fullPath = True, type = "transform")
     logL = []
     resultB = True
 
     transformL = cmds.ls(transformL,l = True)
-    print "transformL-1",transformL
 
     #check if input, is a transform list 
     noTransformL = list(set(transformL)-set(cmds.ls(transformL,type = "transform",l = True)))
@@ -940,9 +1040,8 @@ def convertObjToInstance(transformL=[], GUI = True):
             if GUI == True : raise ValueError (logMessage)
             resultB = False
             logL.append(logMessage)
-    print "transformL-2",transformL
     #exclude instances from the objects to process
-    ransMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes("*",inType = "shape")
+    transMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes("*",inType = "shape")
     toSkipL = list(set(transformL)&set(instanceTransformL))
     if toSkipL:
         logMessage = "#### {:>7}: 'convertObjToInstance' {} objects are instances already, they will be skipped: {}".format("Info",len(toSkipL),toSkipL)
@@ -950,18 +1049,23 @@ def convertObjToInstance(transformL=[], GUI = True):
         logL.append(logMessage)
         transformL = list(set(transformL)-set(toSkipL))
 
-    print "transformL",transformL
     masterS = transformL[0]
-    toInstaciateL = transformL.remove(masterS)
-    print "toInstaciateL",toInstaciateL
-    print "masterS",masterS
-    for each in toInstaciateL:
-        eachParent = each.split(each.split("|")[-1])[0].rstrip("|")
-        print "eachParent",eachParent
-        #resultInstance = mc.instance( masterS , leaf=True) 
+    transformL.remove(masterS)
+    toReplace = transformL[1:]
 
-# (10:39) sebastienc: mtx = mc.xform( sSourceXfm, q = True, ws = True, matrix = True )
-# (10:40) sebastienc: mc.xform( sTargetXfm, e = True, ws = True, matrix = mtx )
+    for each in toReplace:
+        mtx = cmds.xform( each, q = True, ws = True, matrix = True )
+        eachParent = each.split(each.split("|")[-1])[0].rstrip("|")
+        resultInstance = cmds.instance( masterS , leaf=True)
+        cmds.delete(each)
+        resultParentedInstance= cmds.parent(resultInstance, eachParent )[0]
+        cmds.xform( resultParentedInstance,  ws = True, matrix = mtx )
+
+    logMessage = "#### {:>7}: 'convertObjToInstance' {} objects have been replaced with instance of '{}' master : {}".format("Info",len(transformL),masterS,transformL)
+    print logMessage
+    logL.append(logMessage)
+
+    return [resultB, logL]
 
 
 # -------------------------- RIG SUPPLEMENT -------------------------------------------------------------------
