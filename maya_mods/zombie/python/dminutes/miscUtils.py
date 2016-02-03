@@ -93,7 +93,9 @@ def createUserWorkspace():
     pm.workspace( davosUser, openWorkspace = True )
 
         
-def deleteUnknownNodes():
+def deleteUnknownNodes(GUI = True):
+    resultB = True
+    logL = []
     
     mentalRayNodeList = [u'mentalrayGlobals',u'mentalrayItemsList',u'miDefaultFramebuffer',u'miDefaultOptions',u'Draft',u'DraftMotionBlur',u'DraftRapidMotion',u'Preview',
                             u'PreviewCaustics',u'PreviewFinalGather',u'PreviewGlobalIllum',u'PreviewImrRayTracyOff',u'PreviewImrRayTracyOn',u'PreviewMotionblur',
@@ -111,37 +113,48 @@ def deleteUnknownNodes():
             mc.lockNode(each,lock = False)
             mc.delete(each)
             mentalRayDeletedNodeList.append(each)
-            #print "#### {:>7}: '{}' Mental Ray node deleted".format("Info", each)
         except:
-            print "#### {:>7}: 'deleteUnknownNodes' {} Mental Ray node could not be deleted".format("Warning", each)
+            logMessage = "#### {:>7}: 'deleteUnknownNodes' {} Mental Ray node could not be deleted".format("Warning", each)
+            logL.append(logMessage)
+            if GUI == True: print logMessage
 
     for each in turtleNodeList:
         try:
             mc.lockNode(each,lock = False)
             mc.delete(each)
             turtleDeletedNodeList.append(each)
-            #print "#### {:>7}: '{}' Turtle node deleted".format("Info", each)
         except:
-            print "#### {:>7}: 'deleteUnknownNodes' {} Turtle node could not be deleted".format("Warning", each)
+            logMessage = "#### {:>7}: 'deleteUnknownNodes' {} Turtle node could not be deleted".format("Warning", each)
+            logL.append(logMessage)
+            if GUI == True: print logMessage
 
     unknownNodes = mc.ls(type = "unknown")
     if unknownNodes:
-        print "#### {:>7}: 'deleteUnknownNodes'  {} unknown node has been found in the scene: {}".format("Warning", len(unknownNodes), unknownNodes)
+        logMessage = "#### {:>7}: 'deleteUnknownNodes'  {} unknown node has been found in the scene: {}".format("Warning", len(unknownNodes), unknownNodes)
+        logL.append(logMessage)
+        if GUI == True: print logMessage
 
     if mentalRayDeletedNodeList:
-        print "#### {:>7}: 'deleteUnknownNodes'  {} Mental Ray node(s) deteled: '{}'".format("Info", len(mentalRayDeletedNodeList), mentalRayDeletedNodeList)
+        logMessage = "#### {:>7}: 'deleteUnknownNodes'  {} Mental Ray node(s) deteled: '{}'".format("Info", len(mentalRayDeletedNodeList), mentalRayDeletedNodeList)
+        logL.append(logMessage)
+        if GUI == True: print logMessage
 
     if turtleDeletedNodeList:
-        print "#### {:>7}: 'deleteUnknownNodes'  {} Turtle node(s) deteled: '{}".format("Info", len(turtleDeletedNodeList), turtleDeletedNodeList)
+        logMessage = "#### {:>7}: 'deleteUnknownNodes'  {} Turtle node(s) deteled: '{}".format("Info", len(turtleDeletedNodeList), turtleDeletedNodeList)
+        logL.append(logMessage)
+        if GUI == True: print logMessage
 
     if not turtleDeletedNodeList and not turtleDeletedNodeList:
-        print "#### {:>7}: 'deleteUnknownNodes'  no Turtle or Mental Ray node deteled".format("Info")
+        logMessage =  "#### {:>7}: 'deleteUnknownNodes'  no Turtle or Mental Ray node deteled".format("Info")
+        logL.append(logMessage)
+        if GUI == True: print logMessage
 
     try:
         mc.unloadPlugin("Turtle",force = True)
     except:
         pass
 
+    return resultB, logL
 
 
 def setAttrC(*args, **kwargs):
@@ -199,8 +212,6 @@ def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, empt
         return [toReturnB, delNameSpaceL]
 
 
-
-
 def getShape(objectList =  [], failIfNoShape = False):
         shapeList = []
         for eachObject in objectList:
@@ -216,8 +227,9 @@ def getShape(objectList =  [], failIfNoShape = False):
         return shapeList if shapeList != [] else  None
 
 
-            
-def deleteAllColorSet(inParent = "*"):
+def deleteAllColorSet(inParent = "*",GUI = True):
+    resultB = True
+    logL = []
     sTransList, sSnstanceList = getAllTransfomMeshes(inParent = inParent)
     sMeshList = mc.ls(sTransList, type='mesh')
     nbOfDeleteDone=0
@@ -225,8 +237,10 @@ def deleteAllColorSet(inParent = "*"):
         if mc.polyColorSet(each, query=True, allColorSets=True):       
             mc.polyColorSet(each, delete=True)
             nbOfDeleteDone +=1
-    print "#### {:>7}: color sets have been deleted on  {} objects".format("Info",nbOfDeleteDone )
-
+    logMessage = "#### {:>7}: 'deleteAllColorSet' color sets have been deleted on  {} objects".format("Info",nbOfDeleteDone )
+    logL.append(logMessage)
+    if GUI == True: print logMessage
+    return resultB, logL
 
 
 def h264ToProres(inSeqList = ['sq0230', 'sq0150'], shotStep = '01_previz'):
