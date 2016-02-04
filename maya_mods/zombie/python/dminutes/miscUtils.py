@@ -144,7 +144,7 @@ def deleteUnknownNodes(GUI = True):
         logL.append(logMessage)
         if GUI == True: print logMessage
 
-    if not turtleDeletedNodeList and not turtleDeletedNodeList:
+    if not turtleDeletedNodeList and not mentalRayDeletedNodeList:
         logMessage =  "#### {:>7}: 'deleteUnknownNodes'  no Turtle or Mental Ray node deteled".format("Info")
         logL.append(logMessage)
         if GUI == True: print logMessage
