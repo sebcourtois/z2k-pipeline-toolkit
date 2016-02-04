@@ -7,7 +7,7 @@ from itertools import izip
 from collections import OrderedDict
 
 import pymel.core as pm
-import maya.cmds as mc
+#import maya.cmds as mc
 
 #from pytd.util.logutils import logMsg
 from pytaya.core import system as myasys
@@ -21,11 +21,13 @@ from davos.tools import publish_dependencies
 
 from .general import entityFromScene, projectFromScene
 from davos_maya.tool import dependency_scan
-from pytd.util.sysutils import toStr, inDevMode
+from pytd.util.sysutils import toStr, inDevMode, timer
 from pytd.gui.dialogs import confirmDialog
 from pytd.util.fsutils import normCase
 from davos.core.damtypes import DamAsset
 #from pytd.util.fsutils import pathRelativeTo
+
+osp = os.path
 
 bDevDryRun = False
 
@@ -289,3 +291,33 @@ def publishCurrentScene(*args, **kwargs):
 
     return res
 
+@timer
+def linkSceneDependencies(sCurScnPath, depScanResults, sDependencyType):
+
+    if not depScanResults:
+        return
+
+    proj = projectFromScene(sCurScnPath)
+
+    scnFile = proj.entryFromPath(sCurScnPath, dbNode=False)
+    if scnFile.isPrivate():
+        scnFile = scnFile.getPublicFile(fail=True, dbNode=False)
+
+    depFileList = []
+    sAnyPathList = []
+
+    for depData in depScanResults:
+
+        if not depData["file_nodes"]:
+            continue
+
+        drcFile = depData["drc_file"]
+        if drcFile:
+            depFileList.append(drcFile)
+        else:
+            sAbsPath = depData["abs_path"]
+            sAnyPathList.append(sAbsPath)
+
+    data = {"link_type":"dependency", "dependency_type":sDependencyType}
+
+    return proj.linkResourceFiles(scnFile, depFileList, data)

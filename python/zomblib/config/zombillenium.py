@@ -8,6 +8,7 @@ from os.path import join
 s = os.getenv("DEV_MODE_ENV", "0")
 DEV_MODE = eval(s) if s else False
 
+
 class project(object):
 
     maya_version = 2016
@@ -51,6 +52,10 @@ class project(object):
                         "texture":{"upd_status_art":True},
                         "shading":{"upd_status_art":True},
                         }
+
+class damas(object):
+    public_path = project.damas_root_path
+    private_path = join(project.damas_root_path, "private", "$DAVOS_USER", "{proj.dir_name}")
 
 class shot_lib(object):
 

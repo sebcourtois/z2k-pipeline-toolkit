@@ -55,7 +55,7 @@ class DavosSetup(ToolSetup):
 
         with self.menu:
 
-            pm.menuItem(label="Asset Browser", c=file_browser.launch)
+            pm.menuItem(label="File Browser", c=file_browser.launch)
             pm.menuItem(divider=True)
 
             with pm.subMenuItem(label="Create Folders", to=False):
@@ -109,9 +109,18 @@ class DavosSetup(ToolSetup):
 
         import logging
 
-        for sModule in ("requests.packages.urllib3.connectionpool",
+        sMuteModList = ["requests.packages.urllib3.connectionpool",
                         "pytd.util.external.parse",
-                        "PIL.Image"):
+                        "PIL.Image", ]
+
+        if inDevMode():
+            sMuteModList[0] = ""
+
+        for sModule in sMuteModList:
+
+            if not sModule:
+                continue
+
             try:
                 logger = logging.getLogger(sModule)
                 if logger:
