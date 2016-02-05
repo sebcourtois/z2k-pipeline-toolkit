@@ -11,6 +11,8 @@ from dminutes import assetconformation
 reload (assetconformation)
 
 def cleanAsset (GUI = True):
+    resultB = True
+    logL = []
 
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
@@ -123,3 +125,5 @@ def cleanAsset (GUI = True):
                 miscUtils.deleteAllColorSet()
                 modeling.geoGroupDeleteHistory()
                 assetconformation.softClean(keepRenderLayers = False)
+
+    return resultB, logL
