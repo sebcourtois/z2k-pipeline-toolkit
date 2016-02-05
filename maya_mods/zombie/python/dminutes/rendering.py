@@ -324,7 +324,7 @@ def toggleCameraAspectRatio(cameraPatternS = 'cam_shading_*:*'):
     print "#### Info: 'toggleCameraAspectRatio' aspect ratio changed from {} to {} on following cameras: {}".format(initAspectRatio, aspectRatio, shadingCamL)
 
 
-def deleteAovs():
+def deleteAovs(GUI = True):
     toReturn =True
     infoS =""
     if mc.ls("defaultArnoldRenderOptions"):
@@ -334,13 +334,13 @@ def deleteAovs():
             myAOVs.removeAOVs(aovList)
             aovs.refreshAliases()
             infoS =  "#### {:>7}: 'deleteAovs' has deleted {} aovs".format("Info", len(aovList))
-            print infoS
+            if GUI: print infoS
         else:
             infoS =  "#### {:>7}: 'deleteAovs' no AOVs to delete".format("Info")
-            print infoS
+            if GUI: print infoS
     else:
         infoS =  "#### {:>7}: 'deleteAovs' no 'defaultArnoldRenderOptions' found in the scene cannot delete aovs".format("Info")
-        print infoS
+        if GUI: print infoS
     return toReturn, infoS
 
 
