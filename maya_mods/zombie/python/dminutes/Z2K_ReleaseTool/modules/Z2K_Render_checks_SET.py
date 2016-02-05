@@ -38,7 +38,7 @@ reload (miscUtils)
 
 from dminutes import assetconformation
 reload(assetconformation)
-r2a = assetconformation.Asset_File_Conformer()
+
 
 from dminutes import modeling
 reload(modeling)
@@ -66,6 +66,7 @@ class checkModule(object):
         # trickage pour le batch mode goret
         print "GUI=",self.GUI
         if self.GUI in [False,0]:
+            self.BpreClean=""
             self.BcheckStructure=""
             self.BCleanScene=""
             self.BCleanObjects=""
@@ -142,6 +143,7 @@ class checkModule(object):
 
         # 3   clean file (remove file comparator refs (previz, anim, render....))
         self.printF("asset conformation: clean files ", st="t")
+        r2a = assetconformation.Asset_File_Conformer()
         result,details = r2a.cleanFile()
         # prints -------------------
         self.printF(result, st="r")
@@ -206,7 +208,7 @@ class checkModule(object):
 
 
         # colors
-        print "*btn_checkStructure:",boolResult
+        print "*btn_preClean:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
         
         return boolResult
@@ -571,6 +573,8 @@ class checkModule(object):
         
 
         boolResult = True
+        if not self.btn_preClean(controlN=self.BpreClean, ):
+            boolResult = False 
         if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
             boolResult = False
         
