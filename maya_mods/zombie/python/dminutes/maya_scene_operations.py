@@ -438,6 +438,15 @@ def init_previz_scene(sceneManager):
 
     if sStepName.lower() != "previz 3d":
 
+        if sStepName.lower() == "layout":
+            try:
+                geomLayerL = mc.ls('*:geometry', type="displayLayer")
+                for each in geomLayerL:
+                    if not mc.getAttr(each + ".texturing"):
+                        mc.setAttr(each + ".texturing", 1)
+            except Exception as e:
+                pc.displayWarning(toStr(e))
+
         if not oShotCam.isReferenced():
             oShotCam = switchShotCamToRef(sceneManager, oShotCam)
 

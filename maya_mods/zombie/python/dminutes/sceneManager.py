@@ -577,7 +577,7 @@ class SceneManager():
         if bShotCamEdited:
             sCamFile = abcFile.nextVersionName()
         else:
-            latestAbcFile = abcFile.getLatestBackupFile()
+            latestAbcFile = abcFile.latestVersionFile()
             if latestAbcFile:
                 sCamFile = latestAbcFile.name
 
