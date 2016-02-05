@@ -36,7 +36,8 @@ class project(object):
     authenticator_class = ".authtypes.DualAuth"
 
     if DEV_MODE:
-        damas_server_addr = "https://62.210.104.42:8444/api"
+        sPort = os.getenv("DAMAS_DEV_PORT", "8443")
+        damas_server_addr = "https://62.210.104.42:{}/api".format(sPort)
     else:
         damas_server_addr = "https://62.210.104.42:8443/api"
 
