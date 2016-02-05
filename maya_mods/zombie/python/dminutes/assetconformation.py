@@ -130,7 +130,7 @@ def setSubdiv():
 
     for eachSetSubdiv in subdivSets:
         geoInSet = mc.sets(eachSetSubdiv, query = True)
-        if geoInSet == None: geoInSet = []
+        if not geoInSet: geoInSet = []
         
         if eachSetSubdiv != "set_subdiv_init" and geoInSet:
             subdivLevel =  int(eachSetSubdiv.split("set_subdiv_")[1])
@@ -138,8 +138,9 @@ def setSubdiv():
             if  0 <= subdivLevel <=9 :
                 print "#### info: scaning 'set_subdiv_"+str(subdivLevel)+"'"
                 for eachGeo in geoInSet:
-                    eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)[0]
-                    print "    "+eachGeoShape
+                    if mc.nodeType(eachGeo)!="mesh":
+                        eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)[0]
+                    #print "    "+eachGeoShape
                     mc.setAttr(eachGeoShape+".displaySmoothMesh",2)
                     mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
                     mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
