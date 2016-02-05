@@ -1028,7 +1028,7 @@ def importGrpLgt(lgtRig = "lgtRig_character"):
     print "#### {:>7}: '{}' light linked  to '{}' shaders".format("Info",lgtDefault, len(shadingEngine2LinkList))
     return True
 
-def fixMaterialInfo (shadingEngineL = []):
+def fixMaterialInfo (shadingEngineL = [], GUI = True):
     returnB = True
     logL = []
     fixedEhadingEngineL=[]
@@ -1048,7 +1048,7 @@ def fixMaterialInfo (shadingEngineL = []):
             fixedEhadingEngineL.append(each)
 
     logMessage ="#### {:>7}: 'fixMaterialInfo' regenerated materialInfo for {} SE nodes: {}".format("Info",len(fixedEhadingEngineL),fixedEhadingEngineL)
-    print logMessage
+    if GUI == True: print logMessage
     logL.append(logMessage)
 
     return [returnB, logL]

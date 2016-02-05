@@ -446,7 +446,7 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
         if instanceTransformL:
             logMessage = "#### {:>7}: 'meshShapeNameConform': {} objects ignored since they are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
             logL.append(logMessage)
-            if GUI == True: print logMessage
+            if GUI: print logMessage
 
         if myTransMesh is None: myTransMesh = []
         checkAllScene = True
@@ -464,28 +464,28 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
         if myShape != myShapeCorrectName and fixShapeName == True:
             logMessage = "#### info: 'meshShapeNameConform': rename '"+myShape.split("|")[-1]+"' --> as --> '"+myShapeCorrectName.split("|")[-1]+"'"
             logL.append(logMessage)
-            if GUI == True: print logMessage
+            if GUI: print logMessage
             cmds.rename(myShape,each.split("|")[-1]+"Shape")
             renamedNumber = renamedNumber +1
         elif myShape != myShapeCorrectName and fixShapeName == False:
             logMessage = "#### warning: 'meshShapeNameConform': '"+each+"' has a wrong shape name: '"+myShape.split("|")[-1]+"' --> should be renamed as: --> '"+myShapeCorrectName.split("|")[-1]+"'"
             logL.append(logMessage)
-            if GUI == True: print logMessage
+            if GUI: print logMessage
             shapesToFix.append(each)
     if renamedNumber != 0:
         logMessage = "#### {:>7}: 'meshShapeNameConform': {} shape(s) fixed".format("Info",renamedNumber) 
         logL.append(logMessage)
-        if GUI == True: print logMessage 
+        if GUI: print logMessage 
         return None
     elif shapesToFix: 
         logMessage = "#### {:>7}: 'meshShapeNameConform': {} shape(s) to be fixed".format("Info",shapesToFix)
         logL.append(logMessage)
-        if GUI == True: print logMessage
+        if GUI: print logMessage
         return shapesToFix
     elif checkAllScene == True:
         logMessage = "#### {:>7}: 'meshShapeNameConform': all meshes shapes names are correct".format("Info")
         logL.append(logMessage)
-        if GUI == True: print logMessage
+        if GUI: print logMessage
         return None
     else:
         return None
@@ -967,7 +967,8 @@ def combineGeoGroup(toCombineTransfL = [], combineByMaterialB = False, GUI = Tru
 
     logMessage = "#### {:>7}: 'combineGeoGroup' {} objects combined in : {} objects".format("Info",len(combinedObjL),len(resultObjL))
     logL.append(logMessage)
-        
+
+       
     if GUI == True: 
         cmds.select(resultObjL)
         if verbose == True: print logMessage
@@ -1021,6 +1022,13 @@ def combineAllGroups(inParent = "asset|grp_geo", GUI = True, autoRenameI= 1, com
         logMessage = "#### {:>7}: 'combineAllGroups' --> {} could not be combined --> instances".format("Info", len(skippedInstanceL))
         logL.append(logMessage)
         if GUI == True: print logMessage
+
+    # make sure alle the geometry is in the geometry layer
+    geoTransformList = []
+    allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent="|asset|grp_geo", inType = "mesh")
+    geoTransformList = allTransMesh+ instanceTransformL
+    if cmds.ls("geometry", type = "displayLayer"):
+        cmds.editDisplayLayerMembers( "geometry", geoTransformList, noRecurse=True)
 
     return resultB, logL
 
