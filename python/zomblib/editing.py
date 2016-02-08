@@ -168,7 +168,8 @@ def h264ToProres(inSeqList, shotStep='01_previz'):
             for shotName in shotNameList:
                 inDir = osp.normpath(osp.join(shotDir, seqName, shotName, shotStep, "_version"))
                 if  not osp.isdir(inDir):
-                    raise ValueError("Directory could not be found: '{}'".format(inDir))
+                    print "#### {:>7}: Directory could not be found: '{}'".format("Error", inDir)
+                    continue
                 videoList = []
                 for each in os.listdir(inDir):
                     if re.match('^sq[0-9]{4}_sh[0-9]{4}[a-z]{1}_[a-zA-Z0-9\-]{1,24}.mov$', each):
