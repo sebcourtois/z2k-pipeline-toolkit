@@ -331,6 +331,7 @@ def listColHD(public = False):
         if not os.path.isdir(chrDirS):
             return
         allChrL = os.listdir(chrDirS)
+        allChrL.sort()
         myChrL = []
         
         for each in allChrL:
