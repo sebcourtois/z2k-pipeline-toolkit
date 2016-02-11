@@ -1094,6 +1094,7 @@ def convertObjToInstance(transformL=[], GUI = True, checkTopo = True):
     logMessage = "#### {:>7}: 'convertObjToInstance' {} objects have been replaced with instance of '{}' master : {}".format("Info",len(transformL),masterS,transformL)
     if GUI == True : print logMessage
     logL.append(logMessage)
+    setInstanceUpdate()
 
     return [resultB, logL]
 
@@ -1168,12 +1169,13 @@ def convertBranchToLeafInstance(inParent ="asset|grp_geo", GUI = True, mode = "l
                             logL.append(logMessage)
                             if GUI == True : raise ValueError (logMessage)
                             resultB = False
+    setInstanceUpdate()
     cmds.select(initSelection, r= True)
 
     return dict(resultB=resultB, logL=logL)
 
-def setInstance(inParent="asset|grp_geo"):
 
+def setInstanceUpdate(inParent="asset|grp_geo"):
     setL = cmds.ls("set_instance*", type = "objectSet")
     for eachSet in setL:
         subsetL = cmds.ls(cmds.sets(eachSet, query = True), type = "objectSet")
