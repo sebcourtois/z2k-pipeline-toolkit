@@ -48,13 +48,14 @@ def cleanAsset (GUI = True):
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
         elif assetType == "set":
-            if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=baseMessageS+"\n    - delete geo history,\n    - make all mesh unique,\n    - conform mesh shapes names, \n    - delete all unused nodes (not connected to an asset dag node)", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+            if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=baseMessageS+"\n    - delete geo history,\n    - convert branch instanced to leaf instances,\n    - make all mesh unique,\n    - conform mesh shapes names, \n    - delete all unused nodes (not connected to an asset dag node)", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 rendering.deleteAovs()
                 miscUtils.deleteUnknownNodes()
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
                 modeling.geoGroupDeleteHistory()
+                modeling.convertBranchToLeafInstance(inParent ="grp_geo", GUI = True, mode = "convToLeaf" )
                 modeling.makeAllMeshesUnique(inParent="|asset|grp_geo")
                 modeling.meshShapeNameConform(inParent = "|asset|grp_geo")
                 assetconformation.softClean(keepRenderLayers = False)
@@ -105,13 +106,14 @@ def cleanAsset (GUI = True):
 
 
     elif fileType == "master":
-            if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=baseMessageS+"\n    - delete geo history,\n    - make all mesh unique,\n    - conform mesh shapes names, \n    - delete all unused nodes (not connected to an asset dag node), render layers will not be removed", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+            if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=baseMessageS+"\n    - delete geo history,\n    - convert branch instanced to leaf instances,\n    - make all mesh unique,\n    - conform mesh shapes names, \n    - delete all unused nodes (not connected to an asset dag node), render layers will not be removed", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 rendering.deleteAovs()
                 miscUtils.deleteUnknownNodes()
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
                 modeling.geoGroupDeleteHistory()
+                modeling.convertBranchToLeafInstance(inParent ="grp_geo", GUI = True, mode = "convToLeaf" )
                 modeling.makeAllMeshesUnique(inParent="|asset|grp_geo")
                 modeling.meshShapeNameConform(inParent = "|asset|grp_geo")
                 assetconformation.softClean(keepRenderLayers = False)
