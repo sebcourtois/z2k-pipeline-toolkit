@@ -288,6 +288,21 @@ def do(s_inCommand, s_inTask, sceneManager):
     cmdCallable(sceneManager)
     print '{} initialization done ! ({})'.format(s_inTask, sceneManager.context)
 
+def setMayaProject(sProjName):
+
+    sMayaProjsLoc = os.path.dirname(os.path.normpath(mc.workspace(q=True, rd=True)))
+    sMyaProjPath = os.path.join(sMayaProjsLoc, sProjName)
+
+    if not os.path.exists(sMyaProjPath):
+        os.mkdir(sMyaProjPath)
+
+    mc.workspace(sProjName, openWorkspace=True)
+    if not mc.workspace(fileRuleEntry="movie"):
+        mc.workspace(fileRule=("movie", "captures"))
+        mc.workspace(saveWorkspace=True)
+
+    return sMyaProjPath
+
 def importSceneStructure(sceneManager):
     #Import only if does not exists...
     if pc.objExists('shot'):

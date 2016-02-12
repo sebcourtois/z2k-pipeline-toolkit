@@ -1,0 +1,45 @@
+3
+source_setup,source_setup-4.1.rvpkg,nil,nil,nil,true,true,4.0,false
+ocio_source_setup,ocio_source_setup-2.1.rvpkg,nil,nil,nil,true,true,4.0,true
+window_title,window_title-1.4.rvpkg,nil,nil,nil,true,true,3.12.10,false
+session_manager,session_manager-1.6.rvpkg,Tools/Session Manager,x,key-down--x,false,false,3.12.15,false
+StackGroup_edit_mode,session_manager-1.6.rvpkg,nil,nil,nil,false,false,3.12.15,false
+SwitchGroup_edit_mode,session_manager-1.6.rvpkg,nil,nil,nil,false,false,3.12.15,false
+FolderGroup_edit_mode,session_manager-1.6.rvpkg,nil,nil,nil,false,false,3.12.15,false
+Stack_edit_mode,session_manager-1.6.rvpkg,nil,nil,nil,false,false,3.12.15,false
+Switch_edit_mode,session_manager-1.6.rvpkg,nil,nil,nil,false,false,3.12.15,false
+Composite_edit_mode,session_manager-1.6.rvpkg,nil,nil,nil,false,false,3.12.15,false
+SequenceGroup_edit_mode,session_manager-1.6.rvpkg,nil,nil,nil,false,false,3.12.15,false
+SourceGroup_edit_mode,session_manager-1.6.rvpkg,nil,nil,nil,false,false,3.12.15,false
+LayoutGroup_edit_mode,session_manager-1.6.rvpkg,nil,nil,nil,false,false,3.12.15,false
+RetimeGroup_edit_mode,session_manager-1.6.rvpkg,nil,nil,nil,false,false,3.12.15,false
+transform_manip,session_manager-1.6.rvpkg,nil,nil,nil,false,false,3.12.15,false
+slmodule,SLModule-1.0.rvpkg,nil,nil,nil,true,true,6.0.1,false
+slgui,SLModule-1.0.rvpkg,nil,nil,nil,true,true,6.0.1,false
+annotate_mode,annotate-1.11.rvpkg,Tools/Annotation,F10,key-down--f10,false,false,3.12.15,false
+doc_browser,doc_browser-1.1.rvpkg,nil,nil,nil,false,false,3.9.11,false
+os_dependent_path_conversion_mode,os_dependent_path_conversion_mode-1.5.rvpkg,nil,nil,nil,true,true,4.0.7,true
+export_cuts,export_cuts-1.2.rvpkg,nil,nil,nil,true,true,3.10.9,true
+missing_frame_bling_mode,missing_frame_bling-1.5.rvpkg,nil,nil,nil,true,true,3.10.9,true
+file_sequence_mode,sequence_from_file-1.2.rvpkg,File/Options/One File → Sequence,nil,nil,true,true,3.10.9,true
+shotgun_mode,shotgun-1.65.rvpkg,nil,nil,nil,true,true,6.0.1,false
+shotgun_info_mode,shotgun-1.65.rvpkg,nil,nil,nil,true,true,6.0.1,false
+shotgun_review_app,screening_room-1.65.rvpkg,nil,nil,nil,true,true,6.0.1,false
+shotgun_upload,screening_room-1.65.rvpkg,nil,nil,nil,true,true,6.0.1,false
+rvnuke_mode,rvnuke-1.10.rvpkg,Tools/Nuke,nil,nil,false,false,4.0.12,true
+webview,webview-1.7.rvpkg,nil,nil,nil,true,true,3.12,true
+layer_select_mode,layer_select-1.5.rvpkg,Tools/Layer Selector,/,key-down--/,false,false,4.0.7,true
+maya_tools,maya_tools-1.4.rvpkg,nil,nil,nil,true,true,3.12.15,false
+stereo_autoload,stereo_autoload-1.4.rvpkg,nil,nil,nil,true,true,3.12.18,true
+scrub_offset,scrub_offset-1.4.rvpkg,Edit/Scrub Range Offset,O,key-down--O,false,false,3.12.15,true
+versioning_mode,versioning-1.7.rvpkg,nil,nil,nil,true,true,4.0.9,true
+versioning_selector,versioning-1.7.rvpkg,nil,nil,nil,true,true,4.0.9,true
+custom_mattes,custom_mattes-2.1.rvpkg,nil,nil,nil,true,true,4.0.7,true
+custom_lut_menu_mode,custom_lut_menu_mode-2.7.rvpkg,nil,nil,nil,true,true,4.0.12,true
+channel_select,channel_select-1.1.rvpkg,nil,nil,nil,true,true,4.0.8,true
+data_display_indicator_mode,data_display_indicators-1.0.rvpkg,View/EXR Data and Display Indicators,nil,nil,false,false,4.0.11,true
+stereo_disassembly,stereo_disassembly-1.1.rvpkg,nil,nil,nil,true,true,6.0.1,true
+lat_long_viewer,lat_long_viewer-1.0.rvpkg,nil,nil,nil,true,true,6.0.1,true
+pyside_example,pyside_example-1.0.rvpkg,Tools/PySide Example,nil,nil,true,true,6.2.4,true
+pyhello,pyhello-1.0.rvpkg,Tools/PYHELLO,nil,nil,true,true,3.12.9,true
+pymystuff,pymystuff-1.0.rvpkg,nil,nil,nil,true,true,3.12,true
