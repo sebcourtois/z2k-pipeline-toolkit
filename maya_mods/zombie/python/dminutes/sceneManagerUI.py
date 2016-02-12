@@ -18,6 +18,7 @@ from pytd.util.qtutils import setWaitCursor
 import dminutes.maya_scene_operations as mop
 from dminutes import sceneManager
 
+osp = os.path
 
 """Global instance of sceneManager Class"""
 SCENE_MANAGER = None
@@ -48,7 +49,7 @@ def sceneManagerUI():
     if (pc.window('sceneManagerUI', q=True, exists=True)):
         pc.deleteUI('sceneManagerUI')
 
-    dirname, _ = os.path.split(os.path.abspath(__file__))
+    dirname, _ = osp.split(osp.abspath(__file__))
     ui = pc.loadUI(uiFile=dirname + "/UI/sceneManagerUIB.ui")
     SCENE_MANAGER_UI = ui
 
@@ -317,7 +318,7 @@ def doShowInShotgun(*args):
 
 def doShowWipCapturesDir(*args):
     p = SCENE_MANAGER.getWipCaptureDir().replace("/", "\\")
-    if os.path.isdir(p):
+    if osp.isdir(p):
         subprocess.call("explorer {}".format(p))
     else:
         pc.displayWarning("No such directory: '{}'".format(p))
@@ -330,9 +331,10 @@ def doShowSequenceInRv(*args):
     shotgun_review_app.theMode().launchTimeline([(string, string)] {{("entity_type", "Sequence"), ("entity_id", "{}")}});'
     .format(seqId))
 
-    sCmdAgrs = [r"C:\Users\sebcourtois\devspace\git\z2k-pipeline-toolkit\launchers\paris\rvpush.bat",
-                "-tag", "playblast", "mu-eval", sMuCmd
-                ]
+    sLauncherLoc = osp.dirname(os.environ["Z2K_LAUNCH_SCRIPT"])
+    p = osp.join(sLauncherLoc, "rvpush.bat")
+    print p
+    sCmdAgrs = [p, "-tag", "playblast", "mu-eval", sMuCmd]
 
     subprocess.call(sCmdAgrs)
 

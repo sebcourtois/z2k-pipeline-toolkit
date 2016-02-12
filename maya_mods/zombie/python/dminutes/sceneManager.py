@@ -680,7 +680,8 @@ class SceneManager():
         if sendToRv:
             p = r"C:\Program Files\Shotgun\RV 6.2.6\bin\rvpush.exe"
             if osp.isfile(p):
-                p = r"C:\Users\sebcourtois\devspace\git\z2k-pipeline-toolkit\launchers\paris\rvpush.bat"
+                sLauncherLoc = osp.dirname(os.environ["Z2K_LAUNCH_SCRIPT"])
+                p = osp.join(sLauncherLoc, "rvpush.bat")
                 sCmd = p + " -tag playblast merge {}"
             else:
                 pc.displayError("Could not send capture to RV. Missing app: '{}'".format(p))
