@@ -5,6 +5,7 @@ import re
 import subprocess
 import datetime
 
+
 def getAllTransfomMeshes(inParent = "*", inType = "mesh"):
     """
     list all the transforms meshes , under de given 'inParent', 
@@ -315,6 +316,44 @@ def getShapeOrig(TransformS = ""):
         if mc.getAttr(each+".intermediateObject") == 1 and not mc.listConnections( each+".inMesh",source=True) and "ShapeOrig" in each:
             shapeOrigList.append(each)
     return shapeOrigList
+
+
+
+
+def listColHD(public = False):
+
+    def subScan( path = ""):
+        print ""
+        print "########"
+        print "######################  {}  ######################".format( path)
+        print "########"
+        chrDirS = pathJoin(assetDirS,"chr")
+        if not os.path.isdir(chrDirS):
+            return
+        allChrL = os.listdir(chrDirS)
+        allChrL.sort()
+        myChrL = []
+        
+        for each in allChrL:
+            texturePathS = pathJoin(chrDirS,each,"texture")
+            if os.path.isdir(texturePathS):
+                print "#### {:>7}: Scanning: {}".format("Info", texturePathS)
+                allFileL = os.listdir(texturePathS)
+                for each in allFileL:
+                    if each.split(".")[-1].lower()=="jpg" and each.split(".")[0].split("_")[-1].lower() == "colhd":
+                        print "#### {:>7}: ----------> {}".format("Info", each)
+                        
+    if public == True:
+        assetDirS = os.environ["ZOMB_ASSET_PATH"]
+        subScan(path = assetDirS)
+    else:
+        privDirS = pathJoin(os.environ["ZOMB_PRIVATE_LOC"],"private")
+        allFileL = os.listdir(privDirS)
+        for each in allFileL:
+            assetDirS = pathJoin(privDirS,each,"zomb","asset")
+            if os.path.isdir(assetDirS):
+                subScan(path = assetDirS)
+        
 
 
 

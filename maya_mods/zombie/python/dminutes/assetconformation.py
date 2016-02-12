@@ -555,10 +555,17 @@ class Asset_File_Conformer:
                     topoMismatch = topoMismatch + 1
                     print ("#### {:>7}: Vertex number mismatch: '{}' vertex nb = {} -- '{}' vertex nb = {}".format("Error",self.sourceList[i],sourceVrtxCnt, self.targetList[i],targetVrtxCnt))
 
-                sourceBBox =  mc.exactWorldBoundingBox(self.sourceList[i])
-                targetBBox =  mc.exactWorldBoundingBox(self.targetList[i])
-                if sourceVrtxCnt != targetVrtxCnt:
-                    print ("#### {:>7}: Bounding box  mismatch: '{}' -- '{}'".format("Warning",self.sourceList[i], self.targetList[i]))
+                # sourceBBox =  mc.exactWorldBoundingBox(self.sourceList[i])
+                # targetBBox =  mc.exactWorldBoundingBox(self.targetList[i])
+                # if masterBBox != targetBBox:
+                #     print ("#### {:>7}: Bounding box  mismatch: '{}' -- '{}'".format("Warning",self.sourceList[i], self.targetList[i]))
+
+                areaTolF = 0.01 #percentage world area tolerance
+                sourceWorldArea =  mc.polyEvaluate(self.sourceList[i], worldArea= True)
+                targetWorldArea =  mc.polyEvaluate(self.targetList[i], worldArea= True)
+                areaDifF = abs(float(sourceWorldArea - targetWorldArea)/sourceWorldArea *100)
+                if areaDifF > areaTolF:
+                    print "#### {:>7}: World area is {:.3f} percent different: '{}' -- '{}'".format("Warning",areaDifF, self.sourceList[i], self.targetList[i])
 
                 i+=1
 
