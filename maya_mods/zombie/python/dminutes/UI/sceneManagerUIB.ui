@@ -294,7 +294,7 @@
           </sizepolicy>
          </property>
          <property name="title">
-          <string>Open...</string>
+          <string>Misc. Operations</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -319,23 +319,23 @@
            <number>6</number>
           </property>
           <item>
-           <widget class="QPushButton" name="sm_shotgunPage_bt">
+           <widget class="QPushButton" name="sm_rvScreeningRoom_bt">
             <property name="text">
-             <string>Shotgun Page</string>
+             <string>Open Sequence In RV</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="sm_rvScreeningRoom_bt">
+           <widget class="QPushButton" name="sm_shotgunPage_bt">
             <property name="text">
-             <string>Sequence In RV</string>
+             <string>Go To Shotgun Page</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="sm_wipCaptureDir_bt">
             <property name="text">
-             <string>WIP Captures Folder</string>
+             <string>Open WIP Captures Folder</string>
             </property>
            </widget>
           </item>
