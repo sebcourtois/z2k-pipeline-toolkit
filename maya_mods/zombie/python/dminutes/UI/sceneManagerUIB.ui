@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1098</width>
+    <width>1108</width>
     <height>841</height>
    </rect>
   </property>
@@ -792,7 +792,7 @@
                  </size>
                 </property>
                 <property name="text">
-                 <string>Send To RV</string>
+                 <string>Add Capture To RV</string>
                 </property>
                </widget>
               </item>

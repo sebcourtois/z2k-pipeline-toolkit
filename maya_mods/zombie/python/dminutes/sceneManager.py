@@ -179,7 +179,7 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
                            percent=100,
                            startTime=start, endTime=end,
                            width=width, height=height,
-                           offScreen=False,
+                           offScreen=True, #fixes clamping of the capture in Legacy viewports
                            )
 
     sAudioNode = audioNode
