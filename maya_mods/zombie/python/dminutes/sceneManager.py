@@ -4,6 +4,8 @@
 
 import os
 import re
+import stat
+import subprocess
 from collections import OrderedDict
 
 import pymel.core as pc
@@ -11,7 +13,7 @@ import maya.cmds as cmds
 import maya.mel
 
 #import tkMayaCore as tkc
-from pytd.util.fsutils import pathResolve, normCase
+from pytd.util.fsutils import pathResolve, normCase, pathSuffixed
 from pytd.util.logutils import logMsg
 
 from davos.core import damproject
@@ -27,6 +29,7 @@ import dminutes.camImpExp as camIE
 import dminutes.infoSetExp as infoE
 #from dminutes.miscUtils import deleteUnknownNodes
 from pytd.util.sysutils import toStr
+from pytd.util.strutils import padded
 
 reload(jpZ)
 reload(camIE)
@@ -126,19 +129,13 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
                 ornaments=False, play=False, useCamera=None, audioNode=None,
                 i_inFilmFit=0, i_inDisplayResolution=0, i_inDisplayFilmGate=0,
                 i_inOverscan=1.0, i_inSafeAction=0, i_inSafeTitle=0,
-                i_inGateMask=0, f_inMaskOpacity=0.8):
+                i_inGateMask=0, f_inMaskOpacity=0.8, quick=False):
 
     pc.select(cl=True)
     names = []
     name = ""
 
     pan = pc.playblast(activeEditor=True)
-    app = pc.modelEditor(pan, query=True, displayAppearance=True)
-    tex = pc.modelEditor(pan, query=True, displayTextures=True)
-    wireOnShaded = pc.modelEditor(pan, query=True, wireframeOnShaded=True)
-    xray = pc.modelEditor(pan, query=True, xray=True)
-    jointXray = pc.modelEditor(pan, query=True, jointXray=True)
-    hud = pc.modelEditor(pan, query=True, hud=True)
 
     #Camera settings
     oldCamera = None
@@ -147,6 +144,13 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
         if curCam != useCamera:
             oldCamera = curCam
             pc.modelEditor(pan, edit=True, camera=useCamera)
+
+    app = pc.modelEditor(pan, query=True, displayAppearance=True)
+    tex = pc.modelEditor(pan, query=True, displayTextures=True)
+    wireOnShaded = pc.modelEditor(pan, query=True, wireframeOnShaded=True)
+    xray = pc.modelEditor(pan, query=True, xray=True)
+    jointXray = pc.modelEditor(pan, query=True, jointXray=True)
+    hud = pc.modelEditor(pan, query=True, hud=True)
 
     camera = pc.modelEditor(pan, query=True, camera=True)
     if camera.type() == "transform":
@@ -161,27 +165,10 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
     displayGateMask = pc.getAttr(camera + ".displayGateMask")
     displayGateMaskOpacity = pc.getAttr(camera + ".displayGateMaskOpacity")
 
-    pc.setAttr(camera + ".filmFit", i_inFilmFit)
-    pc.setAttr(camera + ".displayResolution", i_inDisplayResolution)
-    pc.setAttr(camera + ".displayFilmGate", i_inDisplayFilmGate)
-    pc.setAttr(camera + ".overscan", i_inOverscan)
-    pc.setAttr(camera + ".displaySafeAction", i_inSafeAction)
-    pc.setAttr(camera + ".displaySafeTitle", i_inSafeTitle)
-    pc.setAttr(camera + ".displayGateMask", i_inGateMask)
-    pc.setAttr(camera + ".displayGateMaskOpacity", f_inMaskOpacity)
-
     #visible types
     nurbsCurvesShowing = pc.modelEditor(pan, query=True, nurbsCurves=True)
 
-    editorKwargs = {}
-    if displaymode:
-        if displaymode == "wireframe":
-            pc.modelEditor(pan, edit=True, displayAppearance="wireframe", wireframeOnShaded=False, hud=ornaments)
-        else:
-            pc.modelEditor(pan, edit=True, displayAppearance="smoothShaded", wireframeOnShaded=False, hud=ornaments)
-
-        editorKwargs = dict(displayTextures="textured" in displaymode or displaymode == "OpenGL")
-
+    editorKwargs = dict(hud=ornaments, wireframeOnShaded=False, displayAppearance="smoothShaded")
     pc.modelEditor(pan, edit=True, nurbsCurves=False, **editorKwargs)
 
     playblastKwargs = dict(format=format, compression=compression, quality=90,
@@ -192,6 +179,7 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
                            percent=100,
                            startTime=start, endTime=end,
                            width=width, height=height,
+                           offScreen=False,
                            )
 
     sAudioNode = audioNode
@@ -207,42 +195,55 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
         else:
             playblastKwargs.update(sound=sAudioNode)
 
-    if format == "iff" and showFrameNumbers:
-        name = pc.playblast(filename=filepath, **playblastKwargs)
 
-        for i in range(start, end + 1):
-            oldFileName = name.replace("####", str(i).zfill(4))
-            newFileName = oldFileName.replace(".", "_", 1)
-            if os.path.isfile(newFileName):
-                os.remove(newFileName)
-            os.rename(oldFileName, newFileName)
-            names.append(newFileName)
-    else:
-        if format == "iff":
-            name = pc.playblast(completeFilename=filepath, **playblastKwargs)
-        else:
+    pc.setAttr(camera + ".filmFit", i_inFilmFit)
+    pc.setAttr(camera + ".displayResolution", i_inDisplayResolution)
+    pc.setAttr(camera + ".displayFilmGate", i_inDisplayFilmGate)
+    pc.setAttr(camera + ".overscan", i_inOverscan)
+    pc.setAttr(camera + ".displaySafeAction", i_inSafeAction)
+    pc.setAttr(camera + ".displaySafeTitle", i_inSafeTitle)
+    pc.setAttr(camera + ".displayGateMask", i_inGateMask)
+    pc.setAttr(camera + ".displayGateMaskOpacity", f_inMaskOpacity)
+
+    try:
+
+        if format == "iff" and showFrameNumbers:
             name = pc.playblast(filename=filepath, **playblastKwargs)
 
-        names.append(name)
+            for i in range(start, end + 1):
+                oldFileName = name.replace("####", str(i).zfill(4))
+                newFileName = oldFileName.replace(".", "_", 1)
+                if os.path.isfile(newFileName):
+                    os.remove(newFileName)
+                os.rename(oldFileName, newFileName)
+                names.append(newFileName)
+        else:
+            if format == "iff":
+                name = pc.playblast(completeFilename=filepath, **playblastKwargs)
+            else:
+                name = pc.playblast(filename=filepath, **playblastKwargs)
 
-    #Reset values
-    pc.modelEditor(pan, edit=True, displayAppearance=app,
-                   displayTextures=tex,
-                   wireframeOnShaded=wireOnShaded,
-                   xray=xray,
-                   jointXray=jointXray,
-                   nurbsCurves=nurbsCurvesShowing,
-                   hud=hud)
+            names.append(name)
 
-    #Camera
-    pc.setAttr(camera + ".filmFit", filmFit)
-    pc.setAttr(camera + ".displayResolution", displayResolution)
-    pc.setAttr(camera + ".displayFilmGate", displayFilmGate)
-    pc.setAttr(camera + ".overscan", overscan)
-    pc.setAttr(camera + ".displaySafeAction", safeAction)
-    pc.setAttr(camera + ".displaySafeTitle", safeTitle)
-    pc.setAttr(camera + ".displayGateMask", displayGateMask)
-    pc.setAttr(camera + ".displayGateMaskOpacity", displayGateMaskOpacity)
+    finally:
+        #Reset values
+        pc.modelEditor(pan, edit=True, displayAppearance=app,
+                       displayTextures=tex,
+                       wireframeOnShaded=wireOnShaded,
+                       xray=xray,
+                       jointXray=jointXray,
+                       nurbsCurves=nurbsCurvesShowing,
+                       hud=hud)
+
+        #Camera
+        pc.setAttr(camera + ".filmFit", filmFit)
+        pc.setAttr(camera + ".displayResolution", displayResolution)
+        pc.setAttr(camera + ".displayFilmGate", displayFilmGate)
+        pc.setAttr(camera + ".overscan", overscan)
+        pc.setAttr(camera + ".displaySafeAction", safeAction)
+        pc.setAttr(camera + ".displaySafeTitle", safeTitle)
+        pc.setAttr(camera + ".displayGateMask", displayGateMask)
+        pc.setAttr(camera + ".displayGateMaskOpacity", displayGateMaskOpacity)
 
     if oldCamera != None:
         pc.modelEditor(pan, edit=True, camera=oldCamera)
@@ -257,7 +258,9 @@ class SceneManager():
         self.context['damProject'] = damproject.DamProject(self.projectname)
 
         if self.context['damProject'] == None:
-            pc.error("Cannot initialize project '{0}'".format(self.projectname))
+            raise RuntimeError("Cannot initialize project '{0}'".format(self.projectname))
+
+        mop.setMayaProject(self.projectname)
 
     #FROM DAVOS !!!!
     def collapseVariables(self, s_inPath, encapsulation="${0}"):
@@ -529,19 +532,28 @@ class SceneManager():
 
         return None
 
-    def capture(self, increment=True):
+    def getWipCaptureDir(self, damShot=None):
+
+        if not damShot:
+            damShot = self.getDamShot()
+
+        p = osp.join(cmds.workspace(fileRuleEntry="movie"),
+                        damShot.sequence,
+                        damShot.name,)
+                        #self.context['sceneData']["step"],)
+
+        return cmds.workspace(expandName=p)
+
+    def capture(self, increment=True, quick=True, sendToRv=False):
         # BUG pas de son alors que son present dans la scene
         # BUG first frame decalee dupliquee dans les fichier output
         global CAPTURE_INFOS
 
         savedFile = None
 
-#        try:
-#            deleteUnknownNodes()
-#        except Exception as e:
-#            pc.displayWarning(toStr(e))
-
+        damShot = self.getDamShot()
         oShotCam = self.getShotCamera(fail=True)
+        sShotCam = oShotCam.name()
         CAPTURE_INFOS['cam'] = oShotCam.getShape().name()
         oCamRef = oShotCam.referenceFile()
 
@@ -553,82 +565,132 @@ class SceneManager():
         else:
             CAPTURE_INFOS['task'] = sStep + " | " + sTask
 
-        if increment:
-            savedFile = self.saveIncrement(b_inForce=False)
-        else:
-            savedFile = self.save(b_inForce=False)
-
-        if savedFile is None:
-            raise RuntimeError("Could not save current scene !")
+        CAPTURE_INFOS['user'] = self.context['damProject']._shotgundb.currentUser['name']
 
         sCamFile = ""
-        damShot = self.getDamShot()
-        sAbcPath = damShot.getPath("public", "camera_abc")
-        abcFile = damShot.getLibrary()._weakFile(sAbcPath)
+        if not quick:
+            sAbcPath = damShot.getPath("public", "camera_abc")
+            abcFile = damShot.getLibrary()._weakFile(sAbcPath)
 
-        bShotCamEdited = self.isShotCamEdited()
+            bShotCamEdited = self.isShotCamEdited()
 
-        oCamAbcNode = self.getShotCamAbcNode()
-        if oCamAbcNode:
-            sAbcNodePath = pathResolve(oCamAbcNode.getAttr("abc_File"))
-            if osp.normcase(sAbcNodePath) != osp.normcase(abcFile.absPath()):
-                raise RuntimeError("Unexpected path on '{}' node: \n         got: '{}'\n    expected: '{}'")
+            oCamAbcNode = self.getShotCamAbcNode()
+            if oCamAbcNode:
+                sAbcNodePath = pathResolve(oCamAbcNode.getAttr("abc_File"))
+                if osp.normcase(sAbcNodePath) != osp.normcase(abcFile.absPath()):
+                    raise RuntimeError("Unexpected path on '{}' node: \n         got: '{}'\n    expected: '{}'")
 
-        if bShotCamEdited:
-            sCamFile = abcFile.nextVersionName()
-        else:
-            latestAbcFile = abcFile.latestVersionFile()
-            if latestAbcFile:
-                sCamFile = latestAbcFile.name
+            if bShotCamEdited:
+                sCamFile = abcFile.nextVersionName()
+            else:
+                latestAbcFile = abcFile.latestVersionFile()
+                if latestAbcFile:
+                    sCamFile = latestAbcFile.name
 
         CAPTURE_INFOS['cam_file'] = sCamFile#.rsplit(".", 1)[0]
-        CAPTURE_INFOS['user'] = self.context['damProject']._shotgundb.currentUser['name']
+
         #Infer capture path
         scenePath = pc.sceneName()
-        CAPTURE_INFOS['scene'] = os.path.basename(scenePath)
+        sFilename = os.path.basename(scenePath)
+        CAPTURE_INFOS['scene'] = sFilename
+        if not quick:
+            sCapturePath = scenePath.replace(".ma", ".mov")
+        else:
+            sCapturePath = osp.join(self.getWipCaptureDir(damShot),
+                                    sFilename.replace(".ma", ".mov"))
 
-        capturePath = scenePath.replace(".ma", ".mov")
+            maxIncr = 50
+            def iterIncrementFiles(sFilePath, count):
+                for i in xrange(1, count + 1):
+                    p = pathSuffixed(sFilePath, "." + padded(i, 2))
+                    try:
+                        st = os.stat(p)
+                    except OSError:
+                        continue
 
-        #Get start/end from shotgun
-        captureStart = 101
+                    if stat.S_ISREG(st.st_mode):
+                        yield dict(path=p, mtime=st.st_mtime, num=i)
+
+            incrementFiles = sorted(iterIncrementFiles(sCapturePath, maxIncr),
+                                  key=lambda d:d["mtime"])
+            if incrementFiles:
+                incrFile = incrementFiles[-1]
+                j = (incrFile["num"] % maxIncr) + 1
+                sCapturePath = pathSuffixed(sCapturePath, "." + padded(j, 2))
+            else:
+                sCapturePath = pathSuffixed(sCapturePath, "." + padded(1, 2))
+
+        if not quick:
+            #Get start/end from shotgun
+            captureStart = 101
+            duration = self.getDuration()
+            captureEnd = captureStart + duration - 1
+        else:
+            captureStart = pc.playbackOptions(q=True, minTime=True)
+            captureEnd = pc.playbackOptions(q=True, maxTime=True)
+
         CAPTURE_INFOS['start'] = captureStart
-        duration = self.getDuration()
-        captureEnd = captureStart + duration - 1
         CAPTURE_INFOS['end'] = captureEnd
 
+        if not quick:
+            if increment:
+                savedFile = self.saveIncrement(b_inForce=False)
+            else:
+                savedFile = self.save(b_inForce=False)
 
-        oImgPlaneCam = mop.getImagePlaneItems(create=False)[1]
-
-        oldValues = createHUD()
-
-        bImgPlnViz = mop.isImgPlaneVisible()
-        mop.setImgPlaneVisible(False)
+            if savedFile is None:
+                raise RuntimeError("Could not save current scene !")
 
         if oCamRef:
             bWasLocked = oCamRef.refNode.getAttr("locked")
             mop.setReferenceLocked(oCamRef, False)
 
+        bImgPlnViz = mop.isImgPlaneVisible()
+        mop.setImgPlaneVisible(False)
+
+        savedHudValues = createHUD()
+
         try:
+            oShotCam = pc.PyNode(sShotCam)
             oShotCam.setAttr('aspectRatio', 1.85)
 
+            oImgPlaneCam = mop.getImagePlaneItems(create=False)[1]
             mop.arrangeViews(oShotCam, oImgPlaneCam)
             pc.refresh()
 
-            makeCapture(capturePath, captureStart, captureEnd, 1280, 720, useCamera=oShotCam,
-                        format="qt", compression="H.264", ornaments=True, play=True,
+            makeCapture(sCapturePath, captureStart, captureEnd, 1280, 720, useCamera=oShotCam,
+                        format="qt", compression="H.264", ornaments=True, play=False,
                         i_inFilmFit=1, i_inDisplayFilmGate=1, i_inSafeAction=1,
-                        i_inSafeTitle=0, i_inGateMask=1, f_inMaskOpacity=1.0)
+                        i_inSafeTitle=0, i_inGateMask=1, f_inMaskOpacity=1.0, quick=quick)
         finally:
             oShotCam.setAttr('aspectRatio', 1.7778)
 
             if oCamRef and bWasLocked:
                 mop.setReferenceLocked(oCamRef, True)
+                oShotCam = pc.PyNode(sShotCam)
                 mop.setCamAsPerspView(oShotCam)
 
-            restoreHUD(oldValues)
+            restoreHUD(savedHudValues)
+
             mop.setImgPlaneVisible(bImgPlnViz)
 
-        os.system("start " + capturePath.replace("/", "\\"))
+        sCmd = ""
+        bShell = False
+
+        if sendToRv:
+            p = r"C:\Program Files\Shotgun\RV 6.2.6\bin\rvpush.exe"
+            if osp.isfile(p):
+                p = r"C:\Users\sebcourtois\devspace\git\z2k-pipeline-toolkit\launchers\paris\rvpush.bat"
+                sCmd = p + " -tag playblast merge {}"
+            else:
+                pc.displayError("Could not send capture to RV. Missing app: '{}'".format(p))
+
+        if not sCmd:
+            sCmd = "start {}"
+            bShell = True
+
+        sCmd = sCmd.format(sCapturePath.replace("/", "\\"))
+        subprocess.call(sCmd, shell=bShell)
 
     def edit(self, editInPlace=None, onBase=False, createFolders=False):
         privFile = None
@@ -850,12 +912,16 @@ class SceneManager():
                 continue
 
             damAst = DamAsset(proj, name=sAstName)
+            drcLib = damAst.getLibrary()
             astRcDct = {}
 
-            for sRcName, sRcPath in damAst.iterMayaRcItems(filter="*_ref"):
+            entryFromPath = lambda p: proj.entryFromPath(p, library=drcLib, dbNode=False)
+            mayaRcIter = damAst.iterMayaRcItems(filter="*_ref")
+            mayaFileItems = tuple((n, entryFromPath(p)) for n, p in mayaRcIter)
 
-                mrcFile = proj.entryFromPath(sRcPath, library=damAst.getLibrary(),
-                                             dbNode=False)
+            #proj.dbNodesForResources(tuple(f for _, f in mayaFileItems if f))
+
+            for sRcName, mrcFile in mayaFileItems:
 
                 rcDct = {"drc_file":mrcFile, "status":okValue}
                 astRcDct[sRcName] = rcDct
@@ -1259,23 +1325,25 @@ def createHUD():
         headUpsValues[headsUp] = pc.headsUpDisplay(headsUp, query=True, visible=True)
         pc.headsUpDisplay(headsUp, edit=True, visible=False)
 
+    sSize = 'large'
+
     pc.headsUpDisplay('HUD_ZOMBUser', section=0, block=pc.headsUpDisplay(nextFreeBlock=0),
-                      blockSize='small', label='', labelFontSize='small', dataFontSize='small',
+                      blockSize='small', label='', labelFontSize=sSize, dataFontSize=sSize,
                       command=userInfo, attachToRefresh=True)
     pc.headsUpDisplay('HUD_ZOMBScene', section=2, block=pc.headsUpDisplay(nextFreeBlock=2),
-                      blockSize='small', label='', labelFontSize='small', dataFontSize='small',
+                      blockSize='small', label='', labelFontSize=sSize, dataFontSize=sSize,
                       command=sceneInfo, attachToRefresh=True)
     pc.headsUpDisplay('HUD_ZOMBStep', section=4, block=pc.headsUpDisplay(nextFreeBlock=4),
-                      blockSize='small', label='', labelFontSize='small', dataFontSize='small',
+                      blockSize='small', label='', labelFontSize=sSize, dataFontSize=sSize,
                       command=stepInfo, attachToRefresh=True)
     pc.headsUpDisplay('HUD_ZOMBFrame', section=5, block=pc.headsUpDisplay(nextFreeBlock=5),
-                      blockSize='small', label='', labelFontSize='small', dataFontSize='small',
+                      blockSize='small', label='', labelFontSize=sSize, dataFontSize=sSize,
                       command=frameInfo, attachToRefresh=True)
     pc.headsUpDisplay('HUD_ZOMBCam', section=7, block=pc.headsUpDisplay(nextFreeBlock=7),
-                      blockSize='small', label='', labelFontSize='small', dataFontSize='small',
+                      blockSize='small', label='', labelFontSize=sSize, dataFontSize=sSize,
                       command=cameraInfo, attachToRefresh=True)
     pc.headsUpDisplay('HUD_ZOMBEndFrame', section=9, block=pc.headsUpDisplay(nextFreeBlock=9),
-                      blockSize='small', label='', labelFontSize='small', dataFontSize='small',
+                      blockSize='small', label='', labelFontSize=sSize, dataFontSize=sSize,
                       command=endFrameInfo, attachToRefresh=True)
 
     return headUpsValues

@@ -3,12 +3,14 @@
 #------------------------------------------------------------------
 
 import os
+import subprocess
+
 import maya.cmds as cmds
 import pymel.core
 pc = pymel.core
 
 from pytd.util.fsutils import pathResolve
-from pytd.util.sysutils import inDevMode
+from pytd.util.sysutils import inDevMode, timer
 from pytd.util.logutils import logMsg
 #from pytd.util.sysutils import getCaller
 from pytd.util.qtutils import setWaitCursor
@@ -120,6 +122,8 @@ def refreshContextUI():
     pc.control('sm_editCam_bt', edit=True, enable=bEnabled)
 
     pc.checkBox('sm_imgPlane_chk', edit=True, value=mop.isImgPlaneVisible())
+    pc.checkBox('sm_increment_chk', edit=True, value=pc.optionVar.get("Z2K_SM_increment", False))
+    pc.checkBox('sm_sendToRv_chk', edit=True, value=pc.optionVar.get("Z2K_SM_sendToRv", False))
 
 def setContextUI():
     """Initialize UI from scene"""
@@ -275,10 +279,15 @@ def connectCallbacks():
     pc.button('sm_upscene_bt', edit=True, c=doUpdateScene)
     pc.button('sm_updb_bt', edit=True, c=doUpdateShotgun)
     pc.button('sm_capture_bt', edit=True, c=doCapture)
+    pc.button('sm_wipCapture_bt', edit=True, c=doWipCapture)
+
     pc.button('sm_saveWip_bt', edit=True, c=doSaveWip)
 
     pc.button('sm_switchContext_bt', edit=True, c=doSwitchContext)
-    pc.button('sm_shotgun_bt', edit=True, c=doShowInShotgun)
+
+    pc.button('sm_shotgunPage_bt', edit=True, c=doShowInShotgun)
+    pc.button('sm_wipCaptureDir_bt', edit=True, c=doShowWipCapturesDir)
+    pc.button('sm_rvScreeningRoom_bt', edit=True, c=doShowSequenceInRv)
 
     #davos
     pc.button('sm_unlock_bt', edit=True, c=doUnlock)
@@ -293,6 +302,9 @@ def connectCallbacks():
 
     pc.button('sm_editCam_bt', edit=True, c=doEditCam)
     pc.checkBox('sm_imgPlane_chk', edit=True, cc=doShowImagePlane)
+    pc.checkBox('sm_increment_chk', edit=True, cc=doSetIncremental)
+    pc.checkBox('sm_sendToRv_chk', edit=True, cc=doSetCaptureSentToRv)
+
 
     pc.button('sm_pouet_bt', edit=True, c=doPouet)
     #buttonName = 'sm_create_bt'
@@ -303,8 +315,35 @@ def connectCallbacks():
 def doShowInShotgun(*args):
     SCENE_MANAGER.showInShotgun()
 
+def doShowWipCapturesDir(*args):
+    p = SCENE_MANAGER.getWipCaptureDir().replace("/", "\\")
+    if os.path.isdir(p):
+        subprocess.call("explorer {}".format(p))
+    else:
+        pc.displayWarning("No such directory: '{}'".format(p))
+
+def doShowSequenceInRv(*args):
+
+    seqId = SCENE_MANAGER.context["entity"]["sg_sequence"]["id"]
+
+    sMuCmd = ('shotgun_review_app.theMode().setServer("https://zombillenium.shotgunstudio.com");\
+    shotgun_review_app.theMode().launchTimeline([(string, string)] {{("entity_type", "Sequence"), ("entity_id", "{}")}});'
+    .format(seqId))
+
+    sCmdAgrs = [r"C:\Users\sebcourtois\devspace\git\z2k-pipeline-toolkit\launchers\paris\rvpush.bat",
+                "-tag", "playblast", "mu-eval", sMuCmd
+                ]
+
+    subprocess.call(sCmdAgrs)
+
 def doShowImagePlane(bShow):
     mop.setImgPlaneVisible(bShow)
+
+def doSetIncremental(bEnable):
+    pc.optionVar["Z2K_SM_increment"] = bEnable
+
+def doSetCaptureSentToRv(bEnable):
+    pc.optionVar["Z2K_SM_sendToRv"] = bEnable
 
 def doDisconnect(*args):
     SG.logoutUser()
@@ -581,13 +620,21 @@ def doUpdateShotgun(*args):
 
     pc.displayWarning("Done !")
 
-def doCapture(*args):
-    if SCENE_MANAGER.assert_isEditable():
-        b_increment = pc.checkBox('sm_increment_bt', query=True, value=True)
-        SCENE_MANAGER.capture(b_increment)
-        doRefreshSceneInfo(args)
+#@timer
+def doCapture(*args , **kwargs):
+
+    bQuick = kwargs.get("quick", False)
+    if bQuick or SCENE_MANAGER.assert_isEditable():
+        bIncrement = pc.checkBox('sm_increment_chk', query=True, value=True)
+        bSend = pc.checkBox('sm_sendToRv_chk', query=True, value=True)
+        SCENE_MANAGER.capture(bIncrement, quick=bQuick, sendToRv=bSend)
+        if not bQuick:
+            doRefreshSceneInfo(args)
     else:
         doDetect(args)
+
+def doWipCapture(*args):
+    doCapture(*args, quick=True)
 
 def doSaveWip(*args):
     if SCENE_MANAGER.assert_isEditable():
@@ -648,8 +695,8 @@ def doCreateFolder(*args):
 def doInit(*args):
     """Button is named 'Shot Setup'"""
 
-    if not SCENE_MANAGER.contextIsMatching():
-        raise RuntimeError("Sorry, context does not match current scene")
+#    if not SCENE_MANAGER.contextIsMatching():
+#        raise RuntimeError("Sorry, context does not match current scene")
 
     SCENE_MANAGER.do('init')
     doRefreshSceneInfo()

@@ -262,11 +262,14 @@ class Z2kToolkit(object):
         sAppPath = cmdArgs[0]
         sAppName = osp.basename(sAppPath)
 
+        if not osp.isfile(sAppPath):
+            raise EnvironmentError("No such application: '{}'".format(sAppPath))
+
         try:
             self.loadAppEnvs(sAppPath)
-        except Exception, err:
+        except Exception as e:
             print ("\n\n!!!!!!! Failed loading '{}' environments: {}"
-                   .format(sAppName, err))
+                   .format(sAppName, e))
             if raw_input("\nPress enter to continue...") == "raise": raise
 
 #        startupinfo = subprocess.STARTUPINFO()
