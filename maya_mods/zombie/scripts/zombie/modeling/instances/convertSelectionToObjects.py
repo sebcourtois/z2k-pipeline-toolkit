@@ -5,5 +5,4 @@ reload(modeling)
 
 
 selectionL = mc.ls(selection=True)
-resultD = modeling.convertObjToInstance(selectionL)
-mc.select(resultD["resultL"],r=True)
+modeling.convertInstanceToObj(selectionL)

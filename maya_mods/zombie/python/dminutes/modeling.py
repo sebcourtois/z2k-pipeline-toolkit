@@ -1035,13 +1035,16 @@ def combineAllGroups(inParent = "asset|grp_geo", GUI = True, autoRenameI= 1, com
     return resultB, logL
 
 
-def convertObjToInstance(transformL=[], GUI = True, checkTopo = True):
+def convertObjToInstance(transformL=[], GUI = True, checkTopo = True, updateSetLayInstance = True):
     #exemple of transform naming selection
     #mc.listRelatives(mc.ls("geo_femmeFatyVisiteurA*",type='mesh'),parent =True, fullPath = True, type = "transform")
     logL = []
     resultB = True
-    print transformL
-    transformL = cmds.ls(transformL,l = True)
+
+    shapesL = cmds.listRelatives(cmds.ls(transformL,l = True, type = "mesh"), parent =True, fullPath = True, type = "transform")
+    if not shapesL:
+        shapesL=[]
+    transformL = list(set(cmds.ls(transformL,l = True, type = "transform"))|set(shapesL))
 
     if checkTopo: 
         result =  compareMeshTopologie(transformL, GUI = False, vrtxCnt = True, worldArea = True)
@@ -1054,8 +1057,7 @@ def convertObjToInstance(transformL=[], GUI = True, checkTopo = True):
             resultB = False
             logL.append(logMessage)
             logL.extend(result["logL"])
-            return [resultB, logL]
-
+            return dict(resultB=resultB, logL=logL, resultL= transformL)
 
     #check if input, is a transform list 
     noTransformL = list(set(transformL)-set(cmds.ls(transformL,type = "transform",l = True)))
@@ -1068,16 +1070,17 @@ def convertObjToInstance(transformL=[], GUI = True, checkTopo = True):
     transMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes("*",inType = "shape")
     alreadyInstanceL = list(set(transformL)&set(instanceTransformL))
     if alreadyInstanceL:
-        allAlreadyInstanceL = cmds.listRelatives(cmds.listRelatives(alreadyInstanceL[0], children = True, fullPath = True, type = "mesh")[0], allParents = True, fullPath = True, type = "transform")
-        logMessage = "#### {:>7}: 'convertObjToInstance' Objects are instances already, appending to existing instances".format("Info")
+        allAlreadyInstanceL = cmds.listRelatives(cmds.listRelatives(alreadyInstanceL, children = True, fullPath = True, type = "mesh"), allParents = True, fullPath = True, type = "transform")
+        logMessage = "#### {:>7}: 'convertObjToInstance' {} Inputs are instances already, appending other objects to them : {}".format("Info",len(allAlreadyInstanceL),allAlreadyInstanceL)
         if GUI == True : print logMessage
         logL.append(logMessage)
-        transformL = list(set(transformL) and set(alreadyInstanceL))
+        transformL = list(set(transformL) | set(allAlreadyInstanceL))
 
     if len(transformL)<2:
-        logMessage = "#### {:>7}: 'convertObjToInstance' Nothing  to instanciate".format("Info")
+        logMessage = "#### {:>7}: 'convertObjToInstance' nothing  to instanciate, at least 2 inputs needed".format("Info")
         if GUI == True : print logMessage
         logL.append(logMessage)
+        return dict(resultB=resultB, logL=logL, resultL= transformL)
 
 
     masterS = transformL[0]
@@ -1086,17 +1089,52 @@ def convertObjToInstance(transformL=[], GUI = True, checkTopo = True):
     for each in transformL:
         mtx = cmds.xform( each, q = True, ws = True, matrix = True )
         eachParent = each.split(each.split("|")[-1])[0].rstrip("|")
-        resultInstance = cmds.instance( masterS , leaf=True)
+        resultInstance = cmds.instance( masterS , leaf=True)[0]
         cmds.delete(each)
         resultParentedInstance= cmds.parent(resultInstance, eachParent )[0]
-        cmds.xform( resultParentedInstance,  ws = True, matrix = mtx )
+        renamedInstance = cmds.rename(resultParentedInstance,each.split("|")[-1])
+        cmds.xform( renamedInstance,  ws = True, matrix = mtx )
 
-    logMessage = "#### {:>7}: 'convertObjToInstance' {} objects have been replaced with instance of '{}' master : {}".format("Info",len(transformL),masterS,transformL)
+    logMessage = "#### {:>7}: 'convertObjToInstance' {} objects have been instanced. Master:'{}' <----> '{}'".format("Info",len(transformL)+1,masterS,transformL)
     if GUI == True : print logMessage
     logL.append(logMessage)
-    setInstanceUpdate()
+    if updateSetLayInstance: 
+        setInstanceUpdate()
+        layInstanceUpdate()
 
-    return [resultB, logL]
+    return dict(resultB=resultB, logL=logL, resultL= transformL+[masterS])
+
+
+def convertInstanceToObj(transformL=[],GUI = True, updateSetLayInstance = True,inParent = "asset|grp_geo"):
+    logL = []
+    resultB = True
+    initSelectionL = cmds.ls(selection=True)
+    geoTransformL, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+
+    shapesL = cmds.listRelatives(cmds.ls(transformL,l = True, type = "mesh"), parent =True, fullPath = True, type = "transform")
+    if not shapesL:
+        shapesL=[]
+    transformL = list(set(cmds.ls(transformL,l = True, type = "transform"))|set(shapesL))
+
+    transformL = list(set(transformL) & set(instanceTransformL))
+
+    if transformL:
+        cmds.select(transformL)
+        pmr.ConvertInstanceToObject()
+
+        if updateSetLayInstance: 
+            setInstanceUpdate()
+            layInstanceUpdate()
+        cmds.select(initSelectionL)
+        logMessage = "#### {:>7}: 'convertInstanceToObj' {} instances converted to objects: '{}'".format("Info",len(transformL),transformL)
+        if GUI == True : print logMessage
+        logL.append(logMessage)
+    else:
+        logMessage = "#### {:>7}: 'convertInstanceToObj' no instances to convert".format("Info")
+        if GUI == True : print logMessage
+        logL.append(logMessage)
+
+    return dict(resultB=resultB, logL=logL)
 
 
 def convertBranchToLeafInstance(inParent ="asset|grp_geo", GUI = True, mode = "listOnly"):
@@ -1163,39 +1201,110 @@ def convertBranchToLeafInstance(inParent ="asset|grp_geo", GUI = True, mode = "l
                         for eachTransf in allTransfAllParent: 
                             if patern in eachTransf:
                                 toInstanciateL.append(eachTransf)
-                        result = convertObjToInstance(transformL=toInstanciateL, GUI = False)
+                        result = convertObjToInstance(transformL=toInstanciateL, GUI = False, updateSetLayInstance = False)
                         if result[0] == False:
                             logMessage = "#### {:>7}: 'convertBranchToLeafInstance' sub function 'convertObjToInstance() failed to instanciate: {}'".format("Error",toInstanciateL)
                             logL.append(logMessage)
                             if GUI == True : raise ValueError (logMessage)
                             resultB = False
     setInstanceUpdate()
+    layInstanceUpdate()
     cmds.select(initSelection, r= True)
-
     return dict(resultB=resultB, logL=logL)
 
 
-def setInstanceUpdate(inParent="asset|grp_geo"):
+
+
+def getRelatedInstance(transformL=[]):
+    logL = []
+    resultB = True
+    resultL = []
+
+    shapesL = cmds.listRelatives(cmds.ls(transformL,l = True, type = "mesh"), parent =True, fullPath = True, type = "transform")
+    if not shapesL: shapesL=[]
+    transformL = cmds.ls(transformL,l = True, type = "transform")+shapesL
+    if not transformL: transformL=[]
+
+    for each in transformL:
+        relatedInstanceL = cmds.listRelatives(cmds.listRelatives(each,children = True, fullPath = True, type = "mesh"),allParents = True, fullPath = True, type = "transform")
+        if len(relatedInstanceL)>1:
+            resultL.extend(relatedInstanceL)
+
+    return dict(resultB=resultB, logL=logL, resultL= resultL)
+
+
+def layInstanceUpdate(inParent="asset|grp_geo", GUI = True):
+    resultB = True
+    logL = []
+
+    geoTransformL, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+
+    myInstanceLayerL = cmds.ls("instance")
+    if myInstanceLayerL:
+        cmds.delete(myInstanceLayerL)
+    if instanceTransformL:
+        myInstanceLayerS = cmds.createDisplayLayer(instanceTransformL, empty=False, noRecurse=False, name="instance")
+        cmds.setAttr(myInstanceLayerS+".displayType",0)
+        cmds.setAttr(myInstanceLayerS+".color",23)
+        cmds.setAttr(myInstanceLayerS+".overrideColorRGB",0,0,0)
+        cmds.setAttr(myInstanceLayerS+".overrideRGBColors",0)
+
+    myGeometryLayerL = cmds.ls("geometry")
+    if myGeometryLayerL:
+        cmds.delete(myGeometryLayerL)
+    if geoTransformL:
+        myGeometryLayerS = cmds.createDisplayLayer(geoTransformL, empty=False, noRecurse=False, name="geometry")
+
+    logMessage = "#### {:>7}: 'layInstanceUpdate' 'geometry' and 'instance' display layers updated ".format("Info")
+    logL.append(logMessage)
+    if GUI == True : print logMessage
+    return dict(resultB=resultB, logL=logL)
+
+
+
+
+def setInstanceUpdate(inParent="asset|grp_geo", delSetOnly = False, GUI = True):
+    resultB = True
+    logL = []
+    deletedSetL = []
+
     setL = cmds.ls("set_instance*", type = "objectSet")
     for eachSet in setL:
         subsetL = cmds.ls(cmds.sets(eachSet, query = True), type = "objectSet")
         cmds.delete(subsetL)
+        deletedSetL.extend(subsetL)
         if cmds.ls(eachSet):
             cmds.delete(eachSet)
+            deletedSetL.append(eachSet)
+    if deletedSetL and delSetOnly:
+        logMessage = "#### {:>7}: 'setInstanceUpdate' {} 'set_instances' and sub sets deleted ".format("Info",len(deletedSetL))
+        logL.append(logMessage)
+        if GUI == True : print logMessage
 
-    transMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
-    allInstancedShapeL = cmds.listRelatives(instanceTransformL, children = True, fullPath = True, type = "mesh")
-    processedShapes = []
-    subSetL = []
-    for each in allInstancedShapeL:
-        relatedInstanciedTransfL = cmds.listRelatives(each , allParents = True, fullPath = True, type = "transform")
-        if relatedInstanciedTransfL[0] not in processedShapes:
-            setNameS = "set_"+relatedInstanciedTransfL[0].split("|")[-1]
-            setNameS = setNameS.replace('geo_','')
-            subSetL.append(cmds.sets(relatedInstanciedTransfL, name=setNameS))
-            processedShapes.extend(relatedInstanciedTransfL)
+    if delSetOnly == False:
+        transMeshL, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+        if not instanceTransformL:
+            logMessage = "#### {:>7}: 'setInstanceUpdate' no instances found".format("Info")
+            logL.append(logMessage)
+            if GUI == True : print logMessage
+            return dict(resultB=resultB, logL=logL)
 
-    setInstanceS = cmds.sets(subSetL, name="set_instance")
+        allInstancedShapeL = cmds.listRelatives(instanceTransformL, children = True, fullPath = True, type = "mesh")
+        processedShapes = []
+        subSetL = []
+        for each in allInstancedShapeL:
+            relatedInstanciedTransfL = cmds.listRelatives(each , allParents = True, fullPath = True, type = "transform")
+            if relatedInstanciedTransfL[0] not in processedShapes:
+                setNameS = "set_"+relatedInstanciedTransfL[0].split("|")[-1]
+                setNameS = setNameS.replace('geo_','')
+                subSetL.append(cmds.sets(relatedInstanciedTransfL, name=setNameS))
+                processedShapes.extend(relatedInstanciedTransfL)
+        setInstanceS = cmds.sets(subSetL, name="set_instance")
+        logMessage = "#### {:>7}: 'setInstanceUpdate'  'set_instance' re-generated with {} sub sets".format("Info",len(subSetL))
+        logL.append(logMessage)
+        if GUI == True : print logMessage
+
+    return dict(resultB=resultB, logL=logL)
 
 
 
@@ -1227,6 +1336,7 @@ def compareMeshTopologie(transformL = [], GUI = True, vrtxCnt = True, worldArea 
     transformL.remove(transformL[0])
 
     for eachTransf in transformL:
+        vrtxCntMatch = True
         eachMesh = cmds.listRelatives(eachTransf, children = True, fullPath = True, type = "mesh")[0]
         if not eachMesh:
             logMessage = "#### {:>7}: 'compareMeshTopologie' can't compare topology, no mesh shape found under {}'".format("Error",eachTransf)
@@ -1239,11 +1349,12 @@ def compareMeshTopologie(transformL = [], GUI = True, vrtxCnt = True, worldArea 
             if masterMeshVrtxCnt != eachMeshVrtxCnt:
                 vrtxCntMismatchL.append(eachMesh)
                 resultB = False
+                vrtxCntMatch = False
                 if verbose == True:
                     logMessage = "#### {:>7}: 'compareMeshTopologie' Vertex number mismatch: '{}' vertex nb = {} -- '{}' vertex nb = {}".format("Error",masterMeshS,masterMeshVrtxCnt, eachMesh,eachMeshVrtxCnt)
                     logL.append(logMessage)
                     if GUI == True : print logMessage
-        if worldArea == True:
+        if worldArea == True and vrtxCntMatch:
             areaTolF = 0.01 #percentage world area tolerance
             eachWorldArea =  cmds.polyEvaluate(eachMesh, worldArea= True)
             areaDifF = abs(float(masterWorldArea - eachWorldArea)/masterWorldArea *100)
@@ -1255,7 +1366,7 @@ def compareMeshTopologie(transformL = [], GUI = True, vrtxCnt = True, worldArea 
                 logL.append(logMessage)
                 if GUI == True : print logMessage
 
-    mismatchL = list(set(worldAreaMismatchL)and set(vrtxCntMismatchL))
+    mismatchL = list(set(worldAreaMismatchL) | set(vrtxCntMismatchL))
     if not mismatchL:
         logMessage = "#### {:>7}: 'compareMeshTopologie' meshes tolopogies match".format("Info")
         logL.append(logMessage)
