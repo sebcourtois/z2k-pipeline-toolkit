@@ -568,7 +568,7 @@ class SceneManager():
         CAPTURE_INFOS['user'] = self.context['damProject']._shotgundb.currentUser['name']
 
         sCamFile = ""
-        if not quick:
+        if (not quick) and sStep.lower() != "previz 3d":
             sAbcPath = damShot.getPath("public", "camera_abc")
             abcFile = damShot.getLibrary()._weakFile(sAbcPath)
 
@@ -580,12 +580,13 @@ class SceneManager():
                 if osp.normcase(sAbcNodePath) != osp.normcase(abcFile.absPath()):
                     raise RuntimeError("Unexpected path on '{}' node: \n         got: '{}'\n    expected: '{}'")
 
-            if bShotCamEdited:
-                sCamFile = abcFile.nextVersionName()
-            else:
-                latestAbcFile = abcFile.latestVersionFile()
-                if latestAbcFile:
-                    sCamFile = latestAbcFile.name
+            if abcFile.exists():
+                if bShotCamEdited:
+                    sCamFile = abcFile.nextVersionName()
+                else:
+                    latestAbcFile = abcFile.latestVersionFile()
+                    if latestAbcFile:
+                        sCamFile = latestAbcFile.name
 
         CAPTURE_INFOS['cam_file'] = sCamFile#.rsplit(".", 1)[0]
 
@@ -1309,9 +1310,9 @@ def frameInfo():
     return pc.currentTime(query=True)
 
 def cameraInfo():
-    items = (CAPTURE_INFOS['cam_file'],
+    infos = (CAPTURE_INFOS['cam_file'],
              'F {}mm'.format(cmds.getAttr(CAPTURE_INFOS['cam'] + '.focalLength')),)
-    return " - ".join(items)
+    return " - ".join(s for s in infos if s)
 
 def endFrameInfo():
     return CAPTURE_INFOS['end']
