@@ -332,6 +332,15 @@ def deleteAovs(GUI = True):
         aovList = myAOVs.getAOVs()
         if aovList:
             myAOVs.removeAOVs(aovList)
+            aiAOVL=mc.ls( type = "aiAOV")
+            if aiAOVL:
+                mc.lockNode(aiAOVL,lock = False)
+                try:
+                    mc.delete(aiAOVL)
+                except:
+                    infoS =  "#### {:>7}: 'deleteAovs' failed to delete somme AOVS nodes".format("Error")
+                    if GUI: print infoS
+                    toReturn =False
             aovs.refreshAliases()
             infoS =  "#### {:>7}: 'deleteAovs' has deleted {} aovs".format("Info", len(aovList))
             if GUI: print infoS
