@@ -92,6 +92,8 @@ def buttonTxUpdateSelection(*args):
 #shading presets
 def buttonDmnToonReflectingGlass(*args):
 	shading.dmnToonPreset( preset = "reflectingGlass")
+def buttonDmnToonRealisticGlass(*args):
+	shading.dmnToonPreset( preset = "realisticGlass")
 def buttonDmnToonConstant(*args):
 	shading.dmnToonPreset( preset = "constant")
 def buttonDmnToonOutline(*args):
@@ -222,12 +224,12 @@ mc.setParent( '..' )
 mc.separator(style = 'in', h = 5  )
 mc.text(label="shading presets (selected dmnToon)", align='center')
 mc.flowLayout( )
-mc.button( label='Reflecting Glass', recomputeSize = False, width = 125, c= buttonDmnToonReflectingGlass )
-mc.button( label='Constant', recomputeSize = False, width = 125, c= buttonDmnToonConstant )
+mc.button( label='Reflecting Glass', recomputeSize = False, width = 125, c=buttonDmnToonReflectingGlass )
+mc.button( label='Realistic Glass',  recomputeSize = False, width = 125, c=buttonDmnToonRealisticGlass )
 mc.setParent( '..' )
 mc.flowLayout()
 mc.button( label='Outline', recomputeSize = False, width = 125, c=buttonDmnToonOutline )
-mc.button( label='unused',  recomputeSize = False, width = 125, c=buttonUnused )
+mc.button( label='Constant', recomputeSize = False, width = 125, c= buttonDmnToonConstant )
 mc.setParent( '..' )
 
 #shading modes

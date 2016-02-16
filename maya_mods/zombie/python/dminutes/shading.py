@@ -1166,6 +1166,37 @@ def dmnToonPreset (preset = ""):
 
             miscUtils.setAttrC(each+".opacity", 0.2,0.2,0.2, type = "double3")
 
+    if preset == "realisticGlass":
+        for each in dmnToonNodeList:
+            print "####info: setting dmnToon node: "+each+" as "+preset
+            miscUtils.setAttrC(each+".diffuseIntensity", 0)
+            miscUtils.setAttrC(each+".ambientIntensity", 0)
+
+            miscUtils.setAttrC(each+".shadowMaskWeight", 0)
+            miscUtils.setAttrC(each+".shadowMaskWeight01", 0)
+            miscUtils.setAttrC(each+".shadowMaskWeight02", 0)
+            miscUtils.setAttrC(each+".shadowMaskWeight03", 0)
+
+            miscUtils.setAttrC(each+".rimToonWeight", 0)
+            miscUtils.setAttrC(each+".lambertWeight", 0)
+            miscUtils.setAttrC(each+".incidenceWeight", 0)
+            miscUtils.setAttrC(each+".occlusionWeight", 0)  
+            miscUtils.setAttrC(each+".toonWeight", 0)
+            miscUtils.setAttrC(each+".contourWeight", 0)
+
+            miscUtils.setAttrC(each+".reflectionWeight", 1)
+            miscUtils.setAttrC(each+".reflectionRoughness", 0)
+            miscUtils.setAttrC(each+".reflectionAdditive", 0)
+            miscUtils.setAttrC(each+".specularWeight", 1)
+            miscUtils.setAttrC(each+".specularRoughness", 0)
+
+            miscUtils.setAttrC(each+".fresnelReflection", 0)
+            miscUtils.setAttrC(each+".fresnelRefraction", 1)
+            miscUtils.setAttrC(each+".fresnelFrontReflectivity", 0.01)
+            miscUtils.setAttrC(each+".fresnelFalloff", 10)
+
+            miscUtils.setAttrC(each+".opacity", 0.0,0.0,0.0, type = "double3")
+
 
     elif preset == "constant":
         for each in dmnToonNodeList:
