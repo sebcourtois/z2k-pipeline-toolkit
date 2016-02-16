@@ -23,6 +23,7 @@ def buttonCharacterShadingCamGet(*args):
 	shading.referenceShadingCamera(cameraName = "cam_shading_character")
 def buttonDefaultShadingCamRemove(*args):
 	shading.referenceShadingCamera( remove=True)
+	rendering.deleteAovs()
 
 #Render Settings
 def buttonSetRenderOption(*args):
