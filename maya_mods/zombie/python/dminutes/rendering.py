@@ -143,7 +143,7 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.GIGlossyDepth",1)
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseDepth",0)
     mc.setAttr("defaultArnoldRenderOptions.GIRefractionDepth",8)
-    mc.setAttr("defaultArnoldRenderOptions.GIReflectionDepth",10)
+    mc.setAttr("defaultArnoldRenderOptions.GIReflectionDepth",2)
     mc.setAttr("defaultArnoldRenderOptions.GIVolumeDepth",0)
     mc.setAttr("defaultArnoldRenderOptions.autoTransparencyDepth",10)
     
