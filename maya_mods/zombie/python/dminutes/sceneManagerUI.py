@@ -77,7 +77,7 @@ def initialize(d_inContext=None):
                                         if step['entity_type'] == 'Shot')
     refreshOptionMenu('sm_step_dd', sStepCodes)
 
-    print userSgStep
+    #print userSgStep
     if (userSgStep is not None) and (userSgStep['code'] in sStepCodes):
         pc.optionMenu("sm_step_dd", edit=True, value=userSgStep['code'])
 
@@ -89,6 +89,7 @@ def initialize(d_inContext=None):
     pc.control("sm_createFolder_bt", edit=True, visible=False)
     pc.control("sm_edit_bt", edit=True, visible=False)
     pc.control("sm_addOnly_bt", edit=True, visible=False)
+    pc.control("sm_project_bt", edit=True, visible=False)
     #pc.control("sm_disconnect_bt", edit=True, visible=False)
     if not inDevMode():
         pc.control("sm_pouet_bt", edit=True, visible=False)
