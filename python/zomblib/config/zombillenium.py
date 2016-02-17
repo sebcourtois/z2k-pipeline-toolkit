@@ -97,6 +97,12 @@ class shot_lib(object):
                     "{name}_layout.ma -> layout_scene":None,
                     "{name}_layout.mov -> layout_capture":None,
                    },
+                "{step:04_anim} -> anim_dir":
+                   {
+                    "geoCache -> geoCache_dir":{},
+                    "{name}_anim.ma -> anim_scene":None,
+                    "{name}_anim.mov -> anim_capture":None,
+                   },
                 },
             },
         }
@@ -113,7 +119,6 @@ class shot_lib(object):
                     "upload_to_sg":"previz_capture",
                     "sg_tasks":("previz 3D",),
                     "sg_status":"rev",
-
                     },
     "layout_scene":{"outcomes":("layout_capture",),
                     "create_sg_version":True,
