@@ -52,6 +52,13 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('reflection_look_at_fast', label='Look at Fast Shader')
         self.endLayout()
 
+        self.beginLayout('Fresnel', collapse=True)
+        self.addControl('fresnel_reflection', label='Reflections')
+        self.addControl('fresnel_specular', label='Specular')
+        self.addControl('fresnel_refraction', label='Refraction')
+        self.addControl('fresnel_front_reflectivity', label='Front Reflectivity')
+        self.addControl('fresnel_falloff', label='Falloff')
+        self.endLayout()
 
         self.beginLayout('Transparency', collapse=True)
         self.addControl('opacity', label='Opacity')
