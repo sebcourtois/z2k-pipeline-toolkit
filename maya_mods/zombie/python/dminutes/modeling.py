@@ -1202,7 +1202,7 @@ def convertBranchToLeafInstance(inParent ="asset|grp_geo", GUI = True, mode = "l
                             if patern in eachTransf:
                                 toInstanciateL.append(eachTransf)
                         result = convertObjToInstance(transformL=toInstanciateL, GUI = False, updateSetLayInstance = False)
-                        if result[0] == False:
+                        if result["resultB"] == False:
                             logMessage = "#### {:>7}: 'convertBranchToLeafInstance' sub function 'convertObjToInstance() failed to instanciate: {}'".format("Error",toInstanciateL)
                             logL.append(logMessage)
                             if GUI == True : raise ValueError (logMessage)
@@ -1211,7 +1211,6 @@ def convertBranchToLeafInstance(inParent ="asset|grp_geo", GUI = True, mode = "l
     layInstanceUpdate()
     cmds.select(initSelection, r= True)
     return dict(resultB=resultB, logL=logL)
-
 
 
 
