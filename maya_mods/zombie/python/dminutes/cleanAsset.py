@@ -23,7 +23,6 @@ def cleanAsset (GUI = True):
             publicMapdir = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
             publicMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(publicMapdir)))
         else:
-            print mainFilePathElem
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
     else :
         raise ValueError("#### Error: no '|asset' could be found in this scene")
