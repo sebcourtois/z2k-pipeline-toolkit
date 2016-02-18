@@ -605,18 +605,38 @@ def makeAllMeshesUnique(inParent = "*", GUI = True):
 
 
 
-def geoGroupDeleteHistory(GUI=True):
+def geoGroupDeleteHistory(GUI=True, freezeVrtxPos = True):
     """
     gets all the mesh transformms under the '|asset|grp_geo', delete their history and delete any intermediate unconnected shape 
     """
     resultB = True
     logL = []
     geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
+
+    #process in a different loop for instances to avoid precessing the several time
+    if freezeVrtxPos:
+        for each in geoTransformList:
+            cmds.polyMoveVertex (each, constructionHistory =True, random  = 0)
+
+        processedInstTransL = []
+        for each in instanceTransformL:
+            eachShapeL = cmds.ls(cmds.listRelatives(each, noIntermediate = True, shapes = True, fullPath = True),l=True)
+            parentTransL = cmds.listRelatives(eachShapeL,allParents =True, fullPath = True)
+            if each not in processedInstTransL:
+                cmds.polyMoveVertex (each, constructionHistory =True, random  = 0)
+                processedInstTransL.extend(parentTransL)
+       
+        logMessage = "#### {:>7}: 'geoGroupDeleteHistory': vertex position freezed on {} geometries and {} instances".format("Info", len(geoTransformList),len(processedInstTransL))
+        logL.append(logMessage)
+        if GUI == True: print logMessage
+        cmds.select(cl=True)
+
+
     if instanceTransformL:
         logMessage = "#### {:>7}: 'geoGroupDeleteHistory': {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
         logL.append(logMessage)
         if GUI == True: print logMessage
-        geoTransformList = geoTransformList+ instanceTransformL
+        geoTransformList = list(geoTransformList+ instanceTransformL)
 
     cmds.delete(geoTransformList,ch =True)
     logMessage = "#### {:>7}: 'geoGroupDeleteHistory': deteted history on {} geometries".format("Info",len(geoTransformList))
@@ -638,6 +658,9 @@ def geoGroupDeleteHistory(GUI=True):
             logL.append(logMessage)
             if GUI == True: print logMessage
     return resultB, logL
+
+
+
 
 
 def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False, GUI = True):
@@ -1035,7 +1058,7 @@ def combineAllGroups(inParent = "asset|grp_geo", GUI = True, autoRenameI= 1, com
     return resultB, logL
 
 
-def convertObjToInstance(transformL=[], GUI = True, checkTopo = True, updateSetLayInstance = True):
+def convertObjToInstance(transformL=[], GUI = True, checkTopo = True, updateSetLayInstance = True, legacy = False):
     #exemple of transform naming selection
     #mc.listRelatives(mc.ls("geo_femmeFatyVisiteurA*",type='mesh'),parent =True, fullPath = True, type = "transform")
     logL = []
@@ -1084,16 +1107,49 @@ def convertObjToInstance(transformL=[], GUI = True, checkTopo = True, updateSetL
 
 
     masterS = transformL[0]
-    transformL.remove(masterS)
+    masterShapeL = cmds.ls(cmds.listRelatives(masterS, noIntermediate = True, shapes = True, fullPath = True),l=True)
+    if not masterShapeL:
+        logMessage = "#### {:>7}: 'convertObjToInstance' No shape could be found under the master  : '{}'".format("Error", masterS)
+        if GUI == True : raise ValueError (logMessage)
+        resultB = False
+        logL.append(logMessage)
+        return dict(resultB=resultB, logL=logL, resultL= transformL)
+    elif len(masterShapeL)>1:
+        logMessage = "#### {:>7}: 'convertObjToInstance' {} shapes were found under the master  : '{}'".format("Error",len(masterShapeL), masterS)
+        if GUI == True : raise ValueError (logMessage)
+        resultB = False
+        logL.append(logMessage)
+        return dict(resultB=resultB, logL=logL, resultL= transformL)
+    else:
+        masterShapeS = masterShapeL[0]  
 
-    for each in transformL:
-        mtx = cmds.xform( each, q = True, ws = True, matrix = True )
-        eachParent = each.split(each.split("|")[-1])[0].rstrip("|")
-        resultInstance = cmds.instance( masterS , leaf=True)[0]
-        cmds.delete(each)
-        resultParentedInstance= cmds.parent(resultInstance, eachParent )[0]
-        renamedInstance = cmds.rename(resultParentedInstance,each.split("|")[-1])
-        cmds.xform( renamedInstance,  ws = True, matrix = mtx )
+    transformL.remove(masterS)
+    if legacy == True:
+        for each in transformL:
+            mtx = cmds.xform( each, q = True, ws = True, matrix = True )
+            eachParent = each.split(each.split("|")[-1])[0].rstrip("|")
+            resultInstance = cmds.instance( masterS , leaf=True)[0]
+            cmds.delete(each)
+            resultParentedInstance= cmds.parent(resultInstance, eachParent )[0]
+            renamedInstance = cmds.rename(resultParentedInstance,each.split("|")[-1])
+            cmds.xform( renamedInstance,  ws = True, matrix = mtx )
+    else:
+        for each in transformL:
+            eachShapeL = cmds.ls(cmds.listRelatives(each, noIntermediate = True, shapes = True, fullPath = True),l=True)
+            if len(eachShapeL)>1 or not eachShapeL:
+                logMessage = "#### {:>7}: 'convertObjToInstance' {} shapes were found under the geometry  : '{}'".format("Error",len(eachShapeL), each)
+                if GUI == True : raise ValueError (logMessage)
+                resultB = False
+                logL.append(logMessage)
+                return dict(resultB=resultB, logL=logL, resultL= transformL)
+            else:
+                eachShapeS = eachShapeL[0]
+            if len(cmds.listRelatives(eachShapeS,allParents =True))>1: #object is an instance already
+                continue
+            cmds.parent(masterShapeS, each, addObject = True, shape = True)
+            cmds.delete(eachShapeS)
+
+
 
     logMessage = "#### {:>7}: 'convertObjToInstance' {} objects have been instanced. Master:'{}' <----> '{}'".format("Info",len(transformL)+1,masterS,transformL)
     if GUI == True : print logMessage
@@ -1202,7 +1258,7 @@ def convertBranchToLeafInstance(inParent ="asset|grp_geo", GUI = True, mode = "l
                             if patern in eachTransf:
                                 toInstanciateL.append(eachTransf)
                         result = convertObjToInstance(transformL=toInstanciateL, GUI = False, updateSetLayInstance = False)
-                        if result[0] == False:
+                        if result["resultB"] == False:
                             logMessage = "#### {:>7}: 'convertBranchToLeafInstance' sub function 'convertObjToInstance() failed to instanciate: {}'".format("Error",toInstanciateL)
                             logL.append(logMessage)
                             if GUI == True : raise ValueError (logMessage)
@@ -1211,7 +1267,6 @@ def convertBranchToLeafInstance(inParent ="asset|grp_geo", GUI = True, mode = "l
     layInstanceUpdate()
     cmds.select(initSelection, r= True)
     return dict(resultB=resultB, logL=logL)
-
 
 
 
