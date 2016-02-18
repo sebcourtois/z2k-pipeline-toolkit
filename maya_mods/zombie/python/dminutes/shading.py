@@ -1195,7 +1195,10 @@ def dmnToonPreset (preset = ""):
             miscUtils.setAttrC(each+".fresnelFrontReflectivity", 0.01)
             miscUtils.setAttrC(each+".fresnelFalloff", 10)
 
-            miscUtils.setAttrC(each+".opacity", 0.0,0.0,0.0, type = "double3")
+            miscUtils.setAttrC(each+".refraction", 1)
+            miscUtils.setAttrC(each+".ior", 1.3)
+
+            miscUtils.setAttrC(each+".opacity", 0.2,0.2,0.2, type = "double3")
 
 
     elif preset == "constant":
