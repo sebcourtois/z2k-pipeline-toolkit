@@ -148,7 +148,7 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
-        if  mainFilePathElem[-4] == "asset" or remove == True:
+        if  mainFilePathElem[-4] == "asset" or remove == True or mainFilePathElem[-5] == "asset":
             privateMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
             privateMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(privateMapdir)))
             publicMapdir = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
@@ -251,7 +251,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
-        if  mainFilePathElem[-4] == "asset":
+        if  mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "asset":
             privateMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
             privateMapdirExpand = miscUtils.normPath(os.path.expandvars(os.path.expandvars(privateMapdir)))
             publicMapdir = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
@@ -697,7 +697,7 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
-        if  mainFilePathElem[-4] == "asset":
+        if  mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "asset":
             privateMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
             privateMapdirExpand = os.path.expandvars(os.path.expandvars(privateMapdir))
         else:
@@ -889,7 +889,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
-        if  mainFilePathElem[-4] == "asset":
+        if  mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "asset":
             privateMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
             privateMapdirExpand = os.path.expandvars(os.path.expandvars(privateMapdir))
         else:
