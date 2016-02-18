@@ -721,6 +721,7 @@ def checkBaseStructure(*args,**kwargs):
         baseSetL = ["set_meshCache","set_control",]
         additionnalSetL = ["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"]
         baseLayerL = ["control","geometry"]
+        extraLayerL = ["instance"]
         baseCTRL = ["BigDaddy","BigDaddy_NeutralPose","Global_SRT","Local_SRT","Global_SRT_NeutralPose","Local_SRT_NeutralPose"]
         AllBaseObj = baseLayerL + baseObjL + baseSetL
         print tab+"AllBaseObj=", AllBaseObj
@@ -771,7 +772,7 @@ def checkBaseStructure(*args,**kwargs):
 
        # Layers test
         debugD["layerL"] = {}
-        if not sorted(baseLayerL) == sorted(layerL):
+        if sorted(baseLayerL) != sorted(layerL) and sorted(baseLayerL+extraLayerL) != sorted(layerL):
             debugD["layerL"]["result"] = "PAS CONFORME"
             debugD["layerL"]["Found"] = layerL
             toReturnB= False
