@@ -612,19 +612,31 @@ def geoGroupDeleteHistory(GUI=True, freezeVrtxPos = True):
     resultB = True
     logL = []
     geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
+
+
+    if freezeVrtxPos:
+        for each in geoTransformList:
+            cmds.polyMoveVertex (each, constructionHistory =True, random  = 0)
+
+        processedInstTransL = []
+        for each in instanceTransformL:
+            eachShapeL = cmds.ls(cmds.listRelatives(each, noIntermediate = True, shapes = True, fullPath = True),l=True)
+            parentTransL = cmds.listRelatives(eachShapeL,allParents =True, fullPath = True)
+            if each not in processedInstTransL:
+                cmds.polyMoveVertex (each, constructionHistory =True, random  = 0)
+                processedInstTransL.extend(parentTransL)
+       
+        logMessage = "#### {:>7}: 'geoGroupDeleteHistory': vertex position freezed on {} geometries and {} instances".format("Info", len(geoTransformList),len(processedInstTransL))
+        logL.append(logMessage)
+        if GUI == True: print logMessage
+        cmds.select(cl=True)
+
+
     if instanceTransformL:
         logMessage = "#### {:>7}: 'geoGroupDeleteHistory': {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
         logL.append(logMessage)
         if GUI == True: print logMessage
-        geoTransformList = geoTransformList+ instanceTransformL
-
-    if freezeVrtxPos:
-        for each in geoTransformList:
-            cmds.polyMoveVertex (each,constructionHistory =True, random  = 0)
-        logMessage = "#### {:>7}: 'geoGroupDeleteHistory': vertex position freezed on {} geometries".format("Info", len(geoTransformList))
-        logL.append(logMessage)
-        if GUI == True: print logMessage
-        cmds.select(cl=True)
+        geoTransformList = list(geoTransformList+ instanceTransformL)
 
     cmds.delete(geoTransformList,ch =True)
     logMessage = "#### {:>7}: 'geoGroupDeleteHistory': deteted history on {} geometries".format("Info",len(geoTransformList))
