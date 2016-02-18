@@ -46,21 +46,27 @@ def sceneManagerUI():
     SCENE_MANAGER = sceneManager.SceneManager()
     SG = SCENE_MANAGER.context['damProject']._shotgundb
 
-    if (pc.window('sceneManagerUI', q=True, exists=True)):
-        pc.deleteUI('sceneManagerUI')
+    if cmds.window('sceneManagerUI', q=True, exists=True):
+        cmds.deleteUI('sceneManagerUI')
+
+    if cmds.dockControl('sceneManagerDock', q=True, exists=True):
+        cmds.deleteUI('sceneManagerDock')
 
     dirname, _ = osp.split(osp.abspath(__file__))
-    ui = pc.loadUI(uiFile=dirname + "/UI/sceneManagerUIB.ui")
+    ui = cmds.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui")
     SCENE_MANAGER_UI = ui
 
-    sListWdgName = pc.textScrollList("sm_sceneInfo_lb", edit=True, removeAll=True,
+    sListWdgName = cmds.textScrollList("sm_sceneInfo_lb", edit=True, removeAll=True,
                                      font="fixedWidthFont", allowMultiSelection=True)
     LIST_WIDGET = pc.ui.toPySideObject(sListWdgName)
 
     connectCallbacks()
 
     initialize()
-    pc.showWindow(ui)
+    #cmds.showWindow(ui)
+    cmds.dockControl('sceneManagerDock', area='left', content=ui,
+                     allowedArea=['right', 'left'], retain=True, floating=True,
+                     label=cmds.window(ui, q=True, title=True))
     refreshContextUI()
 
 def initialize(d_inContext=None):
@@ -86,6 +92,7 @@ def initialize(d_inContext=None):
 
     #Hide some controls
     pc.control("fileStatusGroup", edit=True, visible=False)
+    pc.control("versionsGroup", edit=True, visible=False)
     pc.control("sm_createFolder_bt", edit=True, visible=False)
     pc.control("sm_edit_bt", edit=True, visible=False)
     pc.control("sm_addOnly_bt", edit=True, visible=False)

@@ -1,6 +1,6 @@
 
 
-from dminutes import maya_scene_operations as mop
+from davos_maya.tool.reference import SelectRefDialog
 from pytd.util.sysutils import qtGuiApp
 
 def launch():
@@ -19,7 +19,7 @@ def launch():
             dlg.raise_()
             return
 
-    dlg = mop.SelectRefDialog()
+    dlg = SelectRefDialog()
     dlg.show()
 
 launch()
