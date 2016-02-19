@@ -65,7 +65,7 @@ reload(Z2K_check_PREVIZ_SET)
 # anim checks
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Anim_checks as  Z2K_check_ANIM
 reload(Z2K_check_ANIM)
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_SET_checks as  Z2K_check_ANIM_SET # script à remplacer par le vrai
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Anim_SET_checks as  Z2K_check_ANIM_SET # script à remplacer par le vrai
 reload(Z2K_check_ANIM_SET)
 
 # render checks
