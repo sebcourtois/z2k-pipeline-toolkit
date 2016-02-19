@@ -1236,7 +1236,7 @@ def setSmoothness(inObjL=[], mode=0, *args,**kwargs):
     for obj in inObjL:
         # print tab,obj
         try :
-            shapeL=cmds.listRelatives(obj,s=1,ni=1)
+            shapeL=cmds.listRelatives(obj,s=1,ni=1,f=1)
             if shapeL:
                 for shape in shapeL:
                     print "    ",shape
