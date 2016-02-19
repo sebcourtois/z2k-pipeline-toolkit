@@ -22,7 +22,7 @@ osp = os.path
 
 """Global instance of sceneManager Class"""
 SCENE_MANAGER = None
-SCENE_MANAGER_UI = None
+SCENE_MANAGER_UI = 'sceneManagerDock'
 
 """Global instance of shotgunengine Class"""
 SG = None
@@ -38,39 +38,74 @@ LIST_WIDGET = None
 #               Main UI Creation/Initialization
 #------------------------------------------------------------------
 
+def kill():
+
+    global SCENE_MANAGER_UI
+
+    if cmds.dockControl(SCENE_MANAGER_UI, q=True, exists=True):
+        pc.deleteUI(SCENE_MANAGER_UI)
+        return True
+
+    return False
+
+def saveDockState():
+    pc.optionVar["Z2K_SM_dockState"] = cmds.dockControl(SCENE_MANAGER_UI, q=True, state=True)
+    pc.optionVar["Z2K_SM_dockFloating"] = cmds.dockControl(SCENE_MANAGER_UI, q=True, floating=True)
+
 def sceneManagerUI():
     """Main UI Creator"""
-    global SCENE_MANAGER, SCENE_MANAGER_UI
-    global SG, LIST_WIDGET
+    global LIST_WIDGET
+
+    states = dict()
+
+    if cmds.dockControl(SCENE_MANAGER_UI, q=True, exists=True) and SCENE_MANAGER:
+        cmds.dockControl(SCENE_MANAGER_UI, e=True, visible=True)
+    else:
+        kill()
+
+        dirname, _ = osp.split(osp.abspath(__file__))
+        ui = cmds.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui")
+
+        sListWdgName = cmds.textScrollList("sm_sceneInfo_lb", e=True,
+                                           removeAll=True,
+                                           font="fixedWidthFont",
+                                           allowMultiSelection=True)
+        LIST_WIDGET = pc.ui.toPySideObject(sListWdgName)
+
+        sState = pc.optionVar.get("Z2K_SM_dockState")
+        if sState:
+            states.update(state=sState)
+        states.update(floating=pc.optionVar.get("Z2K_SM_dockFloating", False))
+
+        cmds.dockControl(SCENE_MANAGER_UI, area='left', content=ui,
+                         allowedArea=['left'], retain=True,
+                         label=cmds.window(ui, q=True, title=True),
+                         closeCommand=saveDockState,
+                         **states)
+
+        connectCallbacks()
+
+    initialize()
+    refreshContextUI()
+
+    if states:
+        cmds.dockControl(SCENE_MANAGER_UI, e=True, **states)
+
+    if not cmds.dockControl(SCENE_MANAGER_UI, q=True, floating=True):
+        cmds.dockControl(SCENE_MANAGER_UI, e=True, r=True)
+
+def initialize():
+    """Initialize default values (Operator AllowedSteps and CurrentStep...), hide forbidden buttons"""
+
+    global SCENE_MANAGER, SG
+
+    if SCENE_MANAGER:
+        del SCENE_MANAGER
+    if SG:
+        del SG
 
     SCENE_MANAGER = sceneManager.SceneManager()
     SG = SCENE_MANAGER.context['damProject']._shotgundb
-
-    if cmds.window('sceneManagerUI', q=True, exists=True):
-        cmds.deleteUI('sceneManagerUI')
-
-    if cmds.dockControl('sceneManagerDock', q=True, exists=True):
-        cmds.deleteUI('sceneManagerDock')
-
-    dirname, _ = osp.split(osp.abspath(__file__))
-    ui = cmds.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui")
-    SCENE_MANAGER_UI = ui
-
-    sListWdgName = cmds.textScrollList("sm_sceneInfo_lb", edit=True, removeAll=True,
-                                     font="fixedWidthFont", allowMultiSelection=True)
-    LIST_WIDGET = pc.ui.toPySideObject(sListWdgName)
-
-    connectCallbacks()
-
-    initialize()
-    #cmds.showWindow(ui)
-    cmds.dockControl('sceneManagerDock', area='left', content=ui,
-                     allowedArea=['right', 'left'], retain=True, floating=True,
-                     label=cmds.window(ui, q=True, title=True))
-    refreshContextUI()
-
-def initialize(d_inContext=None):
-    """Initialize default values (Operator AllowedSteps and CurrentStep...), hide forbidden buttons"""
 
     curSgUser = SG.currentUser
     userSgStep = curSgUser['sg_currentstep']
@@ -86,9 +121,6 @@ def initialize(d_inContext=None):
     #print userSgStep
     if (userSgStep is not None) and (userSgStep['code'] in sStepCodes):
         pc.optionMenu("sm_step_dd", edit=True, value=userSgStep['code'])
-
-    if d_inContext != None:
-        SCENE_MANAGER.init(d_inContext)
 
     #Hide some controls
     pc.control("fileStatusGroup", edit=True, visible=False)
@@ -162,15 +194,6 @@ def setContextUI():
 
     return False
 
-def kill():
-
-    global SCENE_MANAGER_UI
-
-    if SCENE_MANAGER_UI:
-        pc.deleteUI(SCENE_MANAGER_UI, window=True)
-        return True
-
-    return False
 
 #------------------------------------------------------------------
 #               UI Refresh helpers

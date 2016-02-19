@@ -1,4 +1,3 @@
-from dminutes import sceneManagerUI
-reload(sceneManagerUI)
 
+from dminutes import sceneManagerUI
 sceneManagerUI.sceneManagerUI()
