@@ -1,5 +1,5 @@
 
 
-from dminutes import maya_scene_operations as mop
+from davos_maya.tool.reference import setDefaultAssetFileForSelectedRefs
 
-mop.setDefaultAssetFileForSelectedRefs()
+setDefaultAssetFileForSelectedRefs()
