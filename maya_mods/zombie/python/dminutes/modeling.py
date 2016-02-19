@@ -613,7 +613,7 @@ def geoGroupDeleteHistory(GUI=True, freezeVrtxPos = True):
     logL = []
     geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
 
-    #process in a different loop for instances to avoid precessing the several time
+    #now process vertex frezze position in a different loop for instances to avoid precessing the several time
     if freezeVrtxPos:
         for each in geoTransformList:
             cmds.polyMoveVertex (each, constructionHistory =True, random  = 0)
@@ -708,6 +708,7 @@ def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False, G
         if GUI == True: print logMessage
 
     return resultB, logL
+
 
 def compareHDToPreviz():
     """
