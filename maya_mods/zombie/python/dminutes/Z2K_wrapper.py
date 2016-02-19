@@ -103,7 +103,7 @@ def editFile(proj="" , Path_publish_public="", autoAction="overwrite", *args, **
 
     return privFile
 
-def publishFile(proj="", path_private_toPublish="",comment="test the cashbah moda foka!",sgTask="",*args, **kwargs):
+def publishFile(proj="", path_private_toPublish="",comment="test the cashbah moda foka!",sgTask="",sgVersionData=None,*args, **kwargs):
     """ Description: publish file with davos and SG
         Return : STING
         Dependencies :  - publishEditedVersion
@@ -112,9 +112,9 @@ def publishFile(proj="", path_private_toPublish="",comment="test the cashbah mod
     print "Z2K_publishFile()" 
     tab= "    "
     sPrivPath = path_private_toPublish.absPath()
-    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment=comment, autoLock=True, sgTask=sgTask)[0]
+    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment=comment, autoLock=True, sgTask=sgTask, sgVersionData=sgVersionData)[0]
     PublishedFile_absPath = PublishedMrc.absPath()
-    PublishedFile_shortName = PublishedMrc.fileName() 
+    PublishedFile_shortName = PublishedMrc.fileName()
     # PublishedFile_Comment = PublishedMrc.comment()
     
     print tab,"DONE","->",PublishedFile_shortName
@@ -139,11 +139,11 @@ def unlockAllUserLock(theUser="jipe",*args, **kwargs):
 
 # WIP ----------------------- ajout du SG publish
 def publishEditedVersionSG(proj="", path_private_toPublish="", comment="test the cashbah moda foka!", 
-    sgTask="Rig",
+    sgTask="Rig", sgVersionData=None,
     *args, **kwargs):
     print "publishEditedVersionSG()" 
     tab= "    "
 
     sPrivPath = path_private_toPublish
-    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment=comment, autoLock=True, sgTask=sgTask)[0]
+    PublishedMrc= proj.publishEditedVersion(sPrivPath, comment=comment, autoLock=True, sgTask=sgTask, sgVersionData=sgVersionData)[0]
     return PublishedMrc.absPath()
