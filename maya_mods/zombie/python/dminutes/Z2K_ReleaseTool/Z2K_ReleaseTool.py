@@ -58,6 +58,8 @@ import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_CHAR_checks as Z2K_Pcheck_CHA
 reload(Z2K_Pcheck_CHAR)
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_SET_checks as Z2K_Pcheck_SET
 reload(Z2K_Pcheck_SET)
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Anim_SET_checks as Z2K_Acheck_SET
+reload(Z2K_Acheck_SET)
 
 
 
@@ -498,9 +500,10 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
                     Z2K_Pcheck = Z2K_Pcheck_SET
                     
                 elif self.SourceAssetType in ["anim_scene"]:
-                    print tab, "anim, test not ready"
+                    print tab, "anim"
                     # set DEBUG FILE here
                     theDebugFile  = DEBUGFILE_ANIM_SET
+                    Z2K_Pcheck = Z2K_Acheck_SET
 
                 
 
