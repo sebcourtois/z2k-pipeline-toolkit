@@ -102,14 +102,19 @@ def createSubdivSets():
             print "#### info: add geo to 'set_subdiv_init': "+eachGeo
 
      
-def setSubdiv():
+def setSubdiv(GUI= True):
     """
     creates 'smoothLevel1' and 'smoothLevel2' extra attributes on the 'grp_geo' 
     and connect them to the smoothLevel (preview subdiv level) of the geo shapes
     """
+    resultB = True
+    logL = []
+
     if not mc.ls("|asset|grp_geo", l = True):
-        msg = "#### error 'setSubdiv': no '|asset|grp_geo' found"
-        raise ValueError(msg)
+        logMessage = "#### {:>7}: 'setSubdiv' No '|asset|grp_geo' found".format("Error")
+        if GUI == True: raise ValueError(logMessage)
+        logL.append(logMessage)
+        resultB = False
 
     
     userDefinedAttr =(mc.listAttr("|asset|grp_geo",userDefined=True))
@@ -121,41 +126,64 @@ def setSubdiv():
 
     mc.addAttr("|asset|grp_geo",ln = "smoothLevel1", at = "long", min = 0, max = 1,dv = 0, keyable = True) 
     mc.addAttr("|asset|grp_geo",ln = "smoothLevel2", at = "long", min = 0, max = 2,dv = 0, keyable = True)
-        
 
     subdivSets = mc.ls("set_subdiv_*", type = "objectSet")
     if not subdivSets:
-        msg = "#### error 'setSubdiv' : no subdivision set could be found (set_subdiv_*). Please create them first"
-        raise ValueError(msg)
+        logMessage = "#### {:>7}: 'setSubdiv' No subdivision set could be found (set_subdiv_*). Please create them first".format("Error")
+        if GUI == True: raise ValueError(logMessage)
+        logL.append(logMessage)
+        resultB = False
 
     for eachSetSubdiv in subdivSets:
-        geoInSet = mc.sets(eachSetSubdiv, query = True)
+        geoInSet = mc.ls(mc.sets(eachSetSubdiv, query = True),l=True)
         if not geoInSet: geoInSet = []
-        
+       
         if eachSetSubdiv != "set_subdiv_init" and geoInSet:
             subdivLevel =  int(eachSetSubdiv.split("set_subdiv_")[1])
             previewSubdivLevel = subdivLevel    
             if  0 <= subdivLevel <=9 :
-                print "#### info: scaning 'set_subdiv_"+str(subdivLevel)+"'"
+                processedTransL =[]
+                skippedTransL =[]
                 for eachGeo in geoInSet:
                     if mc.nodeType(eachGeo)!="mesh":
                         eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)[0]
-                    #print "    "+eachGeoShape
-                    mc.setAttr(eachGeoShape+".displaySmoothMesh",2)
-                    mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
-                    mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
-                    if previewSubdivLevel == 1:
-                        mc.connectAttr("|asset|grp_geo.smoothLevel1", eachGeoShape+".smoothLevel", f=True)
-                    if previewSubdivLevel > 1:
-                        mc.connectAttr("|asset|grp_geo.smoothLevel2", eachGeoShape+".smoothLevel",f=True)
-                    if not mc.attributeQuery ("aiSubdivType", node = eachGeoShape , exists = True):
-                        print "#### error: "+eachGeoShape+".aiSubdivType attribute coud not be found, please check if Arnold is properly installed on your computer"
+                    eachGeoParentL = mc.listRelatives(eachGeoShape, allParents = True, fullPath = True)
+                    if not set(eachGeoParentL) & set(processedTransL):
+                        mc.setAttr(eachGeoShape+".displaySmoothMesh",2)
+                        mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
+                        mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
+                        if previewSubdivLevel == 1:
+                            mc.connectAttr("|asset|grp_geo.smoothLevel1", eachGeoShape+".smoothLevel", f=True)
+                        if previewSubdivLevel > 1:
+                            mc.connectAttr("|asset|grp_geo.smoothLevel2", eachGeoShape+".smoothLevel",f=True)
+                        if not mc.attributeQuery ("aiSubdivType", node = eachGeoShape , exists = True):
+                            logMessage = "#### {:>7}: 'setSubdiv' {}.aiSubdivType attribute coud not be found, please check if Arnold is properly installed on your computer".format("Error",eachGeoShape)
+                            if GUI == True: raise ValueError(logMessage)
+                            logL.append(logMessage)
+                            resultB = False
+                        else:
+                            mc.setAttr(eachGeoShape+".aiSubdivType",1)
+                            mc.setAttr(eachGeoShape+".aiSubdivIterations",subdivLevel)
+                        processedTransL.append(eachGeo)
                     else:
-                        mc.setAttr(eachGeoShape+".aiSubdivType",1)
-                        mc.setAttr(eachGeoShape+".aiSubdivIterations",subdivLevel)
+                        skippedTransL.append(eachGeo)
+    if processedTransL and not skippedTransL:
+        logMessage = "#### {:>7}: 'setSubdiv' {} meshes processed".format("Info", len(processedTransL))
+        if GUI == True: print logMessage
+        logL.append(logMessage)
+    if processedTransL and skippedTransL:
+        logMessage = "#### {:>7}: 'setSubdiv' {} meshes processed and {} instances skipped ".format("Info", len(processedTransL), len(skippedTransL))
+        if GUI == True: print logMessage
+        logL.append(logMessage)
 
     if "set_subdiv_init" in subdivSets and mc.sets("set_subdiv_init", query = True) != None:
-        print "#### warning: a geo object is still in the 'set_subdiv_init', please asssign it to a 'set_subdiv*'"
+        logMessage = "#### {:>7}: 'setSubdiv' A geo object is still in the 'set_subdiv_init', please asssign it to a 'set_subdiv*'".format("Warning")
+        if GUI == True: print logMessage
+        logL.append(logMessage)
+
+    return dict(resultB=resultB, logL=logL)
+
+
 
 def previewSubdiv(enable = True, filter = ""):
     """
