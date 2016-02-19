@@ -7,6 +7,8 @@ import pymel.core as pc
 import maya.cmds as mc
 
 from pytd.util.sysutils import toStr
+from davos_maya.tool.reference import loadReferencesForAnim
+from dminutes.shotconformation import removeRefEditByAttr
 
 
 CAMPATTERN = 'cam_sq????_sh?????:*'
@@ -413,9 +415,14 @@ def init_previz_scene(sceneManager):
     pc.setAttr('hardwareRenderingGlobals.ssaoFilterRadius', 8)
     pc.setAttr('hardwareRenderingGlobals.ssaoSamples', 16)
 
-    sStepName = sceneManager.context["step"]["code"]
+    sStepName = sceneManager.context["step"]["code"].lower()
     proj = sceneManager.context["damProject"]
     shotLib = proj.getLibrary("public", "shot_lib")
+
+    if sStepName == "animation":
+        if not pc.listReferences(loaded=True, unloaded=False):
+            removeRefEditByAttr(None, attr="smoothDrawType", GUI=True)
+            loadReferencesForAnim(project=proj)
 
     #rename any other shot camera
     remainingCamera = None
@@ -433,7 +440,7 @@ def init_previz_scene(sceneManager):
                 sCamNs = otherCam.parentNamespace()
                 if sShotCamNspace != sCamNs:
                     otherCam.setAttr("renderable", False)
-                    mc.setAttr(sCamNs + ":asset.visibility", False)
+                    #mc.setAttr(sCamNs + ":asset.visibility", False)
                     camsLength -= 1
         else:
             remainingCamera = otherCams[0]
@@ -446,9 +453,9 @@ def init_previz_scene(sceneManager):
     if not oShotCam:
         oShotCam = sceneManager.importShotCam()
 
-    if sStepName.lower() != "previz 3d":
+    if sStepName != "previz 3d":
 
-        if sStepName.lower() == "layout":
+        if sStepName == "layout":
             try:
                 geomLayerL = mc.ls('*:geometry', type="displayLayer")
                 for each in geomLayerL:
@@ -498,6 +505,7 @@ def init_previz_scene(sceneManager):
 
     reArrangeAssets()
 
+
 COMMANDS = {
     'create':{
         'BASE':create_scene_base,
@@ -507,6 +515,7 @@ COMMANDS = {
         'BASE':init_scene_base,
         'previz 3D':init_previz_scene,
         'layout':init_previz_scene,
+        'animation':init_previz_scene,
     }
 }
 

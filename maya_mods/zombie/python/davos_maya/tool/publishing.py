@@ -7,6 +7,7 @@ from itertools import izip
 from collections import OrderedDict
 
 import pymel.core as pm
+import pymel.util as pmu
 #import maya.cmds as mc
 
 #from pytd.util.logutils import logMsg
@@ -206,6 +207,12 @@ def quickSceneCleanUp():
 
     from dminutes import miscUtils
     miscUtils.deleteUnknownNodes()
+
+    # optimize scene
+    pmu.putEnv("MAYA_TESTING_CLEANUP", "1")
+    sCleanOptions = ("referencedOption",)
+    pm.mel.scOpt_performOneCleanup(sCleanOptions)
+    pmu.putEnv("MAYA_TESTING_CLEANUP", "")
 
 def publishCurrentScene(*args, **kwargs):
 
