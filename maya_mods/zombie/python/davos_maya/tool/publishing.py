@@ -7,6 +7,7 @@ from itertools import izip
 from collections import OrderedDict
 
 import pymel.core as pm
+import pymel.util as pmu
 #import maya.cmds as mc
 
 #from pytd.util.logutils import logMsg
@@ -205,7 +206,15 @@ def publishSceneDependencies(damEntity, depScanResults, prePublishInfos, **kwarg
 def quickSceneCleanUp():
 
     from dminutes import miscUtils
+    pm.mel.source("cleanUpScene.mel")
+
     miscUtils.deleteUnknownNodes()
+
+    # optimize scene
+    pmu.putEnv("MAYA_TESTING_CLEANUP", "1")
+    sCleanOptions = ("referencedOption",)
+    pm.mel.scOpt_performOneCleanup(sCleanOptions)
+    pmu.putEnv("MAYA_TESTING_CLEANUP", "")
 
 def publishCurrentScene(*args, **kwargs):
 
@@ -231,7 +240,7 @@ def publishCurrentScene(*args, **kwargs):
     if isinstance(damEntity, DamAsset):
         try:
             quickSceneCleanUp()
-        except Exception, e:
+        except Exception as e:
             sConfirm = confirmDialog(title='INFO !',
                                      message="Quick cleanup failed !\n\n{0}".format(toStr(e)),
                                      button=['Continue', 'Cancel'],

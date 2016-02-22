@@ -17,7 +17,7 @@ from pytaya.util.sysutils import withSelectionRestored
 from pytaya.core.reference import processSelectedReferences
 from pytaya.core.reference import listReferences
 
-from davos_maya.tool.general import entityFromScene
+from davos_maya.tool.general import entityFromScene, projectFromScene
 
 
 @processSelectedReferences
@@ -246,10 +246,11 @@ def setDefaultAssetFileForSelectedRefs(assetFile="NoInput", **kwargs):
             print "set {}.{} to '{}'".format(oRefNode, DEFAULT_FILE_ATTR, sAstRcName)
             oRefNode.setAttr(DEFAULT_FILE_ATTR, sAstRcName)
 
-def loadReferencesForAnim(dryRun=False):
+def loadReferencesForAnim(project=None, dryRun=False):
 
-    scnEntity = entityFromScene()
-    proj = scnEntity.project
+    proj = project
+    if not proj:
+        proj = projectFromScene()
 
     logItems = []
     numFailure = 0
