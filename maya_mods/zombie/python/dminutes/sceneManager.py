@@ -569,6 +569,7 @@ class SceneManager():
 
         sCamFile = ""
         if (not quick) and sStep.lower() != "previz 3d":
+
             sAbcPath = damShot.getPath("public", "camera_abc")
             abcFile = damShot.getLibrary()._weakFile(sAbcPath)
 
@@ -590,37 +591,6 @@ class SceneManager():
 
         CAPTURE_INFOS['cam_file'] = sCamFile#.rsplit(".", 1)[0]
 
-        #Infer capture path
-        scenePath = pc.sceneName()
-        sFilename = os.path.basename(scenePath)
-        CAPTURE_INFOS['scene'] = sFilename
-        if not quick:
-            sCapturePath = scenePath.replace(".ma", ".mov")
-        else:
-            sCapturePath = osp.join(self.getWipCaptureDir(damShot),
-                                    sFilename.replace(".ma", ".mov"))
-
-            maxIncr = 50
-            def iterIncrementFiles(sFilePath, count):
-                for i in xrange(1, count + 1):
-                    p = pathSuffixed(sFilePath, "." + padded(i, 2))
-                    try:
-                        st = os.stat(p)
-                    except OSError:
-                        continue
-
-                    if stat.S_ISREG(st.st_mode):
-                        yield dict(path=p, mtime=st.st_mtime, num=i)
-
-            incrementFiles = sorted(iterIncrementFiles(sCapturePath, maxIncr),
-                                  key=lambda d:d["mtime"])
-            if incrementFiles:
-                incrFile = incrementFiles[-1]
-                j = (incrFile["num"] % maxIncr) + 1
-                sCapturePath = pathSuffixed(sCapturePath, "." + padded(j, 2))
-            else:
-                sCapturePath = pathSuffixed(sCapturePath, "." + padded(1, 2))
-
         if not quick:
             #Get start/end from shotgun
             captureStart = 101
@@ -641,6 +611,36 @@ class SceneManager():
 
             if savedFile is None:
                 raise RuntimeError("Could not save current scene !")
+
+        #Infer capture path
+        scenePath = pc.sceneName()
+        sFilename = os.path.basename(scenePath)
+        CAPTURE_INFOS['scene'] = sFilename
+        if not quick:
+            sCapturePath = scenePath.replace(".ma", ".mov")
+        else:
+            sCapturePath = osp.join(self.getWipCaptureDir(damShot),
+                                    sFilename.replace(".ma", ".mov"))
+            maxIncr = 50
+            def iterIncrementFiles(sFilePath, count):
+                for i in xrange(1, count + 1):
+                    p = pathSuffixed(sFilePath, "." + padded(i, 2))
+                    try:
+                        st = os.stat(p)
+                    except OSError:
+                        continue
+
+                    if stat.S_ISREG(st.st_mode):
+                        yield dict(path=p, mtime=st.st_mtime, num=i)
+
+            incrementFiles = sorted(iterIncrementFiles(sCapturePath, maxIncr),
+                                  key=lambda d:d["mtime"])
+            if incrementFiles:
+                incrFile = incrementFiles[-1]
+                j = (incrFile["num"] % maxIncr) + 1
+                sCapturePath = pathSuffixed(sCapturePath, "." + padded(j, 2))
+            else:
+                sCapturePath = pathSuffixed(sCapturePath, "." + padded(1, 2))
 
         if oCamRef:
             bWasLocked = oCamRef.refNode.getAttr("locked")
