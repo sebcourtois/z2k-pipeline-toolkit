@@ -80,8 +80,7 @@ def sceneManagerUI():
         cmds.dockControl(SCENE_MANAGER_UI, area='left', content=ui,
                          allowedArea=['left'], retain=True,
                          label=cmds.window(ui, q=True, title=True),
-                         closeCommand=saveDockState,
-                         **states)
+                         closeCommand=saveDockState, **states)
 
         connectCallbacks()
 
