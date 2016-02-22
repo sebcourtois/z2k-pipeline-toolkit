@@ -206,6 +206,8 @@ def publishSceneDependencies(damEntity, depScanResults, prePublishInfos, **kwarg
 def quickSceneCleanUp():
 
     from dminutes import miscUtils
+    pm.mel.source("cleanUpScene.mel")
+
     miscUtils.deleteUnknownNodes()
 
     # optimize scene
@@ -238,7 +240,7 @@ def publishCurrentScene(*args, **kwargs):
     if isinstance(damEntity, DamAsset):
         try:
             quickSceneCleanUp()
-        except Exception, e:
+        except Exception as e:
             sConfirm = confirmDialog(title='INFO !',
                                      message="Quick cleanup failed !\n\n{0}".format(toStr(e)),
                                      button=['Continue', 'Cancel'],
