@@ -228,7 +228,7 @@ def setShadingMask(selectFailingNodes = False, verbose = True, gui = True):
     dmnMask05_G = []# yeux, custom
     dmnMask05_B = []# bouches, custom
 
-    dmnMask06_R = []# shading decor custom
+    dmnMask06_R = []# shading decor custom, gradient sourcil sur aurelien et francis
     dmnMask06_G = []# shading decor custom
     dmnMask06_B = []# shading decor custom
 

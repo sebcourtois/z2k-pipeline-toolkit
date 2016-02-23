@@ -141,8 +141,11 @@ def unlockAllUserLock(theUser="jipe",*args, **kwargs):
 def publishEditedVersionSG(proj="", path_private_toPublish="", comment="test the cashbah moda foka!", 
     sgTask="Rig", sgVersionData=None,
     *args, **kwargs):
-    print "publishEditedVersionSG()" 
+    print "publishEditedVersionSG()"
     tab= "    "
+
+    if isinstance(sgVersionData, dict):
+        sgVersionData['sg_task']=sgTask
 
     sPrivPath = path_private_toPublish
     PublishedMrc= proj.publishEditedVersion(sPrivPath, comment=comment, autoLock=True, sgTask=sgTask, sgVersionData=sgVersionData)[0]

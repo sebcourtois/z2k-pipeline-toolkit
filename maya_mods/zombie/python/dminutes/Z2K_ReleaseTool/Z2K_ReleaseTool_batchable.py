@@ -266,7 +266,7 @@ class Z2K_ReleaseTool (object):
 
 
     def release_Asset(self, destinationAsset="chr_aurelien_manteau", destinationAssetType = "previz_ref",
-        theComment= "", autoUnlock = False, sgTask="",
+        theComment= "", autoUnlock = False, sgTask="", sgVersionData = None,
         *args, **kwargs):
         print "release_Asset()"
         
