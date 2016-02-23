@@ -146,7 +146,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=9, e=True)
+        self.pBar_upd(step=1, maxValue=10, e=True)
 
         # steps
 
@@ -262,17 +262,31 @@ class checkModule(object):
         # 9   apply setSubdiv
         self.printF("assetconformation: apply setSubdiv ", st="t")
         resultD = assetconformation.setSubdiv(GUI = False)
-        # prints -------------------
         print resultD
-        self.printF(resultD["resultB"], st="r")
+        # prints -------------------
+        self.printF(resultD["returnB"], st="r")
         for each in resultD["logL"]:
             self.printF( each )
         # --------------------------
-        if not resultD["resultB"]:
+        if not resultD["returnB"]:
             boolResult = False
         self.pBar_upd(step= 1,)
 
-       
+
+        # 10   assetGrpClean
+        self.printF("assetconformation: clean asset group ", st="t")
+        resultD = assetconformation.assetGrpClean( clean = True, GUI = False)
+        print resultD
+        # prints -------------------
+        self.printF(resultD["returnB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["returnB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+   
 
         # colors
         print "*btn_preClean:",boolResult
