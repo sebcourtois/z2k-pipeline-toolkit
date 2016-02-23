@@ -50,6 +50,8 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('reflection_color', label='Color')
         self.addControl('reflection_roughness', label='Roughness')
         self.addControl('reflection_look_at_fast', label='Look at Fast Shader')
+        self.addControl('max_internal_reflection', label='Max Internal Reflection')
+
         self.endLayout()
 
         self.beginLayout('Fresnel', collapse=True)
