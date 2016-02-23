@@ -7,13 +7,13 @@ from ztk_setup import Z2kToolkit
 
 # Common envs, may be different for each studio
 ENVS = {
-        "ZOMB_ASSET_LOC":"\\\\lv7000_fileserver\\Zombidamas",
-        "ZOMB_SHOT_LOC":"\\\\lv7000_fileserver\\Zombidamas",
-        "ZOMB_OUTPUT_LOC":"\\\\lv7000_fileserver\\Zombidamas",
-        "ZOMB_MISC_LOC":"\\\\lv7000_fileserver\\Zombidamas",
-        "ZOMB_PRIVATE_LOC":"\\\\lv7000_fileserver\\Zombidamas",
+        "ZOMB_ASSET_LOC":"\\\\Servnas02\\zombidamas",
+        "ZOMB_SHOT_LOC":"\\\\Servnas02\\zombidamas",
+        "ZOMB_OUTPUT_LOC":"\\\\Servnas02\\zombidamas",
+        "ZOMB_MISC_LOC":"\\\\Servnas02\\zombidamas",
+        "ZOMB_PRIVATE_LOC":"\\\\Servnas02\\zombidamas",
 
-        "ZOMB_TOOL_PATH":"\\\\lv7000_fileserver\\Zombidamas\\zomb\\tool",
+        "ZOMB_TOOL_PATH":"\\\\Servnas02\\zombidamas\\ZOMB\\tool",
 
         }
 
