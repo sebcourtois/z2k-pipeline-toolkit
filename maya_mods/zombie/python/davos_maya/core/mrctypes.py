@@ -23,7 +23,7 @@ class MrcFile(DrcFile):
     def __init__(self, drcLib, absPathOrInfo=None, **kwargs):
         super(MrcFile, self).__init__(drcLib, absPathOrInfo, **kwargs)
 
-    def edit(self, openFile=False, existing=""):
+    def edit(self, openFile=False, existing="", **kwargs):
 
         self.library.project.assertMayaVersion(pmv.current())
         self.assertIsMayaScene()
@@ -31,7 +31,8 @@ class MrcFile(DrcFile):
         privFile = DrcFile.edit(self, openFile=False, existing=existing)
 
         if openFile and privFile:
-            privFile.mayaOpen(checkFile=False)
+            kwargs['loadReferenceDepth'] = "default"
+            privFile.mayaOpen(checkFile=False, **kwargs)
 
         return privFile
 
@@ -44,7 +45,7 @@ class MrcFile(DrcFile):
 
         return p
 
-    def mayaOpen(self, checkFile=True, **kwargs):
+    def mayaOpen(self, checkFile=True, existing="", **kwargs):
 
         if checkFile:
             assert self.isFile(), "File does NOT exists !"
@@ -57,7 +58,7 @@ class MrcFile(DrcFile):
 
             sWordList = (sVersSuffix, '-', 'readonly')
             sSuffix = "".join(sWordList)
-            privFile, _ = self.copyToPrivateSpace(suffix=sSuffix, **kwargs)
+            privFile, _ = self.copyToPrivateSpace(suffix=sSuffix, existing=existing)
         else:
             privFile = self
 
@@ -65,11 +66,23 @@ class MrcFile(DrcFile):
         if not result:
             return
 
-        return myasys.openScene(privFile.absPath(), force=True, fail=False)
+        sRefDepth = kwargs.pop("loadReferenceDepth", kwargs.pop("lrd", None))
+        if (sRefDepth is None) and (not self.library.project.mayaLoadReferences):
+            kwargs["loadReferenceDepth"] = "none"
+        elif sRefDepth != "default":
+            kwargs["loadReferenceDepth"] = sRefDepth
 
-    def mayaImportScene(self, *args, **kwargs):
+        return myasys.openScene(privFile.absPath(), force=True, fail=False, **kwargs)
+
+    def mayaImportScene(self, **kwargs):
 
         sNamespace = kwargs.pop("namespace", kwargs.pop("ns", ""))
+
+        sRefDepth = kwargs.pop("loadReferenceDepth", kwargs.pop("lrd", None))
+        if (sRefDepth is None) and (not self.library.project.mayaLoadReferences):
+            kwargs["loadReferenceDepth"] = "none"
+        elif sRefDepth != "default":
+            kwargs["loadReferenceDepth"] = sRefDepth
 
         if self.isPublic():
 
