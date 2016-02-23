@@ -67,8 +67,9 @@ class MrcFile(DrcFile):
             return
 
         sRefDepth = kwargs.pop("loadReferenceDepth", kwargs.pop("lrd", None))
-        if (sRefDepth is None) and (not self.library.project.mayaLoadReferences):
-            kwargs["loadReferenceDepth"] = "none"
+        if sRefDepth is None:
+            if not self.library.project.mayaLoadReferences:
+                kwargs["loadReferenceDepth"] = "none"
         elif sRefDepth != "default":
             kwargs["loadReferenceDepth"] = sRefDepth
 
@@ -79,8 +80,9 @@ class MrcFile(DrcFile):
         sNamespace = kwargs.pop("namespace", kwargs.pop("ns", ""))
 
         sRefDepth = kwargs.pop("loadReferenceDepth", kwargs.pop("lrd", None))
-        if (sRefDepth is None) and (not self.library.project.mayaLoadReferences):
-            kwargs["loadReferenceDepth"] = "none"
+        if sRefDepth is None:
+            if not self.library.project.mayaLoadReferences:
+                kwargs["loadReferenceDepth"] = "none"
         elif sRefDepth != "default":
             kwargs["loadReferenceDepth"] = sRefDepth
 
