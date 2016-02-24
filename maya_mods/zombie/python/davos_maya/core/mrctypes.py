@@ -56,8 +56,7 @@ class MrcFile(DrcFile):
             if self.versionFromName() is None:
                 sVersSuffix = mkVersionSuffix(self.currentVersion)
 
-            sWordList = (sVersSuffix, '-', 'readonly')
-            sSuffix = "".join(sWordList)
+            sSuffix = "".join((sVersSuffix, '-', 'readonly'))
             privFile, _ = self.copyToPrivateSpace(suffix=sSuffix, existing=existing)
         else:
             privFile = self

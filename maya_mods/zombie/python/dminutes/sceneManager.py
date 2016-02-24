@@ -634,7 +634,7 @@ class SceneManager():
                         yield dict(path=p, mtime=st.st_mtime, num=i)
 
             incrementFiles = sorted(iterIncrementFiles(sCapturePath, maxIncr),
-                                  key=lambda d:d["mtime"])
+                                    key=lambda d:d["mtime"])
             if incrementFiles:
                 incrFile = incrementFiles[-1]
                 j = (incrFile["num"] % maxIncr) + 1
