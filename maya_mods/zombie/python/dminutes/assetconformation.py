@@ -107,7 +107,7 @@ def setSubdiv(GUI= True):
     creates 'smoothLevel1' and 'smoothLevel2' extra attributes on the 'grp_geo' 
     and connect them to the smoothLevel (preview subdiv level) of the geo shapes
     """
-    resultB = True
+    returnB = True
     logL = []
     processedTransL =[]
     skippedTransL =[]
@@ -116,7 +116,7 @@ def setSubdiv(GUI= True):
         logMessage = "#### {:>7}: 'setSubdiv' No '|asset|grp_geo' found".format("Error")
         if GUI == True: raise ValueError(logMessage)
         logL.append(logMessage)
-        resultB = False
+        returnB = False
 
     
     userDefinedAttr =(mc.listAttr("|asset|grp_geo",userDefined=True))
@@ -134,7 +134,7 @@ def setSubdiv(GUI= True):
         logMessage = "#### {:>7}: 'setSubdiv' No subdivision set could be found (set_subdiv_*). Please create them first".format("Error")
         if GUI == True: raise ValueError(logMessage)
         logL.append(logMessage)
-        resultB = False
+        returnB = False
 
     for eachSetSubdiv in subdivSets:
         geoInSet = mc.ls(mc.sets(eachSetSubdiv, query = True),l=True)
@@ -160,7 +160,7 @@ def setSubdiv(GUI= True):
                             logMessage = "#### {:>7}: 'setSubdiv' {}.aiSubdivType attribute coud not be found, please check if Arnold is properly installed on your computer".format("Error",eachGeoShape)
                             if GUI == True: raise ValueError(logMessage)
                             logL.append(logMessage)
-                            resultB = False
+                            returnB = False
                         else:
                             mc.setAttr(eachGeoShape+".aiSubdivType",1)
                             mc.setAttr(eachGeoShape+".aiSubdivIterations",subdivLevel)
@@ -180,9 +180,9 @@ def setSubdiv(GUI= True):
         logMessage = "#### {:>7}: 'setSubdiv' A geo object is still in the 'set_subdiv_init', please asssign it to a 'set_subdiv*'".format("Error")
         if GUI == True: raise ValueError(logMessage)
         logL.append(logMessage)
-        resultB = False
+        returnB = False
 
-    return dict(resultB=resultB, logL=logL)
+    return dict(returnB=returnB, logL=logL)
 
 
 
@@ -1036,12 +1036,12 @@ def importGrpLgt(lgtRig = "lgtRig_character"):
     else :
         raise ValueError("#### Error: no '|asset' could be found in this scene")
 
-    grpLgt =  mc.ls("grp_lgt*", l=True)
+    grpLgt =  mc.ls("grp_light*", l=True)
     mc.delete(grpLgt)
 
     print "#### {:>7}: importing '{}'".format("Info",lgtRigFilePath_exp)
     myImport = mc.file( lgtRigFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, preserveReferences= True )
-    mc.parent("grp_lgt","asset")
+    mc.parent("grp_light","asset")
 
 
     lgtDefault =  mc.ls("lgt_default*", l=True, type = "light")
@@ -1091,4 +1091,60 @@ def fixMaterialInfo (shadingEngineL = [], GUI = True):
 
 
 
+def assetGrpClean( clean = True, GUI = True):
+    returnB = True
+    logL = []
+
+    if not mc.ls("|asset"):
+        logMessage = "#### {:>7}: 'assetGrpClean' No '|asset' found in this scene".format("Error")
+        logL.append(logMessage)
+        returnB = False
+        if GUI == True : print logMessage
+        return dict(returnB = returnB, logL = logL)
+    else:
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        assetType = mainFilePathElem[-3]
+
+
+    validDefaultGrpL = ["|asset|grp_geo", "|asset|grp_rig"]
+    validSetGrpL = ["|asset|grp_geo", "|asset|grp_placeHolders", "|asset|grp_rig"]
+    validChrGrpL = ["|asset|grp_geo", "|asset|grp_placeHolders", "|asset|grp_rig"]
+    if assetType == "set":
+        validGrpL = validSetGrpL
+    elif assetType == "chr":
+        validGrpL = validChrGrpL
+    else:
+        validGrpL = validDefaultGrpL
+
+
+    assetRootL = mc.listRelatives ("|asset",ni=1,f=1,c=1)
+    for each in assetRootL:
+        if mc.nodeType(each) != 'transform' or "grp_" not in each.split("|")[-1]:
+            logMessage = "#### {:>7}: 'assetGrpClean' {} is not a group named 'grp_*'".format("Error", each)
+            logL.append(logMessage)
+            returnB = False
+            if GUI == True : print logMessage
+        else:
+            if each not in validGrpL:
+                if clean:
+                    try:
+                        logMessage = "#### {:>7}: 'assetGrpClean' deleting {} ".format("Info", each)
+                        mc.delete(each)
+                    except Exception,err:
+                        returnB = False
+                        logMessage = "#### {:>7}: 'assetGrpClean' could not delete {} --> '{}'".format("Error", each, err)
+                else:
+                    logMessage = "#### {:>7}: 'assetGrpClean' to delete: {}".format("Info", each)
+
+                logL.append(logMessage)
+                if GUI == True : print logMessage
+
+    if not logL:
+        logMessage = "#### {:>7}: 'assetGrpClean' '|asset' group is clean, nothing done".format("Info")
+        logL.append(logMessage)
+        if GUI == True : print logMessage
+
+
+    return dict(returnB=returnB, logL=logL)
 

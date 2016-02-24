@@ -146,7 +146,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=9, e=True)
+        self.pBar_upd(step=1, maxValue=11, e=True)
 
         # steps
 
@@ -263,16 +263,39 @@ class checkModule(object):
         self.printF("assetconformation: apply setSubdiv ", st="t")
         resultD = assetconformation.setSubdiv(GUI = False)
         # prints -------------------
-        print resultD
+        self.printF(resultD["returnB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["returnB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 10   assetGrpClean
+        self.printF("assetconformation: clean asset group ", st="t")
+        resultD = assetconformation.assetGrpClean( clean = True, GUI = False)
+        # prints -------------------
+        self.printF(resultD["returnB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["returnB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 11   assetGrpClean
+        self.printF("modeling: display layer update", st="t")
+        resultD = modeling.layerUpdate(inParent="asset|grp_geo", GUI = False, displayMode = 1)
+        # prints -------------------
         self.printF(resultD["resultB"], st="r")
         for each in resultD["logL"]:
             self.printF( each )
         # --------------------------
         if not resultD["resultB"]:
             boolResult = False
-        self.pBar_upd(step= 1,)
-
-       
+        self.pBar_upd(step= 1,)   
 
         # colors
         print "*btn_preClean:",boolResult

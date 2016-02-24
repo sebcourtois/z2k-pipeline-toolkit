@@ -1157,7 +1157,7 @@ def convertObjToInstance(transformL=[], GUI = True, checkTopo = True, updateSetL
     logL.append(logMessage)
     if updateSetLayInstance: 
         setInstanceUpdate()
-        layInstanceUpdate()
+        layerUpdate()
 
     return dict(resultB=resultB, logL=logL, resultL= transformL+[masterS])
 
@@ -1181,7 +1181,7 @@ def convertInstanceToObj(transformL=[],GUI = True, updateSetLayInstance = True,i
 
         if updateSetLayInstance: 
             setInstanceUpdate()
-            layInstanceUpdate()
+            layerUpdate()
         cmds.select(initSelectionL)
         logMessage = "#### {:>7}: 'convertInstanceToObj' {} instances converted to objects: '{}'".format("Info",len(transformL),transformL)
         if GUI == True : print logMessage
@@ -1265,7 +1265,7 @@ def convertBranchToLeafInstance(inParent ="asset|grp_geo", GUI = True, mode = "l
                             if GUI == True : raise ValueError (logMessage)
                             resultB = False
     setInstanceUpdate()
-    layInstanceUpdate()
+    layerUpdate()
     cmds.select(initSelection, r= True)
     return dict(resultB=resultB, logL=logL)
 
@@ -1289,29 +1289,69 @@ def getRelatedInstance(transformL=[]):
     return dict(resultB=resultB, logL=logL, resultL= resultL)
 
 
-def layInstanceUpdate(inParent="asset|grp_geo", GUI = True):
+def layerUpdate(inParent="asset|grp_geo", GUI = True, displayMode = 0):
+    """
+    display mode:   '0' --> default values
+                    '1' --> anim   mode, crtl: visib 'on'  select 'on' , geo: visib 'on' select 'off' 
+                    '2' --> render mode, crtl: visib 'off' select 'off', geo: visib 'on' select 'on' 
+    """
+
     resultB = True
     logL = []
 
     geoTransformL, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+    setCtrl = cmds.ls('set_control')
+    if setCtrl:
+        crtlL = cmds.sets( setCtrl[0], q=True )
 
-    myInstanceLayerL = cmds.ls("instance")
-    if myInstanceLayerL:
-        cmds.delete(myInstanceLayerL)
-    if instanceTransformL:
-        myInstanceLayerS = cmds.createDisplayLayer(instanceTransformL, empty=False, noRecurse=False, name="instance")
-        cmds.setAttr(myInstanceLayerS+".displayType",0)
-        cmds.setAttr(myInstanceLayerS+".color",23)
-        cmds.setAttr(myInstanceLayerS+".overrideColorRGB",0,0,0)
-        cmds.setAttr(myInstanceLayerS+".overrideRGBColors",0)
+    try:
+        myInstanceLayerL = cmds.ls("instance")
+        if myInstanceLayerL:
+            cmds.delete(myInstanceLayerL)
+        if instanceTransformL:
+            myInstanceLayerS = cmds.createDisplayLayer(instanceTransformL, number=3, empty=False, noRecurse=False, name="instance")
+            cmds.setAttr(myInstanceLayerS+".displayType",0)
+            cmds.setAttr(myInstanceLayerS+".color",23)
+            cmds.setAttr(myInstanceLayerS+".overrideColorRGB",0,0,0)
+            cmds.setAttr(myInstanceLayerS+".overrideRGBColors",0)
+            if displayMode == 1:
+                cmds.setAttr("instance.displayType", 2)
+                cmds.setAttr("instance.visibility", 1)
+            elif displayMode == 2:
+                cmds.setAttr("instance.displayType", 0)
+                cmds.setAttr("instance.visibility", 1)
 
-    myGeometryLayerL = cmds.ls("geometry")
-    if myGeometryLayerL:
-        cmds.delete(myGeometryLayerL)
-    if geoTransformL:
-        myGeometryLayerS = cmds.createDisplayLayer(geoTransformL, empty=False, noRecurse=False, name="geometry")
+        myGeometryLayerL = cmds.ls("geometry")
+        if myGeometryLayerL:
+            cmds.delete(myGeometryLayerL)
+        if geoTransformL:
+            myGeometryLayerS = cmds.createDisplayLayer(geoTransformL,number=1, empty=False, noRecurse=False, name="geometry")
+            if displayMode == 1:
+                cmds.setAttr("geometry.displayType", 2)
+                cmds.setAttr("geometry.visibility", 1)
+            elif displayMode == 2:
+                cmds.setAttr("geometry.displayType", 0)
+                cmds.setAttr("geometry.visibility", 1)
 
-    logMessage = "#### {:>7}: 'layInstanceUpdate' 'geometry' and 'instance' display layers updated ".format("Info")
+        myControlLayerL = cmds.ls("control")
+        if myControlLayerL:
+            cmds.delete(myControlLayerL)
+        if crtlL:
+            myControlLayerS = cmds.createDisplayLayer(crtlL, number=2, empty=False, noRecurse=True, name="control")
+            #cmds.setAttr("control.hideOnPlayback", 0)
+            if displayMode == 1:
+                cmds.setAttr("control.displayType", 0)
+                cmds.setAttr("control.visibility", 1)
+            elif displayMode == 2:
+                cmds.setAttr("control.displayType", 0)
+                cmds.setAttr("control.visibility", 0)
+
+        logMessage = "#### {:>7}: 'layerUpdate' display layers updated ".format("Info")
+
+    except Exception,err:
+        resultB = False
+        logMessage = "#### {:>7}: 'layerUpdate'  --> '{}'".format("Error", err)
+
     logL.append(logMessage)
     if GUI == True : print logMessage
     return dict(resultB=resultB, logL=logL)
