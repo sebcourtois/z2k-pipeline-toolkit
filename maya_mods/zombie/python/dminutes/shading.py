@@ -836,7 +836,7 @@ def makeTxForArnold(inputFilePathName = "", outputFilePathName = "", updateOnly 
         except:
             raise ValueError("#### Error: file is locked by your os, someone is accessing it: "+outputFilePathName_exp)
 
-    renderDesc = os.environ["MAYA_RENDER_DESC_PATH"].split(":")
+    renderDesc = os.environ["MAYA_RENDER_DESC_PATH"].split(";")
     mtoaPath = ""
     for each in renderDesc:
         normedEach = os.path.normpath(each).replace("\\", "/")
@@ -846,7 +846,7 @@ def makeTxForArnold(inputFilePathName = "", outputFilePathName = "", updateOnly 
     if mtoaPath == "":
         print "#### {:>7}: 'could not find a valid solidangle path in 'MAYA_RENDER_DESC_PATH'".format("Error")
         return
-    maketxCommand = mtoaPath+"/bin/maketx"
+    maketxCommand = mtoaPath+"/bin/maketx.exe"
     subprocess.call([maketxCommand, "-u","--oiio", inputFilePathName_exp])   
 
     image = om.MImage()
