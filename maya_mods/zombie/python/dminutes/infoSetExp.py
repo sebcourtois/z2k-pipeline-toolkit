@@ -78,7 +78,7 @@ class infoSetExp(object):
         print "pubFile,versionFile=", pubFile, versionFile
         return pubFile, versionFile
 
-    def constructDico(self, inCTRL=["set*:BigDaddy", "set*:Global_SRT", "set*:Local_SRT"], GUI=True, *args, **kwargs):
+    def constructDico(self, inCTRL=["set_*:BigDaddy", "set_*:Global_SRT", "set_*:Local_SRT"], GUI=True, *args, **kwargs):
         # construct output dict
         errmsg = "UNKNWON"
         CTRL = cmds.ls(inCTRL)
@@ -122,8 +122,14 @@ class infoSetExp(object):
             print "* bad version"
             shotVersion = "UNKNWON"
         print "shotVersion=", shotVersion
+
         # publish Davos from private exported file
-        result = self.publishInfoSetFile(currentScene=sceneName, comment="From " + fromTxt)
+        sComment = "From " + fromTxt
+        sAddComment = kwargs.pop("comment", "")
+        if sAddComment:
+            sComment = "{}: {}".format(sComment, sAddComment)
+
+        result = self.publishInfoSetFile(currentScene=sceneName, comment=sComment)
         print "result=", result
 
 # test de la class

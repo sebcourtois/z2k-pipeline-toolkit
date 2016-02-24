@@ -113,8 +113,8 @@ class DavosSetup(ToolSetup):
                         "pytd.util.external.parse",
                         "PIL.Image", ]
 
-        if inDevMode():
-            sMuteModList[0] = ""
+#        if inDevMode():
+#            sMuteModList[0] = ""
 
         for sModule in sMuteModList:
 
