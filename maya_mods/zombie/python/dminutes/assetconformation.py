@@ -149,7 +149,7 @@ def setSubdiv(GUI= True):
                         eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)[0]
                     eachGeoParentL = mc.listRelatives(eachGeoShape, allParents = True, fullPath = True)
                     if not set(eachGeoParentL) & set(processedTransL):
-                        mc.setAttr(eachGeoShape+".displaySmoothMesh",2)
+                        mc.setAttr(eachGeoShape+".displaySmoothMesh",0)
                         mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
                         mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
                         if previewSubdivLevel == 1:
