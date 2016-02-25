@@ -65,7 +65,7 @@ def checkGroupNamingConvention(printInfo = True, inParent = "*"):
 
 
 
-def createSubdivSets():
+def createSubdivSets(GUI = True):
     """
     This function creates a "set_subdiv_init" that gather all the "geo_*" objects found in the scene.
     and bunch of empty sets named "set_subdiv_X" (where X is a digit) are also created.
@@ -73,33 +73,54 @@ def createSubdivSets():
     the user must afterward move the all the "geo_*" objects from the "set_subdiv_init" set to the "set_subdiv_X" depending the level of subdivision that is requiered.
     then, the setSubdiv() procedure must be executed to apply the subdivision to the objects through the shapes attributes  
     """
-    print ""
-    print "#### info: exectute 'createSubdivsets()'"
+    returnB = True
+    logL = []
+
     subdivSets = mc.ls("set_subdiv_*", type = "objectSet")
     subdivPartitions = mc.ls("par_*", type = "partition")
     existingGeo = mc.ls("geo_*", type = "transform")
     subdivSetsInitList = ["set_subdiv_init","set_subdiv_0","set_subdiv_1","set_subdiv_2","set_subdiv_3"]
     if not existingGeo:
-        print "#### error: no 'geo_*' object could be foud in the scene"
-        return
-
+        logMessage = "#### {:>7}: 'createSubdivSets' 'geo_*' object could be foud in the scene".format("Error")
+        if GUI == True: raise ValueError(logMessage)
+        logL.append(logMessage)
+        returnB = False
 
     if "par_subdiv" not in subdivPartitions:
         mc.partition( name="par_subdiv")
 
+    createdSetL=[]
     for eachSet in subdivSetsInitList:
         if eachSet not in subdivSets:
-            print "#### info: creates: "+eachSet
             mc.sets(name=eachSet, empty=True)
             mc.partition( eachSet, add="par_subdiv")
+            createdSetL.append(eachSet)
+
+    if createdSetL:
+        logMessage = "#### {:>7}: 'createSubdivSets' Created {} new subdiv sets : {}".format("Info",len(createdSetL), createdSetL)
+        if GUI == True: print logMessage
+        logL.append(logMessage)
 
     geoInSet = mc.sets(subdivSets, query = True)
     if geoInSet == None: geoInSet = []
 
+    addedGeoToInitSet = []
     for eachGeo in existingGeo:
         if eachGeo not in geoInSet:
             mc.sets(eachGeo, forceElement="set_subdiv_init")
-            print "#### info: add geo to 'set_subdiv_init': "+eachGeo
+            addedGeoToInitSet.append(eachGeo)
+
+    if addedGeoToInitSet:
+        logMessage = "#### {:>7}: 'createSubdivSets' {} geo added to 'set_subdiv_init': {}".format("Info",len(addedGeoToInitSet),addedGeoToInitSet)
+        if GUI == True: print logMessage
+        logL.append(logMessage)
+
+    if not logL:
+        logMessage = "#### {:>7}: 'createSubdivSets' Nothing done".format("Info")
+        if GUI == True: print logMessage
+        logL.append(logMessage)
+
+    return dict(returnB=returnB, logL=logL)
 
      
 def setSubdiv(GUI= True ):
