@@ -102,15 +102,14 @@ def createSubdivSets():
             print "#### info: add geo to 'set_subdiv_init': "+eachGeo
 
      
-def setSubdiv(GUI= True):
+def setSubdiv(GUI= True ):
     """
     creates 'smoothLevel1' and 'smoothLevel2' extra attributes on the 'grp_geo' 
     and connect them to the smoothLevel (preview subdiv level) of the geo shapes
     """
     returnB = True
     logL = []
-    processedTransL =[]
-    skippedTransL =[]
+
 
     if not mc.ls("|asset|grp_geo", l = True):
         logMessage = "#### {:>7}: 'setSubdiv' No '|asset|grp_geo' found".format("Error")
@@ -143,7 +142,8 @@ def setSubdiv(GUI= True):
             subdivLevel =  int(eachSetSubdiv.split("set_subdiv_")[1])
             previewSubdivLevel = subdivLevel    
             if  0 <= subdivLevel <=9 :
-
+                processedTransL =[]
+                skippedTransL =[]
                 for eachGeo in geoInSet:
                     if mc.nodeType(eachGeo)!="mesh":
                         eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)[0]
@@ -152,6 +152,7 @@ def setSubdiv(GUI= True):
                         mc.setAttr(eachGeoShape+".displaySmoothMesh",0)
                         mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
                         mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
+                        mc.setAttr(eachGeoShape+".useGlobalSmoothDrawType",1)
                         if previewSubdivLevel == 1:
                             mc.connectAttr("|asset|grp_geo.smoothLevel1", eachGeoShape+".smoothLevel", f=True)
                         if previewSubdivLevel > 1:
@@ -167,8 +168,10 @@ def setSubdiv(GUI= True):
                         processedTransL.append(eachGeo)
                     else:
                         skippedTransL.append(eachGeo)
+          
     mc.setAttr("|asset|grp_geo.smoothLevel1", 1)
     mc.setAttr("|asset|grp_geo.smoothLevel2", 2)
+    
     if processedTransL and not skippedTransL:
         logMessage = "#### {:>7}: 'setSubdiv' {} meshes processed".format("Info", len(processedTransL))
         if GUI == True: print logMessage
@@ -185,6 +188,7 @@ def setSubdiv(GUI= True):
         returnB = False
 
     return dict(returnB=returnB, logL=logL)
+
 
 
 
