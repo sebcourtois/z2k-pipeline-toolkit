@@ -31,7 +31,7 @@ class MrcFile(DrcFile):
         privFile = DrcFile.edit(self, openFile=False, existing=existing)
 
         if openFile and privFile:
-            kwargs['loadReferenceDepth'] = "default"
+            #kwargs['loadReferenceDepth'] = "default"
             privFile.mayaOpen(checkFile=False, **kwargs)
 
         return privFile

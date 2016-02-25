@@ -9,7 +9,7 @@ import subprocess
 from collections import OrderedDict
 
 import pymel.core as pc
-import maya.cmds as cmds
+import maya.cmds as mc
 import maya.mel
 
 #import tkMayaCore as tkc
@@ -110,13 +110,13 @@ def restoreSelection(func):
 
     def doIt(*args, **kwargs):
 
-        sSelList = cmds.ls(sl=True)
+        sSelList = mc.ls(sl=True)
         try:
             ret = func(*args, **kwargs)
         finally:
             if sSelList:
                 try:
-                    cmds.select(sSelList)
+                    mc.select(sSelList)
                 except Exception as e:
                     print "Could restore previous selection: {}".format(e)
 
@@ -185,10 +185,10 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
     sAudioNode = audioNode
     if not sAudioNode:
         gPlayBackSlider = maya.mel.eval('$tmpVar=$gPlayBackSlider')
-        sAudioNode = cmds.timeControl(gPlayBackSlider, q=True, sound=True)
+        sAudioNode = mc.timeControl(gPlayBackSlider, q=True, sound=True)
 
     if sAudioNode:
-        sSoundPath = pathResolve(cmds.getAttr(".".join((sAudioNode, "filename"))))
+        sSoundPath = pathResolve(mc.getAttr(".".join((sAudioNode, "filename"))))
         if not os.path.exists(sSoundPath):
             pc.displayError("File of '{}' node not found: '{}' !"
                               .format(sAudioNode, sSoundPath))
@@ -537,12 +537,12 @@ class SceneManager():
         if not damShot:
             damShot = self.getDamShot()
 
-        p = osp.join(cmds.workspace(fileRuleEntry="movie"),
+        p = osp.join(mc.workspace(fileRuleEntry="movie"),
                         damShot.sequence,
                         damShot.name,)
                         #self.context['sceneData']["step"],)
 
-        return cmds.workspace(expandName=p)
+        return mc.workspace(expandName=p)
 
     def capture(self, increment=True, quick=True, sendToRv=False):
         # BUG pas de son alors que son present dans la scene
@@ -777,8 +777,8 @@ class SceneManager():
             iversion = int(version) + 1
 
             newpath = os.path.join(rootPath, vSplit[0] + ".{0:03}.ma".format(iversion))
-            cmds.file(rename=newpath)
-            cmds.file(save=True)
+            mc.file(rename=newpath)
+            mc.file(save=True)
         else:
             privFile = entry.edit(openFile=not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
 
@@ -999,7 +999,7 @@ class SceneManager():
             mop.reArrangeAssets()
 
         if len(errorL):
-            cmds.confirmDialog(title='Error',
+            mc.confirmDialog(title='Error',
                                message="Could not import:\n{0}".format("\n".join(errorL)),
                                button=['OK'],
                                defaultButton='OK',
@@ -1075,33 +1075,21 @@ class SceneManager():
         return duration
 
     def mkShotCamNamespace(self):
-        return 'cam_{0}'.format(self.context['entity']['code'].lower())
+        return mop.mkShotCamNamespace(self.context['entity']['code'].lower())
 
     def getShotCamera(self, fail=False):
-
-        sCamName = self.mkShotCamNamespace() + ":cam_shot_default"
-        sCamList = cmds.ls(sCamName)
-
-        if not sCamList:
-            if fail:
-                raise RuntimeError("Shot Camera not found: '{}'".format(sCamName))
-            return None
-
-        if len(sCamList) == 1:
-            return pc.PyNode(sCamList[0])
-        else:
-            raise RuntimeError("Multiple cameras named '{}'".format(sCamName))
+        return mop.getShotCamera(self.context['entity']['code'].lower(), fail=fail)
 
     def importShotCam(self):
 
         sCamNspace = self.mkShotCamNamespace()
-        if cmds.namespace(exists=sCamNspace):
+        if mc.namespace(exists=sCamNspace):
             raise RuntimeError("Namespace already exists: '{}'".format(sCamNspace))
 
         damCam = self.context["damProject"].getAsset("cam_shot_default")
         camFile = damCam.getResource("public", "scene")
         camFile.mayaImportScene(ns=sCamNspace)
-        cmds.refresh()
+        mc.refresh()
 
         return pc.PyNode(sCamNspace + ":cam_shot_default")
 
@@ -1125,20 +1113,20 @@ class SceneManager():
         sShotCamNs = self.mkShotCamNamespace()
 
         def iterFuture(sAbcNode):
-            sFutureList = cmds.listHistory(sAbcNode, future=True)
+            sFutureList = mc.listHistory(sAbcNode, future=True)
             if sFutureList is not None:
                 for sNode in sFutureList:
                     if sNode != sAbcNode and sNode.startswith(sShotCamNs + ":"):
                         yield sNode
 
         sAbcNodeList = []
-        for sAbcNode in cmds.ls(type="AlembicNode"):
+        for sAbcNode in mc.ls(type="AlembicNode"):
 
             sFuturList = tuple(iterFuture(sAbcNode))
             if not sFuturList:
-                cmds.lockNode(sAbcNode, lock=False)
+                mc.lockNode(sAbcNode, lock=False)
                 print "delete unused '{}'".format(sAbcNode)
-                cmds.delete(sAbcNode)
+                mc.delete(sAbcNode)
             else:
                 sAbcNodeList.append(sAbcNode)
 
@@ -1223,9 +1211,9 @@ class SceneManager():
             mop.setReferenceLocked(oFileRef, False)
 
         try:
-            cmds.select(sCamAstGrp)
+            mc.select(sCamAstGrp)
             sAbcPath = abcFile.absPath()
-            cmds.AbcImport(sAbcPath, mode="import", connect=sCamAstGrp)
+            mc.AbcImport(sAbcPath, mode="import", connect=sCamAstGrp)
 
             oAbcNode = self.getShotCamAbcNode()
             if oAbcNode:
@@ -1311,7 +1299,7 @@ def frameInfo():
 
 def cameraInfo():
     infos = (CAPTURE_INFOS['cam_file'],
-             'F {}mm'.format(cmds.getAttr(CAPTURE_INFOS['cam'] + '.focalLength')),)
+             'F {}mm'.format(mc.getAttr(CAPTURE_INFOS['cam'] + '.focalLength')),)
     return " - ".join(s for s in infos if s)
 
 def endFrameInfo():
@@ -1370,10 +1358,10 @@ def deleteHUD(*args, **kwargs):
     # FUNCTION QUI SEMBLE MANQUER, a ajouter quelque part apres le playblast
     # actuellement il y a un bug qui fait que t'as des script qui tournent en permanence dans la scene, et qui plante si
     # ce n'est pas une scene zombie avec une belle camera
-    headsUps = cmds.headsUpDisplay(listHeadsUpDisplays=True)
+    headsUps = mc.headsUpDisplay(listHeadsUpDisplays=True)
     for i in headsUps:
         if "HUD_ZOMB" in i:
             print i
-            cmds.headsUpDisplay(i, rem=True)
+            mc.headsUpDisplay(i, rem=True)
 
 
