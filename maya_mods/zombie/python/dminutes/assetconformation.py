@@ -167,6 +167,8 @@ def setSubdiv(GUI= True):
                         processedTransL.append(eachGeo)
                     else:
                         skippedTransL.append(eachGeo)
+    mc.setAttr("|asset|grp_geo.smoothLevel1", 1)
+    mc.setAttr("|asset|grp_geo.smoothLevel2", 2)
     if processedTransL and not skippedTransL:
         logMessage = "#### {:>7}: 'setSubdiv' {} meshes processed".format("Info", len(processedTransL))
         if GUI == True: print logMessage
