@@ -146,7 +146,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=11, e=True)
+        self.pBar_upd(step=1, maxValue=12, e=True)
 
         # steps
 
@@ -259,7 +259,20 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 9   apply setSubdiv
+        # 9   create subdiv sets
+        self.printF("assetconformation: create subdiv sets ", st="t")
+        resultD = assetconformation.createSubdivSets(GUI = False)
+        # prints -------------------
+        self.printF(resultD["returnB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["returnB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 10   apply setSubdiv
         self.printF("assetconformation: apply setSubdiv ", st="t")
         resultD = assetconformation.setSubdiv(GUI = False)
         # prints -------------------
@@ -272,7 +285,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 10   assetGrpClean
+        # 11   assetGrpClean
         self.printF("assetconformation: clean asset group ", st="t")
         resultD = assetconformation.assetGrpClean( clean = True, GUI = False)
         # prints -------------------
@@ -285,7 +298,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 11   assetGrpClean
+        # 12   display layer update
         self.printF("modeling: display layer update", st="t")
         resultD = modeling.layerUpdate(inParent="asset|grp_geo", GUI = False, displayMode = 1)
         # prints -------------------
@@ -598,18 +611,18 @@ class checkModule(object):
 
 
 
-        # 3 setSmoothness (meshCacheObjL)
-        result,debugD = jpZ.setSmoothness(inObjL=allTransL, mode=0)
-        # prints -------------------
-        self.printF("setSmoothness()", st="t")
-        self.printF(result, st="r")
-        self.printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(allTransL) ) )
-        for i,j in debugD.iteritems():
-            self.printF ( "     - {0}: {1}".format( i.ljust(15),j ) )
-        # --------------------------
-        if not result :
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        # # 3 setSmoothness (meshCacheObjL)
+        # result,debugD = jpZ.setSmoothness(inObjL=allTransL, mode=0)
+        # # prints -------------------
+        # self.printF("setSmoothness()", st="t")
+        # self.printF(result, st="r")
+        # self.printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(allTransL) ) )
+        # for i,j in debugD.iteritems():
+        #     self.printF ( "     - {0}: {1}".format( i.ljust(15),j ) )
+        # # --------------------------
+        # if not result :
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
 
 
 
