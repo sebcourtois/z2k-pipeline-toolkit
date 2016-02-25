@@ -407,6 +407,24 @@ def arrangeViews(oShotCam, oImgPlaneCam=None):
 
     pc.setFocus(perspPanel)
 
+def mkShotCamNamespace(sShotCode):
+    return 'cam_{}'.format(sShotCode)
+
+def getShotCamera(sShotCode, fail=False):
+
+    sCamName = mkShotCamNamespace(sShotCode) + ":cam_shot_default"
+    sCamList = mc.ls(sCamName)
+
+    if not sCamList:
+        if fail:
+            raise RuntimeError("Shot Camera not found: '{}'".format(sCamName))
+        return None
+
+    if len(sCamList) == 1:
+        return pc.PyNode(sCamList[0])
+    else:
+        raise RuntimeError("Multiple cameras named '{}'".format(sCamName))
+
 def init_previz_scene(sceneManager):
 
     # --- Set Viewport 2.0 AO default Value

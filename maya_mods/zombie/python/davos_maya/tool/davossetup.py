@@ -28,6 +28,10 @@ if inDevMode():
         pass
 
 def doCreateFolders(sEntiType, *args):
+
+    pm.mel.ScriptEditor()
+    pm.mel.handleScriptEditorAction("maximizeHistory")
+
     create_dirs_n_files.launch(sEntiType, dryRun=False,
                                dialogParent=myaqt.mayaMainWindow())
 
@@ -112,9 +116,6 @@ class DavosSetup(ToolSetup):
         sMuteModList = ["requests.packages.urllib3.connectionpool",
                         "pytd.util.external.parse",
                         "PIL.Image", ]
-
-#        if inDevMode():
-#            sMuteModList[0] = ""
 
         for sModule in sMuteModList:
 

@@ -5,7 +5,7 @@
 import os
 import subprocess
 
-import maya.cmds as cmds
+import maya.cmds as mc
 import pymel.core
 pc = pymel.core
 
@@ -42,15 +42,15 @@ def kill():
 
     global SCENE_MANAGER_UI
 
-    if cmds.dockControl(SCENE_MANAGER_UI, q=True, exists=True):
+    if mc.dockControl(SCENE_MANAGER_UI, q=True, exists=True):
         pc.deleteUI(SCENE_MANAGER_UI)
         return True
 
     return False
 
 def saveDockState():
-    pc.optionVar["Z2K_SM_dockState"] = cmds.dockControl(SCENE_MANAGER_UI, q=True, state=True)
-    pc.optionVar["Z2K_SM_dockFloating"] = cmds.dockControl(SCENE_MANAGER_UI, q=True, floating=True)
+    pc.optionVar["Z2K_SM_dockState"] = mc.dockControl(SCENE_MANAGER_UI, q=True, state=True)
+    pc.optionVar["Z2K_SM_dockFloating"] = mc.dockControl(SCENE_MANAGER_UI, q=True, floating=True)
 
 def sceneManagerUI():
     """Main UI Creator"""
@@ -58,15 +58,15 @@ def sceneManagerUI():
 
     states = dict()
 
-    if cmds.dockControl(SCENE_MANAGER_UI, q=True, exists=True) and SCENE_MANAGER:
-        cmds.dockControl(SCENE_MANAGER_UI, e=True, visible=True)
+    if mc.dockControl(SCENE_MANAGER_UI, q=True, exists=True) and SCENE_MANAGER:
+        mc.dockControl(SCENE_MANAGER_UI, e=True, visible=True)
     else:
         kill()
 
         dirname, _ = osp.split(osp.abspath(__file__))
-        ui = cmds.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui")
+        ui = mc.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui")
 
-        sListWdgName = cmds.textScrollList("sm_sceneInfo_lb", e=True,
+        sListWdgName = mc.textScrollList("sm_sceneInfo_lb", e=True,
                                            removeAll=True,
                                            font="fixedWidthFont",
                                            allowMultiSelection=True)
@@ -77,9 +77,9 @@ def sceneManagerUI():
             states.update(state=sState)
         states.update(floating=pc.optionVar.get("Z2K_SM_dockFloating", False))
 
-        cmds.dockControl(SCENE_MANAGER_UI, area='left', content=ui,
+        mc.dockControl(SCENE_MANAGER_UI, area='left', content=ui,
                          allowedArea=['left'], retain=True,
-                         label=cmds.window(ui, q=True, title=True),
+                         label=mc.window(ui, q=True, title=True),
                          closeCommand=saveDockState, **states)
 
         connectCallbacks()
@@ -88,10 +88,10 @@ def sceneManagerUI():
     refreshContextUI()
 
     if states:
-        cmds.dockControl(SCENE_MANAGER_UI, e=True, **states)
+        mc.dockControl(SCENE_MANAGER_UI, e=True, **states)
 
-    if not cmds.dockControl(SCENE_MANAGER_UI, q=True, floating=True):
-        cmds.dockControl(SCENE_MANAGER_UI, e=True, r=True)
+    if not mc.dockControl(SCENE_MANAGER_UI, q=True, floating=True):
+        mc.dockControl(SCENE_MANAGER_UI, e=True, r=True)
 
 def initialize():
     """Initialize default values (Operator AllowedSteps and CurrentStep...), hide forbidden buttons"""
@@ -520,9 +520,9 @@ def doSelectRefs(*args):
                 continue
 
             sRefNode = oFileRef.refNode.name()
-            sNodeList = cmds.referenceQuery(sRefNode, nodes=True, dagPath=True)
+            sNodeList = mc.referenceQuery(sRefNode, nodes=True, dagPath=True)
             if sNodeList:
-                sDagNodeList = cmds.ls(sNodeList, type="dagNode")
+                sDagNodeList = mc.ls(sNodeList, type="dagNode")
                 if sDagNodeList:
                     sNodeList = sDagNodeList
                 sNodeList = [sNodeList[0], sRefNode]
@@ -533,7 +533,7 @@ def doSelectRefs(*args):
             count += 1
 
     if sSelList:
-        cmds.select(sSelList, replace=True, noExpand=True)
+        mc.select(sSelList, replace=True, noExpand=True)
         pc.displayInfo("{} references selected.".format(count))
     else:
         pc.displayWarning("No references to select !")
