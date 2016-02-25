@@ -103,10 +103,11 @@ def cleanAsset (GUI = True):
                 miscUtils.deleteUnknownNodes()
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
+                assetconformation.setSubdiv()
 
 
     elif fileType == "master":
-            if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=baseMessageS+"\n    - delete geo history,\n    - convert branch instanced to leaf instances,\n    - make all mesh unique,\n    - conform mesh shapes names, \n    - delete all unused nodes (not connected to an asset dag node), render layers will not be removed", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+            if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=baseMessageS+"\n    - delete geo history,\n    - convert branch instanced to leaf instances,\n    - make all mesh unique,\n    - apply set subdiv,\n    - conform mesh shapes names, \n    - delete all unused nodes (not connected to an asset dag node), render layers will not be removed", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 rendering.deleteAovs()
                 miscUtils.deleteUnknownNodes()
@@ -117,15 +118,16 @@ def cleanAsset (GUI = True):
                 modeling.makeAllMeshesUnique(inParent="|asset|grp_geo")
                 modeling.meshShapeNameConform(inParent = "|asset|grp_geo")
                 assetconformation.softClean(keepRenderLayers = False)
-
+                assetconformation.setSubdiv()
 
     elif fileType == "render":
-            if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message="cleaning prosses will:\n    - delete unknown nodes,\n    - fix materialInfo nodes,\n    - delete all color sets,\n    - delete geo history, \n    - delete all unused nodes (not connected to an asset dag node), render layers will not be removed", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+            if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message="cleaning prosses will:\n    - delete unknown nodes,\n    - fix materialInfo nodes,\n    - delete all color sets,\n    - apply set subdiv,\n    - delete geo history,\n    - delete all unused nodes (not connected to an asset dag node), render layers will not be removed", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 miscUtils.deleteUnknownNodes()
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
                 modeling.geoGroupDeleteHistory()
                 assetconformation.softClean(keepRenderLayers = False)
+                assetconformation.setSubdiv()
 
     return resultB, logL
