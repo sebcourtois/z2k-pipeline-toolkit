@@ -1,12 +1,19 @@
 
 #import os.path as osp
+from os.path import join
 
 from zomblib.config import zombillenium as zomb
 
 class project(zomb.project):
+
     dir_name = "zombtest"
     damas_root_path = "/{}/".format(dir_name)
     sg_versions_mandatory = False
+
+class damas(object):
+
+    public_path = project.damas_root_path
+    private_path = join(project.damas_root_path, "private", "$DAVOS_USER", "{proj.dir_name}")
 
 class asset_lib(zomb.asset_lib):
     pass

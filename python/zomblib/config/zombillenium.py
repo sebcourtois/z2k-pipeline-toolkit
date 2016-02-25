@@ -127,20 +127,23 @@ class shot_lib(object):
                     "sg_status":"rev",
                     },
     "anim_scene":{"outcomes":("anim_capture",),
-                    "create_sg_version":True,
-                    "upload_to_sg":"anim_capture",
-                    "sg_tasks":("animation",),
-                    "sg_status":"rev",
+                  "create_sg_version":True,
+                  "upload_to_sg":"anim_capture",
+                  "sg_tasks":("animation",),
+                  "sg_status":"rev",
                     },
     "animatic_capture":{"create_sg_version":True,
                         "sg_tasks":("animatic",),
                         "sg_status":"rev",
                         },
-    "data_dir":{"default_sync_rules":"all_sites",
+    "data_dir":{"default_sync_rules":["all_sites"],
                 },
-    "previz_dir":{"default_sync_rules":"all_sites",
+    "previz_dir":{"default_sync_rules":["all_sites"],
                   },
-    "layout_dir":{"default_sync_rules":"all_sites",
+    "layout_dir":{"default_sync_rules":["all_sites"],
+                  },
+    "anim_dir":{"default_sync_rules":["dmn_paris", "online",
+                                      "dream_wall", "pipangai"],
                   },
     }
 
@@ -209,6 +212,9 @@ class asset_lib(object):
     "anim_scene":{"create_sg_version":True,
                   "sg_steps":("Rigging",),
                   },
+    "animMaster_scene":{"create_sg_version":True,
+                        "sg_steps":("Rigging",),
+                        },
     "anim_ref":{"create_sg_version":True,
                 "sg_tasks":("Rig_Anim",),
                 "sg_status":"rev",
@@ -247,10 +253,13 @@ class camera(object):
         },
     }
 
-class charbase(object):
+class character3d(object):
 
     entity_class = "davos.core.damtypes.DamAsset"
 
+    prefix = "chr"
+    aliases = (prefix, "Character 3D",)
+    assetType = prefix
     template_dir = "asset_chr"
 
     public_path = join(asset_lib.public_path, "{assetType}")
@@ -283,7 +292,8 @@ class charbase(object):
         "{name}_modeling.ma -> modeling_scene":None,
         "{name}_previz.ma -> previz_scene":None,
         "{name}_render.ma -> render_scene":None,
-        "{name}_blendShape.ma -> blendShape_scene":None
+        "{name}_blendShape.ma -> blendShape_scene":None,
+        "{name}_animMaster.ma -> animMaster_scene":None,
 
         #"{name}_preview.jpg -> preview_image":None,
         },
@@ -292,17 +302,47 @@ class charbase(object):
     resources_settings = asset_lib.resources_settings
     dependency_types = asset_lib.dependency_types
 
-class character3d(charbase):
+class character2d(object):
 
-    prefix = "chr"
-    aliases = (prefix, "Character 3D",)
-    assetType = prefix
-
-class character2d(charbase):
+    entity_class = "davos.core.damtypes.DamAsset"
 
     prefix = "c2d"
     aliases = (prefix, "Character 2D",)
     assetType = prefix
+    template_dir = "asset_c2d"
+
+    public_path = join(asset_lib.public_path, "{assetType}")
+    private_path = join(asset_lib.private_path, "{assetType}")
+    template_path = project.template_path
+
+    resource_tree = {
+    "{name} -> entity_dir":
+        {
+        "ref -> ref_dir":
+            {
+            "{name}_previzRef.mb -> previz_ref":None,
+            "{name}_animRef.mb -> anim_ref":None,
+            "{name}_renderRef.mb -> render_ref":None,
+            },
+        "review -> review_dir":
+            {
+            "{name}_anim.mov -> anim_review":None,
+            "{name}_modeling.mov -> modeling_review":None,
+            "{name}_previz.mov -> previz_review":None,
+            "{name}_render.mov -> render_review":None,
+            },
+        "texture -> texture_dir":{},
+
+        "{name}_anim.ma -> anim_scene":None,
+        "{name}_modeling.ma -> modeling_scene":None,
+        "{name}_previz.ma -> previz_scene":None,
+        "{name}_render.ma -> render_scene":None,
+        #"{name}_blendShape.ma -> blendShape_scene":None
+        },
+    }
+
+    resources_settings = asset_lib.resources_settings
+    dependency_types = asset_lib.dependency_types
 
 class prop3d(object):
 
