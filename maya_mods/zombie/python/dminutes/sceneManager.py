@@ -18,7 +18,6 @@ from pytd.util.logutils import logMsg
 
 from davos.core import damproject
 from davos.core.damtypes import DamShot, DamAsset
-from davos.core.utils import versionFromName
 from davos_maya.tool.publishing import publishCurrentScene
 
 from zomblib import shotgunengine
@@ -45,11 +44,11 @@ noneValue = 'MISSING'
 notFoundvalue = 'NOT FOUND'
 
 #FROM DAVOS !!!!
-FILE_FOR_STEP = {'Previz 3D':'previz_scene',
+RC_FOR_STEP = {'Previz 3D':'previz_scene',
                  'Layout':'layout_scene',
                  'Animation':'anim_scene',
                  }
-FILE_FOR_TASK = {}#{'previz 3D':'previz_scene', 'layout':'layout_scene'}
+RC_FOR_TASK = {}#{'previz 3D':'previz_scene', 'layout':'layout_scene'}
 
 REF_FOR_STEP = {'Previz 3D':'previz_ref',
                 'Layout':'anim_ref',
@@ -60,12 +59,12 @@ REF_FOR_TASK = {}
 
 LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
 
-def fileFromTask(sgTask, fail=False):
+def rcFromTask(sgTask, fail=False):
 
     sTask = sgTask['content']
     sStep = sgTask['step']['name']
 
-    sName = FILE_FOR_TASK.get(sTask, FILE_FOR_STEP.get(sStep, ""))
+    sName = RC_FOR_TASK.get(sTask, RC_FOR_STEP.get(sStep, ""))
 
     if (not sName):
         sMsg = ("No resource file associated with task: {}".format(sgTask))
@@ -358,58 +357,83 @@ class SceneManager():
         """Retrieve the scene path and get davos data from it"""
         self.context['sceneEntry'] = None
         self.context['sceneData'] = {}
+        self.context['sceneEntity'] = None
+
         proj = self.context['damProject']
 
         curScenePath = pc.sceneName()
         if curScenePath:
             curScenePath = os.path.abspath(curScenePath)
             entry = proj.entryFromPath(curScenePath)
-            if entry != None:
+            if entry:
                 self.context['sceneEntry'] = entry
-                self.context['sceneData'] = proj.dataFromPath(curScenePath)
-
-        return self.contextIsMatching()
+                data = proj.dataFromPath(curScenePath)
+                self.context['sceneData'] = data
+                self.context['sceneEntity'] = proj._entityFromPathData(data, fail=False)
 
     def contextIsMatching(self):
         """Compare davos data with UI data, return True if they match"""
         self.context['sceneState'] = ""
-        contextEntry = self.getEntry()
+        contextEntry = self.entryFromContext()
 
         if contextEntry is None or self.context['sceneEntry'] is None:
             self.context['sceneState'] = "Cannot autodetect context !"
             return False
 
-        sceneEntryPath = self.context['sceneEntry'].getPublicFile().absPath()
+        sceneEntry = self.context['sceneEntry']
+        sceneEntryPath = sceneEntry.getPublicFile().absPath()
         if contextEntry.absPath() == sceneEntryPath:
-            iSrcVers = versionFromName(self.context['sceneEntry'].name)
-            iNxtVers = contextEntry.currentVersion + 1
-
-            if iSrcVers < iNxtVers:
-                self.context['sceneState'] = "Current scene version is obsolete ({0} => {1}) !".format(iSrcVers, iNxtVers)
-                return False
-
             return True
 
-        self.context['sceneState'] = "Your context does not match with current scene ({0} => {1}) !".format(os.path.basename(contextEntry.absPath()), os.path.basename(sceneEntryPath))
+        self.context['sceneState'] = ("Your context does not match with current scene ({0} => {1}) !"
+                                      .format(os.path.basename(contextEntry.absPath()),
+                                              os.path.basename(sceneEntryPath)))
         return False
 
-    def isEditable(self):
+    def assertEntitiesMatchUp(self):
+
+        context = self.context
+
+        ctxEntity = self.getDamEntity()
+        scnEntity = context.get("sceneEntity")
+        if not scnEntity:
+            raise AssertionError("Current scene is neither an Asset nor a Shot.")
+
+        if scnEntity.sgEntityType != ctxEntity.sgEntityType:
+            raise AssertionError("Entity types difffer: Current scene is a {} but Scene Manager displays a {}."
+                                 .format(scnEntity.sgEntityType, ctxEntity.sgEntityType))
+
+        if scnEntity.name != ctxEntity.name:
+            raise AssertionError("Entity names difffer: Current scene is '{}' but Scene Manager displays '{}'."
+                                 .format(scnEntity.name, ctxEntity.name))
+
+    def entitiesMatchUp(self):
+        try:
+            self.assertEntitiesMatchUp()
+        except AssertionError:# as e:
+            #print toStr(e)
+            return False
+        return True
+
+    def scenePublishable(self):
         if self.context['lock'] != "Error":
-            return self.context['lock'] == "" or self.context['lock'] == self.context['damProject']._shotgundb.currentUser['login']
-
+            return self.context['lock'] == self.context['damProject']._shotgundb.currentUser['login']
         return False
 
-    def assert_isEditable(self):
-        message = ""
+    def assert_isEditable(self, warn=True):
+        sMsg = ""
 
-        if not self.refreshSceneContext():
-            message = self.context['sceneState']
+        self.refreshSceneContext()
 
-        if not self.isEditable():
-            message = "Your entity is locked by {0} !".format(self.context['lock'])
+        if not self.contextIsMatching():
+            sMsg = self.context['sceneState']
 
-        if message != "":
-            pc.confirmDialog(title='Entity not editable', message=message, button=['Ok'])
+        if not self.scenePublishable():
+            sMsg = "Your entity is locked by {0} !".format(self.context['lock'])
+
+        if sMsg:
+            if warn:
+                pc.confirmDialog(title='Entity not editable', message=sMsg, button=['OK'])
             return False
 
         return True
@@ -419,7 +443,7 @@ class SceneManager():
         self.context['lock'] = "Error"
 
         if entry == None:
-            entry = self.getEntry()
+            entry = self.entryFromContext()
 
         if entry != None:
             self.context['lock'] = entry.getLockOwner()
@@ -441,7 +465,7 @@ class SceneManager():
 
         return damEntity
 
-    def getEntry(self):
+    def entryFromContext(self):
         """Get davos entry from UI data"""
 
         entry = None
@@ -449,11 +473,11 @@ class SceneManager():
         if 'task' not in self.context:
             return
 
-        s_inFileTag = fileFromTask(self.context['task'])
-        if s_inFileTag:
+        sRcName = rcFromTask(self.context['task'])
+        if sRcName:
             try:
                 damEntity = self.getDamEntity()
-                entry = damEntity.getResource("public", s_inFileTag)
+                entry = damEntity.getResource("public", sRcName)
             except Exception as e:
                 pc.warning(toStr(e))
 
@@ -469,7 +493,7 @@ class SceneManager():
             damShot.createDirsAndFiles()
 
     def save(self, b_inForce=True):
-        entry = self.getEntry()
+        entry = self.entryFromContext()
 
         if entry == None:
             pc.error("Cannot get entry for context {0}".format(self.context))
@@ -480,35 +504,9 @@ class SceneManager():
 
         return pc.saveAs(currentScene, force=b_inForce)
 
-    # def saveIncrement(self, b_inForce=True):
-    #     # old
-    #     entry = self.getEntry()
-
-    #     if entry == None:
-    #         pc.error("Cannot get entry for context {0}".format(self.context))
-
-    #     currentScene = os.path.abspath(pc.sceneName())
-    #     if currentScene == '':
-    #         pc.error("Please save your scene as a valid private working scene (Edit if needed)")
-
-    #     matches = re.match(".*(v\d{3})\.(\d{3})\.ma", currentScene)
-
-    #     if matches:
-    #         curVersion = int(matches.group(2))
-    #         curVersion += 1
-    #         newFileName = '{0}.{1:03}.ma'.format(currentScene.split('.')[0], curVersion)
-    #         if b_inForce or not os.path.isfile(newFileName):
-    #             return pc.saveAs(newFileName, force=b_inForce)
-    #         else:
-    #             pc.error("File already exists ({0})!".format(newFileName))
-    #     else:
-    #         pc.warning("Invalid file pattern !")
-
-    #     return None
-
     def saveIncrement(self, b_inForce=True):
         # new incrementing system based on the last versoin present in the folder
-        entry = self.getEntry()
+        entry = self.entryFromContext()
 
         if entry == None:
             pc.error("Cannot get entry for context {0}".format(self.context))
@@ -540,7 +538,6 @@ class SceneManager():
         p = osp.join(mc.workspace(fileRuleEntry="movie"),
                         damShot.sequence,
                         damShot.name,)
-                        #self.context['sceneData']["step"],)
 
         return mc.workspace(expandName=p)
 
@@ -705,13 +702,13 @@ class SceneManager():
             return
 
         sgTask = self.context['task']
-        s_inFileTag = fileFromTask(sgTask)
-        if not s_inFileTag:
+        sRcName = rcFromTask(sgTask)
+        if not sRcName:
             return
 
         path = None
         try:
-            path = damEntity.getPath('public', s_inFileTag)
+            path = damEntity.getPath('public', sRcName)
         except Exception, e:
             pc.warning('damProject.getPath failed : {0}'.format(e))
 

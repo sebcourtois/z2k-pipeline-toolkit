@@ -1,24 +1,23 @@
 
 
+from functools import partial
+
 import pymel.core as pm
 import pymel.util as pmu
+import pymel.versions as pmv
 
-import pymel.versions
-pmv = pymel.versions
-
-from functools import partial
+from pytd.util.sysutils import inDevMode
+from pytd.util.sysutils import toStr
 
 from pytaya.util.toolsetup import ToolSetup
 from pytaya.util import qtutils as myaqt
 #from pytd.util.sysutils import toStr
 
 from davos.tools import create_dirs_n_files
-
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
-from pytd.util.sysutils import inDevMode
 
-from pytd.util.sysutils import toStr
+from dminutes import sceneManagerUI as smui
 
 if inDevMode():
     try:
@@ -133,8 +132,7 @@ class DavosSetup(ToolSetup):
         file_browser.kill()
 
         try:
-            from dminutes import sceneManagerUI
-            sceneManagerUI.kill()
+            smui.kill()
         except Exception as e:
             pm.displayInfo("Could not kill 'sceneManagerUI': {}".format(toStr(e)))
 
@@ -144,14 +142,12 @@ class DavosSetup(ToolSetup):
         ToolSetup.onPreFileNewOrOpened(self, *args)
         pm.colorManagementPrefs(e=True, cmEnabled=False)
 
-#    def onSceneOpened(self, *args):
-#        ToolSetup.onSceneOpened(self, *args)
-#
-#        if pmu.getEnv("DAVOS_FILE_CHECK", "1"):
-#            fncAst.checkCgsFileState(warnNotLocked=False)
-#        else:
-#            pmu.putEnv("DAVOS_FILE_CHECK", "1")
-#
+    def onSceneOpened(self, *args):
+        ToolSetup.onSceneOpened(self, *args)
+
+        if smui.isLaunched() and smui.isVisible():
+            smui.doDetect()
+
 #    def onSceneSaved(self):
 #        ToolSetup.onSceneSaved(self)
 #
