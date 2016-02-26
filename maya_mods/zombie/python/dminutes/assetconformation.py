@@ -2,7 +2,6 @@ import maya.cmds as mc
 import pymel.core as pm
 import re
 import string
-import miscUtils
 import os
 
 from pytd.util.logutils import logMsg
@@ -518,7 +517,7 @@ class Asset_File_Conformer:
         if targetObjects == "set_meshCache" or isinstance(targetObjects, (list,tuple,set)):
             if targetObjects == "set_meshCache":
                 if mc.ls("set_meshCache"):
-                    targetObjects = mc.sets('set_meshCache',q=True)
+                    targetObjects = mc.ls(mc.sets("set_meshCache",q=1),l=1)
                 else:
                     print ("#### {:>7}: no 'set_meshCache' could be found".format("Error"))
                     errorOnTarget = errorOnTarget + 1
@@ -536,7 +535,8 @@ class Asset_File_Conformer:
                     errorOnTarget = errorOnTarget + 1
 
             for eachTarget in self.targetList:
-                eachSource = sourceFile+":"+("|"+sourceFile+":").join(eachTarget.split("|"))
+                #eachSource = sourceFile+":"+("|"+sourceFile+":").join(eachTarget.split("|"))
+                eachSource = ("|"+sourceFile+":").join(eachTarget.split("|"))
 
                 if mc.ls(eachSource):
                     if mc.nodeType (eachSource)!= "transform":
@@ -767,7 +767,6 @@ class Asset_File_Conformer:
                         if verbose: print "#### {:>7}: Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
         print ("#### {:>7}: name space removed from {} shading nodes(s)".format("Info",renamedShadNodeNb))
         mc.refresh()
-
 
 
     def disconnectAiMaterials(self):

@@ -217,14 +217,14 @@ def getShape(objectList =  [], failIfNoShape = False):
         shapeList = []
         for eachObject in objectList:
             if not mc.objectType(eachObject,isAType = "shape"):
-                eachObjectShapes = mc.ls(mc.listRelatives(eachObject, noIntermediate = True, shapes = True, fullPath = True),l=False)
+                eachObjectShapes = mc.ls(mc.listRelatives(eachObject, noIntermediate = True, shapes = True, fullPath = True),l=True)
                 if not eachObjectShapes and failIfNoShape:
                     raise ValueError("'{}' has no shape".format(eachObject))
                 if len(eachObjectShapes)>1: 
                     raise ValueError("'{}' has several shapes".format(eachObject))
                 shapeList.append(eachObjectShapes[0])
             else:
-                shapeList.append(eachObject)
+                shapeList.append(mc.ls(eachObject,l=1))
         return shapeList if shapeList != [] else  None
 
 
