@@ -107,7 +107,11 @@ def cleanAsset (GUI = True):
 
 
     elif fileType == "master":
-            if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=baseMessageS+"\n    - delete geo history,\n    - convert branch instanced to leaf instances,\n    - make all mesh unique,\n    - apply set subdiv,\n    - conform mesh shapes names, \n    - delete all unused nodes (not connected to an asset dag node), render layers will not be removed", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+            if GUI == True:
+                msgS = baseMessageS+"""
+    - delete geo history,\n    - convert branch instanced to leaf instances,\n    - make all mesh unique,\n    - conform mesh shapes names,\n    - create set subdiv,\n    - apply set subdiv,    
+    - delete all unused nodes (unconnected to an asset dag node), except render layers"""
+                answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 rendering.deleteAovs()
                 miscUtils.deleteUnknownNodes()
@@ -118,6 +122,7 @@ def cleanAsset (GUI = True):
                 modeling.makeAllMeshesUnique(inParent="|asset|grp_geo")
                 modeling.meshShapeNameConform(inParent = "|asset|grp_geo")
                 assetconformation.softClean(keepRenderLayers = False)
+                assetconformation.createSubdivSets()
                 assetconformation.setSubdiv()
 
     elif fileType == "render":

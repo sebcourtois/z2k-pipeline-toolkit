@@ -155,7 +155,8 @@ def setSubdiv(GUI= True ):
         if GUI == True: raise ValueError(logMessage)
         logL.append(logMessage)
         returnB = False
-
+    processedTransL =[]
+    skippedTransL =[]
     for eachSetSubdiv in subdivSets:
         geoInSet = mc.ls(mc.sets(eachSetSubdiv, query = True),l=True)
         if not geoInSet: geoInSet = []       
@@ -163,8 +164,6 @@ def setSubdiv(GUI= True ):
             subdivLevel =  int(eachSetSubdiv.split("set_subdiv_")[1])
             previewSubdivLevel = subdivLevel    
             if  0 <= subdivLevel <=9 :
-                processedTransL =[]
-                skippedTransL =[]
                 for eachGeo in geoInSet:
                     if mc.nodeType(eachGeo)!="mesh":
                         eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)[0]
@@ -204,7 +203,7 @@ def setSubdiv(GUI= True ):
 
     if "set_subdiv_init" in subdivSets and mc.sets("set_subdiv_init", query = True) != None:
         logMessage = "#### {:>7}: 'setSubdiv' A geo object is still in the 'set_subdiv_init', please asssign it to a 'set_subdiv*'".format("Error")
-        if GUI == True: raise ValueError(logMessage)
+        if GUI == True: mc.confirmDialog( title='Error:', message=logMessage, button=['Ok'], defaultButton='Ok' )
         logL.append(logMessage)
         returnB = False
 
