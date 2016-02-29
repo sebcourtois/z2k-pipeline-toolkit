@@ -45,9 +45,13 @@ def kill():
     global SCENE_MANAGER_DOCK, SCENE_MANAGER_UI
 
     if mc.dockControl(SCENE_MANAGER_DOCK, q=True, exists=True):
-        pc.deleteUI(SCENE_MANAGER_UI)
+
         pc.deleteUI(SCENE_MANAGER_DOCK)
         return True
+
+    if mc.control(SCENE_MANAGER_UI, q=True, exists=True):
+        pc.deleteUI(SCENE_MANAGER_UI)
+
     return False
 
 def saveDockState():
@@ -74,6 +78,9 @@ def sceneManagerUI():
         dirname, _ = osp.split(osp.abspath(__file__))
         sLoadedUi = mc.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui", v=False)
         if sLoadedUi != SCENE_MANAGER_UI:
+            mc.deleteUI(sLoadedUi)
+            mc.deleteUI(SCENE_MANAGER_UI)
+            #sLoadedUi = mc.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui", v=False)
             raise ValueError("Bad loaded UI Name: '{}'. Expected: '{}'"
                              .format(sLoadedUi, SCENE_MANAGER_UI))
 
@@ -91,10 +98,13 @@ def sceneManagerUI():
             states.update(state=sState)
         states.update(floating=pc.optionVar.get("Z2K_SM_dockFloating", False))
 
+#        if not mc.window(SCENE_MANAGER_UI, q=True, exists=True):
+#            mc.showWindow(SCENE_MANAGER_UI)
+
         mc.dockControl(SCENE_MANAGER_DOCK, area='left', content=sLoadedUi,
-                         allowedArea=['left'], retain=True,
-                         label=mc.window(sLoadedUi, q=True, title=True),
-                         closeCommand=saveDockState, **states)
+                       allowedArea=['left'], retain=True,
+                       label=mc.window(sLoadedUi, q=True, title=True),
+                       closeCommand=saveDockState, **states)
 
         connectCallbacks()
 
@@ -152,12 +162,12 @@ def initialize():
 def updateButtons():
     """Update buttons availability from maya_scene_operations commands dictionary"""
 
-    SCENE_MANAGER.refreshSceneContext()
+    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
     for buttonName in ACTION_BUTTONS:
         _, action, _ = buttonName.split('_')
         enable = (('task' in SCENE_MANAGER.context)
                     and mop.canDo(action, SCENE_MANAGER.context['task']['content'])
-                    and SCENE_MANAGER.entitiesMatchUp())
+                    and SCENE_MANAGER.entitiesMatchUp(sceneInfos))
         pc.control(buttonName, edit=True, enable=enable)
 
     refreshContextUI()
@@ -165,16 +175,18 @@ def updateButtons():
 def refreshContextUI():
     """Update buttons availability from contexts (scene Context / UI Context)"""
 
-    SCENE_MANAGER.refreshSceneContext()
-    contextMatches = SCENE_MANAGER.contextIsMatching()
-    bPublishable = contextMatches and SCENE_MANAGER.scenePublishable()
+    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
+    bRcsMatchUp = SCENE_MANAGER.resourcesMatchUp(sceneInfos)
+    bPublishable = bRcsMatchUp and SCENE_MANAGER.scenePublishable(sceneInfos)
 
     pc.control('sm_switchContext_bt', edit=True, enable=not bPublishable)
 
     pc.control('sm_capture_bt', edit=True, enable=bPublishable)
-    pc.control('sm_wipCapture_bt', edit=True, enable=contextMatches)
+    pc.control('sm_wipCapture_bt', edit=True, enable=bRcsMatchUp)
     pc.control('sm_saveWip_bt', edit=True, enable=bPublishable)
     pc.control('sm_publish_bt', edit=True, enable=bPublishable)
+
+    pc.control('sm_updateThumb_bt', edit=True, enable=bRcsMatchUp)
 
     sStepName = SCENE_MANAGER.context["step"]["code"].lower()
     bEnabled = (sStepName != "previz 3d") and bPublishable
@@ -189,11 +201,12 @@ def refreshContextUI():
     if bListAssets:
         pc.control('sm_upscene_bt', edit=True, enable=bPublishable)
         pc.control('sm_updb_bt', edit=True, enable=bPublishable)
+        pc.control('sm_selectRefs_bt', edit=True, enable=bRcsMatchUp)
 
 def setContextUI(**kwargs):
     """Initialize UI from scene"""
-    SCENE_MANAGER.refreshSceneContext()
-    context = SCENE_MANAGER.getContextFromDavosData()
+    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
+    context = SCENE_MANAGER.contextFromSceneInfos(sceneInfos)
 
     if context != None:
         #print context
@@ -534,7 +547,7 @@ def doRefreshFileStatus(*args):
 
 #buttons
 def doDetect(*args, **kwargs):
-    print """load context from scene"""
+    """load context from scene"""
     setContextUI(**kwargs)
 
 FILEREFS_FOR_LINE = {}
@@ -692,7 +705,7 @@ def doUpdateShotgun(*args):
 def doCapture(*args , **kwargs):
 
     bQuick = kwargs.get("quick", False)
-    if bQuick or SCENE_MANAGER.assert_isEditable():
+    if bQuick or SCENE_MANAGER.assertScenePublishable():
         bIncrement = pc.checkBox('sm_increment_chk', query=True, value=True)
         bSend = pc.checkBox('sm_sendToRv_chk', query=True, value=True)
         SCENE_MANAGER.capture(bIncrement, quick=bQuick, sendToRv=bSend)
@@ -705,7 +718,7 @@ def doWipCapture(*args):
     doCapture(*args, quick=True)
 
 def doSaveWip(*args):
-    if SCENE_MANAGER.assert_isEditable():
+    if SCENE_MANAGER.assertScenePublishable():
         SCENE_MANAGER.saveIncrement()
     else:
         doDetect(args)
@@ -714,9 +727,9 @@ def doSwitchContext(*args):
     """Use the current scene for an edition on the entry currently showing in the UI 
     (basically an edit, creating folders if needed)"""
 
-    SCENE_MANAGER.refreshSceneContext()
+    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
 
-    if SCENE_MANAGER.contextIsMatching():
+    if SCENE_MANAGER.resourcesMatchUp(sceneInfos):
         pc.warning("Your context is already matching !!")
         return
 
@@ -732,14 +745,14 @@ def doSwitchContext(*args):
 #davos
 def doEdit(*args):
     """Associated button is hidden (forbidden)"""
-    if SCENE_MANAGER.assert_isEditable():
+    if SCENE_MANAGER.assertScenePublishable():
         SCENE_MANAGER.edit(False)
         doTaskChanged()
     else:
         doDetect(args)
 
 def doPublish(*args):
-    if SCENE_MANAGER.assert_isEditable():
+    if SCENE_MANAGER.assertScenePublishable():
         SCENE_MANAGER.publish()
         doTaskChanged()
         #doRefreshFileStatus()
@@ -756,8 +769,8 @@ def doCreateFolder(*args):
 def doInit(*args):
     """Button is named 'Shot Setup'"""
 
-    SCENE_MANAGER.refreshSceneContext()
-    SCENE_MANAGER.assertEntitiesMatchUp()
+    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
+    SCENE_MANAGER.assertEntitiesMatchUp(sceneInfos)
 
     SCENE_MANAGER.do('init')
     doRefreshSceneInfo()

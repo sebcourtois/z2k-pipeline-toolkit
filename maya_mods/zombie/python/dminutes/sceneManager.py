@@ -320,20 +320,20 @@ class SceneManager():
 
         return path
 
-    def getContextFromDavosData(self):
-        """format davos data (contained in self.context['sceneData']) to match with UI Data to allow detection of current loaded scene"""
+    def contextFromSceneInfos(self, sceneInfos):
+        """format davos data to match with UI Data to allow detection of current loaded scene"""
         davosContext = {}
         proj = self.context['damProject']
-        ctxSceneData = self.context['sceneData']
-        #print "-------------", ctxSceneData
-        if (("resource" not in ctxSceneData) or ("section" not in ctxSceneData)
-            or ("name" not in ctxSceneData)):
+        scnPathData = sceneInfos.get("path_data", {})
+        #print "-------------", scnPathData
+        if (("resource" not in scnPathData) or ("section" not in scnPathData)
+            or ("name" not in scnPathData)):
             return None
 
-        sSection = ctxSceneData["section"]
+        sSection = scnPathData["section"]
         if sSection == "shot_lib":
 
-            sStepDir = ctxSceneData.get("step", "")
+            sStepDir = scnPathData.get("step", "")
             if not sStepDir:
                 return None
 
@@ -341,99 +341,173 @@ class SceneManager():
             if sStepDir in sSgStepDct:
                 davosContext['step'] = sSgStepDct[sStepDir]
 
-            davosContext['seq'] = ctxSceneData["sequence"]
-            davosContext['shot'] = ctxSceneData["name"]
+            davosContext['seq'] = scnPathData["sequence"]
+            davosContext['shot'] = scnPathData["name"]
 
         elif sSection == "asset_lib":
             pc.warning("asset_lib section not managed yet !!")
             return None
         else:
-            pc.warning("Unknown section {0}".format(ctxSceneData["section"]))
+            pc.warning("Unknown section {0}".format(scnPathData["section"]))
             return None
 
         return davosContext
+
+    def infosFromCurrentScene(self):
+        """Retrieve the scene path and get davos data from it"""
+
+        infos = {}
+
+        proj = self.context['damProject']
+
+        sCurScnPath = pc.sceneName()
+        if sCurScnPath:
+            sCurScnPath = os.path.abspath(sCurScnPath)
+            privFile = proj.entryFromPath(sCurScnPath)
+            if privFile:
+                infos["priv_file"] = privFile
+                infos["pub_file"] = privFile.getPublicFile()
+
+                data = proj.dataFromPath(sCurScnPath)
+                infos["path_data"] = data
+                infos["dam_entity"] = proj._entityFromPathData(data, fail=False)
+
+        return infos
+
+    def assertEntitiesMatchUp(self, sceneInfos):
+
+        ctxEntity = self.getDamEntity()
+        scnEntity = sceneInfos.get("dam_entity")
+        if not scnEntity:
+            raise AssertionError("Current scene is neither an Asset nor a Shot.")
+
+        if scnEntity.sgEntityType != ctxEntity.sgEntityType:
+            raise AssertionError("Entity types differ: Current scene is a {} but Scene Manager displays a {}."
+                                 .format(scnEntity.sgEntityType, ctxEntity.sgEntityType))
+
+        if scnEntity.name != ctxEntity.name:
+            raise AssertionError("Entity names differ: Current scene is '{}' but Scene Manager displays '{}'."
+                                 .format(scnEntity.name, ctxEntity.name))
+
+        return True
+
+    def entitiesMatchUp(self, sceneInfos):
+        try:
+            self.assertEntitiesMatchUp(sceneInfos)
+        except AssertionError as e:
+            logMsg(toStr(e), log="debug")
+            return False
+        return True
+
+    def assertResourcesMatchUp(self, sceneInfos):
+        """Compare davos data with UI data, return True if they match"""
+
+        self.assertEntitiesMatchUp(sceneInfos)
+
+        ctxRcFile = self.entryFromContext()
+        if not ctxRcFile:
+            raise AssertionError("Could not get davos resource from current context.")
+
+        scnRcFile = sceneInfos.get("pub_file")
+        if not scnRcFile:
+            raise AssertionError("Could not get davos resource from current scene.")
+
+        if scnRcFile != ctxRcFile:
+            sMsgLines = ("Resource files differ:",
+                         "Current Scene: '{}'".format(scnRcFile.absPath()),
+                         "Scene Manager: '{}'".format(ctxRcFile.absPath())
+                        )
+            raise AssertionError("\n    - ".join(sMsgLines))
+
+        return True
+
+    def resourcesMatchUp(self, sceneInfos):
+        try:
+            self.assertResourcesMatchUp(sceneInfos)
+        except AssertionError as e:
+            logMsg(toStr(e), log="debug")
+            return False
+        return True
+
+    def assertScenePublishable(self, sceneInfos=None):
+
+        if sceneInfos is None:
+            sceneInfos = self.infosFromCurrentScene()
+            self.assertResourcesMatchUp(sceneInfos)
+
+        scnPubFile = sceneInfos["pub_file"]
+        scnPubFile.assertEditedVersion(sceneInfos["priv_file"])
+        try:
+            scnPubFile.ensureLocked(autoLock=False)
+        except RuntimeError as e:
+            raise AssertionError(e.message)
+
+        return True
+
+    def scenePublishable(self, sceneInfos):
+        try:
+            self.assertScenePublishable(sceneInfos)
+        except AssertionError as e:
+            logMsg(toStr(e), log="debug")
+            return False
+        return True
 
     def refreshSceneContext(self):
         """Retrieve the scene path and get davos data from it"""
         self.context['sceneEntry'] = None
         self.context['sceneData'] = {}
-        self.context['sceneEntity'] = None
-
         proj = self.context['damProject']
 
         curScenePath = pc.sceneName()
         if curScenePath:
             curScenePath = os.path.abspath(curScenePath)
             entry = proj.entryFromPath(curScenePath)
-            if entry:
+            if entry != None:
                 self.context['sceneEntry'] = entry
-                data = proj.dataFromPath(curScenePath)
-                self.context['sceneData'] = data
-                self.context['sceneEntity'] = proj._entityFromPathData(data, fail=False)
+                self.context['sceneData'] = proj.dataFromPath(curScenePath)
+
+        return self.contextIsMatching()
 
     def contextIsMatching(self):
         """Compare davos data with UI data, return True if they match"""
         self.context['sceneState'] = ""
-        contextEntry = self.entryFromContext()
+        contextEntry = self.getEntry()
 
         if contextEntry is None or self.context['sceneEntry'] is None:
             self.context['sceneState'] = "Cannot autodetect context !"
             return False
 
-        sceneEntry = self.context['sceneEntry']
-        sceneEntryPath = sceneEntry.getPublicFile().absPath()
+        sceneEntryPath = self.context['sceneEntry'].getPublicFile().absPath()
         if contextEntry.absPath() == sceneEntryPath:
+            iSrcVers = self.context['sceneEntry'].versionFromName()
+            iNxtVers = contextEntry.currentVersion + 1
+
+            if iSrcVers < iNxtVers:
+                self.context['sceneState'] = "Current scene version is obsolete ({0} => {1}) !".format(iSrcVers, iNxtVers)
+                return False
+
             return True
 
-        self.context['sceneState'] = ("Your context does not match with current scene ({0} => {1}) !"
-                                      .format(os.path.basename(contextEntry.absPath()),
-                                              os.path.basename(sceneEntryPath)))
+        self.context['sceneState'] = "Your context does not match with current scene ({0} => {1}) !".format(os.path.basename(contextEntry.absPath()), os.path.basename(sceneEntryPath))
         return False
 
-    def assertEntitiesMatchUp(self):
-
-        context = self.context
-
-        ctxEntity = self.getDamEntity()
-        scnEntity = context.get("sceneEntity")
-        if not scnEntity:
-            raise AssertionError("Current scene is neither an Asset nor a Shot.")
-
-        if scnEntity.sgEntityType != ctxEntity.sgEntityType:
-            raise AssertionError("Entity types difffer: Current scene is a {} but Scene Manager displays a {}."
-                                 .format(scnEntity.sgEntityType, ctxEntity.sgEntityType))
-
-        if scnEntity.name != ctxEntity.name:
-            raise AssertionError("Entity names difffer: Current scene is '{}' but Scene Manager displays '{}'."
-                                 .format(scnEntity.name, ctxEntity.name))
-
-    def entitiesMatchUp(self):
-        try:
-            self.assertEntitiesMatchUp()
-        except AssertionError:# as e:
-            #print toStr(e)
-            return False
-        return True
-
-    def scenePublishable(self):
+    def isEditable(self):
         if self.context['lock'] != "Error":
-            return self.context['lock'] == self.context['damProject']._shotgundb.currentUser['login']
+            return self.context['lock'] == "" or self.context['lock'] == self.context['damProject']._shotgundb.currentUser['login']
+
         return False
 
-    def assert_isEditable(self, warn=True):
-        sMsg = ""
+    def assert_isEditable(self):
+        message = ""
 
-        self.refreshSceneContext()
+        if not self.refreshSceneContext():
+            message = self.context['sceneState']
 
-        if not self.contextIsMatching():
-            sMsg = self.context['sceneState']
+        if not self.isEditable():
+            message = "Your entity is locked by {0} !".format(self.context['lock'])
 
-        if not self.scenePublishable():
-            sMsg = "Your entity is locked by {0} !".format(self.context['lock'])
-
-        if sMsg:
-            if warn:
-                pc.confirmDialog(title='Entity not editable', message=sMsg, button=['OK'])
+        if message != "":
+            pc.confirmDialog(title='Entity not editable', message=message, button=['Ok'])
             return False
 
         return True
@@ -465,13 +539,15 @@ class SceneManager():
 
         return damEntity
 
-    def entryFromContext(self):
+    def entryFromContext(self, fail=False):
         """Get davos entry from UI data"""
 
         entry = None
 
         if 'task' not in self.context:
-            return
+            if fail:
+                raise RuntimeError("Current context has no task defined.")
+            return None
 
         sRcName = rcFromTask(self.context['task'])
         if sRcName:
@@ -479,6 +555,8 @@ class SceneManager():
                 damEntity = self.getDamEntity()
                 entry = damEntity.getResource("public", sRcName)
             except Exception as e:
+                if fail:
+                    raise
                 pc.warning(toStr(e))
 
         return entry
@@ -643,8 +721,8 @@ class SceneManager():
             bWasLocked = oCamRef.refNode.getAttr("locked")
             mop.setReferenceLocked(oCamRef, False)
 
-        bImgPlnViz = mop.isImgPlaneVisible()
-        mop.setImgPlaneVisible(False)
+        #bImgPlnViz = mop.isImgPlaneVisible()
+        #mop.setImgPlaneVisible(False)
 
         savedHudValues = createHUD()
 
@@ -652,7 +730,7 @@ class SceneManager():
             oShotCam = pc.PyNode(sShotCam)
             oShotCam.setAttr('aspectRatio', 1.85)
 
-            oImgPlaneCam = mop.getImagePlaneItems(create=False)[1]
+            _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
             mop.arrangeViews(oShotCam, oImgPlaneCam)
             pc.refresh()
 
@@ -670,7 +748,7 @@ class SceneManager():
 
             restoreHUD(savedHudValues)
 
-            mop.setImgPlaneVisible(bImgPlnViz)
+            #mop.setImgPlaneVisible(bImgPlnViz)
 
         sCmd = ""
         bShell = False
