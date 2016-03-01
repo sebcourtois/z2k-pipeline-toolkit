@@ -22,7 +22,8 @@ osp = os.path
 
 """Global instance of sceneManager Class"""
 SCENE_MANAGER = None
-SCENE_MANAGER_UI = 'sceneManagerDock'
+SCENE_MANAGER_DOCK = 'sceneManagerDock'
+SCENE_MANAGER_UI = 'sceneManagerUI'
 
 """Global instance of shotgunengine Class"""
 SG = None
@@ -33,54 +34,77 @@ CURRENT_ENTITY_TASKS = {}
 VERSIONS = {}
 
 ACTION_BUTTONS = []
-LIST_WIDGET = None
+ASSETS_QLISTWDG = None
+ASSETS_QGRPBOX = None
 #------------------------------------------------------------------
 #               Main UI Creation/Initialization
 #------------------------------------------------------------------
 
 def kill():
 
-    global SCENE_MANAGER_UI
+    global SCENE_MANAGER_DOCK, SCENE_MANAGER_UI
 
-    if mc.dockControl(SCENE_MANAGER_UI, q=True, exists=True):
-        pc.deleteUI(SCENE_MANAGER_UI)
+    if mc.dockControl(SCENE_MANAGER_DOCK, q=True, exists=True):
+
+        pc.deleteUI(SCENE_MANAGER_DOCK)
         return True
+
+    if mc.control(SCENE_MANAGER_UI, q=True, exists=True):
+        pc.deleteUI(SCENE_MANAGER_UI)
 
     return False
 
 def saveDockState():
-    pc.optionVar["Z2K_SM_dockState"] = mc.dockControl(SCENE_MANAGER_UI, q=True, state=True)
-    pc.optionVar["Z2K_SM_dockFloating"] = mc.dockControl(SCENE_MANAGER_UI, q=True, floating=True)
+    pc.optionVar["Z2K_SM_dockState"] = mc.dockControl(SCENE_MANAGER_DOCK, q=True, state=True)
+    pc.optionVar["Z2K_SM_dockFloating"] = mc.dockControl(SCENE_MANAGER_DOCK, q=True, floating=True)
+
+def isLaunched():
+    return mc.dockControl(SCENE_MANAGER_DOCK, q=True, exists=True) and SCENE_MANAGER
+
+def isVisible():
+    return mc.dockControl(SCENE_MANAGER_DOCK, q=True, visible=True)
 
 def sceneManagerUI():
     """Main UI Creator"""
-    global LIST_WIDGET
+    global ASSETS_QLISTWDG, ASSETS_QGRPBOX
 
     states = dict()
 
-    if mc.dockControl(SCENE_MANAGER_UI, q=True, exists=True) and SCENE_MANAGER:
-        mc.dockControl(SCENE_MANAGER_UI, e=True, visible=True)
+    if isLaunched():
+        mc.dockControl(SCENE_MANAGER_DOCK, e=True, visible=True)
     else:
         kill()
 
         dirname, _ = osp.split(osp.abspath(__file__))
-        ui = mc.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui")
+        sLoadedUi = mc.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui", v=False)
+        if sLoadedUi != SCENE_MANAGER_UI:
+            mc.deleteUI(sLoadedUi)
+            mc.deleteUI(SCENE_MANAGER_UI)
+            #sLoadedUi = mc.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui", v=False)
+            raise ValueError("Bad loaded UI Name: '{}'. Expected: '{}'"
+                             .format(sLoadedUi, SCENE_MANAGER_UI))
 
         sListWdgName = mc.textScrollList("sm_sceneInfo_lb", e=True,
                                            removeAll=True,
                                            font="fixedWidthFont",
                                            allowMultiSelection=True)
-        LIST_WIDGET = pc.ui.toPySideObject(sListWdgName)
+        ASSETS_QLISTWDG = pc.ui.toPySideObject(sListWdgName)
+
+        sWdgName = mc.control("relatedAssetsGroup", q=True, fullPathName=True)
+        ASSETS_QGRPBOX = pc.ui.toPySideObject(sWdgName)
 
         sState = pc.optionVar.get("Z2K_SM_dockState")
         if sState:
             states.update(state=sState)
         states.update(floating=pc.optionVar.get("Z2K_SM_dockFloating", False))
 
-        mc.dockControl(SCENE_MANAGER_UI, area='left', content=ui,
-                         allowedArea=['left'], retain=True,
-                         label=mc.window(ui, q=True, title=True),
-                         closeCommand=saveDockState, **states)
+#        if not mc.window(SCENE_MANAGER_UI, q=True, exists=True):
+#            mc.showWindow(SCENE_MANAGER_UI)
+
+        mc.dockControl(SCENE_MANAGER_DOCK, area='left', content=sLoadedUi,
+                       allowedArea=['left'], retain=True,
+                       label=mc.window(sLoadedUi, q=True, title=True),
+                       closeCommand=saveDockState, **states)
 
         connectCallbacks()
 
@@ -88,10 +112,10 @@ def sceneManagerUI():
     refreshContextUI()
 
     if states:
-        mc.dockControl(SCENE_MANAGER_UI, e=True, **states)
+        mc.dockControl(SCENE_MANAGER_DOCK, e=True, **states)
 
-    if not mc.dockControl(SCENE_MANAGER_UI, q=True, floating=True):
-        mc.dockControl(SCENE_MANAGER_UI, e=True, r=True)
+    if not mc.dockControl(SCENE_MANAGER_DOCK, q=True, floating=True):
+        mc.dockControl(SCENE_MANAGER_DOCK, e=True, r=True)
 
 def initialize():
     """Initialize default values (Operator AllowedSteps and CurrentStep...), hide forbidden buttons"""
@@ -137,38 +161,52 @@ def initialize():
 
 def updateButtons():
     """Update buttons availability from maya_scene_operations commands dictionary"""
+
+    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
     for buttonName in ACTION_BUTTONS:
         _, action, _ = buttonName.split('_')
-        enable = (False if not 'task' in SCENE_MANAGER.context
-                  else mop.canDo(action, SCENE_MANAGER.context['task']['content']) == True)
+        enable = (('task' in SCENE_MANAGER.context)
+                    and mop.canDo(action, SCENE_MANAGER.context['task']['content'])
+                    and SCENE_MANAGER.entitiesMatchUp(sceneInfos))
         pc.control(buttonName, edit=True, enable=enable)
 
     refreshContextUI()
 
 def refreshContextUI():
     """Update buttons availability from contexts (scene Context / UI Context)"""
-    contextMatches = SCENE_MANAGER.refreshSceneContext()
 
-    pc.control('sm_switchContext_bt', edit=True, enable=not contextMatches)
+    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
+    bRcsMatchUp = SCENE_MANAGER.resourcesMatchUp(sceneInfos)
+    bPublishable = bRcsMatchUp and SCENE_MANAGER.scenePublishable(sceneInfos)
 
-    pc.control('sm_capture_bt', edit=True, enable=contextMatches)
-    pc.control('sm_saveWip_bt', edit=True, enable=contextMatches)
-    pc.control('sm_publish_bt', edit=True, enable=contextMatches)
-    pc.control('sm_upscene_bt', edit=True, enable=contextMatches)
-    pc.control('sm_updb_bt', edit=True, enable=contextMatches)
+    pc.control('sm_switchContext_bt', edit=True, enable=not bPublishable)
+
+    pc.control('sm_capture_bt', edit=True, enable=bPublishable)
+    pc.control('sm_wipCapture_bt', edit=True, enable=bRcsMatchUp)
+    pc.control('sm_saveWip_bt', edit=True, enable=bPublishable)
+    pc.control('sm_publish_bt', edit=True, enable=bPublishable)
+
+    pc.control('sm_updateThumb_bt', edit=True, enable=bRcsMatchUp)
 
     sStepName = SCENE_MANAGER.context["step"]["code"].lower()
-    bEnabled = (sStepName != "previz 3d") and contextMatches
+    bEnabled = (sStepName != "previz 3d") and bPublishable
     pc.control('sm_editCam_bt', edit=True, enable=bEnabled)
 
     pc.checkBox('sm_imgPlane_chk', edit=True, value=mop.isImgPlaneVisible())
     pc.checkBox('sm_increment_chk', edit=True, value=pc.optionVar.get("Z2K_SM_increment", False))
     pc.checkBox('sm_sendToRv_chk', edit=True, value=pc.optionVar.get("Z2K_SM_sendToRv", False))
 
-def setContextUI():
+    bListAssets = pc.optionVar.get("Z2K_SM_listAssets", True)
+    ASSETS_QGRPBOX.setChecked(bListAssets)
+    if bListAssets:
+        pc.control('sm_upscene_bt', edit=True, enable=bPublishable)
+        pc.control('sm_updb_bt', edit=True, enable=bPublishable)
+        pc.control('sm_selectRefs_bt', edit=True, enable=bRcsMatchUp)
+
+def setContextUI(**kwargs):
     """Initialize UI from scene"""
-    SCENE_MANAGER.refreshSceneContext()
-    context = SCENE_MANAGER.getContextFromDavosData()
+    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
+    context = SCENE_MANAGER.contextFromSceneInfos(sceneInfos)
 
     if context != None:
         #print context
@@ -182,14 +220,14 @@ def setContextUI():
             somethingChanged |= setOption("sm_seq_dd", context["seq"], runEntityChanged=False)
             somethingChanged |= setOption("sm_shot_dd", context["shot"], runEntityChanged=False)
 
-        doEntityChanged()
+        doEntityChanged(**kwargs)
 
         if not somethingChanged:
             refreshContextUI()
 
         return True
 
-    doEntityChanged()
+    doEntityChanged(**kwargs)
 
     return False
 
@@ -333,9 +371,11 @@ def connectCallbacks():
 
     pc.button('sm_editCam_bt', edit=True, c=doEditCam)
     pc.checkBox('sm_imgPlane_chk', edit=True, cc=doShowImagePlane)
-    pc.checkBox('sm_increment_chk', edit=True, cc=doSetIncremental)
-    pc.checkBox('sm_sendToRv_chk', edit=True, cc=doSetCaptureSentToRv)
+    pc.checkBox('sm_increment_chk', edit=True, cc=storeIncrementalSave)
+    pc.checkBox('sm_sendToRv_chk', edit=True, cc=storeAddCaptureToRv)
 
+
+    ASSETS_QGRPBOX.clicked[bool].connect(storeRelatedAssetsEnabled)
 
     pc.button('sm_pouet_bt', edit=True, c=doPouet)
     #buttonName = 'sm_create_bt'
@@ -351,7 +391,7 @@ def doShowWipCapturesDir(*args):
     if osp.isdir(p):
         subprocess.call("explorer {}".format(p))
     else:
-        pc.displayWarning("No such directory: '{}'".format(p))
+        pc.displayError("No such directory: '{}'".format(p))
 
 def doShowSequenceInRv(*args):
 
@@ -371,11 +411,16 @@ def doShowSequenceInRv(*args):
 def doShowImagePlane(bShow):
     mop.setImgPlaneVisible(bShow)
 
-def doSetIncremental(bEnable):
+def storeIncrementalSave(bEnable):
     pc.optionVar["Z2K_SM_increment"] = bEnable
 
-def doSetCaptureSentToRv(bEnable):
+def storeAddCaptureToRv(bEnable):
     pc.optionVar["Z2K_SM_sendToRv"] = bEnable
+
+def storeRelatedAssetsEnabled(bEnable):
+    pc.optionVar["Z2K_SM_listAssets"] = bEnable
+
+    doRefreshSceneInfo()
 
 def doDisconnect(*args):
     SG.logoutUser()
@@ -493,26 +538,27 @@ def doRefreshFileStatus(*args):
 
     pc.textField("sm_lock_tb", edit=True, text=statusText)
 
-    editable = SCENE_MANAGER.isEditable()
-
-    pc.button('sm_edit_bt', edit=True, enable=editable)
-    pc.button('sm_publish_bt', edit=True, enable=editable)
-    pc.button('sm_capture_bt', edit=True, enable=editable)
-    pc.button('sm_saveWip_bt', edit=True, enable=editable)
+#    bPublishable = SCENE_MANAGER.scenePublishable()
+#
+#    pc.button('sm_edit_bt', edit=True, enable=bPublishable)
+#    pc.button('sm_publish_bt', edit=True, enable=bPublishable)
+#    pc.button('sm_capture_bt', edit=True, enable=bPublishable)
+#    pc.button('sm_saveWip_bt', edit=True, enable=bPublishable)
 
 #buttons
-def doDetect(*args):
-    setContextUI()
+def doDetect(*args, **kwargs):
+    """load context from scene"""
+    setContextUI(**kwargs)
 
 FILEREFS_FOR_LINE = {}
 
 def doSelectRefs(*args):
 
-    global LIST_WIDGET
+    global ASSETS_QLISTWDG
 
     sSelList = []
     count = 0
-    for item in LIST_WIDGET.selectedItems():
+    for item in ASSETS_QLISTWDG.selectedItems():
 
         for oFileRef in item.data(32):
 
@@ -545,10 +591,13 @@ def doRefreshSceneInfo(*args):
     """Displays the comparison of shotgun and active scene Assets"""
     logMsg(log='all')
 
-    global FILEREFS_FOR_LINE, LIST_WIDGET
+    global FILEREFS_FOR_LINE, ASSETS_QLISTWDG
 
-    LIST_WIDGET.clear()
+    ASSETS_QLISTWDG.clear()
     pc.refresh()
+
+    if not pc.optionVar.get("Z2K_SM_listAssets", True):
+        return []
 
     assetDataList = SCENE_MANAGER.listRelatedAssets()
 
@@ -618,8 +667,8 @@ def doRefreshSceneInfo(*args):
         sRowFmt = "|".join(rowFmts[:c])
         sLine = sRowFmt.format(*rowData[:c])
 
-        LIST_WIDGET.addItem(sLine)
-        item = LIST_WIDGET.item(LIST_WIDGET.count() - 1)
+        ASSETS_QLISTWDG.addItem(sLine)
+        item = ASSETS_QLISTWDG.item(ASSETS_QLISTWDG.count() - 1)
         item.setData(32, oFileRefList)
 
         itemList.append(item)
@@ -628,7 +677,7 @@ def doRefreshSceneInfo(*args):
 
 def doUnlock(*args):
     """Simply unlocks current entry, but button is hidden (forbidden)"""
-    entry = SCENE_MANAGER.getEntry()
+    entry = SCENE_MANAGER.entryFromContext()
 
     if entry == None:
         pc.error("Cannot get entry form context {0}".format(SCENE_MANAGER.context))
@@ -656,12 +705,12 @@ def doUpdateShotgun(*args):
 def doCapture(*args , **kwargs):
 
     bQuick = kwargs.get("quick", False)
-    if bQuick or SCENE_MANAGER.assert_isEditable():
+    if bQuick or SCENE_MANAGER.assertScenePublishable():
         bIncrement = pc.checkBox('sm_increment_chk', query=True, value=True)
         bSend = pc.checkBox('sm_sendToRv_chk', query=True, value=True)
         SCENE_MANAGER.capture(bIncrement, quick=bQuick, sendToRv=bSend)
-        if not bQuick:
-            doRefreshSceneInfo(args)
+#        if not bQuick:
+#            doRefreshSceneInfo(args)
     else:
         doDetect(args)
 
@@ -669,7 +718,7 @@ def doWipCapture(*args):
     doCapture(*args, quick=True)
 
 def doSaveWip(*args):
-    if SCENE_MANAGER.assert_isEditable():
+    if SCENE_MANAGER.assertScenePublishable():
         SCENE_MANAGER.saveIncrement()
     else:
         doDetect(args)
@@ -678,18 +727,11 @@ def doSwitchContext(*args):
     """Use the current scene for an edition on the entry currently showing in the UI 
     (basically an edit, creating folders if needed)"""
 
-    if SCENE_MANAGER.refreshSceneContext():
+    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
+
+    if SCENE_MANAGER.resourcesMatchUp(sceneInfos):
         pc.warning("Your context is already matching !!")
         return
-
-#    if not SCENE_MANAGER.isEditable() and SCENE_MANAGER.context["lock"] == "Error":
-#        #Maybe this is because folders does not exists ?
-#        SCENE_MANAGER.createFolder()
-#        doRefreshFileStatus()
-#
-#    if not SCENE_MANAGER.isEditable():
-#        pc.warning("Your entity is locked by {0}".format(SCENE_MANAGER.context["lock"]))
-#        return
 
     sMsg = "Your entity already have published versions, are you sure you want to use current scene ?"
     if (len(SCENE_MANAGER.getVersions()) == 0
@@ -703,14 +745,14 @@ def doSwitchContext(*args):
 #davos
 def doEdit(*args):
     """Associated button is hidden (forbidden)"""
-    if SCENE_MANAGER.assert_isEditable():
+    if SCENE_MANAGER.assertScenePublishable():
         SCENE_MANAGER.edit(False)
         doTaskChanged()
     else:
         doDetect(args)
 
 def doPublish(*args):
-    if SCENE_MANAGER.assert_isEditable():
+    if SCENE_MANAGER.assertScenePublishable():
         SCENE_MANAGER.publish()
         doTaskChanged()
         #doRefreshFileStatus()
@@ -727,8 +769,8 @@ def doCreateFolder(*args):
 def doInit(*args):
     """Button is named 'Shot Setup'"""
 
-#    if not SCENE_MANAGER.contextIsMatching():
-#        raise RuntimeError("Sorry, context does not match current scene")
+    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
+    SCENE_MANAGER.assertEntitiesMatchUp(sceneInfos)
 
     SCENE_MANAGER.do('init')
     doRefreshSceneInfo()
