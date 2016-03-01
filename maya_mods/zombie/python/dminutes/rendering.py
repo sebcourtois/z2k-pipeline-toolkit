@@ -131,12 +131,14 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples",3)
     mc.setAttr("defaultArnoldRenderOptions.GIRefractionSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.GISssSamples",0)
+    mc.setAttr("defaultArnoldRenderOptions.GIVolumeSamples",3)
     mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp",1)
     mc.setAttr("defaultArnoldRenderOptions.AASampleClamp",2.5)
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
     mc.setAttr("defaultArnoldRenderOptions.skipLicenseCheck",1)
     mc.setAttr("defaultArnoldRenderOptions.log_verbosity",1)#warnig + info
 
+   
 
     mc.setAttr("defaultArnoldRenderOptions.GITotalDepth",4)
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseDepth",0)
@@ -144,7 +146,7 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseDepth",0)
     mc.setAttr("defaultArnoldRenderOptions.GIRefractionDepth",4)
     mc.setAttr("defaultArnoldRenderOptions.GIReflectionDepth",2)
-    mc.setAttr("defaultArnoldRenderOptions.GIVolumeDepth",0)
+    mc.setAttr("defaultArnoldRenderOptions.GIVolumeDepth",1)
     mc.setAttr("defaultArnoldRenderOptions.autoTransparencyDepth",10)
     
     print "#### info: render options are now production ready"

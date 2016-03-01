@@ -9,6 +9,7 @@ import maya.cmds as mc
 from pytd.util.sysutils import toStr
 from davos_maya.tool.reference import loadReferencesForAnim
 from dminutes.shotconformation import removeRefEditByAttr
+from pytaya.util.sysutils import withSelectionRestored
 
 
 CAMPATTERN = 'cam_sq????_sh?????:*'
@@ -47,56 +48,58 @@ def getSceneContent(sceneManager):
     return sceneContent
 
 def getImagePlaneItems(create=False):
-    IMGP = None
 
-    IMGPs = pc.ls("cam_animatic:assetShape->imgPlane_animatic*")
-    if len(IMGPs) > 0:
-        IMGP = IMGPs[0]
+    oImgPlane = None
 
-    if (not IMGP) and (not create):
-        return None, None
+    oImgPlaneList = pc.ls("cam_animatic:assetShape->imgPlane_animatic")
+    if oImgPlaneList:
+        oImgPlane = oImgPlaneList[0]
 
-    cam_animatic = pc.ls("cam_animatic:*")
-    if len(cam_animatic) > 0:
-        return (IMGP, cam_animatic[0])
-    else:
-        if create:
-            pc.delete(IMGP)
-        else:
+    if (not oImgPlane):
+        if not create:
             return None, None
+        else:
+            # - Create new Animatic Camera
+            if not pc.namespace(exists='cam_animatic'):
+                pc.namespace(addNamespace='cam_animatic')
+            else:
+                # - Remove previous Animatic Camera
+                oCamList = pc.ls("cam_animatic:*")
+                if oCamList:
+                    pc.delete(oCamList)
 
-    # - Remove previous Animatic Camera
-    cam_animatic = pc.ls("cam_animatic:*")
-    if len(cam_animatic) > 0:
-        pc.delete(cam_animatic)
+            oCamXfm, oCamShape = pc.camera(name='cam_animatic:asset', aspectRatio=1.77, displayFilmGate=True)
+            oCamXfm.rename('cam_animatic:asset')
+            oCamShape.setAttr('visibility', 0)
+            #mc.parent( CAM_Animatic[0], grpDict['GD_ROOT'] )
 
-    # - Create new Animatic Camera
-    if not pc.namespace(exists='cam_animatic'):
-        pc.namespace(addNamespace='cam_animatic')
-
-    cam_animatic = pc.camera(name='cam_animatic:asset', aspectRatio=1.77, displayFilmGate=True)
-    cam_animatic[0].rename('cam_animatic:asset')
-    pc.setAttr(cam_animatic[1].name() + '.visibility', 0)
-    #mc.parent( CAM_Animatic[0], grpDict['GD_ROOT'] )
-
-    IMGP = pc.imagePlane(camera=cam_animatic[1], showInAllViews=False, name="imgPlane_animatic")
-    IMGP[1].rename("imgPlane_animatic")
+            _, oImgPlane = pc.imagePlane(camera=oCamShape,
+                                         showInAllViews=False,
+                                         name="imgPlane_animatic")
+            oImgPlane.rename("imgPlane_animatic")
+    else:
+        oCamXfm = oImgPlane.getParent(3)
+        oCamShape = oCamXfm.getShape()
 
     #SET DE L'IMAGE PLANE
-    pc.setAttr(IMGP[1].name() + ".type", 2)
-    pc.setAttr(IMGP[1].name() + ".fit", 1)
-    pc.setAttr(IMGP[1].name() + ".useFrameExtension", 1)
-    pc.setAttr(IMGP[1].name() + ".frameOffset", -100)
-    pc.setAttr(IMGP[1].name() + ".frameIn", 101)
-    pc.setAttr(IMGP[1].name() + ".frameOut", 1000)
-    pc.setAttr(cam_animatic[1] + ".displayFilmGate", 1)
-    pc.setAttr(cam_animatic[1] + ".displayGateMask", 1)
-    pc.setAttr(cam_animatic[1] + ".overscan", 1.4)
-    pc.setAttr(cam_animatic[1] + ".displaySafeTitle", 1)
-    pc.setAttr(cam_animatic[1] + ".displaySafeAction", 1)
-    pc.setAttr(cam_animatic[1] + ".displayGateMaskColor", [0, 0, 0])
+    sImgPlane = oImgPlane.name()
+    pc.setAttr(sImgPlane + ".type", 2)
+    pc.setAttr(sImgPlane + ".fit", 1)
+    pc.setAttr(sImgPlane + ".useFrameExtension", 1)
+    pc.setAttr(sImgPlane + ".frameOffset", -100)
+    pc.setAttr(sImgPlane + ".frameIn", 101)
+    pc.setAttr(sImgPlane + ".frameOut", 1000)
+    pc.setAttr(sImgPlane + ".hideOnPlayback", True)
 
-    return (IMGP[1], cam_animatic[0])
+    sCamShape = oCamShape.name()
+    pc.setAttr(sCamShape + ".displayFilmGate", 1)
+    pc.setAttr(sCamShape + ".displayGateMask", 1)
+    pc.setAttr(sCamShape + ".overscan", 1.4)
+    pc.setAttr(sCamShape + ".displaySafeTitle", 1)
+    pc.setAttr(sCamShape + ".displaySafeAction", 1)
+    pc.setAttr(sCamShape + ".displayGateMaskColor", [0, 0, 0])
+
+    return oImgPlane, oCamXfm
 
 def setImgPlaneVisible(bVisible):
 
@@ -407,6 +410,25 @@ def arrangeViews(oShotCam, oImgPlaneCam=None):
 
     pc.setFocus(perspPanel)
 
+def mkShotCamNamespace(sShotCode):
+    return 'cam_{}'.format(sShotCode)
+
+def getShotCamera(sShotCode, fail=False):
+
+    sCamName = mkShotCamNamespace(sShotCode) + ":cam_shot_default"
+    sCamList = mc.ls(sCamName)
+
+    if not sCamList:
+        if fail:
+            raise RuntimeError("Shot Camera not found: '{}'".format(sCamName))
+        return None
+
+    if len(sCamList) == 1:
+        return pc.PyNode(sCamList[0])
+    else:
+        raise RuntimeError("Multiple cameras named '{}'".format(sCamName))
+
+@withSelectionRestored
 def init_previz_scene(sceneManager):
 
     # --- Set Viewport 2.0 AO default Value
@@ -470,22 +492,24 @@ def init_previz_scene(sceneManager):
         if (not sceneManager.isShotCamEdited()) and sceneManager.camAnimFilesExist():
             sceneManager.importShotCamAbcFile()
 
+        oShotCam = sceneManager.getShotCamera()
+
     sgEntity = sceneManager.context['entity']
     #image plane "Y:\shot\...\00_data\sqXXXX_shXXXXa_animatic.mov"
     imgPlanePath = sceneManager.getPath(sgEntity, 'animatic_capture')
     imgPlaneEnvPath = shotLib.absToEnvPath(imgPlanePath)
-    IMGP = getImagePlaneItems(create=True)
+    oImagePlane, oImagePlaneCam = getImagePlaneItems(create=True)
 
-    arrangeViews(oShotCam.getShape(), IMGP[1])
+    arrangeViews(oShotCam.getShape(), oImagePlaneCam)
 
     if os.path.isfile(imgPlanePath):
         pc.currentTime(101)
         pc.refresh()
-        pc.imagePlane(IMGP[0], edit=True, fileName=imgPlaneEnvPath)
+        pc.imagePlane(oImagePlane, edit=True, fileName=imgPlaneEnvPath)
     else:
         pc.warning('Image plane file cannot be found ({0})'.format(imgPlanePath))
-        pc.setAttr(IMGP[0] + ".imageName", imgPlaneEnvPath, type="string")
-        #pc.imagePlane(IMGP[0], edit=True, fileName="")
+        oImagePlane.setAttr("imageName", imgPlaneEnvPath, type="string")
+        #pc.imagePlane(oImagePlane, edit=True, fileName="")
 
     #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
     soundPath = sceneManager.getPath(sgEntity, 'animatic_sound')
@@ -499,7 +523,6 @@ def init_previz_scene(sceneManager):
         # - Show Sound in Timeline
         aPlayBackSliderPython = pc.mel.eval('$tmpVar=$gPlayBackSlider')
         pc.timeControl(aPlayBackSliderPython, e=True, sound=audio_shot, displaySound=True)
-
     else:
         pc.warning('Sound file cannot be found ({0})'.format(soundPath))
 

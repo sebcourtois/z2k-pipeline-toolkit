@@ -9,7 +9,7 @@ import subprocess
 from collections import OrderedDict
 
 import pymel.core as pc
-import maya.cmds as cmds
+import maya.cmds as mc
 import maya.mel
 
 #import tkMayaCore as tkc
@@ -18,7 +18,6 @@ from pytd.util.logutils import logMsg
 
 from davos.core import damproject
 from davos.core.damtypes import DamShot, DamAsset
-from davos.core.utils import versionFromName
 from davos_maya.tool.publishing import publishCurrentScene
 
 from zomblib import shotgunengine
@@ -45,11 +44,11 @@ noneValue = 'MISSING'
 notFoundvalue = 'NOT FOUND'
 
 #FROM DAVOS !!!!
-FILE_FOR_STEP = {'Previz 3D':'previz_scene',
+RC_FOR_STEP = {'Previz 3D':'previz_scene',
                  'Layout':'layout_scene',
                  'Animation':'anim_scene',
                  }
-FILE_FOR_TASK = {}#{'previz 3D':'previz_scene', 'layout':'layout_scene'}
+RC_FOR_TASK = {}#{'previz 3D':'previz_scene', 'layout':'layout_scene'}
 
 REF_FOR_STEP = {'Previz 3D':'previz_ref',
                 'Layout':'anim_ref',
@@ -60,12 +59,12 @@ REF_FOR_TASK = {}
 
 LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
 
-def fileFromTask(sgTask, fail=False):
+def rcFromTask(sgTask, fail=False):
 
     sTask = sgTask['content']
     sStep = sgTask['step']['name']
 
-    sName = FILE_FOR_TASK.get(sTask, FILE_FOR_STEP.get(sStep, ""))
+    sName = RC_FOR_TASK.get(sTask, RC_FOR_STEP.get(sStep, ""))
 
     if (not sName):
         sMsg = ("No resource file associated with task: {}".format(sgTask))
@@ -110,13 +109,13 @@ def restoreSelection(func):
 
     def doIt(*args, **kwargs):
 
-        sSelList = cmds.ls(sl=True)
+        sSelList = mc.ls(sl=True)
         try:
             ret = func(*args, **kwargs)
         finally:
             if sSelList:
                 try:
-                    cmds.select(sSelList)
+                    mc.select(sSelList)
                 except Exception as e:
                     print "Could restore previous selection: {}".format(e)
 
@@ -185,10 +184,10 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
     sAudioNode = audioNode
     if not sAudioNode:
         gPlayBackSlider = maya.mel.eval('$tmpVar=$gPlayBackSlider')
-        sAudioNode = cmds.timeControl(gPlayBackSlider, q=True, sound=True)
+        sAudioNode = mc.timeControl(gPlayBackSlider, q=True, sound=True)
 
     if sAudioNode:
-        sSoundPath = pathResolve(cmds.getAttr(".".join((sAudioNode, "filename"))))
+        sSoundPath = pathResolve(mc.getAttr(".".join((sAudioNode, "filename"))))
         if not os.path.exists(sSoundPath):
             pc.displayError("File of '{}' node not found: '{}' !"
                               .format(sAudioNode, sSoundPath))
@@ -321,20 +320,20 @@ class SceneManager():
 
         return path
 
-    def getContextFromDavosData(self):
-        """format davos data (contained in self.context['sceneData']) to match with UI Data to allow detection of current loaded scene"""
+    def contextFromSceneInfos(self, sceneInfos):
+        """format davos data to match with UI Data to allow detection of current loaded scene"""
         davosContext = {}
         proj = self.context['damProject']
-        ctxSceneData = self.context['sceneData']
-        #print "-------------", ctxSceneData
-        if (("resource" not in ctxSceneData) or ("section" not in ctxSceneData)
-            or ("name" not in ctxSceneData)):
+        scnPathData = sceneInfos.get("path_data", {})
+        #print "-------------", scnPathData
+        if (("resource" not in scnPathData) or ("section" not in scnPathData)
+            or ("name" not in scnPathData)):
             return None
 
-        sSection = ctxSceneData["section"]
+        sSection = scnPathData["section"]
         if sSection == "shot_lib":
 
-            sStepDir = ctxSceneData.get("step", "")
+            sStepDir = scnPathData.get("step", "")
             if not sStepDir:
                 return None
 
@@ -342,17 +341,116 @@ class SceneManager():
             if sStepDir in sSgStepDct:
                 davosContext['step'] = sSgStepDct[sStepDir]
 
-            davosContext['seq'] = ctxSceneData["sequence"]
-            davosContext['shot'] = ctxSceneData["name"]
+            davosContext['seq'] = scnPathData["sequence"]
+            davosContext['shot'] = scnPathData["name"]
 
         elif sSection == "asset_lib":
             pc.warning("asset_lib section not managed yet !!")
             return None
         else:
-            pc.warning("Unknown section {0}".format(ctxSceneData["section"]))
+            pc.warning("Unknown section {0}".format(scnPathData["section"]))
             return None
 
         return davosContext
+
+    def infosFromCurrentScene(self):
+        """Retrieve the scene path and get davos data from it"""
+
+        infos = {}
+
+        proj = self.context['damProject']
+
+        sCurScnPath = pc.sceneName()
+        if sCurScnPath:
+            sCurScnPath = os.path.abspath(sCurScnPath)
+            privFile = proj.entryFromPath(sCurScnPath)
+            if privFile:
+                infos["priv_file"] = privFile
+                infos["pub_file"] = privFile.getPublicFile()
+
+                data = proj.dataFromPath(sCurScnPath)
+                infos["path_data"] = data
+                infos["dam_entity"] = proj._entityFromPathData(data, fail=False)
+
+        return infos
+
+    def assertEntitiesMatchUp(self, sceneInfos):
+
+        ctxEntity = self.getDamEntity()
+        scnEntity = sceneInfos.get("dam_entity")
+        if not scnEntity:
+            raise AssertionError("Current scene is neither an Asset nor a Shot.")
+
+        if scnEntity.sgEntityType != ctxEntity.sgEntityType:
+            raise AssertionError("Entity types differ: Current scene is a {} but Scene Manager displays a {}."
+                                 .format(scnEntity.sgEntityType, ctxEntity.sgEntityType))
+
+        if scnEntity.name != ctxEntity.name:
+            raise AssertionError("Entity names differ: Current scene is '{}' but Scene Manager displays '{}'."
+                                 .format(scnEntity.name, ctxEntity.name))
+
+        return True
+
+    def entitiesMatchUp(self, sceneInfos):
+        try:
+            self.assertEntitiesMatchUp(sceneInfos)
+        except AssertionError as e:
+            logMsg(toStr(e), log="debug")
+            return False
+        return True
+
+    def assertResourcesMatchUp(self, sceneInfos):
+        """Compare davos data with UI data, return True if they match"""
+
+        self.assertEntitiesMatchUp(sceneInfos)
+
+        ctxRcFile = self.entryFromContext()
+        if not ctxRcFile:
+            raise AssertionError("Could not get davos resource from current context.")
+
+        scnRcFile = sceneInfos.get("pub_file")
+        if not scnRcFile:
+            raise AssertionError("Could not get davos resource from current scene.")
+
+        if scnRcFile != ctxRcFile:
+            sMsgLines = ("Resource files differ:",
+                         "Current Scene: '{}'".format(scnRcFile.absPath()),
+                         "Scene Manager: '{}'".format(ctxRcFile.absPath())
+                        )
+            raise AssertionError("\n    - ".join(sMsgLines))
+
+        return True
+
+    def resourcesMatchUp(self, sceneInfos):
+        try:
+            self.assertResourcesMatchUp(sceneInfos)
+        except AssertionError as e:
+            logMsg(toStr(e), log="debug")
+            return False
+        return True
+
+    def assertScenePublishable(self, sceneInfos=None):
+
+        if sceneInfos is None:
+            sceneInfos = self.infosFromCurrentScene()
+            self.assertResourcesMatchUp(sceneInfos)
+
+        scnPubFile = sceneInfos["pub_file"]
+        scnPubFile.assertEditedVersion(sceneInfos["priv_file"])
+        try:
+            scnPubFile.ensureLocked(autoLock=False)
+        except RuntimeError as e:
+            raise AssertionError(e.message)
+
+        return True
+
+    def scenePublishable(self, sceneInfos):
+        try:
+            self.assertScenePublishable(sceneInfos)
+        except AssertionError as e:
+            logMsg(toStr(e), log="debug")
+            return False
+        return True
 
     def refreshSceneContext(self):
         """Retrieve the scene path and get davos data from it"""
@@ -381,7 +479,7 @@ class SceneManager():
 
         sceneEntryPath = self.context['sceneEntry'].getPublicFile().absPath()
         if contextEntry.absPath() == sceneEntryPath:
-            iSrcVers = versionFromName(self.context['sceneEntry'].name)
+            iSrcVers = self.context['sceneEntry'].versionFromName()
             iNxtVers = contextEntry.currentVersion + 1
 
             if iSrcVers < iNxtVers:
@@ -419,7 +517,7 @@ class SceneManager():
         self.context['lock'] = "Error"
 
         if entry == None:
-            entry = self.getEntry()
+            entry = self.entryFromContext()
 
         if entry != None:
             self.context['lock'] = entry.getLockOwner()
@@ -441,20 +539,24 @@ class SceneManager():
 
         return damEntity
 
-    def getEntry(self):
+    def entryFromContext(self, fail=False):
         """Get davos entry from UI data"""
 
         entry = None
 
         if 'task' not in self.context:
-            return
+            if fail:
+                raise RuntimeError("Current context has no task defined.")
+            return None
 
-        s_inFileTag = fileFromTask(self.context['task'])
-        if s_inFileTag:
+        sRcName = rcFromTask(self.context['task'])
+        if sRcName:
             try:
                 damEntity = self.getDamEntity()
-                entry = damEntity.getResource("public", s_inFileTag)
+                entry = damEntity.getResource("public", sRcName)
             except Exception as e:
+                if fail:
+                    raise
                 pc.warning(toStr(e))
 
         return entry
@@ -469,7 +571,7 @@ class SceneManager():
             damShot.createDirsAndFiles()
 
     def save(self, b_inForce=True):
-        entry = self.getEntry()
+        entry = self.entryFromContext()
 
         if entry == None:
             pc.error("Cannot get entry for context {0}".format(self.context))
@@ -480,35 +582,9 @@ class SceneManager():
 
         return pc.saveAs(currentScene, force=b_inForce)
 
-    # def saveIncrement(self, b_inForce=True):
-    #     # old
-    #     entry = self.getEntry()
-
-    #     if entry == None:
-    #         pc.error("Cannot get entry for context {0}".format(self.context))
-
-    #     currentScene = os.path.abspath(pc.sceneName())
-    #     if currentScene == '':
-    #         pc.error("Please save your scene as a valid private working scene (Edit if needed)")
-
-    #     matches = re.match(".*(v\d{3})\.(\d{3})\.ma", currentScene)
-
-    #     if matches:
-    #         curVersion = int(matches.group(2))
-    #         curVersion += 1
-    #         newFileName = '{0}.{1:03}.ma'.format(currentScene.split('.')[0], curVersion)
-    #         if b_inForce or not os.path.isfile(newFileName):
-    #             return pc.saveAs(newFileName, force=b_inForce)
-    #         else:
-    #             pc.error("File already exists ({0})!".format(newFileName))
-    #     else:
-    #         pc.warning("Invalid file pattern !")
-
-    #     return None
-
     def saveIncrement(self, b_inForce=True):
         # new incrementing system based on the last versoin present in the folder
-        entry = self.getEntry()
+        entry = self.entryFromContext()
 
         if entry == None:
             pc.error("Cannot get entry for context {0}".format(self.context))
@@ -537,12 +613,11 @@ class SceneManager():
         if not damShot:
             damShot = self.getDamShot()
 
-        p = osp.join(cmds.workspace(fileRuleEntry="movie"),
+        p = osp.join(mc.workspace(fileRuleEntry="movie"),
                         damShot.sequence,
                         damShot.name,)
-                        #self.context['sceneData']["step"],)
 
-        return cmds.workspace(expandName=p)
+        return mc.workspace(expandName=p)
 
     def capture(self, increment=True, quick=True, sendToRv=False):
         # BUG pas de son alors que son present dans la scene
@@ -646,8 +721,8 @@ class SceneManager():
             bWasLocked = oCamRef.refNode.getAttr("locked")
             mop.setReferenceLocked(oCamRef, False)
 
-        bImgPlnViz = mop.isImgPlaneVisible()
-        mop.setImgPlaneVisible(False)
+        #bImgPlnViz = mop.isImgPlaneVisible()
+        #mop.setImgPlaneVisible(False)
 
         savedHudValues = createHUD()
 
@@ -655,7 +730,7 @@ class SceneManager():
             oShotCam = pc.PyNode(sShotCam)
             oShotCam.setAttr('aspectRatio', 1.85)
 
-            oImgPlaneCam = mop.getImagePlaneItems(create=False)[1]
+            _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
             mop.arrangeViews(oShotCam, oImgPlaneCam)
             pc.refresh()
 
@@ -673,7 +748,7 @@ class SceneManager():
 
             restoreHUD(savedHudValues)
 
-            mop.setImgPlaneVisible(bImgPlnViz)
+            #mop.setImgPlaneVisible(bImgPlnViz)
 
         sCmd = ""
         bShell = False
@@ -705,13 +780,13 @@ class SceneManager():
             return
 
         sgTask = self.context['task']
-        s_inFileTag = fileFromTask(sgTask)
-        if not s_inFileTag:
+        sRcName = rcFromTask(sgTask)
+        if not sRcName:
             return
 
         path = None
         try:
-            path = damEntity.getPath('public', s_inFileTag)
+            path = damEntity.getPath('public', sRcName)
         except Exception, e:
             pc.warning('damProject.getPath failed : {0}'.format(e))
 
@@ -777,8 +852,8 @@ class SceneManager():
             iversion = int(version) + 1
 
             newpath = os.path.join(rootPath, vSplit[0] + ".{0:03}.ma".format(iversion))
-            cmds.file(rename=newpath)
-            cmds.file(save=True)
+            mc.file(rename=newpath)
+            mc.file(save=True)
         else:
             privFile = entry.edit(openFile=not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
 
@@ -999,7 +1074,7 @@ class SceneManager():
             mop.reArrangeAssets()
 
         if len(errorL):
-            cmds.confirmDialog(title='Error',
+            mc.confirmDialog(title='Error',
                                message="Could not import:\n{0}".format("\n".join(errorL)),
                                button=['OK'],
                                defaultButton='OK',
@@ -1075,33 +1150,21 @@ class SceneManager():
         return duration
 
     def mkShotCamNamespace(self):
-        return 'cam_{0}'.format(self.context['entity']['code'].lower())
+        return mop.mkShotCamNamespace(self.context['entity']['code'].lower())
 
     def getShotCamera(self, fail=False):
-
-        sCamName = self.mkShotCamNamespace() + ":cam_shot_default"
-        sCamList = cmds.ls(sCamName)
-
-        if not sCamList:
-            if fail:
-                raise RuntimeError("Shot Camera not found: '{}'".format(sCamName))
-            return None
-
-        if len(sCamList) == 1:
-            return pc.PyNode(sCamList[0])
-        else:
-            raise RuntimeError("Multiple cameras named '{}'".format(sCamName))
+        return mop.getShotCamera(self.context['entity']['code'].lower(), fail=fail)
 
     def importShotCam(self):
 
         sCamNspace = self.mkShotCamNamespace()
-        if cmds.namespace(exists=sCamNspace):
+        if mc.namespace(exists=sCamNspace):
             raise RuntimeError("Namespace already exists: '{}'".format(sCamNspace))
 
         damCam = self.context["damProject"].getAsset("cam_shot_default")
         camFile = damCam.getResource("public", "scene")
         camFile.mayaImportScene(ns=sCamNspace)
-        cmds.refresh()
+        mc.refresh()
 
         return pc.PyNode(sCamNspace + ":cam_shot_default")
 
@@ -1125,20 +1188,20 @@ class SceneManager():
         sShotCamNs = self.mkShotCamNamespace()
 
         def iterFuture(sAbcNode):
-            sFutureList = cmds.listHistory(sAbcNode, future=True)
+            sFutureList = mc.listHistory(sAbcNode, future=True)
             if sFutureList is not None:
                 for sNode in sFutureList:
                     if sNode != sAbcNode and sNode.startswith(sShotCamNs + ":"):
                         yield sNode
 
         sAbcNodeList = []
-        for sAbcNode in cmds.ls(type="AlembicNode"):
+        for sAbcNode in mc.ls(type="AlembicNode"):
 
             sFuturList = tuple(iterFuture(sAbcNode))
             if not sFuturList:
-                cmds.lockNode(sAbcNode, lock=False)
+                mc.lockNode(sAbcNode, lock=False)
                 print "delete unused '{}'".format(sAbcNode)
-                cmds.delete(sAbcNode)
+                mc.delete(sAbcNode)
             else:
                 sAbcNodeList.append(sAbcNode)
 
@@ -1223,9 +1286,9 @@ class SceneManager():
             mop.setReferenceLocked(oFileRef, False)
 
         try:
-            cmds.select(sCamAstGrp)
+            mc.select(sCamAstGrp)
             sAbcPath = abcFile.absPath()
-            cmds.AbcImport(sAbcPath, mode="import", connect=sCamAstGrp)
+            mc.AbcImport(sAbcPath, mode="import", connect=sCamAstGrp)
 
             oAbcNode = self.getShotCamAbcNode()
             if oAbcNode:
@@ -1311,7 +1374,7 @@ def frameInfo():
 
 def cameraInfo():
     infos = (CAPTURE_INFOS['cam_file'],
-             'F {}mm'.format(cmds.getAttr(CAPTURE_INFOS['cam'] + '.focalLength')),)
+             'F {}mm'.format(mc.getAttr(CAPTURE_INFOS['cam'] + '.focalLength')),)
     return " - ".join(s for s in infos if s)
 
 def endFrameInfo():
@@ -1370,10 +1433,10 @@ def deleteHUD(*args, **kwargs):
     # FUNCTION QUI SEMBLE MANQUER, a ajouter quelque part apres le playblast
     # actuellement il y a un bug qui fait que t'as des script qui tournent en permanence dans la scene, et qui plante si
     # ce n'est pas une scene zombie avec une belle camera
-    headsUps = cmds.headsUpDisplay(listHeadsUpDisplays=True)
+    headsUps = mc.headsUpDisplay(listHeadsUpDisplays=True)
     for i in headsUps:
         if "HUD_ZOMB" in i:
             print i
-            cmds.headsUpDisplay(i, rem=True)
+            mc.headsUpDisplay(i, rem=True)
 
 

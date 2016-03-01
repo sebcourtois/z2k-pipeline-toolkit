@@ -489,7 +489,7 @@ def imageResize(inputFilePathName = "", outputFilePathName = "", lod = 4, jpgQua
 
 
 
-def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrongShadEngine = True, preShadNodeType = "lambert", matShadNodeTypeList= ["dmnToon","aiRaySwitch"], matTextureInput = ".outColor", preTextureInput = ".color", gui = True):
+def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrongShadEngine = True, preShadNodeType = "lambert", matShadNodeTypeList= ["dmnToon","aiRaySwitch"], matTextureInput = ".diffuseColor", preTextureInput = ".color", gui = True):
     """
     from a ginven shading engine
     this script assumes the shading tree has 2 different parts:
@@ -640,9 +640,11 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
                 continue        
         else:
             matShadTextInputValue = mc.getAttr(matShadNode+matTextureInput)[0]
+            print "matShadNode: ",matShadNode
+            print "matShadTextInputValue: ",matShadTextInputValue
 
-
-        #get the input texture connection of the preview shading node 
+        #get the input texture connection of the preview shading node
+        rgbSumF= mc.getAttr(preShadNode+preTextureInput)[0][0]+mc.getAttr(preShadNode+preTextureInput)[0][1]+mc.getAttr(preShadNode+preTextureInput)[0][2]
         preShadTextInputConnection = mc.listConnections (preShadNode+preTextureInput, source=True, destination=False)
         if preShadTextInputConnection:
             preShadTextInputConnection = preShadTextInputConnection[-1]
@@ -662,14 +664,15 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
             mc.connectAttr(result+".outColor", preShadNode+preTextureInput, force =True)
             if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: texture file node duplicated".format("Info", shadingEngine)
             conformShaderName(shadingEngine, selectWrongShadEngine = False, verbose = False )
-            #if the color is black replace it with the color from the render shader
-        elif  mc.getAttr(preShadNode+preTextureInput)[0][0]+mc.getAttr(preShadNode+preTextureInput)[0][1]+mc.getAttr(preShadNode+preTextureInput)[0][2] == 0:
+            #if the color is black or white replace it with the color from the render shader
+        elif rgbSumF == 0 or rgbSumF ==3:
             try: 
                 mc.setAttr(preShadNode+preTextureInput, matShadTextInputValue[0], matShadTextInputValue[1],matShadTextInputValue[2], type = "double3")
                 if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: color value inherited".format("Info", shadingEngine)
+                print "#### {:>7}: {:^28} Preview shader processed: color value inherited".format("Info", shadingEngine)
             except: 
                 if verbose == True: print "#### {:>7}: {:^28} Preview shader untouched: color value locked".format("Warning", shadingEngine)
-
+                print "#### {:>7}: {:^28} Preview shader untouched: color value locked".format("Warning", shadingEngine)
 
     if  wrongShadEngine != [] and selectWrongShadEngine == True:
         mc.select(clear = True)

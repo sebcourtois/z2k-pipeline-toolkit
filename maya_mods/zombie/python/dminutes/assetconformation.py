@@ -2,7 +2,6 @@ import maya.cmds as mc
 import pymel.core as pm
 import re
 import string
-import miscUtils
 import os
 
 from pytd.util.logutils import logMsg
@@ -65,7 +64,7 @@ def checkGroupNamingConvention(printInfo = True, inParent = "*"):
 
 
 
-def createSubdivSets():
+def createSubdivSets(GUI = True):
     """
     This function creates a "set_subdiv_init" that gather all the "geo_*" objects found in the scene.
     and bunch of empty sets named "set_subdiv_X" (where X is a digit) are also created.
@@ -73,44 +72,64 @@ def createSubdivSets():
     the user must afterward move the all the "geo_*" objects from the "set_subdiv_init" set to the "set_subdiv_X" depending the level of subdivision that is requiered.
     then, the setSubdiv() procedure must be executed to apply the subdivision to the objects through the shapes attributes  
     """
-    print ""
-    print "#### info: exectute 'createSubdivsets()'"
+    returnB = True
+    logL = []
+
     subdivSets = mc.ls("set_subdiv_*", type = "objectSet")
     subdivPartitions = mc.ls("par_*", type = "partition")
     existingGeo = mc.ls("geo_*", type = "transform")
     subdivSetsInitList = ["set_subdiv_init","set_subdiv_0","set_subdiv_1","set_subdiv_2","set_subdiv_3"]
     if not existingGeo:
-        print "#### error: no 'geo_*' object could be foud in the scene"
-        return
-
+        logMessage = "#### {:>7}: 'createSubdivSets' 'geo_*' object could be foud in the scene".format("Error")
+        if GUI == True: raise ValueError(logMessage)
+        logL.append(logMessage)
+        returnB = False
 
     if "par_subdiv" not in subdivPartitions:
         mc.partition( name="par_subdiv")
 
+    createdSetL=[]
     for eachSet in subdivSetsInitList:
         if eachSet not in subdivSets:
-            print "#### info: creates: "+eachSet
             mc.sets(name=eachSet, empty=True)
             mc.partition( eachSet, add="par_subdiv")
+            createdSetL.append(eachSet)
+
+    if createdSetL:
+        logMessage = "#### {:>7}: 'createSubdivSets' Created {} new subdiv sets : {}".format("Info",len(createdSetL), createdSetL)
+        if GUI == True: print logMessage
+        logL.append(logMessage)
 
     geoInSet = mc.sets(subdivSets, query = True)
     if geoInSet == None: geoInSet = []
 
+    addedGeoToInitSet = []
     for eachGeo in existingGeo:
         if eachGeo not in geoInSet:
             mc.sets(eachGeo, forceElement="set_subdiv_init")
-            print "#### info: add geo to 'set_subdiv_init': "+eachGeo
+            addedGeoToInitSet.append(eachGeo)
+
+    if addedGeoToInitSet:
+        logMessage = "#### {:>7}: 'createSubdivSets' {} geo added to 'set_subdiv_init': {}".format("Info",len(addedGeoToInitSet),addedGeoToInitSet)
+        if GUI == True: print logMessage
+        logL.append(logMessage)
+
+    if not logL:
+        logMessage = "#### {:>7}: 'createSubdivSets' Nothing done".format("Info")
+        if GUI == True: print logMessage
+        logL.append(logMessage)
+
+    return dict(returnB=returnB, logL=logL)
 
      
-def setSubdiv(GUI= True):
+def setSubdiv(GUI= True ):
     """
     creates 'smoothLevel1' and 'smoothLevel2' extra attributes on the 'grp_geo' 
     and connect them to the smoothLevel (preview subdiv level) of the geo shapes
     """
     returnB = True
     logL = []
-    processedTransL =[]
-    skippedTransL =[]
+
 
     if not mc.ls("|asset|grp_geo", l = True):
         logMessage = "#### {:>7}: 'setSubdiv' No '|asset|grp_geo' found".format("Error")
@@ -135,7 +154,8 @@ def setSubdiv(GUI= True):
         if GUI == True: raise ValueError(logMessage)
         logL.append(logMessage)
         returnB = False
-
+    processedTransL =[]
+    skippedTransL =[]
     for eachSetSubdiv in subdivSets:
         geoInSet = mc.ls(mc.sets(eachSetSubdiv, query = True),l=True)
         if not geoInSet: geoInSet = []       
@@ -143,15 +163,15 @@ def setSubdiv(GUI= True):
             subdivLevel =  int(eachSetSubdiv.split("set_subdiv_")[1])
             previewSubdivLevel = subdivLevel    
             if  0 <= subdivLevel <=9 :
-
                 for eachGeo in geoInSet:
                     if mc.nodeType(eachGeo)!="mesh":
                         eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)[0]
                     eachGeoParentL = mc.listRelatives(eachGeoShape, allParents = True, fullPath = True)
                     if not set(eachGeoParentL) & set(processedTransL):
-                        mc.setAttr(eachGeoShape+".displaySmoothMesh",2)
+                        mc.setAttr(eachGeoShape+".displaySmoothMesh",0)
                         mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
                         mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
+                        mc.setAttr(eachGeoShape+".useGlobalSmoothDrawType",1)
                         if previewSubdivLevel == 1:
                             mc.connectAttr("|asset|grp_geo.smoothLevel1", eachGeoShape+".smoothLevel", f=True)
                         if previewSubdivLevel > 1:
@@ -167,6 +187,10 @@ def setSubdiv(GUI= True):
                         processedTransL.append(eachGeo)
                     else:
                         skippedTransL.append(eachGeo)
+          
+    mc.setAttr("|asset|grp_geo.smoothLevel1", 1)
+    mc.setAttr("|asset|grp_geo.smoothLevel2", 2)
+    
     if processedTransL and not skippedTransL:
         logMessage = "#### {:>7}: 'setSubdiv' {} meshes processed".format("Info", len(processedTransL))
         if GUI == True: print logMessage
@@ -178,11 +202,12 @@ def setSubdiv(GUI= True):
 
     if "set_subdiv_init" in subdivSets and mc.sets("set_subdiv_init", query = True) != None:
         logMessage = "#### {:>7}: 'setSubdiv' A geo object is still in the 'set_subdiv_init', please asssign it to a 'set_subdiv*'".format("Error")
-        if GUI == True: raise ValueError(logMessage)
+        if GUI == True: mc.confirmDialog( title='Error:', message=logMessage, button=['Ok'], defaultButton='Ok' )
         logL.append(logMessage)
         returnB = False
 
     return dict(returnB=returnB, logL=logL)
+
 
 
 
@@ -492,7 +517,7 @@ class Asset_File_Conformer:
         if targetObjects == "set_meshCache" or isinstance(targetObjects, (list,tuple,set)):
             if targetObjects == "set_meshCache":
                 if mc.ls("set_meshCache"):
-                    targetObjects = mc.sets('set_meshCache',q=True)
+                    targetObjects = mc.ls(mc.sets("set_meshCache",q=1),l=1)
                 else:
                     print ("#### {:>7}: no 'set_meshCache' could be found".format("Error"))
                     errorOnTarget = errorOnTarget + 1
@@ -510,7 +535,8 @@ class Asset_File_Conformer:
                     errorOnTarget = errorOnTarget + 1
 
             for eachTarget in self.targetList:
-                eachSource = sourceFile+":"+("|"+sourceFile+":").join(eachTarget.split("|"))
+                #eachSource = sourceFile+":"+("|"+sourceFile+":").join(eachTarget.split("|"))
+                eachSource = ("|"+sourceFile+":").join(eachTarget.split("|"))
 
                 if mc.ls(eachSource):
                     if mc.nodeType (eachSource)!= "transform":
@@ -741,7 +767,6 @@ class Asset_File_Conformer:
                         if verbose: print "#### {:>7}: Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
         print ("#### {:>7}: name space removed from {} shading nodes(s)".format("Info",renamedShadNodeNb))
         mc.refresh()
-
 
 
     def disconnectAiMaterials(self):
