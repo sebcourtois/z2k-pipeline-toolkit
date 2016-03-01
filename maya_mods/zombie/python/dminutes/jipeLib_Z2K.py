@@ -1737,7 +1737,7 @@ def chr_rename_Teeth_BS_attribs(*args, **kwargs):
     return True,debugL
 
 
-
+# wip
 def chr_TongueFix(*args, **kwargs):
     print "chr_TongueFix()"
     # WIP 
@@ -1920,6 +1920,7 @@ def chr_changeCtrDisplays(*args, **kwargs):
         Return : [BOOL,LIST]
         Dependencies : cmds - 
     """
+    print "chr_changeCtrDisplays()"
     debugL = []
 
     canDo = True
@@ -2022,6 +2023,19 @@ def chr_changeCtrDisplays(*args, **kwargs):
     return True,debugL
 
 
+def chr_neckBulge_Factor_to_zero(*args, **kwargs):
+    """ Description: met le neck bulge factor à 0
+        Return : BOOL
+        Dependencies : cmds - 
+    """
+    print "chr_neckBulge_Factor_to_zero()"
+
+    if cmds.objExists("Head_ParamHolder_Main_Ctrl.Neck_Bulge_Factor"):
+        cmds.setAttr("Head_ParamHolder_Main_Ctrl.Neck_Bulge_Factor",0)
+    return True
+
+
+    
 def chr_teeth_Noze_BS_Fix(*args, **kwargs):
     print "chr_teeth_squeezFix()"
 
@@ -2037,3 +2051,8 @@ def chr_teeth_Noze_BS_Fix(*args, **kwargs):
     # apply .bsd file
 
     # delete importe objects
+
+def armTwistFix (*args, **kwargs):
+    print "armTwistFix()"
+
+    # Left_Rounding_Deformer_End_Crv_upV_pathCns_Mult1 #tweak rotation
