@@ -1091,7 +1091,7 @@ def createShadingGroup():
     transformMeshList = []
     selection = mc.ls( selection=True, l=True)
     for each in selection:
-        meshList = miscUtils.getAllTransfomMeshes(inParent = each)
+        meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = each)
         for eachMesh in meshList:
             transformMeshList.append(eachMesh)
     if not transformMeshList:
@@ -1108,6 +1108,7 @@ def createShadingGroup():
         return
 
     for each in transformMeshList:
+        print "each: ", each
         myName = each.split("|")[-1].lstrip("geo_")
         mynameSplit = myName.split("_")
         if len(mynameSplit)==2:
