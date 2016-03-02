@@ -699,11 +699,25 @@ class Asset_File_Conformer:
                         uvTransferFailed +=1
                         continue
 
+
+                setBackVisibOn = False
+
                 #print sourceShape+" --> "+targetShape
-                if shapeOrig == True: mc.setAttr(targetShape+".intermediateObject", 0)
-                mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                if shapeOrig == True: 
+                    mc.setAttr(targetShape+".intermediateObject", 0)
+                    mc.setAttr(targetShape+".visibility", 1)
+                    mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                    mc.setAttr(targetShape+".intermediateObject", 1)
+                else:
+                    if mc.getAttr(targetShape+".visibility") == 0:
+                        mc.setAttr(targetShape+".visibility", 1) 
+                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                        mc.setAttr(targetShape+".visibility", 0) 
+                    else:
+                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+
                 mc.delete(targetShape, constructionHistory = True)
-                if shapeOrig == True: mc.setAttr(targetShape+".intermediateObject", 1)
+
 
             if uvTransferFailed ==0:
                 print "#### {:>7}: UVs has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
