@@ -210,6 +210,33 @@ def setSubdiv(GUI= True ):
 
 
 
+def createSetMeshCache(inParent= "|asset|grp_geo", GUI = True):
+    returnB = True
+    logL = []
+
+    meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = inParent)
+    existingGeoL = list(meshList)
+    existingGeoL.extend(instanceList)
+
+    if not existingGeoL:
+        logMessage = "#### {:>7}: 'createSetMeshCache' geometries could be foud under '{}'".format("Error", inParent)
+        if GUI == True: raise ValueError(logMessage)
+        logL.append(logMessage)
+        returnB = False
+
+    setMeshCacheL = mc.ls("set_meshCache*", type = "objectSet")
+    if setMeshCacheL:
+        mc.delete(setMeshCacheL)
+
+    mc.sets(existingGeoL, name="set_meshCache")
+
+    logMessage = "#### {:>7}: 'createSetMeshCache' updated 'set_meshCache', now includes {} geometries".format("Info",len(existingGeoL))
+    if GUI == True: print logMessage
+    logL.append(logMessage)
+
+    return dict(returnB=returnB, logL=logL)
+
+
 
 def previewSubdiv(enable = True, filter = ""):
     """
