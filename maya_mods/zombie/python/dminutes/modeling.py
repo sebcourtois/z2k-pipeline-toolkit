@@ -1475,6 +1475,45 @@ def compareMeshTopologie(transformL = [], GUI = True, vrtxCnt = True, worldArea 
     return dict(resultB=resultB, logL=logL)
 
 
+def groupEachMesh():
+
+    selL = cmds.ls(selection= True, l=1)
+    if not selL: return
+    newSelL = []
+
+    geoL, insL = miscUtils.getAllTransfomMeshes(inParent = selL, inType = "mesh", recursive = True)
+    geoL.extend(insL)
+    geoL = cmds.ls(geoL, l=1)
+
+    trsL = list(set(selL)&set(geoL))
+
+    for each in trsL:
+        stripedNameS = each.split("|")[-1].replace("geo_","")
+        grpNameS = each.replace(each.split("|")[-1],"grp_"+stripedNameS)
+        grpShortNameS = grpNameS.split("|")[-1]
+        grpParentNameS = each.replace("|"+each.split("|")[-1],"")
+        print "---"
+        print "grpNameS: ", grpNameS
+        print "grpShortNameS: ",grpShortNameS
+        print "grpParentNameS: ",grpParentNameS
+       
+        mtx = cmds.xform( each, q = True, ws = True, matrix = True )
+        cmds.makeIdentity (each ,apply= False, n=0, pn=1)
+
+        createdGrp = cmds.group( each, name = grpShortNameS, parent = grpParentNameS)
+
+        newEachNameS = createdGrp+"|"+each.split("|")[-1]
+        print "newEachNameS: ",newEachNameS
+        cmds.makeIdentity ( newEachNameS,apply= False, n=0, pn=1)
+        cmds.makeIdentity ( newEachNameS,apply= True, n=0, pn=1)
+        newSelL.append(newEachNameS)
+        cmds.xform( createdGrp,  ws = True, matrix = mtx )
+        print "#### {:>7}: 'groupEachMesh' '{}' transforms grouped under their own group".format("Info",len(newSelL))
+
+    if newSelL: cmds.select(newSelL)
+
+
+
 # -------------------------- RIG SUPPLEMENT -------------------------------------------------------------------
 def createPropsControlRecur(inGrp, inRoot, b_inRecursive=True):
     # print"createPropsControlRecur()"

@@ -6,7 +6,7 @@ import subprocess
 import datetime
 
 
-def getAllTransfomMeshes(inParent = "*", inType = "mesh"):
+def getAllTransfomMeshes(inParent = "*", inType = "mesh", recursive = False):
     """
     list all the transforms meshes , under de given 'inParent', 
     by default '*' means that any unreferenced transform mesh in the scene will be listed
@@ -16,6 +16,8 @@ def getAllTransfomMeshes(inParent = "*", inType = "mesh"):
     oParent = mc.ls(inParent, l =True)
     if not oParent:
         raise ValueError("#### error 'getAllTransfomMeshes': No '"+str(inParent)+"' found")
+    elif len(oParent)>1 and recursive:
+        oParent = oParent
     elif inParent != "*":
         oParent = oParent[0]
     else:
@@ -357,6 +359,10 @@ def listColHD(public = False):
 
 
 
+
+
+
+        
 
 
 
