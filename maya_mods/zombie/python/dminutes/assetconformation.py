@@ -986,7 +986,7 @@ class Asset_File_Conformer:
 
 
 
-def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = True,GUI = True):
+def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = True,GUI = True, nameSpaceToKeepL = []):
     """
     this script intend to remove from the scene every node that do not has a link with the selected structure.
     It also clean the empty namespaces
@@ -1008,6 +1008,13 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
         doNotDelete = doNotDelete + mc.ls(type='renderLayer')
     else:
         mc.editRenderLayerGlobals( currentRenderLayer='defaultRenderLayer' )    
+
+
+    doNotDeleteObjL = []
+    for each in nameSpaceToKeepL:
+        doNotDeleteObjL.extend(mc.ls(each+":*"))
+
+
 
 
     intiSelection = mc.ls(selection = True)
@@ -1049,7 +1056,7 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
     #mc.container (name="asset1", includeNetwork = True, includeShaders=True, includeHierarchyBelow=True, includeTransform=True, preview=True, addNode= struct2CleanList, force= True)
     #myAssetNodeList = mc.ls(selection = True)+doNotDelete
 
-    toDelete = list(set(mc.ls()) - set(myAssetNodeList)-set(mc.ls(lockedNodes = True))-set(mc.ls(referencedNodes = True))-set(mc.ls(type = "reference"))-set(undeletable))
+    toDelete = list(set(mc.ls()) - set(myAssetNodeList)-set(mc.ls(lockedNodes = True))-set(mc.ls(referencedNodes = True))-set(mc.ls(type = "reference"))-set(doNotDeleteObjL)-set(undeletable))
     if toDelete:
         mc.delete(toDelete)
         deletedNodes = deletedNodes + len(toDelete)
