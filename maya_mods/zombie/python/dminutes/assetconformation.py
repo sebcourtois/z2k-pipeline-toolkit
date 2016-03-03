@@ -210,6 +210,33 @@ def setSubdiv(GUI= True ):
 
 
 
+def createSetMeshCache(inParent= "|asset|grp_geo", GUI = True):
+    returnB = True
+    logL = []
+
+    meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = inParent)
+    existingGeoL = list(meshList)
+    existingGeoL.extend(instanceList)
+
+    if not existingGeoL:
+        logMessage = "#### {:>7}: 'createSetMeshCache' geometries could be foud under '{}'".format("Error", inParent)
+        if GUI == True: raise ValueError(logMessage)
+        logL.append(logMessage)
+        returnB = False
+
+    setMeshCacheL = mc.ls("set_meshCache*", type = "objectSet")
+    if setMeshCacheL:
+        mc.delete(setMeshCacheL)
+
+    mc.sets(existingGeoL, name="set_meshCache")
+
+    logMessage = "#### {:>7}: 'createSetMeshCache' updated 'set_meshCache', now includes {} geometries".format("Info",len(existingGeoL))
+    if GUI == True: print logMessage
+    logL.append(logMessage)
+
+    return dict(returnB=returnB, logL=logL)
+
+
 
 def previewSubdiv(enable = True, filter = ""):
     """
@@ -672,11 +699,25 @@ class Asset_File_Conformer:
                         uvTransferFailed +=1
                         continue
 
+
+                setBackVisibOn = False
+
                 #print sourceShape+" --> "+targetShape
-                if shapeOrig == True: mc.setAttr(targetShape+".intermediateObject", 0)
-                mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                if shapeOrig == True: 
+                    mc.setAttr(targetShape+".intermediateObject", 0)
+                    mc.setAttr(targetShape+".visibility", 1)
+                    mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                    mc.setAttr(targetShape+".intermediateObject", 1)
+                else:
+                    if mc.getAttr(targetShape+".visibility") == 0:
+                        mc.setAttr(targetShape+".visibility", 1) 
+                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                        mc.setAttr(targetShape+".visibility", 0) 
+                    else:
+                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+
                 mc.delete(targetShape, constructionHistory = True)
-                if shapeOrig == True: mc.setAttr(targetShape+".intermediateObject", 1)
+
 
             if uvTransferFailed ==0:
                 print "#### {:>7}: UVs has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))

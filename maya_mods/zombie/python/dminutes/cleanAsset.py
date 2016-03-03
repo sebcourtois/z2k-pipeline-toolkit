@@ -36,6 +36,7 @@ def cleanAsset (GUI = True):
 
 
     baseMessageS="cleaning prosses will:\n    - delete AOVs,\n    - delete unknown nodes,\n    - fix materialInfo nodes,\n    - delete all color sets,"
+    baseMessage2S ="cleaning prosses will:\n    - delete unknown nodes,\n    - fix materialInfo nodes,\n    - delete all color sets,"
     if GUI == False: answer = "Proceed"
 
 
@@ -106,6 +107,7 @@ def cleanAsset (GUI = True):
                 assetconformation.setSubdiv()
 
 
+
     elif fileType == "master":
             if GUI == True:
                 msgS = baseMessageS+"""
@@ -126,13 +128,21 @@ def cleanAsset (GUI = True):
                 assetconformation.setSubdiv()
 
     elif fileType == "render":
-            if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message="cleaning prosses will:\n    - delete unknown nodes,\n    - fix materialInfo nodes,\n    - delete all color sets,\n    - apply set subdiv,\n    - delete geo history,\n    - delete all unused nodes (not connected to an asset dag node), render layers will not be removed", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+            if GUI == True: 
+                msgS = baseMessage2S+"""
+    - delete geo history,\n    - make all mesh unique,\n    - conform mesh shapes names,\n    - create set subdiv,\n    - apply set subdiv,\n    - create 'set_meshCache',   
+    - delete all unused nodes (unconnected to an asset dag node), except render layers"""
+                answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 miscUtils.deleteUnknownNodes()
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
                 modeling.geoGroupDeleteHistory()
+                modeling.makeAllMeshesUnique(inParent="|asset|grp_geo")
+                modeling.meshShapeNameConform(inParent = "|asset|grp_geo")
                 assetconformation.softClean(keepRenderLayers = False)
                 assetconformation.setSubdiv()
+                assetconformation.createSubdivSets()
+                assetconformation.createSetMeshCache()
 
     return resultB, logL
