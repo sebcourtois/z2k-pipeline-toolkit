@@ -4,10 +4,10 @@
 
 import os
 import subprocess
+from functools import partial
 
 import maya.cmds as mc
 import pymel.core
-pc = pymel.core
 
 from pytd.util.fsutils import pathResolve
 from pytd.util.sysutils import inDevMode, timer
@@ -19,6 +19,8 @@ import dminutes.maya_scene_operations as mop
 from dminutes import sceneManager
 
 osp = os.path
+pc = pymel.core
+
 
 """Global instance of sceneManager Class"""
 SCENE_MANAGER = None
@@ -34,8 +36,7 @@ CURRENT_ENTITY_TASKS = {}
 VERSIONS = {}
 
 ACTION_BUTTONS = []
-ASSETS_QLISTWDG = None
-ASSETS_QGRPBOX = None
+QWIDGETS = {}
 #------------------------------------------------------------------
 #               Main UI Creation/Initialization
 #------------------------------------------------------------------
@@ -45,12 +46,16 @@ def kill():
     global SCENE_MANAGER_DOCK, SCENE_MANAGER_UI
 
     if mc.dockControl(SCENE_MANAGER_DOCK, q=True, exists=True):
-
+        print "deleteUI", SCENE_MANAGER_UI, SCENE_MANAGER_DOCK
+        pc.deleteUI(SCENE_MANAGER_UI)
         pc.deleteUI(SCENE_MANAGER_DOCK)
         return True
 
     if mc.control(SCENE_MANAGER_UI, q=True, exists=True):
+        print "deleteUI", SCENE_MANAGER_UI
         pc.deleteUI(SCENE_MANAGER_UI)
+
+    pc.refresh()
 
     return False
 
@@ -66,7 +71,7 @@ def isVisible():
 
 def sceneManagerUI():
     """Main UI Creator"""
-    global ASSETS_QLISTWDG, ASSETS_QGRPBOX
+    global QWIDGETS
 
     states = dict()
 
@@ -84,14 +89,17 @@ def sceneManagerUI():
             raise ValueError("Bad loaded UI Name: '{}'. Expected: '{}'"
                              .format(sLoadedUi, SCENE_MANAGER_UI))
 
-        sListWdgName = mc.textScrollList("sm_sceneInfo_lb", e=True,
+        sWdgName = mc.textScrollList("sm_sceneInfo_lb", e=True,
                                            removeAll=True,
                                            font="fixedWidthFont",
                                            allowMultiSelection=True)
-        ASSETS_QLISTWDG = pc.ui.toPySideObject(sListWdgName)
+        QWIDGETS["sm_sceneInfo_lb"] = pc.ui.toPySideObject(sWdgName)
 
         sWdgName = mc.control("relatedAssetsGroup", q=True, fullPathName=True)
-        ASSETS_QGRPBOX = pc.ui.toPySideObject(sWdgName)
+        QWIDGETS["relatedAssetsGroup"] = pc.ui.toPySideObject(sWdgName)
+
+        sWdgName = mc.control("smoothGroup", q=True, fullPathName=True)
+        QWIDGETS["smoothGroup"] = pc.ui.toPySideObject(sWdgName)
 
         sState = pc.optionVar.get("Z2K_SM_dockState")
         if sState:
@@ -105,6 +113,8 @@ def sceneManagerUI():
                        allowedArea=['left'], retain=True,
                        label=mc.window(sLoadedUi, q=True, title=True),
                        closeCommand=saveDockState, **states)
+
+#        print sDock, sLoadedUi, mc.control(sLoadedUi, q=True, fullPathName=True)
 
         connectCallbacks()
 
@@ -195,13 +205,18 @@ def refreshContextUI():
     pc.checkBox('sm_imgPlane_chk', edit=True, value=mop.isImgPlaneVisible())
     pc.checkBox('sm_increment_chk', edit=True, value=pc.optionVar.get("Z2K_SM_increment", False))
     pc.checkBox('sm_sendToRv_chk', edit=True, value=pc.optionVar.get("Z2K_SM_sendToRv", False))
+    pc.checkBox('sm_blocking_chk', edit=True, value=pc.playbackOptions(q=True, blockingAnim=True))
 
     bListAssets = pc.optionVar.get("Z2K_SM_listAssets", True)
-    ASSETS_QGRPBOX.setChecked(bListAssets)
+    QWIDGETS["relatedAssetsGroup"].setChecked(bListAssets)
     if bListAssets:
         pc.control('sm_upscene_bt', edit=True, enable=bPublishable)
         pc.control('sm_updb_bt', edit=True, enable=bPublishable)
         pc.control('sm_selectRefs_bt', edit=True, enable=bRcsMatchUp)
+
+    bEnable = pc.optionVar.get("Z2K_SM_smoothOnCapture", False)
+    QWIDGETS["smoothGroup"].setChecked(bEnable)
+    updSmoothOnCaptureState(bEnable, warn=False)
 
 def setContextUI(**kwargs):
     """Initialize UI from scene"""
@@ -330,6 +345,7 @@ def refreshStep(*args, **kwargs):
 
 def connectCallbacks():
     """Connect all ui items events to functions declared in this file"""
+
     pc.button('sm_disconnect_bt', edit=True, c=doDisconnect)
     pc.optionMenu("sm_step_dd", edit=True, cc=doStepChanged)
     pc.optionMenu('sm_categ_dd', edit=True, cc=doCategChanged)
@@ -371,17 +387,60 @@ def connectCallbacks():
 
     pc.button('sm_editCam_bt', edit=True, c=doEditCam)
     pc.checkBox('sm_imgPlane_chk', edit=True, cc=doShowImagePlane)
-    pc.checkBox('sm_increment_chk', edit=True, cc=storeIncrementalSave)
-    pc.checkBox('sm_sendToRv_chk', edit=True, cc=storeAddCaptureToRv)
+    pc.checkBox('sm_increment_chk', edit=True, cc=updIncrementalSaveState)
+    pc.checkBox('sm_sendToRv_chk', edit=True, cc=updAddCaptureToRvState)
+    pc.checkBox('sm_blocking_chk', edit=True, cc=updBlockingAnimState)
 
+    pc.button('sm_smoothAdd_bt', edit=True, c=doAddToSmooth)
+    pc.button('sm_smoothRem_bt', edit=True, c=doDelFromSmooth)
+    pc.button('sm_smoothSelect_bt', edit=True, c=doSelectSmoothed)
 
-    ASSETS_QGRPBOX.clicked[bool].connect(storeRelatedAssetsEnabled)
+    pc.button('sm_clearIncluded_bt', edit=True, c=partial(doClearObjectSet,
+                                                          "set_applySmoothOnCapture"))
+    pc.button('sm_clearExcluded_bt', edit=True, c=partial(doClearObjectSet,
+                                                          "set_ignoreSmoothOnCapture"))
+
+    pc.button('sm_selectIncluded_bt', edit=True, c=partial(doSelectSetMembers,
+                                                          "set_applySmoothOnCapture"))
+    pc.button('sm_selectExcluded_bt', edit=True, c=partial(doSelectSetMembers,
+                                                          "set_ignoreSmoothOnCapture"))
+
+    QWIDGETS["relatedAssetsGroup"].clicked[bool].connect(updRelatedAssetsShown)
+    QWIDGETS["smoothGroup"].clicked[bool].connect(updSmoothOnCaptureState)
 
     pc.button('sm_pouet_bt', edit=True, c=doPouet)
     #buttonName = 'sm_create_bt'
     #pc.button(buttonName, edit=True, c=doCreate)
     #ACTION_BUTTONS.append(buttonName)
 
+def doClearObjectSet(sSetName, bChecked):
+    mop.clearObjectSet(sSetName)
+    updSmoothOnCaptureState()
+
+def doSelectSetMembers(sSetName, bChecked):
+    members = mop.objectSetMembers(sSetName, recursive=False)
+    if members:
+        mc.select(list(members))
+    else:
+        pc.displayWarning("Nothing to select.")
+
+def doSelectSmoothed(*args):
+
+    smoothData = updSmoothOnCaptureState()
+
+    if not smoothData:
+        pc.displayWarning("Nothing to select.")
+        return
+
+    mc.select(smoothData.keys())
+
+def doDelFromSmooth(*args):
+    mop.delFromSmooth()
+    updSmoothOnCaptureState()
+
+def doAddToSmooth(*args):
+    mop.addToSmooth()
+    updSmoothOnCaptureState()
 
 def doShowInShotgun(*args):
     SCENE_MANAGER.showInShotgun()
@@ -411,15 +470,31 @@ def doShowSequenceInRv(*args):
 def doShowImagePlane(bShow):
     mop.setImgPlaneVisible(bShow)
 
-def storeIncrementalSave(bEnable):
+def updBlockingAnimState(bEnable):
+    pc.playbackOptions(e=True, blockingAnim=bEnable)
+
+def updIncrementalSaveState(bEnable):
     pc.optionVar["Z2K_SM_increment"] = bEnable
 
-def storeAddCaptureToRv(bEnable):
+def updAddCaptureToRvState(bEnable):
     pc.optionVar["Z2K_SM_sendToRv"] = bEnable
 
-def storeRelatedAssetsEnabled(bEnable):
-    pc.optionVar["Z2K_SM_listAssets"] = bEnable
+def updSmoothOnCaptureState(bEnable=None, warn=True):
 
+    if bEnable is not None:
+        pc.optionVar["Z2K_SM_smoothOnCapture"] = bEnable
+    else:
+        bEnable = pc.optionVar.get("Z2K_SM_smoothOnCapture", False)
+
+    if bEnable:
+        smoothData, numFaces = mop.listSmoothableMeshes(project=SCENE_MANAGER.context["damProject"],
+                                                        warn=warn)
+        QWIDGETS["smoothGroup"].setTitle("Smooth On Capture ({} meshes - {:,} faces)"
+                                         .format(len(smoothData), numFaces))
+        return smoothData
+
+def updRelatedAssetsShown(bEnable):
+    pc.optionVar["Z2K_SM_listAssets"] = bEnable
     doRefreshSceneInfo()
 
 def doDisconnect(*args):
@@ -427,7 +502,7 @@ def doDisconnect(*args):
     sceneManagerUI()
 
 def doStepChanged(*args, **kwargs):
-    #print args
+
     bUpdSg = kwargs.get("updateStep", True)
 
     prevStep = SCENE_MANAGER.context.get('step')
@@ -554,11 +629,10 @@ FILEREFS_FOR_LINE = {}
 
 def doSelectRefs(*args):
 
-    global ASSETS_QLISTWDG
-
+    sceneInfoWdg = QWIDGETS["sm_sceneInfo_lb"]
     sSelList = []
     count = 0
-    for item in ASSETS_QLISTWDG.selectedItems():
+    for item in sceneInfoWdg.selectedItems():
 
         for oFileRef in item.data(32):
 
@@ -591,9 +665,11 @@ def doRefreshSceneInfo(*args):
     """Displays the comparison of shotgun and active scene Assets"""
     logMsg(log='all')
 
-    global FILEREFS_FOR_LINE, ASSETS_QLISTWDG
+    global FILEREFS_FOR_LINE
 
-    ASSETS_QLISTWDG.clear()
+    sceneInfoWdg = QWIDGETS["sm_sceneInfo_lb"]
+
+    sceneInfoWdg.clear()
     pc.refresh()
 
     if not pc.optionVar.get("Z2K_SM_listAssets", True):
@@ -667,8 +743,8 @@ def doRefreshSceneInfo(*args):
         sRowFmt = "|".join(rowFmts[:c])
         sLine = sRowFmt.format(*rowData[:c])
 
-        ASSETS_QLISTWDG.addItem(sLine)
-        item = ASSETS_QLISTWDG.item(ASSETS_QLISTWDG.count() - 1)
+        sceneInfoWdg.addItem(sLine)
+        item = sceneInfoWdg.item(sceneInfoWdg.count() - 1)
         item.setData(32, oFileRefList)
 
         itemList.append(item)
@@ -706,9 +782,14 @@ def doCapture(*args , **kwargs):
 
     bQuick = kwargs.get("quick", False)
     if bQuick or SCENE_MANAGER.assertScenePublishable():
+
         bIncrement = pc.checkBox('sm_increment_chk', query=True, value=True)
         bSend = pc.checkBox('sm_sendToRv_chk', query=True, value=True)
-        SCENE_MANAGER.capture(bIncrement, quick=bQuick, sendToRv=bSend)
+        smoothData = updSmoothOnCaptureState()
+
+        SCENE_MANAGER.capture(bIncrement, quick=bQuick, sendToRv=bSend,
+                              smoothData=smoothData)
+
 #        if not bQuick:
 #            doRefreshSceneInfo(args)
     else:
@@ -802,3 +883,4 @@ def doPouet(*args, **kwargs):
     print "pouet"
     for i, j in  SCENE_MANAGER.context.iteritems():
         print "    ", i, j
+
