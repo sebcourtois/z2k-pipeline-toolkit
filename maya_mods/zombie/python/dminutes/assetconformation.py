@@ -700,23 +700,28 @@ class Asset_File_Conformer:
                         uvTransferFailed +=1
                         continue
 
-
+                # sampleSpace: Selects which space the attribute transfer is performed in. 
+                # 0 is world space, (default)
+                # 1 is model space, 
+                # 4 is component-based, 
+                # 5 is topology-based
 
                 #print ("#### {:>7}: 'transferUV' from '{}' --> {}".format("Drebug",sourceShape,targetShape))
+                sampleSpace = 4
                 if shapeOrig == True: 
                     mc.setAttr(targetShape+".intermediateObject", 0)
                     mc.setAttr(targetShape+".visibility", 1)
-                    mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                    mc.transferAttributes( sourceShape, targetShape, sampleSpace=sampleSpace, transferUVs=2 )
                     mc.delete(targetShape, constructionHistory = True)
                     mc.setAttr(targetShape+".intermediateObject", 1)
                 else:
                     if mc.getAttr(targetShape+".visibility") == 0:
                         mc.setAttr(targetShape+".visibility", 1) 
-                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=sampleSpace, transferUVs=2 ) 
                         mc.delete(targetShape, constructionHistory = True)
                         mc.setAttr(targetShape+".visibility", 0) 
                     else:
-                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=sampleSpace, transferUVs=2 )
                         mc.delete(targetShape, constructionHistory = True)
 
 
