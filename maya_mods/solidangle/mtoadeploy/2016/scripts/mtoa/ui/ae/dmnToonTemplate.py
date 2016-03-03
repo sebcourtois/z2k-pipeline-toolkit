@@ -51,6 +51,10 @@ class AEdmnToonTemplate(ShaderAETemplate):
         self.addControl('reflection_roughness', label='Roughness')
         self.addControl('reflection_look_at_fast', label='Look at Fast Shader')
         self.addControl('max_internal_reflection', label='Max Internal Reflection')
+        self.addControl('reflection_max_dist', label='Max Dist')
+        self.addControl('reflection_max_dist_falloff', label='Max Dist Falloff')
+        self.addControl('reflection_local_env', label='Local Env')
+        self.addControl('reflection_env_color', label='Env Color')
 
         self.endLayout()
 

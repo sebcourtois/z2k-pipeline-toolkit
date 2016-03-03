@@ -210,6 +210,33 @@ def setSubdiv(GUI= True ):
 
 
 
+def createSetMeshCache(inParent= "|asset|grp_geo", GUI = True):
+    returnB = True
+    logL = []
+
+    meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = inParent)
+    existingGeoL = list(meshList)
+    existingGeoL.extend(instanceList)
+
+    if not existingGeoL:
+        logMessage = "#### {:>7}: 'createSetMeshCache' geometries could be foud under '{}'".format("Error", inParent)
+        if GUI == True: raise ValueError(logMessage)
+        logL.append(logMessage)
+        returnB = False
+
+    setMeshCacheL = mc.ls("set_meshCache*", type = "objectSet")
+    if setMeshCacheL:
+        mc.delete(setMeshCacheL)
+
+    mc.sets(existingGeoL, name="set_meshCache")
+
+    logMessage = "#### {:>7}: 'createSetMeshCache' updated 'set_meshCache', now includes {} geometries".format("Info",len(existingGeoL))
+    if GUI == True: print logMessage
+    logL.append(logMessage)
+
+    return dict(returnB=returnB, logL=logL)
+
+
 
 def previewSubdiv(enable = True, filter = ""):
     """
@@ -634,13 +661,14 @@ class Asset_File_Conformer:
 
 
     def transferUV(self):
+
         if self.sourceTargetListMatch == True:
             i = -1
             uvTransferFailed = 0
             while i < len(self.targetList)-1:
                 i+=1
                 shapeOrig = False
-                sourceShapeList = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
+                sourceShapeList = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
                 if len(sourceShapeList)==0:
                     print ("#### {:>7}: source, no shape coud be found under transform : '{}'".format("Error",self.sourceList[i]))
                     uvTransferFailed +=1
@@ -652,7 +680,7 @@ class Asset_File_Conformer:
                     uvTransferFailed +=1
                     continue
 
-                targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=False)
+                targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
                 if len(targetShapeList)==0:
                     print ("#### {:>7}: target, no shape coud be found under transform: '{}'".format("Error",self.sourceList[i]))
                     uvTransferFailed +=1
@@ -672,11 +700,32 @@ class Asset_File_Conformer:
                         uvTransferFailed +=1
                         continue
 
-                #print sourceShape+" --> "+targetShape
-                if shapeOrig == True: mc.setAttr(targetShape+".intermediateObject", 0)
-                mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
-                mc.delete(targetShape, constructionHistory = True)
-                if shapeOrig == True: mc.setAttr(targetShape+".intermediateObject", 1)
+
+
+                #print ("#### {:>7}: 'transferUV' from '{}' --> {}".format("Drebug",sourceShape,targetShape))
+                if shapeOrig == True: 
+                    mc.setAttr(targetShape+".intermediateObject", 0)
+                    mc.setAttr(targetShape+".visibility", 1)
+                    mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                    mc.delete(targetShape, constructionHistory = True)
+                    mc.setAttr(targetShape+".intermediateObject", 1)
+                else:
+                    if mc.getAttr(targetShape+".visibility") == 0:
+                        mc.setAttr(targetShape+".visibility", 1) 
+                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                        mc.delete(targetShape, constructionHistory = True)
+                        mc.setAttr(targetShape+".visibility", 0) 
+                    else:
+                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                        mc.delete(targetShape, constructionHistory = True)
+
+
+            # targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
+            # targetShapeList.remove(targetShape)
+            # for each in targetShapeList:
+            #     if mc.getAttr(each+".intermediateObject") == 1 and not mc.listConnections( each+".inMesh",source=True) and "ShapeOrig" in each:
+            #         shapeOrigList.append(each)
+
 
             if uvTransferFailed ==0:
                 print "#### {:>7}: UVs has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
@@ -686,6 +735,8 @@ class Asset_File_Conformer:
         else:
             print "#### {:>7}: cannot transfer uvs, target and source list mismatch".format("Error")
             return False
+
+
 
         if uvTransferFailed == 0:
             return True
@@ -743,7 +794,6 @@ class Asset_File_Conformer:
         else:
             print "#### {:>7}: cannot transfer materials, target and source list mismatch".format("Error")
             return False
-
         if sgTransferFailed == 0:
             return True
         else:
@@ -882,7 +932,6 @@ class Asset_File_Conformer:
     def deleteUnusedShadingNodes(self):
         # mc.select("persp")
         # mc.select(clear=True)
-        mc.refresh()
 
         ignoredShadEngL = [u'initialParticleSE', u'initialShadingGroup']
         ignoredNodeTypeL = [u'colorManagementGlobals', u'mesh']
@@ -1094,6 +1143,7 @@ def fixMaterialInfo (shadingEngineL = [], GUI = True):
     logL = []
     fixedEhadingEngineL=[]
 
+
     if not shadingEngineL:
         shadingEngineL = mc.ls(type='shadingEngine')
         if "initialParticleSE" in shadingEngineL: shadingEngineL.remove("initialParticleSE")
@@ -1111,6 +1161,7 @@ def fixMaterialInfo (shadingEngineL = [], GUI = True):
     logMessage ="#### {:>7}: 'fixMaterialInfo' regenerated materialInfo for {} SE nodes: {}".format("Info",len(fixedEhadingEngineL),fixedEhadingEngineL)
     if GUI == True: print logMessage
     logL.append(logMessage)
+
 
     return [returnB, logL]
 

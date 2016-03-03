@@ -71,7 +71,7 @@ reload(Z2K_check_ANIM_SET)
 # render checks
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_checks as  Z2K_check_RENDER
 reload(Z2K_check_RENDER)
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_checks as  Z2K_check_RENDER_SET  # script à remplacer par le vrai
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_SET_checks as  Z2K_check_RENDER_SET  # script à remplacer par le vrai
 reload(Z2K_check_RENDER_SET)
 
 

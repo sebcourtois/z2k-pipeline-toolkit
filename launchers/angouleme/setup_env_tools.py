@@ -5,6 +5,11 @@ import sys
 sys.path.append(osp.join(osp.dirname(__file__), ".."))
 from ztk_setup import Z2kToolkit
 
+#Nouveau chemins:
+#\\tatooine\zombidamas\zomb
+#\\tatooine\zombidamas\private
+
+
 # Common envs, may be different for each studio
 ENVS = {
         "ZOMB_ASSET_LOC":"\\\\ZOMBILLENIUM\\ZOMBIDAMAS",
