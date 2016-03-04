@@ -421,22 +421,25 @@ def OverideColor(theColor, mode="normal",TheSel = None, *args):
     else :
         cursel = GetSel()
     for obj in cursel:
-        shapeNodes = cmds.listRelatives(obj, shapes=True, path=True)
-        print " shapeNodes = ", shapeNodes
-        if type(shapeNodes) is not list:
-            shapeNodes = [shapeNodes]
-            print shapeNodes
-        
+        if cmds.objExists(obj):
+            shapeNodes = cmds.listRelatives(obj, shapes=True, path=True)
+            print " shapeNodes = ", shapeNodes
+            if type(shapeNodes) is not list:
+                shapeNodes = [shapeNodes]
+                print shapeNodes
             
-        for shape in shapeNodes:
-            try:
-                print " shape = ", shape
-                if shape in [ None,"None" ]:
-                    shape = obj
-                cmds.setAttr("%s.overrideEnabled" % (shape), EnableSwith)
-                cmds.setAttr("%s.overrideColor" % (shape), theColor)
-            except Exception, err:
-                print "erreur :", Exception, err
+                
+            for shape in shapeNodes:
+                try:
+                    print " shape = ", shape
+                    if shape in [ None,"None" ]:
+                        shape = obj
+                    cmds.setAttr("%s.overrideEnabled" % (shape), EnableSwith)
+                    cmds.setAttr("%s.overrideColor" % (shape), theColor)
+                except Exception, err:
+                    print "erreur :", Exception, err
+        else:
+            print "  object doesn't exist:",obj
     # print "theColor = ",theColor
     return theColor
 
@@ -1585,6 +1588,15 @@ def deleteActiveBlendShape_grp(*args, **kwargs):
     except Exception,err:
        print err
 
+    gp="imported_gp"
+    gpb = "BS_ACTIVES_grp"
+    if cmds.objExists(gp) ==True and cmds.objExists(gpb)==True:
+        if cmds.listRelatives(gp,c=1,type="transform")[0] in [gpb]:
+            print"a"
+            try:
+                cmds.delete(gp)
+            except Exception,err:
+                print err
     return True
 
 def get_BS_TargetObjD(BS_Node="",*args, **kwargs):
@@ -1704,7 +1716,7 @@ def chr_UnlockForgottenSRT():
     for obj in scLockL:
         if not cmds.objExists(obj):
             canDo = False
-            # print "BOOOM"
+            print "BOOOM"
     if canDo:
         print "scene valid for scalingFreeman()"
         
@@ -1783,7 +1795,7 @@ def chr_rename_Teeth_BS_attribs(*args, **kwargs):
     return True,debugL
 
 
-# wip
+
 def chr_TongueFix(*args, **kwargs):
     print "chr_TongueFix()"
     # WIP 
@@ -1837,9 +1849,6 @@ def chr_TongueFix(*args, **kwargs):
             debugL.append("Nothing Done")
         
     return True,debugL
-
-
-
 
 
 def chr_CstScaleandOptimFix(bridgeName = "Dn_Teeth_Bridge", RootPrefixeToCut = "TK_",rootL = [],*args, **kwargs):
@@ -1965,8 +1974,6 @@ def chr_chinEarsFix(*args, **kwargs):
     return resultL,debugL
 
 
-
-
 def chr_changeCtrDisplays(*args, **kwargs):
     """ Description: Change les colors des ctrs, et re-ajuste le display de certain ctrs
         Return : [BOOL,LIST]
@@ -2013,9 +2020,9 @@ def chr_changeCtrDisplays(*args, **kwargs):
         print "Tweak Allready done"
         debugL.append("Tweak Allready done")
 
-        for k in greenL+brownLightL+redDarkL:
-            if not cmds.objExists(k):
-                canDo = False
+    # for k in greenL+brownLightL+redDarkL:
+    #     if not cmds.objExists(k):
+    #         canDo = False
 
         
     if canDo:
@@ -2094,8 +2101,7 @@ def chr_neckBulge_Factor_to_zero(*args, **kwargs):
         cmds.setAttr("Head_ParamHolder_Main_Ctrl.Neck_Bulge_Factor",0)
     return True
 
-
-    
+   
 def chr_teeth_Noze_BS_Fix(*args, **kwargs):
     print "chr_teeth_squeezFix()"
 
@@ -2111,6 +2117,7 @@ def chr_teeth_Noze_BS_Fix(*args, **kwargs):
     # apply .bsd file
 
     # delete importe objects
+
 
 def armTwistFix (*args, **kwargs):
     print "armTwistFix()"
