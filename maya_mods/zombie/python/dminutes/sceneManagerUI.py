@@ -810,7 +810,8 @@ def doSwitchContext(*args):
 
     sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
 
-    if SCENE_MANAGER.resourcesMatchUp(sceneInfos):
+    if (SCENE_MANAGER.resourcesMatchUp(sceneInfos)
+        and SCENE_MANAGER.scenePublishable(sceneInfos)):
         pc.warning("Your context is already matching !!")
         return
 
