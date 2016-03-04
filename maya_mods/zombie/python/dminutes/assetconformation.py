@@ -682,7 +682,7 @@ class Asset_File_Conformer:
 
                 targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
                 if len(targetShapeList)==0:
-                    print ("#### {:>7}: target, no shape coud be found under transform: '{}'".format("Error",self.sourceList[i]))
+                    print ("#### {:>7}: target, no shape coud be found under transform: '{}'".format("Error",self.targetList[i]))
                     uvTransferFailed +=1
                     continue
                 elif len(targetShapeList)==1:
@@ -696,7 +696,7 @@ class Asset_File_Conformer:
                         targetShape = shapeOrigList[0]
                         shapeOrig = True
                     else:
-                        print ("#### {:>7}: several 'ShapeOrig' were found under: '{}' transform".format("Error",self.sourceList[i]))
+                        print ("#### {:>7}: several 'ShapeOrig' were found under: '{}' transform".format("Error",self.targetList[i]))
                         uvTransferFailed +=1
                         continue
 
@@ -814,6 +814,7 @@ class Asset_File_Conformer:
             shadEngList = list(set(eachSEList))
             for shadEng in shadEngList:
                 nodeList = mc.ls(mc.listHistory(mc.listConnections(shadEng+'.surfaceShader',connections = False)[0]),l=True) + mc.ls(mc.listHistory(mc.listConnections(shadEng+'.aiSurfaceShader',connections = False)[0]),l=True) + [shadEng]
+                nodeList = list(set(nodeList))
                 for each in nodeList:
                     if ":"in each:
                         mc.lockNode(each, lock=False)
