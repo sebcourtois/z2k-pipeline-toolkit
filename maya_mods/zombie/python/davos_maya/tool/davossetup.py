@@ -104,6 +104,7 @@ class DavosSetup(ToolSetup):
         pmu.putEnv("DAVOS_FILE_CHECK", "1")
 
         pm.colorManagementPrefs(e=True, cmEnabled=False)
+        pm.polyOptions(newPolymesh=True, smoothDrawType=0)
 
         if not pm.about(batch=True):
             if not pm.stackTrace(q=True, state=True):

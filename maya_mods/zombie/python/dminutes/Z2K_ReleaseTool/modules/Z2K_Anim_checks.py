@@ -564,7 +564,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=8, e=True)
+        self.pBar_upd(step=1, maxValue=10, e=True)
 
 
         # 1 connectVisibility ()
@@ -672,18 +672,32 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
         
 
-        # # 10 ----- chr_TongueFix () WIP
-        # result,debugL = jpZ.chr_TongueFix()
-        # # prints -------------------
-        # self.printF("chr_TongueFix()", st="t")
-        # self.printF(result, st="r")
-        # for debug in debugL:
-        #     self.printF(debug)
-        # # --------------------------
-        # # --------------------------
-        # if not result :
-        #     boolResult = False
-        # self.pBar_upd(step= 1,)
+        # # 09 neck bulge factor to zero
+        result = jpZ.chr_neckBulge_Factor_to_zero()
+        # prints -------------------
+        self.printF("chr_neckBulge_Factor_to_zero()", st="t")
+        self.printF(result, st="r")
+        
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # 10 ----- chr_TongueFix () COULD BE BETTER
+        result,debugL = jpZ.chr_TongueFix()
+        # prints -------------------
+        self.printF("chr_TongueFix()", st="t")
+        self.printF(result, st="r")
+        for debug in debugL:
+            self.printF(debug)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
 
 
 

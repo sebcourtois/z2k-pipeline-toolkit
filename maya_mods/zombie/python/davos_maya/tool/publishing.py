@@ -26,6 +26,7 @@ from pytd.util.sysutils import toStr, inDevMode, timer
 from pytd.gui.dialogs import confirmDialog
 from pytd.util.fsutils import normCase
 from davos.core.damtypes import DamAsset
+from pytaya.tool import cleaning
 #from pytd.util.fsutils import pathRelativeTo
 
 osp = os.path
@@ -203,12 +204,17 @@ def publishSceneDependencies(damEntity, depScanResults, prePublishInfos, **kwarg
 
     return (not bDryRun)
 
-def quickSceneCleanUp():
+def quickSceneCleanUp(damEntity):
 
     from dminutes import miscUtils
     pm.mel.source("cleanUpScene.mel")
 
-    miscUtils.deleteUnknownNodes()
+    if isinstance(damEntity, DamAsset):
+
+        miscUtils.deleteUnknownNodes()
+
+        cleaning.unsmoothAllMeshes()
+        cleaning.cleanLambert1()
 
     # optimize scene
     pmu.putEnv("MAYA_TESTING_CLEANUP", "1")
@@ -237,19 +243,18 @@ def publishCurrentScene(*args, **kwargs):
     _, curPubFile = proj.assertEditedVersion(sCurScnPath)
     curPubFile.ensureLocked(autoLock=False)
 
-    if isinstance(damEntity, DamAsset):
-        try:
-            quickSceneCleanUp()
-        except Exception as e:
-            sConfirm = confirmDialog(title='INFO !',
-                                     message="Quick cleanup failed !\n\n{0}".format(toStr(e)),
-                                     button=['Continue', 'Cancel'],
-                                     defaultButton='Continue',
-                                     cancelButton='Cancel',
-                                     dismissString='Continue',
-                                     icon="information")
-            if sConfirm == 'Cancel':
-                raise
+    try:
+        quickSceneCleanUp(damEntity)
+    except Exception as e:
+        sConfirm = confirmDialog(title='INFO !',
+                                 message="Quick cleanup failed !\n\n{0}".format(toStr(e)),
+                                 button=['Continue', 'Cancel'],
+                                 defaultButton='Continue',
+                                 cancelButton='Cancel',
+                                 dismissString='Continue',
+                                 icon="information")
+        if sConfirm == 'Cancel':
+            raise
 
     depScanResults = []
     if damEntity and bWithDeps:
