@@ -314,7 +314,7 @@ class checkModule(object):
 
         # 13   checks shaders naming convention
         self.printF("shading: checks shaders naming convention", st="t")
-        resultD = shading.conformShaderNameNew(shadEngineList = [],  GUI = False, checkOnly = True )
+        resultD = shading.checkShaderName(shadEngineList = [],  GUI = False, checkOnly = True )
         # prints -------------------
         self.printF(resultD["resultB"], st="r")
         for each in resultD["logL"]:

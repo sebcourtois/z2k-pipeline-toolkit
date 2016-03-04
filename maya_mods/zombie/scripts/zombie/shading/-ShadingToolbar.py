@@ -53,9 +53,13 @@ def buttonPrintSelTexturePath(*args):
 
 #Conform Shader Names
 def buttonConformAllShaderName(*args):
-	shading.conformShaderName(shadEngineList = 'all')
+	shading.checkShaderName(GUI = True)
 def buttonConformSelShaderName(*args):
-	shading.conformShaderName(shadEngineList = 'selection')
+	selectedSE = mc.ls(selection = True,type = "shadingEngine")
+	if selectedSE:
+		shading.checkShaderName(shadEngineList = selectedSE, GUI = True)
+	else:
+		print "#### {:>7}: 'checkShaderName' no shading engine selected".format("Info")
 
 
 #Conform Shader Masks
