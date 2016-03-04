@@ -5,6 +5,8 @@ import sys
 sys.path.append(osp.join(osp.dirname(__file__), ".."))
 from ztk_setup import Z2kToolkit
 
+
+
 # Common envs, may be different for each studio
 ENVS = {
         "ZOMB_ASSET_LOC":"\\\\Servnas02\\zombidamas",
@@ -16,7 +18,7 @@ ENVS = {
         "ZOMB_TOOL_PATH":"\\\\Servnas02\\zombidamas\\ZOMB\\tool",
         
         "MAYA_MODULE_PATH":"\\\\Servnas02\\z2k\\04_WG_PIPANGAI\\PythonTree",
-        "CUSTOM_CASHBAH": "\\\\Servnas02\\z2k\\04_WG_PIPANGAI\\PythonTree",
+        "CUSTOM_CASHBAH": "\\\\Servnas02\\z2k\\04_WG_PIPANGAI\\PythonTree"
         }
 
 try:
@@ -26,3 +28,5 @@ except Exception,err:
     print "ERROR__",err
     os.environ["PYTHONINSPECT"] = "1"
     raise
+    
+
