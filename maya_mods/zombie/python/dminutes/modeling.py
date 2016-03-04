@@ -493,7 +493,7 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
 
 
 
-
+#DEPRECATED use getSameShortNameMesh{} instead
 def getMeshesWithSameName(inVerbose = True, inParent = "*"):
     """
     list all the meshes that share the same short name, under de given 'inParent', 
@@ -523,6 +523,48 @@ def getMeshesWithSameName(inVerbose = True, inParent = "*"):
         if inVerbose is True:
             print "#### info: 'getMeshesWithSameName': no multiple short names found in '"+str(inParent)+"'"
         return None 
+
+
+def getSameShortNameMesh(GUI = True, inParent = "*"):
+    """
+    list all the meshes that share the same short name, under de given 'inParent', 
+    by default '*' means that any unreferenced mesh in the scene is taken into account
+        - inVerbose (boolean) : print the 'multipleMesh' list
+        - inParent (string) : long name of the parent 
+        - return (list) : multipleMesh
+    """
+    resultB = True
+    logL = []
+    shortNameD = {}
+    
+    # allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+    # allTransMesh.extend(instanceTransformL)
+
+    mc.ls(mc.listRelatives(oParent, allDescendents = True, fullPath = True, type = inType), noIntermediate = True, l=True)
+    multipleMesh = []
+
+    if instanceTransformL:
+        logMessage = "#### {:>7}: 'makeAllMeshesUnique' {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+        logL.append(logMessage)
+        if GUI == True: print logMessage
+
+    for each in allTransMesh:
+        eachShort = each.split("|")[-1]
+        ## if the key exists, adds the value to the attached list
+        if eachShort in shortNameD.keys():
+            elemList = shortNameD.get(eachShort)
+            elemList.append(each)
+        else: ## else creates the list with a single value
+            shortNameD[eachShort] = [each]
+    if shortNameD:
+        resultB = False
+        for key in shortNameD.keys():
+            logMessage = "#### {:>7}: 'getSameShortNameMesh' '{:>3}' object share the same short name: '{}' --> {} ".format("Error", len(shortNameD[key]),key, shortNameD[key])
+            if GUI == True: print logMessage
+            logL.append(logMessage)
+
+    return dict(resultB=resultB, logL=logL, shortNameD = shortNameD)
+
 
 
 def renameMeshAsUnique(myMesh, inParent = "*", GUI = True):
@@ -564,7 +606,7 @@ def renameMeshAsUnique(myMesh, inParent = "*", GUI = True):
         if GUI == True: print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+myMesh+digit
         if myMesh in allTransMesh: meshShapeNameConform(fixShapeName = True, myTransMesh = myMeshNew, forceInfoOff = True)
 
-                        
+#DEPRECATED use makeAllMesheUnique{} instead                        
 def makeAllMeshesUnique(inParent = "*", GUI = True):
     """
     makes all the meshes short names unique by adding a digit and/or incrementing it till the short name is unique in the scene
@@ -602,6 +644,45 @@ def makeAllMeshesUnique(inParent = "*", GUI = True):
     return resultB, logL
 
 
+def makeAllMesheUnique(inParent = "*", GUI = True):
+    """
+    makes all the meshes short names unique by adding a digit and/or incrementing it till the short name is unique in the scene
+    then makes sure the shapes names are corrects
+    """
+    resultB = True
+    logL = []
+
+    resultD = getSameShortNameMesh(GUI=GUI)
+    if resultD['resultB']:
+        logMessage = "#### {:>7}: 'makeAllMesheUnique' no multiple mesh found under '{}' all meshes have unique short name ".format("Info",inParent)
+        logL.append(logMessage)
+        if GUI == True: print logMessage
+        return dict(resultB=resultB, logL=logL)
+
+
+
+
+    multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
+    if multipleMesh :
+        i=0
+        while multipleMesh:
+            renameMeshAsUnique(multipleMesh[0], inParent, GUI= False)
+            multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
+            i = i+1
+            if i>300:
+                print "#### {:>7}: 'makeAllMeshesUnique' while loop has reached the security limit, program has been stopped: {}".format("Error", multipleMesh)
+                break
+    else:
+        if inParent == "*":
+            logMessage =  "#### {:>7}: 'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name".format("Info")
+            logL.append(logMessage)
+            if GUI == True: print logMessage
+        else :
+            logMessage = "#### {:>7}: 'makeAllMeshesUnique' no multiple mesh found under '{}' all meshes have unique short name ".format("Info",inParent)
+            logL.append(logMessage)
+            if GUI == True: print logMessage
+
+    return resultB, logL
 
 
 
