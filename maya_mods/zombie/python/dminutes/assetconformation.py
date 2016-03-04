@@ -661,13 +661,14 @@ class Asset_File_Conformer:
 
 
     def transferUV(self):
+
         if self.sourceTargetListMatch == True:
             i = -1
             uvTransferFailed = 0
             while i < len(self.targetList)-1:
                 i+=1
                 shapeOrig = False
-                sourceShapeList = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
+                sourceShapeList = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
                 if len(sourceShapeList)==0:
                     print ("#### {:>7}: source, no shape coud be found under transform : '{}'".format("Error",self.sourceList[i]))
                     uvTransferFailed +=1
@@ -679,7 +680,7 @@ class Asset_File_Conformer:
                     uvTransferFailed +=1
                     continue
 
-                targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=False)
+                targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
                 if len(targetShapeList)==0:
                     print ("#### {:>7}: target, no shape coud be found under transform: '{}'".format("Error",self.sourceList[i]))
                     uvTransferFailed +=1
@@ -699,24 +700,36 @@ class Asset_File_Conformer:
                         uvTransferFailed +=1
                         continue
 
+                # sampleSpace: Selects which space the attribute transfer is performed in. 
+                # 0 is world space, (default)
+                # 1 is model space, 
+                # 4 is component-based, 
+                # 5 is topology-based
 
-                setBackVisibOn = False
-
-                #print sourceShape+" --> "+targetShape
+                #print ("#### {:>7}: 'transferUV' from '{}' --> {}".format("Drebug",sourceShape,targetShape))
+                sampleSpace = 4
                 if shapeOrig == True: 
                     mc.setAttr(targetShape+".intermediateObject", 0)
                     mc.setAttr(targetShape+".visibility", 1)
-                    mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                    mc.transferAttributes( sourceShape, targetShape, sampleSpace=sampleSpace, transferUVs=2 )
+                    mc.delete(targetShape, constructionHistory = True)
                     mc.setAttr(targetShape+".intermediateObject", 1)
                 else:
                     if mc.getAttr(targetShape+".visibility") == 0:
                         mc.setAttr(targetShape+".visibility", 1) 
-                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=sampleSpace, transferUVs=2 ) 
+                        mc.delete(targetShape, constructionHistory = True)
                         mc.setAttr(targetShape+".visibility", 0) 
                     else:
-                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=1, transferUVs=2 ) #sampleSpace=1, means performed in model space
+                        mc.transferAttributes( sourceShape, targetShape, sampleSpace=sampleSpace, transferUVs=2 )
+                        mc.delete(targetShape, constructionHistory = True)
 
-                mc.delete(targetShape, constructionHistory = True)
+
+            # targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
+            # targetShapeList.remove(targetShape)
+            # for each in targetShapeList:
+            #     if mc.getAttr(each+".intermediateObject") == 1 and not mc.listConnections( each+".inMesh",source=True) and "ShapeOrig" in each:
+            #         shapeOrigList.append(each)
 
 
             if uvTransferFailed ==0:
@@ -727,6 +740,8 @@ class Asset_File_Conformer:
         else:
             print "#### {:>7}: cannot transfer uvs, target and source list mismatch".format("Error")
             return False
+
+
 
         if uvTransferFailed == 0:
             return True
@@ -784,7 +799,6 @@ class Asset_File_Conformer:
         else:
             print "#### {:>7}: cannot transfer materials, target and source list mismatch".format("Error")
             return False
-
         if sgTransferFailed == 0:
             return True
         else:
@@ -923,7 +937,6 @@ class Asset_File_Conformer:
     def deleteUnusedShadingNodes(self):
         # mc.select("persp")
         # mc.select(clear=True)
-        mc.refresh()
 
         ignoredShadEngL = [u'initialParticleSE', u'initialShadingGroup']
         ignoredNodeTypeL = [u'colorManagementGlobals', u'mesh']
@@ -973,7 +986,7 @@ class Asset_File_Conformer:
 
 
 
-def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = True,GUI = True):
+def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = True,GUI = True, nameSpaceToKeepL = []):
     """
     this script intend to remove from the scene every node that do not has a link with the selected structure.
     It also clean the empty namespaces
@@ -995,6 +1008,13 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
         doNotDelete = doNotDelete + mc.ls(type='renderLayer')
     else:
         mc.editRenderLayerGlobals( currentRenderLayer='defaultRenderLayer' )    
+
+
+    doNotDeleteObjL = []
+    for each in nameSpaceToKeepL:
+        doNotDeleteObjL.extend(mc.ls(each+":*"))
+
+
 
 
     intiSelection = mc.ls(selection = True)
@@ -1036,7 +1056,7 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
     #mc.container (name="asset1", includeNetwork = True, includeShaders=True, includeHierarchyBelow=True, includeTransform=True, preview=True, addNode= struct2CleanList, force= True)
     #myAssetNodeList = mc.ls(selection = True)+doNotDelete
 
-    toDelete = list(set(mc.ls()) - set(myAssetNodeList)-set(mc.ls(lockedNodes = True))-set(mc.ls(referencedNodes = True))-set(mc.ls(type = "reference"))-set(undeletable))
+    toDelete = list(set(mc.ls()) - set(myAssetNodeList)-set(mc.ls(lockedNodes = True))-set(mc.ls(referencedNodes = True))-set(mc.ls(type = "reference"))-set(doNotDeleteObjL)-set(undeletable))
     if toDelete:
         mc.delete(toDelete)
         deletedNodes = deletedNodes + len(toDelete)
@@ -1135,6 +1155,7 @@ def fixMaterialInfo (shadingEngineL = [], GUI = True):
     logL = []
     fixedEhadingEngineL=[]
 
+
     if not shadingEngineL:
         shadingEngineL = mc.ls(type='shadingEngine')
         if "initialParticleSE" in shadingEngineL: shadingEngineL.remove("initialParticleSE")
@@ -1152,6 +1173,7 @@ def fixMaterialInfo (shadingEngineL = [], GUI = True):
     logMessage ="#### {:>7}: 'fixMaterialInfo' regenerated materialInfo for {} SE nodes: {}".format("Info",len(fixedEhadingEngineL),fixedEhadingEngineL)
     if GUI == True: print logMessage
     logL.append(logMessage)
+
 
     return [returnB, logL]
 

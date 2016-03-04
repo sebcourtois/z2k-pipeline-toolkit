@@ -116,8 +116,9 @@ class infoSetExp(object):
             f.write(str(self.constructDico()))
 
         # get shot version
-        shotVersion = cmds.file(q=1, sceneName=True, shortName=True).split("-", 1)[1][:4]
-        fromTxt = cmds.file(q=1, sceneName=True, shortName=True).split(".", 1)[0].rsplit("_", 1)[-1]
+        scnFilename = os.path.basename(cmds.file(q=1, l=1)[0])
+        shotVersion = scnFilename.split("-", 1)[1][:4]
+        fromTxt = scnFilename.split(".", 1)[0].rsplit("_", 1)[-1]
         if shotVersion[0]  in ["v"] and not len(shotVersion)in [4]:
             print "* bad version"
             shotVersion = "UNKNWON"

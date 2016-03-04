@@ -110,12 +110,12 @@ def cleanAsset (GUI = True):
 
     elif fileType == "master":
             if GUI == True:
-                msgS = baseMessageS+"""
+                msgS = baseMessage2S+"""
     - delete geo history,\n    - convert branch instanced to leaf instances,\n    - make all mesh unique,\n    - conform mesh shapes names,\n    - create set subdiv,\n    - apply set subdiv,    
     - delete all unused nodes (unconnected to an asset dag node), except render layers"""
                 answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
-                rendering.deleteAovs()
+                #rendering.deleteAovs()
                 miscUtils.deleteUnknownNodes()
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
@@ -123,7 +123,7 @@ def cleanAsset (GUI = True):
                 modeling.convertBranchToLeafInstance(inParent ="grp_geo", GUI = True, mode = "convToLeaf" )
                 modeling.makeAllMeshesUnique(inParent="|asset|grp_geo")
                 modeling.meshShapeNameConform(inParent = "|asset|grp_geo")
-                assetconformation.softClean(keepRenderLayers = False)
+                assetconformation.softClean(keepRenderLayers = False,nameSpaceToKeepL = ["lgtRig"])
                 assetconformation.createSubdivSets()
                 assetconformation.setSubdiv()
 
@@ -140,7 +140,7 @@ def cleanAsset (GUI = True):
                 modeling.geoGroupDeleteHistory()
                 modeling.makeAllMeshesUnique(inParent="|asset|grp_geo")
                 modeling.meshShapeNameConform(inParent = "|asset|grp_geo")
-                assetconformation.softClean(keepRenderLayers = False)
+                assetconformation.softClean(keepRenderLayers = False,nameSpaceToKeepL = ["lgtRig"])
                 assetconformation.setSubdiv()
                 assetconformation.createSubdivSets()
                 assetconformation.createSetMeshCache()

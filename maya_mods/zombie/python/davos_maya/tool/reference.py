@@ -252,6 +252,8 @@ def loadReferencesForAnim(project=None, dryRun=False):
     if not proj:
         proj = projectFromScene()
 
+    astLib = proj.getLibrary("public", "asset_lib")
+
     logItems = []
     numFailure = 0
     numLoaded = 0
@@ -272,7 +274,7 @@ def loadReferencesForAnim(project=None, dryRun=False):
 
         pathData = None
         try:
-            pathData = proj.dataFromPath(sRefPath)
+            pathData = proj.dataFromPath(sRefPath, library=astLib)
         except Exception as e:
             pm.displayWarning(toStr(e))
 
@@ -323,6 +325,42 @@ def loadReferencesForAnim(project=None, dryRun=False):
     sMsg = '\n' + sMsgHeader.center(100, "-") + sSep + sMsgBody + '\n' + sMsgEnd
     print sMsg
     displayFunc(sMsgHeader + "More details in Script Editor ----" + (70 * ">"))
+
+def listPrevizRefMeshes(project=None):
+
+    proj = project
+    if not proj:
+        proj = projectFromScene()
+
+    astLib = proj.getLibrary("public", "asset_lib")
+
+    sAllMeshList = []
+
+    oFileRefList = pm.listReferences(unloaded=False, loaded=True)
+    for oFileRef in oFileRefList:
+
+        sRefPath = pathResolve(oFileRef.path)
+
+        pathData = None
+        try:
+            pathData = proj.dataFromPath(sRefPath, library=astLib)
+        except Exception as e:
+            pm.displayWarning(toStr(e))
+
+        if not pathData:
+            continue
+
+        sCurRcName = pathData.get("resource", "")
+        if not sCurRcName.startswith("previz"):
+            continue
+
+        sMeshList = mc.referenceQuery(oFileRef.refNode.name(), nodes=True)
+        if sMeshList:
+            sMeshList = mc.ls(sMeshList, type="mesh", ni=True)
+            if sMeshList:
+                sAllMeshList.extend(sMeshList)
+
+    return sAllMeshList
 
 def selectRefsWithDefaultAssetFile(assetFile="NoInput"):
 

@@ -8,6 +8,7 @@ from dminutes import assetconformation
 reload (assetconformation)
       
 r2a = assetconformation.Asset_File_Conformer()
+mc.refresh(suspend = True)
 
 if r2a.assetFileType != "anim":
 	raise ValueError( "Working file must be an '_anim' file, operation canceled")
@@ -36,6 +37,8 @@ else:
 	r2a.cleanFile()
 	#raise ValueError( "Asset is not conform, please fix and run the script again")
 	mc.confirmDialog( title='Confirm', message="Asset is not conform, please fix and run the script again", button=['Ok'], defaultButton='Ok',)
+
+mc.refresh(suspend = False)
 
 
 

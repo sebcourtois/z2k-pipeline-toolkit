@@ -619,7 +619,7 @@ class SceneManager():
 
         return mc.workspace(expandName=p)
 
-    def capture(self, increment=True, quick=True, sendToRv=False):
+    def capture(self, increment=True, quick=True, sendToRv=False, smoothData=None):
         # BUG pas de son alors que son present dans la scene
         # BUG first frame decalee dupliquee dans les fichier output
         global CAPTURE_INFOS
@@ -732,6 +732,11 @@ class SceneManager():
 
             _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
             mop.arrangeViews(oShotCam, oImgPlaneCam)
+
+            if smoothData:
+                for sMesh in smoothData.iterkeys():
+                    mc.setAttr(sMesh + ".displaySmoothMesh", 2)
+
             pc.refresh()
 
             makeCapture(sCapturePath, captureStart, captureEnd, 1280, 720, useCamera=oShotCam,
@@ -739,6 +744,12 @@ class SceneManager():
                         i_inFilmFit=1, i_inDisplayFilmGate=1, i_inSafeAction=1,
                         i_inSafeTitle=0, i_inGateMask=1, f_inMaskOpacity=1.0, quick=quick)
         finally:
+            if smoothData:
+                for sMesh, meshInfo in smoothData.iteritems():
+                    for k, v in meshInfo.iteritems():
+                        if k.startswith("."):
+                            mc.setAttr(sMesh + k, v)
+
             oShotCam.setAttr('aspectRatio', 1.7778)
 
             if oCamRef and bWasLocked:
