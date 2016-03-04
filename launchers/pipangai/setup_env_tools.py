@@ -18,7 +18,7 @@ ENVS = {
         "ZOMB_TOOL_PATH":"\\\\Servnas02\\zombidamas\\ZOMB\\tool",
         
         "MAYA_MODULE_PATH":"\\\\Servnas02\\z2k\\04_WG_PIPANGAI\\PythonTree",
-        "CUSTOM_CASHBAH": "\\\\Servnas02\\z2k\\04_WG_PIPANGAI\\PythonTree"
+        "CUSTOM_CASHBAH": "\\\\Servnas02\\z2k\\04_WG_PIPANGAI\\PythonTree",
         }
 
 try:

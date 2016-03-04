@@ -439,6 +439,36 @@ def OverideColor(theColor, mode="normal",TheSel = None, *args):
                 print "erreur :", Exception, err
     # print "theColor = ",theColor
     return theColor
+
+def getColor(objL=None,*args, **kwargs):
+    theColor= 0
+    theColorL=[]
+    cursel= Ltest(objL)
+    if not len(cursel) :
+        cursel = GetSel()
+    print "cursel=", cursel
+    for obj in cursel:
+        shapeNodes = cmds.listRelatives(obj, shapes=True, path=True)
+        print " shapeNodes = ", shapeNodes
+        if type(shapeNodes) is not list:
+            shapeNodes = [shapeNodes]
+            print shapeNodes
+        
+            
+        for shape in shapeNodes:
+            try:
+                print " shape = ", shape
+                if shape in [ None,"None" ]:
+                    shape = obj
+                theColor= cmds.getAttr("%s.overrideColor" % (shape))
+            except Exception, err:
+                print "erreur :", Exception, err
+                theColor = None
+        theColorL.append(theColor)
+    print "theColor = ",theColor
+    return theColorL
+
+
 def setFilterTest(setName="",includedSetL=["objectSet","textureBakeSet","vertexBakeSet","character"],
         excludedSetL=["shadingEngine","displayLayer","ilrBakeLayer"],
         bookmarksSets = False, defaultSets=False,lockedSets=False,
@@ -697,7 +727,20 @@ def UnusedNodeAnalyse( execptionTL = ['containerBase', 'entity'], specificTL= []
 
 
 
+# Z2k func
 
+def z2k_selAll_asset_Ctr(*args, **kwargs):
+    print "z2k_selAll_asset_Ctr()"
+    # select all controler of selected asset
+    toSel= None
+    cursel = cmds.ls(sl=1)
+    if len(cursel):
+        if ":" in cursel[0]:
+            toSel = cursel[0].split(":")[0] + ":set_control"
+        else:
+            toSel = "set_control"
+        cmds.select(toSel)
+    return toSel
 
 #--------------------- CHECK FUNCTION ------------------------------
 def checkBaseStructure(*args,**kwargs):
@@ -1091,7 +1134,7 @@ def resetCTR( inObjL=[],userDefined=True,SRT=True, *args,**kwargs):
         Return : [toReturnB,debugD]
         Dependencies : cmds - checkSRT()
     """
-    print "resetSRT()"
+    print "resetCTR()"
 
     tab = "    "
     cursel = inObjL
@@ -1101,7 +1144,7 @@ def resetCTR( inObjL=[],userDefined=True,SRT=True, *args,**kwargs):
     toReturnB = True
     
     for i in cursel:
-        
+        print i
         if SRT:
             if  not checkSRT([i])[0]:
                 # print "    reseting",i
@@ -1119,6 +1162,9 @@ def resetCTR( inObjL=[],userDefined=True,SRT=True, *args,**kwargs):
                         dv = cmds.addAttr(i+"."+attr, q=True, defaultValue=True)
                         if not dv in [None] and cmds.getAttr(i+"."+attr,settable=1):
                             cmds.setAttr(i+"."+attr,dv)
+                        else:
+                            # cmds.setAttr(i+"."+attr,0)
+                            print "No default value"
                     except Exception,err:
                         toReturnB=False
                         debugL.append(err)
@@ -1745,44 +1791,50 @@ def chr_TongueFix(*args, **kwargs):
     # et refait la contrainte pour lier au reste proprement, afin d'enlever les problemes de scale.
     debugL = []
     bridgeName = "Tongue_Bridge"
-    if not cmds.objExists(bridgeName):
-        allCstL = getTypeInHierarchy(cursel=["TK_Tongue_System"], theType="constraint")
-        print len(allCstL),allCstL
-        
-        # delete cst
-        for cst in allCstL:
-            print "cst=",cst
+    canDo = True
+    ctrL = ['Tongue_0', 'Tongue_1', 'Tongue_2', 'Right_Tongue_3', 'Tongue_3']
+    for i in ctrL:
+        if not cmds.objExists(i):
+            canDo = False
+    if canDo:
+        if not cmds.objExists(bridgeName):
+            allCstL = getTypeInHierarchy(cursel=["TK_Tongue_System"], theType="constraint")
+            print len(allCstL),allCstL
             
-            if not "Tongue_0_Root" in cst:
-                if cmds.objExists(cst):
-                    
-
-                    if "_prCns" in cst:
-                        # get cst conn
-                        theParent = cmds.listConnections( cst+'.target[0].targetParentMatrix', d=False, s=True )[0]
-                        theChild = cmds.listConnections( cst+'.constraintTranslate.constraintTranslateX', d=True, s=False )[0]
-                        print theChild,"c->p",theParent
-
-                        # re parent has it has to be
-                        cmds.parent (theChild,theParent)       
-        # delete cst
-        for i in allCstL:
-            cmds.delete(i)
-                   
+            # delete cst
+            for cst in allCstL:
+                print "cst=",cst
                 
-        # create bridge group parent it in the hierarchy and cst
-        print "BRIDGING:"
-        bridgeGp = cmds.group(name= bridgeName,world=1,em=1)
-        cmds.parent (bridgeGp,"TK_Tongue_System")
-        # matchByXformMatrix(cursel=["Jaw_Bone_Ctrl",bridgeGp], mode=0)
-        cmds.parentConstraint("Jaw_Bone_Ctrl",bridgeGp, mo=0)
-        cmds.scaleConstraint("Jaw_Bone_Ctrl",bridgeGp, )
-        cmds.parent ("TK_Tongue_0_Root",bridgeGp)
+                if not "Tongue_0_Root" in cst:
+                    if cmds.objExists(cst):
+                        
+
+                        if "_prCns" in cst:
+                            # get cst conn
+                            theParent = cmds.listConnections( cst+'.target[0].targetParentMatrix', d=False, s=True )[0]
+                            theChild = cmds.listConnections( cst+'.constraintTranslate.constraintTranslateX', d=True, s=False )[0]
+                            print theChild,"c->p",theParent
+
+                            # re parent has it has to be
+                            cmds.parent (theChild,theParent)       
+            # delete cst
+            for i in allCstL:
+                cmds.delete(i)
+                       
+                    
+            # create bridge group parent it in the hierarchy and cst
+            print "BRIDGING:"
+            bridgeGp = cmds.group(name= bridgeName,world=1,em=1)
+            cmds.parent (bridgeGp,"TK_Tongue_System")
+            # matchByXformMatrix(cursel=["Jaw_Bone_Ctrl",bridgeGp], mode=0)
+            cmds.parentConstraint("Jaw_Bone_Ctrl",bridgeGp, mo=0)
+            cmds.scaleConstraint("Jaw_Bone_Ctrl",bridgeGp, )
+            cmds.parent ("TK_Tongue_0_Root",bridgeGp)
 
 
-        debugL.append("Rig_replaced, all cst deleted") 
-    else:
-        debugL.append("Nothing Done")
+            debugL.append("Rig_replaced, all cst deleted") 
+        else:
+            debugL.append("Nothing Done")
         
     return True,debugL
 
@@ -1955,9 +2007,17 @@ def chr_changeCtrDisplays(*args, **kwargs):
     yellowC = 17
     yellowL = []
 
-    for k in greenL+brownLightL+redDarkL:
-        if not cmds.objExists(k):
-            canDo = False
+    #allready done test
+    if getColor(objL= "Fly_Main_Ctrl")[0] in [greenC] and getColor(objL= "BigDaddy")[0] in [redDarkC]:
+        canDo = False
+        print "Tweak Allready done"
+        debugL.append("Tweak Allready done")
+
+        for k in greenL+brownLightL+redDarkL:
+            if not cmds.objExists(k):
+                canDo = False
+
+        
     if canDo:
         # to green 
         OverideColor(greenC, mode="normal",TheSel = greenL, )
@@ -1972,53 +2032,53 @@ def chr_changeCtrDisplays(*args, **kwargs):
         debugL.append("-Base Colors changed")
 
 
-    # special offset du display du fly -----------------------------------------------
-    print "fly display"
-    zooB = True
-    target = "Fly_Main_Ctrl"
-    refL = ['Global_SRT', 'LowerBody']
-    for i in refL+[target]:
-        if not  cmds.objExists(i):
-            zooB = False
-    if zooB:
-        pointL = getPointsOnCurve(target)
-        bbox = cmds.exactWorldBoundingBox(refL)
-        factor = 2.5
-        cmds.move(0, 0, - (bbox[3]-bbox[0])/factor ,pointL, r=1, os=1, wd=1,  )
-        debugL.append("-fly display changed")
+        # special offset du display du fly -----------------------------------------------
+        print "fly display"
+        zooB = True
+        target = "Fly_Main_Ctrl"
+        refL = ['Global_SRT', 'LowerBody']
+        for i in refL+[target]:
+            if not  cmds.objExists(i):
+                zooB = False
+        if zooB:
+            pointL = getPointsOnCurve(target)
+            bbox = cmds.exactWorldBoundingBox(refL)
+            factor = 2.5
+            cmds.move(0, 0, - (bbox[3]-bbox[0])/factor ,pointL, r=1, os=1, wd=1,  )
+            debugL.append("-fly display changed")
 
 
-    # change foots display --------------------------------------------------------------
-    print "foots display"
-    zooB = True
-    footL = ['Right_Leg_IK','Left_Leg_IK']
-    for k in footL:
-        if not cmds.objExists(k):
-            zooB = False
-    if zooB:
-        for j in footL:
-            pointL = getPointsOnCurve(j)
-            bbox = cmds.exactWorldBoundingBox(pointL)
-            pivT = cmds.xform(j,t=1,q=1,ws=1,worldSpaceDistance=1)
-            cmds.scale( 1.3, 0.1, 1.3, pointL, p=( pivT[0],0,pivT[2], ) )
-        debugL.append("-foots display changed")
+        # change foots display --------------------------------------------------------------
+        print "foots display"
+        zooB = True
+        footL = ['Right_Leg_IK','Left_Leg_IK']
+        for k in footL:
+            if not cmds.objExists(k):
+                zooB = False
+        if zooB:
+            for j in footL:
+                pointL = getPointsOnCurve(j)
+                bbox = cmds.exactWorldBoundingBox(pointL)
+                pivT = cmds.xform(j,t=1,q=1,ws=1,worldSpaceDistance=1)
+                cmds.scale( 1.3, 0.1, 1.3, pointL, p=( pivT[0],0,pivT[2], ) )
+            debugL.append("-foots display changed")
 
 
-    # move vis_Holder --------------------------------------------------------------
-    print "vis_Holder display"
-    zooB = True
-    visH = ["VisHolder_Main_Ctrl"]
-    refL = ['Local_SRT', 'VisHolder_Main_Ctrl']
-    for k in refL+visH :
-        if not cmds.objExists(k):
-            zooB = False
-    if zooB:
-        factor = 3.5
-        pointL = getPointsOnCurve(visH)
-        bbox = cmds.exactWorldBoundingBox(refL)
-        cmds.move( (bbox[3]-bbox[0])/factor , 1,0,pointL, r=1, os=1, wd=1,  )
-        debugL.append("-vis_Holder display changed")
-        debugL.append("-vis_Holder display changed")
+        # move vis_Holder --------------------------------------------------------------
+        print "vis_Holder display"
+        zooB = True
+        visH = ["VisHolder_Main_Ctrl"]
+        refL = ['Local_SRT', 'VisHolder_Main_Ctrl']
+        for k in refL+visH :
+            if not cmds.objExists(k):
+                zooB = False
+        if zooB:
+            factor = 3.5
+            pointL = getPointsOnCurve(visH)
+            bbox = cmds.exactWorldBoundingBox(refL)
+            cmds.move( (bbox[3]-bbox[0])/factor , 1,0,pointL, r=1, os=1, wd=1,  )
+            debugL.append("-vis_Holder display changed")
+
 
     return True,debugL
 
@@ -2056,3 +2116,132 @@ def armTwistFix (*args, **kwargs):
     print "armTwistFix()"
 
     # Left_Rounding_Deformer_End_Crv_upV_pathCns_Mult1 #tweak rotation
+
+
+def chr_improve_Knuckles(*args, **kwargs):
+    """ Description: Add factoring and connexion on the basic Knuckles rig splited in flexion/extension and rotation_factor
+                     Add knuckle_scale attributes on the corresponding phalanx controlers
+                     All Rigging Tweaking attribut are accessible on the knuckes deformers directly:
+                     - Flexion/extension translateX and Y
+                     - rotation factoring 
+        Return : 
+        Dependencies : cmds - 
+    """
+                    
+    print "chr_improve_Knuckles()"
+
+    canDo = True
+    defL = ['Left_Index_meta_offset_jnt', 'Left_Middle_meta_offset_jnt', 'Left_Ring_meta_offset_jnt',
+            'Left_Pinky_meta_offset_jnt',
+            'Right_Index_meta_offset_jnt', 'Right_Middle_meta_offset_jnt', 'Right_Ring_meta_offset_jnt',
+             'Right_Pinky_meta_offset_jnt',
+            ]
+
+    thePlugA = "tx"
+    thePlugB = "ty"
+
+    # default values
+    rotation_factor = 0.5
+    Ty_flexion_factor = -0.5
+    Tx_flexion_factor = 0.3
+    Ty_extension_factor = -0.3
+    Tx_extension_factor = 0.5
+
+    for i in defL :
+        if not cmds.objExists(i):
+            canDo = False
+
+    if canDo:
+        for j in defL:
+            #-------------------- translate tree ----------------------------------------------------------
+
+            # create multiply node
+            multiply_T_N = cmds.createNode("multiplyDivide", name=j+"Multiply_T_facto")
+
+            # create condition
+            ConditionYN = cmds.createNode("condition", name=j+"condition_T_flex_ext")
+             # cond node greter or  equal
+            cmds.setAttr(ConditionYN + ".operation", 3)
+            cmds.setAttr(ConditionYN + ".secondTerm", 0)
+            cmds.setAttr(ConditionYN + ".colorIfTrueR", Tx_flexion_factor) # TX Flex
+            cmds.setAttr(ConditionYN + ".colorIfTrueG", Ty_flexion_factor)
+            # cmds.setAttr(ConditionYN + ".colorIfTrueB", 0)
+            cmds.setAttr(ConditionYN + ".colorIfFalseR", Tx_extension_factor)# TX ext
+            cmds.setAttr(ConditionYN + ".colorIfFalseG", Ty_flexion_factor)
+            # cmds.setAttr(ConditionYN + ".colorIfFalseB", 0)
+
+            # get connection on ty
+            ty_inCon = cmds.listConnections(j+"."+ thePlugA, s=1,d=0,p=1)[0]
+            print "ty_inCon=", ty_inCon
+             # get connection on tx
+            tx_inCon = ty_inCon
+
+            # connect ty to multi
+            cmds.connectAttr(ty_inCon, ConditionYN + ".firstTerm", f=True)
+            # cmds.connectAttr(ty_inCon, ConditionYN + ".colorIfTrueR", f=True)
+            # cmds.connectAttr(ty_inCon, ConditionYN + ".colorIfTrueG", f=True)
+            # cmds.connectAttr(ty_inCon, ConditionYN + ".colorIfFalseR", f=True)
+            # cmds.connectAttr(ty_inCon, ConditionYN + ".colorIfFalseG", f=True)
+
+            # connect ty to cond
+            cmds.connectAttr(ConditionYN + ".outColor", multiply_T_N + ".input2", f=True)
+
+            # connect ty to multi
+            cmds.connectAttr(tx_inCon , multiply_T_N + ".input1X", f=True)
+            cmds.connectAttr(tx_inCon , multiply_T_N + ".input1Y", f=True)
+            
+            # connect multi to the plugs
+            cmds.connectAttr(multiply_T_N + ".outputX", j + "."+ thePlugA, f=True)
+            cmds.connectAttr(multiply_T_N + ".outputY", j + "."+ thePlugB, f=True)
+
+            # set values
+            # cmds.setAttr(multiply_T_N+"."+ "input2X",multPlugAT)
+            # cmds.setAttr(multiply_T_N+"."+ "input2Y",multPlugBT)
+
+            #-------------------- rotate tree ----------------------------------------------------------
+             # get controling attrib
+            controlingCTR_Attr= cmds.listConnections(ty_inCon.split(".",1)[0],s=1,d=0,scn=1,)[0]
+            print "controlingCTR_Attr=", controlingCTR_Attr
+            
+            # create Multiply_R_factor node
+            multiply_R_N = cmds.createNode("multiplyDivide", name=j+"Multiply_R_facto")#  multidoublelinear
+
+            # connect
+            cmds.connectAttr(controlingCTR_Attr + ".rotate", multiply_R_N + ".input1", f=True)
+            cmds.connectAttr(multiply_R_N + ".output", j + ".rotate", f=True)
+
+            # set rotation factor values
+            cmds.setAttr(multiply_R_N+"."+ "input2X",rotation_factor)
+            cmds.setAttr(multiply_R_N+"."+ "input2Y",rotation_factor)
+            cmds.setAttr(multiply_R_N+"."+ "input2Z",rotation_factor)
+
+            # add attr to each 
+            cmds.addAttr(j, longName="Ty_flexion_factor", attributeType = "float", keyable=True, min = -10, max=10,dv=Ty_flexion_factor) 
+            cmds.addAttr(j, longName="Tx_flexion_factor", attributeType = "float", keyable=True, min = -10, max=10,dv=Tx_flexion_factor) 
+            cmds.addAttr(j, longName="Ty_extension_factor", attributeType = "float", keyable=True, min = -10, max=10,dv=Ty_extension_factor)
+            cmds.addAttr(j, longName="Tx_extension_factor", attributeType = "float", keyable=True, min = -10, max=10,dv=Tx_extension_factor)  
+            cmds.addAttr(j, longName="rotation_factor", attributeType = "float", keyable=True, min = -10, max=10,dv=rotation_factor) 
+
+            # connect attr to factor nodes
+            cmds.connectAttr(j + ".Tx_flexion_factor", ConditionYN + ".colorIfTrueR", f=True)
+            cmds.connectAttr(j + ".Ty_flexion_factor", ConditionYN + ".colorIfTrueG", f=True)
+            cmds.connectAttr(j + ".Tx_extension_factor", ConditionYN + ".colorIfFalseR", f=True)
+            cmds.connectAttr(j + ".Ty_extension_factor", ConditionYN + ".colorIfFalseG", f=True)
+            cmds.connectAttr(j + ".rotation_factor", multiply_R_N + ".input2X", f=True)
+            cmds.connectAttr(j + ".rotation_factor", multiply_R_N + ".input2Y", f=True)
+            cmds.connectAttr(j + ".rotation_factor", multiply_R_N + ".input2Z", f=True)
+
+
+            #-------------------- scale tree ----------------------------------------------------------
+            # connect the deformer scale to the first phalanx controler
+            cmds.addAttr(controlingCTR_Attr.split(".",1)[0], longName="Knuckle_scale_X", attributeType = "float", keyable=True, min = -5, max=5,dv=1)
+            cmds.addAttr(controlingCTR_Attr.split(".",1)[0], longName="Knuckle_scale_Y", attributeType = "float", keyable=True, min = -5, max=5,dv=1)  
+            cmds.addAttr(controlingCTR_Attr.split(".",1)[0], longName="Knuckle_scale_Z", attributeType = "float", keyable=True, min = -5, max=5,dv=1)   
+
+            cmds.connectAttr(controlingCTR_Attr + ".Knuckle_scale_X", j + ".scaleX", f=True)
+            cmds.connectAttr(controlingCTR_Attr + ".Knuckle_scale_Y", j + ".scaleY", f=True)
+            cmds.connectAttr(controlingCTR_Attr + ".Knuckle_scale_Z", j + ".scaleZ", f=True)
+
+            # add one desactivation attrib
+
+            # return all created nodes
