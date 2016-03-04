@@ -10,7 +10,7 @@ import maya.cmds as mc
 import pymel.core
 
 from pytd.util.fsutils import pathResolve
-from pytd.util.sysutils import inDevMode, timer
+from pytd.util.sysutils import inDevMode
 from pytd.util.logutils import logMsg
 #from pytd.util.sysutils import getCaller
 from pytd.util.qtutils import setWaitCursor
@@ -202,10 +202,13 @@ def refreshContextUI():
     bEnabled = (sStepName != "previz 3d") and bPublishable
     pc.control('sm_editCam_bt', edit=True, enable=bEnabled)
 
-    pc.checkBox('sm_imgPlane_chk', edit=True, value=mop.isImgPlaneVisible())
+    pc.checkBox('sm_imgPlane_chk', edit=True, value=mop.isImgPlaneHidden())
     pc.checkBox('sm_increment_chk', edit=True, value=pc.optionVar.get("Z2K_SM_increment", False))
     pc.checkBox('sm_sendToRv_chk', edit=True, value=pc.optionVar.get("Z2K_SM_sendToRv", False))
+
     pc.checkBox('sm_blocking_chk', edit=True, value=pc.playbackOptions(q=True, blockingAnim=True))
+    pc.checkBox('sm_updAllViews_chk', edit=True, value=(pc.playbackOptions(q=True, view=True) == "all"))
+
 
     bListAssets = pc.optionVar.get("Z2K_SM_listAssets", True)
     QWIDGETS["relatedAssetsGroup"].setChecked(bListAssets)
@@ -390,6 +393,7 @@ def connectCallbacks():
     pc.checkBox('sm_increment_chk', edit=True, cc=updIncrementalSaveState)
     pc.checkBox('sm_sendToRv_chk', edit=True, cc=updAddCaptureToRvState)
     pc.checkBox('sm_blocking_chk', edit=True, cc=updBlockingAnimState)
+    pc.checkBox('sm_updAllViews_chk', edit=True, cc=setAllViewsUpdated)
 
     pc.button('sm_smoothAdd_bt', edit=True, c=doAddToSmooth)
     pc.button('sm_smoothRem_bt', edit=True, c=doDelFromSmooth)
@@ -412,6 +416,10 @@ def connectCallbacks():
     #buttonName = 'sm_create_bt'
     #pc.button(buttonName, edit=True, c=doCreate)
     #ACTION_BUTTONS.append(buttonName)
+
+
+def setAllViewsUpdated(bEnable):
+    mc.playbackOptions(e=True, view="all" if bEnable else "active")
 
 def doClearObjectSet(sSetName, bChecked):
     mop.clearObjectSet(sSetName)
@@ -468,7 +476,7 @@ def doShowSequenceInRv(*args):
     subprocess.call(sCmdAgrs)
 
 def doShowImagePlane(bShow):
-    mop.setImgPlaneVisible(bShow)
+    mop.setImgPlaneHidden(bShow)
 
 def updBlockingAnimState(bEnable):
     pc.playbackOptions(e=True, blockingAnim=bEnable)
