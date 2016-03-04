@@ -78,44 +78,44 @@ def getImagePlaneItems(create=False):
                                          showInAllViews=False,
                                          name="imgPlane_animatic")
             oImgPlane.rename("imgPlane_animatic")
+
+            #SET DE L'IMAGE PLANE
+            sImgPlane = oImgPlane.name()
+            pc.setAttr(sImgPlane + ".type", 2)
+            pc.setAttr(sImgPlane + ".fit", 1)
+            pc.setAttr(sImgPlane + ".useFrameExtension", 1)
+            pc.setAttr(sImgPlane + ".frameOffset", -100)
+            pc.setAttr(sImgPlane + ".frameIn", 101)
+            pc.setAttr(sImgPlane + ".frameOut", 1000)
+            #pc.setAttr(sImgPlane + ".hideOnPlayback", False)
+
+            sCamShape = oCamShape.name()
+            pc.setAttr(sCamShape + ".displayFilmGate", 1)
+            pc.setAttr(sCamShape + ".displayGateMask", 1)
+            pc.setAttr(sCamShape + ".overscan", 1.4)
+            pc.setAttr(sCamShape + ".displaySafeTitle", 1)
+            pc.setAttr(sCamShape + ".displaySafeAction", 1)
+            pc.setAttr(sCamShape + ".displayGateMaskColor", [0, 0, 0])
     else:
         oCamXfm = oImgPlane.getParent(3)
         oCamShape = oCamXfm.getShape()
 
-    #SET DE L'IMAGE PLANE
-    sImgPlane = oImgPlane.name()
-    pc.setAttr(sImgPlane + ".type", 2)
-    pc.setAttr(sImgPlane + ".fit", 1)
-    pc.setAttr(sImgPlane + ".useFrameExtension", 1)
-    pc.setAttr(sImgPlane + ".frameOffset", -100)
-    pc.setAttr(sImgPlane + ".frameIn", 101)
-    pc.setAttr(sImgPlane + ".frameOut", 1000)
-    pc.setAttr(sImgPlane + ".hideOnPlayback", True)
-
-    sCamShape = oCamShape.name()
-    pc.setAttr(sCamShape + ".displayFilmGate", 1)
-    pc.setAttr(sCamShape + ".displayGateMask", 1)
-    pc.setAttr(sCamShape + ".overscan", 1.4)
-    pc.setAttr(sCamShape + ".displaySafeTitle", 1)
-    pc.setAttr(sCamShape + ".displaySafeAction", 1)
-    pc.setAttr(sCamShape + ".displayGateMaskColor", [0, 0, 0])
-
     return oImgPlane, oCamXfm
 
-def setImgPlaneVisible(bVisible):
+def setImgPlaneHidden(bVisible):
 
     oImgPlaneList = pc.ls("imgPlane_animatic*", type="imagePlane")
     for oImgPlane in oImgPlaneList:
-        try: oImgPlane.setAttr("visibility", bVisible)
+        try: oImgPlane.setAttr("hideOnPlayback", bVisible)
         except Exception as e: pc.displayWarning(toStr(e))
 
-def isImgPlaneVisible():
+def isImgPlaneHidden():
 
     bVisible = False
 
     oImgPlaneList = pc.ls("imgPlane_animatic*", type="imagePlane")
     for oImgPlane in oImgPlaneList:
-        bVisible = (bVisible or oImgPlane.getAttr("visibility"))
+        bVisible = (bVisible or oImgPlane.getAttr("hideOnPlayback"))
 
     return bVisible
 
@@ -775,12 +775,12 @@ def exportCamAlembic(**kwargs):
     print "\n", sHeader
     print sAbcJobArgs
 
-    bImgPlnViz = isImgPlaneVisible()
-    setImgPlaneVisible(False)
+    bImgPlnViz = isImgPlaneHidden()
+    setImgPlaneHidden(False)
     try:
         res = mc.AbcExport(j=sAbcJobArgs.replace("\n", " "))
     finally:
-        setImgPlaneVisible(bImgPlnViz)
+        setImgPlaneHidden(bImgPlnViz)
 
     print sHeader
 

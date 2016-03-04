@@ -721,8 +721,8 @@ class SceneManager():
             bWasLocked = oCamRef.refNode.getAttr("locked")
             mop.setReferenceLocked(oCamRef, False)
 
-        #bImgPlnViz = mop.isImgPlaneVisible()
-        #mop.setImgPlaneVisible(False)
+        bImgPlnViz = mop.isImgPlaneHidden()
+        mop.setImgPlaneHidden(True)
 
         savedHudValues = createHUD()
 
@@ -759,7 +759,7 @@ class SceneManager():
 
             restoreHUD(savedHudValues)
 
-            #mop.setImgPlaneVisible(bImgPlnViz)
+            mop.setImgPlaneHidden(bImgPlnViz)
 
         sCmd = ""
         bShell = False
