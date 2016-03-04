@@ -29,6 +29,7 @@ def connectedToSeveralSG(myNode = ""):
 
 def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True, verbose = True, GUI = True ):
     """
+    DEPRECATED, use checkShaderName() instead
     shadEngineList : selection, all
     conform the shading tree attached to the selected shading engine , or all the shading trees , depending on the shadEngineList value.
     The initial shading engines are skipped so the ones that do not follow the proper 
@@ -137,7 +138,7 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
     return wrongShadEngine if wrongShadEngine != [] else  None
 
 
-def conformShaderNameNew(shadEngineList = [],  GUI = True, checkOnly = False ):
+def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
     """
     shadEngineList : selection, all
     conform the shading tree attached to the selected shading engine , or all the shading trees , depending on the shadEngineList value.
@@ -170,7 +171,7 @@ def conformShaderNameNew(shadEngineList = [],  GUI = True, checkOnly = False ):
     shadEngineList.remove("initialShadingGroup")
 
     if not shadEngineList :
-        logMessage = "#### {:>7}: 'conformShaderName' No shading engine to conform".format("Info")
+        logMessage = "#### {:>7}: 'checkShaderName' No shading engine to conform".format("Info")
         if GUI == True: print logMessage
         logL.append(logMessage)
         return dict(resultB=resultB, logL=logL, correctShadEngine=correctShadEngine, wrongShadEngine=wrongShadEngine)
@@ -180,7 +181,7 @@ def conformShaderNameNew(shadEngineList = [],  GUI = True, checkOnly = False ):
     for each in shadEngineList:
         #check shading group name convention
         if not re.match('^sgr_[a-zA-Z0-9]{1,24}$', each):
-            logMessage = "#### {:>7}: 'conformShaderName' '{}' does not match naming convention 'sgr_materialName' where is composed of 24 alphanumeric characters maximum".format("Error", each)
+            logMessage = "#### {:>7}: 'checkShaderName' '{}' does not match naming convention 'sgr_materialName' where is composed of 24 alphanumeric characters maximum".format("Error", each)
             if GUI == True: print logMessage
             logL.append(logMessage)
             wrongShadEngine.append(each)
@@ -190,7 +191,7 @@ def conformShaderNameNew(shadEngineList = [],  GUI = True, checkOnly = False ):
             preview_shader =  mc.listConnections(each+'.surfaceShader',connections = True)
             render_shader =  mc.listConnections(each+'.aiSurfaceShader',connections = True)
             if not preview_shader or not render_shader:
-                logMessage = "#### {:>7}: 'conformShaderName' '{}' preview_shader or render_shader is missing".format("Error", each)
+                logMessage = "#### {:>7}: 'checkShaderName' '{}' preview_shader or render_shader is missing".format("Error", each)
                 if GUI == True: print logMessage
                 logL.append(logMessage)
                 wrongShadEngine.append(each)
@@ -200,7 +201,7 @@ def conformShaderNameNew(shadEngineList = [],  GUI = True, checkOnly = False ):
                 render_shader = render_shader[-1]
                  
             if preview_shader == render_shader:
-                logMessage = "#### {:>7}: 'conformShaderName' '{}' surfaceShader and aiSurfaceShader connected to the same node: {}".format("Error", each, preview_shader)
+                logMessage = "#### {:>7}: 'checkShaderName' '{}' surfaceShader and aiSurfaceShader connected to the same node: {}".format("Error", each, preview_shader)
                 if GUI == True: print logMessage
                 logL.append(logMessage)
                 wrongShadEngine.append(each)
@@ -209,7 +210,7 @@ def conformShaderNameNew(shadEngineList = [],  GUI = True, checkOnly = False ):
             preview_shader_type = mc.nodeType(preview_shader)
             render_shader_type = mc.nodeType(render_shader)
             if preview_shader_type not in permitted_preview_shader_type:
-                logMessage = "#### {:>7}: 'conformShaderName' '{} --> '{}' unauthorized preview shader node type: {} should be one of the following: {}".format("Error", each, preview_shader, preview_shader_type, str(permitted_preview_shader_type))
+                logMessage = "#### {:>7}: 'checkShaderName' '{} --> '{}' unauthorized preview shader node type: {} should be one of the following: {}".format("Error", each, preview_shader, preview_shader_type, str(permitted_preview_shader_type))
                 if GUI == True: print logMessage
                 logL.append(logMessage)
                 wrongShadEngine.append(each)
@@ -222,12 +223,19 @@ def conformShaderNameNew(shadEngineList = [],  GUI = True, checkOnly = False ):
                     continue
                 if connectedToSeveralSG (item):
                     materialParticule = "shared"
+
+                upStreamNodeList =  mc.listHistory (item,future = True)
+                if preview_shader in upStreamNodeList and render_shader in upStreamNodeList:
+                    prefix = "bis"
+                else:
+                    prefix = "pre"
+
                 preview_shader_type = mc.nodeType(item)
-                if not re.match('pre_'+materialParticule+'_'+preview_shader_type+'[0-9]{0,3}$|mat_'+materialParticule+'_'+preview_shader_type+'[0-9]{0,3}$',item) and  not mc.lockNode(item, q=True)[-1] and not mc.ls(item, defaultNodes = True):
+                if not re.match(prefix+'_'+materialParticule+'_'+preview_shader_type+'[0-9]{0,3}$',item) and  not mc.lockNode(item, q=True)[-1] and not mc.ls(item, defaultNodes = True):
                     if checkOnly== False:
-                         mc.rename(item,'pre_'+materialParticule+'_'+preview_shader_type)
+                         mc.rename(item, prefix+'_'+materialParticule+'_'+preview_shader_type)
                     else:
-                        logMessage = "#### {:>7}: 'conformShaderName' Wrong preview node naming convention '{} --> {}' ".format("Error", each, item)
+                        logMessage = "#### {:>7}: 'checkShaderName' Wrong preview node naming convention '{} --> {}' ".format("Error", each, item)
                         if GUI == True: print logMessage
                         logL.append(logMessage)
                         resultB = False
@@ -244,12 +252,19 @@ def conformShaderNameNew(shadEngineList = [],  GUI = True, checkOnly = False ):
                     continue
                 if connectedToSeveralSG (item):
                     materialParticule = "shared"
+
+                upStreamNodeList =  mc.listHistory (item,future = True)
+                if preview_shader in upStreamNodeList and render_shader in upStreamNodeList:
+                    prefix = "bis"
+                else:
+                    prefix = "mat"
+
                 render_shader_type = mc.nodeType(item)
-                if not re.match('pre_'+materialParticule+'_'+render_shader_type+'[0-9]{0,3}$|mat_'+materialParticule+'_'+render_shader_type+'[0-9]{0,3}$',item) and  not mc.lockNode(item, q=True)[-1] and not mc.ls(item, defaultNodes = True):
+                if not re.match(prefix+'_'+materialParticule+'_'+render_shader_type+'[0-9]{0,3}$',item) and  not mc.lockNode(item, q=True)[-1] and not mc.ls(item, defaultNodes = True):
                     if checkOnly==False:
-                        mc.rename(item,'mat_'+materialParticule+'_'+render_shader_type)
+                        mc.rename(item, prefix+'_'+materialParticule+'_'+render_shader_type)
                     else:
-                        logMessage = "#### {:>7}: 'conformShaderName' Wrong render node naming convention '{} --> {}' ".format("Error", each, item)
+                        logMessage = "#### {:>7}: 'checkShaderName' Wrong render node naming convention '{} --> {}' ".format("Error", each, item)
                         if GUI == True: print logMessage
                         logL.append(logMessage)
                         resultB = False
@@ -259,14 +274,14 @@ def conformShaderNameNew(shadEngineList = [],  GUI = True, checkOnly = False ):
     correctShadEngine =list(set(shadEngineList)-set(wrongShadEngine))
 
     if wrongShadEngine:
-        logMessage = "#### {:>7}: 'conformShaderName' {:>3} shader(s) not conform: {}".format("Error",len(wrongShadEngine),wrongShadEngine)
+        logMessage = "#### {:>7}: 'checkShaderName' {:>3} shader(s) not conform: {}".format("Error",len(wrongShadEngine),wrongShadEngine)
         if GUI == True:
             print logMessage
             mc.confirmDialog( title = 'Shader Name Error', message = 'Some shaders are not conform, please read the log to get more information', button = ['Ok'], defaultButton = 'Ok' )
         logL.append(logMessage)
         resultB = False
 
-    logMessage = "#### {:>7}: 'conformShaderName' {:>3} shader(s) checked succesfully: {}".format("Info", len(correctShadEngine), correctShadEngine)
+    logMessage = "#### {:>7}: 'checkShaderName' {:>3} shader(s) checked succesfully: {}".format("Info", len(correctShadEngine), correctShadEngine)
     if GUI == True: print logMessage
     logL.append(logMessage)
            

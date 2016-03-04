@@ -128,7 +128,7 @@ def cleanAsset (GUI = True):
                 assetconformation.softClean(keepRenderLayers = False,nameSpaceToKeepL = ["lgtRig"])
                 assetconformation.createSubdivSets()
                 assetconformation.setSubdiv()
-                shading.conformShaderNameNew( GUI = True )
+                shading.checkShaderName( GUI = True )
 
     elif fileType == "render":
             if GUI == True: 
@@ -147,6 +147,6 @@ def cleanAsset (GUI = True):
                 assetconformation.setSubdiv()
                 assetconformation.createSubdivSets()
                 assetconformation.createSetMeshCache()
-                shading.conformShaderNameNew( GUI = True )
+                shading.checkShaderName( GUI = True )
 
     return resultB, logL
