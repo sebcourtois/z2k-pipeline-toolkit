@@ -209,7 +209,7 @@ class checkModule(object):
 
         # 5   soft clean
         self.printF("asset conformation:   soft clean", st="t")
-        result, logL = assetconformation.softClean(struct2CleanList=["asset"])
+        result, logL = assetconformation.softClean(keepRenderLayers = False,struct2CleanList=["asset"])
         # prints -------------------
         self.printF(result, st="r")
         for each in logL:

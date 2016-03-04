@@ -146,7 +146,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=12, e=True)
+        self.pBar_upd(step=1, maxValue=13, e=True)
 
         # steps
 
@@ -309,6 +309,22 @@ class checkModule(object):
         if not resultD["resultB"]:
             boolResult = False
         self.pBar_upd(step= 1,)   
+
+
+
+        # 13   checks shaders naming convention
+        self.printF("shading: checks shaders naming convention", st="t")
+        resultD = shading.conformShaderNameNew(shadEngineList = [],  GUI = False, checkOnly = True )
+        # prints -------------------
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)   
+
+
 
         # colors
         print "*btn_preClean:",boolResult

@@ -9,6 +9,8 @@ from dminutes import modeling
 reload (modeling)
 from dminutes import assetconformation
 reload (assetconformation)
+from dminutes import shading
+reload (shading)
 
 def cleanAsset (GUI = True):
     resultB = True
@@ -112,7 +114,7 @@ def cleanAsset (GUI = True):
             if GUI == True:
                 msgS = baseMessage2S+"""
     - delete geo history,\n    - convert branch instanced to leaf instances,\n    - make all mesh unique,\n    - conform mesh shapes names,\n    - create set subdiv,\n    - apply set subdiv,    
-    - delete all unused nodes (unconnected to an asset dag node), except render layers"""
+    - delete all unused nodes (unconnected to an asset dag node), except render layers,\n    - conform all shaders names"""
                 answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 #rendering.deleteAovs()
@@ -126,12 +128,13 @@ def cleanAsset (GUI = True):
                 assetconformation.softClean(keepRenderLayers = False,nameSpaceToKeepL = ["lgtRig"])
                 assetconformation.createSubdivSets()
                 assetconformation.setSubdiv()
+                shading.conformShaderNameNew( GUI = True )
 
     elif fileType == "render":
             if GUI == True: 
                 msgS = baseMessage2S+"""
     - delete geo history,\n    - make all mesh unique,\n    - conform mesh shapes names,\n    - create set subdiv,\n    - apply set subdiv,\n    - create 'set_meshCache',   
-    - delete all unused nodes (unconnected to an asset dag node), except render layers"""
+    - delete all unused nodes (unconnected to an asset dag node), except render layers,\n    - conform all shaders names"""
                 answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 miscUtils.deleteUnknownNodes()
@@ -144,5 +147,6 @@ def cleanAsset (GUI = True):
                 assetconformation.setSubdiv()
                 assetconformation.createSubdivSets()
                 assetconformation.createSetMeshCache()
+                shading.conformShaderNameNew( GUI = True )
 
     return resultB, logL
