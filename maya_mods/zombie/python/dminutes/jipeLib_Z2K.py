@@ -2105,6 +2105,11 @@ def chr_neckBulge_Factor_to_zero(*args, **kwargs):
 
 def chr_teeth_Noze_BS_Fix(*args, **kwargs):
     print "chr_teeth_squeezFix()"
+    # for now it's done manually
+    # update the BS file
+    # update the script .bsd file
+    # use the misc scripts bs_facial_tertiaire
+
 
     # get asset BS path (have to contain all teeth and additif BS shapes)
 
@@ -2253,3 +2258,30 @@ def chr_improve_Knuckles(*args, **kwargs):
             # add one desactivation attrib
 
             # return all created nodes
+
+
+
+def chr_fix_knuckles(*args, **kwargs):
+    """ Description: Fix the non homothetique scaling probleme (from TK rig)
+        Return : [True]
+        Dependencies : cmds - 
+    """
+    print "chr_fix_knuckles()"
+    canDo = True
+    toDelL = ["Left_Index_Meta_0_Deform_to_FK_SimpleBone_Bone_Ctrl_sCns",
+    "Left_Pinky_Meta_0_Deform_to_FK_SimpleBone_Bone_Ctrl_sCns",
+    "Left_Ring_Meta_0_Deform_to_FK_SimpleBone_Bone_Ctrl_sCns",
+    "Left_Middle_Meta_0_Deform_to_FK_SimpleBone_Bone_Ctrl_sCns",
+    "Right_Index_Meta_0_Deform_to_FK_SimpleBone_Bone_Ctrl_sCns",
+    "Right_Pinky_Meta_0_Deform_to_FK_SimpleBone_Bone_Ctrl_sCns",
+    "Right_Ring_Meta_0_Deform_to_FK_SimpleBone_Bone_Ctrl_sCns",
+    "Right_Middle_Meta_0_Deform_to_FK_SimpleBone_Bone_Ctrl_sCns",
+    ]
+
+    for i in toDelL:
+        if not cmds.objExists(i):
+            canDo = False
+            print i
+    if canDo:
+        cmds.delete(toDelL)
+        print "deleting bad scale constraint DONE"
