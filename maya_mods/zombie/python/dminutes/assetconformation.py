@@ -813,7 +813,17 @@ class Asset_File_Conformer:
             eachSEList = mc.ls(mc.listHistory(eachShape,future = True),type="shadingEngine", l = True)
             shadEngList = list(set(eachSEList))
             for shadEng in shadEngList:
-                nodeList = mc.ls(mc.listHistory(mc.listConnections(shadEng+'.surfaceShader',connections = False)[0]),l=True) + mc.ls(mc.listHistory(mc.listConnections(shadEng+'.aiSurfaceShader',connections = False)[0]),l=True) + [shadEng]
+                print "shadEng: ", shadEng
+                try:
+                    surfaceBranchShdNodeL = mc.ls(mc.listHistory(mc.listConnections(shadEng+'.surfaceShader',connections = False))[0],l=True)
+                except:
+                    surfaceBranchShdNodeL=[]
+
+                try: 
+                    aiSurfaceBranchShdNodeL = mc.ls(mc.listHistory(mc.listConnections(shadEng+'.aiSurfaceShader',connections = False))[0],l=True)
+                except:
+                    aiSurfaceBranchShdNodeL=[]
+                nodeList = surfaceBranchShdNodeL + aiSurfaceBranchShdNodeL + [shadEng]
                 nodeList = list(set(nodeList))
                 for each in nodeList:
                     if ":"in each:
