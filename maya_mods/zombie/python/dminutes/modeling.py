@@ -493,62 +493,68 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
 
 
 
-#DEPRECATED use getSameShortNameMesh{} instead
-def getMeshesWithSameName(inVerbose = True, inParent = "*"):
+def makeAllMeshesUnique( inParent = "*", GUI = True):
     """
-    list all the meshes that share the same short name, under de given 'inParent', 
+    make all the transform meshes shortName unique under de given 'inParent', 
     by default '*' means that any unreferenced mesh in the scene is taken into account
-        - inVerbose (boolean) : print the 'multipleMesh' list
         - inParent (string) : long name of the parent 
-        - return (list) : multipleMesh
-    """
-
-    allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
-    allTransMesh.extend(instanceTransformL)
-    multipleMesh = []
-
-    for eachTrasnMesh in allTransMesh:
-        if len(cmds.ls(cmds.listRelatives(eachTrasnMesh, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True)) > 1:
-            raise ValueError("#### {:>7}:'getMeshesWithSameName': {} has multiple shapes, please clean this mesh and run the script again".format("Error",eachTrasnMesh))
-        shortName = eachTrasnMesh.split("|")[-1]
-        if str(allTransMesh).count(shortName+"'") > 1:
-            multipleMesh.append(eachTrasnMesh)
-    if multipleMesh:
-        if inVerbose is True:
-            print "#### warning: 'getMeshesWithSameName': somes meshes have the same short name: "
-            for each in multipleMesh:
-                    print "#### warning: 'getMeshesWithSameName': "+each
-        return multipleMesh
-    else:
-        if inVerbose is True:
-            print "#### info: 'getMeshesWithSameName': no multiple short names found in '"+str(inParent)+"'"
-        return None 
-
-
-def getSameShortNameMesh(GUI = True, inParent = "*"):
-    """
-    list all the meshes that share the same short name, under de given 'inParent', 
-    by default '*' means that any unreferenced mesh in the scene is taken into account
-        - inVerbose (boolean) : print the 'multipleMesh' list
-        - inParent (string) : long name of the parent 
-        - return (list) : multipleMesh
     """
     resultB = True
     logL = []
     shortNameD = {}
+   
+
+    def renameAsUnique(longName="", reservedShortNameL = [], GUI = GUI):
+        resultB = True
+        logL = []
+        shortName = longName.split("|")[-1]
+        digit = re.findall('([0-9]+$)', longName)
+        if digit:
+            digit = digit[0]
+            shortName = string.rstrip(shortName,digit)
+            longNameNoDigit = string.rstrip(longName,digit)
+        else:
+            longNameNoDigit = longName
+        digit = "1"    
+        i = 0
+        while shortName+digit in reservedShortNameL:
+            digit = string.zfill(str(int(digit)+1), len(digit))
+            i+=1
+            if i>300:
+                logMessage = "#### {:>7}: 'renameAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
+                if GUI == True: print logMessage
+                logL.append(logMessage)
+                resultB = False
+                break
+        newShortName = shortName+digit
+        cmds.rename(longName,newShortName)
+        newLongName = longNameNoDigit+digit
+        logMessage = "#### {:>7}: 'renameAsUnique' Renamed '{}'   -->  '{}'".format("Info",longName,newShortName)
+        if GUI == True: print logMessage
+        logL.append(logMessage)
+        return dict(resultB=resultB, logL=logL, newShortName = newShortName, newLongName=newLongName)
+
+
+    allMeshL = cmds.ls(cmds.listRelatives(inParent, allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
+    allTransL = cmds.listRelatives (allMeshL, parent = True, fullPath = True, type = "transform")
+    allTransL = list(set(allTransL))
+
+    transL = []
+    instL =[]
     
-    # allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
-    # allTransMesh.extend(instanceTransformL)
+    for each in allTransL:
+        if len(cmds.listRelatives(each,allParents =True))>1:
+            instL.append(each)
+        else:
+            transL.append(each)
 
-    mc.ls(mc.listRelatives(oParent, allDescendents = True, fullPath = True, type = inType), noIntermediate = True, l=True)
-    multipleMesh = []
-
-    if instanceTransformL:
-        logMessage = "#### {:>7}: 'makeAllMeshesUnique' {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
+    if instL:
+        logMessage = "#### {:>7}: 'makeAllMeshesUnique' Ignoring {} instance object : {}".format("Warning", len(instL), instL)
         logL.append(logMessage)
         if GUI == True: print logMessage
 
-    for each in allTransMesh:
+    multipleMesh = []
+    for each in allTransL:
         eachShort = each.split("|")[-1]
         ## if the key exists, adds the value to the attached list
         if eachShort in shortNameD.keys():
@@ -556,134 +562,26 @@ def getSameShortNameMesh(GUI = True, inParent = "*"):
             elemList.append(each)
         else: ## else creates the list with a single value
             shortNameD[eachShort] = [each]
-    if shortNameD:
-        resultB = False
-        for key in shortNameD.keys():
-            logMessage = "#### {:>7}: 'getSameShortNameMesh' '{:>3}' object share the same short name: '{}' --> {} ".format("Error", len(shortNameD[key]),key, shortNameD[key])
-            if GUI == True: print logMessage
-            logL.append(logMessage)
+
+
+    reservedShortNameL = list(shortNameD.keys())
+    renamedLongNameL = []
+    for key in shortNameD.keys():
+        if len(shortNameD[key])>1:
+            toModifyL = list(set(shortNameD[key])&set(transL))
+            for each in toModifyL[1:]:
+                resultD = renameAsUnique(longName=each, reservedShortNameL = reservedShortNameL)
+                reservedShortNameL.append(resultD['newShortName'])
+                renamedLongNameL.append(resultD['newLongName'])
+                logL.extend(resultD['logL'])
+                if resultD['resultB']== False: resultB = False
+
+
+    logMessage = "#### {:>7}: 'makeAllMeshesUnique' '{:>3}' object(s) renamed: '{}' ".format("Info", len(renamedLongNameL),renamedLongNameL)
+    print logMessage
+    logL.append(logMessage)
 
     return dict(resultB=resultB, logL=logL, shortNameD = shortNameD)
-
-
-
-def renameMeshAsUnique(myMesh, inParent = "*", GUI = True):
-    """
-    Makes the given mesh name unique by adding a digit and/or incrementing it till the short name is unique in the scene. 
-    Only meshes of the main name space are taken into account, referenced meshes are therefore ignored.
-    myMesh  (string) : the long name of a mesh (a transform parent of a mesh shape) that has to be renamed to have a unique short name in the scene
-
-    """
-    allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
-
-    shortName = myMesh.split("|")[-1]
-    digit = re.findall('([0-9]+$)', myMesh)
-    if digit:
-        digit = digit[0]
-        newShortName = string.rstrip(shortName,digit)
-        newDigit = string.zfill(str(int(digit)+1), len(digit))
-        i = 1
-        while str(allTransMesh).count(newShortName+newDigit) > 0:
-            newDigit = string.zfill(str(int(digit)+i), len(digit))
-            i = i+1
-            if i>300:
-                print "#### {:>7}: 'renameMeshAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
-                break
-        cmds.rename(myMesh,newShortName+newDigit)
-        if GUI == True: print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+string.rstrip(myMesh,digit)+newDigit
-        if myMesh in allTransMesh: meshShapeNameConform(fixShapeName = True, myTransMesh = [string.rstrip(myMesh,digit)+newDigit], forceInfoOff = True )
-        
-    else:
-        digit = "1"
-        i = 1
-        while str(allTransMesh).count(shortName+digit) > 0:
-            digit = str(int(digit)+1)
-            i = i+1
-            if i>300:
-                print "#### {:>7}: 'renameMeshAsUnique' while loop has reached the security limit, program has been stopped".format("Error")
-                break
-        myMeshNew = [cmds.rename(myMesh,shortName+digit)]
-        if GUI == True: print "#### info: 'renameMeshAsUnique' rename "+myMesh+"  -->  "+myMesh+digit
-        if myMesh in allTransMesh: meshShapeNameConform(fixShapeName = True, myTransMesh = myMeshNew, forceInfoOff = True)
-
-#DEPRECATED use makeAllMesheUnique{} instead                        
-def makeAllMeshesUnique(inParent = "*", GUI = True):
-    """
-    makes all the meshes short names unique by adding a digit and/or incrementing it till the short name is unique in the scene
-    then makes sure the shapes names are corrects
-    """
-    resultB = True
-    logL = []
-
-    allTransMesh, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
-    if instanceTransformL:
-        logMessage = "#### {:>7}: 'makeAllMeshesUnique' {} objects are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
-        logL.append(logMessage)
-        if GUI == True: print logMessage
-
-    multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
-    if multipleMesh :
-        i=0
-        while multipleMesh:
-            renameMeshAsUnique(multipleMesh[0], inParent, GUI= False)
-            multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
-            i = i+1
-            if i>300:
-                print "#### {:>7}: 'makeAllMeshesUnique' while loop has reached the security limit, program has been stopped: {}".format("Error", multipleMesh)
-                break
-    else:
-        if inParent == "*":
-            logMessage =  "#### {:>7}: 'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name".format("Info")
-            logL.append(logMessage)
-            if GUI == True: print logMessage
-        else :
-            logMessage = "#### {:>7}: 'makeAllMeshesUnique' no multiple mesh found under '{}' all meshes have unique short name ".format("Info",inParent)
-            logL.append(logMessage)
-            if GUI == True: print logMessage
-
-    return resultB, logL
-
-
-def makeAllMesheUnique(inParent = "*", GUI = True):
-    """
-    makes all the meshes short names unique by adding a digit and/or incrementing it till the short name is unique in the scene
-    then makes sure the shapes names are corrects
-    """
-    resultB = True
-    logL = []
-
-    resultD = getSameShortNameMesh(GUI=GUI)
-    if resultD['resultB']:
-        logMessage = "#### {:>7}: 'makeAllMesheUnique' no multiple mesh found under '{}' all meshes have unique short name ".format("Info",inParent)
-        logL.append(logMessage)
-        if GUI == True: print logMessage
-        return dict(resultB=resultB, logL=logL)
-
-
-
-
-    multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
-    if multipleMesh :
-        i=0
-        while multipleMesh:
-            renameMeshAsUnique(multipleMesh[0], inParent, GUI= False)
-            multipleMesh = getMeshesWithSameName(inVerbose = False,inParent = inParent)
-            i = i+1
-            if i>300:
-                print "#### {:>7}: 'makeAllMeshesUnique' while loop has reached the security limit, program has been stopped: {}".format("Error", multipleMesh)
-                break
-    else:
-        if inParent == "*":
-            logMessage =  "#### {:>7}: 'makeAllMeshesUnique' no multiple mesh found, all meshes have unique short name".format("Info")
-            logL.append(logMessage)
-            if GUI == True: print logMessage
-        else :
-            logMessage = "#### {:>7}: 'makeAllMeshesUnique' no multiple mesh found under '{}' all meshes have unique short name ".format("Info",inParent)
-            logL.append(logMessage)
-            if GUI == True: print logMessage
-
-    return resultB, logL
-
 
 
 def geoGroupDeleteHistory(GUI=True, freezeVrtxPos = True):
@@ -1005,6 +903,7 @@ def combineGeoGroup(toCombineTransfL = [], combineByMaterialB = False, GUI = Tru
         return [resultB, logL, toCombineTransfL, resultObjL] 
 
     path = cmds.listRelatives(cmds.listRelatives(toCombineShapesL[-1], parent = True, fullPath = True, type = "transform"), parent = True, fullPath = True, type = "transform")[0]
+    mtx = cmds.xform( path, q = True, ws = True, matrix = True )
     finalObjectName = toCombineShapesL[-1].split("|")[-1]
 
     if GUI == True:
@@ -1063,9 +962,13 @@ def combineGeoGroup(toCombineTransfL = [], combineByMaterialB = False, GUI = Tru
                 #parent back the merged object under the initial group 
                 if not cmds.ls(path):
                     if parentName =='':
-                        newGroupName = cmds.group(mergedObjectName, name= groupName)
+                        newGroupName = cmds.group( name= groupName, empty=True)
+                        cmds.xform( path,  ws = True, matrix = mtx )
+                        mergedObjectName = cmds.parent(mergedObjectName, path )[0]
                     else:
-                        newGroupName = cmds.group(mergedObjectName, name= groupName, parent = parentName)
+                        newGroupName = cmds.group(empty=True, name= groupName, parent = parentName)
+                        cmds.xform( path,  ws = True, matrix = mtx )
+                        mergedObjectName = cmds.parent(mergedObjectName, path )[0]
                 else:
                     mergedObjectName = cmds.parent(mergedObjectName, path )[0]
                 if autoRenameI ==0 : mergedObjectName = cmds.rename(mergedObjectName,mergedObjectName.split("Shape")[0])
