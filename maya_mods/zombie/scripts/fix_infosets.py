@@ -42,7 +42,7 @@ def launch(sSeqList=None, dryRun=True):
         shotFilters = [["sg_sequence.Sequence.code", "in", sSeqList]]
         bOmitted = True
     versFields = ["sg_source_file"]
-    versFilters = [["sg_task.Task.step.Step.code", "in", ["previz 3d", "layout"]],
+    versFilters = [["sg_task.Task.step.Step.code", "in", ["previz 3d"]],
                    ]
 
     privFileList = []
@@ -50,6 +50,7 @@ def launch(sSeqList=None, dryRun=True):
     for sgShot in proj.listAllSgShots(includeOmitted=bOmitted, moreFilters=shotFilters):
 
         sShotCode = sgShot["code"]
+
         if sShotCode in sAlreadyFixedShots:
             print "already fixed infoSet on '{}'".format(sShotCode)
             continue
@@ -77,7 +78,7 @@ def launch(sSeqList=None, dryRun=True):
 #                continue
 
             privFile, _ = pubFile.copyToPrivateSpace(existing="keep")
-            "will be process: '{}'".format(privFile.absPath())
+            print "will be process: '{}'".format(privFile.absPath())
             privFileList.append(privFile)
 
     for privFile in privFileList:

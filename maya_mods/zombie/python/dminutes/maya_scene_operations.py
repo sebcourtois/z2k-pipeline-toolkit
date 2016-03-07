@@ -106,8 +106,10 @@ def setImgPlaneHidden(bVisible):
 
     oImgPlaneList = pc.ls("imgPlane_animatic*", type="imagePlane")
     for oImgPlane in oImgPlaneList:
-        try: oImgPlane.setAttr("hideOnPlayback", bVisible)
-        except Exception as e: pc.displayWarning(toStr(e))
+        try:
+            oImgPlane.setAttr("hideOnPlayback", bVisible)
+        except Exception as e:
+            pc.displayWarning(toStr(e))
 
 def isImgPlaneHidden():
 
@@ -115,6 +117,7 @@ def isImgPlaneHidden():
 
     oImgPlaneList = pc.ls("imgPlane_animatic*", type="imagePlane")
     for oImgPlane in oImgPlaneList:
+        oImgPlane.setAttr("visibility", True)
         bVisible = (bVisible or oImgPlane.getAttr("hideOnPlayback"))
 
     return bVisible
