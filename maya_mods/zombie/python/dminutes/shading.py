@@ -26,7 +26,7 @@ def connectedToSeveralSG(myNode = ""):
         return False
 
 
-
+#DEPRECATED, use checkShaderName() instead
 def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True, verbose = True, GUI = True ):
     """
     DEPRECATED, use checkShaderName() instead
@@ -140,7 +140,6 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
 
 def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
     """
-    shadEngineList : selection, all
     conform the shading tree attached to the selected shading engine , or all the shading trees , depending on the shadEngineList value.
     The initial shading engines are skipped so the ones that do not follow the proper 
     naming convention:  'sgr_materialName' where is composed of 24 alphanumeric characters maximum"
@@ -167,8 +166,10 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
     else:
         shadEngineList = mc.ls(":*",type = "shadingEngine")
 
-    shadEngineList.remove("initialParticleSE")
-    shadEngineList.remove("initialShadingGroup")
+    if "initialParticleSE" in shadEngineList:
+        shadEngineList.remove("initialParticleSE")
+    if "initialShadingGroup" in shadEngineList:
+        shadEngineList.remove("initialShadingGroup")
 
     if not shadEngineList :
         logMessage = "#### {:>7}: 'checkShaderName' No shading engine to conform".format("Info")
@@ -176,8 +177,7 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
         logL.append(logMessage)
         return dict(resultB=resultB, logL=logL, correctShadEngine=correctShadEngine, wrongShadEngine=wrongShadEngine)
 
-
-
+    unSoloDone = False
     for each in shadEngineList:
         #check shading group name convention
         if not re.match('^sgr_[a-zA-Z0-9]{1,24}$', each):
@@ -224,6 +224,14 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
                 if connectedToSeveralSG (item):
                     materialParticule = "shared"
 
+                if not unSoloDone:
+                    try:
+                        mc.soloMaterial(node=item)
+                        mc.soloMaterial(unsolo=True)
+                        unSoloDone = True
+                    except:
+                        pass
+
                 upStreamNodeList =  mc.listHistory (item,future = True)
                 if preview_shader in upStreamNodeList and render_shader in upStreamNodeList:
                     prefix = "bis"
@@ -253,6 +261,14 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
                 if connectedToSeveralSG (item):
                     materialParticule = "shared"
 
+                if not unSoloDone:
+                    try:
+                        mc.soloMaterial(node=item)
+                        mc.soloMaterial(unsolo=True)
+                        unSoloDone = True
+                    except:
+                        pass
+
                 upStreamNodeList =  mc.listHistory (item,future = True)
                 if preview_shader in upStreamNodeList and render_shader in upStreamNodeList:
                     prefix = "bis"
@@ -272,6 +288,7 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
                             wrongShadEngine.append(each)
 
     correctShadEngine =list(set(shadEngineList)-set(wrongShadEngine))
+    mc.refresh (suspend= False)
 
     if wrongShadEngine:
         logMessage = "#### {:>7}: 'checkShaderName' {:>3} shader(s) not conform: {}".format("Error",len(wrongShadEngine),wrongShadEngine)
