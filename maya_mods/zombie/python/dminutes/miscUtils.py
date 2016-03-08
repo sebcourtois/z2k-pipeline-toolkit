@@ -165,7 +165,6 @@ def setAttrC(*args, **kwargs):
         mc.setAttr(*args, **kwargs)
         return True
     except:
-        print "#### {:>7}: setAttr {}{} not possible, attribute is locked or connected".format("Warning", args, kwargs)
         return False
 
 
@@ -360,6 +359,49 @@ def listColHD(public = False):
 
 
 
+class LogBuilder():
+    
+    def __init__(self,gui=True, funcName ="", logL = [], resultB = True, logFile = ""):
+        self.gui = gui
+        self.funcName = funcName
+        self.logL = logL
+        self.resultB = resultB
+        self.logFile = logFile
+        if self.funcName:
+            self.funcName = "'"+self.funcName+"' "
+
+        if self.logFile:
+            print "toto"
+
+    def printL(self,style = "i",msg = "", guiPopUp = False ):
+        self.style = style
+        self.msg = msg
+
+        if not self.gui:
+            self.guiPopUp = False
+      
+        if self.style == "t":
+            self.formMsg = '\n----------- '+self.msg    
+        elif self.style == "e":
+            self.formMsg = "#### {:>7}: {}{}".format("Error",self.funcName,self.msg)
+            if guiPopUp: mc.confirmDialog( title='Error: '+self.funcName, message=self.msg, button=['Ok'], defaultButton='Ok' )
+            self.resultB = False
+        elif self.style == "w":
+            self.formMsg = "#### {:>7}: {}{}".format("Warning",self.funcName,self.msg)
+            if guiPopUp: mc.confirmDialog( title='Warning: '+self.funcName, message=self.msg, button=['Ok'], defaultButton='Ok' )
+        elif self.style == "i":
+            self.formMsg = "#### {:>7}: {}{}".format("Info",self.funcName,self.msg)
+            if guiPopUp: mc.confirmDialog( title='Info: '+self.funcName, message=self.msg, button=['Ok'], defaultButton='Ok' )
+        else:
+            self.formMsg = "{}{}".format(self.funcName,self.msg)
+
+
+        print self.formMsg
+
+
+
+        self.logL.append(self.formMsg)
+    
 
 
         
