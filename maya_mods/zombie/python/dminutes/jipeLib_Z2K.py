@@ -893,7 +893,7 @@ def Apply_Delete_setSubdiv (applySetSub=True, toDelete=["set_subdiv_0", "set_sub
     setSub = False
     if applySetSub:
         try:
-            assetconformation.setSubdiv()
+            assetconformation.setSubdiv(GUI = False)
             setSub = True
         except:
             print "    No setSubDiv to Apply in the scene"
