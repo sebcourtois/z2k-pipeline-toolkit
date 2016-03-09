@@ -146,7 +146,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=14, e=True)
+        self.pBar_upd(step=1, maxValue=15, e=True)
 
         # steps
 
@@ -337,7 +337,18 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)     
 
-
+        # 15   import light rig"
+        self.printF("assetconformation: import light rig", st="t")
+        resultD = assetconformation.importGrpLgt(lgtRig = "lgtRig_character", gui=False)
+        # prints -------------------
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+        
 
         # colors
         print "*btn_preClean:",boolResult
@@ -355,7 +366,7 @@ class checkModule(object):
         # steps
 
         # 1   checkBaseStructure()
-        result,debugD = jpZ.checkBaseStructure()
+        result,debugD = jpZ.checkBaseStructure(baseLayerL = ["geometry"], baseCTRL = [])
         # prints -------------------
         self.printF("checkBaseStructure()", st="t")
         self.printF(result, st="r")
@@ -379,8 +390,8 @@ class checkModule(object):
 
 
         # 2   checkAssetStructure()
-        result,debugD = jpZ.checkAssetStructure(assetgpN="asset", expectedL=["grp_rig","grp_geo"],
-        additionalL=["grp_placeHolders"])
+        result,debugD = jpZ.checkAssetStructure(assetgpN="asset", expectedL=["grp_geo"],
+        additionalL=[ "grp_light"])
         # prints -------------------
         self.printF("checkAssetStructure()", st="t")
         self.printF(result, st="r")
@@ -396,7 +407,7 @@ class checkModule(object):
 
 
         # 3   isSet_meshCache_OK()
-        result,details = jpZ.isSet_meshCache_OK (theType="setPreviz")
+        result,details = jpZ.isSet_meshCache_OK (theType="chr")
         # prints -------------------
         self.printF("isSetMeshCacheOK()", st="t")
         self.printF(result, st="r")
