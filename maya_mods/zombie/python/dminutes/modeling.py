@@ -592,10 +592,25 @@ def geoGroupDeleteHistory(GUI=True, freezeVrtxPos = True):
     logL = []
     geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
 
+
+    if not cmds.listAttr( '|asset|grp_geo',string = "deleteHistoryDone") and cmds.ls("|asset|grp_geo"):
+        cmds.addAttr("|asset|grp_geo",ln = "deleteHistoryDone", at = "bool")
+        deleteHistoryDone = False
+    else:
+        deleteHistoryDone = cmds.getAttr('grp_geo.deleteHistoryDone')
+
+
+    if  deleteHistoryDone:
+        logMessage = "#### {:>7}: 'geoGroupDeleteHistory': 'geoGroupDeleteHistory': skipping operation, '|asset|grp_geo.deleteHistoryDone' attr is True".format("Info")
+        logL.append(logMessage)
+        if GUI == True: print logMessage
+        return resultB, logL
+
     #now process vertex frezze position in a different loop for instances to avoid precessing the several time
     if freezeVrtxPos:
         for each in geoTransformList:
             cmds.polyMoveVertex (each, constructionHistory =True, random  = 0)
+            
 
         processedInstTransL = []
         for each in instanceTransformL:
@@ -636,6 +651,12 @@ def geoGroupDeleteHistory(GUI=True, freezeVrtxPos = True):
             logMessage = "#### info : 'geoGroupDeleteHistory': deteted "+str(len(deletedShapeList))+" intermediate(s) mesh shape : "
             logL.append(logMessage)
             if GUI == True: print logMessage
+
+    try:
+        cmds.setAttr("|asset|grp_geo.deleteHistoryDone",1)
+    except:
+        pass
+
     return resultB, logL
 
 
@@ -1045,7 +1066,7 @@ def combineAllGroups(inParent = "asset|grp_geo", GUI = True, autoRenameI= 1, com
 
 def convertObjToInstance(transformL=[], GUI = True, checkTopo = True, updateSetLayInstance = True, legacy = False):
     #exemple of transform naming selection
-    #mc.listRelatives(mc.ls("geo_femmeFatyVisiteurA*",type='mesh'),parent =True, fullPath = True, type = "transform")
+    #cmds.listRelatives(cmds.ls("geo_femmeFatyVisiteurA*",type='mesh'),parent =True, fullPath = True, type = "transform")
     logL = []
     resultB = True
 
