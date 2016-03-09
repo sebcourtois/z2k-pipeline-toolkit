@@ -168,6 +168,8 @@ def setAttrC(*args, **kwargs):
         return False
 
 
+
+
 def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, emptyOnly=False, *args,**kwargs):
         """ Description: Delete all NameSpace appart the ones in the NSexclusionL
             Return : nothing
@@ -379,19 +381,22 @@ class LogBuilder():
 
         if not self.gui:
             self.guiPopUp = False
+        else:
+            self.guiPopUp = guiPopUp
+
       
         if self.style == "t":
             self.formMsg = '\n----------- '+self.msg    
         elif self.style == "e":
             self.formMsg = "#### {:>7}: {}{}".format("Error",self.funcName,self.msg)
-            if guiPopUp: mc.confirmDialog( title='Error: '+self.funcName, message=self.msg, button=['Ok'], defaultButton='Ok' )
+            if self.guiPopUp: mc.confirmDialog( title='Error: '+self.funcName, message=self.msg, button=['Ok'], defaultButton='Ok' )
             self.resultB = False
         elif self.style == "w":
             self.formMsg = "#### {:>7}: {}{}".format("Warning",self.funcName,self.msg)
-            if guiPopUp: mc.confirmDialog( title='Warning: '+self.funcName, message=self.msg, button=['Ok'], defaultButton='Ok' )
+            if self.guiPopUp: mc.confirmDialog( title='Warning: '+self.funcName, message=self.msg, button=['Ok'], defaultButton='Ok' )
         elif self.style == "i":
             self.formMsg = "#### {:>7}: {}{}".format("Info",self.funcName,self.msg)
-            if guiPopUp: mc.confirmDialog( title='Info: '+self.funcName, message=self.msg, button=['Ok'], defaultButton='Ok' )
+            if self.guiPopUp: mc.confirmDialog( title='Info: '+self.funcName, message=self.msg, button=['Ok'], defaultButton='Ok' )
         else:
             self.formMsg = "{}{}".format(self.funcName,self.msg)
 
