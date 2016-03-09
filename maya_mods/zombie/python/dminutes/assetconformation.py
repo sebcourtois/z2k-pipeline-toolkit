@@ -122,7 +122,7 @@ def createSubdivSets(GUI = True):
     return dict(returnB=returnB, logL=logL)
 
      
-def setSubdiv(GUI= True ):
+def setSubdiv(GUI= False ):
     """
     creates 'smoothLevel1' and 'smoothLevel2' extra attributes on the 'grp_geo' 
     and connect them to the smoothLevel (preview subdiv level) of the geo shapes
@@ -172,6 +172,8 @@ def setSubdiv(GUI= True ):
                         mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
                         mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
                         mc.setAttr(eachGeoShape+".useGlobalSmoothDrawType",1)
+                        if previewSubdivLevel == 0:
+                            mc.setAttr(eachGeoShape+".smoothLevel", 0)
                         if previewSubdivLevel == 1:
                             mc.connectAttr("|asset|grp_geo.smoothLevel1", eachGeoShape+".smoothLevel", f=True)
                         if previewSubdivLevel > 1:
@@ -1108,8 +1110,9 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
 
 
 
+def importGrpLgt(lgtRig = "lgtRig_character", gui=True):
 
-def importGrpLgt(lgtRig = "lgtRig_character"):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="importGrpLgt")
 
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
@@ -1120,23 +1123,28 @@ def importGrpLgt(lgtRig = "lgtRig_character"):
         if  mainFilePathElem[-4] == "asset":
             lgtRigFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_MISC_PATH","shading","lightRigs",lgtRig+".ma"))
             lgtRigFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(lgtRigFilePath)))
-
         else:
-            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+            txt= "You are not working in an 'asset' structure directory"
+            log.printL("e", txt, guiPopUp = True)
+            raise ValueError(txt)
     else :
-        raise ValueError("#### Error: no '|asset' could be found in this scene")
+        log.printL("e", "No '|asset' could be found in this scene", guiPopUp = True)
+        raise ValueError(txt)
 
     grpLgt =  mc.ls("grp_light*", l=True)
     mc.delete(grpLgt)
 
-    print "#### {:>7}: importing '{}'".format("Info",lgtRigFilePath_exp)
+    log.printL("i", "Importing '{}'".format(lgtRigFilePath_exp))
     myImport = mc.file( lgtRigFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, preserveReferences= True )
     mc.parent("grp_light","asset")
 
 
     lgtDefault =  mc.ls("lgt_default*", l=True, type = "light")
     if len(lgtDefault)!=1:
-        raise ValueError("#### {:>7}: '{}' 'lgt_default' light has been found, proceeding with the first one".format( len(lgtDefault)))
+        txt= "'{}' 'lgt_default' light has been found".format( len(lgtDefault))
+        log.printL("e", txt, guiPopUp = True)
+        raise ValueError(txt)
+
     lgtDefault = lgtDefault[0]    
 
     shadingEngineList =  mc.ls("*",type = "shadingEngine")
@@ -1145,14 +1153,16 @@ def importGrpLgt(lgtRig = "lgtRig_character"):
         if each == "initialParticleSE" or each == "initialShadingGroup":
             continue
         elif not re.match('^sgr_[a-zA-Z0-9]{1,24}$', each):
-                print "#### {:>7}: Skipping '{}' light linking, since it does not match naming convention 'sgr_materialName'".format("Warning",each)
+                log.printL("w", "Skipping '{}' light linking, since it does not match naming convention 'sgr_materialName'".format(each))
                 continue
         else:
             shadingEngine2LinkList.append(each)
 
     mc.lightlink( light=lgtDefault, object=shadingEngine2LinkList )
-    print "#### {:>7}: '{}' light linked  to '{}' shaders".format("Info",lgtDefault, len(shadingEngine2LinkList))
-    return True
+    log.printL("i", "'{}' light linked  to '{}' shaders".format(lgtDefault, len(shadingEngine2LinkList)))
+
+    return dict(resultB=log.resultB, logL=log.logL)
+
 
 def fixMaterialInfo (shadingEngineL = [], GUI = True):
     returnB = True
