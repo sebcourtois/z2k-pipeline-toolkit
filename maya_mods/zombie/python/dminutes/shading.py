@@ -1264,10 +1264,17 @@ def createShadingGroup():
     print "#### {:>7}: runing shading.createShadingGroup()".format("Info")
     transformMeshList = []
     selection = mc.ls( selection=True, l=True)
+    processedInstL=[]
     for each in selection:
         meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = each)
+        for eachInst in instanceList:
+            instParentL = mc.listRelatives(mc.listRelatives(eachInst, allDescendents = True, fullPath = True, type = "mesh"), allParents = True, fullPath = True, type = "transform")
+            if instParentL[0] not in processedInstL:
+                processedInstL.extend(instParentL)
+                transformMeshList.append(instParentL[0])
         for eachMesh in meshList:
             transformMeshList.append(eachMesh)
+
     if not transformMeshList:
         print "#### {:>7}: nothing selected, please select at leas a geometrie and run again the script".format("Info")
         return
