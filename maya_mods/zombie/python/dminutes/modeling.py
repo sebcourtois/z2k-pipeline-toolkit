@@ -549,7 +549,7 @@ def makeAllMeshesUnique( inParent = "*", GUI = True):
             transL.append(each)
 
     if instL:
-        logMessage = "#### {:>7}: 'makeAllMeshesUnique' Ignoring {} instance object : {}".format("Warning", len(instL), instL)
+        logMessage = "#### {:>7}: 'getSameShortNameMesh' Ignoring {} instance object : {}".format("Warning", len(instL), instL)
         logL.append(logMessage)
         if GUI == True: print logMessage
 
@@ -1287,6 +1287,8 @@ def layerUpdate(inParent="asset|grp_geo", GUI = True, displayMode = 0):
     setCtrl = cmds.ls('set_control')
     if setCtrl:
         crtlL = cmds.sets( setCtrl[0], q=True )
+    else:
+        crtlL=[]
 
     try:
         myInstanceLayerL = cmds.ls("instance")
