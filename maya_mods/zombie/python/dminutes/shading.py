@@ -377,6 +377,10 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
         if "cam_shading_" in  str(mc.file(query=True, list=True, reference = True)):
             mc.currentTime(1)
             removedCameraI = 0
+            for eachPanel in mc.getPanel(type="modelPanel"):
+                if "cam_shading_" in  str(mc.modelPanel(eachPanel, q=True, camera=True)):
+                    mc.modelPanel(eachPanel, edit=True, camera='persp')
+                    mc.refresh()
             for each in  mc.file(query=True, list=True, reference = True):
                 if "cam_shading_" in each:
                     mc.file(each, removeReference = True)
