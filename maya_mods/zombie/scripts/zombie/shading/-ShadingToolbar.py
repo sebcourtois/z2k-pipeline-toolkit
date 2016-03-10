@@ -64,7 +64,7 @@ def buttonConformSelShaderName(*args):
 
 #Conform Shader Masks
 def buttonConformShaderMasks(*args):
-	assetconformation.setShadingMask(selectFailingNodes = True, verbose = True, gui = True)
+	assetconformation.setShadingMask(selectFailingNodes = True, gui = True)
 
 #Conform Preview Shader
 def buttonConformAllPreviewShader(*args):

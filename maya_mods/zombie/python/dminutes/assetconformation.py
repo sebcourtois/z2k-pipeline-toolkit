@@ -122,7 +122,7 @@ def createSubdivSets(GUI = True):
     return dict(returnB=returnB, logL=logL)
 
      
-def setSubdiv(GUI= True ):
+def setSubdiv(GUI= False ):
     """
     creates 'smoothLevel1' and 'smoothLevel2' extra attributes on the 'grp_geo' 
     and connect them to the smoothLevel (preview subdiv level) of the geo shapes
@@ -172,12 +172,14 @@ def setSubdiv(GUI= True ):
                         mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
                         mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
                         mc.setAttr(eachGeoShape+".useGlobalSmoothDrawType",1)
+                        if previewSubdivLevel == 0:
+                            mc.setAttr(eachGeoShape+".smoothLevel", 0)
                         if previewSubdivLevel == 1:
                             mc.connectAttr("|asset|grp_geo.smoothLevel1", eachGeoShape+".smoothLevel", f=True)
                         if previewSubdivLevel > 1:
                             mc.connectAttr("|asset|grp_geo.smoothLevel2", eachGeoShape+".smoothLevel",f=True)
                         if not mc.attributeQuery ("aiSubdivType", node = eachGeoShape , exists = True):
-                            logMessage = "#### {:>7}: 'setSubdiv' {}.aiSubdivType attribute coud not be found, please check if Arnold is properly installed on your computer".format("Error",eachGeoShape)
+                            logMessage = "#### {:>7}: 'setSubdiv' {}.aiSubdivType attribute coud not be found, please check if Arnold is properly installed on your computer".format(eachGeoShape)
                             if GUI == True: raise ValueError(logMessage)
                             logL.append(logMessage)
                             returnB = False
@@ -219,7 +221,7 @@ def createSetMeshCache(inParent= "|asset|grp_geo", GUI = True):
     existingGeoL.extend(instanceList)
 
     if not existingGeoL:
-        logMessage = "#### {:>7}: 'createSetMeshCache' geometries could be foud under '{}'".format("Error", inParent)
+        logMessage = "#### {:>7}: 'createSetMeshCache' geometries could be foud under '{}'".format( inParent)
         if GUI == True: raise ValueError(logMessage)
         logL.append(logMessage)
         returnB = False
@@ -252,9 +254,9 @@ def previewSubdiv(enable = True, filter = ""):
                 for eachAttr in smoothLevelAttrList:
                     mc.setAttr(eachGeoGroup+"."+eachAttr, enable * int(eachAttr[-1]))
 
-def setShadingMask(selectFailingNodes = False, verbose = True, gui = True):
-    if verbose == True: print ""
-    if verbose == True: print "#### {:>7}: running setShadingMask(selectFailingNodes = {}, verbose = {} )".format("info",selectFailingNodes, verbose)
+def setShadingMask(selectFailingNodes = False, gui = True):
+
+    log = miscUtils.LogBuilder(gui=gui, funcName ="setShadingMask")
 
     dmnMask00_R = ["chr_"]
     dmnMask00_G = ["prp_"]
@@ -304,19 +306,19 @@ def setShadingMask(selectFailingNodes = False, verbose = True, gui = True):
 
     failingNodes = []
     succedingNodes = []
+    lockedNodes = []
 
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] != "asset":
-            if gui:
-                raise ValueError("#### Error: you are not working in an 'asset' structure directory")
-            else:
-                tx= "#### Error: you are not working in an 'asset' structure directory"
-                print tx
+                txt= "You are not working in an 'asset' structure directory"
+                log.printL("e", txt, guiPopUp = True)
+                raise ValueError(txt)
     else :
-        if gui:
-            raise ValueError("#### Error: no '|asset' could be found in this scene")
+        log.printL("e", "No '|asset' could be found in this scene", guiPopUp = True)
+        raise ValueError(txt)
+
 
     assetName =  mainFilePathElem[-2]
 
@@ -357,81 +359,75 @@ def setShadingMask(selectFailingNodes = False, verbose = True, gui = True):
 
 
     dmnToonList = mc.ls(type="dmnToon")
-    if verbose == True: 
-        print "#### {:>7}: {} dmnToon nodes to process ".format("Info",len(dmnToonList))
-        print "#### {:>7}: 'dmnMask00' set to -->  {} ".format("Info", dmnMask00)
-        print "#### {:>7}: 'dmnMask01' set to -->  {} ".format("Info", dmnMask01)
-        print "#### {:>7}: 'dmnMask02' set to -->  {} ".format("Info", dmnMask02)
-        print "#### {:>7}: 'dmnMask03' set to -->  {} ".format("Info", dmnMask03)
-        print "#### {:>7}: 'dmnMask04' set to -->  {} ".format("Info", dmnMask04)
+
+    #log.printL("i", "{} dmnToon nodes to process".format(len(dmnToonList)) )
+    log.printL("i", "'dmnMask00' set to -->  {}".format(dmnMask00) )
+    log.printL("i", "'dmnMask01' set to -->  {}".format(dmnMask01) )
+    log.printL("i", "'dmnMask02' set to -->  {}".format(dmnMask02) )
+    log.printL("i", "'dmnMask03' set to -->  {}".format(dmnMask03) )
+    log.printL("i", "'dmnMask04' set to -->  {}".format(dmnMask04) )
+
+
 
     for each in dmnToonList:
         maskNumber = 5
-
+        locked = False
         if not mc.listConnections(each+".dmnMask00",connections = True):
-            if mc.getAttr(each+".dmnMask00", lock = True): 
-                mc.setAttr(each+".dmnMask00", lock = False)
-                print "#### {:>7}: '{}.dmnMask00' has been unlocked".format("Warning", each)
-            mc.setAttr (each+".dmnMask00", dmnMask00[0], dmnMask00[1], dmnMask00[2], type="double3")
+            if not miscUtils.setAttrC(each+".dmnMask00", dmnMask00[0], dmnMask00[1], dmnMask00[2], type="double3"):
+                locked =True
             maskNumber = maskNumber - 1
         else:
-            print "#### {:>7}: '{}.dmnMask00' is already connected, can't change value".format("Error", each)
+            log.printL("e", "'{}.dmnMask00' is already connected, can't change value".format( each))
 
         if not mc.listConnections(each+".dmnMask01",connections = True):
-            if mc.getAttr(each+".dmnMask01", lock = True): 
-                mc.setAttr(each+".dmnMask01", lock = False)
-                print "#### {:>7}: '{}.dmnMask01' has been unlocked".format("Warning", each)
-            mc.setAttr (each+".dmnMask01", dmnMask01[0], dmnMask01[1], dmnMask01[2], type="double3")
+            if not miscUtils.setAttrC(each+".dmnMask01", dmnMask01[0], dmnMask01[1], dmnMask01[2], type="double3"):
+                locked =True
             maskNumber = maskNumber - 1
         else:
-            print "#### {:>7}: '{}.dmnMask01' is already connected, can't change value".format("Error", each)
+            log.printL("e", "'{}.dmnMask01' is already connected, can't change value".format( each))
 
         if not mc.listConnections(each+".dmnMask02",connections = True):
-            if mc.getAttr(each+".dmnMask02", lock = True): 
-                mc.setAttr(each+".dmnMask02", lock = False)
-                print "#### {:>7}: '{}.dmnMask02' has been unlocked".format("Warning", each)
-            mc.setAttr (each+".dmnMask02", dmnMask02[0], dmnMask02[1], dmnMask02[2], type="double3")
+            if not miscUtils.setAttrC(each+".dmnMask02", dmnMask02[0], dmnMask02[1], dmnMask02[2], type="double3"):
+                locked =True
             maskNumber = maskNumber - 1
         else:
-            print "#### {:>7}: '{}.dmnMask02' is already connected, can't change value".format("Error", each)
+            log.printL("e", "'{}.dmnMask02' is already connected, can't change value".format( each))
 
         if not mc.listConnections(each+".dmnMask03",connections = True):
-            if mc.getAttr(each+".dmnMask03", lock = True): 
-                mc.setAttr(each+".dmnMask03", lock = False)
-                print "#### {:>7}: '{}.dmnMask03' has been unlocked".format("Warning", each)
-            mc.setAttr (each+".dmnMask03", dmnMask03[0], dmnMask03[1], dmnMask03[2], type="double3")
+            if not miscUtils.setAttrC(each+".dmnMask03", dmnMask03[0], dmnMask03[1], dmnMask03[2], type="double3"):
+                locked =True
             maskNumber = maskNumber - 1
         else:
-            print "#### {:>7}: '{}.dmnMask03' is already connected, can't change value".format("Error", each)
+            log.printL("e", "'{}.dmnMask03' is already connected, can't change value".format( each))
 
         if not mc.listConnections(each+".dmnMask04",connections = True):
-            if mc.getAttr(each+".dmnMask04", lock = True): 
-                mc.setAttr(each+".dmnMask04", lock = False)
-                print "#### {:>7}: '{}.dmnMask04' has been unlocked".format("Warning", each)
-            mc.setAttr (each+".dmnMask04", dmnMask04[0], dmnMask04[1], dmnMask04[2], type="double3")
+            if not miscUtils.setAttrC(each+".dmnMask04", dmnMask04[0], dmnMask04[1], dmnMask04[2], type="double3"):
+                locked =True
             maskNumber = maskNumber - 1
         else:
-            print "#### {:>7}: '{}.dmnMask04' is already connected, can't change value".format("Error", each)
+            log.printL("e", "'{}.dmnMask04' is already connected, can't change value".format( each))
+
+        if locked: 
+            lockedNodes.append(each)
 
         if maskNumber == 0:
             succedingNodes.append(each)
         else:
             failingNodes.append(each)
 
-    if len(succedingNodes) > 0 :
-        print "#### {:>7}: {} dmnToon nodes masks have been set succesfully ".format("Info",len(succedingNodes))
-    else:
-        succedingNodes = None
+    if len(lockedNodes) > 0 :
+        log.printL("w", "{} dmnToon nodes has locked attibutes hence could not be set totaly: {}".format( len(lockedNodes), lockedNodes))
 
     if len(failingNodes) > 0 :
-        if selectFailingNodes == True: 
+        if selectFailingNodes == True and gui: 
             mc.select(failingNodes)
-        if gui:
-            raise ValueError("#### {:>7}: {} dmnToon nodes masks cannot be set: {}".format("Error",len(failingNodes), failingNodes))
-    else:
-        failingNodes = None
+        log.printL("e", "{} dmnToon nodes masks cannot be set: {}".format( len(failingNodes), failingNodes), guiPopUp = True)
 
-    return failingNodes
+    if len(succedingNodes) > 0 :
+        log.printL("i", "{} dmnToon nodes masks have been set succesfully: {}".format( len(succedingNodes), succedingNodes))
+            
+
+    return dict(resultB=log.resultB, logL=log.logL)
 
 
 
@@ -553,12 +549,12 @@ class Asset_File_Conformer:
             for eachTarget in targetObjects:
                 if mc.ls(eachTarget):
                     if mc.nodeType (eachTarget)!= "transform":
-                        print ("#### {:>7}: no '{}' target object has not the right type, only 'transform' nodes accepted".format("Error", eachTarget))
+                        print ("#### {:>7}: no '{}' target object has not the right type, only 'transform' nodes accepted".format( eachTarget))
                         errorOnTarget = errorOnTarget + 1
                     else:
                         self.targetList.append(eachTarget)
                 else:
-                    print ("#### {:>7}: no '{}' target object could be found".format("Error", eachTarget))
+                    print ("#### {:>7}: no '{}' target object could be found".format( eachTarget))
                     errorOnTarget = errorOnTarget + 1
 
             for eachTarget in self.targetList:
@@ -567,13 +563,13 @@ class Asset_File_Conformer:
 
                 if mc.ls(eachSource):
                     if mc.nodeType (eachSource)!= "transform":
-                        print ("#### {:>7}: no '{}' source object has not the right type, only 'transform' nodes accepted".format("Error", eachSource))
+                        print ("#### {:>7}: no '{}' source object has not the right type, only 'transform' nodes accepted".format( eachSource))
                         errorOnSource = errorOnSource + 1
                     else:
                         self.sourceList.append(eachSource)
                 else:
                     errorOnSource = errorOnSource + 1
-                    print ("#### {:>7}: target --> '{:<30}'  has no correspondig source --> '{}'".format("Error",eachTarget, eachSource))
+                    print ("#### {:>7}: target --> '{:<30}'  has no correspondig source --> '{}'".format(eachTarget, eachSource))
 
             if errorOnTarget != 0: self.targetList =[]
             if errorOnSource != 0: self.sourceList =[]
@@ -595,7 +591,7 @@ class Asset_File_Conformer:
                     errorOnTarget = errorOnTarget + 1
             else:
                 print ("#### {:>7}: 2 objects must be selected, source first then target".format("Error"))
-                print ("#### {:>7}: selection {}".format("Error",mySelection))
+                print ("#### {:>7}: selection {}".format(mySelection))
     
 
         else:
@@ -620,8 +616,8 @@ class Asset_File_Conformer:
                 i+=1
         else:
             print "#### {:>7}: target list and source list not conform".format("Error")
-            print "#### {:>7}: source {}".format("Error", self.sourceList)
-            print "#### {:>7}: target {}".format("Error", self.targetList)
+            print "#### {:>7}: source {}".format( self.sourceList)
+            print "#### {:>7}: target {}".format( self.targetList)
 
 
 
@@ -635,7 +631,7 @@ class Asset_File_Conformer:
                 targetVrtxCnt = len(mc.getAttr(self.targetList[i]+".vrts[:]"))
                 if sourceVrtxCnt != targetVrtxCnt:
                     topoMismatch = topoMismatch + 1
-                    print ("#### {:>7}: Vertex number mismatch: '{}' vertex nb = {} -- '{}' vertex nb = {}".format("Error",self.sourceList[i],sourceVrtxCnt, self.targetList[i],targetVrtxCnt))
+                    print ("#### {:>7}: Vertex number mismatch: '{}' vertex nb = {} -- '{}' vertex nb = {}".format(self.sourceList[i],sourceVrtxCnt, self.targetList[i],targetVrtxCnt))
 
                 # sourceBBox =  mc.exactWorldBoundingBox(self.sourceList[i])
                 # targetBBox =  mc.exactWorldBoundingBox(self.targetList[i])
@@ -670,19 +666,19 @@ class Asset_File_Conformer:
                 shapeOrig = False
                 sourceShapeList = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
                 if len(sourceShapeList)==0:
-                    print ("#### {:>7}: source, no shape coud be found under transform : '{}'".format("Error",self.sourceList[i]))
+                    print ("#### {:>7}: source, no shape coud be found under transform : '{}'".format(self.sourceList[i]))
                     uvTransferFailed +=1
                     continue
                 elif len(sourceShapeList)==1:
                     sourceShape = sourceShapeList[0]
                 else:
-                    print ("#### {:>7}: several 'shapes' were found under: '{}' transform".format("Error",self.sourceList[i]))
+                    print ("#### {:>7}: several 'shapes' were found under: '{}' transform".format(self.sourceList[i]))
                     uvTransferFailed +=1
                     continue
 
                 targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
                 if len(targetShapeList)==0:
-                    print ("#### {:>7}: target, no shape coud be found under transform: '{}'".format("Error",self.targetList[i]))
+                    print ("#### {:>7}: target, no shape coud be found under transform: '{}'".format(self.targetList[i]))
                     uvTransferFailed +=1
                     continue
                 elif len(targetShapeList)==1:
@@ -696,7 +692,7 @@ class Asset_File_Conformer:
                         targetShape = shapeOrigList[0]
                         shapeOrig = True
                     else:
-                        print ("#### {:>7}: several 'ShapeOrig' were found under: '{}' transform".format("Error",self.targetList[i]))
+                        print ("#### {:>7}: several 'ShapeOrig' were found under: '{}' transform".format(self.targetList[i]))
                         uvTransferFailed +=1
                         continue
 
@@ -735,7 +731,7 @@ class Asset_File_Conformer:
             if uvTransferFailed ==0:
                 print "#### {:>7}: UVs has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
             else:
-                print ("#### {:>7}: UVs transfer failed for {} object(s)".format("Error",uvTransferFailed))
+                print ("#### {:>7}: UVs transfer failed for {} object(s)".format(uvTransferFailed))
 
         else:
             print "#### {:>7}: cannot transfer uvs, target and source list mismatch".format("Error")
@@ -758,25 +754,25 @@ class Asset_File_Conformer:
                 i+=1
                 sourceShapeList = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
                 if len(sourceShapeList)==0:
-                    print ("#### {:>7}: source, no shape coud be found under transform : '{}'".format("Error",self.sourceList[i]))
+                    print ("#### {:>7}: source, no shape coud be found under transform : '{}'".format(self.sourceList[i]))
                     sgTransferFailed +=1
                     continue
                 elif len(sourceShapeList)==1:
                     sourceShape = sourceShapeList[0]
                 else:
-                    print ("#### {:>7}: several 'shapes' were found under: '{}' transform".format("Error",self.sourceList[i]))
+                    print ("#### {:>7}: several 'shapes' were found under: '{}' transform".format(self.sourceList[i]))
                     sgTransferFailed +=1
                     continue
 
                 targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
                 if len(targetShapeList)==0:
-                    print ("#### {:>7}: target, no shape coud be found under transform: '{}'".format("Error",self.sourceList[i]))
+                    print ("#### {:>7}: target, no shape coud be found under transform: '{}'".format(self.sourceList[i]))
                     sgTransferFailed +=1
                     continue
                 elif len(targetShapeList)==1:
                     targetShape = targetShapeList[0]
                 else:
-                    print ("#### {:>7}: several 'shapes' were found under: '{}' transform".format("Error",self.sourceList[i]))
+                    print ("#### {:>7}: several 'shapes' were found under: '{}' transform".format(self.sourceList[i]))
                     sgTransferFailed +=1
                     continue
 
@@ -787,14 +783,14 @@ class Asset_File_Conformer:
                 elif len(sourceShadEngList) > 0:
                     mc.transferShadingSets(sourceShape,targetShape, sampleSpace=0, searchMethod=3)
                 else:
-                    print ("#### {:>7}: no 'shader' found on source object: '{}' transform".format("Error",sourceShape))
+                    print ("#### {:>7}: no 'shader' found on source object: '{}' transform".format(sourceShape))
                     sgTransferFailed +=1
 
 
             if sgTransferFailed ==0:
                 print "#### {:>7}: materials has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
             else:
-                print ("#### {:>7}: materials transfer failed for {} object(s)".format("Error",sgTransferFailed))
+                print ("#### {:>7}: materials transfer failed for {} object(s)".format(sgTransferFailed))
 
         else:
             print "#### {:>7}: cannot transfer materials, target and source list mismatch".format("Error")
@@ -813,7 +809,16 @@ class Asset_File_Conformer:
             eachSEList = mc.ls(mc.listHistory(eachShape,future = True),type="shadingEngine", l = True)
             shadEngList = list(set(eachSEList))
             for shadEng in shadEngList:
-                nodeList = mc.ls(mc.listHistory(mc.listConnections(shadEng+'.surfaceShader',connections = False)[0]),l=True) + mc.ls(mc.listHistory(mc.listConnections(shadEng+'.aiSurfaceShader',connections = False)[0]),l=True) + [shadEng]
+                try:
+                    surfaceBranchShdNodeL = mc.ls(mc.listHistory(mc.listConnections(shadEng+'.surfaceShader',connections = False))[0],l=True)
+                except:
+                    surfaceBranchShdNodeL=[]
+
+                try: 
+                    aiSurfaceBranchShdNodeL = mc.ls(mc.listHistory(mc.listConnections(shadEng+'.aiSurfaceShader',connections = False))[0],l=True)
+                except:
+                    aiSurfaceBranchShdNodeL=[]
+                nodeList = surfaceBranchShdNodeL + aiSurfaceBranchShdNodeL + [shadEng]
                 nodeList = list(set(nodeList))
                 for each in nodeList:
                     if ":"in each:
@@ -884,9 +889,9 @@ class Asset_File_Conformer:
                 targetShapeLn = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
                 if len(sourceShapeLn) != 1 or len(targetShapeLn) != 1:
                     if len(sourceShapeLn) != 1:
-                        print ("#### {:>7}: {} shape(s) found under transform: '{}'".format("Error",len(sourceShapeLn), self.sourceList[i]))
+                        print ("#### {:>7}: {} shape(s) found under transform: '{}'".format(len(sourceShapeLn), self.sourceList[i]))
                     if len(targetShapeLn) != 1:
-                        print ("#### {:>7}: {} shape(s) found under transform: '{}'".format("Error",len(targetShapeLn), self.targetList[i]))
+                        print ("#### {:>7}: {} shape(s) found under transform: '{}'".format(len(targetShapeLn), self.targetList[i]))
                     shapeTransferFailed += 1
                 else:
                     for each in shapeAttrList:
@@ -897,7 +902,7 @@ class Asset_File_Conformer:
                 i+=1
             if shapeTransferFailed != 0 or attrTransferFailed != 0:
                 if shapeTransferFailed != 0:
-                    print ("#### {:>7}: Rendering attribute transfer failed for {} shape(s)".format("Error",shapeTransferFailed))
+                    print ("#### {:>7}: Rendering attribute transfer failed for {} shape(s)".format(shapeTransferFailed))
                 if attrTransferFailed != 0:
                     print ("#### {:>7}: Rendering attribute transfer failed for {} attribute(s)".format("Warning",attrTransferFailed))
             else:
@@ -1105,8 +1110,9 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
 
 
 
+def importGrpLgt(lgtRig = "lgtRig_character", gui=True):
 
-def importGrpLgt(lgtRig = "lgtRig_character"):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="importGrpLgt")
 
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
@@ -1117,23 +1123,28 @@ def importGrpLgt(lgtRig = "lgtRig_character"):
         if  mainFilePathElem[-4] == "asset":
             lgtRigFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_MISC_PATH","shading","lightRigs",lgtRig+".ma"))
             lgtRigFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(lgtRigFilePath)))
-
         else:
-            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+            txt= "You are not working in an 'asset' structure directory"
+            log.printL("e", txt, guiPopUp = True)
+            raise ValueError(txt)
     else :
-        raise ValueError("#### Error: no '|asset' could be found in this scene")
+        log.printL("e", "No '|asset' could be found in this scene", guiPopUp = True)
+        raise ValueError(txt)
 
     grpLgt =  mc.ls("grp_light*", l=True)
     mc.delete(grpLgt)
 
-    print "#### {:>7}: importing '{}'".format("Info",lgtRigFilePath_exp)
+    log.printL("i", "Importing '{}'".format(lgtRigFilePath_exp))
     myImport = mc.file( lgtRigFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, preserveReferences= True )
     mc.parent("grp_light","asset")
 
 
     lgtDefault =  mc.ls("lgt_default*", l=True, type = "light")
     if len(lgtDefault)!=1:
-        raise ValueError("#### {:>7}: '{}' 'lgt_default' light has been found, proceeding with the first one".format("Error", len(lgtDefault)))
+        txt= "'{}' 'lgt_default' light has been found".format( len(lgtDefault))
+        log.printL("e", txt, guiPopUp = True)
+        raise ValueError(txt)
+
     lgtDefault = lgtDefault[0]    
 
     shadingEngineList =  mc.ls("*",type = "shadingEngine")
@@ -1142,14 +1153,16 @@ def importGrpLgt(lgtRig = "lgtRig_character"):
         if each == "initialParticleSE" or each == "initialShadingGroup":
             continue
         elif not re.match('^sgr_[a-zA-Z0-9]{1,24}$', each):
-                print "#### {:>7}: Skipping '{}' light linking, since it does not match naming convention 'sgr_materialName'".format("Warning",each)
+                log.printL("w", "Skipping '{}' light linking, since it does not match naming convention 'sgr_materialName'".format(each))
                 continue
         else:
             shadingEngine2LinkList.append(each)
 
     mc.lightlink( light=lgtDefault, object=shadingEngine2LinkList )
-    print "#### {:>7}: '{}' light linked  to '{}' shaders".format("Info",lgtDefault, len(shadingEngine2LinkList))
-    return True
+    log.printL("i", "'{}' light linked  to '{}' shaders".format(lgtDefault, len(shadingEngine2LinkList)))
+
+    return dict(resultB=log.resultB, logL=log.logL)
+
 
 def fixMaterialInfo (shadingEngineL = [], GUI = True):
     returnB = True
@@ -1210,7 +1223,7 @@ def assetGrpClean( clean = True, GUI = True):
     assetRootL = mc.listRelatives ("|asset",ni=1,f=1,c=1)
     for each in assetRootL:
         if mc.nodeType(each) != 'transform' or "grp_" not in each.split("|")[-1]:
-            logMessage = "#### {:>7}: 'assetGrpClean' {} is not a group named 'grp_*'".format("Error", each)
+            logMessage = "#### {:>7}: 'assetGrpClean' {} is not a group named 'grp_*'".format( each)
             logL.append(logMessage)
             returnB = False
             if GUI == True : print logMessage
@@ -1222,7 +1235,7 @@ def assetGrpClean( clean = True, GUI = True):
                         mc.delete(each)
                     except Exception,err:
                         returnB = False
-                        logMessage = "#### {:>7}: 'assetGrpClean' could not delete {} --> '{}'".format("Error", each, err)
+                        logMessage = "#### {:>7}: 'assetGrpClean' could not delete {} --> '{}'".format( each, err)
                 else:
                     logMessage = "#### {:>7}: 'assetGrpClean' to delete: {}".format("Info", each)
 

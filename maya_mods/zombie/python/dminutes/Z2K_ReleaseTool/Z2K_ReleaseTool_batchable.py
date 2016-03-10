@@ -71,9 +71,10 @@ reload(Z2K_check_ANIM_SET)
 # render checks
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_checks as  Z2K_check_RENDER
 reload(Z2K_check_RENDER)
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_SET_checks as  Z2K_check_RENDER_SET  # script à remplacer par le vrai
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_SET_checks as  Z2K_check_RENDER_SET
 reload(Z2K_check_RENDER_SET)
-
+import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_CHAR_checks as  Z2K_check_RENDER_CHAR
+reload(Z2K_check_RENDER_CHAR)
 
 
 class Z2K_ReleaseTool (object):
@@ -131,9 +132,9 @@ class Z2K_ReleaseTool (object):
                 theDebugFile  = DEBUGFILE_MODELING_CHR
 
             elif self.destinationAssetType in ["render_ref"]:
-                print tab, "render, test not ready"
+                print tab, "render"
                 theDebugFile  = DEBUGFILE_RENDER_CHR
-                Z2K_check = Z2K_check_RENDER
+                Z2K_check = Z2K_check_RENDER_CHAR
 
             elif self.destinationAssetType in ["previz_ref"]:
                 print tab, "previz"
@@ -180,7 +181,7 @@ class Z2K_ReleaseTool (object):
                 theDebugFile  = DEBUGFILE_MODELING_SET
 
             elif self.destinationAssetType in ["render_ref"]:
-                print tab, "render, test not ready"
+                print tab, "render"
                 theDebugFile  = DEBUGFILE_RENDER_SET
                 Z2K_check = Z2K_check_RENDER_SET
 
