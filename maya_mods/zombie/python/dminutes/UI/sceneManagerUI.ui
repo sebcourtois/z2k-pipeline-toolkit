@@ -419,14 +419,14 @@
                <number>0</number>
               </property>
               <item>
-               <widget class="QPushButton" name="sm_upscene_bt">
+               <widget class="QPushButton" name="sm_updScene_bt">
                 <property name="text">
                  <string>Update Scene from DB</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="sm_updb_bt">
+               <widget class="QPushButton" name="sm_updShotgun_bt">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>

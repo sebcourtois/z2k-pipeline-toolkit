@@ -73,7 +73,7 @@ class shot_lib(object):
     template_dir = "shot_template"
 
     resource_tree = {
-        "{sequence}":
+        "{sequence} -> sequence_dir":
             {
             "{name} -> entity_dir":
                 {
@@ -92,6 +92,13 @@ class shot_lib(object):
                      "{name}_previz.ma -> previz_scene":None,
                      "{name}_previz.mov -> previz_capture":None,
                     },
+                 "{step:01_stereo} -> stereo_dir":
+                    {
+                     "{name}_stereo.ma -> stereo_scene":None,
+                     "{name}_stereo.mov -> stereo_capture":None,
+                     "{name}_stereoCam.atom -> stereoCam_anim":None,
+                     "{name}_stereoInfo.json -> stereoCam_info":None,
+                    },
                 "{step:02_layout} -> layout_dir":
                    {
                     "{name}_layout.ma -> layout_scene":None,
@@ -108,8 +115,9 @@ class shot_lib(object):
         }
 
     sg_step_map = {"01_previz":"Previz 3D",
+                   "01_stereo":"Stereo",
                    "02_layout":"Layout",
-                   "03_blocking":"Blocking",
+                   #"03_blocking":"Blocking",
                    "04_anim":"Animation",
                    }
 
@@ -120,6 +128,13 @@ class shot_lib(object):
                     "sg_tasks":("previz 3D",),
                     "sg_status":"rev",
                     },
+    "stereo_scene":{"outcomes":("stereo_capture",),
+                    "create_sg_version":True,
+                    "upload_to_sg":"stereo_capture",
+                    "sg_tasks":("stereo",),
+                    "sg_status":"rev",
+                    },
+
     "layout_scene":{"outcomes":("layout_capture",),
                     "create_sg_version":True,
                     "upload_to_sg":"layout_capture",
@@ -144,7 +159,7 @@ class shot_lib(object):
                   },
     "anim_dir":{"default_sync_rules":["dmn_paris", "online",
                                       "dream_wall", "pipangai"],
-                  },
+                },
     }
 
 class output_lib(object):
@@ -258,7 +273,8 @@ class character3d(object):
     entity_class = "davos.core.damtypes.DamAsset"
 
     prefix = "chr"
-    aliases = (prefix, "Character 3D",)
+    sg_type = "Character 3D"
+    aliases = (prefix, sg_type,)
     assetType = prefix
     template_dir = "asset_chr"
 
@@ -307,7 +323,8 @@ class character2d(object):
     entity_class = "davos.core.damtypes.DamAsset"
 
     prefix = "c2d"
-    aliases = (prefix, "Character 2D",)
+    sg_type = "Character 2D"
+    aliases = (prefix, sg_type,)
     assetType = prefix
     template_dir = "asset_c2d"
 
@@ -349,7 +366,8 @@ class prop3d(object):
     entity_class = "davos.core.damtypes.DamAsset"
 
     prefix = "prp"
-    aliases = (prefix, "Prop 3D",)
+    sg_type = "Prop 3D"
+    aliases = (prefix, sg_type,)
     assetType = prefix
     template_dir = "asset_vhlPrp"
 
@@ -390,7 +408,8 @@ class vehicle3d(prop3d):
     entity_class = "davos.core.damtypes.DamAsset"
 
     prefix = "vhl"
-    aliases = (prefix, "Vehicle 3D",)
+    sg_type = "Vehicle 3D"
+    aliases = (prefix, sg_type,)
     assetType = prefix
 
     dependency_types = asset_lib.dependency_types
@@ -400,7 +419,8 @@ class fx_previz(object):
     entity_class = "davos.core.damtypes.DamAsset"
 
     prefix = "fxp"
-    aliases = (prefix, "FX")
+    sg_type = "FX"
+    aliases = (prefix, sg_type,)
     assetType = prefix
     template_dir = "asset_fxpCwp"
 
@@ -432,7 +452,8 @@ class crowd_previz(fx_previz):
     entity_class = "davos.core.damtypes.DamAsset"
 
     prefix = "cwp"
-    aliases = (prefix, "Crowd Previz",)
+    sg_type = "Crowd Previz"
+    aliases = (prefix, sg_type,)
     assetType = prefix
 
     dependency_types = asset_lib.dependency_types
@@ -442,7 +463,8 @@ class set3d(object):
     entity_class = "davos.core.damtypes.DamAsset"
 
     prefix = "set"
-    aliases = (prefix, "Set 3D",)
+    sg_type = "Set 3D"
+    aliases = (prefix, sg_type,)
     assetType = prefix
     template_dir = "asset_envSet"
 
@@ -480,7 +502,8 @@ class environment3d(set3d):
     entity_class = "davos.core.damtypes.DamAsset"
 
     prefix = "env"
-    aliases = (prefix, "Environment",)
+    sg_type = "Environment"
+    aliases = (prefix, sg_type,)
     assetType = prefix
 
     dependency_types = asset_lib.dependency_types

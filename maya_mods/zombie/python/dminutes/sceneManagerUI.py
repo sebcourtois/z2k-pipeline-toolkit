@@ -199,7 +199,7 @@ def refreshContextUI():
     pc.control('sm_updateThumb_bt', edit=True, enable=bRcsMatchUp)
 
     sStepName = SCENE_MANAGER.context["step"]["code"].lower()
-    bEnabled = (sStepName != "previz 3d") and bPublishable
+    bEnabled = (sStepName not in ("previz 3d", "stereo")) and bPublishable
     pc.control('sm_editCam_bt', edit=True, enable=bEnabled)
 
     pc.checkBox('sm_imgPlane_chk', edit=True, value=mop.isImgPlaneHidden())
@@ -209,12 +209,11 @@ def refreshContextUI():
     pc.checkBox('sm_blocking_chk', edit=True, value=pc.playbackOptions(q=True, blockingAnim=True))
     pc.checkBox('sm_updAllViews_chk', edit=True, value=(pc.playbackOptions(q=True, view=True) == "all"))
 
-
     bListAssets = pc.optionVar.get("Z2K_SM_listAssets", True)
     QWIDGETS["relatedAssetsGroup"].setChecked(bListAssets)
     if bListAssets:
-        pc.control('sm_upscene_bt', edit=True, enable=bPublishable)
-        pc.control('sm_updb_bt', edit=True, enable=bPublishable)
+        pc.control('sm_updScene_bt', edit=True, enable=bPublishable)
+        pc.control('sm_updShotgun_bt', edit=True, enable=bPublishable)
         pc.control('sm_selectRefs_bt', edit=True, enable=bRcsMatchUp)
 
     bEnable = pc.optionVar.get("Z2K_SM_smoothOnCapture", False)
@@ -364,8 +363,8 @@ def connectCallbacks():
     pc.button('sm_refreshScene_bt', edit=True, c=doRefreshSceneInfo)
     pc.button('sm_selectRefs_bt', edit=True, c=doSelectRefs)
 
-    pc.button('sm_upscene_bt', edit=True, c=doUpdateScene)
-    pc.button('sm_updb_bt', edit=True, c=doUpdateShotgun)
+    pc.button('sm_updScene_bt', edit=True, c=doUpdateScene)
+    pc.button('sm_updShotgun_bt', edit=True, c=doUpdateShotgun)
     pc.button('sm_capture_bt', edit=True, c=doCapture)
     pc.button('sm_wipCapture_bt', edit=True, c=doWipCapture)
 
