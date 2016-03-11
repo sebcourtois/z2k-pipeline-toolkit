@@ -88,7 +88,14 @@ class BaseAreaLightTemplate(lightTemplate.LightTemplate):
         
 class QuadAreaLightTemplate(BaseAreaLightTemplate):
     def setup(self):
+        self.addControl("aiSpread")
         self.addControl("aiResolution")
+        self.addSeparator()
+        self.addCommonParameters()
+
+class DiskAreaLightTemplate(BaseAreaLightTemplate):
+    def setup(self):
+        self.addControl("aiSpread")
         self.addSeparator()
         self.addCommonParameters()
 
@@ -132,6 +139,6 @@ class MeshLightTemplate(BaseAreaLightTemplate):
 templates.registerAETemplate(templates.TranslatorControl, "aiAreaLight", label="Light Shape")
 templates.registerTranslatorUI(QuadAreaLightTemplate, "aiAreaLight", "quad")
 templates.registerTranslatorUI(BaseAreaLightTemplate, "aiAreaLight", "cylinder")
-templates.registerTranslatorUI(BaseAreaLightTemplate, "aiAreaLight", "disk")
+templates.registerTranslatorUI(DiskAreaLightTemplate, "aiAreaLight", "disk")
 templates.registerDefaultTranslator('aiAreaLight', "quad")
 templates.registerTranslatorUI(MeshLightTemplate, "mesh", "mesh_light")

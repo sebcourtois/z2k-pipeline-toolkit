@@ -747,7 +747,7 @@ def z2k_selAll_asset_Ctr(*args, **kwargs):
     return toSel
 
 #--------------------- CHECK FUNCTION ------------------------------
-def checkBaseStructure(*args, **kwargs):
+def checkBaseStructure( *args, **kwargs):
         """
         Descrition: Check if th Basic hierachy is ok
         Return: [result,debugDict]
@@ -767,9 +767,18 @@ def checkBaseStructure(*args, **kwargs):
         baseObjL = ["asset", ]
         baseSetL = ["set_meshCache", "set_control", ]
         additionnalSetL = ["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"]
-        baseLayerL = ["control", "geometry"]
+        if "baseLayerL" in kwargs.keys():
+            baseLayerL = kwargs["baseLayerL"]
+        else:
+            baseLayerL = ["control", "geometry"]
         extraLayerL = ["instance"]
-        baseCTRL = ["BigDaddy", "BigDaddy_NeutralPose", "Global_SRT", "Local_SRT", "Global_SRT_NeutralPose", "Local_SRT_NeutralPose"]
+
+        if "baseCTRL" in kwargs.keys():
+            baseCTRL = kwargs["baseCTRL"]
+        else:
+            baseCTRL = ["BigDaddy", "BigDaddy_NeutralPose", "Global_SRT", "Local_SRT", "Global_SRT_NeutralPose", "Local_SRT_NeutralPose"]
+
+
         AllBaseObj = baseLayerL + baseObjL + baseSetL
         print tab + "AllBaseObj=", AllBaseObj
         topObjL = list(set(cmds.ls(assemblies=True,)) - set(baseExcludeL))
@@ -856,6 +865,9 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig", "grp_geo"],
         if sceneName[:3] in ["set"]:
             print "it's a set"
             extendedL.extend(additionalL)
+        if "render" in sceneName.split("_")[3]:
+            print "it's a render asset"
+            extendedL.extend(additionalL)
         toReturnB = False
         debugD = {}
         tab = "    "
@@ -893,7 +905,7 @@ def Apply_Delete_setSubdiv (applySetSub=True, toDelete=["set_subdiv_0", "set_sub
     setSub = False
     if applySetSub:
         try:
-            assetconformation.setSubdiv()
+            assetconformation.setSubdiv(GUI = False)
             setSub = True
         except:
             print "    No setSubDiv to Apply in the scene"

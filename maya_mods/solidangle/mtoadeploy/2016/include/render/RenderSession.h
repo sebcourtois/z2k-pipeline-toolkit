@@ -66,6 +66,7 @@ public:
    static RenderCallbackType GetCallback();
 
    static void DeleteRenderView();
+
    
 
    // Render Methods.
@@ -102,6 +103,8 @@ public:
    void InterruptRender(bool waitFinished = false);
 
    void RunRenderView();
+   void SetRenderViewOption(const MString &option, const MString &value);
+
    /// Start and IPR render.
    void DoIPRRender();
    void StopIPR();

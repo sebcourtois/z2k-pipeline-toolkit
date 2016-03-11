@@ -62,6 +62,7 @@ class AEaiPhotometricLightTemplate(lightTemplate.LightTemplate):
         self.addControl('format', label='Format')
         self.addControl('aiExposure', label='Exposure')
         self.addControl('aiSamples', label='Samples')
+        self.addControl('aiRadius', label='Radius')
         self.addControl('aiNormalize', label='Normalize')
         self.addSeparator()
         self.addControl('aiCastShadows', label='Cast Shadows')

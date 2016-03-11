@@ -114,7 +114,7 @@ def cleanAsset (GUI = True):
             if GUI == True:
                 msgS = baseMessage2S+"""
     - delete geo history,\n    - convert branch instanced to leaf instances,\n    - make all mesh unique,\n    - conform mesh shapes names,\n    - create set subdiv,\n    - apply set subdiv,    
-    - delete all unused nodes (unconnected to an asset dag node), except render layers,\n    - conform all shaders names"""
+    - delete all unused nodes (unconnected to an asset dag node), except render layers,\n    - conform all shaders names,\n    - conform shader masks"""
                 answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 #rendering.deleteAovs()
@@ -129,12 +129,13 @@ def cleanAsset (GUI = True):
                 assetconformation.createSubdivSets()
                 assetconformation.setSubdiv()
                 shading.checkShaderName( GUI = True )
+                assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
 
     elif fileType == "render":
             if GUI == True: 
                 msgS = baseMessage2S+"""
     - delete geo history,\n    - make all mesh unique,\n    - conform mesh shapes names,\n    - create set subdiv,\n    - apply set subdiv,\n    - create 'set_meshCache',   
-    - delete all unused nodes (unconnected to an asset dag node), except render layers,\n    - conform all shaders names"""
+    - delete all unused nodes (unconnected to an asset dag node), except render layers,\n    - conform all shaders names,\n    - conform shader masks"""
                 answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 miscUtils.deleteUnknownNodes()
@@ -148,5 +149,34 @@ def cleanAsset (GUI = True):
                 assetconformation.createSubdivSets()
                 assetconformation.createSetMeshCache()
                 shading.checkShaderName( GUI = True )
+                assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
 
     return resultB, logL
+
+
+def hardClean(GUI =True):
+    if mc.ls("|asset|grp_rig"):
+        msg = "cannot be run on a rigged asset"
+        if GUI: mc.confirmDialog( title='error', message= msg, button=['Ok'], defaultButton='Ok', cancelButton='Ok', dismissString='Ok' )
+        raise ValueError("#### Error: "+msg)
+
+    baseMessageS="WARNING: do not run on a rigged asset, cleaning prosses will:\n    - delete AOVs,\n    - delete unknown nodes,\n    - fix materialInfo nodes,\n    - delete all color sets,"
+    if GUI == True: 
+        msgS = baseMessageS+"""
+    - delete geo history,\n    - make all mesh unique,\n    - conform mesh shapes names,\n    - create set subdiv,\n    - apply set subdiv,\n    - create 'set_meshCache',   
+    - delete all unused nodes (unconnected to an asset dag node), except render layers,\n    - conform all shaders names,\n    - conform shader masks"""
+        answer =  mc.confirmDialog( title='HARD clean ', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+        if answer != "Cancel":
+            rendering.deleteAovs()
+            miscUtils.deleteUnknownNodes()
+            assetconformation.fixMaterialInfo()
+            miscUtils.deleteAllColorSet()
+            modeling.geoGroupDeleteHistory()
+            modeling.convertBranchToLeafInstance(inParent ="grp_geo", GUI = True, mode = "convToLeaf" )
+            modeling.makeAllMeshesUnique(inParent="|asset|grp_geo")
+            modeling.meshShapeNameConform(inParent = "|asset|grp_geo")
+            assetconformation.softClean(keepRenderLayers = False,nameSpaceToKeepL = ["lgtRig"])
+            assetconformation.createSubdivSets()
+            assetconformation.setSubdiv()
+            shading.checkShaderName( GUI = True )
+            assetconformation.setShadingMask(selectFailingNodes = False, gui = False)

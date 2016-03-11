@@ -864,27 +864,33 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         canNotGetSclPP = 0
         while a<particleNodeCount:
             if a not in idToExtract:
-                forParticlePos.append(mc.particle(particleNode, q=True, vv = True, at='pos',  id=a))
+                #forParticlePos.append(mc.particle(particleNode, q=True, vv = True, at='pos',  id=a))
+                forParticlePos.append(mc.nParticle(particleNode, q=True, vv = True, at='pos',  id=a))
                 try:
-                    forParticleRot.append(mc.particle(particleNode, q=True, vv = True, at='rotPP', id=a))
+                    #forParticleRot.append(mc.particle(particleNode, q=True, vv = True, at='rotPP', id=a))
+                    forParticleRot.append(mc.nParticle(particleNode, q=True, vv = True, at='rotPP', id=a))
                 except:
                     forParticleRot.append([0,0,0])
                     canNotGetRotPP = 1
                 try: 
-                    forParticleScl.append(mc.particle(particleNode, q=True, vv = True, at='sclPP', id=a))
+                    #forParticleScl.append(mc.particle(particleNode, q=True, vv = True, at='sclPP', id=a))
+                    forParticleScl.append(mc.nParticle(particleNode, q=True, vv = True, at='sclPP', id=a))
                 except:
                     forParticleScl.append([1,1,1])
                     canNotGetSclPP = 1
                 b+=1
             else:
-                forInstancePos = mc.particle(particleNode, q=True, at='pos', id=a)
+                #forInstancePos = mc.particle(particleNode, q=True, at='pos', id=a)
+                forInstancePos = mc.nParticle(particleNode, q=True, at='pos', id=a)
                 try:
-                    forInstanceRot = mc.particle(particleNode, q=True, at='rotPP', id=a)
+                    #forInstanceRot = mc.particle(particleNode, q=True, at='rotPP', id=a)
+                    forInstanceRot = mc.nParticle(particleNode, q=True, at='rotPP', id=a)
                 except:
                     forInstanceRot = [0,0,0]
                     canNotGetRotPP = 1
                 try: 
-                    forInstanceScl = mc.particle(particleNode, q=True, at='sclPP', id=a)
+                    #forInstanceScl = mc.particle(particleNode, q=True, at='sclPP', id=a)
+                    forInstanceScl = mc.nParticle(particleNode, q=True, at='sclPP', id=a)
                 except:
                     forInstanceScl = [1,1,1]
                     canNotGetSclPP = 1
@@ -904,7 +910,8 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         mc.delete(instancerNode)
 
         #create  new particle node
-        particleNode = mc.particle(name = particleNode, position = forParticlePos)[0]
+        #particleNode = mc.particle(name = particleNode, position = forParticlePos)[0]
+        particleNode = mc.nParticle(name = particleNode, position = forParticlePos)[0]
         particleNodeShape = mc.listRelatives(particleNode, type="shape", ad=True, ni=True)[0]
         mc.setAttr(particleNodeShape+".isDynamic",0,lock=True)
         mc.addAttr (particleNodeShape, ln='rotPP', dt='vectorArray')
@@ -913,8 +920,10 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         particleNodeCount = mc.nParticle (particleNode, q=True, count=True)
         a=0
         while a<particleNodeCount:
-            mc.particle(particleNode, e=True, at='rotPP', id=a, vv=forParticleRot[a])
-            mc.particle(particleNode, e=True, at='sclPP', id=a, vv=forParticleScl[a])
+            # mc.particle(particleNode, e=True, at='rotPP', id=a, vv=forParticleRot[a])
+            # mc.particle(particleNode, e=True, at='sclPP', id=a, vv=forParticleScl[a])
+            mc.nParticle(particleNode, e=True, at='rotPP', id=a, vv=forParticleRot[a])
+            mc.nParticle(particleNode, e=True, at='sclPP', id=a, vv=forParticleScl[a])
             a+=1
         print("#### info: new particles number: "+ str(particleNodeCount))
         # create a new particle node and instancer
@@ -981,19 +990,24 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
             InstanceTransformsRot.append (mc.xform (item, q=True, rotation=True,ws=True))
             InstanceTransformsScl.append (mc.xform (item, q=True, scale=True,ws=True))
         #Create a particle object, and set the position, rotPP, and sclPP of 
-        particleNode = mc.particle(name = masterTransform+"_particle00", position = InstanceTransformsPos)[0]
+        #particleNode = mc.particle(name = masterTransform+"_particle00", position = InstanceTransformsPos)[0]
+        particleNode = mc.nParticle(name = masterTransform+"_particle00", position = InstanceTransformsPos)[0]
         print "particleNode",particleNode
         particleNodeShape = mc.listRelatives(particleNode, type="shape", ad=True, ni=True,path = True)[0]
         print "particleNodeShape",particleNodeShape
         mc.setAttr(particleNodeShape+".isDynamic",0,lock=True)
         mc.addAttr (particleNodeShape, ln='rotPP', dt='vectorArray')
+        mc.addAttr (particleNodeShape, ln='rotPP0', dt='vectorArray')
         mc.addAttr (particleNodeShape, ln='sclPP', dt='vectorArray')
+        mc.addAttr (particleNodeShape, ln='sclPP0', dt='vectorArray')
         #mc.saveInitialState (particleNode)
         particleNodeCount = mc.nParticle (particleNode, q=True, count=True)
         a=0
         while a<particleNodeCount:
-            mc.particle(particleNode, e=True, at='rotPP', id=a, vv=InstanceTransformsRot[a])
-            mc.particle(particleNode, e=True, at='sclPP', id=a, vv=InstanceTransformsScl[a])
+            # mc.particle(particleNode, e=True, at='rotPP', id=a, vv=InstanceTransformsRot[a])
+            # mc.particle(particleNode, e=True, at='sclPP', id=a, vv=InstanceTransformsScl[a])
+            mc.nParticle(particleNode, e=True, at='rotPP', id=a, vv=InstanceTransformsRot[a])
+            mc.nParticle(particleNode, e=True, at='sclPP', id=a, vv=InstanceTransformsScl[a])
             a+=1
         print("#### info: number of particles created: "+ str(particleNodeCount))
         particuleInstancer = mc.particleInstancer(particleNode, name=particleNode+"_instancer", addObject=True, object=masterTransform ,position='worldPosition', rotation='rotPP', scale='sclPP')
@@ -1034,9 +1048,12 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         particlePos =[]; particleRot =[]; particleScl =[]
         a=0
         while a<particleNodeCount:
-            particlePos.append(mc.particle(particleNode, q=True, vv = True, at='pos',  id=a))
-            particleRot.append(mc.particle(particleNode, q=True, vv = True, at='rotPP', id=a))
-            particleScl.append(mc.particle(particleNode, q=True, vv = True, at='sclPP', id=a))
+            # particlePos.append(mc.particle(particleNode, q=True, vv = True, at='pos',  id=a))
+            # particleRot.append(mc.particle(particleNode, q=True, vv = True, at='rotPP', id=a))
+            # particleScl.append(mc.particle(particleNode, q=True, vv = True, at='sclPP', id=a))
+            particlePos.append(mc.nParticle(particleNode, q=True, vv = True, at='pos',  id=a))
+            particleRot.append(mc.nParticle(particleNode, q=True, vv = True, at='rotPP', id=a))
+            particleScl.append(mc.nParticle(particleNode, q=True, vv = True, at='sclPP', id=a))
             a+=1
         #List the transformation values of our instances transforms
         transformPos =[]; transformRot =[]; transformScl =[]
@@ -1061,8 +1078,10 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
             addedParCount =  len (addedParIds)
             a=0
             while a<addedParCount:
-                mc.particle(particleNode, e=True, at='rotPP', id=addedParIds[a], vv=transformRot[a])
-                mc.particle(particleNode, e=True, at='sclPP', id=addedParIds[a], vv=transformScl[a])
+                # mc.particle(particleNode, e=True, at='rotPP', id=addedParIds[a], vv=transformRot[a])
+                # mc.particle(particleNode, e=True, at='sclPP', id=addedParIds[a], vv=transformScl[a])
+                mc.nParticle(particleNode, e=True, at='rotPP', id=addedParIds[a], vv=transformRot[a])
+                mc.nParticle(particleNode, e=True, at='sclPP', id=addedParIds[a], vv=transformScl[a])
                 a+=1
             mc.saveInitialState (particleNode)
             cTime = mc.currentTime(q=True)

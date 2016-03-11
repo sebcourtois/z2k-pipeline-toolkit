@@ -459,9 +459,10 @@ def createLocator(locatorType, asLight=False):
     lName = lNode.name()
     lId = lName[len(locatorType):]
     shapeName = '%sShape%s' % (locatorType, lId)
-    pm.createNode(locatorType, name=shapeName, parent=lNode)       
     if asLight:
-        cmds.connectAttr('%s.instObjGroups' % lName, 'defaultLightSet.dagSetMembers', nextAvailable=True)
+        cmds.shadingNode(locatorType, name=shapeName, parent=lName, asLight=True)
+    else:
+        pm.createNode(locatorType, name=shapeName, parent=lNode)       
     return (shapeName, lName)
 
 def getSourceImagesDir():

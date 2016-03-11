@@ -125,7 +125,7 @@ class checkModule(object):
         # print scene NAME
         infoDict = jpZ.infosFromMayaScene()
         self.printF("ASSET_NAME: {0}  -Version: {1}    - Categorie: {2}".format( infoDict["assetName"],infoDict["version"], infoDict["assetCat"] ) , st="t")
-        self.printF("running Z2K_Anim_SET_check", st="t")
+        self.printF("running Z2K_render_SET_check", st="t")
 
 
     # decorators ---------------------------
@@ -146,7 +146,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=13, e=True)
+        self.pBar_upd(step=1, maxValue=14, e=True)
 
         # steps
 
@@ -322,7 +322,20 @@ class checkModule(object):
         # --------------------------
         if not resultD["resultB"]:
             boolResult = False
-        self.pBar_upd(step= 1,)   
+        self.pBar_upd(step= 1,)
+
+
+        # 14   set shading masks"
+        self.printF("assetconformation: set shading masks", st="t")
+        resultD = assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
+        # prints -------------------
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)     
 
 
 
