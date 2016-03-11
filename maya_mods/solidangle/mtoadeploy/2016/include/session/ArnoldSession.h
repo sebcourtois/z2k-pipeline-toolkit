@@ -21,6 +21,7 @@
 #include <maya/MPlug.h>
 #include <maya/MCommonRenderSettingsData.h>
 #include <maya/MLightLinks.h>
+#include <maya/MCallbackIdArray.h>
 
 #include <vector>
 #include <set>
@@ -48,6 +49,7 @@ class COptionsTranslator;
 // FIXME: careful that multiple occurrence of same translator will cause a crash when clearing map and deleting them!
 typedef std::multimap<CNodeAttrHandle, CNodeTranslator*> ObjectToTranslatorMap;
 typedef std::pair<CNodeAttrHandle, CNodeTranslator*> ObjectToTranslatorPair;
+typedef std::pair<CNodeAttrHandle, MCallbackId> HiddenObjectCallbackPair;
 
 // Map dag object handles to master instance
 typedef std::map<MObjectHandle, MDagPath, MObjectCompare> ObjectHandleToDagMap;
@@ -161,6 +163,7 @@ public:
    //bool GetContinuousUpdates() const { return m_continuousUpdates;}
    bool HasObjectsToUpdate() const {return !m_objectsToUpdate.empty();}
    
+   MString GetMayaObjectName(const AtNode *node) const;
 /*
    bool IsActiveAOV(CAOV &aov) const
    {
@@ -211,7 +214,7 @@ private:
    
    MStatus Export(MSelectionList* selected = NULL);
 
-   MStatus FlattenSelection(MSelectionList* selected);
+   MStatus FlattenSelection(MSelectionList* selected, bool skipRoot = false);
 
    MStatus ExportCameras(MSelectionList* selected = NULL);
    MStatus ExportLights(MSelectionList* selected = NULL);
@@ -226,6 +229,8 @@ private:
    inline bool IsActive() const { return m_is_active; }
    //void ProcessAOVs();
 
+   static void HiddenNodeCallback(MObject& node, MPlug& plug, void* clientData);
+   void SetDagVisible(MDagPath &path);
 
 private:
 
@@ -250,6 +255,7 @@ private:
    MMatrix m_scaleFactorMMatrix;
    AtMatrix m_scaleFactorAtMatrix;
    MVector m_origin;
+   std::vector<HiddenObjectCallbackPair> m_hiddenObjectsCallbacks;
 protected:
    ObjectHandleToDagMap m_masterInstances;
 
