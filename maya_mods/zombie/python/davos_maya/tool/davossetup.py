@@ -10,10 +10,10 @@ from pytd.util.sysutils import inDevMode
 from pytd.util.sysutils import toStr
 
 from pytaya.util.toolsetup import ToolSetup
-from pytaya.util import qtutils as myaqt
+#from pytaya.util import qtutils as myaqt
 #from pytd.util.sysutils import toStr
 
-from davos.tools import create_dirs_n_files
+#from davos.tools import create_dirs_n_files
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
 
@@ -26,13 +26,13 @@ if inDevMode():
     except ImportError:
         pass
 
-def doCreateFolders(sEntiType, *args):
-
-    pm.mel.ScriptEditor()
-    pm.mel.handleScriptEditorAction("maximizeHistory")
-
-    create_dirs_n_files.launch(sEntiType, dryRun=False,
-                               dialogParent=myaqt.mayaMainWindow())
+#def doCreateFolders(sEntiType, *args):
+#
+#    pm.mel.ScriptEditor()
+#    pm.mel.handleScriptEditorAction("maximizeHistory")
+#
+#    create_dirs_n_files.launch(sEntiType, dryRun=False,
+#                               dialogParent=myaqt.mayaMainWindow())
 
 def doDependencyScan(*args):
     from davos_maya.tool import dependency_scan
@@ -61,9 +61,9 @@ class DavosSetup(ToolSetup):
             pm.menuItem(label="File Browser", c=file_browser.launch)
             pm.menuItem(divider=True)
 
-            with pm.subMenuItem(label="Create Folders", to=False):
-                pm.menuItem(label="Assets...", c=partial(doCreateFolders, "asset"))
-                pm.menuItem(label="Shots...", c=partial(doCreateFolders, "shot"))
+#            with pm.subMenuItem(label="Create Folders", to=False):
+#                pm.menuItem(label="Assets...", c=partial(doCreateFolders, "asset"))
+#                pm.menuItem(label="Shots...", c=partial(doCreateFolders, "shot"))
 
             pm.menuItem(label="Switch References", c=doSwitchReferences)
             pm.menuItem(divider=True)

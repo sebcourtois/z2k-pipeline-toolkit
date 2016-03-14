@@ -11,6 +11,8 @@ from davos_maya.tool.reference import loadReferencesForAnim, listPrevizRefMeshes
 from dminutes.shotconformation import removeRefEditByAttr
 from pytaya.util.sysutils import withSelectionRestored
 from collections import OrderedDict
+from pytaya.core.transform import matchTransform
+from pytd.util.fsutils import jsonWrite
 
 
 CAMPATTERN = 'cam_sq????_sh?????:*'
@@ -18,6 +20,48 @@ CAM_GLOBAL = 'Global_SRT'
 CAM_LOCAL = 'Local_SRT'
 CAM_DOLLY = 'Dolly'
 
+STEREO_INFOS = {}
+def recStereoInfos(frame, **kwargs):
+    global STEREO_INFOS
+    STEREO_INFOS[frame] = kwargs
+
+def getStereoInfosRecorder(sStereoCam):
+
+    import sys
+    m = sys.modules["__main__"]
+    m.mop = sys.modules[__name__]
+
+    sExprCode = """
+int $frame = frame;
+float $sep = abs({camera}.stereoRightOffset);
+float $conv = abs({camera}.filmBackOutputRight);
+string $cmd = `format -s $frame -s $sep -s $conv "mop.recStereoInfos(^1s, separation=^2s, convergence=^3s)"`;
+//print $cmd;
+python($cmd);""".format(camera=sStereoCam)
+
+    sName = "recorder_" + sStereoCam.rsplit(":", 1)[0].replace(":", "_")
+    sExprNode = getNode(sName)
+    if not sExprNode:
+        sExprNode = mc.expression(n=sName, s=sExprCode, ae=True, uc="all")
+    else:
+        mc.expression(sExprNode, e=True, s=sExprCode, ae=True, uc="all")
+
+    return sExprNode
+
+def writeStereoInfos(sFilePath):
+
+    global STEREO_INFOS
+
+    if not STEREO_INFOS:
+        raise RuntimeError("No stereo infos to write.")
+
+    sDirPath = os.path.dirname(sFilePath)
+    if not os.path.exists(sDirPath):
+        os.makedirs(sDirPath)
+
+    jsonWrite(sFilePath, STEREO_INFOS)
+
+    return True
 
 #0 as Maya CC, and 1 as OSD Uniform, 2 OSD adaptive
 def setSubdivPref(i_inSubDiv=0):
@@ -224,13 +268,13 @@ def reArrangeAssets():
                     pc.parent(root, structParent)
 
     #We could also have local cameras (cam_animatic and/or cam_sq####_sh####)
-    cams = pc.ls('cam_*:*', type='camera')
+    cams = pc.ls('*_cam_*:*', type='camera')
     for cam in cams:
         #print "cam " + str(cam)
         camRoot = getRoot(cam)
         #print "camRoot " + str(camRoot)
         camParent = camRoot.getParent()
-        if camParent == None or camParent.name() != structure['cam']:
+        if camParent is None or camParent.name() != structure['cam']:
             #print camRoot, structure['cam']
             pc.parent(camRoot, structure['cam'])
 
@@ -242,9 +286,7 @@ def getCameraRig():
         pc.error("Can't find camera matching pattern '{0}'".format(CAMPATTERN))
 
     camInfo['Namespace'] = cams[0].namespace()
-
     camInfo['Shape'] = cams[0]
-
     camInfo['Transform'] = cams[0].getParent()
 
     camRoot = getRoot(cams[0])
@@ -253,17 +295,20 @@ def getCameraRig():
     if mc.objExists(camInfo['Namespace'] + CAM_GLOBAL):
         camInfo['Global'] = pc.PyNode(camInfo['Namespace'] + CAM_GLOBAL)
     else:
-        pc.error("Can't find global camera control with pattern '{0}'".format(camInfo['Namespace'] + CAM_GLOBAL))
+        pc.error("Can't find global camera control with pattern '{0}'"
+                 .format(camInfo['Namespace'] + CAM_GLOBAL))
 
     if mc.objExists(camInfo['Namespace'] + CAM_LOCAL):
         camInfo['Local'] = pc.PyNode(camInfo['Namespace'] + CAM_LOCAL)
     else:
-        pc.error("Can't find local camera control with pattern '{0}'".format(camInfo['Namespace'] + CAM_LOCAL))
+        pc.error("Can't find local camera control with pattern '{0}'"
+                 .format(camInfo['Namespace'] + CAM_LOCAL))
 
     if mc.objExists(camInfo['Namespace'] + CAM_DOLLY):
         camInfo['Dolly'] = pc.PyNode(camInfo['Namespace'] + CAM_DOLLY)
     else:
-        pc.error("Can't find dolly camera control with pattern '{0}'".format(camInfo['Namespace'] + CAM_DOLLY))
+        pc.error("Can't find dolly camera control with pattern '{0}'"
+                 .format(camInfo['Namespace'] + CAM_DOLLY))
 
     return camInfo
 
@@ -389,30 +434,44 @@ def init_scene_base(sceneManager):
 
     importSceneStructure(sceneManager)
 
-def arrangeViews(oShotCam, oImgPlaneCam=None):
+def arrangeViews(oShotCam, oImgPlaneCam=None, oStereoCam=None,
+                 singleView=False, stereoDisplay="anaglyph"):
 
     # Set Viewport
-    pc.mel.eval('setNamedPanelLayout("Four View")')
-    pc.mel.eval('ThreeRightSplitViewArrangement')
+    if singleView:
+        pc.mel.eval('setNamedPanelLayout("Single Perspective View")')
+    else:
+        pc.mel.eval('setNamedPanelLayout("Four View")')
+        pc.mel.eval('ThreeRightSplitViewArrangement')
 
-    #Image plane
-    sidePanel = ""
-    if oImgPlaneCam:
-        sidePanel = mc.getPanel(withLabel='Side View')
-        pc.modelPanel(sidePanel, edit=True, camera=oImgPlaneCam)
+    mc.refresh()
+
+    if not singleView:
+        #Image plane
+        sideView = ""
+        if oImgPlaneCam:
+            sideView = mc.getPanel(withLabel='Side View')
+            pc.modelEditor(sideView, edit=True, camera=oImgPlaneCam)
+
+        #Work view
+        workPanel = mc.getPanel(withLabel='Top View')
+        pc.modelEditor(workPanel, edit=True, camera='persp')
+
+        if sideView:
+            pc.modelEditor(sideView, edit=True, allObjects=0, imagePlane=True, grid=False)
 
     #Camera
-    perspPanel = mc.getPanel(withLabel='Persp View')
-    pc.modelPanel(perspPanel, edit=True, camera=oShotCam)
+    perspView = mc.getPanel(withLabel='Persp View')
+    pc.modelEditor(perspView, edit=True, camera=oShotCam)
+    if oStereoCam:
+        stereoPanel = "StereoPanel"
+        mc.scriptedPanel(stereoPanel, e=True, rp=perspView)
+        mc.stereoCameraView("StereoPanelEditor", e=True, rigRoot=oStereoCam.name())
+        mc.stereoCameraView("StereoPanelEditor", e=True, displayMode=stereoDisplay)
+        perspView = "StereoPanelEditor"
 
-    #Work view
-    workPanel = mc.getPanel(withLabel='Top View')
-    pc.modelPanel(workPanel, edit=True, camera='persp')
-
-    if sidePanel:
-        pc.modelEditor(sidePanel, edit=True, allObjects=0, imagePlane=True, grid=False)
-
-    pc.setFocus(perspPanel)
+    mc.modelEditor(perspView, e=True, activeView=True)
+    mc.refresh()
 
 def mkShotCamNamespace(sShotCode):
     return 'cam_{}'.format(sShotCode)
@@ -425,6 +484,24 @@ def getShotCamera(sShotCode, fail=False):
     if not sCamList:
         if fail:
             raise RuntimeError("Shot Camera not found: '{}'".format(sCamName))
+        return None
+
+    if len(sCamList) == 1:
+        return pc.PyNode(sCamList[0])
+    else:
+        raise RuntimeError("Multiple cameras named '{}'".format(sCamName))
+
+def mkStereoCamNamespace(sShotCode):
+    return "stereo_" + mkShotCamNamespace(sShotCode)
+
+def getStereoCam(sShotCode, fail=False):
+
+    sCamName = mkStereoCamNamespace(sShotCode) + ":cam_stereo"
+    sCamList = mc.ls(sCamName)
+
+    if not sCamList:
+        if fail:
+            raise RuntimeError("Stereo Camera not found: '{}'".format(sCamName))
         return None
 
     if len(sCamList) == 1:
@@ -649,6 +726,7 @@ def init_previz_scene(sceneManager):
     sStepName = sceneManager.context["step"]["code"].lower()
     proj = sceneManager.context["damProject"]
     shotLib = proj.getLibrary("public", "shot_lib")
+    sShotCode = sceneManager.context['entity']['code']
 
     if sStepName == "animation":
         if not pc.listReferences(loaded=True, unloaded=False):
@@ -683,11 +761,18 @@ def init_previz_scene(sceneManager):
             #rename camera
             pc.namespace(rename=(remainingCamera.namespace(), sShotCamNspace))
 
+
     oShotCam = sceneManager.getShotCamera()
+    bCamAdded = False
     if not oShotCam:
         oShotCam = sceneManager.importShotCam()
+        bCamAdded = True
 
-    if sStepName != "previz 3d":
+    sceneInfos = sceneManager.infosFromCurrentScene()
+    bRcsMatchUp = sceneManager.resourcesMatchUp(sceneInfos)
+
+    oStereoCam = None
+    if sStepName != "previz 3d" and bRcsMatchUp:
 
         if sStepName == "layout":
             try:
@@ -699,12 +784,24 @@ def init_previz_scene(sceneManager):
                 pc.displayWarning(toStr(e))
 
         if not oShotCam.isReferenced():
-            oShotCam = switchShotCamToRef(sceneManager, oShotCam)
+            switchShotCamToRef(sceneManager, oShotCam)
 
-        if (not sceneManager.isShotCamEdited()) and sceneManager.camAnimFilesExist():
+        if ((not sceneManager.isShotCamEdited()) or bCamAdded) and sceneManager.camAnimFilesExist():
             sceneManager.importShotCamAbcFile()
 
-        oShotCam = sceneManager.getShotCamera()
+        oShotCam = sceneManager.getShotCamera(fail=True)
+
+        if sStepName == "stereo":
+            oStereoCam = getStereoCam(sShotCode, fail=False)
+            if not oStereoCam:
+                stereoCamFile = proj.getLibrary("public", "misc_lib").getEntry("layout/stereo_cam.ma")
+                sImpNs = mkStereoCamNamespace(sShotCode)
+                stereoCamFile.mayaImportScene(ns=sImpNs, returnNewNodes=False)
+                oStereoCam = getStereoCam(sShotCode, fail=True)
+
+            matchTransform(oStereoCam, oShotCam, atm="tr")
+            pc.parentConstraint(oShotCam, oStereoCam, maintainOffset=True)
+            oShotCam.attr("focalLength") >> oStereoCam.attr("focalLength")
 
     sgEntity = sceneManager.context['entity']
     #image plane "Y:\shot\...\00_data\sqXXXX_shXXXXa_animatic.mov"
@@ -712,7 +809,7 @@ def init_previz_scene(sceneManager):
     imgPlaneEnvPath = shotLib.absToEnvPath(imgPlanePath)
     oImagePlane, oImagePlaneCam = getImagePlaneItems(create=True)
 
-    arrangeViews(oShotCam.getShape(), oImagePlaneCam)
+    arrangeViews(oShotCam.getShape(), oImagePlaneCam, oStereoCam)
 
     if os.path.isfile(imgPlanePath):
         pc.currentTime(101)
@@ -749,6 +846,7 @@ COMMANDS = {
     'init':{
         'BASE':init_scene_base,
         'previz 3D':init_previz_scene,
+        'stereo':init_previz_scene,
         'layout':init_previz_scene,
         'animation':init_previz_scene,
     }

@@ -32,7 +32,8 @@ class MrcFile(DrcFile):
 
         if openFile and privFile:
             #kwargs['loadReferenceDepth'] = "default"
-            privFile.mayaOpen(checkFile=False, **kwargs)
+            if not privFile.mayaOpen(checkFile=False, **kwargs):
+                self.restoreLockState()
 
         return privFile
 
