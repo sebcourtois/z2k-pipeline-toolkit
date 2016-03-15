@@ -1,6 +1,7 @@
 
 import sys
 import os
+import os.path as osp
 #import subprocess
 
 from pytd.util.sysutils import inDevMode
@@ -11,6 +12,7 @@ from davos.core.damtypes import DamShot
 
 from zomblib.editing import parseEdl, convertTcToSeconds, convertTcToSecondsTc
 from zomblib.editing import FPS
+
 
 if inDevMode():
     SHOT_FOLDER = "C:\\Users\\sebcourtois\\zombillenium\\shot\\"
@@ -30,8 +32,8 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
     proj = DamProject(os.environ.get("DAVOS_INIT_PROJECT"))
     shotLib = proj.getLibrary("public", "shot_lib")
 
-    dirname, _ = os.path.split(os.path.abspath(__file__))
-    batchFile = os.path.join(dirname, "split.bat")
+    dirname, _ = osp.split(osp.abspath(__file__))
+    batchFile = osp.join(dirname, "split.bat")
 
     print "splitMovie({0}, {1}, {2}, {3})".format(in_sSourcePath, in_sEdlPath, in_sSeqFilter, in_sSeqOverrideName)
 
@@ -63,8 +65,8 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
                 sequenceCode = in_sSeqOverrideName
 
             damShot = DamShot(proj, name=sequenceCode + "_" + shotCode)
-            sPrivMoviePath = os.path.normpath(damShot.getPath("private", "animatic_capture"))
-            sPrivOutDirPath, sFilename = os.path.split(sPrivMoviePath)
+            sPrivMoviePath = osp.normpath(damShot.getPath("private", "animatic_capture"))
+            sPrivOutDirPath, sFilename = osp.split(sPrivMoviePath)
 
             fmtFields = (batchFile, "{0}".format(in_sSourcePath),
                          convertTcToSecondsTc(shot["start"], in_iHoursOffset=-1),
@@ -73,7 +75,7 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
             cmdLine = "{0} {1} {2} {3} {4}".format(*fmtFields)
 
             if in_bExportInShotFolders:
-                if not os.path.exists(sPrivOutDirPath):
+                if not osp.exists(sPrivOutDirPath):
                     os.makedirs(sPrivOutDirPath)
                 cmdLine += " {0}\\".format(sPrivOutDirPath)
 
@@ -85,12 +87,14 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
             if in_bExportInShotFolders:
 
                 sPubMoviePath = damShot.getPath("public", "animatic_capture")
-                sPubOutDirPath = os.path.dirname(sPubMoviePath)
-
-                if not os.path.exists(sPubOutDirPath):
+                sPubOutDirPath = osp.dirname(sPubMoviePath)
+                pubOutDir = shotLib._weakDir(sPubOutDirPath, dbNode=False)
+                if not osp.exists(sPubOutDirPath):
                     os.makedirs(sPubOutDirPath)
+                    sSyncRuleList = pubOutDir.getParam("default_sync_rules", None)
+                    if sSyncRuleList:
+                        pubOutDir.setSyncRules(sSyncRuleList, applyRules=False)
 
-                pubOutDir = shotLib.getEntry(sPubOutDirPath, dbNode=False)
                 _, versionFile = pubOutDir.publishFile(sPrivMoviePath,
                                                        autoLock=True,
                                                        autoUnlock=True,
