@@ -7,7 +7,7 @@ import pymel.core as pc
 import maya.cmds as mc
 
 from pytd.util.sysutils import toStr
-from davos_maya.tool.reference import loadReferencesForAnim, listPrevizRefMeshes
+from davos_maya.tool.reference import loadAssetRefsToDefault, listPrevizRefMeshes
 from dminutes.shotconformation import removeRefEditByAttr
 from pytaya.util.sysutils import withSelectionRestored
 from collections import OrderedDict
@@ -345,6 +345,7 @@ def setMayaProject(sProjName):
     if not os.path.exists(sMyaProjPath):
         os.mkdir(sMyaProjPath)
 
+    mc.workspace(update=True)
     mc.workspace(sProjName, openWorkspace=True)
     if not mc.workspace(fileRuleEntry="movie"):
         mc.workspace(fileRule=("movie", "captures"))
@@ -734,7 +735,7 @@ def init_previz_scene(sceneManager):
                                       "displaySmoothMesh",
                                       "dispResolution"),
                                 GUI=False)
-            loadReferencesForAnim(project=proj)
+            loadAssetRefsToDefault(project=proj)
 
     #rename any other shot camera
     remainingCamera = None
