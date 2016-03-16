@@ -222,7 +222,7 @@ class checkModule(object):
         boolResultL = []
         warnB=False
         # set progress bar
-        self.pBar_upd(step=1, maxValue=11, e=True)
+        self.pBar_upd(step=1, maxValue=10, e=True)
 
         # steps
 
@@ -403,6 +403,10 @@ class checkModule(object):
         self.pBar_upd(step= 1,) 
         
 
+        
+
+
+
 
         # colors
         print "*btn_CleanScene:",boolResult
@@ -415,7 +419,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=10, e=True)
+        self.pBar_upd(step=1, maxValue=9, e=True)
 
         meshCacheObjL = jpZ.getSetContent(inSetL=["set_meshCache"] )
         controlObjL = jpZ.getSetContent(inSetL=["set_control"] )
@@ -550,13 +554,12 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
+        
         # colors
         print "*btn_CleanObjects:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
-
+        
         return boolResult
-
-
 
     @jpZ.waiter
     def btn_specialSettings(self, controlN="", *args, **kwargs):
@@ -564,13 +567,13 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=10, e=True)
+        self.pBar_upd(step=1, maxValue=16, e=True)
 
 
         # 1 connectVisibility ()
+        self.printF("connectVisibility()", st="t")
         result,debugS = jpZ.connectVisibility()
         # prints -------------------
-        self.printF("connectVisibility()", st="t")
         self.printF(result, st="r")
         # --------------------------
         if not result :
@@ -579,9 +582,9 @@ class checkModule(object):
 
 
         # 2 ----- fixTKFacialRig_EyeBrow_Middle ()
+        self.printF("fixTKFacialRig_EyeBrow_Middle()", st="t")
         result,debugL = jpZ.chr_fixTKFacialRig_EyeBrow_Middle()
         # prints -------------------
-        self.printF("fixTKFacialRig_EyeBrow_Middle()", st="t")
         self.printF(result, st="r")
         for i in debugL:
             self.printF(i)
@@ -593,9 +596,9 @@ class checkModule(object):
 
 
         # 3 ----- fixTKFacialRig_EyeBrow_Middle ()
+        self.printF("chr_facialUnlockSRT()", st="t")
         result,debugL = jpZ.chr_UnlockForgottenSRT()
         # prints -------------------
-        self.printF("chr_facialUnlockSRT()", st="t")
         self.printF(result, st="r")
         self.printF( "total updated= ".format(len(debugL) ) )
         # --------------------------
@@ -605,9 +608,9 @@ class checkModule(object):
         self.pBar_upd(step= 1,) 
 
         # 4 ----- fixTKFacialRig_EyeBrow_Middle ()
+        self.printF("set_grp_geo_SmoothLevel()", st="t")
         result,debugL = jpZ.set_grp_geo_SmoothLevel()
         # prints -------------------
-        self.printF("set_grp_geo_SmoothLevel()", st="t")
         self.printF(result, st="r")
         # --------------------------
         # --------------------------
@@ -616,10 +619,10 @@ class checkModule(object):
         self.pBar_upd(step= 1,) 
 
         
-        # 5 ----- chr_delete_BS_active_group ()
+        # 5 ----- chr_rename_Teeth_BS_attribs ()
+        self.printF("chr_rename_Teeth_BS_attribs()", st="t")
         result,debugL = jpZ.chr_rename_Teeth_BS_attribs()
         # prints -------------------
-        self.printF("chr_rename_Teeth_BS_attribs()", st="t")
         self.printF(result, st="r")
         for debug in debugL:
             self.printF(debug)
@@ -633,8 +636,8 @@ class checkModule(object):
 
         # 6 ----- chr_TeethFix ()
         resultL,debugL = jpZ.chr_TeethFix()
-        # prints -------------------
         self.printF("chr_TeethFix()", st="t")
+        # prints -------------------
         self.printF(result, st="r")
         for debug in debugL:
             self.printF(debug)
@@ -646,9 +649,9 @@ class checkModule(object):
 
     
         # 7 ----- chr_chinEarsFix ()
+        self.printF("chr_chinEarsFix()", st="t")
         resultL,debugL = jpZ.chr_chinEarsFix()
         # prints -------------------
-        self.printF("chr_chinEarsFix()", st="t")
         self.printF(result, st="r")
         for debug in debugL:
             self.printF(debug)
@@ -659,9 +662,9 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
         # 8 ----- chr_changeCtrDisplays ()
+        self.printF("chr_changeCtrDisplays()", st="t")
         result,debugL = jpZ.chr_changeCtrDisplays()
         # prints -------------------
-        self.printF("chr_changeCtrDisplays()", st="t")
         self.printF(result, st="r")
         for debug in debugL:
             self.printF(debug)
@@ -673,9 +676,9 @@ class checkModule(object):
         
 
         # # 09 neck bulge factor to zero
+        self.printF("chr_neckBulge_Factor_to_zero()", st="t")
         result = jpZ.chr_neckBulge_Factor_to_zero()
         # prints -------------------
-        self.printF("chr_neckBulge_Factor_to_zero()", st="t")
         self.printF(result, st="r")
         
         # --------------------------
@@ -687,15 +690,93 @@ class checkModule(object):
 
 
         # 10 ----- chr_TongueFix () COULD BE BETTER
+        self.printF("chr_TongueFix()", st="t")
         result,debugL = jpZ.chr_TongueFix()
         # prints -------------------
-        self.printF("chr_TongueFix()", st="t")
         self.printF(result, st="r")
         for debug in debugL:
             self.printF(debug)
         # --------------------------
         # --------------------------
         if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # 11 ----- chr_fixeLatticeParams () 
+        self.printF("chr_fixeLatticeParams()", st="t")
+        result,debugL = jpZ.chr_fixeLatticeParams()
+        # prints -------------------
+        self.printF(result, st="r")
+        for debug in debugL:
+            self.printF(debug)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+        # 12 ----- chr_hideCurveAiAttr () 
+        self.printF("chr_hideCurveAiAttr()", st="t")
+        result,debugL = jpZ.chr_hideCurveAiAttr()
+        # prints -------------------
+        self.printF(result, st="r")
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+
+        # 13 ----- chr_clean_set_control_bad_members ()
+        result,debugL = jpZ.chr_clean_set_control_bad_members()
+        # prints -------------------
+        self.printF("chr_clean_set_control_bad_members()", st="t")
+        self.printF(result, st="r")
+        if len(debugL):
+            for i in debugL:
+                self.printF("    -"+i+" removed from set_control")
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,) 
+
+
+        
+        # 14 ----- chr_replace_chr_vis_Exp_System () 
+        self.printF("chr_replace_chr_vis_Exp_System()", st="t")
+        result,debug = jpZ.chr_replace_chr_vis_Exp_System()
+        # prints -------------------
+        self.printF(result, st="r")
+        self.printF("-"+str(debug)+ " expressions replaced")
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+         # 15 ----- chr_reArrangeCtr_displayLevel () 
+        self.printF("chr_reArrangeCtr_displayLevel()", st="t")
+        result,debug = jpZ.chr_reArrangeCtr_displayLevel()
+        # prints -------------------
+        self.printF(result, st="r")
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+        
+
+        # 16 chr_setVis_Params (chr_setVis_Params)
+        if not jpZ.chr_setVis_Params()[0] :
             boolResult = False
         self.pBar_upd(step= 1,)
 
