@@ -16,6 +16,8 @@ import maya.mel
 from pytd.util.fsutils import pathResolve, normCase, pathSuffixed
 from pytd.util.logutils import logMsg
 
+from pytaya.core import system as myasys
+
 from davos.core import damproject
 from davos.core.damtypes import DamShot, DamAsset
 from davos_maya.tool.publishing import publishCurrentScene
@@ -29,6 +31,7 @@ import dminutes.infoSetExp as infoE
 #from dminutes.miscUtils import deleteUnknownNodes
 from pytd.util.sysutils import toStr
 from pytd.util.strutils import padded
+from pytaya.core.general import copyAttrs, getObject
 
 reload(jpZ)
 reload(camIE)
@@ -45,9 +48,11 @@ notFoundvalue = 'NOT FOUND'
 
 #FROM DAVOS !!!!
 RC_FOR_STEP = {'Previz 3D':'previz_scene',
-                 'Layout':'layout_scene',
-                 'Animation':'anim_scene',
-                 }
+               'Stereo':'stereo_scene',
+               'Layout':'layout_scene',
+               'Animation':'anim_scene',
+               }
+
 RC_FOR_TASK = {}#{'previz 3D':'previz_scene', 'layout':'layout_scene'}
 
 REF_FOR_STEP = {'Previz 3D':'previz_ref',
@@ -126,19 +131,22 @@ def restoreSelection(func):
 def makeCapture(filepath, start, end, width, height, displaymode="",
                 showFrameNumbers=True, format="iff", compression="jpg",
                 ornaments=False, play=False, useCamera=None, audioNode=None,
-                i_inFilmFit=0, i_inDisplayResolution=0, i_inDisplayFilmGate=0,
-                i_inOverscan=1.0, i_inSafeAction=0, i_inSafeTitle=0,
-                i_inGateMask=0, f_inMaskOpacity=0.8, quick=False):
+                camSettings=None, quick=False):
+#                i_inFilmFit=0, i_inDisplayResolution=0, i_inDisplayFilmGate=0,
+#                i_inOverscan=1.0, i_inSafeAction=0, i_inSafeTitle=0,
+#                i_inGateMask=0, f_inMaskOpacity=0.8, quick=False):
 
     pc.select(cl=True)
     names = []
     name = ""
 
     pan = pc.playblast(activeEditor=True)
+    #sViewType = mc.modelEditor(pan, q=True, viewType=True)
+    #if sViewType == "stereoCameraView":
 
     #Camera settings
     oldCamera = None
-    if useCamera != None:
+    if useCamera:
         curCam = pc.modelEditor(pan, query=True, camera=True)
         if curCam != useCamera:
             oldCamera = curCam
@@ -151,18 +159,11 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
     jointXray = pc.modelEditor(pan, query=True, jointXray=True)
     hud = pc.modelEditor(pan, query=True, hud=True)
 
-    camera = pc.modelEditor(pan, query=True, camera=True)
-    if camera.type() == "transform":
-        camera = camera.getShape()
-
-    filmFit = pc.getAttr(camera + ".filmFit")
-    displayResolution = pc.getAttr(camera + ".displayResolution")
-    displayFilmGate = pc.getAttr(camera + ".displayFilmGate")
-    overscan = pc.getAttr(camera + ".overscan")
-    safeAction = pc.getAttr(camera + ".displaySafeAction")
-    safeTitle = pc.getAttr(camera + ".displaySafeTitle")
-    displayGateMask = pc.getAttr(camera + ".displayGateMask")
-    displayGateMaskOpacity = pc.getAttr(camera + ".displayGateMaskOpacity")
+    oCamShape = pc.modelEditor(pan, query=True, camera=True)
+    if oCamShape.type() == "transform":
+        sCamShape = oCamShape.getShape().name()
+    else:
+        sCamShape = oCamShape.name()
 
     #visible types
     nurbsCurvesShowing = pc.modelEditor(pan, query=True, nurbsCurves=True)
@@ -177,7 +178,7 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
                            forceOverwrite=True,
                            percent=100,
                            startTime=start, endTime=end,
-                           width=width, height=height,
+                           widthHeight=[width, height],
                            offScreen=True, #fixes clamping of the capture in Legacy viewports
                            )
 
@@ -194,20 +195,16 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
         else:
             playblastKwargs.update(sound=sAudioNode)
 
-
-    pc.setAttr(camera + ".filmFit", i_inFilmFit)
-    pc.setAttr(camera + ".displayResolution", i_inDisplayResolution)
-    pc.setAttr(camera + ".displayFilmGate", i_inDisplayFilmGate)
-    pc.setAttr(camera + ".overscan", i_inOverscan)
-    pc.setAttr(camera + ".displaySafeAction", i_inSafeAction)
-    pc.setAttr(camera + ".displaySafeTitle", i_inSafeTitle)
-    pc.setAttr(camera + ".displayGateMask", i_inGateMask)
-    pc.setAttr(camera + ".displayGateMaskOpacity", f_inMaskOpacity)
+    savedSettings = {}
+    if camSettings:
+        for sAttr, value in camSettings.iteritems():
+            sNodeAttr = sCamShape + "." + sAttr
+            savedSettings[sAttr] = mc.getAttr(sNodeAttr)
+            pc.setAttr(sNodeAttr, value)
 
     try:
-
         if format == "iff" and showFrameNumbers:
-            name = pc.playblast(filename=filepath, **playblastKwargs)
+            name = mc.playblast(filename=filepath, **playblastKwargs)
 
             for i in range(start, end + 1):
                 oldFileName = name.replace("####", str(i).zfill(4))
@@ -218,9 +215,9 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
                 names.append(newFileName)
         else:
             if format == "iff":
-                name = pc.playblast(completeFilename=filepath, **playblastKwargs)
+                name = mc.playblast(completeFilename=filepath, **playblastKwargs)
             else:
-                name = pc.playblast(filename=filepath, **playblastKwargs)
+                name = mc.playblast(filename=filepath, **playblastKwargs)
 
             names.append(name)
 
@@ -235,16 +232,11 @@ def makeCapture(filepath, start, end, width, height, displaymode="",
                        hud=hud)
 
         #Camera
-        pc.setAttr(camera + ".filmFit", filmFit)
-        pc.setAttr(camera + ".displayResolution", displayResolution)
-        pc.setAttr(camera + ".displayFilmGate", displayFilmGate)
-        pc.setAttr(camera + ".overscan", overscan)
-        pc.setAttr(camera + ".displaySafeAction", safeAction)
-        pc.setAttr(camera + ".displaySafeTitle", safeTitle)
-        pc.setAttr(camera + ".displayGateMask", displayGateMask)
-        pc.setAttr(camera + ".displayGateMaskOpacity", displayGateMaskOpacity)
+        if savedSettings:
+            for sAttr, value in savedSettings.iteritems():
+                pc.setAttr(sCamShape + "." + sAttr, value)
 
-    if oldCamera != None:
+    if oldCamera:
         pc.modelEditor(pan, edit=True, camera=oldCamera)
 
     return names
@@ -462,7 +454,7 @@ class SceneManager():
         if curScenePath:
             curScenePath = os.path.abspath(curScenePath)
             entry = proj.entryFromPath(curScenePath)
-            if entry != None:
+            if entry is not None:
                 self.context['sceneEntry'] = entry
                 self.context['sceneData'] = proj.dataFromPath(curScenePath)
 
@@ -516,10 +508,9 @@ class SceneManager():
         """Refresh the 'lock' status"""
         self.context['lock'] = "Error"
 
-        if entry == None:
+        if not entry:
             entry = self.entryFromContext()
-
-        if entry != None:
+        else:
             self.context['lock'] = entry.getLockOwner()
 
     def getDamEntity(self):
@@ -570,7 +561,7 @@ class SceneManager():
             damShot = DamShot(self.context['damProject'], name=self.context['entity'][nameKey])
             damShot.createDirsAndFiles()
 
-    def save(self, b_inForce=True):
+    def save(self, force=True):
         entry = self.entryFromContext()
 
         if entry == None:
@@ -580,9 +571,12 @@ class SceneManager():
         if currentScene == '':
             pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
-        return pc.saveAs(currentScene, force=b_inForce)
+        if not mc.file(q=True, modified=True):
+            return currentScene
 
-    def saveIncrement(self, b_inForce=True):
+        return pc.saveAs(currentScene, force=force)
+
+    def saveIncrement(self, force=True):
         # new incrementing system based on the last versoin present in the folder
         entry = self.entryFromContext()
 
@@ -599,11 +593,11 @@ class SceneManager():
             print "currentScene=", currentScene
             newFileName = jpZ.createIncrementedFilePath(filePath=currentScene, vSep=".", extSep=".ma", digits=3,)
 
-            if b_inForce or not os.path.isfile(newFileName):
-                return pc.saveAs(newFileName, force=b_inForce)
-            else:
+            if (not force) and os.path.isfile(newFileName):
                 pc.error("File already exists ({0})!".format(newFileName))
-        else:
+            else:
+                return pc.saveAs(newFileName, force=force)
+
             pc.warning("Invalid file pattern !")
 
         return None
@@ -624,7 +618,10 @@ class SceneManager():
         # BUG first frame decalee dupliquee dans les fichier output
         global CAPTURE_INFOS
 
-        savedFile = None
+        sSavedFile = None
+
+        sStep = self.context['step']['code']
+        sTask = self.context['task']['content']
 
         damShot = self.getDamShot()
         oShotCam = self.getShotCamera(fail=True)
@@ -632,8 +629,9 @@ class SceneManager():
         CAPTURE_INFOS['cam'] = oShotCam.getShape().name()
         oCamRef = oShotCam.referenceFile()
 
-        sStep = self.context['step']['code']
-        sTask = self.context['task']['content']
+        oStereoCam = None
+        if sStep.lower() == "stereo":
+            oStereoCam = self.getStereoCam(fail=True)
 
         if sStep.lower() == sTask.lower():
             CAPTURE_INFOS['task'] = sTask
@@ -680,11 +678,11 @@ class SceneManager():
 
         if not quick:
             if increment:
-                savedFile = self.saveIncrement(b_inForce=False)
+                sSavedFile = self.saveIncrement(force=False)
             else:
-                savedFile = self.save(b_inForce=False)
+                sSavedFile = self.save(force=False)
 
-            if savedFile is None:
+            if not sSavedFile:
                 raise RuntimeError("Could not save current scene !")
 
         #Infer capture path
@@ -720,35 +718,52 @@ class SceneManager():
         if oCamRef:
             bWasLocked = oCamRef.refNode.getAttr("locked")
             mop.setReferenceLocked(oCamRef, False)
+            oShotCam = pc.PyNode(sShotCam)
 
         bImgPlnViz = mop.isImgPlaneHidden()
         mop.setImgPlaneHidden(True)
 
-        savedHudValues = createHUD()
-
+        numSmoothed = 0
+        sRecorder = ""
         try:
-            oShotCam = pc.PyNode(sShotCam)
             oShotCam.setAttr('aspectRatio', 1.85)
 
-            _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
-            mop.arrangeViews(oShotCam, oImgPlaneCam)
-
             if smoothData:
-                for sMesh in smoothData.iterkeys():
+                sMeshList = sorted(smoothData.iterkeys())
+                for sMesh in sMeshList:
                     mc.setAttr(sMesh + ".displaySmoothMesh", 2)
+                    numSmoothed += 1
 
-            pc.refresh()
+            camSettings = dict(filmFit=1, displayResolution=0, displayFilmGate=1,
+                               displaySafeAction=1, overscan=1.0,
+                               displaySafeTitle=0, displayGateMask=1,
+                               displayGateMaskOpacity=1.0)
 
-            makeCapture(sCapturePath, captureStart, captureEnd, 1280, 720, useCamera=oShotCam,
-                        format="qt", compression="H.264", ornaments=True, play=False,
-                        i_inFilmFit=1, i_inDisplayFilmGate=1, i_inSafeAction=1,
-                        i_inSafeTitle=0, i_inGateMask=1, f_inMaskOpacity=1.0, quick=quick)
+            bSingleView = False
+            if oStereoCam:
+                if (not quick):
+                    sRecorder = mop.getStereoInfosRecorder(oStereoCam.name())
+                camSettings = None
+                bSingleView = True
+
+            savedHudValues = createHUD()
+
+            _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
+            mop.arrangeViews(oShotCam, oImgPlaneCam, oStereoCam,
+                             singleView=bSingleView, stereoDisplay="freeview")
+
+            makeCapture(sCapturePath, captureStart, captureEnd, 1280, 720,
+                        format="qt", compression="H.264", camSettings=camSettings,
+                        ornaments=True, play=False, quick=quick)
         finally:
-            if smoothData:
-                for sMesh, meshInfo in smoothData.iteritems():
-                    for k, v in meshInfo.iteritems():
-                        if k.startswith("."):
-                            mc.setAttr(sMesh + k, v)
+
+            try:
+                restoreHUD(savedHudValues)
+            except Exception as e:
+                pc.displayError(toStr(e))
+
+            if sRecorder:
+                mc.delete(sRecorder)
 
             oShotCam.setAttr('aspectRatio', 1.7778)
 
@@ -757,9 +772,23 @@ class SceneManager():
                 oShotCam = pc.PyNode(sShotCam)
                 mop.setCamAsPerspView(oShotCam)
 
-            restoreHUD(savedHudValues)
+            if numSmoothed:
+                for i in xrange(numSmoothed):
+                    sMesh = sMeshList[i]
+                    meshInfo = smoothData[sMesh]
+                    for k, v in meshInfo.iteritems():
+                        if k.startswith("."):
+                            mc.setAttr(sMesh + k, v)
 
             mop.setImgPlaneHidden(bImgPlnViz)
+            mop.arrangeViews(oShotCam, oImgPlaneCam, oStereoCam, singleView=False)
+
+        if sRecorder:
+            sPrivInfoPath = damShot.getPath("private", "stereoCam_info")
+            try:
+                mop.writeStereoInfos(sPrivInfoPath)
+            except Exception as e:
+                pc.displayWarning("Could not write stereo infos: " + toStr(e))
 
         sCmd = ""
         bShell = False
@@ -878,7 +907,13 @@ class SceneManager():
 
     def prePublishCurrentScene(self, publishCtx, **kwargs):
 
-        bPreviz = self.context["step"]["code"].lower() == "previz 3d"
+        sStepCode = self.context["step"]["code"].lower()
+
+        if sStepCode == "stereo":
+            self.exportStereoCamFiles(publish=True)
+            return
+
+        bPreviz = (sStepCode == "previz 3d")
 
         # here is incerted the publish of the camera of the scene
         print "exporting the camera of the shot"
@@ -890,7 +925,7 @@ class SceneManager():
         infoSetExpI.export(sceneName=jpZ.getShotName())
 
         if (not bPreviz) and self.isShotCamEdited():
-            self.exportCamAnimFiles()
+            self.exportCamAnimFiles(publish=True)
             self.importShotCamAbcFile()
             mop.setCamAsPerspView(self.getShotCamera())
 
@@ -929,7 +964,7 @@ class SceneManager():
     def getShotgunContent(self):
         #print 'getShotgunContent ' + self.context['entity']['code']
         content = self.context['damProject']._shotgundb.getShotAssets(self.context['entity']['code'])
-        return content if content != None else []
+        return content if content is not None else []
 
     def getFileTagFromPath(self, in_sPath):
         """Detect the filetag (resource) from an asset path, when we don't have the shotgun info, right now it'll just say 'NONE'"""
@@ -1166,6 +1201,9 @@ class SceneManager():
     def getShotCamera(self, fail=False):
         return mop.getShotCamera(self.context['entity']['code'].lower(), fail=fail)
 
+    def getStereoCam(self, fail=False):
+        return mop.getStereoCam(self.context['entity']['code'].lower(), fail=fail)
+
     def importShotCam(self):
 
         sCamNspace = self.mkShotCamNamespace()
@@ -1176,6 +1214,11 @@ class SceneManager():
         camFile = damCam.getResource("public", "scene")
         camFile.mayaImportScene(ns=sCamNspace)
         mc.refresh()
+
+        try:
+            mc.parent(sCamNspace + ":asset", "grp_camera")
+        except Exception as e:
+            pc.displayWarning(toStr(e))
 
         return pc.PyNode(sCamNspace + ":cam_shot_default")
 
@@ -1232,16 +1275,13 @@ class SceneManager():
 
         return (osp.exists(sPubAtomPath) and osp.exists(sPubAbcPath))
 
-    def exportCamAnimFiles(self, publish=True):
+    def exportCamAnimFiles(self, publish=False):
 
         from pytaya.core import system as myasys
 
         damShot = self.getDamShot()
 
-        sPubAtomPath = damShot.getPath("public", "camera_atom")
-        sPubAbcPath = damShot.getPath("public", "camera_abc")
-
-        oCamAstGrp = pc.PyNode(self.mkShotCamNamespace() + ":asset")
+        oCamAstGrp = pc.PyNode(mop.mkShotCamNamespace(damShot.name) + ":asset")
 
         mop.init_shot_constants(self)
 
@@ -1274,8 +1314,75 @@ class SceneManager():
             sComment = "from {}".format(pc.sceneName().basename())
             results = []
 
+            sPubAtomPath = damShot.getPath("public", "camera_atom")
+            sPubAbcPath = damShot.getPath("public", "camera_abc")
+
             sFilePathItems = ((sPrivAtomPath, sPubAtomPath), (sPrivAbcPath, sPubAbcPath))
-            for sPrivPath, sPubPath  in sFilePathItems:
+            for sPrivPath, sPubPath in sFilePathItems:
+                sDirPath = osp.dirname(sPubPath)
+                parentDir = pubShotLib.getEntry(sDirPath, dbNode=False)
+                res = parentDir.publishFile(sPrivPath, autoLock=True, autoUnlock=True,
+                                            comment=sComment, dryRun=False)
+                results.append(res)
+
+            return results
+
+    def exportStereoCamFiles(self, publish=False):
+
+        damShot = self.getDamShot()
+        sShotCode = damShot.name
+
+        oStereoCam = self.getStereoCam(fail=True).getShape()
+        sStereoNs = mop.mkStereoCamNamespace(sShotCode)
+        sStereoGrp = getObject(sStereoNs + ":grp_stereo", fail=True)
+        sAtomFixCam = getObject(sStereoNs + ":atomFix_" + oStereoCam.nodeName(stripNamespace=True), fail=True)
+
+        mop.init_shot_constants(self)
+
+        sPrivAtomPath = damShot.getPath("private", "stereoCam_anim")
+        sPrivInfoPath = damShot.getPath("private", "stereoCam_info")
+        if not osp.isfile(sPrivInfoPath):
+            sPrivInfoPath = ""
+
+        for p in (sPrivAtomPath, sPrivInfoPath):
+            if not p: continue
+            sDirPath = os.path.dirname(p)
+            if not os.path.exists(sDirPath):
+                os.makedirs(sDirPath)
+
+        sAttrList = pc.listAttr(oStereoCam, k=True)
+        sAttrList = copyAttrs(oStereoCam, sAtomFixCam, *sAttrList,
+                              create=False, values=True, inConnections=True)
+
+        pc.select(sStereoGrp)
+        myasys.exportAtomFile(sPrivAtomPath,
+                              SDK=False,
+                              constraints=False,
+                              animLayers=True,
+                              statics=True,
+                              baked=True,
+                              points=False,
+                              hierarchy="below",
+                              channels="all_keyable",
+                              timeRange="all",
+                              )
+
+        sAttrList = copyAttrs(sAtomFixCam, oStereoCam, *sAttrList,
+                              create=False, values=True, inConnections=True)
+
+        if publish:
+
+            pubShotLib = damShot.getLibrary("public")
+            sComment = "from {}".format(pc.sceneName().basename())
+            results = []
+
+            sPubAtomPath = damShot.getPath("public", "stereoCam_anim")
+            sPubInfoPath = damShot.getPath("public", "stereoCam_info")
+
+            sFilePathItems = ((sPrivAtomPath, sPubAtomPath), (sPrivInfoPath, sPubInfoPath))
+            for sPrivPath, sPubPath in sFilePathItems:
+                if not sPrivPath:
+                    continue
                 sDirPath = osp.dirname(sPubPath)
                 parentDir = pubShotLib.getEntry(sDirPath, dbNode=False)
                 res = parentDir.publishFile(sPrivPath, autoLock=True, autoUnlock=True,
@@ -1313,8 +1420,6 @@ class SceneManager():
         return oAbcNode
 
     def editShotCam(self):
-
-        from pytaya.core import system as myasys
 
         damShot = self.getDamShot()
         atomFile = damShot.getResource("public", "camera_atom", fail=True)
@@ -1435,7 +1540,7 @@ def restoreHUD(oldValues=None):
 
     headsUps = pc.headsUpDisplay(listHeadsUpDisplays=True)
 
-    if oldValues != None:
+    if oldValues is not None:
         for k, v in oldValues.iteritems():
             if k in headsUps:
                 pc.headsUpDisplay(k, edit=True, visible=v)

@@ -172,12 +172,13 @@ def setSubdiv(GUI= False ):
                         mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
                         mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
                         mc.setAttr(eachGeoShape+".useGlobalSmoothDrawType",1)
-                        if previewSubdivLevel == 0:
-                            mc.setAttr(eachGeoShape+".smoothLevel", 0)
-                        if previewSubdivLevel == 1:
-                            mc.connectAttr("|asset|grp_geo.smoothLevel1", eachGeoShape+".smoothLevel", f=True)
-                        if previewSubdivLevel > 1:
-                            mc.connectAttr("|asset|grp_geo.smoothLevel2", eachGeoShape+".smoothLevel",f=True)
+                        if not mc.getAttr(eachGeoShape+".smoothLevel", lock = True):
+                            if previewSubdivLevel == 0:
+                                mc.setAttr(eachGeoShape+".smoothLevel", 0)
+                            if previewSubdivLevel == 1:
+                                mc.connectAttr("|asset|grp_geo.smoothLevel1", eachGeoShape+".smoothLevel", f=True)
+                            if previewSubdivLevel > 1:
+                                mc.connectAttr("|asset|grp_geo.smoothLevel2", eachGeoShape+".smoothLevel",f=True)
                         if not mc.attributeQuery ("aiSubdivType", node = eachGeoShape , exists = True):
                             logMessage = "#### {:>7}: 'setSubdiv' {}.aiSubdivType attribute coud not be found, please check if Arnold is properly installed on your computer".format(eachGeoShape)
                             if GUI == True: raise ValueError(logMessage)
@@ -1250,3 +1251,19 @@ def assetGrpClean( clean = True, GUI = True):
 
     return dict(returnB=returnB, logL=logL)
 
+
+def standInchecks():
+    proxiL = mc.ls('prx_*', type='mesh')
+
+    for eachProxy in proxiL:
+        print "eachProxy: ", eachProxy
+        mc.setAttr(eachProxy+".visibility" ,1)
+        mc.setAttr(eachProxy+".aiSelfShadows" ,0)
+        mc.setAttr(eachProxy+".aiVisibleInDiffuse" ,0)
+        mc.setAttr(eachProxy+".aiVisibleInGlossy" ,0)
+        mc.setAttr(eachProxy+".castsShadows" ,0)
+        mc.setAttr(eachProxy+".receiveShadows" ,0)
+        mc.setAttr(eachProxy+".motionBlur" ,0)
+        mc.setAttr(eachProxy+".primaryVisibility" ,0)
+        mc.setAttr(eachProxy+".visibleInReflections" ,0)
+        mc.setAttr(eachProxy+".visibleInRefractions" ,0)

@@ -219,6 +219,8 @@ public:
    inline void SetArnoldRenderOptions(const MObject& options) { m_options = options; }
 
    MString GetShaderSearchPath() const { return m_shader_searchpath; }
+   int GetLogConsoleVerbosity() const;
+   int GetLogFileVerbosity() const;
 
 private:
 

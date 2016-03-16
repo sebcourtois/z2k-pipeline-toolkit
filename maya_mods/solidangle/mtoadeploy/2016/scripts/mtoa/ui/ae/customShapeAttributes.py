@@ -110,7 +110,19 @@ class MeshTemplate(templates.ShapeTranslatorTemplate):
 #       ui.addSeparator()
 #       ui.addControl("enableProcedural")
 #       ui.addControl("dso")
+
+class ProceduralTemplate(templates.ShapeTranslatorTemplate):
+
+    def setup(self):
+        self.commonShapeAttributes()
+        self.addSeparator()
+        self.addControl('dso', label='Path')
+        self.addControl('data', label='Data')
+        self.addControl('deferStandinLoad', label='Defer Procedural Load')
+        self.addControl("aiUserOptions", label="User Options")
+
 templates.registerTranslatorUI(MeshTemplate, "mesh", "polymesh")
+templates.registerTranslatorUI(ProceduralTemplate, "mesh", "procedural")
 core.registerDefaultTranslator("mesh", "polymesh")
 templates.registerTranslatorUI(MeshTemplate, "nurbsSurface", "<built-in>")
 
@@ -341,7 +353,8 @@ class AreaLightTemplate(lightTemplate.LightTemplate):
         self.addSeparator()
 
         self.addControl("aiResolution")
-        
+        self.addControl("aiSpread")
+                
         self.addSeparator()
 
         self.commonLightAttributes()
@@ -682,6 +695,27 @@ def registerDriverTemplates():
 templatesNames = []
     
 class EXRDriverTranslatorUI(templates.AttributeTemplate):
+
+    def selectedAttrName(self, nodeName):
+        # unfortunately the functions below might be called 
+        # with NodeNames corresponding to a previously selected node
+        # (maya doesn't rebuild the UI but just updates the param values so the callbacks remain)
+        tokens = nodeName.split('.')
+
+        # same object, nothing to change
+        if (tokens[0] == self.nodeName):
+            return nodeName
+
+        #replace the first token by the actual self name
+        result = self.nodeName
+        tokens.pop(0)
+        
+        for token in tokens:
+            result += "." + token
+
+        return result
+
+
     def changeAttrName(self, nodeName, attrNameText, index):
         # Get the attribute name, type and value
         attrName = nodeName+'['+str(index)+']'
@@ -741,10 +775,13 @@ class EXRDriverTranslatorUI(templates.AttributeTemplate):
         cmds.setAttr(attrName, metadata, type="string")
         
     def removeAttribute(self, nodeName, index):
+        nodeName = self.selectedAttrName(nodeName)
         cmds.removeMultiInstance(nodeName+'['+str(index)+']')
         self.updatedMetadata(nodeName)
         
     def addAttribute(self, nodeName):
+        
+        nodeName = self.selectedAttrName(nodeName)
         next = 0
         if cmds.getAttr(nodeName, multiIndices=True):
             next = cmds.getAttr(nodeName, multiIndices=True)[-1] + 1
@@ -756,6 +793,7 @@ class EXRDriverTranslatorUI(templates.AttributeTemplate):
         result = metadata.split(' ', 2 )
         result += [""] * (3-len(result))
         
+        nodeName = self.selectedAttrName(nodeName)
         # Attribute Name
         attrNameText = cmds.textField("MtoA_exrMAttributeName", text=result[1])
         cmds.textField(attrNameText, edit=True, changeCommand=pm.Callback(self.changeAttrName, nodeName, attrNameText, index))
@@ -787,6 +825,9 @@ class EXRDriverTranslatorUI(templates.AttributeTemplate):
         cmds.symbolButton(image="SP_TrashIcon.png", command=pm.Callback(self.removeAttribute, nodeName, index))
         
     def updatedMetadata(self, nodeName):
+
+        nodeName = self.selectedAttrName(nodeName)
+
         templatesNames[:] = [tup for tup in templatesNames if cmds.columnLayout(tup, exists=True)]
         for templateName in templatesNames:
             cmds.setParent(templateName)
@@ -803,12 +844,14 @@ class EXRDriverTranslatorUI(templates.AttributeTemplate):
         
     def metadataNew(self, nodeName):
         cmds.rowLayout(nc=2, cw2=(200,140), cl2=('center', 'center'))
-        cmds.button( label='Add New Attribute', command=pm.Callback(self.addAttribute, 'defaultArnoldDriver.custom_attributes'))
+
+        nodeName = self.selectedAttrName(nodeName)
+        cmds.button( label='Add New Attribute', command=pm.Callback(self.addAttribute, nodeName))
         cmds.setParent( '..' )
         layout = cmds.columnLayout(rowSpacing=5, columnWidth=340)
         # This template could be created more than once in different panels
         templatesNames.append(layout)
-        self.updatedMetadata('defaultArnoldDriver.custom_attributes')
+        self.updatedMetadata(nodeName)
         cmds.setParent( '..' )
 
     def metadataReplace(self, nodeName):
@@ -839,6 +882,25 @@ class DeepEXRDriverTranslatorUI(templates.AttributeTemplate):
         aovs.addAOVChangedCallback(self.updateLayerHalfPrecision, 'DeepEXRDriverTranslatorUIHalfPrecision')
         aovs.addAOVChangedCallback(self.updateLayerEnableFiltering, 'DeepEXRDriverTranslatorUIEnableFiltering')
         super(DeepEXRDriverTranslatorUI, self).__init__(nodeType)
+
+    def selectedAttrName(self, nodeName):
+        # unfortunately the functions below might be called 
+        # with NodeNames corresponding to a previously selected node
+        # (maya doesn't rebuild the UI but just updates the param values so the callbacks remain)
+        tokens = nodeName.split('.')
+
+        # same object, nothing to change
+        if (tokens[0] == self.nodeName):
+            return nodeName
+
+        #replace the first token by the actual self name
+        result = self.nodeName
+        tokens.pop(0)
+
+        for token in tokens:
+            result += "." + token
+
+        return result
 
     def updateLayerTolerance(self):
 
@@ -1029,10 +1091,13 @@ class DeepEXRDriverTranslatorUI(templates.AttributeTemplate):
         cmds.setAttr(attrName, metadata, type="string")
         
     def removeAttribute(self, nodeName, index):
+        nodeName = self.selectedAttrName(nodeName)
         cmds.removeMultiInstance(nodeName+'['+str(index)+']')
         self.updatedMetadata(nodeName)
         
     def addAttribute(self, nodeName):
+
+        nodeName = self.selectedAttrName(nodeName)
         next = 0
         if cmds.getAttr(nodeName, multiIndices=True):
             next = cmds.getAttr(nodeName, multiIndices=True)[-1] + 1
@@ -1044,6 +1109,8 @@ class DeepEXRDriverTranslatorUI(templates.AttributeTemplate):
         result = metadata.split(' ', 2 )
         result += [""] * (3-len(result))
         
+        nodeName = self.selectedAttrName(nodeName)
+
         # Attribute Name
         attrNameText = cmds.textField("MtoA_exrMAttributeName", text=result[1])
         cmds.textField(attrNameText, edit=True, changeCommand=pm.Callback(self.changeAttrName, nodeName, attrNameText, index))
@@ -1075,6 +1142,9 @@ class DeepEXRDriverTranslatorUI(templates.AttributeTemplate):
         cmds.symbolButton(image="SP_TrashIcon.png", command=pm.Callback(self.removeAttribute, nodeName, index))
         
     def updatedMetadata(self, nodeName):
+        
+        nodeName = self.selectedAttrName(nodeName)
+
         templatesNames[:] = [tup for tup in templatesNames if cmds.columnLayout(tup, exists=True)]
         for templateName in templatesNames:
             cmds.setParent(templateName)
@@ -1090,13 +1160,16 @@ class DeepEXRDriverTranslatorUI(templates.AttributeTemplate):
                     cmds.setParent('..')
         
     def metadataNew(self, nodeName):
+
+        nodeName = self.selectedAttrName(nodeName)
+
         cmds.rowLayout(nc=2, cw2=(200,140), cl2=('center', 'center'))
-        cmds.button( label='Add New Attribute', command=pm.Callback(self.addAttribute, 'defaultArnoldDriver.custom_attributes'))
+        cmds.button( label='Add New Attribute', command=pm.Callback(self.addAttribute, nodeName))
         cmds.setParent( '..' )
         layout = cmds.columnLayout(rowSpacing=5, columnWidth=340)
         # This template could be created more than once in different panels
         templatesNames.append(layout)
-        self.updatedMetadata('defaultArnoldDriver.custom_attributes')
+        self.updatedMetadata(nodeName)
         cmds.setParent( '..' )
 
     def metadataReplace(self, nodeName):

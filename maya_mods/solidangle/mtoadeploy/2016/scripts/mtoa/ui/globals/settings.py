@@ -623,7 +623,8 @@ def createArnoldEnvironmentSettings():
     pm.columnLayout(adjustableColumn=True)
 
     pm.rowLayout(adjustableColumn=2, numberOfColumns=4)
-    pm.text(label="Background")
+    pm.text('es_background_text', label="Background")
+    pm.connectControl('es_background_text', 'defaultArnoldRenderOptions.background')
     backgroundTextField = pm.textField("defaultArnoldRenderOptionsBackgroundTextField",editable=False)
     backgroundButton = pm.symbolButton(image="navButtonUnconnected.png")
     backgroundSelectButton = pm.symbolButton("defaultArnoldRenderOptionsBackgroundSelectButton", image="navButtonConnected.png", command=selectBackground, enable=False)
@@ -641,7 +642,8 @@ def createArnoldEnvironmentSettings():
 
     
     pm.rowLayout(adjustableColumn=2, numberOfColumns=4)
-    pm.text(label="Atmosphere")
+    pm.text('es_atmosphere_text', label="Atmosphere")
+    pm.connectControl('es_atmosphere_text', 'defaultArnoldRenderOptions.atmosphere')
     atmosphereTextField = pm.textField("defaultArnoldRenderOptionsAtmosphereTextField",editable=False)
     atmosphereButton = pm.symbolButton(image="navButtonUnconnected.png")
     atmosphereSelectButton = pm.symbolButton("defaultArnoldRenderOptionsAtmosphereSelectButton", image="navButtonConnected.png", command=selectAtmosphere, enable=False)
