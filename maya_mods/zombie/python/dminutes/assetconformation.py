@@ -778,7 +778,7 @@ class Asset_File_Conformer:
                     continue
 
                 sourceShadEngList = mc.ls(mc.listHistory(sourceShape,future = True),type="shadingEngine")
-                #print sourceShape+" --> "+targetShape
+                print sourceShape+" --> "+targetShape
                 if len(sourceShadEngList) == 1:
                     mc.sets(targetShape,e=True, forceElement=sourceShadEngList[0])
                 elif len(sourceShadEngList) > 0:
@@ -925,18 +925,19 @@ class Asset_File_Conformer:
             shadEngList = mc.ls(mc.listHistory(eachShape,future = True),type="shadingEngine")
             for eachShadEng in shadEngList:
                 attrList = mc.listConnections(eachShadEng,source = True,type='shape', connections =  True, plugs = True)
-                i = -2
-                while i< len(attrList)-2:
-                    i+=2
-                    shapeAttr = attrList[i+1]
-                    shadEngAttr = str(attrList[i])
-                    if eachShape in shapeAttr and eachShadEng+".dagSetMembers" in shadEngAttr:
-                        #print "#### {:>7}: try to disconnect '{}'  from  '{}'".format("Info", shapeAttr,shadEngAttr) 
-                        result = mc.disconnectAttr(shapeAttr, shadEngAttr)
-                        if eachShape not in disconnectShapes:
-                            disconnectShapes.append(eachShape)
-                        if verbose == True: print result
-                    if i>200: break
+                if attrList:
+                    i = -2
+                    while i< len(attrList)-2:
+                        i+=2
+                        shapeAttr = attrList[i+1]
+                        shadEngAttr = str(attrList[i])
+                        if eachShape.split("|")[-1] in shapeAttr and eachShadEng+".dagSetMembers" in shadEngAttr:
+                            #print "#### {:>7}: try to disconnect '{}'  from  '{}'".format("Info", shapeAttr,shadEngAttr) 
+                            result = mc.disconnectAttr(shapeAttr, shadEngAttr)
+                            if eachShape not in disconnectShapes:
+                                disconnectShapes.append(eachShape)
+                            if verbose == True: print result
+                        if i>200: break
         print "#### {:>7}: shader have been disconnected on {} object(s) ".format("Info", len(disconnectShapes))
 
 
@@ -946,15 +947,15 @@ class Asset_File_Conformer:
         # mc.select(clear=True)
 
         ignoredShadEngL = [u'initialParticleSE', u'initialShadingGroup']
-        ignoredNodeTypeL = [u'colorManagementGlobals', u'mesh']
+        ignoredNodeTypeL = [u'colorManagementGlobals', u'mesh', u'shape']
 
-        ignoredShadNodeL = mc.ls("*",type= ignoredNodeTypeL)
-        if not ignoredShadNodeL: ignoredShadNodeL=[]
+        ignoredNodeL = mc.ls("*",type= ignoredNodeTypeL)
+        if not ignoredNodeL: ignoredNodeL=[]
 
-        ignoredShadNodeL = ignoredShadEngL+ignoredShadNodeL
+        ignoredNodeL = ignoredShadEngL+ignoredNodeL
         for each in ignoredShadEngL:
-            ignoredShadNodeL.extend(mc.hyperShade (listUpstreamNodes= each))
-        #ignoredShadNodeL  = list(set(ignoredShadNodeL)|set(mc.ls("*",type= ignoredNodeTypeL)))#union
+            ignoredNodeL.extend(mc.hyperShade (listUpstreamNodes= each))
+        #ignoredNodeL  = list(set(ignoredNodeL)|set(mc.ls("*",type= ignoredNodeTypeL)))#union
 
         allShadEngL = mc.ls("*",type="shadingEngine")
         if not allShadEngL: allShadEngL=[]
@@ -970,7 +971,7 @@ class Asset_File_Conformer:
             usedShadNodeL.extend(mc.hyperShade (listUpstreamNodes= each))
 
 
-        unusedShadNodeL = list(set(allShadNodeL)-set(usedShadNodeL)-set(ignoredShadNodeL))
+        unusedShadNodeL = list(set(allShadNodeL)-set(usedShadNodeL)-set(ignoredNodeL))
 
 
         if unusedShadNodeL:
