@@ -10,10 +10,12 @@ import maya.cmds as mc
 import pymel.core
 
 from pytd.util.fsutils import pathResolve
-from pytd.util.sysutils import inDevMode
+from pytd.util.sysutils import inDevMode, toStr
 from pytd.util.logutils import logMsg
 #from pytd.util.sysutils import getCaller
 from pytd.util.qtutils import setWaitCursor
+
+from zomblib import rvutils
 
 import dminutes.maya_scene_operations as mop
 from dminutes import sceneManager
@@ -40,6 +42,23 @@ QWIDGETS = {}
 #------------------------------------------------------------------
 #               Main UI Creation/Initialization
 #------------------------------------------------------------------
+
+def withErrorDialog(func):
+    def doIt(*args, **kwargs):
+        try:
+            res = func(*args, **kwargs)
+        except Exception as e:
+            pc.confirmDialog(title='SORRY !'
+                             , message=toStr(e)
+                            , button=["OK"]
+                            , defaultButton="OK"
+                            , cancelButton="OK"
+                            , dismissString="OK"
+                            , icon="critical")
+            raise
+
+        return res
+    return doIt
 
 def kill():
 
@@ -169,6 +188,12 @@ def initialize():
     doStepChanged(updateStep=False)
     setContextUI()
 
+    damShot = SCENE_MANAGER.getDamShot()
+    sAnn = "Create a capture into local project: '{}'".format(SCENE_MANAGER.getWipCaptureDir(damShot))
+    pc.control("sm_wipCapture_bt", edit=True, annotation=sAnn)
+    sAnn = "Create a PUBLISHABLE capture into private area: '{}'".format(damShot.getPath("private", "entity_dir"))
+    pc.control("sm_capture_bt", edit=True, annotation=sAnn)
+
 def updateButtons():
     """Update buttons availability from maya_scene_operations commands dictionary"""
 
@@ -209,7 +234,7 @@ def refreshContextUI():
     pc.checkBox('sm_blocking_chk', edit=True, value=pc.playbackOptions(q=True, blockingAnim=True))
     pc.checkBox('sm_updAllViews_chk', edit=True, value=(pc.playbackOptions(q=True, view=True) == "all"))
 
-    bListAssets = pc.optionVar.get("Z2K_SM_listAssets", True)
+    bListAssets = pc.optionVar.get("Z2K_SM_listAssets", False if sStepName == "animation" else True)
     QWIDGETS["relatedAssetsGroup"].setChecked(bListAssets)
     if bListAssets:
         pc.control('sm_updScene_bt', edit=True, enable=bPublishable)
@@ -460,19 +485,8 @@ def doShowWipCapturesDir(*args):
         pc.displayError("No such directory: '{}'".format(p))
 
 def doShowSequenceInRv(*args):
-
     seqId = SCENE_MANAGER.context["entity"]["sg_sequence"]["id"]
-
-    sMuCmd = ('shotgun_review_app.theMode().setServer("https://zombillenium.shotgunstudio.com");\
-    shotgun_review_app.theMode().launchTimeline([(string, string)] {{("entity_type", "Sequence"), ("entity_id", "{}")}});'
-    .format(seqId))
-
-    sLauncherLoc = osp.dirname(os.environ["Z2K_LAUNCH_SCRIPT"])
-    p = osp.join(sLauncherLoc, "rvpush.bat")
-    print p
-    sCmdAgrs = [p, "-tag", "playblast", "mu-eval", sMuCmd]
-
-    subprocess.call(sCmdAgrs)
+    rvutils.openToSgSequence(seqId)
 
 def doShowImagePlane(bShow):
     mop.setImgPlaneHidden(bShow)
@@ -679,7 +693,14 @@ def doRefreshSceneInfo(*args):
     sceneInfoWdg.clear()
     pc.refresh()
 
-    if not pc.optionVar.get("Z2K_SM_listAssets", True):
+
+    sStepName = ""
+    try:
+        sStepName = SCENE_MANAGER.context["step"]["code"].lower()
+    except KeyError:
+        pass
+
+    if not pc.optionVar.get("Z2K_SM_listAssets", False if sStepName == "animation" else True):
         return []
 
     assetDataList = SCENE_MANAGER.listRelatedAssets()
@@ -891,4 +912,3 @@ def doPouet(*args, **kwargs):
     print "pouet"
     for i, j in  SCENE_MANAGER.context.iteritems():
         print "    ", i, j
-

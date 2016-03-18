@@ -120,12 +120,19 @@ def parseEdl(in_sEdlPath, in_sSeqFilter=None):
                     return None
     return shots
 
+def ffmpegAppPath():
+    p = osp.normpath(osp.join(os.environ["Z2K_LAUNCH_SCRIPT"].split("launchers")[0], "movSplitter", "ffmpeg", "bin", "ffmpeg.exe"))
+    if not osp.isfile(p):
+        raise EnvironmentError("FFMPEG command-line tool not found: '{}'.".format(p))
+
+    return p
 
 def h264ToProres(inSeqList, shotStep='01_previz'):
     """
     There are 4 profiles that exist within Prores: Proxy, LT, SQ and HQ (and then optionally 4444). In ffmpeg these profiles are assigned numbers (0 is Proxy and 3 is HQ)
     """
-    ffmpegCommand = osp.normpath(osp.join(os.environ["Z2K_LAUNCH_SCRIPT"].split("launchers")[0], "movSplitter", "ffmpeg", "bin", "ffmpeg.exe"))
+
+    sFfmpegPath = ffmpegAppPath()
     shotDir = osp.normpath(osp.join(os.environ["ZOMB_SHOT_LOC"], "zomb", "shot"))
     montageDir = "//Zombiwalk/z2k/11_EXCHANGE_MONTAGE"
     sSeqShotDict = OrderedDict()
@@ -181,10 +188,36 @@ def h264ToProres(inSeqList, shotStep='01_previz'):
                 inFile = osp.normpath(osp.join(inDir, videoList[-1]))
                 outFile = osp.normpath(osp.join(outDir, videoList[-1]))
                 finalCommand = ("{0} -i {1} -c:v prores_ks -profile:v {2} {3}"
-                                .format(ffmpegCommand, inFile, profile, outFile))
+                                .format(sFfmpegPath, inFile, profile, outFile))
                 tmpBatFile.write(finalCommand + "\n")
 
         tmpBatFile.write("\n")
         tmpBatFile.write("pause\n")
 
     subprocess.call("explorer /select, {}".format(sTmpBatPath))
+
+def makeFilePath(sDirPath, sBaseFileName, sExt, frame=None, padding=4):
+
+    sFrameExt = ""
+    if isinstance(frame, int):
+        sFrameExt = "{:0{}d}".format(frame, padding)
+    elif isinstance(frame, basestring):
+        sFrameExt = padding * frame
+
+    sFilename = ".".join((sBaseFileName, sFrameExt, sExt))
+    return osp.normpath(osp.join(sDirPath, sFilename)).replace("\\", "/")
+
+def movieToJpegSequence(sMoviePath, sOutDirPath, sBaseFileName, padding=4):
+
+    sFfmpegPath = ffmpegAppPath()
+    sBaseFileName = sBaseFileName.split('.', 1)[0]
+    sExt = "jpg"
+    sFilename = ".".join((sBaseFileName, "%0{}d".format(padding), sExt))
+    sOutFilePath = osp.normpath(osp.join(sOutDirPath, sFilename))
+    cmdArgs = [sFfmpegPath, "-i", osp.normpath(sMoviePath), "-q:v", "2", sOutFilePath]
+
+    subprocess.check_call(cmdArgs)
+
+    sFilename = ".".join((sBaseFileName, "{:0{}d}".format(1, padding), sExt))
+    return makeFilePath(sOutDirPath, sBaseFileName, sExt, frame=1, padding=padding)
+

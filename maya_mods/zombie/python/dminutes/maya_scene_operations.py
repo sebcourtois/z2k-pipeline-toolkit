@@ -1,18 +1,23 @@
 
 import os
+import os.path as osp
 import re
+import shutil
+
 #from itertools import izip
 
 import pymel.core as pc
 import maya.cmds as mc
 
-from pytd.util.sysutils import toStr
-from davos_maya.tool.reference import loadAssetRefsToDefault, listPrevizRefMeshes
+from pytd.util.sysutils import toStr, inDevMode
+from davos_maya.tool.reference import loadAssetRefsToDefaultFile, listPrevizRefMeshes
 from dminutes.shotconformation import removeRefEditByAttr
 from pytaya.util.sysutils import withSelectionRestored
 from collections import OrderedDict
 from pytaya.core.transform import matchTransform
-from pytd.util.fsutils import jsonWrite
+from pytd.util.fsutils import jsonWrite, copyFile
+import filecmp
+from zomblib.editing import makeFilePath, movieToJpegSequence
 
 
 CAMPATTERN = 'cam_sq????_sh?????:*'
@@ -55,8 +60,8 @@ def writeStereoInfos(sFilePath):
     if not STEREO_INFOS:
         raise RuntimeError("No stereo infos to write.")
 
-    sDirPath = os.path.dirname(sFilePath)
-    if not os.path.exists(sDirPath):
+    sDirPath = osp.dirname(sFilePath)
+    if not osp.exists(sDirPath):
         os.makedirs(sDirPath)
 
     jsonWrite(sFilePath, STEREO_INFOS)
@@ -100,7 +105,7 @@ def getImagePlaneItems(create=False):
     if oImgPlaneList:
         oImgPlane = oImgPlaneList[0]
 
-    if (not oImgPlane):
+    if not oImgPlane:
         if not create:
             return None, None
         else:
@@ -123,26 +128,28 @@ def getImagePlaneItems(create=False):
                                          name="imgPlane_animatic")
             oImgPlane.rename("imgPlane_animatic")
 
-            #SET DE L'IMAGE PLANE
-            sImgPlane = oImgPlane.name()
-            pc.setAttr(sImgPlane + ".type", 2)
-            pc.setAttr(sImgPlane + ".fit", 1)
-            pc.setAttr(sImgPlane + ".useFrameExtension", 1)
-            pc.setAttr(sImgPlane + ".frameOffset", -100)
-            pc.setAttr(sImgPlane + ".frameIn", 101)
-            pc.setAttr(sImgPlane + ".frameOut", 1000)
-            #pc.setAttr(sImgPlane + ".hideOnPlayback", False)
-
-            sCamShape = oCamShape.name()
-            pc.setAttr(sCamShape + ".displayFilmGate", 1)
-            pc.setAttr(sCamShape + ".displayGateMask", 1)
-            pc.setAttr(sCamShape + ".overscan", 1.4)
-            pc.setAttr(sCamShape + ".displaySafeTitle", 1)
-            pc.setAttr(sCamShape + ".displaySafeAction", 1)
-            pc.setAttr(sCamShape + ".displayGateMaskColor", [0, 0, 0])
+            mc.optionMenu("AELookThroughCameraMenu", e=True, enable=True)
+            pc.mel.AEchangeLookThroughCamera(oImgPlane.name())
     else:
         oCamXfm = oImgPlane.getParent(3)
         oCamShape = oCamXfm.getShape()
+
+    #SET DE L'IMAGE PLANE
+    sImgPlane = oImgPlane.name()
+    pc.setAttr(sImgPlane + ".type", 0)
+    pc.setAttr(sImgPlane + ".fit", 1)
+    pc.setAttr(sImgPlane + ".useFrameExtension", 1)
+    #pc.setAttr(sImgPlane + ".frameOffset", -100)
+    pc.setAttr(sImgPlane + ".frameIn", 101)
+    pc.setAttr(sImgPlane + ".frameOut", 1000)
+
+    sCamShape = oCamShape.name()
+    pc.setAttr(sCamShape + ".displayFilmGate", 1)
+    pc.setAttr(sCamShape + ".displayGateMask", 1)
+    pc.setAttr(sCamShape + ".overscan", 1.2)
+    pc.setAttr(sCamShape + ".displaySafeTitle", 1)
+    pc.setAttr(sCamShape + ".displaySafeAction", 1)
+    pc.setAttr(sCamShape + ".displayGateMaskColor", [0, 0, 0])
 
     return oImgPlane, oCamXfm
 
@@ -339,10 +346,10 @@ def do(s_inCommand, s_inTask, sceneManager):
 
 def setMayaProject(sProjName):
 
-    sMayaProjsLoc = os.path.dirname(os.path.normpath(mc.workspace(q=True, rd=True)))
-    sMyaProjPath = os.path.join(sMayaProjsLoc, sProjName)
+    sMayaProjsLoc = osp.dirname(osp.normpath(mc.workspace(q=True, rd=True)))
+    sMyaProjPath = osp.join(sMayaProjsLoc, sProjName)
 
-    if not os.path.exists(sMyaProjPath):
+    if not osp.exists(sMyaProjPath):
         os.mkdir(sMyaProjPath)
 
     mc.workspace(update=True)
@@ -362,9 +369,9 @@ def importSceneStructure(sceneManager):
 
     #Import scene structure
     template_path = sceneManager.context['damProject'].getPath('template', 'project')
-    strucure_path = os.path.join(template_path, "{0}_layout_tree.ma".format(sEntityType.lower()))
+    strucure_path = osp.join(template_path, "{0}_layout_tree.ma".format(sEntityType.lower()))
 
-    if os.path.isfile(strucure_path):
+    if osp.isfile(strucure_path):
         mc.file(strucure_path, i=True, rpr='')
     else:
         pc.warning("Base file structure not found for entity type : {0}".format(sEntityType))
@@ -730,12 +737,19 @@ def init_previz_scene(sceneManager):
     sShotCode = sceneManager.context['entity']['code']
 
     if sStepName == "animation":
+
         if not pc.listReferences(loaded=True, unloaded=False):
-            removeRefEditByAttr(attr=("smoothDrawType",
-                                      "displaySmoothMesh",
-                                      "dispResolution"),
-                                GUI=False)
-            loadAssetRefsToDefault(project=proj)
+
+            sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution")
+            removeRefEditByAttr(attr=sAttrList, GUI=False)
+
+            oFileRefList = pc.listReferences(loaded=False, unloaded=True)
+
+            loadAssetRefsToDefaultFile(project=proj, selected=False)
+
+            for oFileRef in oFileRefList:
+                if not oFileRef.isLoaded():
+                    oFileRef.load()
 
     #rename any other shot camera
     remainingCamera = None
@@ -804,27 +818,60 @@ def init_previz_scene(sceneManager):
             pc.parentConstraint(oShotCam, oStereoCam, maintainOffset=True)
             oShotCam.attr("focalLength") >> oStereoCam.attr("focalLength")
 
-    sgEntity = sceneManager.context['entity']
+    damShot = sceneManager.getDamShot()
+    #sgEntity = sceneManager.context['entity']
     #image plane "Y:\shot\...\00_data\sqXXXX_shXXXXa_animatic.mov"
-    imgPlanePath = sceneManager.getPath(sgEntity, 'animatic_capture')
-    imgPlaneEnvPath = shotLib.absToEnvPath(imgPlanePath)
-    oImagePlane, oImagePlaneCam = getImagePlaneItems(create=True)
+    sPubMoviePath = damShot.getPath('public', 'animatic_capture')
 
-    arrangeViews(oShotCam.getShape(), oImagePlaneCam, oStereoCam)
+    sLocMoviePath = osp.normpath(osp.join(sceneManager.getWipCaptureDir(damShot),
+                                          osp.basename(sPubMoviePath)))
 
-    if os.path.isfile(imgPlanePath):
+    sImgSeqDirPath = osp.splitext(sLocMoviePath)[0]
+    sFirstImgPath = makeFilePath(sImgSeqDirPath, "animatic", "jpg", frame=1)
+
+    oImgPlane, oImgPlaneCam = getImagePlaneItems(create=False)
+
+    if osp.isfile(sPubMoviePath):
+
         pc.currentTime(101)
         pc.refresh()
-        pc.imagePlane(oImagePlane, edit=True, fileName=imgPlaneEnvPath)
+
+        bForce = False if inDevMode() else False
+
+        sDirPath = osp.dirname(sLocMoviePath)
+        if not osp.exists(sDirPath):
+            os.makedirs(sDirPath)
+        _, bMovieCopied = copyFile(sPubMoviePath, sLocMoviePath, update=(not bForce))
+
+        bImgSeqFound = osp.exists(sFirstImgPath)
+        if bImgSeqFound and bMovieCopied:
+            if oImgPlaneCam:
+                pc.delete(oImgPlaneCam);pc.refresh()
+                oImgPlaneCam = None
+            print "deleting", osp.dirname(sFirstImgPath)
+            shutil.rmtree(osp.dirname(sFirstImgPath), ignore_errors=False)
+
+        if (not bImgSeqFound) or bMovieCopied:
+            if not osp.exists(sImgSeqDirPath):
+                os.makedirs(sImgSeqDirPath)
+            movieToJpegSequence(sLocMoviePath, sImgSeqDirPath, "animatic")
+
+        if not (oImgPlaneCam and oImgPlane):
+            oImgPlane, oImgPlaneCam = getImagePlaneItems(create=True)
+
+        pc.imagePlane(oImgPlane, edit=True, fileName=sFirstImgPath)
+        oImgPlane.setAttr("frameOffset", -100)
+        pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
     else:
-        pc.warning('Image plane file cannot be found ({0})'.format(imgPlanePath))
-        oImagePlane.setAttr("imageName", imgPlaneEnvPath, type="string")
-        #pc.imagePlane(oImagePlane, edit=True, fileName="")
+        pc.displayError("Animatic movie not found: '{}'".format(sPubMoviePath))
+        oImgPlane.setAttr("imageName", sFirstImgPath, type="string")
+
+    arrangeViews(oShotCam.getShape(), oImgPlaneCam, oStereoCam)
 
     #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
-    soundPath = sceneManager.getPath(sgEntity, 'animatic_sound')
+    soundPath = damShot.getPath('public', 'animatic_sound')
     pc.mel.DeleteAllSounds()
-    if os.path.isfile(soundPath):
+    if osp.isfile(soundPath):
         # --- Import Sound
         # - Import current shot Sound
         soundEnvPath = shotLib.absToEnvPath(soundPath)
@@ -895,7 +942,7 @@ def switchShotCamToRef(scnMng, oShotCam):
 
     from tempfile import NamedTemporaryFile
     with NamedTemporaryFile(suffix=".atom", delete=False) as f:
-        sAtomFilePath = os.path.normpath(f.name).replace("\\", "/")
+        sAtomFilePath = osp.normpath(f.name).replace("\\", "/")
 
     try:
         from pytaya.core import system as myasys
@@ -960,6 +1007,21 @@ def setReferenceLocked(oFileRef, bLocked):
         if bLoaded:
             mc.file(loadReference=oRefNode.name())
 
+def setRefCamLocked(oCam, bLocked):
+
+    oFileRef = oCam.referenceFile()
+    sCam = oCam.name()
+
+    sCamShotPanelList = tuple(iterPanelsFromCam(oCam))
+    setReferenceLocked(oFileRef, bLocked)
+    oCam = pc.PyNode(sCam)
+    if sCamShotPanelList:
+        for sPanel in sCamShotPanelList:
+            pc.modelPanel(sPanel, e=True, camera=oCam)
+        pc.refresh()
+
+    return oCam
+
 def saveDisplayLayersState():
 
     savedAttrs = {}
@@ -1009,3 +1071,20 @@ def setGeometryLayersSelectable(bSelectable):
             mc.setAttr(sLayer + "." + "displayType", value)
         except RuntimeError as e:
             pc.displayWarning(toStr(e).rstrip())
+
+def iterPanelsFromCam(oCamXfm, visible=False):
+
+    sCamXfm = oCamXfm.name()
+    sCamShape = oCamXfm.getShape().name()
+
+    sVizPanels = None
+    if visible:
+        sVizPanels = mc.getPanel(visiblePanels=True)
+
+    for sPanel in mc.getPanel(type="modelPanel"):
+        sPanelCam = mc.modelPanel(sPanel, q=True, camera=True)
+        print sPanel, sPanelCam, (sCamXfm, sCamShape)
+        if sPanelCam in (sCamXfm, sCamShape):
+            if sVizPanels and (sPanel not in sVizPanels):
+                continue
+            yield sPanel

@@ -65,8 +65,9 @@ class DavosSetup(ToolSetup):
 #                pm.menuItem(label="Assets...", c=partial(doCreateFolders, "asset"))
 #                pm.menuItem(label="Shots...", c=partial(doCreateFolders, "shot"))
 
-            pm.menuItem(label="Switch References", c=doSwitchReferences)
-            pm.menuItem(divider=True)
+#            pm.menuItem(label="Switch References", c=doSwitchReferences)
+#            pm.menuItem(divider=True)
+
             pm.menuItem(label="Edit Textures...", c=doEditTextures)
             pm.menuItem(label="Check Dependencies...", c=doDependencyScan)
             pm.menuItem(label="Publish...", c=publishing.publishCurrentScene)
