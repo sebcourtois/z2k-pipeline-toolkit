@@ -1,12 +1,21 @@
 ###############################################################################
+
 # Name: 
+
 #   instancerTools.py
+
 #
+
 # Description: 
+
 #   toolbox to scatter instances on a mesh and append/extract instances 
+
 #   to particle instancer in Maya 2015
+
 #
+
 #
+
 # Author: 
 #   Alexandre Bermond for zombie group studios
 #
@@ -56,7 +65,7 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         self.incVar = 20
         self.subdivLevel = 2
         self.emisOverlapPruning = 1
-        
+      
         self.master2particles = ""
         self.particleInstancer = ""
         self.particleMaxRange = 250
@@ -335,11 +344,20 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         self.subdivLevel_label.setObjectName("subdivLevel_label")
         self.subdivLevel_label.setText(QtGui.QApplication.translate("instancerTool_Dialog", "Emitter Subdivision  Level", None, QtGui.QApplication.UnicodeUTF8))
         self.subdivLevel_horizontalLayout.addWidget(self.subdivLevel_label)
+        ## layout "instanciateButton_horizontalLayout"
+        self.instanciateButton_horizontalLayout = QtGui.QHBoxLayout()
+        self.instanciateButton_horizontalLayout.setObjectName("instanciateButton_horizontalLayout")
+        self.instanciateOnMesh_verticalLayout.addLayout(self.instanciateButton_horizontalLayout)
         #push button  "instanciate"
         self.instanciate_pushButton = QtGui.QPushButton(self.instanciateOnMesh_groupBox)
         self.instanciate_pushButton.setObjectName("instanciate_pushButton")
-        self.instanciate_pushButton.setText(QtGui.QApplication.translate("instancerTool_Dialog", "Instantiate", None, QtGui.QApplication.UnicodeUTF8))
-        self.instanciateOnMesh_verticalLayout.addWidget(self.instanciate_pushButton)
+        self.instanciate_pushButton.setText(QtGui.QApplication.translate("instancerTool_Dialog", "Transform Instance", None, QtGui.QApplication.UnicodeUTF8))
+        self.instanciateButton_horizontalLayout.addWidget(self.instanciate_pushButton)
+        #push button  "particle instanciate"
+        self.parInstanciate_pushButton = QtGui.QPushButton(self.instanciateOnMesh_groupBox)
+        self.parInstanciate_pushButton.setObjectName("parInstanciate_pushButton")
+        self.parInstanciate_pushButton.setText(QtGui.QApplication.translate("instancerTool_Dialog", "Particle Instancer", None, QtGui.QApplication.UnicodeUTF8))
+        self.instanciateButton_horizontalLayout.addWidget(self.parInstanciate_pushButton)
 
 ################### tab2 : "To Particle Instancer"
 ####Group "Create Particle Instancer"
@@ -438,6 +456,7 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         
         self.subdivLevel_spinBox.valueChanged.connect(self.on_subdivLevel_spinBox_changed)
         self.instanciate_pushButton.clicked.connect(self.on_instantiate_pushButton_pressed)
+        self.parInstanciate_pushButton.clicked.connect(self.on_parInstantiate_pushButton_pressed)
         
         #--- tab2
         self.master2particles_pushButton.clicked.connect(self.on_master2particles_pushButton_pressed)
@@ -479,7 +498,7 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         self.maxParticleCount = self.maxParticleCount_lineEdit.text()
         try:
             self.maxParticleCount = int(self.maxParticleCount)
-            if self.maxParticleCount <= 0 or self.maxParticleCount > 2500:
+            if self.maxParticleCount <= 0 or self.maxParticleCount > 500000:
                 raise ValueError
         except ValueError:
             print "#### error: input must be : 0 < integer <= 2500"
@@ -588,8 +607,18 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         self.subdivLevel = int(self.subdivLevel_spinBox.text())
 
     def on_instantiate_pushButton_pressed(self):
+        if self.maxParticleCount > 2400:
+            msg = "#### Error: You cannot create more than 2400 instances at the same time, please set max particle count to a descent value to avoid freezing your computer"
+            raise ValueError (msg)
+        else:
+            self.instanceEmitter(TransformInstanceType = True)
+ 
+    def on_parInstantiate_pushButton_pressed(self):
+        self.instanceEmitter(TransformInstanceType = False)
+
+    def instanceEmitter(self, TransformInstanceType = False):
         '''
-        This method use a temp nParticle node to emit particles from the specified mesh object. The the given master is instantiated along every particle. 
+        This method uses a temp nParticle node to emit particles from the specified mesh object. The the given master is instantiated along every particle. 
         Some random values modulate the instances SRT according to the variance values.
         '''
         print ""
@@ -597,7 +626,6 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         if not self.master2Instances:
             print "#### error: no master selected"
             return
-#        selection = []
         selection = mc.ls(sl = True)
         savedSelection = list(selection)
         #################
@@ -675,6 +703,7 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         #################
         ####  emit particles on "tempEmitterMesh" ,  instantiate the master on on every particle and delete "tempEmitterMesh"
         #################
+
         if tempEmitterMesh:
             #generate nParticule system
             InitialNucleusList = mc.ls(exactType="nucleus")
@@ -690,50 +719,104 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
             mc.setAttr(my_nParticle+".emissionOverlapPruning",self.emisOverlapPruning)
             cTime = mc.currentTime(q=True)
             initTime = mc.currentTime(q=True)
+            mc.refresh(suspend = True)
             particleCount = 0
             a = 0
             while (a < self.frameDuration) and (particleCount < self.maxParticleCount):
                 cTime = mc.currentTime(cTime+1)
-                particleCount = mc.nParticle( my_nParticle, q=True, ct = True)
+
+                if self.perFrameEmissionRate*a > self.maxParticleCount:
+                    particleCount = mc.nParticle( my_nParticle, q=True, ct = True)
                 a += 1
 
-            #Instantiate the master on every particle, orient it's Y axe along the velocity vector of the particle, and apply srt  random values according to user  inputs
-            instanceList = []
-            a = 0
-            while (a < particleCount):
-                positionList = mc.nParticle( my_nParticle, q=True, order = a, at = "position")
-                velocityList = mc.nParticle( my_nParticle, q=True, order = a, at = "velocity")
-                item = mc.instance (self.master2Instances, leaf=False)
-                instanceList.append(item[0])
-                angBet = mc.angleBetween (euler=True, v1=(0,1,0), v2=(velocityList[0],velocityList[1],velocityList[2]))
-                mc.rotate(angBet[0],angBet[1],angBet[2], item,a=True, ws=True)
-                mc.move( positionList[0],positionList[1],positionList[2], item, a=True)
-                if self.oriVar > 0:
-                    mc.rotate(0,random.uniform(0,self.oriVar),0, item ,r=True, os=True)
-                if 0< self.incVar <= 90:
-                    mc.rotate(random.uniform(-self.incVar,self.incVar),0,random.uniform(-self.incVar,self.incVar), item ,r=True, os=True)
-                if self.sclMinVar != self.sclMaxVar != 1:
-                    randScale = random.uniform(self.sclMinVar,self.sclMaxVar)
-                    mc.scale( randScale,randScale,randScale, item, a=True)
-                if self.elevMinVar != self.elevMaxVar != 0:
-                    mc.move(0,random.uniform(self.elevMinVar,self.elevMaxVar),0, item ,r=True, os=True)
-                a += 1                 
+            particleCount = int(mc.nParticle( my_nParticle, q=True, ct = True))
+            mc.refresh(suspend = False)
 
-            instanceGroup = mc.group(instanceList, name=str(mc.ls(self.master2Instances)[0])+"_grp00")
-            if  mc.listRelatives(instanceGroup, allParents = True):
-                    mc.parent (instanceGroup,world =True)
-            print "#### info: "+str(len(instanceList))+" instances scattered then grouped in "+instanceGroup
-            
+            #################
+            ####  Instantiate (transforms) the master and align the instances on every particle, 
+            ####  orient it's Y axe along the velocity vector of the particle, 
+            ####  and apply srt  random values according to user  inputs
+            #################
+            if TransformInstanceType:
+                instanceList = []
+                a = 0
+                mc.refresh(suspend = True)
+                while (a < particleCount):
+                    positionList = mc.nParticle( my_nParticle, q=True, order = a, at = "position")
+                    velocityList = mc.nParticle( my_nParticle, q=True, order = a, at = "velocity")
+                    item = mc.instance (self.master2Instances, leaf=False)
+                    instanceList.append(item[0])
+                    angBet = mc.angleBetween (euler=True, v1=(0,1,0), v2=(velocityList[0],velocityList[1],velocityList[2]))
+                    mc.rotate(angBet[0],angBet[1],angBet[2], item,a=True, ws=True)
+                    mc.move( positionList[0],positionList[1],positionList[2], item, a=True)
+                    if self.oriVar > 0:
+                        mc.rotate(0,random.uniform(0,self.oriVar),0, item ,r=True, os=True)
+                    if 0< self.incVar <= 90:
+                        mc.rotate(random.uniform(-self.incVar,self.incVar),0,random.uniform(-self.incVar,self.incVar), item ,r=True, os=True)
+                    if self.sclMinVar != self.sclMaxVar != 1:
+                        randScale = random.uniform(self.sclMinVar,self.sclMaxVar)
+                        mc.scale( randScale,randScale,randScale, item, a=True)
+                    if self.elevMinVar != self.elevMaxVar != 0:
+                        mc.move(0,random.uniform(self.elevMinVar,self.elevMaxVar),0, item ,r=True, os=True)
+                    a += 1
+                mc.refresh(suspend = False)
+                instanceGroup = mc.group(instanceList, name=str(mc.ls(self.master2Instances)[0])+"_grp00")
+                if  mc.listRelatives(instanceGroup, allParents = True):
+                        mc.parent (instanceGroup,world =True)
+                print "#### info: "+str(len(instanceList))+" instances scattered then grouped in "+instanceGroup
+
+            #################                
+            ####  Create a new nParticule static object, 
+            ####  get the position and the velocity out of the first generated nParticule object, 
+            ####  transform velocity vector into rototation axes
+            ####  apply srt  random values according to user  inputs, 
+            ####  and create a particule instancer attached to the new nParticle obj
+            #################
+            else:
+                mc.refresh(suspend = True)
+                initPosList =[]
+                a=0
+                while (a < particleCount):
+                    initPosList.append([0,0,0])
+                    a+=1
+                particleNode = mc.nParticle(name = self.master2Instances.split("|")[-1]+"_particle00", position = initPosList)[0]
+                particleNodeShape = mc.listRelatives(particleNode, type="shape", ad=True, ni=True,path = True)[0]
+                mc.setAttr(particleNodeShape+".isDynamic",0,lock=True)
+                mc.addAttr (particleNodeShape, ln='rotPP', dt='vectorArray')
+                mc.addAttr (particleNodeShape, ln='rotPP0', dt='vectorArray')
+                mc.addAttr (particleNodeShape, ln='sclPP', dt='vectorArray')
+                mc.addAttr (particleNodeShape, ln='sclPP0', dt='vectorArray')
+                
+                a = 0
+                while (a < particleCount):                    
+                    positionList = mc.nParticle( my_nParticle, q=True, order = a, at = "position")
+                    velocityList = mc.nParticle( my_nParticle, q=True, order = a, at = "velocity")
+                    angBet = mc.angleBetween (euler=True, v1=(0,1,0), v2=(velocityList[0],velocityList[1],velocityList[2]))
+                    if self.oriVar > 0:
+                        angBet[1] = angBet[1]+random.uniform(0,self.oriVar)
+                    if 0< self.incVar <= 90:
+                        angBet[0] = angBet[0]+random.uniform(-self.incVar,self.incVar)
+                        angBet[2] = angBet[2]+random.uniform(-self.incVar,self.incVar)
+                    if self.sclMinVar != self.sclMaxVar != 1:
+                        randScale = random.uniform(self.sclMinVar,self.sclMaxVar)
+                    if self.elevMinVar != self.elevMaxVar != 0:
+                        positionList[1] = positionList[1]+random.uniform(self.elevMinVar,self.elevMaxVar)
+                    mc.nParticle(particleNodeShape, e=True, at='position', order=a, vv=positionList)             
+                    mc.nParticle(particleNodeShape, e=True, at='rotPP', order=a, vv=angBet)
+                    mc.nParticle(particleNodeShape, e=True, at='sclPP', order=a, vv=[randScale,randScale,randScale])
+                    a += 1
+                mc.refresh(suspend = False)
+                particuleInstancer = mc.particleInstancer(particleNodeShape, name=particleNode+"_instancer", addObject=True, rotationOrder = "YXZ", object=self.master2Instances ,position='worldPosition', rotation='rotPP', scale='sclPP')
+
             #clean scene
             mc.delete(tempEmitterMesh, emitterNode,my_nParticle)
             mc.currentTime(initTime)
-            if InitialNucleusList:
-                print "#### warning: could not clean nucleus. At least one of them existed at the beginning of the process. Please clean manually."
-            else:
-                mc.delete(mc.ls(exactType="nucleus"))        
+            allNucleus = mc.ls(exactType="nucleus")
+            nucleusToDelL = list(set(allNucleus) - set(InitialNucleusList))
+            if nucleusToDelL: mc.delete(nucleusToDelL)
+
         else:
             print ("#### info: please make a valid selection")
-
 
 #------------------------    Tab2 : "Instance Scatter"
 #----Group "Master"
@@ -815,9 +898,10 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         if not self.check_if_similar_hierarchy([toAppendList[0],self.master2particles]):
             print "#### warning: the chosen master instance is different from the other instances",self.master2particles, toAppendList[0]
         particleNode, particuleInstancer = self.create_particule_and_instancer (self.master2particles.split("|")[-1], toAppendList)
-        mc.select(selection)
+        mc.selection(selection)
         print "#### info: particle node created: ",particleNode
         print "#### info: particle instancer created: ",particuleInstancer
+
 
     def on_extractFrom_pushButton_pressed(self):
         print ""
@@ -832,8 +916,8 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         particleNodeCount = mc.nParticle (particleNode, q=True, count=True)
         print("#### info: initial particles number: "+ str(particleNodeCount))
 
-        if mc.nodeType(particleNodeShape) != "particle":
-            print "#### error: can only exctract from a particle type object (nParticle not supported)"
+        if mc.nodeType(particleNodeShape) not in ["particle", "nParticle"]:
+            print "#### error: can only exctract from a 'nParticle' type object"
             return
         instancerNode = mc.listConnections(particleNodeShape, type = "instancer")
         if instancerNode:
@@ -864,32 +948,26 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         canNotGetSclPP = 0
         while a<particleNodeCount:
             if a not in idToExtract:
-                #forParticlePos.append(mc.particle(particleNode, q=True, vv = True, at='pos',  id=a))
                 forParticlePos.append(mc.nParticle(particleNode, q=True, vv = True, at='pos',  id=a))
                 try:
-                    #forParticleRot.append(mc.particle(particleNode, q=True, vv = True, at='rotPP', id=a))
                     forParticleRot.append(mc.nParticle(particleNode, q=True, vv = True, at='rotPP', id=a))
                 except:
                     forParticleRot.append([0,0,0])
                     canNotGetRotPP = 1
                 try: 
-                    #forParticleScl.append(mc.particle(particleNode, q=True, vv = True, at='sclPP', id=a))
                     forParticleScl.append(mc.nParticle(particleNode, q=True, vv = True, at='sclPP', id=a))
                 except:
                     forParticleScl.append([1,1,1])
                     canNotGetSclPP = 1
                 b+=1
             else:
-                #forInstancePos = mc.particle(particleNode, q=True, at='pos', id=a)
                 forInstancePos = mc.nParticle(particleNode, q=True, at='pos', id=a)
                 try:
-                    #forInstanceRot = mc.particle(particleNode, q=True, at='rotPP', id=a)
                     forInstanceRot = mc.nParticle(particleNode, q=True, at='rotPP', id=a)
                 except:
                     forInstanceRot = [0,0,0]
                     canNotGetRotPP = 1
                 try: 
-                    #forInstanceScl = mc.particle(particleNode, q=True, at='sclPP', id=a)
                     forInstanceScl = mc.nParticle(particleNode, q=True, at='sclPP', id=a)
                 except:
                     forInstanceScl = [1,1,1]
@@ -910,18 +988,17 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         mc.delete(instancerNode)
 
         #create  new particle node
-        #particleNode = mc.particle(name = particleNode, position = forParticlePos)[0]
         particleNode = mc.nParticle(name = particleNode, position = forParticlePos)[0]
         particleNodeShape = mc.listRelatives(particleNode, type="shape", ad=True, ni=True)[0]
         mc.setAttr(particleNodeShape+".isDynamic",0,lock=True)
         mc.addAttr (particleNodeShape, ln='rotPP', dt='vectorArray')
+        mc.addAttr (particleNodeShape, ln='rotPP0', dt='vectorArray')
         mc.addAttr (particleNodeShape, ln='sclPP', dt='vectorArray')
+        mc.addAttr (particleNodeShape, ln='sclPP0', dt='vectorArray')
         #mc.saveInitialState (particleNode)
         particleNodeCount = mc.nParticle (particleNode, q=True, count=True)
         a=0
         while a<particleNodeCount:
-            # mc.particle(particleNode, e=True, at='rotPP', id=a, vv=forParticleRot[a])
-            # mc.particle(particleNode, e=True, at='sclPP', id=a, vv=forParticleScl[a])
             mc.nParticle(particleNode, e=True, at='rotPP', id=a, vv=forParticleRot[a])
             mc.nParticle(particleNode, e=True, at='sclPP', id=a, vv=forParticleScl[a])
             a+=1
@@ -981,6 +1058,7 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         Rotation and scale values of the transform are passed thought per particles attributes rotPP and sclPP.
         inArgs: masterTransform (string), instanceTransforms (string list)
         outArgs: particleNode (string), particuleInstancer (string)"""
+        InitialNucleusList = mc.ls(exactType="nucleus")
         #List the transformation values of  our instances transforms
         InstanceTransformsPos =[]; InstanceTransformsRot =[]; InstanceTransformsScl =[]
         for item in instanceTransforms:  
@@ -990,7 +1068,6 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
             InstanceTransformsRot.append (mc.xform (item, q=True, rotation=True,ws=True))
             InstanceTransformsScl.append (mc.xform (item, q=True, scale=True,ws=True))
         #Create a particle object, and set the position, rotPP, and sclPP of 
-        #particleNode = mc.particle(name = masterTransform+"_particle00", position = InstanceTransformsPos)[0]
         particleNode = mc.nParticle(name = masterTransform+"_particle00", position = InstanceTransformsPos)[0]
         print "particleNode",particleNode
         particleNodeShape = mc.listRelatives(particleNode, type="shape", ad=True, ni=True,path = True)[0]
@@ -1004,21 +1081,24 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         particleNodeCount = mc.nParticle (particleNode, q=True, count=True)
         a=0
         while a<particleNodeCount:
-            # mc.particle(particleNode, e=True, at='rotPP', id=a, vv=InstanceTransformsRot[a])
-            # mc.particle(particleNode, e=True, at='sclPP', id=a, vv=InstanceTransformsScl[a])
             mc.nParticle(particleNode, e=True, at='rotPP', id=a, vv=InstanceTransformsRot[a])
             mc.nParticle(particleNode, e=True, at='sclPP', id=a, vv=InstanceTransformsScl[a])
             a+=1
         print("#### info: number of particles created: "+ str(particleNodeCount))
         particuleInstancer = mc.particleInstancer(particleNode, name=particleNode+"_instancer", addObject=True, object=masterTransform ,position='worldPosition', rotation='rotPP', scale='sclPP')
+        allNucleus = mc.ls(exactType="nucleus")
+        nucleusToDelL = list(set(allNucleus) - set(InitialNucleusList))
+        if nucleusToDelL: mc.delete(nucleusToDelL)
         return particleNode, particuleInstancer
 
     def append_instances_to_particle (self, particleNode):
         '''
         append a new particle to the given particle node, for every selected instances.
         '''
+        InitialNucleusList = mc.ls(exactType="nucleus")
         selection = mc.ls(sl=True, type = "transform")
         if not selection:
+
             print "#### error: nothing selected or no transform in your selection"
             return
         if not particleNode :
@@ -1048,9 +1128,6 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
         particlePos =[]; particleRot =[]; particleScl =[]
         a=0
         while a<particleNodeCount:
-            # particlePos.append(mc.particle(particleNode, q=True, vv = True, at='pos',  id=a))
-            # particleRot.append(mc.particle(particleNode, q=True, vv = True, at='rotPP', id=a))
-            # particleScl.append(mc.particle(particleNode, q=True, vv = True, at='sclPP', id=a))
             particlePos.append(mc.nParticle(particleNode, q=True, vv = True, at='pos',  id=a))
             particleRot.append(mc.nParticle(particleNode, q=True, vv = True, at='rotPP', id=a))
             particleScl.append(mc.nParticle(particleNode, q=True, vv = True, at='sclPP', id=a))
@@ -1078,8 +1155,6 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
             addedParCount =  len (addedParIds)
             a=0
             while a<addedParCount:
-                # mc.particle(particleNode, e=True, at='rotPP', id=addedParIds[a], vv=transformRot[a])
-                # mc.particle(particleNode, e=True, at='sclPP', id=addedParIds[a], vv=transformScl[a])
                 mc.nParticle(particleNode, e=True, at='rotPP', id=addedParIds[a], vv=transformRot[a])
                 mc.nParticle(particleNode, e=True, at='sclPP', id=addedParIds[a], vv=transformScl[a])
                 a+=1
@@ -1089,6 +1164,12 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
             mc.currentTime(cTime)
         else:
             addedParCount = 0
+
+        # Clean
+        mc.select(selection)
+        allNucleus = mc.ls(exactType="nucleus")
+        nucleusToDelL = list(set(allNucleus) - set(InitialNucleusList))
+        if nucleusToDelL: mc.delete(nucleusToDelL)
 
         newParCount  = mc.nParticle (particleNode, q=True, count=True)
         if particleNotAdded > 0:
