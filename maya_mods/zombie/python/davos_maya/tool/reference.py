@@ -26,13 +26,13 @@ def listMayaRcForSelectedRefs(oFileRef, project, **kwargs):
     sRefPath = pathResolve(oFileRef.path)
     asset = project.entityFromPath(sRefPath, fail=False)
 
+    resultList = kwargs.pop("processResults")
+
     mayaRcDct = dict()
     if asset:
         mayaRcDct = dict((rc, p if normCase(p) != normCase(sRefPath) else "current")
                                     for rc, p in asset.iterMayaRcItems(**kwargs))
     res = (asset, mayaRcDct)
-
-    resultList = kwargs.pop("processResults")
     resultList.append(res)
 
 @withSelectionRestored
@@ -170,7 +170,7 @@ def setDefaultAssetFileForSelectedRefs(assetFile="NoInput", **kwargs):
     damEntity = entityFromScene()
     proj = damEntity.project
 
-    kwargs.update(confirm=False, allIfNoSelection=False, topReference=True)
+    kwargs.update(confirm=False, allIfNoSelection=False, topReference=True, locked=False)
     oSelRefList, assetRcList = listMayaRcForSelectedRefs(proj,
                                                          filter="previz_ref",
                                                          **kwargs)
@@ -246,7 +246,78 @@ def setDefaultAssetFileForSelectedRefs(assetFile="NoInput", **kwargs):
             print "set {}.{} to '{}'".format(oRefNode, DEFAULT_FILE_ATTR, sAstRcName)
             oRefNode.setAttr(DEFAULT_FILE_ATTR, sAstRcName)
 
-def loadReferencesForAnim(project=None, dryRun=False):
+@processSelectedReferences
+def _loadAssetRefsToDefaultFile(oFileRef, astLib, logData, dryRun=False, **kwargs):
+
+    oAstFileRefList = kwargs.pop("processResults")
+    def loadRef(p=None):
+        if not dryRun:
+            oFileRef.load(p)
+        logData["loaded"] += 1
+
+    proj = astLib.project
+    logItems = logData["log"]
+
+    oRefNode = oFileRef.refNode
+
+    sDefaultRcName = ""
+    if oRefNode.hasAttr(DEFAULT_FILE_ATTR):
+        sDefaultRcName = oRefNode.getAttr(DEFAULT_FILE_ATTR)
+
+    if not sDefaultRcName:
+        return
+
+    bLoaded = oFileRef.isLoaded()
+    sRefNode = oRefNode.name()
+
+    if sDefaultRcName == "offloaded":
+        sMsg = "offloaded"
+        if bLoaded:
+            oFileRef.unload()
+        else:
+            sMsg = "already " + sMsg
+        logItems.append((sRefNode, sMsg))
+        return
+
+    sRefPath = pathResolve(oFileRef.path)
+
+    pathData = {}
+    try:
+        pathData = proj.dataFromPath(sRefPath, library=astLib)
+    except Exception as e:
+        pm.displayWarning(toStr(e))
+
+    try:
+        damAst = proj._entityFromPathData(pathData, fail=True)
+    except Exception as e:
+        logItems.append((sRefNode, "FAILED: " + toStr(e)))
+        logData["failed"] += 1
+        return
+
+    oAstFileRefList.append(oFileRef)
+
+    sCurRcName = pathData.get("resource", "")
+    if sDefaultRcName in (sCurRcName, ""):
+        sMsg = "loaded as '{}'".format(sDefaultRcName) if sDefaultRcName else "loaded"
+        if not bLoaded:
+            loadRef()
+        else:
+            sMsg = "already " + sMsg
+        logItems.append((sRefNode, sMsg))
+        return
+
+    try:
+        astFile = damAst.getResource("public", sDefaultRcName,
+                                    dbNode=False, fail=True)
+    except Exception as e:
+        logItems.append((sRefNode, "FAILED: " + toStr(e)))
+        logData["failed"] += 1
+        return
+
+    logItems.append((sRefNode, "loaded as '{}'".format(sDefaultRcName)))
+    loadRef(astFile.envPath())
+
+def loadAssetRefsToDefaultFile(project=None, dryRun=False, selected=False):
 
     proj = project
     if not proj:
@@ -255,68 +326,28 @@ def loadReferencesForAnim(project=None, dryRun=False):
     astLib = proj.getLibrary("public", "asset_lib")
 
     logItems = []
-    numFailure = 0
-    numLoaded = 0
-    oFileRefList = pm.listReferences(unloaded=True, loaded=False)
-    for oFileRef in oFileRefList:
+    logData = dict(log=logItems, failed=0, loaded=0)
 
-        sDefaultRcName = ""
-        oRefNode = oFileRef.refNode
-        sRefNode = oRefNode.name()
-        if oRefNode.hasAttr(DEFAULT_FILE_ATTR):
-            sDefaultRcName = oRefNode.getAttr(DEFAULT_FILE_ATTR)
+    _, oAstFileRefList = _loadAssetRefsToDefaultFile(astLib, logData,
+                                                      dryRun=dryRun,
+                                                      confirm=True,
+                                                      allIfNoSelection=True,
+                                                      topReference=True,
+                                                      locked=False,
+                                                      selected=selected)
+    numFailure = logData["failed"]
+    numLoaded = logData["loaded"]
 
-        if sDefaultRcName == "offloaded":
-            logItems.append((sRefNode, "kept offloaded"))
-            continue
-
-        sRefPath = pathResolve(oFileRef.path)
-
-        pathData = None
-        try:
-            pathData = proj.dataFromPath(sRefPath, library=astLib)
-        except Exception as e:
-            pm.displayWarning(toStr(e))
-
-        sCurRcName = pathData.get("resource", "")
-        if sDefaultRcName in set(("", sCurRcName)):
-            sMsg = "loaded as '{}'".format(sDefaultRcName) if sDefaultRcName else "loaded"
-            logItems.append((sRefNode, sMsg))
-            if not dryRun:
-                oFileRef.load()
-            numLoaded += 1
-            continue
-
-        try:
-            asset = proj._entityFromPathData(pathData, fail=True)
-        except Exception as e:
-            logItems.append((sRefNode, "FAILED: " + toStr(e)))
-            numFailure += 1
-            continue
-
-        try:
-            astFile = asset.getResource("public", sDefaultRcName,
-                                        dbNode=False, fail=True)
-        except Exception as e:
-            logItems.append((sRefNode, "FAILED: " + toStr(e)))
-            numFailure += 1
-            continue
-
-        logItems.append((sRefNode, "loaded as '{}'".format(sDefaultRcName)))
-        if not dryRun:
-            oFileRef.load(astFile.envPath())
-        numLoaded += 1
-
-    numRefs = len(oFileRefList)
-    w = len(max((r for r, _ in logItems), key=len))
+    numRefs = len(oAstFileRefList)
+    w = len(max((r for r, _ in logItems), key=len)) if logItems else 0
     fmt = lambda rn, m: "{0:<{2}}: {1}".format(rn, m, w)
 
     sSep = "\n- "
     if numFailure:
-        sMsgHeader = " Failed to load {}/{} references. ".format(numFailure, numRefs)
+        sMsgHeader = " Failed to load {}/{} asset refs to default. ".format(numFailure, numRefs)
         displayFunc = pm.displayError
     else:
-        sMsgHeader = " {}/{} references loaded. ".format(numLoaded, numRefs)
+        sMsgHeader = " {}/{} asset refs loaded to default. ".format(numLoaded, numRefs)
         displayFunc = pm.displayInfo
 
     sMsgBody = sSep.join(fmt(r, m) for r, m in logItems)
@@ -325,6 +356,7 @@ def loadReferencesForAnim(project=None, dryRun=False):
     sMsg = '\n' + sMsgHeader.center(100, "-") + sSep + sMsgBody + '\n' + sMsgEnd
     print sMsg
     displayFunc(sMsgHeader + "More details in Script Editor ----" + (70 * ">"))
+
 
 def listPrevizRefMeshes(project=None):
 

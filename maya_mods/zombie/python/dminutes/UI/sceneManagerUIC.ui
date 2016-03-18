@@ -1046,7 +1046,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,2">
+           <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="2,3">
             <property name="rightMargin">
              <number>0</number>
             </property>
@@ -1095,8 +1095,17 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string/>
+              </property>
+              <property name="statusTip">
+               <string/>
+              </property>
+              <property name="whatsThis">
+               <string/>
+              </property>
               <property name="text">
-               <string>Save and Capture</string>
+               <string>Save And Capture</string>
               </property>
              </widget>
             </item>
@@ -1167,7 +1176,7 @@
                </size>
               </property>
               <property name="text">
-               <string notr="true">Save WIP</string>
+               <string notr="true">Incremental Save</string>
               </property>
              </widget>
             </item>

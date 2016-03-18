@@ -22,7 +22,7 @@ from davos.core import damproject
 from davos.core.damtypes import DamShot, DamAsset
 from davos_maya.tool.publishing import publishCurrentScene
 
-from zomblib import shotgunengine
+from zomblib import shotgunengine, rvutils
 
 import dminutes.maya_scene_operations as mop
 import dminutes.jipeLib_Z2K as jpZ
@@ -32,6 +32,9 @@ import dminutes.infoSetExp as infoE
 from pytd.util.sysutils import toStr
 from pytd.util.strutils import padded
 from pytaya.core.general import copyAttrs, getObject
+import shutil
+from datetime import timedelta
+from dminutes.maya_scene_operations import setRefCamLocked
 
 reload(jpZ)
 reload(camIE)
@@ -312,6 +315,27 @@ class SceneManager():
 
         return path
 
+    def infosFromCurrentScene(self):
+        """Retrieve the scene path and get davos data from it"""
+
+        infos = {}
+
+        proj = self.context['damProject']
+
+        sCurScnPath = pc.sceneName()
+        if sCurScnPath:
+            sCurScnPath = os.path.abspath(sCurScnPath)
+            privFile = proj.entryFromPath(sCurScnPath)
+            if privFile:
+                infos["priv_file"] = privFile
+                infos["pub_file"] = privFile.getPublicFile()
+
+                pathData = proj.dataFromPath(privFile)
+                infos["path_data"] = pathData
+                infos["dam_entity"] = proj._entityFromPathData(pathData, fail=False)
+
+        return infos
+
     def contextFromSceneInfos(self, sceneInfos):
         """format davos data to match with UI Data to allow detection of current loaded scene"""
         davosContext = {}
@@ -344,27 +368,6 @@ class SceneManager():
             return None
 
         return davosContext
-
-    def infosFromCurrentScene(self):
-        """Retrieve the scene path and get davos data from it"""
-
-        infos = {}
-
-        proj = self.context['damProject']
-
-        sCurScnPath = pc.sceneName()
-        if sCurScnPath:
-            sCurScnPath = os.path.abspath(sCurScnPath)
-            privFile = proj.entryFromPath(sCurScnPath)
-            if privFile:
-                infos["priv_file"] = privFile
-                infos["pub_file"] = privFile.getPublicFile()
-
-                data = proj.dataFromPath(sCurScnPath)
-                infos["path_data"] = data
-                infos["dam_entity"] = proj._entityFromPathData(data, fail=False)
-
-        return infos
 
     def assertEntitiesMatchUp(self, sceneInfos):
 
@@ -564,17 +567,17 @@ class SceneManager():
     def save(self, force=True):
         entry = self.entryFromContext()
 
-        if entry == None:
+        if not entry:
             pc.error("Cannot get entry for context {0}".format(self.context))
 
         currentScene = os.path.abspath(pc.sceneName())
-        if currentScene == '':
+        if not currentScene:
             pc.error("Please save your scene as a valid private working scene (Edit if needed)")
 
         if not mc.file(q=True, modified=True):
             return currentScene
 
-        return pc.saveAs(currentScene, force=force)
+        return pc.saveAs(currentScene, force=force)#, postSaveScript="""python("print 100*'#'")""")
 
     def saveIncrement(self, force=True):
         # new incrementing system based on the last versoin present in the folder
@@ -625,7 +628,7 @@ class SceneManager():
 
         damShot = self.getDamShot()
         oShotCam = self.getShotCamera(fail=True)
-        sShotCam = oShotCam.name()
+        #sShotCam = oShotCam.name()
         CAPTURE_INFOS['cam'] = oShotCam.getShape().name()
         oCamRef = oShotCam.referenceFile()
 
@@ -717,8 +720,7 @@ class SceneManager():
 
         if oCamRef:
             bWasLocked = oCamRef.refNode.getAttr("locked")
-            mop.setReferenceLocked(oCamRef, False)
-            oShotCam = pc.PyNode(sShotCam)
+            oShotCam = mop.setRefCamLocked(oShotCam, False)
 
         bImgPlnViz = mop.isImgPlaneHidden()
         mop.setImgPlaneHidden(True)
@@ -739,18 +741,31 @@ class SceneManager():
                                displaySafeTitle=0, displayGateMask=1,
                                displayGateMaskOpacity=1.0)
 
-            bSingleView = False
+            bArrangeViews = True
             if oStereoCam:
                 if (not quick):
                     sRecorder = mop.getStereoInfosRecorder(oStereoCam.name())
                 camSettings = None
-                bSingleView = True
+            else:
+                sPanelList = tuple(mop.iterPanelsFromCam(oShotCam, visible=True))
+                if sPanelList:
+                    sShotPanel = sPanelList[0]
+                    sEditor = mc.modelPanel(sShotPanel, q=True, modelEditor=True)
+                    mc.modelEditor(sEditor, e=True, activeView=True)
+                    bArrangeViews = False
+
+            if bArrangeViews:
+                if not mc.panelConfiguration("savedBeforeCapture", ex=True):
+                    sPanelConf = mc.panelConfiguration("savedBeforeCapture", sceneConfig=True)
+                    mc.panelConfiguration(sPanelConf, e=True, label="Saved Before Capture")
+
+                pc.mel.updatePanelLayoutFromCurrent("Saved Before Capture")
+
+                _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
+                mop.arrangeViews(oShotCam, oImgPlaneCam, oStereoCam,
+                                 singleView=True, stereoDisplay="freeview")
 
             savedHudValues = createHUD()
-
-            _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
-            mop.arrangeViews(oShotCam, oImgPlaneCam, oStereoCam,
-                             singleView=bSingleView, stereoDisplay="freeview")
 
             makeCapture(sCapturePath, captureStart, captureEnd, 1280, 720,
                         format="qt", compression="H.264", camSettings=camSettings,
@@ -766,11 +781,8 @@ class SceneManager():
                 mc.delete(sRecorder)
 
             oShotCam.setAttr('aspectRatio', 1.7778)
-
             if oCamRef and bWasLocked:
-                mop.setReferenceLocked(oCamRef, True)
-                oShotCam = pc.PyNode(sShotCam)
-                mop.setCamAsPerspView(oShotCam)
+                oShotCam = mop.setRefCamLocked(oShotCam, True)
 
             if numSmoothed:
                 for i in xrange(numSmoothed):
@@ -781,33 +793,41 @@ class SceneManager():
                             mc.setAttr(sMesh + k, v)
 
             mop.setImgPlaneHidden(bImgPlnViz)
-            mop.arrangeViews(oShotCam, oImgPlaneCam, oStereoCam, singleView=False)
+            if bArrangeViews:
+                pc.mel.setNamedPanelLayout("Saved Before Capture")
+                sPanelConf = mc.getPanel(configWithLabel="Saved Before Capture")
+                if sPanelConf:
+                    mc.deleteUI(sPanelConf, panelConfig=True)
 
         if sRecorder:
             sPrivInfoPath = damShot.getPath("private", "stereoCam_info")
             try:
                 mop.writeStereoInfos(sPrivInfoPath)
             except Exception as e:
-                pc.displayWarning("Could not write stereo infos: " + toStr(e))
+                pc.displayError("Could not write stereo infos: " + toStr(e))
+
+        if not quick:
+            shutil.copystat(scenePath, sCapturePath)
 
         sCmd = ""
         bShell = False
 
         if sendToRv:
-            p = r"C:\Program Files\Shotgun\RV 6.2.6\bin\rvpush.exe"
-            if osp.isfile(p):
+            sTag = "playblast"
+            if not rvutils.sessionExists(sTag):
+                print 100 * "*"
+                seqId = self.context["entity"]["sg_sequence"]["id"]
+                return rvutils.openToSgSequence(seqId, tag=sTag, source=sCapturePath)
+            else:
                 sLauncherLoc = osp.dirname(os.environ["Z2K_LAUNCH_SCRIPT"])
                 p = osp.join(sLauncherLoc, "rvpush.bat")
-                sCmd = p + " -tag playblast merge {}"
-            else:
-                pc.displayError("Could not send capture to RV. Missing app: '{}'".format(p))
+                sCmd = p + " -tag {} merge {}".format(sTag, osp.normpath(sCapturePath))
 
         if not sCmd:
-            sCmd = "start {}"
+            sCmd = "start {}".format(osp.normpath(sCapturePath))
             bShell = True
 
-        sCmd = sCmd.format(sCapturePath.replace("/", "\\"))
-        subprocess.call(sCmd, shell=bShell)
+        return subprocess.call(sCmd, shell=bShell)
 
     def edit(self, editInPlace=None, onBase=False, createFolders=False):
         privFile = None
@@ -929,37 +949,65 @@ class SceneManager():
             self.importShotCamAbcFile()
             mop.setCamAsPerspView(self.getShotCamera())
 
-    def publish(self):
+    def assertBeforePublish(self):
 
         proj = self.context['damProject']
 
         currentScene = os.path.abspath(pc.sceneName())
-        if currentScene != '':
-            entry = proj.entryFromPath(currentScene)
-            if entry == None:
-                pc.error()
+        if not currentScene:
+            raise AssertionError("Please save your scene as a valid private working scene (Edit if needed)")
 
-            sFixMsg = " Please, apply a 'Shot Setup' and retry."
-            oShotCam = None
-            try:
-                oShotCam = self.getShotCamera(fail=True)
-            except RuntimeError as e:
-                raise RuntimeError(toStr(e) + sFixMsg)
+        curScnFile = proj.entryFromPath(currentScene, fail=True)
 
-            if self.context["step"]["code"].lower() != "previz 3d":
-                if not oShotCam.isReferenced():
-                    raise RuntimeError("Shot Camera is not referenced !" + sFixMsg)
+        sFixMsg = " Please, apply a 'Shot Setup' and retry."
+        oShotCam = None
+        try:
+            oShotCam = self.getShotCamera(fail=True)
+        except Exception as e:
+            raise AssertionError(toStr(e) + sFixMsg)
 
-            rslt = publishCurrentScene(dependencies=False,
-                                       prePublishFunc=self.prePublishCurrentScene)
-            if rslt is None:
-                return
+        if self.context["step"]["code"].lower() != "previz 3d":
+            if not oShotCam.isReferenced():
+                raise AssertionError("Shot Camera is NOT a reference !" + sFixMsg)
 
-            # here is the original publish
-            if rslt is not None:
-                pc.confirmDialog(title='Publish OK', message='{0} was published successfully'.format(rslt[0].name))
-        else:
-            pc.error("Please save your scene as a valid private working scene (Edit if needed)")
+        obsoleteList = []
+        for sRcName, outcomeFile in curScnFile.iterEditedOutcomeFiles():
+            if not outcomeFile.exists():
+                continue
+            delta = curScnFile.fsMtime - outcomeFile.fsMtime
+            if delta > timedelta(0, 120):
+                obsoleteList.append((sRcName, outcomeFile))
+
+        if obsoleteList:
+            sMsg = "Some outcome files are OBSOLETE:\n"
+            for sRcName, outcomeFile in obsoleteList:
+                sFixMsg = ""
+                if sRcName.endswith("capture"):
+                    sFixMsg = "Do a 'Save And Capture' and retry."
+                sMsg += "\n   - {}".format(' : '.join(("'{}'".format(sRcName), sFixMsg)))
+            raise AssertionError(sMsg)
+
+    def publish(self):
+        try:
+            self.assertBeforePublish()
+        except AssertionError as e:
+            pc.confirmDialog(title='SORRY !'
+                             , message=toStr(e)
+                            , button=["OK"]
+                            , defaultButton="OK"
+                            , cancelButton="OK"
+                            , dismissString="OK"
+                            , icon="critical")
+            return
+
+        rslt = publishCurrentScene(dependencies=False,
+                                   prePublishFunc=self.prePublishCurrentScene)
+        if rslt is None:
+            return
+
+        # here is the original publish
+        if rslt is not None:
+            pc.confirmDialog(title='Publish OK', message='{0} was published successfully'.format(rslt[0].name))
 
     def getShotgunContent(self):
         #print 'getShotgunContent ' + self.context['entity']['code']
@@ -1414,8 +1462,7 @@ class SceneManager():
                 pc.lockNode(oAbcNode, lock=True)
         finally:
             if oFileRef:
-                mop.setReferenceLocked(oFileRef, True)
-                mop.setCamAsPerspView(self.getShotCamera())
+                setRefCamLocked(self.getShotCamera(), True)
 
         return oAbcNode
 
@@ -1431,8 +1478,7 @@ class SceneManager():
 
             bLocked = oFileRef.refNode.getAttr("locked")
             if bLocked:
-                mop.setReferenceLocked(oFileRef, False)
-                mop.setCamAsPerspView(self.getShotCamera())
+                setRefCamLocked(self.getShotCamera(), False)
 
             oAbcNode = self.getShotCamAbcNode()
             if oAbcNode:

@@ -335,15 +335,12 @@ class Z2kToolkit(object):
 #                    print launchArgs
                     print relaunchArgs
 
-                    subprocess.call(relaunchArgs, shell=True)
-                    return
+                    return subprocess.call(relaunchArgs, shell=True)
 
             if ns.renew:
                 self.loadEnvs(self.customEnvs, replace=True)
 
-            self.launchCmd(launchArgs)
-
-            return
+            return self.launchCmd(launchArgs)
 
         if sCmd == "install":
             self.install()

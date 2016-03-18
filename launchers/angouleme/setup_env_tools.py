@@ -22,7 +22,8 @@ ENVS = {
         }
 
 try:
-    Z2kToolkit(ENVS).runFromCmd()
+    status = Z2kToolkit(ENVS).runFromCmd()
 except:
     os.environ["PYTHONINSPECT"] = "1"
     raise
+sys.exit(status)
