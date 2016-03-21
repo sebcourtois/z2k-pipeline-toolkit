@@ -2128,7 +2128,7 @@ def chr_changeCtrDisplays(*args, **kwargs):
                 pointL = getPointsOnCurve(j)
                 bbox = cmds.exactWorldBoundingBox(pointL)
                 pivT = cmds.xform(j, t=1, q=1, ws=1, worldSpaceDistance=1)
-                cmds.scale(1.3, 0.1, 1.3, pointL, p=(pivT[0], 0, pivT[2],))
+                cmds.scale(1.1, 0.1, 1.1, pointL, p=(pivT[0], 0, pivT[2],))
             debugL.append("-foots display changed")
 
 
@@ -2322,30 +2322,32 @@ def chr_fixeLatticeParams(bulge_factor=1.25, *args, **kwargs):
         Return : [True,List]
         Dependencies : cmds - 
     """
-
+    # WIP
     print "chr_fixeLatticeParams()"
     debugL = []
-    ffdL = ['Right_eyeFace_ffd', 'Left_eyeFace_ffd', 'geo_head_ffd', 'ffd_geo_Right_Eye', 'ffd_geo_Left_Eye']
+    ffdL = ['Right_eyeFace_ffd', 'Left_eyeFace_ffd', 'geo_head_ffd', 'ffd_geo_Right_Eye', 'ffd_geo_Left_Eye','ffd_Head_Bulge']
     locInfluance = 8
     canDo = True
     # set local influance
-    for k in ffdL:
+    for k in ffdL[-3:]:
         if not cmds.objExists(k):
             canDo = False
             debugL.append("Nothing done")
     if canDo:
         for i in ffdL:
-            cmds.setAttr(i+ ".localInfluenceS", locInfluance)
-            cmds.setAttr(i+ ".localInfluenceT", locInfluance)
-            cmds.setAttr(i+ ".localInfluenceU", locInfluance)
-            cmds.setAttr(i+ ".localInfluenceU", locInfluance)
-            cmds.setAttr(i+ ".outsideFalloffDist", 0.001)
+            if cmds.objExists(i):
+                cmds.setAttr(i+ ".localInfluenceS", locInfluance)
+                cmds.setAttr(i+ ".localInfluenceT", locInfluance)
+                cmds.setAttr(i+ ".localInfluenceU", locInfluance)
+                cmds.setAttr(i+ ".localInfluenceU", locInfluance)
+                cmds.setAttr(i+ ".outsideFalloffDist", 0.001)
 
-            debugL.append("-" + i+ ": Fixed")
+                debugL.append("-" + i+ ": Fixed")
         
         # set lattice to "inside mode"
         for j in ffdL[:2]:
-            cmds.setAttr(j+ ".outsideLattice", 0)
+            if cmds.objExists(j):
+                cmds.setAttr(j+ ".outsideLattice", 0)
 
     # set bugle_factor
     theAttr = "Head_Bulge_End_Ctrl.Head_Bulge_Bulge_Factor"
@@ -2363,21 +2365,26 @@ def chr_setVis_Params(*args, **kwargs):
     
     obj= "VisHolder_Main_Ctrl"
     if cmds.objExists(obj):
-        cmds.setAttr(obj + ".Big_daddy_visibility", 0)
-        cmds.setAttr(obj + ".Global", 1)
-        cmds.setAttr(obj + ".Controls", 1)
-        cmds.setAttr(obj + ".Controls_0", 1)
-        cmds.setAttr(obj + ".Controls_1", 0)
-        cmds.setAttr(obj + ".Controls_2", 0)
-        cmds.setAttr(obj + ".Controls_3", 0)
-        
-        cmds.setAttr(obj + ".RigStuff", 0)
-        cmds.setAttr(obj + ".Deformers", 0)
-        cmds.setAttr(obj + ".SmoothLevel", 0)
+        try:
+            cmds.setAttr(obj + ".Big_daddy_visibility", 0)
+            cmds.setAttr(obj + ".Global", 1)
+            cmds.setAttr(obj + ".Controls", 1)
 
-        cmds.setAttr(obj + ".Geometry", 1)
-        cmds.setAttr(obj + ".Head_Res", 0)
-        cmds.setAttr(obj + ".Body_res", 1)
+            
+            cmds.setAttr(obj + ".RigStuff", 0)
+            cmds.setAttr(obj + ".Deformers", 0)
+            cmds.setAttr(obj + ".SmoothLevel", 0)
+
+            cmds.setAttr(obj + ".Geometry", 1)
+            cmds.setAttr(obj + ".Controls_0", 1)
+            cmds.setAttr(obj + ".Controls_1", 0)
+            cmds.setAttr(obj + ".Controls_2", 0)
+            cmds.setAttr(obj + ".Controls_3", 0)
+
+            cmds.setAttr(obj + ".Head_Res", 0)
+            cmds.setAttr(obj + ".Body_res", 1)
+        except Exception,err:
+            print err
     return [True]
 
 def chr_hideCurveAiAttr(*args, **kwargs):
@@ -2423,12 +2430,15 @@ def chr_replace_chr_vis_Exp_System(*args, **kwargs):
     multiply_Vis = ""
    
     # show all controlers levels
-    cmds.setAttr(inObj+"."+mainVisAttr,1)
-    cmds.setAttr(inObj+"."+lvl0,1)
-    cmds.setAttr(inObj+"."+lvl0,1)
-    cmds.setAttr(inObj+"."+lvl1,1)
-    cmds.setAttr(inObj+"."+lvl2,1)
-    cmds.setAttr(inObj+"."+lvl3,1)
+    try:
+        cmds.setAttr(inObj+"."+mainVisAttr,1)
+        cmds.setAttr(inObj+"."+lvl0,1)
+        cmds.setAttr(inObj+"."+lvl0,1)
+        cmds.setAttr(inObj+"."+lvl1,1)
+        cmds.setAttr(inObj+"."+lvl2,1)
+        cmds.setAttr(inObj+"."+lvl3,1)
+    except:
+        pass
 
 
     # get expression connected to vis
@@ -2446,16 +2456,16 @@ def chr_replace_chr_vis_Exp_System(*args, **kwargs):
                 exp= cmds.listConnections( j+"."+Attr, s=1, d=0, scn=1,)
                 if exp:
                     exp = exp[0]
-                    print "exp=", exp
+                    # print "exp=", exp
                     inExpConL = []
                     inputL = cmds.listAttr(exp+".input[*]")
                     for i in inputL:
                         inExpConL.append(cmds.listConnections(exp+"."+i,s=1,d=0)[0])
                         # print "    <->",inExpConL
-                    print "inExpConL=", inExpConL
+                    # print "inExpConL=", inExpConL
                     compensed= list(set(inExpConL) )
                     if compensed == ["VisHolder_Main_Ctrl"]:
-                        print "YEAHHHHHHH"
+                        # print "YEAHHHHHHH"
                         if cmds.objectType(exp) in ["expression"]:
                             # print "   ",exp
                             currentStr = cmds.expression(exp,string=1,q=1 )
@@ -2482,7 +2492,7 @@ def chr_replace_chr_vis_Exp_System(*args, **kwargs):
                                 replacedExpL.append(exp)
 
                             else:
-                                print "     @activeLvl:",activeLvl
+                                # print "     @activeLvl:",activeLvl
                                 spkipedObjL.append(j)
 
                         else:
@@ -2527,7 +2537,7 @@ def chr_reArrangeCtr_displayLevel(*args, **kwargs):
     print "chr_reArrangeCtr_displayLevel()"
 
     #body
-    toLvl0L=['Head_Bulge_End_Ctrl', 'Head_Bulge_End_Handle_Ctrl']
+    toLvl0L=['Head_Bulge_End_Ctrl', 'Head_Bulge_End_Handle_Ctrl',]
     
     # facial 01
     toLvl1L=['Right_UpperLip_1_Ctrl', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Right_LowerLip_1_Ctrl', 'Top_Teeth', 'Tongue_1', 'Tongue_0', 
@@ -2581,10 +2591,25 @@ def chr_reArrangeCtr_displayLevel(*args, **kwargs):
             elif i in toLvl2L:
                 curLvl = lvl2
             elif i in toLvl3L:
+                # handle le cas ou il n y a pas d attribut "controls_3" dans le rig
+                if not cmds.objExists(inObj+"."+lvl3):
+                    # print "ADD ATTR"
+                    cmds.addAttr( inObj, longName=lvl3, attributeType="enum",enumName="False:True", keyable=True,  dv=0)
+                    cmds.setAttr(inObj + "."+lvl3,channelBox=1)
+                    movAttrL=  ["Head","Head_Res","Body_res","Deformers","SmoothLevel","Geometry","RigStuff"]
+                    movAttrL.reverse()
+                    for mattr in [lvl3]+movAttrL:
+                        # print "*****",mattr
+                        lock = cmds.getAttr(inObj+"."+mattr,l=1)
+                        cmds.setAttr(inObj+"."+mattr,l=0)
+                        cmds.deleteAttr(inObj,at=mattr)
+                        cmds.undo()
+                        cmds.setAttr(inObj+"."+mattr,l=lock)
+                    
                 curLvl = lvl3
 
             if cmds.objExists(i):
-                print "****",i
+                # print "****",i
                 if cmds.listRelatives(i,c=1,s=1,):
                     shapeL = [i+"|"+ x for x in cmds.listRelatives(i,c=1,s=1,)]
                     if shapeL:

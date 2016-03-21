@@ -724,6 +724,7 @@ class checkModule(object):
         result,debugL = jpZ.chr_hideCurveAiAttr()
         # prints -------------------
         self.printF(result, st="r")
+        self.printF("-cleaned_Ctr = {0}".format(debugL))
         # --------------------------
         # --------------------------
         if not result :
