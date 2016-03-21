@@ -14,7 +14,7 @@ if r2a.assetFileType != "anim":
 	raise ValueError( "Working file must be an '_anim' file, operation canceled")
 
 r2a.cleanFile()
-r2a.loadFile(sourceFile ="render" , reference = False)
+r2a.loadFile(sourceFile ="renderRef" , reference = False)
 
 print "#### {:>7}: target is: {}".format("Info",r2a.assetName+"_"+r2a.assetFileType)
 r2a.initSourceTargetList()
