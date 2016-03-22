@@ -991,13 +991,13 @@ class SceneManager():
         try:
             self.assertBeforePublish()
         except AssertionError as e:
-            pc.confirmDialog(title='SORRY !'
-                             , message=toStr(e)
-                            , button=["OK"]
-                            , defaultButton="OK"
-                            , cancelButton="OK"
-                            , dismissString="OK"
-                            , icon="critical")
+            pc.confirmDialog(title='SORRY !',
+                             message=toStr(e),
+                             button=["OK"],
+                             defaultButton="OK",
+                             cancelButton="OK",
+                             dismissString="OK",
+                             icon="critical")
             return
 
         rslt = publishCurrentScene(dependencies=False,

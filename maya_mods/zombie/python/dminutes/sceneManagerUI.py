@@ -30,7 +30,7 @@ SCENE_MANAGER_DOCK = 'sceneManagerDock'
 SCENE_MANAGER_UI = 'sceneManagerUI'
 
 """Global instance of shotgunengine Class"""
-SG = None
+SG_ENGINE = None
 
 """Various caches for UI lists"""
 CATEG_ITEMS = {}
@@ -149,17 +149,17 @@ def sceneManagerUI():
 def initialize():
     """Initialize default values (Operator AllowedSteps and CurrentStep...), hide forbidden buttons"""
 
-    global SCENE_MANAGER, SG
+    global SCENE_MANAGER, SG_ENGINE
 
     if SCENE_MANAGER:
         del SCENE_MANAGER
-    if SG:
-        del SG
+    if SG_ENGINE:
+        del SG_ENGINE
 
     SCENE_MANAGER = sceneManager.SceneManager()
-    SG = SCENE_MANAGER.context['damProject']._shotgundb
+    SG_ENGINE = SCENE_MANAGER.context['damProject']._shotgundb
 
-    curSgUser = SG.currentUser
+    curSgUser = SG_ENGINE.currentUser
     userSgStep = curSgUser['sg_currentstep']
 
     #User info
@@ -171,8 +171,9 @@ def initialize():
     refreshOptionMenu('sm_step_dd', sStepCodes)
 
     #print userSgStep
-    if (userSgStep is not None) and (userSgStep['code'] in sStepCodes):
-        pc.optionMenu("sm_step_dd", edit=True, value=userSgStep['code'])
+    sUserStep = userSgStep['code']
+    if (userSgStep is not None) and (sUserStep in sStepCodes):
+        pc.optionMenu("sm_step_dd", edit=True, value=sUserStep)
 
     #Hide some controls
     pc.control("fileStatusGroup", edit=True, visible=False)
@@ -193,6 +194,9 @@ def initialize():
     pc.control("sm_wipCapture_bt", edit=True, annotation=sAnn)
     sAnn = "Create a PUBLISHABLE capture into private area: '{}'".format(damShot.getPath("private", "entity_dir"))
     pc.control("sm_capture_bt", edit=True, annotation=sAnn)
+
+    if SG_ENGINE.currentUser.get("login").lower() != "mariong":
+        pc.control("sm_increment_chk", edit=True, visible=False)
 
 def updateButtons():
     """Update buttons availability from maya_scene_operations commands dictionary"""
@@ -218,13 +222,13 @@ def refreshContextUI():
 
     pc.control('sm_capture_bt', edit=True, enable=bPublishable)
     pc.control('sm_wipCapture_bt', edit=True, enable=bRcsMatchUp)
-    pc.control('sm_saveWip_bt', edit=True, enable=bPublishable)
+    pc.control('sm_incrementSave_bt', edit=True, enable=bPublishable)
     pc.control('sm_publish_bt', edit=True, enable=bPublishable)
 
     pc.control('sm_updateThumb_bt', edit=True, enable=bRcsMatchUp)
 
-    sStepName = SCENE_MANAGER.context["step"]["code"].lower()
-    bEnabled = (sStepName not in ("previz 3d", "stereo")) and bPublishable
+    sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
+    bEnabled = (sCtxStep not in ("previz 3d", "stereo")) and bPublishable
     pc.control('sm_editCam_bt', edit=True, enable=bEnabled)
 
     pc.checkBox('sm_imgPlane_chk', edit=True, value=mop.isImgPlaneHidden())
@@ -234,7 +238,7 @@ def refreshContextUI():
     pc.checkBox('sm_blocking_chk', edit=True, value=pc.playbackOptions(q=True, blockingAnim=True))
     pc.checkBox('sm_updAllViews_chk', edit=True, value=(pc.playbackOptions(q=True, view=True) == "all"))
 
-    bListAssets = pc.optionVar.get("Z2K_SM_listAssets", False if sStepName == "animation" else True)
+    bListAssets = pc.optionVar.get("Z2K_SM_listAssets", False if sCtxStep == "animation" else True)
     QWIDGETS["relatedAssetsGroup"].setChecked(bListAssets)
     if bListAssets:
         pc.control('sm_updScene_bt', edit=True, enable=bPublishable)
@@ -319,7 +323,7 @@ def refreshStep(*args, **kwargs):
         pc.control('sm_asset_chooser_grp', edit=True, visible=False)
         pc.control('sm_shot_chooser_grp', edit=True, visible=True)
 
-        shots = SG.getShotsInfo()
+        shots = SG_ENGINE.getShotsInfo()
 
         categ_names = []
         CATEG_ITEMS = {}
@@ -343,7 +347,7 @@ def refreshStep(*args, **kwargs):
         pc.control('sm_asset_chooser_grp', edit=True, visible=True)
         pc.control('sm_shot_chooser_grp', edit=True, visible=False)
 
-        assets = SG.getAssetsInfo()
+        assets = SG_ENGINE.getAssetsInfo()
 
         categ_names = []
         CATEG_ITEMS = {}
@@ -393,7 +397,7 @@ def connectCallbacks():
     pc.button('sm_capture_bt', edit=True, c=doCapture)
     pc.button('sm_wipCapture_bt', edit=True, c=doWipCapture)
 
-    pc.button('sm_saveWip_bt', edit=True, c=doSaveWip)
+    pc.button('sm_incrementSave_bt', edit=True, c=doSaveWip)
 
     pc.button('sm_switchContext_bt', edit=True, c=doSwitchContext)
 
@@ -519,7 +523,7 @@ def updRelatedAssetsShown(bEnable):
     doRefreshSceneInfo()
 
 def doDisconnect(*args):
-    SG.logoutUser()
+    SG_ENGINE.logoutUser()
     sceneManagerUI()
 
 def doStepChanged(*args, **kwargs):
@@ -530,12 +534,12 @@ def doStepChanged(*args, **kwargs):
     stepName = pc.optionMenu("sm_step_dd", query=True, value=True)
     newStep = None
 
-    for allowedStep in SG.currentUser['sg_allowedsteps']:
+    for allowedStep in SG_ENGINE.currentUser['sg_allowedsteps']:
         if allowedStep['code'] == stepName:
             newStep = allowedStep
             if bUpdSg:
-                print "updating {}'s step to {}".format(SG.currentUser["name"], allowedStep)
-                SG.updateStep(allowedStep)
+                print "updating {}'s step to {}".format(SG_ENGINE.currentUser["name"], allowedStep)
+                SG_ENGINE.updateStep(allowedStep)
             break
 
     if newStep == None:
@@ -626,7 +630,7 @@ def doRefreshFileStatus(*args):
     statusText = "Unlocked"
 
     if SCENE_MANAGER.context['lock'] != "":
-        if SCENE_MANAGER.context['lock'] == SG.currentUser['login']:
+        if SCENE_MANAGER.context['lock'] == SG_ENGINE.currentUser['login']:
             statusText = "Locked by Me"
             pc.button('sm_unlock_bt', edit=True, enable=True)
         else:
@@ -639,7 +643,7 @@ def doRefreshFileStatus(*args):
 #    pc.button('sm_edit_bt', edit=True, enable=bPublishable)
 #    pc.button('sm_publish_bt', edit=True, enable=bPublishable)
 #    pc.button('sm_capture_bt', edit=True, enable=bPublishable)
-#    pc.button('sm_saveWip_bt', edit=True, enable=bPublishable)
+#    pc.button('sm_incrementSave_bt', edit=True, enable=bPublishable)
 
 #buttons
 def doDetect(*args, **kwargs):
@@ -694,13 +698,13 @@ def doRefreshSceneInfo(*args):
     pc.refresh()
 
 
-    sStepName = ""
+    sCtxStep = ""
     try:
-        sStepName = SCENE_MANAGER.context["step"]["code"].lower()
+        sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
     except KeyError:
         pass
 
-    if not pc.optionVar.get("Z2K_SM_listAssets", False if sStepName == "animation" else True):
+    if not pc.optionVar.get("Z2K_SM_listAssets", False if sCtxStep == "animation" else True):
         return []
 
     assetDataList = SCENE_MANAGER.listRelatedAssets()
@@ -811,11 +815,14 @@ def doCapture(*args , **kwargs):
     bQuick = kwargs.get("quick", False)
     if bQuick or SCENE_MANAGER.assertScenePublishable():
 
-        bIncrement = pc.checkBox('sm_increment_chk', query=True, value=True)
+        bIncrement = False
+        if pc.checkBox('sm_increment_chk', query=True, visible=True):
+            bIncrement = pc.checkBox('sm_increment_chk', query=True, value=True)
+
         bSend = pc.checkBox('sm_sendToRv_chk', query=True, value=True)
         smoothData = updSmoothOnCaptureState()
 
-        SCENE_MANAGER.capture(bIncrement, quick=bQuick, sendToRv=bSend,
+        SCENE_MANAGER.capture(increment=bIncrement, quick=bQuick, sendToRv=bSend,
                               smoothData=smoothData)
 
 #        if not bQuick:
@@ -909,6 +916,25 @@ def doEditCam(*args):
 
 def doPouet(*args, **kwargs):
     """Best function ever"""
-    print "pouet"
-    for i, j in  SCENE_MANAGER.context.iteritems():
-        print "    ", i, j
+
+    from pprint import pprint
+
+    print "pouet".center(100, "-")
+
+    print "{}.{}:".format(type(SCENE_MANAGER).__name__, "context")
+    pprint(SCENE_MANAGER.context, width=120)
+
+    for k, pyobj in vars(SG_ENGINE).iteritems():
+
+        if "__" in k:
+            continue
+
+        if k == "cmdtable":
+            continue
+
+        if isinstance(pyobj, dict):
+            print "{}.{}:".format(type(SG_ENGINE).__name__, k)
+            pprint(pyobj, width=120)
+
+    print "prout".center(100, "-")
+
