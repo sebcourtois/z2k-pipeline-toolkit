@@ -174,6 +174,18 @@ def createBS():
 # ---------------------------------------------------------------------------
 
 def cleanSet(inRoot):
+    try:
+        doNotDelete = cmds.getAttr('|asset|grp_rig.doNotDelete')
+        print 'True'
+    except:
+        doNotDelete = False
+        print 'False'
+
+    if doNotDelete:
+        msg =  "#### {:>7}: 'cleanSet': cannot delete the rig, '|asset|grp_rig.doNotDelete' attr is True".format("Error")
+        raise ValueError (msg)
+
+
     children = tkc.getChildren(inRoot, False)
     
     for child in children:
@@ -398,6 +410,16 @@ def rigSet(inRoot):
 
     pc.select(clear=True)
 
+
+def doNotDeleteRigAttr():
+    if not cmds.listAttr( '|asset|grp_rig',string = "doNotDelete") and cmds.ls("|asset|grp_rig"):
+        cmds.addAttr("|asset|grp_rig",ln = "doNotDelete", at = "bool")
+    print "#### {:>7}: 'doNotDeleteRigAttr': created 'doNotDelete' attribute on '|asset|grp_rig'".format("Info")
+    cmds.setAttr('|asset|grp_rig.doNotDelete',True)
+
+
+
+
 def checkMeshNamingConvention(printInfo = True, inParent = "*"):
     """
     check all the meshes naming convention, '(geo|aux)_name_complement##' where 'name' and 'complement##' are strings of 24 alphanumeric characters
@@ -597,7 +619,7 @@ def geoGroupDeleteHistory(GUI=True, freezeVrtxPos = True):
         cmds.addAttr("|asset|grp_geo",ln = "deleteHistoryDone", at = "bool")
         deleteHistoryDone = False
     else:
-        deleteHistoryDone = cmds.getAttr('grp_geo.deleteHistoryDone')
+        deleteHistoryDone = cmds.getAttr('|asset|grp_geo.deleteHistoryDone')
 
 
     if  deleteHistoryDone:

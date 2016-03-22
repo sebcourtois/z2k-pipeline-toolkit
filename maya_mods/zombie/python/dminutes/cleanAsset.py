@@ -128,7 +128,7 @@ def cleanAsset (GUI = True):
                 assetconformation.softClean(keepRenderLayers = False,nameSpaceToKeepL = ["lgtRig"])
                 assetconformation.createSubdivSets()
                 assetconformation.setSubdiv()
-                shading.checkShaderName( GUI = True )
+                shading.checkShaderName( GUI = True , inParent = "|asset|grp_geo")
                 assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
 
     elif fileType == "render":
@@ -148,7 +148,7 @@ def cleanAsset (GUI = True):
                 assetconformation.setSubdiv()
                 assetconformation.createSubdivSets()
                 assetconformation.createSetMeshCache()
-                shading.checkShaderName( GUI = True )
+                shading.checkShaderName( GUI = True, inParent = "|asset|grp_geo" )
                 assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
 
     return resultB, logL
