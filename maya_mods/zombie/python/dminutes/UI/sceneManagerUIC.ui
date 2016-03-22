@@ -1162,7 +1162,7 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_18">
             <item>
-             <widget class="QPushButton" name="sm_saveWip_bt">
+             <widget class="QPushButton" name="sm_incrementSave_bt">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                 <horstretch>0</horstretch>
@@ -1176,7 +1176,7 @@
                </size>
               </property>
               <property name="text">
-               <string notr="true">Incremental Save</string>
+               <string notr="true">Increment And Save</string>
               </property>
              </widget>
             </item>

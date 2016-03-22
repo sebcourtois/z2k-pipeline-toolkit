@@ -104,7 +104,6 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
                     sgVersion = versionFile.shotgunVersion
                     proj.updateSgEntity(sgVersion, sg_path_to_movie=versionFile.envPath())
                     if sgVersion:
-                        print " Uploading to Shotgun... ".center(100, "-")
                         proj.uploadSgVersion(sgVersion, versionFile.absPath())
 
                     sPrivSoundPath = damShot.getPath("private", "animatic_sound")

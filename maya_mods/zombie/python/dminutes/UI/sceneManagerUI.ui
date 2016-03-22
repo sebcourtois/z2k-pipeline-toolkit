@@ -511,7 +511,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="sm_saveWip_bt">
+             <widget class="QPushButton" name="sm_incrementSave_bt">
               <property name="text">
                <string>Save WIP</string>
               </property>

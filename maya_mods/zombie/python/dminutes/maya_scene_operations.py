@@ -16,7 +16,6 @@ from pytaya.util.sysutils import withSelectionRestored
 from collections import OrderedDict
 from pytaya.core.transform import matchTransform
 from pytd.util.fsutils import jsonWrite, copyFile
-import filecmp
 from zomblib.editing import makeFilePath, movieToJpegSequence
 
 
@@ -146,7 +145,7 @@ def getImagePlaneItems(create=False):
     sCamShape = oCamShape.name()
     pc.setAttr(sCamShape + ".displayFilmGate", 1)
     pc.setAttr(sCamShape + ".displayGateMask", 1)
-    pc.setAttr(sCamShape + ".overscan", 1.2)
+    pc.setAttr(sCamShape + ".overscan", 1.3)
     pc.setAttr(sCamShape + ".displaySafeTitle", 1)
     pc.setAttr(sCamShape + ".displaySafeAction", 1)
     pc.setAttr(sCamShape + ".displayGateMaskColor", [0, 0, 0])
@@ -858,6 +857,9 @@ def init_previz_scene(sceneManager):
 
         if not (oImgPlaneCam and oImgPlane):
             oImgPlane, oImgPlaneCam = getImagePlaneItems(create=True)
+        else:
+            oImgPlane.setAttr("frameOffset", 0)
+            pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
 
         pc.imagePlane(oImgPlane, edit=True, fileName=sFirstImgPath)
         oImgPlane.setAttr("frameOffset", -100)
