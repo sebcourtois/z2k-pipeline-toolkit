@@ -1601,7 +1601,7 @@ def importLightRig(lgtRig = "lgtRig_outdoor"):
     mc.file( lgtRigFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace="lgtRig", preserveReferences= True )
 
     print "#### {:>7}: reference '{}'".format("Info",envFilePath_exp)
-    mc.file( envFilePath_exp, type= "mayaAscii", ignoreVersion=True, namespace="tmpEnv", preserveReferences= True, reference = True )
+    mc.file( envFilePath, type= "mayaAscii", ignoreVersion=True, namespace="tmpEnv", preserveReferences= True, reference = True )
  
 
 
