@@ -411,6 +411,42 @@ def rigSet(inRoot):
     pc.select(clear=True)
 
 
+def addRigVisibAttr():
+
+    oParent = "|asset|grp_rig|BigDaddy_NeutralPose|BigDaddy|Global_SRT_NeutralPose|Global_SRT|Local_SRT_NeutralPose|Local_SRT"
+    if not cmds.ls(oParent):
+        msg= "#### {:>7}: 'addRigVisibAttr': {} is missing in the scene, Rig could not be found".format("Error", oParent)
+        raise ValueError (oParent+"")
+
+    nurbsL = cmds.ls(cmds.listRelatives(oParent, allDescendents = True, fullPath = True, type = "nurbsCurve"), noIntermediate = True, l=True)
+    ctrls = cmds.listRelatives (nurbsL, parent = True, fullPath = True, type = "transform")
+   
+    # add and connect the visibility attributes on the CTR of each groups -------------------------
+    for ctr in ctrls: 
+        
+        conL=cmds.listConnections(ctr+".parentMatrix[0]",d=1,)
+        if conL:
+            if len(conL):
+                con=conL[0]
+           
+                theSource = cmds.listConnections(con.split(".",1)[0], d=1)[0]
+                # print ctr,"->",theSource
+                    
+                theAttr = "camera_visibility"
+                if not cmds.objExists(ctr+"."+theAttr):
+                    print "creating visibility Attr"
+                    cmds.addAttr( str(ctr), longName=theAttr, attributeType= "long", min=0, dv=1, max=1, keyable=True,) 
+                    cmds.setAttr(str(ctr) + "."+theAttr, l=False,)
+                    # connect attr
+                    print "connecting visibility"
+                    cmds.connectAttr(ctr+"."+theAttr,theSource+".v",f=1)
+                
+                theAttr = "global_visibility"
+                if not cmds.objExists(str(ctr)+"."+theAttr):
+                    cmds.addAttr( str(ctr), longName=theAttr, attributeType= "long", min=0, dv=1, max=1, keyable=True,) 
+                    cmds.setAttr(str(ctr) + "."+theAttr, l=False,)
+
+
 def doNotDeleteRigAttr():
     if not cmds.listAttr( '|asset|grp_rig',string = "doNotDelete") and cmds.ls("|asset|grp_rig"):
         cmds.addAttr("|asset|grp_rig",ln = "doNotDelete", at = "bool")
