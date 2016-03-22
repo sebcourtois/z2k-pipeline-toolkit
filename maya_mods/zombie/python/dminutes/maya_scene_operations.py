@@ -18,6 +18,7 @@ from pytaya.core.transform import matchTransform
 from pytd.util.fsutils import jsonWrite, copyFile
 from zomblib.editing import makeFilePath, movieToJpegSequence
 
+pc.mel.source("AEimagePlaneTemplate.mel")
 
 CAMPATTERN = 'cam_sq????_sh?????:*'
 CAM_GLOBAL = 'Global_SRT'
@@ -139,8 +140,8 @@ def getImagePlaneItems(create=False):
     pc.setAttr(sImgPlane + ".fit", 1)
     pc.setAttr(sImgPlane + ".useFrameExtension", 1)
     #pc.setAttr(sImgPlane + ".frameOffset", -100)
-    pc.setAttr(sImgPlane + ".frameIn", 101)
-    pc.setAttr(sImgPlane + ".frameOut", 1000)
+    #pc.setAttr(sImgPlane + ".frameIn", 101)
+    #pc.setAttr(sImgPlane + ".frameOut", 1000)
 
     sCamShape = oCamShape.name()
     pc.setAttr(sCamShape + ".displayFilmGate", 1)
@@ -857,16 +858,26 @@ def init_previz_scene(sceneManager):
 
         if not (oImgPlaneCam and oImgPlane):
             oImgPlane, oImgPlaneCam = getImagePlaneItems(create=True)
-        else:
-            oImgPlane.setAttr("frameOffset", 0)
-            pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
+#        else:
+#            oImgPlane.setAttr("frameOffset", 0)
+#            pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
 
-        pc.imagePlane(oImgPlane, edit=True, fileName=sFirstImgPath)
+        try:
+            pc.imagePlane(oImgPlane, edit=True, fileName=sFirstImgPath)
+        except RuntimeError as e:
+            if not "Unable to load the image file" in e.message:
+                raise
         oImgPlane.setAttr("frameOffset", -100)
         pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
     else:
         pc.displayError("Animatic movie not found: '{}'".format(sPubMoviePath))
-        oImgPlane.setAttr("imageName", sFirstImgPath, type="string")
+        try:
+            oImgPlane.setAttr("imageName", sFirstImgPath, type="string")
+        except RuntimeError as e:
+            if not "Unable to load the image file" in e.message:
+                raise
+        oImgPlane.setAttr("frameOffset", -100)
+        pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
 
     arrangeViews(oShotCam.getShape(), oImgPlaneCam, oStereoCam)
 
