@@ -143,6 +143,7 @@ public:
    inline MDagPath GetMasterInstanceDagPath(MObjectHandle handle){return m_masterInstances[handle];};
 
    bool IsBatch() const { return (GetSessionMode() == MTOA_SESSION_BATCH || GetSessionMode() == MTOA_SESSION_ASS); }
+   bool IsInteractiveRender() const {return (GetSessionMode() == MTOA_SESSION_RENDERVIEW || GetSessionMode() == MTOA_SESSION_IPR); }
 
    bool IsActiveAOV(CAOV &aov) const;
    AOVSet GetActiveAOVs() const;

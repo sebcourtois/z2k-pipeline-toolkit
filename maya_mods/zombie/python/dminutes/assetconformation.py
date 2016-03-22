@@ -452,20 +452,32 @@ class Asset_File_Conformer:
             raise ValueError("#### Error: no '|asset' could be found in this scene")
 
 
-    def loadFile(self,sourceFile = "render", reference = True):
+    def loadFile(self,sourceFile = "renderRef", reference = True):
 
         mc.refresh()
+
+        if  not self.mainFilePathElem[-4] == "asset":
+            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+
         if sourceFile in ["render","anim","modeling","previz"]:
             self.sourceFile = sourceFile
-        else:
-                raise ValueError("#### Error: the choosen sourceFile '"+sourceFile+"'' is not correct")
-
-
-        if  self.mainFilePathElem[-4] == "asset":
             self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile+".ma"))
             self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
+
+        elif sourceFile in ["renderRef"]:
+            self.sourceFile = sourceFile
+            self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,"ref",self.assetName+"_"+self.sourceFile+".mb"))
+            self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
+            print self.renderFilePath_exp
+            if not os.path.isfile(self.renderFilePath_exp):
+                print "#### {:>7}: could not find: '{}', shading has not been done yet, let's try using '{}'".format("Error",self.sourceFile, self.sourceFile.replace("Ref","") )
+                self.sourceFile = self.sourceFile.replace("Ref","")
+                self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile+".ma"))
+                self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
+            else:
+                self.sourceFile = self.sourceFile.replace("Ref","")
         else:
-            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+            raise ValueError("#### Error: the choosen sourceFile '"+sourceFile+"'' is not correct")
 
 
         if reference:
@@ -550,12 +562,12 @@ class Asset_File_Conformer:
             for eachTarget in targetObjects:
                 if mc.ls(eachTarget):
                     if mc.nodeType (eachTarget)!= "transform":
-                        print ("#### {:>7}: no '{}' target object has not the right type, only 'transform' nodes accepted".format( eachTarget))
+                        print ("#### {:>7}: no '{}' target object has not the right type, only 'transform' nodes accepted".format("Error", eachTarget))
                         errorOnTarget = errorOnTarget + 1
                     else:
                         self.targetList.append(eachTarget)
                 else:
-                    print ("#### {:>7}: no '{}' target object could be found".format( eachTarget))
+                    print ("#### {:>7}: no '{}' target object could be found".format("Error", eachTarget))
                     errorOnTarget = errorOnTarget + 1
 
             for eachTarget in self.targetList:
@@ -564,13 +576,13 @@ class Asset_File_Conformer:
 
                 if mc.ls(eachSource):
                     if mc.nodeType (eachSource)!= "transform":
-                        print ("#### {:>7}: no '{}' source object has not the right type, only 'transform' nodes accepted".format( eachSource))
+                        print ("#### {:>7}: no '{}' source object has not the right type, only 'transform' nodes accepted".format("Error", eachSource))
                         errorOnSource = errorOnSource + 1
                     else:
                         self.sourceList.append(eachSource)
                 else:
                     errorOnSource = errorOnSource + 1
-                    print ("#### {:>7}: target --> '{:<30}'  has no correspondig source --> '{}'".format(eachTarget, eachSource))
+                    print ("#### {:>7}: target --> '{:<30}'  has no correspondig source --> '{}'".format("Error", eachTarget, eachSource))
 
             if errorOnTarget != 0: self.targetList =[]
             if errorOnSource != 0: self.sourceList =[]
@@ -592,7 +604,7 @@ class Asset_File_Conformer:
                     errorOnTarget = errorOnTarget + 1
             else:
                 print ("#### {:>7}: 2 objects must be selected, source first then target".format("Error"))
-                print ("#### {:>7}: selection {}".format(mySelection))
+                print ("#### {:>7}: selection {}".format("Error", mySelection))
     
 
         else:
@@ -693,7 +705,7 @@ class Asset_File_Conformer:
                         targetShape = shapeOrigList[0]
                         shapeOrig = True
                     else:
-                        print ("#### {:>7}: several 'ShapeOrig' were found under: '{}' transform".format(self.targetList[i]))
+                        print ("#### {:>7}: several 'ShapeOrig' were found under: '{}' transform".format("Error",self.targetList[i]))
                         uvTransferFailed +=1
                         continue
 
@@ -732,7 +744,7 @@ class Asset_File_Conformer:
             if uvTransferFailed ==0:
                 print "#### {:>7}: UVs has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
             else:
-                print ("#### {:>7}: UVs transfer failed for {} object(s)".format(uvTransferFailed))
+                print ("#### {:>7}: UVs transfer failed for {} object(s)".format("Error",uvTransferFailed))
 
         else:
             print "#### {:>7}: cannot transfer uvs, target and source list mismatch".format("Error")
@@ -778,20 +790,20 @@ class Asset_File_Conformer:
                     continue
 
                 sourceShadEngList = mc.ls(mc.listHistory(sourceShape,future = True),type="shadingEngine")
-                print sourceShape+" --> "+targetShape
+                #print sourceShape+" --> "+targetShape
                 if len(sourceShadEngList) == 1:
                     mc.sets(targetShape,e=True, forceElement=sourceShadEngList[0])
                 elif len(sourceShadEngList) > 0:
                     mc.transferShadingSets(sourceShape,targetShape, sampleSpace=0, searchMethod=3)
                 else:
-                    print ("#### {:>7}: no 'shader' found on source object: '{}' transform".format(sourceShape))
+                    print ("#### {:>7}: no 'shader' found on source object: '{}' transform".format("Error",sourceShape))
                     sgTransferFailed +=1
 
 
             if sgTransferFailed ==0:
                 print "#### {:>7}: materials has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
             else:
-                print ("#### {:>7}: materials transfer failed for {} object(s)".format(sgTransferFailed))
+                print ("#### {:>7}: materials transfer failed for {} object(s)".format("Error",sgTransferFailed))
 
         else:
             print "#### {:>7}: cannot transfer materials, target and source list mismatch".format("Error")
@@ -811,12 +823,12 @@ class Asset_File_Conformer:
             shadEngList = list(set(eachSEList))
             for shadEng in shadEngList:
                 try:
-                    surfaceBranchShdNodeL = mc.ls(mc.listHistory(mc.listConnections(shadEng+'.surfaceShader',connections = False))[0],l=True)
+                    surfaceBranchShdNodeL = mc.ls(mc.listHistory(mc.listConnections(shadEng+'.surfaceShader',connections = False)),l=True)
                 except:
                     surfaceBranchShdNodeL=[]
 
                 try: 
-                    aiSurfaceBranchShdNodeL = mc.ls(mc.listHistory(mc.listConnections(shadEng+'.aiSurfaceShader',connections = False))[0],l=True)
+                    aiSurfaceBranchShdNodeL = mc.ls(mc.listHistory(mc.listConnections(shadEng+'.aiSurfaceShader',connections = False)),l=True)
                 except:
                     aiSurfaceBranchShdNodeL=[]
                 nodeList = surfaceBranchShdNodeL + aiSurfaceBranchShdNodeL + [shadEng]
@@ -971,7 +983,7 @@ class Asset_File_Conformer:
             usedShadNodeL.extend(mc.hyperShade (listUpstreamNodes= each))
 
 
-        unusedShadNodeL = list(set(allShadNodeL)-set(usedShadNodeL)-set(ignoredNodeL))
+        unusedShadNodeL = mc.ls(list(set(allShadNodeL)-set(usedShadNodeL)-set(ignoredNodeL)))
 
 
         if unusedShadNodeL:

@@ -73,8 +73,26 @@
     [attr aov_indirect_sss]
         aov.type                INT     0x05
     
-    
 
+[node shadowCatcher]
+    [attr backlighting]
+        min                 FLOAT   0.0    
+        max                 FLOAT   1.0
+        softmin                 FLOAT   0.0    
+        softmax                 FLOAT   1.0
+
+    [attr aov_shadow]
+        aov.type                INT     0x05
+    [attr aov_shadow_matte]
+        aov.type                INT     0x05
+    [attr aov_shadow_diff]
+        aov.type                INT     0x05
+    [attr aov_shadow_mask]
+        aov.type                INT     0x05
+    [attr aov_indirect_diffuse]
+        aov.type                INT     0x05
+    [attr aov_reflection]
+        aov.type                INT     0x05
 
 [node volume_collector]
     maya.id    INT     0x00115D1F
