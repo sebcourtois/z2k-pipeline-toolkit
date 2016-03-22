@@ -858,16 +858,15 @@ def init_previz_scene(sceneManager):
 
         if not (oImgPlaneCam and oImgPlane):
             oImgPlane, oImgPlaneCam = getImagePlaneItems(create=True)
-#        else:
-#            oImgPlane.setAttr("frameOffset", 0)
-#            pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
 
         try:
             pc.imagePlane(oImgPlane, edit=True, fileName=sFirstImgPath)
         except RuntimeError as e:
             if not "Unable to load the image file" in e.message:
                 raise
-        oImgPlane.setAttr("frameOffset", -100)
+
+        #offset +1 because ffmpeg duplicates the first frame during movie conversion to jpegs.
+        oImgPlane.setAttr("frameOffset", (-100 + 1))
         pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
     else:
         pc.displayError("Animatic movie not found: '{}'".format(sPubMoviePath))
@@ -1096,7 +1095,7 @@ def iterPanelsFromCam(oCamXfm, visible=False):
 
     for sPanel in mc.getPanel(type="modelPanel"):
         sPanelCam = mc.modelPanel(sPanel, q=True, camera=True)
-        print sPanel, sPanelCam, (sCamXfm, sCamShape)
+        #print sPanel, sPanelCam, (sCamXfm, sCamShape)
         if sPanelCam in (sCamXfm, sCamShape):
             if sVizPanels and (sPanel not in sVizPanels):
                 continue

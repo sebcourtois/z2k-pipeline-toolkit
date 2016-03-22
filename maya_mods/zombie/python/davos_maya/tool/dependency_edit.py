@@ -186,7 +186,7 @@ def editTextureFiles(dryRun=False):
     privScnFile = privLib.getEntry(sCurScnPath)
     pubScnFile = privScnFile.getPublicFile(fail=True)
 
-    pubScnFile.assertEditedVersion(privScnFile)
+    pubScnFile.assertEditedVersion(privScnFile, outcomes=False, remember=False)
     pubScnFile.ensureLocked()
 
     preEditResults = dependency_scan.launch(damEntity, scanFunc=scanTexturesToEdit,
