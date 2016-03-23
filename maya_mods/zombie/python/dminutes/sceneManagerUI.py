@@ -88,7 +88,7 @@ def isLaunched():
 def isVisible():
     return mc.dockControl(SCENE_MANAGER_DOCK, q=True, visible=True)
 
-def sceneManagerUI():
+def launch():
     """Main UI Creator"""
     global QWIDGETS
 
@@ -187,7 +187,7 @@ def initialize():
         pc.control("sm_pouet_bt", edit=True, visible=False)
 
     doStepChanged(updateStep=False)
-    setContextUI()
+    loadContextFromScene()
 
     damShot = SCENE_MANAGER.getDamShot()
     sAnn = "Create a capture into local project: '{}'".format(SCENE_MANAGER.getWipCaptureDir(damShot))
@@ -249,12 +249,12 @@ def refreshContextUI():
     QWIDGETS["smoothGroup"].setChecked(bEnable)
     updSmoothOnCaptureState(bEnable, warn=False)
 
-def setContextUI(**kwargs):
+def loadContextFromScene(**kwargs):
     """Initialize UI from scene"""
     sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
     context = SCENE_MANAGER.contextFromSceneInfos(sceneInfos)
 
-    if context != None:
+    if context:
         #print context
         somethingChanged = False
 
@@ -524,7 +524,7 @@ def updRelatedAssetsShown(bEnable):
 
 def doDisconnect(*args):
     SG_ENGINE.logoutUser()
-    sceneManagerUI()
+    launch()
 
 def doStepChanged(*args, **kwargs):
 
@@ -648,7 +648,7 @@ def doRefreshFileStatus(*args):
 #buttons
 def doDetect(*args, **kwargs):
     """load context from scene"""
-    setContextUI(**kwargs)
+    loadContextFromScene(**kwargs)
 
 FILEREFS_FOR_LINE = {}
 
@@ -822,9 +822,8 @@ def doCapture(*args , **kwargs):
         bSend = pc.checkBox('sm_sendToRv_chk', query=True, value=True)
         smoothData = updSmoothOnCaptureState()
 
-        SCENE_MANAGER.capture(increment=bIncrement, quick=bQuick, sendToRv=bSend,
-                              smoothData=smoothData)
-
+        SCENE_MANAGER.capture(saveScene=(not bQuick), increment=bIncrement, quick=bQuick,
+                              sendToRv=bSend, smoothData=smoothData)
 #        if not bQuick:
 #            doRefreshSceneInfo(args)
     else:
@@ -917,24 +916,5 @@ def doEditCam(*args):
 def doPouet(*args, **kwargs):
     """Best function ever"""
 
-    from pprint import pprint
-
-    print "pouet".center(100, "-")
-
-    print "{}.{}:".format(type(SCENE_MANAGER).__name__, "context")
-    pprint(SCENE_MANAGER.context, width=120)
-
-    for k, pyobj in vars(SG_ENGINE).iteritems():
-
-        if "__" in k:
-            continue
-
-        if k == "cmdtable":
-            continue
-
-        if isinstance(pyobj, dict):
-            print "{}.{}:".format(type(SG_ENGINE).__name__, k)
-            pprint(pyobj, width=120)
-
-    print "prout".center(100, "-")
+    SCENE_MANAGER.logContext()
 

@@ -251,7 +251,7 @@ class SceneManager():
         self.projectname = "zombillenium"
         self.context['damProject'] = damproject.DamProject(self.projectname)
 
-        if self.context['damProject'] == None:
+        if not self.context['damProject']:
             raise RuntimeError("Cannot initialize project '{0}'".format(self.projectname))
 
         mop.setMayaProject(self.projectname)
@@ -617,15 +617,17 @@ class SceneManager():
 
         return mc.workspace(expandName=p)
 
-    def capture(self, increment=True, quick=True, sendToRv=False, smoothData=None):
+    def capture(self, saveScene=False, increment=False, quick=True, sendToRv=False, smoothData=None):
         # BUG pas de son alors que son present dans la scene
         # BUG first frame decalee dupliquee dans les fichier output
         global CAPTURE_INFOS
 
         sSavedFile = None
 
-        sStep = self.context['step']['code']
-        sTask = self.context['task']['content']
+        context = self.context
+
+        sStep = context['step']['code']
+        sTask = context['task']['content']
 
         damShot = self.getDamShot()
         oShotCam = self.getShotCamera(fail=True)
@@ -642,7 +644,7 @@ class SceneManager():
         else:
             CAPTURE_INFOS['task'] = sStep + " | " + sTask
 
-        CAPTURE_INFOS['user'] = self.context['damProject']._shotgundb.currentUser['name']
+        CAPTURE_INFOS['user'] = context['damProject']._shotgundb.currentUser['name']
 
         sCamFile = ""
         if (not quick) and sStep.lower() != "previz 3d":
@@ -680,7 +682,7 @@ class SceneManager():
         CAPTURE_INFOS['start'] = captureStart
         CAPTURE_INFOS['end'] = captureEnd
 
-        if not quick:
+        if saveScene:
             if increment:
                 sSavedFile = self.saveIncrement(force=False)
             else:
@@ -816,8 +818,7 @@ class SceneManager():
         if sendToRv:
             sTag = "playblast"
             if not rvutils.sessionExists(sTag):
-                print 100 * "*"
-                seqId = self.context["entity"]["sg_sequence"]["id"]
+                seqId = context["entity"]["sg_sequence"]["id"]
                 return rvutils.openToSgSequence(seqId, tag=sTag, source=sCapturePath)
             else:
                 sLauncherLoc = osp.dirname(os.environ["Z2K_LAUNCH_SCRIPT"])
@@ -1502,6 +1503,34 @@ class SceneManager():
 
     def showInShotgun(self):
         self.context['damProject']._shotgundb.showInBrowser(self.context['entity'])
+
+    def logContext(self):
+
+        from pprint import pprint
+
+        print "pouet".center(100, "-")
+
+        print "{}.{}:".format(type(self).__name__, "context")
+        pprint(self.context, width=120)
+
+        try:
+            shotgundb = self.context['damProject']._shotgundb
+        except Exception as e:
+            print toStr(e)
+        else:
+            for k, pyobj in vars(shotgundb).iteritems():
+
+                if "__" in k:
+                    continue
+
+                if k == "cmdtable":
+                    continue
+
+                if isinstance(pyobj, dict):
+                    print "{}.{}:".format(type(shotgundb).__name__, k)
+                    pprint(pyobj, width=120)
+
+        print "prout".center(100, "-")
 
 # capture
 CAPTURE_INFOS = {}
