@@ -68,6 +68,11 @@ import dminutes.Z2K_ReleaseTool.modules as ini
 reload(ini)
 from dminutes.Z2K_ReleaseTool.modules import *
 
+from dminutes import miscUtils
+reload (miscUtils)
+
+from dminutes import assetconformation
+reload(assetconformation)
 
 
 
@@ -549,6 +554,20 @@ class checkModule(object):
         if not jpZ.checkSRT(inObjL =controlObjL, verbose=True)[0] :
             boolResult = False
         self.pBar_upd(step= 1,)
+
+
+        # 10   import light rig"
+        self.printF("assetconformation: import light rig", st="t")
+        resultD = assetconformation.importGrpLgt(lgtRig = "lgtRig_character", gui=False, hideLgt = True)
+        # prints -------------------
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
 
         # colors
         print "*btn_CleanObjects:",boolResult
