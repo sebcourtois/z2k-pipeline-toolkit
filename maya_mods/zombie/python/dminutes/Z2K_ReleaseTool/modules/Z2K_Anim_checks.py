@@ -782,7 +782,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-
+        
 
         # colors
         print "*btn_specialSettings:",boolResult
