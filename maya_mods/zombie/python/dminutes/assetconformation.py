@@ -134,6 +134,7 @@ def setSubdiv(GUI= False ):
     if not mc.ls("|asset|grp_geo", l = True):
         logMessage = "#### {:>7}: 'setSubdiv' No '|asset|grp_geo' found".format("Error")
         if GUI == True: raise ValueError(logMessage)
+        print logMessage
         logL.append(logMessage)
         returnB = False
 
@@ -152,6 +153,7 @@ def setSubdiv(GUI= False ):
     if not subdivSets:
         logMessage = "#### {:>7}: 'setSubdiv' No subdivision set could be found (set_subdiv_*). Please create them first".format("Error")
         if GUI == True: raise ValueError(logMessage)
+        print logMessage
         logL.append(logMessage)
         returnB = False
     processedTransL =[]
@@ -196,18 +198,24 @@ def setSubdiv(GUI= False ):
     
     if processedTransL and not skippedTransL:
         logMessage = "#### {:>7}: 'setSubdiv' {} meshes processed".format("Info", len(processedTransL))
-        if GUI == True: print logMessage
+        print logMessage
         logL.append(logMessage)
     if processedTransL and skippedTransL:
         logMessage = "#### {:>7}: 'setSubdiv' {} meshes processed and {} instances skipped ".format("Info", len(processedTransL), len(skippedTransL))
-        if GUI == True: print logMessage
+        print logMessage
         logL.append(logMessage)
 
     if "set_subdiv_init" in subdivSets and mc.sets("set_subdiv_init", query = True) != None:
         logMessage = "#### {:>7}: 'setSubdiv' A geo object is still in the 'set_subdiv_init', please asssign it to a 'set_subdiv*'".format("Error")
         if GUI == True: mc.confirmDialog( title='Error:', message=logMessage, button=['Ok'], defaultButton='Ok' )
+        print logMessage
         logL.append(logMessage)
         returnB = False
+
+    if not logL:
+        logMessage = "#### {:>7}: 'setSubdiv' Donne properly".format("Info")
+        print logMessage
+        logL.append(logMessage)
 
     return dict(returnB=returnB, logL=logL)
 
@@ -480,7 +488,6 @@ class Asset_File_Conformer:
                 print "#### {:>7}: could not find: '{}', shading has not been done yet, let's try using '{}'".format("Error",self.sourceFile, self.sourceFile.replace("Ref","") )
                 self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile+".ma"))
                 self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
-
         else:
             raise ValueError("#### Error: the choosen sourceFile '"+sourceFile+"'' is not correct")
 
