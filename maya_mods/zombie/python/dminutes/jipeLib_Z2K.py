@@ -1163,14 +1163,14 @@ def resetCTR(inObjL=[], userDefined=True, SRT=True, *args, **kwargs):
     for i in cursel:
         print i
         if SRT:
-            if  not checkSRT([i])[0]:
-                # print "    reseting",i
-                try:
-                    cmds.xform(i, ro=(0, 0, 0), t=(0, 0, 0), s=(1, 1, 1))
-                    resetedL.append(i)
-                except Exception, err:
-                    toReturnB = False
-                    debugL.append(err)
+            # if  not checkSRT([i])[0]:
+            # print "    reseting",i
+            try:
+                cmds.xform(i, ro=(0, 0, 0), t=(0, 0, 0), s=(1, 1, 1))
+                resetedL.append(i)
+            except Exception, err:
+                toReturnB = False
+                debugL.append(err)
         if userDefined:
             udAttrL = cmds.listAttr(i, ud=1, k=1)
             if udAttrL:
@@ -2707,7 +2707,7 @@ def improveArcades(*args, **kwargs):
 
             # constraining ctrl head
             cmds.parentConstraint(headCtr,ctrRoot, mo=1)
-            cmds.scaleConstraint(headCtr,ctrRoot, mo=1)
+            # cmds.scaleConstraint(headCtr,ctrRoot, mo=1)
 
             # ----------------------------------------------------------------------------------- parent cst tree
             # get all the plugs on the cst
