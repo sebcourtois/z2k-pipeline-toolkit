@@ -20,9 +20,15 @@ def buttonRefModelingFile(*args):
 def buttonRefAnimFile(*args):
 	r2a.cleanFile()
 	r2a.loadFile(sourceFile ="anim" , reference = True)
+def buttonRefAnimRefFile(*args):
+	r2a.cleanFile()
+	r2a.loadFile(sourceFile ="animRef" , reference = True)
 def buttonRefRenderFile(*args):
 	r2a.cleanFile()
 	r2a.loadFile(sourceFile ="render" , reference = True)
+def buttonRefRenderRefFile(*args):
+	r2a.cleanFile()
+	r2a.loadFile(sourceFile ="renderRef" , reference = True)
 def buttonRemoveAll(*args):
 	r2a.cleanFile()
 
@@ -34,7 +40,7 @@ if mc.window( "fileComparator", exists = True ):
 
 
 window = mc.window( "fileComparator", title="File Comparator", iconName='file Comparator',toolbox = True, sizeable = False )
-mc.window(window, e = True, widthHeight=(260, 110))
+mc.window(window, e = True, widthHeight=(260, 140))
 
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 
@@ -47,7 +53,11 @@ mc.button( label='Modeling', recomputeSize = False, width = 125, c= buttonRefMod
 mc.setParent( '..' )
 mc.flowLayout( )
 mc.button( label='Anim', recomputeSize = False, width = 125, c= buttonRefAnimFile )
+mc.button( label='Anim Ref', recomputeSize = False, width = 125, c= buttonRefAnimRefFile )
+mc.setParent( '..' )
+mc.flowLayout( )
 mc.button( label='Render', recomputeSize = False, width = 125, c= buttonRefRenderFile )
+mc.button( label='Render Ref', recomputeSize = False, width = 125, c= buttonRefRenderRefFile )
 mc.setParent( '..' )
 mc.flowLayout()
 mc.button( label='Remove All', recomputeSize = False, width = 250, c= buttonRemoveAll )

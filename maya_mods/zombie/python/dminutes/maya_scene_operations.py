@@ -15,10 +15,10 @@ from dminutes.shotconformation import removeRefEditByAttr
 from pytaya.util.sysutils import withSelectionRestored
 from collections import OrderedDict
 from pytaya.core.transform import matchTransform
-from pytd.util.fsutils import jsonWrite, copyFile
-import filecmp
+from pytd.util.fsutils import jsonWrite, copyFile, pathResolve
 from zomblib.editing import makeFilePath, movieToJpegSequence
 
+pc.mel.source("AEimagePlaneTemplate.mel")
 
 CAMPATTERN = 'cam_sq????_sh?????:*'
 CAM_GLOBAL = 'Global_SRT'
@@ -127,9 +127,6 @@ def getImagePlaneItems(create=False):
                                          showInAllViews=False,
                                          name="imgPlane_animatic")
             oImgPlane.rename("imgPlane_animatic")
-
-            mc.optionMenu("AELookThroughCameraMenu", e=True, enable=True)
-            pc.mel.AEchangeLookThroughCamera(oImgPlane.name())
     else:
         oCamXfm = oImgPlane.getParent(3)
         oCamShape = oCamXfm.getShape()
@@ -140,13 +137,13 @@ def getImagePlaneItems(create=False):
     pc.setAttr(sImgPlane + ".fit", 1)
     pc.setAttr(sImgPlane + ".useFrameExtension", 1)
     #pc.setAttr(sImgPlane + ".frameOffset", -100)
-    pc.setAttr(sImgPlane + ".frameIn", 101)
-    pc.setAttr(sImgPlane + ".frameOut", 1000)
+    #pc.setAttr(sImgPlane + ".frameIn", 101)
+    #pc.setAttr(sImgPlane + ".frameOut", 1000)
 
     sCamShape = oCamShape.name()
     pc.setAttr(sCamShape + ".displayFilmGate", 1)
     pc.setAttr(sCamShape + ".displayGateMask", 1)
-    pc.setAttr(sCamShape + ".overscan", 1.2)
+    pc.setAttr(sCamShape + ".overscan", 1.3)
     pc.setAttr(sCamShape + ".displaySafeTitle", 1)
     pc.setAttr(sCamShape + ".displaySafeAction", 1)
     pc.setAttr(sCamShape + ".displayGateMaskColor", [0, 0, 0])
@@ -833,6 +830,13 @@ def init_previz_scene(sceneManager):
 
     if osp.isfile(sPubMoviePath):
 
+        if oImgPlane:
+            sCurImgPlanePath = pathResolve(oImgPlane.getAttr("imageName"))
+            if osp.normcase(sCurImgPlanePath) != osp.normcase(sFirstImgPath):
+                print "deleting", oImgPlaneCam
+                pc.delete(oImgPlaneCam);pc.refresh()
+                oImgPlane, oImgPlaneCam = None, None
+
         pc.currentTime(101)
         pc.refresh()
 
@@ -845,9 +849,12 @@ def init_previz_scene(sceneManager):
 
         bImgSeqFound = osp.exists(sFirstImgPath)
         if bImgSeqFound and bMovieCopied:
+
             if oImgPlaneCam:
+                print "deleting", oImgPlaneCam
                 pc.delete(oImgPlaneCam);pc.refresh()
-                oImgPlaneCam = None
+                oImgPlane, oImgPlaneCam = None, None
+
             print "deleting", osp.dirname(sFirstImgPath)
             shutil.rmtree(osp.dirname(sFirstImgPath), ignore_errors=False)
 
@@ -855,16 +862,24 @@ def init_previz_scene(sceneManager):
             if not osp.exists(sImgSeqDirPath):
                 os.makedirs(sImgSeqDirPath)
             movieToJpegSequence(sLocMoviePath, sImgSeqDirPath, "animatic")
-
-        if not (oImgPlaneCam and oImgPlane):
-            oImgPlane, oImgPlaneCam = getImagePlaneItems(create=True)
-
-        pc.imagePlane(oImgPlane, edit=True, fileName=sFirstImgPath)
-        oImgPlane.setAttr("frameOffset", -100)
-        pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
     else:
         pc.displayError("Animatic movie not found: '{}'".format(sPubMoviePath))
-        oImgPlane.setAttr("imageName", sFirstImgPath, type="string")
+
+    if not (oImgPlaneCam and oImgPlane):
+        oImgPlane, oImgPlaneCam = getImagePlaneItems(create=True)
+
+    if oImgPlane:
+        try:
+            pc.imagePlane(oImgPlane, edit=True, fileName=sFirstImgPath)
+        except RuntimeError as e:
+            if not "Unable to load the image file" in e.message:
+                raise
+        try:
+            #offset +1 because ffmpeg duplicates the first frame during movie conversion to jpegs.
+            oImgPlane.setAttr("frameOffset", (-100 + 1))
+            pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
+        except Exception as e:
+            pc.displayWarning(toStr(e))
 
     arrangeViews(oShotCam.getShape(), oImgPlaneCam, oStereoCam)
 
@@ -1083,7 +1098,7 @@ def iterPanelsFromCam(oCamXfm, visible=False):
 
     for sPanel in mc.getPanel(type="modelPanel"):
         sPanelCam = mc.modelPanel(sPanel, q=True, camera=True)
-        print sPanel, sPanelCam, (sCamXfm, sCamShape)
+        #print sPanel, sPanelCam, (sCamXfm, sCamShape)
         if sPanelCam in (sCamXfm, sCamShape):
             if sVizPanels and (sPanel not in sVizPanels):
                 continue

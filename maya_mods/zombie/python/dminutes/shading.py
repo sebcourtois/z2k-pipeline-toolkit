@@ -138,7 +138,7 @@ def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True
     return wrongShadEngine if wrongShadEngine != [] else  None
 
 
-def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
+def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False , inParent = ""):
     """
     conform the shading tree attached to the selected shading engine , or all the shading trees , depending on the shadEngineList value.
     The initial shading engines are skipped so the ones that do not follow the proper 
@@ -171,11 +171,30 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
     if "initialShadingGroup" in shadEngineList:
         shadEngineList.remove("initialShadingGroup")
 
-    if not shadEngineList :
-        logMessage = "#### {:>7}: 'checkShaderName' No shading engine to conform".format("Info")
-        if GUI == True: print logMessage
-        logL.append(logMessage)
-        return dict(resultB=resultB, logL=logL, correctShadEngine=correctShadEngine, wrongShadEngine=wrongShadEngine)
+    if inParent :
+        meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = inParent)
+        geoL = list(meshList)
+        geoL.extend(instanceList)
+        shapeL = mc.ls(mc.listRelatives(geoL, allDescendents = True, fullPath = True, type = "mesh", ni=True),ni=True,l=True)
+        shadEngineList = mc.listConnections(shapeL,destination=True, type="shadingEngine")
+
+        shapeWithoutShaderL=[]
+        for each in shapeL:
+            eachShadEngineL = mc.listConnections(each,destination=True, type="shadingEngine")
+            if not eachShadEngineL or "initialParticleSE" in eachShadEngineL or"initialShadingGroup"in eachShadEngineL:
+                shapeWithoutShaderL.append(each)
+                if "initialParticleSE" in shadEngineList:
+                    shadEngineList.remove("initialParticleSE")
+                if "initialShadingGroup" in shadEngineList:
+                    shadEngineList.remove("initialShadingGroup")
+
+        if shapeWithoutShaderL:
+            logMessage = "#### {:>7}: 'checkShaderName' {:>3} shapes have no shader or use a maya initial shader: '{}'".format("Error",len(shapeWithoutShaderL), shapeWithoutShaderL)
+            if GUI == True: print logMessage
+            logL.append(logMessage)
+            resultB = False
+
+
 
     unSoloDone = False
     for each in shadEngineList:
@@ -193,6 +212,7 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
             if not preview_shader or not render_shader:
                 logMessage = "#### {:>7}: 'checkShaderName' '{}' preview_shader or render_shader is missing".format("Error", each)
                 if GUI == True: print logMessage
+                resultB = False
                 logL.append(logMessage)
                 wrongShadEngine.append(each)
                 continue
@@ -205,6 +225,7 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
                 if GUI == True: print logMessage
                 logL.append(logMessage)
                 wrongShadEngine.append(each)
+                resultB = False
                 continue
             #check that the type of the preview and render nodes is permitted
             preview_shader_type = mc.nodeType(preview_shader)
@@ -214,6 +235,7 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
                 if GUI == True: print logMessage
                 logL.append(logMessage)
                 wrongShadEngine.append(each)
+                resultB = False
                 continue
 
             for item in mc.listHistory (preview_shader):
@@ -288,7 +310,7 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False ):
                             wrongShadEngine.append(each)
 
     correctShadEngine =list(set(shadEngineList)-set(wrongShadEngine))
-    mc.refresh (suspend= False)
+    mc.refresh ()
 
     if wrongShadEngine:
         logMessage = "#### {:>7}: 'checkShaderName' {:>3} shader(s) not conform: {}".format("Error",len(wrongShadEngine),wrongShadEngine)
@@ -1579,7 +1601,7 @@ def importLightRig(lgtRig = "lgtRig_outdoor"):
     mc.file( lgtRigFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace="lgtRig", preserveReferences= True )
 
     print "#### {:>7}: reference '{}'".format("Info",envFilePath_exp)
-    mc.file( envFilePath_exp, type= "mayaAscii", ignoreVersion=True, namespace="tmpEnv", preserveReferences= True, reference = True )
+    mc.file( envFilePath, type= "mayaAscii", ignoreVersion=True, namespace="tmpEnv", preserveReferences= True, reference = True )
  
 
 

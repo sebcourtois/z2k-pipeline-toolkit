@@ -431,7 +431,8 @@ class SceneManager():
             self.assertResourcesMatchUp(sceneInfos)
 
         scnPubFile = sceneInfos["pub_file"]
-        scnPubFile.assertEditedVersion(sceneInfos["priv_file"])
+        scnPubFile.assertEditedVersion(sceneInfos["priv_file"], outcomes=False,
+                                       remember=False)
         try:
             scnPubFile.ensureLocked(autoLock=False)
         except RuntimeError as e:
@@ -951,13 +952,13 @@ class SceneManager():
 
     def assertBeforePublish(self):
 
-        proj = self.context['damProject']
+        #proj = self.context['damProject']
 
         currentScene = os.path.abspath(pc.sceneName())
         if not currentScene:
             raise AssertionError("Please save your scene as a valid private working scene (Edit if needed)")
 
-        curScnFile = proj.entryFromPath(currentScene, fail=True)
+        #curScnFile = proj.entryFromPath(currentScene, fail=True)
 
         sFixMsg = " Please, apply a 'Shot Setup' and retry."
         oShotCam = None
@@ -970,34 +971,17 @@ class SceneManager():
             if not oShotCam.isReferenced():
                 raise AssertionError("Shot Camera is NOT a reference !" + sFixMsg)
 
-        obsoleteList = []
-        for sRcName, outcomeFile in curScnFile.iterEditedOutcomeFiles():
-            if not outcomeFile.exists():
-                continue
-            delta = curScnFile.fsMtime - outcomeFile.fsMtime
-            if delta > timedelta(0, 120):
-                obsoleteList.append((sRcName, outcomeFile))
-
-        if obsoleteList:
-            sMsg = "Some outcome files are OBSOLETE:\n"
-            for sRcName, outcomeFile in obsoleteList:
-                sFixMsg = ""
-                if sRcName.endswith("capture"):
-                    sFixMsg = "Do a 'Save And Capture' and retry."
-                sMsg += "\n   - {}".format(' : '.join(("'{}'".format(sRcName), sFixMsg)))
-            raise AssertionError(sMsg)
-
     def publish(self):
         try:
             self.assertBeforePublish()
         except AssertionError as e:
-            pc.confirmDialog(title='SORRY !'
-                             , message=toStr(e)
-                            , button=["OK"]
-                            , defaultButton="OK"
-                            , cancelButton="OK"
-                            , dismissString="OK"
-                            , icon="critical")
+            pc.confirmDialog(title='SORRY !',
+                             message=toStr(e),
+                             button=["OK"],
+                             defaultButton="OK",
+                             cancelButton="OK",
+                             dismissString="OK",
+                             icon="critical")
             return
 
         rslt = publishCurrentScene(dependencies=False,

@@ -240,7 +240,8 @@ def publishCurrentScene(*args, **kwargs):
     else:
         proj = projectFromScene(sCurScnPath)
 
-    _, curPubFile = proj.assertEditedVersion(sCurScnPath)
+    res = proj.assertEditedVersion(sCurScnPath)
+    curPubFile = res["public_file"]
     curPubFile.ensureLocked(autoLock=False)
 
     try:

@@ -1052,7 +1052,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="sm_saveWip_bt">
+             <widget class="QPushButton" name="sm_incrementSave_bt">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                 <horstretch>0</horstretch>
