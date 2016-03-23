@@ -22,7 +22,7 @@ def run():
 
     sgEngine = ShotgunEngine("zombillenium")
 
-    print ("Uploading '{}'...\n          ...onto '{}' field of {}(id={})."
+    print ("\n\nUploading '{}'...\n          ...onto '{}' field of {}(id={})."
            .format(ns.filePath, ns.fieldName , ns.entityType, ns.entityId))
 
     print "\nDO NOT CLOSE THIS WINDOW ! It will close by itself once the upload succeeded.."
