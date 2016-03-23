@@ -426,7 +426,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=10, e=True)
+        self.pBar_upd(step=1, maxValue=9, e=True)
 
         meshCacheObjL = jpZ.getSetContent(inSetL=["set_meshCache"] )
         controlObjL = jpZ.getSetContent(inSetL=["set_control"] )
@@ -563,19 +563,7 @@ class checkModule(object):
 
         
 
-        # 10   import light rig"
-        self.printF("assetconformation: import light rig", st="t")
-        resultD = assetconformation.importGrpLgt(lgtRig = "lgtRig_character", gui=False, hideLgt = True)
 
-        # prints -------------------
-        self.printF(resultD["resultB"], st="r")
-        for each in resultD["logL"]:
-            self.printF( each )
-
-        # --------------------------
-        if not resultD["resultB"]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
 
 
         # colors
@@ -590,7 +578,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=16, e=True)
+        self.pBar_upd(step=1, maxValue=17, e=True)
 
 
         # 1 connectVisibility ()
@@ -806,6 +794,21 @@ class checkModule(object):
 
 
         
+        # 17   import light rig"
+        self.printF("assetconformation: import light rig", st="t")
+        resultD = assetconformation.importGrpLgt(lgtRig = "lgtRig_character", gui=False, hideLgt = True)
+
+        # prints -------------------
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
 
         # colors
         print "*btn_specialSettings:",boolResult
