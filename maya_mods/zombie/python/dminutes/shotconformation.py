@@ -1,5 +1,10 @@
 import maya.cmds as mc
 
+from dminutes import miscUtils
+reload (miscUtils)
+
+
+
 def removeRefEditByAttr(inRefNodeL=[], attr="smoothDrawType", cmd="setAttr", GUI=True):
     resultB = True
     logL = []
@@ -57,8 +62,5 @@ def removeRefEditByAttr(inRefNodeL=[], attr="smoothDrawType", cmd="setAttr", GUI
             print each
 
     return resultB, logL
-
-
-
 
 
