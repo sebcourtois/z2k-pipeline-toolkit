@@ -1025,7 +1025,7 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
     """
     outSucceedB = True
     outLogL = []
-    mc.refresh()
+    mc.refresh(suspend = True)
     undeletable = ['sideShape','frontShape','front','sideShape','side','perspShape','perspShape','persp','topShape','top','topShape','frontShape','characterPartition',
                 'defaultObjectSet','initialShadingGroup','defaultLightSet','renderPartition','initialParticleSE','strokeGlobals','defaultRenderQuality','defaultRenderingList1',
                 'defaultTextureList1','renderLayerManager','particleCloud1','hyperGraphInfo','shaderGlow1','hardwareRenderingGlobals','globalCacheControl','postProcessList1',
@@ -1131,7 +1131,7 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
         logMessage ="#### {:>7}: 'softClean' has deleted {} namespaces: {}".format("Info",len(returnL[1]),returnL[1])
         if GUI == True : print logMessage
         outLogL.append(logMessage)
-
+    mc.refresh(suspend = False)
     return outSucceedB, outLogL
 
 
