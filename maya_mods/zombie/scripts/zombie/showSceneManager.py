@@ -9,4 +9,4 @@ if inDevMode():
     reload(sceneManager)
     reload(sceneManagerUI)
 
-sceneManagerUI.sceneManagerUI()
+sceneManagerUI.launch()
