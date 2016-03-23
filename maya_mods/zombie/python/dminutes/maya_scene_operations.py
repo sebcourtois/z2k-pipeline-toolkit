@@ -15,7 +15,7 @@ from dminutes.shotconformation import removeRefEditByAttr
 from pytaya.util.sysutils import withSelectionRestored
 from collections import OrderedDict
 from pytaya.core.transform import matchTransform
-from pytd.util.fsutils import jsonWrite, copyFile
+from pytd.util.fsutils import jsonWrite, copyFile, pathResolve
 from zomblib.editing import makeFilePath, movieToJpegSequence
 
 pc.mel.source("AEimagePlaneTemplate.mel")
@@ -127,9 +127,6 @@ def getImagePlaneItems(create=False):
                                          showInAllViews=False,
                                          name="imgPlane_animatic")
             oImgPlane.rename("imgPlane_animatic")
-
-            mc.optionMenu("AELookThroughCameraMenu", e=True, enable=True)
-            pc.mel.AEchangeLookThroughCamera(oImgPlane.name())
     else:
         oCamXfm = oImgPlane.getParent(3)
         oCamShape = oCamXfm.getShape()
@@ -833,6 +830,13 @@ def init_previz_scene(sceneManager):
 
     if osp.isfile(sPubMoviePath):
 
+        if oImgPlane:
+            sCurImgPlanePath = pathResolve(oImgPlane.getAttr("imageName"))
+            if osp.normcase(sCurImgPlanePath) != osp.normcase(sFirstImgPath):
+                print "deleting", oImgPlaneCam
+                pc.delete(oImgPlaneCam);pc.refresh()
+                oImgPlane, oImgPlaneCam = None, None
+
         pc.currentTime(101)
         pc.refresh()
 
@@ -845,9 +849,12 @@ def init_previz_scene(sceneManager):
 
         bImgSeqFound = osp.exists(sFirstImgPath)
         if bImgSeqFound and bMovieCopied:
+
             if oImgPlaneCam:
+                print "deleting", oImgPlaneCam
                 pc.delete(oImgPlaneCam);pc.refresh()
-                oImgPlaneCam = None
+                oImgPlane, oImgPlaneCam = None, None
+
             print "deleting", osp.dirname(sFirstImgPath)
             shutil.rmtree(osp.dirname(sFirstImgPath), ignore_errors=False)
 
@@ -855,28 +862,24 @@ def init_previz_scene(sceneManager):
             if not osp.exists(sImgSeqDirPath):
                 os.makedirs(sImgSeqDirPath)
             movieToJpegSequence(sLocMoviePath, sImgSeqDirPath, "animatic")
+    else:
+        pc.displayError("Animatic movie not found: '{}'".format(sPubMoviePath))
 
-        if not (oImgPlaneCam and oImgPlane):
-            oImgPlane, oImgPlaneCam = getImagePlaneItems(create=True)
+    if not (oImgPlaneCam and oImgPlane):
+        oImgPlane, oImgPlaneCam = getImagePlaneItems(create=True)
 
+    if oImgPlane:
         try:
             pc.imagePlane(oImgPlane, edit=True, fileName=sFirstImgPath)
         except RuntimeError as e:
             if not "Unable to load the image file" in e.message:
                 raise
-
-        #offset +1 because ffmpeg duplicates the first frame during movie conversion to jpegs.
-        oImgPlane.setAttr("frameOffset", (-100 + 1))
-        pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
-    else:
-        pc.displayError("Animatic movie not found: '{}'".format(sPubMoviePath))
         try:
-            oImgPlane.setAttr("imageName", sFirstImgPath, type="string")
-        except RuntimeError as e:
-            if not "Unable to load the image file" in e.message:
-                raise
-        oImgPlane.setAttr("frameOffset", -100)
-        pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
+            #offset +1 because ffmpeg duplicates the first frame during movie conversion to jpegs.
+            oImgPlane.setAttr("frameOffset", (-100 + 1))
+            pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
+        except Exception as e:
+            pc.displayWarning(toStr(e))
 
     arrangeViews(oShotCam.getShape(), oImgPlaneCam, oStereoCam)
 
