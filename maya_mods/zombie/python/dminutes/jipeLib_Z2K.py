@@ -857,7 +857,7 @@ def checkBaseStructure(*args, **kwargs):
         return toReturnB, debugD
 
 def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig", "grp_geo"],
-        additionalL=["grp_placeHolders"], *args, **kwargs):
+        additionalL=["grp_placeHolders","grp_light"], *args, **kwargs):
         """ Description: check inside the asset_gp
             Return : [result,debugDict]
             Dependencies : cmds - 
@@ -868,6 +868,9 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig", "grp_geo"],
         sceneName = os.path.basename(cmds.file(q=1, l=1)[0])
         if sceneName[:3] in ["set"]:
             print "it's a set"
+            extendedL.extend(additionalL)
+        if "render" in sceneName.split("_")[3]:
+            print "it's a render asset"
             extendedL.extend(additionalL)
         toReturnB = False
         debugD = {}
