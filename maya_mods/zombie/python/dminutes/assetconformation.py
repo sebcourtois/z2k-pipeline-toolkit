@@ -283,7 +283,7 @@ def setShadingMask(selectFailingNodes = False, gui = True):
     dmnMask05_G = []# yeux, custom
     dmnMask05_B = []# bouches, custom
 
-    dmnMask06_R = []# shading decor custom, gradient sourcil sur aurelien et francis
+    dmnMask06_R = []# shading decor custom, gradient sourcil sur aurelien et francis, ombre orbites sirus
     dmnMask06_G = []# shading decor custom
     dmnMask06_B = []# shading decor custom
 
@@ -440,8 +440,13 @@ class Asset_File_Conformer:
         if mc.ls("|asset"):        
             self.mainFilePath = mc.file(q=True, list = True)[0]
             self.mainFilePathElem = self.mainFilePath.split("/")
-            self.assetName = self.mainFilePathElem[-2]
-            self.assetType = self.mainFilePathElem[-3]
+            if self.mainFilePathElem[-2] != "ref":
+                self.assetName = self.mainFilePathElem[-2]
+                self.assetType = self.mainFilePathElem[-3]
+            else:
+                self.assetName = self.mainFilePathElem[-3]
+                self.assetType = self.mainFilePathElem[-4]
+
             self.assetFileType = self.mainFilePathElem[-1].split("-")[0].split("_")[-1]
             self.sourceList =[]
             self.targetList =[]
@@ -456,36 +461,36 @@ class Asset_File_Conformer:
 
         mc.refresh()
 
-        if  not self.mainFilePathElem[-4] == "asset":
+        if  not (self.mainFilePathElem[-4] == "asset" or self.mainFilePathElem[-5] == "asset"):
             raise ValueError("#### Error: you are not working in an 'asset' structure directory")
 
         if sourceFile in ["render","anim","modeling","previz"]:
             self.sourceFile = sourceFile
             self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile+".ma"))
             self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
+            fileType ="mayaAscii"
 
-        elif sourceFile in ["renderRef"]:
+        elif sourceFile in ["renderRef", "animRef"]:
             self.sourceFile = sourceFile
             self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,"ref",self.assetName+"_"+self.sourceFile+".mb"))
             self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
+            fileType ="mayaBinary"
             print self.renderFilePath_exp
             if not os.path.isfile(self.renderFilePath_exp):
                 print "#### {:>7}: could not find: '{}', shading has not been done yet, let's try using '{}'".format("Error",self.sourceFile, self.sourceFile.replace("Ref","") )
-                self.sourceFile = self.sourceFile.replace("Ref","")
                 self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile+".ma"))
                 self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
-            else:
-                self.sourceFile = self.sourceFile.replace("Ref","")
+
         else:
             raise ValueError("#### Error: the choosen sourceFile '"+sourceFile+"'' is not correct")
 
 
         if reference:
             print "#### {:>7}: reference '{}'".format("Info",self.renderFilePath_exp)
-            mc.file( self.renderFilePath_exp, type= "mayaAscii", ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True, reference = True )
+            mc.file( self.renderFilePath_exp, type= fileType, ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True, reference = True )
         else:
             print "#### {:>7}: importing '{}'".format("Info",self.renderFilePath_exp)
-            mc.file( self.renderFilePath_exp, i= True, type= "mayaAscii", ignoreVersion=True, namespace=self.sourceFile, preserveReferences= False )
+            mc.file( self.renderFilePath_exp, i= True, type= fileType, ignoreVersion=True, namespace=self.sourceFile, preserveReferences= False )
         mc.refresh()
 
 
@@ -498,7 +503,7 @@ class Asset_File_Conformer:
 
         refNodeList = mc.ls(type = "reference")
         for each in refNodeList:
-            if re.match('^render[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^anim[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^modeling[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^previz[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each):
+            if re.match('^render[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^anim[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^renderRef[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^animRef[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^modeling[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^previz[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each):
                 fileRef= pm.FileReference(each)
                 #fileRef = mc.referenceQuery(each,filename=True)# other way to do it
                 try:
@@ -511,14 +516,14 @@ class Asset_File_Conformer:
 
         nameSpaceList = mc.namespaceInfo(listOnlyNamespaces=True,r=True)
         for each in nameSpaceList:
-            if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each) or re.match('^previz[0-9]{0,3}', each):
+            if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^renderRef[0-9]{0,3}', each) or re.match('^animRef[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each) or re.match('^previz[0-9]{0,3}', each):
                 node2deleteList = mc.ls(each+":*")
                 for node2delete in node2deleteList:
                     mc.lockNode(node2delete,lock = False)
 
         nameSpaceList = mc.namespaceInfo(listOnlyNamespaces=True)
         for each in nameSpaceList:
-            if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each) or re.match('^previz[0-9]{0,3}', each):
+            if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^renderRef[0-9]{0,3}', each) or re.match('^animRef[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each) or re.match('^previz[0-9]{0,3}', each):
                 mc.namespace(removeNamespace=each, deleteNamespaceContent=True)
 
                 logMessage ="#### {:>7}: 'cleanFile' removing namespace and its content: '{:<10}' ".format("Info",each)
@@ -526,7 +531,7 @@ class Asset_File_Conformer:
                 outLogL.append(logMessage)
 
         if not outLogL:
-            logMessage ="#### {:>7}: 'cleanFile' nothing to clean, no '_render', '_anim', '_previz' or '_modeling' reference found".format("Info",each)
+            logMessage ="#### {:>7}: 'cleanFile' nothing to clean, no '_render', '_renderRef','_anim','_animRef', '_previz' or '_modeling' reference found".format("Info",each)
             if verbose == True : print logMessage
             outLogL.append(logMessage)
         mc.refresh()
@@ -1124,7 +1129,7 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
 
 
 
-def importGrpLgt(lgtRig = "lgtRig_character", gui=True):
+def importGrpLgt(lgtRig = "lgtRig_character", gui=True, hideLgt = False):
 
     log = miscUtils.LogBuilder(gui=gui, funcName ="importGrpLgt")
 
@@ -1174,6 +1179,9 @@ def importGrpLgt(lgtRig = "lgtRig_character", gui=True):
 
     mc.lightlink( light=lgtDefault, object=shadingEngine2LinkList )
     log.printL("i", "'{}' light linked  to '{}' shaders".format(lgtDefault, len(shadingEngine2LinkList)))
+    if hideLgt:
+        mc.hide("|asset|grp_light")
+
 
     return dict(resultB=log.resultB, logL=log.logL)
 

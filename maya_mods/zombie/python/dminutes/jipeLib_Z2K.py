@@ -290,6 +290,19 @@ def waiter (func, *args, **kwargs):
     return deco
 
 # 3D maya functions ---------------------------
+def getCstActiveWeightPlugs(theCst,*args, **kwargs):
+    print "getCstActiveWeightPlugs()"
+    activeTarget = []
+    # get weight plugs 
+    for i in cmds.listAttr( theCst+".target[:]",multi=1):
+        if "targetParentMatrix" in i:
+            if cmds.getAttr(theCst + "."+ i):
+                print "    theCst=",i,cmds.getAttr(theCst+"."+i)
+                activeTarget.append(theCst+"."+i.split(".targetParentMatrix",1)[0]+".targetWeight" )
+    print "activeTarget=", activeTarget
+    return activeTarget
+
+
 def Ltest(objL, *args, **kwargs):
     # old way
     # if type(objL) is not list:
@@ -547,7 +560,7 @@ def getSetContent (inSetL=[], *args, **kwargs):
         objL = []
         for i in inSetL:
             if cmds.objExists(i):
-                objL = cmds.listConnections(i + "." + "dagSetMembers", source=1)
+                objL = cmds.listConnections(i + "." + "dagSetMembers", source=1,d=0)
                 if objL:
                     outL.extend(objL)
         return outL
@@ -747,7 +760,7 @@ def z2k_selAll_asset_Ctr(*args, **kwargs):
     return toSel
 
 #--------------------- CHECK FUNCTION ------------------------------
-def checkBaseStructure( *args, **kwargs):
+def checkBaseStructure(*args, **kwargs):
         """
         Descrition: Check if th Basic hierachy is ok
         Return: [result,debugDict]
@@ -767,18 +780,9 @@ def checkBaseStructure( *args, **kwargs):
         baseObjL = ["asset", ]
         baseSetL = ["set_meshCache", "set_control", ]
         additionnalSetL = ["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"]
-        if "baseLayerL" in kwargs.keys():
-            baseLayerL = kwargs["baseLayerL"]
-        else:
-            baseLayerL = ["control", "geometry"]
+        baseLayerL = ["control", "geometry"]
         extraLayerL = ["instance"]
-
-        if "baseCTRL" in kwargs.keys():
-            baseCTRL = kwargs["baseCTRL"]
-        else:
-            baseCTRL = ["BigDaddy", "BigDaddy_NeutralPose", "Global_SRT", "Local_SRT", "Global_SRT_NeutralPose", "Local_SRT_NeutralPose"]
-
-
+        baseCTRL = ["BigDaddy", "BigDaddy_NeutralPose", "Global_SRT", "Local_SRT", "Global_SRT_NeutralPose", "Local_SRT_NeutralPose"]
         AllBaseObj = baseLayerL + baseObjL + baseSetL
         print tab + "AllBaseObj=", AllBaseObj
         topObjL = list(set(cmds.ls(assemblies=True,)) - set(baseExcludeL))
@@ -865,9 +869,6 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig", "grp_geo"],
         if sceneName[:3] in ["set"]:
             print "it's a set"
             extendedL.extend(additionalL)
-        if "render" in sceneName.split("_")[3]:
-            print "it's a render asset"
-            extendedL.extend(additionalL)
         toReturnB = False
         debugD = {}
         tab = "    "
@@ -905,7 +906,7 @@ def Apply_Delete_setSubdiv (applySetSub=True, toDelete=["set_subdiv_0", "set_sub
     setSub = False
     if applySetSub:
         try:
-            assetconformation.setSubdiv(GUI = False)
+            assetconformation.setSubdiv()
             setSub = True
         except:
             print "    No setSubDiv to Apply in the scene"
@@ -1015,7 +1016,7 @@ def isKeyed (inObj, *args, **kwargs):
                                 for attr in attrL:
                                     attrN = inObj + "." + attr
                                     if cmds.connectionInfo(attrN, isDestination=True):
-                                        conL = cmds.listConnections(attrN, s=True, t="animCurve")
+                                        conL = cmds.listConnections(attrN, s=True, d=0,t="animCurve")
                                         # print "conL=", conL
                                         debugD[attrN] = conL
                                         toReturnB = True
@@ -1162,14 +1163,14 @@ def resetCTR(inObjL=[], userDefined=True, SRT=True, *args, **kwargs):
     for i in cursel:
         print i
         if SRT:
-            if  not checkSRT([i])[0]:
-                # print "    reseting",i
-                try:
-                    cmds.xform(i, ro=(0, 0, 0), t=(0, 0, 0), s=(1, 1, 1))
-                    resetedL.append(i)
-                except Exception, err:
-                    toReturnB = False
-                    debugL.append(err)
+            # if  not checkSRT([i])[0]:
+            # print "    reseting",i
+            try:
+                cmds.xform(i, ro=(0, 0, 0), t=(0, 0, 0), s=(1, 1, 1))
+                resetedL.append(i)
+            except Exception, err:
+                toReturnB = False
+                debugL.append(err)
         if userDefined:
             udAttrL = cmds.listAttr(i, ud=1, k=1)
             if udAttrL:
@@ -1542,7 +1543,7 @@ def cleanDisplayLayerWithSet (tableD={"set_meshCache":["geometry", 2, 0], "set_c
     # rebuild with given sets
     for theSet, paramL in tableD.iteritems():
         if cmds.objExists(theSet):
-            inObjL = cmds.listConnections(theSet + ".dagSetMembers", source=1)
+            inObjL = cmds.listConnections(theSet + ".dagSetMembers", source=1, d=0)
             if inObjL:
                 createDisplayLayer (n=paramL[0], inObjL=inObjL, displayType=paramL[1], hideOnPlayback=paramL[2])
                 debugL.append(theSet + " :DONE")
@@ -1593,7 +1594,7 @@ def CleanDisconnectedNodes(*args, **kwargs):
 
 def deleteActiveBlendShape_grp(*args, **kwargs):
     print "deleteActiveBlendShape_grp()"
-
+    # old not in use
     toReturnB = False
     try:
         cmds.delete("grp_activeBS")
@@ -1615,13 +1616,13 @@ def deleteActiveBlendShape_grp(*args, **kwargs):
 def get_BS_TargetObjD(BS_Node="", *args, **kwargs):
     # construction correspondance dictionnary {ObjName:corresponding BS index}
 
-    connectedL = cmds.listConnections(BS_Node, d=1, t="mesh", skipConversionNodes=1, p=1)
+    connectedL = cmds.listConnections(BS_Node, d=1,s=0, t="mesh", skipConversionNodes=1, p=1)
     # print connectedL
     outDict = {}
     if connectedL:
         for i in connectedL:
             if "worldMesh" in i:
-                conL = cmds.listConnections(i, s=1, p=1)
+                conL = cmds.listConnections(i,d=0, s=1, p=1)
                 for j in conL:
                     if BS_Node in j:
                         index = j.split("inputTargetGroup[", 1)[-1].split("]", 1)[0]
@@ -1647,7 +1648,17 @@ def getTypeInHierarchy(cursel=[], theType="mesh", *args, **kwargs):
     return listOut
 
 
+def chr_delete_BS_active_group (*args, **kwargs):
+    # delete le group " BS_ACTIVES_grp"
+    debugL = []
+    for i in ["BS_ACTIVES_grp","imported_gp"]:
+        try:
+            cmds.delete (i)
 
+        except Exception, err:
+            print err
+            debugL.append("    -nothing to delete")
+    return True, debugL
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
 # apply special settings CHR / fixe TK rigs
@@ -1719,8 +1730,26 @@ def chr_UnlockForgottenSRT():
         Dependencies : cmds - 
     """
 
-    faceL = ['Right_LowerEye_2_Ctrl', 'Noze_Main_Ctrl', 'Right_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_EyeBrow_in_1', 'Right_Eye', 'Left_nostril', 'Right_Eyelid_In', 'Left_Brow_ridge_out', 'Left_EyeBrow_out', 'Right_EyeBrow_out_1', 'Left_EyeBrow_Global', 'Left_LowerEye_0_Ctrl', 'Left_Brow_ridge_out_1', 'Right_UpperEye_1_Ctrl', 'Right_LowerEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Left_Eye', 'Left_Cheek', 'Left_EyeBrow_in', 'Left_CheekBone', 'EyeBrow_Middle', 'Right_nostril', 'Right_Brow_ridge_out_1', 'Left_EyeBrow_out_1', 'Left_Brow_ridge_in', 'Right_LowerEye_3_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_out', 'Left_LowerEye_3_Ctrl', 'Right_Brow_ridge_in', 'Right_CheekBone', 'Right_Cheek', 'Left_UpperEye_1_Ctrl', 'Right_Brow_ridge_in_1', 'Right_Ear_Bone_Ctrl', 'Right_UpperEye_3_Ctrl', 'Left_Eyelid_Out', 'Right_EyeBrow_in', 'Left_UpperLid_Main_Ctrl', 'Left_UpperEye_0_Ctrl', 'Left_LowerEye_2_Ctrl', 'Right_EyeBrow_in_1', 'Left_Eye_Bulge', 'Left_Eyelid_In', 'Right_Brow_ridge_out', 'Right_UpperLid_Main_Ctrl', 'Left_UpperEye_3_Ctrl', 'Left_Brow_ridge_in_1', 'Left_Ear_Bone_Ctrl', 'Right_Eyelid_Out', 'Right_LowerLid_Main_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_Base_Depressor1', 'Right_Bottom_Teeth', 'Right_UpperLip_1_Ctrl', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Right_LowerLip_1_Ctrl', 'Top_Teeth', 'Tongue_1', 'Tongue_0', 'Tongue_3', 'Tongue_2', 'Base_UpperLip_Main_Ctrl', 'LowerLip_Center', 'Right_Base_Depressor', 'Right_LowerLip_2_Ctrl', 'Left_Base_Levator1', 'Left_Base_Depressor', 'Jaw_Bone_Ctrl', 'Left_UpperLip_2_Ctrl', 'Right_Base_Levator1', 'Right_Base_Levator', 'Right_UpperLip_2_Ctrl', 'Top_Teeth_Global', 'Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator', 'Left_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Tongue_2', 'Right_Tongue_3', 'Bottom_Teeth', 'Right_Tongue_1', 'Left_LowerLip_1_Ctrl', 'Right_Top_Teeth', 'Bottom_Teeth_Global', 'UpperLip_Center', 'Left_UpperLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 'chin']
-    bodyFunkyL = ['Left_Leg_Extra_0', 'Left_Leg_Extra_1', 'Left_Leg_Extra_2', 'Left_Leg_Extra_3', 'Left_Leg_Extra_4', 'Left_Leg_Extra_5', 'Left_Leg_Extra_6', 'Spine_IK_Extra_6_Ctrl', 'Spine_IK_Extra_5_Ctrl', 'Spine_IK_Extra_4_Ctrl', 'Spine_IK_Extra_3_Ctrl', 'Spine_IK_Extra_2_Ctrl', 'Left_Arm_Extra_0', 'Left_Arm_Extra_1', 'Left_Arm_Extra_2', 'Left_Arm_Extra_3', 'Left_Arm_Extra_4', 'Left_Arm_Extra_5', 'Left_Arm_Extra_6', 'Right_Arm_Extra_0', 'Right_Arm_Extra_1', 'Right_Arm_Extra_2', 'Right_Arm_Extra_3', 'Right_Arm_Extra_4', 'Right_Arm_Extra_5', 'Right_Arm_Extra_6', 'Right_Leg_Extra_0', 'Right_Leg_Extra_1', 'Right_Leg_Extra_2', 'Right_Leg_Extra_3', 'Right_Leg_Extra_4', 'Right_Leg_Extra_5', 'Right_Leg_Extra_6', 'Spine_IK_Extra_1_Ctrl']
+    faceL = ['Right_LowerEye_2_Ctrl', 'Noze_Main_Ctrl', 'Right_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_EyeBrow_in_1', 'Right_Eye', 'Left_nostril', 
+    'Right_Eyelid_In', 'Left_Brow_ridge_out', 'Left_EyeBrow_out', 'Right_EyeBrow_out_1', 'Left_EyeBrow_Global', 'Left_LowerEye_0_Ctrl', 
+    'Left_Brow_ridge_out_1', 'Right_UpperEye_1_Ctrl', 'Right_LowerEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Left_Eye', 
+    'Left_Cheek', 'Left_EyeBrow_in', 'Left_CheekBone', 'EyeBrow_Middle', 'Right_nostril', 'Right_Brow_ridge_out_1', 'Left_EyeBrow_out_1', 
+    'Left_Brow_ridge_in', 'Right_LowerEye_3_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_out', 'Left_LowerEye_3_Ctrl', 
+    'Right_Brow_ridge_in', 'Right_CheekBone', 'Right_Cheek', 'Left_UpperEye_1_Ctrl', 'Right_Brow_ridge_in_1', 'Right_Ear_Bone_Ctrl', 
+    'Right_UpperEye_3_Ctrl', 'Left_Eyelid_Out', 'Right_EyeBrow_in', 'Left_UpperLid_Main_Ctrl', 'Left_UpperEye_0_Ctrl', 'Left_LowerEye_2_Ctrl', 
+    'Right_EyeBrow_in_1', 'Left_Eye_Bulge', 'Left_Eyelid_In', 'Right_Brow_ridge_out', 'Right_UpperLid_Main_Ctrl', 'Left_UpperEye_3_Ctrl', 
+    'Left_Brow_ridge_in_1', 'Left_Ear_Bone_Ctrl', 'Right_Eyelid_Out', 'Right_LowerLid_Main_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_Base_Depressor1', 
+    'Right_Bottom_Teeth', 'Right_UpperLip_1_Ctrl', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Right_LowerLip_1_Ctrl', 'Top_Teeth', 'Tongue_1', 
+    'Tongue_0', 'Tongue_3', 'Tongue_2', 'Base_UpperLip_Main_Ctrl', 'LowerLip_Center', 'Right_Base_Depressor', 'Right_LowerLip_2_Ctrl', 'Left_Base_Levator1', 
+    'Left_Base_Depressor', 'Jaw_Bone_Ctrl', 'Left_UpperLip_2_Ctrl', 'Right_Base_Levator1', 'Right_Base_Levator', 'Right_UpperLip_2_Ctrl', 'Top_Teeth_Global', 
+    'Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator', 'Left_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Tongue_2', 'Right_Tongue_3', 'Bottom_Teeth', 
+    'Right_Tongue_1', 'Left_LowerLip_1_Ctrl', 'Right_Top_Teeth', 'Bottom_Teeth_Global', 'UpperLip_Center', 'Left_UpperLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 
+    'chin']
+    bodyFunkyL = ['Left_Leg_Extra_0', 'Left_Leg_Extra_1', 'Left_Leg_Extra_2', 'Left_Leg_Extra_3', 'Left_Leg_Extra_4', 'Left_Leg_Extra_5', 'Left_Leg_Extra_6', 
+    'Spine_IK_Extra_6_Ctrl', 'Spine_IK_Extra_5_Ctrl', 'Spine_IK_Extra_4_Ctrl', 'Spine_IK_Extra_3_Ctrl', 'Spine_IK_Extra_2_Ctrl', 'Left_Arm_Extra_0', 
+    'Left_Arm_Extra_1', 'Left_Arm_Extra_2', 'Left_Arm_Extra_3', 'Left_Arm_Extra_4', 'Left_Arm_Extra_5', 'Left_Arm_Extra_6', 'Right_Arm_Extra_0', 
+    'Right_Arm_Extra_1', 'Right_Arm_Extra_2', 'Right_Arm_Extra_3', 'Right_Arm_Extra_4', 'Right_Arm_Extra_5', 'Right_Arm_Extra_6', 'Right_Leg_Extra_0', 
+    'Right_Leg_Extra_1', 'Right_Leg_Extra_2', 'Right_Leg_Extra_3', 'Right_Leg_Extra_4', 'Right_Leg_Extra_5', 'Right_Leg_Extra_6', 'Spine_IK_Extra_1_Ctrl']
     toLockL = ["Head_FK"]
     scLockL = faceL + bodyFunkyL
     canDo = True
@@ -1770,17 +1799,23 @@ def set_grp_geo_SmoothLevel(*args, **kwargs):
             pass
     return [True, debugL]
 
-
-def chr_delete_BS_active_group (*args, **kwargs):
-    # delete le group " BS_ACTIVES_grp"
-    debugL = []
-    try:
-        cmds.delete (" BS_ACTIVES_grp")
-    except Exception, err:
-        print err
-        debugL.append("    nothing to delete")
-    return True, debugL
-
+def chr_clean_set_control_bad_members(*args, **kwargs):
+    print "chr_clean_set_control_bad_members()"
+    canDo = True
+    debugL= []
+    toRemL = ['Left_FOOT_IK_2_Ref_Bone_Ctrl', 'Left_FOOT_IK_2_Ref_EffScl', 'Right_FOOT_IK_2_Ref_Bone_Ctrl',  'Right_FOOT_IK_2_Ref_EffScl']
+    for i in toRemL:
+        if not cmds.objExists(i):
+            canDo = False
+    if canDo:
+        for i in toRemL:
+            try:
+                if cmds.sets(i,im="set_control"):
+                    cmds.sets(i, rm="set_control")
+                    debugL.append(i)
+            except Exception,err:
+                print "   ",err
+    return [True,debugL]
 
 def chr_rename_Teeth_BS_attribs(*args, **kwargs):
     # reset all attr of selected controls
@@ -1806,8 +1841,6 @@ def chr_rename_Teeth_BS_attribs(*args, **kwargs):
             debugL.append("{0} has been renamed".format(j))
 
     return True, debugL
-
-
 
 def chr_TongueFix(*args, **kwargs):
     print "chr_TongueFix()"
@@ -1862,7 +1895,6 @@ def chr_TongueFix(*args, **kwargs):
             debugL.append("Nothing Done")
 
     return True, debugL
-
 
 def chr_CstScaleandOptimFix(bridgeName="Dn_Teeth_Bridge", RootPrefixeToCut="TK_", rootL=[], *args, **kwargs):
     print "chr_CstScaleandOptimFix()"
@@ -1935,7 +1967,6 @@ def chr_CstScaleandOptimFix(bridgeName="Dn_Teeth_Bridge", RootPrefixeToCut="TK_"
 
     return True , debugL
 
-
 def chr_TeethFix(*args, **kwargs):
     """ Description: Fix le rig des dents
         Return : [BOOL,LIST]
@@ -1986,7 +2017,6 @@ def chr_chinEarsFix(*args, **kwargs):
     debugL += debugL2 + debugL3
     return resultL, debugL
 
-
 def chr_changeCtrDisplays(*args, **kwargs):
     """ Description: Change les colors des ctrs, et re-ajuste le display de certain ctrs
         Return : [BOOL,LIST]
@@ -2005,7 +2035,11 @@ def chr_changeCtrDisplays(*args, **kwargs):
                 'Left_UpperLip_Inter', 'Left_LowerLip_Inter',
                 'Left_Eye_Bulge', 'Right_Eye_Bulge', 'Right_nostril', 'Left_nostril',
                 'Fly_Main_Ctrl',
+                ]+['Right_Base_Depressor1', 'Right_Base_Depressor', 'Base_Depressor', 'Left_Base_Depressor', 
+                'Left_Base_Depressor1', 'Left_Base_Levator1', 'Left_Base_Levator', 'Base_UpperLip_Main_Ctrl', 
+                'Right_Base_Levator', 'Right_Base_Levator1',
                 ]
+
 
     brownLightC = 25
     brownLightL = ['Spine_IK_Extra_6_Ctrl', 'Spine_IK_Extra_5_Ctrl', 'Spine_IK_Extra_4_Ctrl', 'Spine_IK_Extra_3_Ctrl',
@@ -2018,7 +2052,11 @@ def chr_changeCtrDisplays(*args, **kwargs):
                 'NECK_Deformers_ExtraCtrl_7', 'NECK_Deformers_ExtraCtrl_3', 'NECK_Deformers_ExtraCtrl_5',
                 'NECK_Deformers_ExtraCtrl_1', 'Spine_IK_Extra_7_Ctrl']
     redDarkC = 4
-    redDarkL = ['Head_Bulge_Start_Ctrl', 'Head_Bulge_End_Handle_Ctrl', 'Head_Bulge_End_Ctrl', "BigDaddy"]
+    redDarkL = ['Head_Bulge_Start_Ctrl', 'Head_Bulge_End_Handle_Ctrl', 'Head_Bulge_End_Ctrl', "BigDaddy",
+                ]+['Right_LowerLip_1_Ctrl', 'Right_LowerLip_2_Ctrl', 'Right_UpperLip_2_Ctrl', 'Right_UpperLip_1_Ctrl',
+                 'Left_UpperLip_1_Ctrl', 'Left_UpperLip_2_Ctrl', 'Left_LowerLip_2_Ctrl', 'Left_LowerLip_1_Ctrl',
+                 ]
+
 
     redClearC = 13
     redClearL = ["Global_SRT", ]
@@ -2026,6 +2064,14 @@ def chr_changeCtrDisplays(*args, **kwargs):
 
     yellowC = 17
     yellowL = []
+
+    blackC = 1
+    blackL = ['Right_Riso_0_Ctrl', 'Right_Zygo_0_Ctrl', 'Right_Levator1_1_Ctrl', 'Right_Levator_1_Ctrl', 'Left_Levator_1_Ctrl', 
+            'Left_Levator1_1_Ctrl', 'Left_Zygo_0_Ctrl', 'Left_Riso_0_Ctrl',
+            ]+['Left_Depressor_Handle_1_Control', 'Left_Depressor1_Handle_1_Control', 'Right_Depressor_Handle_1_Control', 'Right_Riso_1_Ctrl', 
+            'Right_Zygo_1_Ctrl', 'Right_Levator_0_Ctrl', 'Right_Depressor1_Handle_1_Control', 'Right_Levator1_0_Ctrl', 'Left_Riso_1_Ctrl', 
+            'Left_Zygo_1_Ctrl', 'Left_Levator1_0_Ctrl', 'Left_Levator_0_Ctrl']
+
 
     #allready done test
     if getColor(objL="Fly_Main_Ctrl")[0] in [greenC] and getColor(objL="BigDaddy")[0] in [redDarkC]:
@@ -2051,6 +2097,8 @@ def chr_changeCtrDisplays(*args, **kwargs):
         # OverideColor(yellowC, mode="normal",TheSel = yellowL, )
         debugL.append("-Base Colors changed")
 
+        # black
+        OverideColor(blackC, mode="normal", TheSel=blackL)
 
         # special offset du display du fly -----------------------------------------------
         print "fly display"
@@ -2080,7 +2128,7 @@ def chr_changeCtrDisplays(*args, **kwargs):
                 pointL = getPointsOnCurve(j)
                 bbox = cmds.exactWorldBoundingBox(pointL)
                 pivT = cmds.xform(j, t=1, q=1, ws=1, worldSpaceDistance=1)
-                cmds.scale(1.3, 0.1, 1.3, pointL, p=(pivT[0], 0, pivT[2],))
+                cmds.scale(1.1, 0.1, 1.1, pointL, p=(pivT[0], 0, pivT[2],))
             debugL.append("-foots display changed")
 
 
@@ -2102,7 +2150,6 @@ def chr_changeCtrDisplays(*args, **kwargs):
 
     return True, debugL
 
-
 def chr_neckBulge_Factor_to_zero(*args, **kwargs):
     """ Description: met le neck bulge factor à 0
         Return : BOOL
@@ -2114,9 +2161,10 @@ def chr_neckBulge_Factor_to_zero(*args, **kwargs):
         cmds.setAttr("Head_ParamHolder_Main_Ctrl.Neck_Bulge_Factor", 0)
     return True
 
+def chr_BS_teeth_Noze_Fix(*args, **kwargs):
+    print "chr_BS_teeth_Noze_Fix()"
+    # fix the teeth squeeze BS and add the noze pinch bs to the characters
 
-def chr_teeth_Noze_BS_Fix(*args, **kwargs):
-    print "chr_teeth_squeezFix()"
 
     # get asset BS path (have to contain all teeth and additif BS shapes)
 
@@ -2265,3 +2313,422 @@ def chr_improve_Knuckles(*args, **kwargs):
             # add one desactivation attrib
 
             # return all created nodes
+
+
+
+def chr_fixeLatticeParams(bulge_factor=1.25, *args, **kwargs):
+    """ Description:  -Fix les valeur de lattice "local influance" causant des deformation disgracieuse
+                      -Set l'attribut Head_bulge à une valeur par default de 1.25
+        Return : [True,List]
+        Dependencies : cmds - 
+    """
+    # WIP
+    print "chr_fixeLatticeParams()"
+    debugL = []
+    ffdL = ['Right_eyeFace_ffd', 'Left_eyeFace_ffd', 'geo_head_ffd', 'ffd_geo_Right_Eye', 'ffd_geo_Left_Eye','ffd_Head_Bulge']
+    locInfluance = 8
+    canDo = True
+    # set local influance
+    for k in ffdL[-3:]:
+        if not cmds.objExists(k):
+            canDo = False
+            debugL.append("Nothing done")
+    if canDo:
+        for i in ffdL:
+            if cmds.objExists(i):
+                cmds.setAttr(i+ ".localInfluenceS", locInfluance)
+                cmds.setAttr(i+ ".localInfluenceT", locInfluance)
+                cmds.setAttr(i+ ".localInfluenceU", locInfluance)
+                cmds.setAttr(i+ ".localInfluenceU", locInfluance)
+                cmds.setAttr(i+ ".outsideFalloffDist", 0.001)
+
+                debugL.append("-" + i+ ": Fixed")
+        
+        # set lattice to "inside mode"
+        for j in ffdL[:2]:
+            if cmds.objExists(j):
+                cmds.setAttr(j+ ".outsideLattice", 0)
+
+    # set bugle_factor
+    theAttr = "Head_Bulge_End_Ctrl.Head_Bulge_Bulge_Factor"
+    if cmds.objExists (theAttr):
+        cmds.setAttr(theAttr,bulge_factor)
+    
+    return True,debugL
+
+def chr_setVis_Params(*args, **kwargs):
+    """ Description: Set les parametre par default des attribut du vis holder pour l'animation
+        Return : [True]
+        Dependencies : cmds - 
+    """
+    print "chr_setVis_Params()"
+    
+    obj= "VisHolder_Main_Ctrl"
+    if cmds.objExists(obj):
+        try:
+            cmds.setAttr(obj + ".Big_daddy_visibility", 0)
+            cmds.setAttr(obj + ".Global", 1)
+            cmds.setAttr(obj + ".Controls", 1)
+
+            
+            cmds.setAttr(obj + ".RigStuff", 0)
+            cmds.setAttr(obj + ".Deformers", 0)
+            cmds.setAttr(obj + ".SmoothLevel", 0)
+
+            cmds.setAttr(obj + ".Geometry", 1)
+            cmds.setAttr(obj + ".Controls_0", 1)
+            cmds.setAttr(obj + ".Controls_1", 0)
+            cmds.setAttr(obj + ".Controls_2", 0)
+            cmds.setAttr(obj + ".Controls_3", 0)
+
+            cmds.setAttr(obj + ".Head_Res", 0)
+            cmds.setAttr(obj + ".Body_res", 1)
+        except Exception,err:
+            print err
+    return [True]
+
+def chr_hideCurveAiAttr(*args, **kwargs):
+    print "chr_hideCurveAiAttr()"
+    """ Description: Rend les attributs arnauld non keyable et non visible sur toutes les shapes des obj du set_control (help for anim and keys)
+        Return : [True,doneList]
+        Dependencies : cmds - 
+
+    """
+    doneL = []
+    attrToHideL= ["aiRenderCurve","aiCurveWidth","aiSampleRate","aiCurveShaderR","aiCurveShaderG","aiCurveShaderB"]
+    cursel = cmds.sets("set_control",q=1)
+    for i in cursel:
+        for attr in attrToHideL:
+            if cmds.objExists(i+"."+attr):
+                cmds.setAttr(i+"."+attr,k=0,)
+                doneL.append(i+"."+attr)
+
+    return [True, doneL]
+
+def chr_replace_chr_vis_Exp_System(*args, **kwargs):
+    print "chr_replace_chr_vis_Exp_System()"
+    """ Description: Remplace le system original de toonkit comportant environ 320 expression par des nodes multiplyLinear
+                     Renvoie toujours True et le nombre d'expression deleted/replaced
+        Return : [BOOL,int]
+        Dependencies : cmds -        
+    """
+    inObj = "VisHolder_Main_Ctrl"
+    mainVisAttr= "Controls"
+    lvl0 = "Controls_0"
+    activeLvl = lvl0
+
+    # activate all to not loose conection info
+    # vars
+    inObj = "VisHolder_Main_Ctrl"
+    mainVisAttr= "Controls"
+    lvl0 = "Controls_0"
+    lvl1 = "Controls_1"
+    lvl2 = "Controls_2"
+    lvl3 = "Controls_3"
+    
+    # get multiply node to connect to
+    multiply_Vis = ""
+   
+    # show all controlers levels
+    try:
+        cmds.setAttr(inObj+"."+mainVisAttr,1)
+        cmds.setAttr(inObj+"."+lvl0,1)
+        cmds.setAttr(inObj+"."+lvl0,1)
+        cmds.setAttr(inObj+"."+lvl1,1)
+        cmds.setAttr(inObj+"."+lvl2,1)
+        cmds.setAttr(inObj+"."+lvl3,1)
+    except:
+        pass
+
+
+    # get expression connected to vis
+    replacedExpL = []
+    spkipedObjL = []
+    Attr = "overrideVisibility"
+    cursel = cmds.sets("set_control",q=1)
+    # print cursel
+    for i in cursel:
+        # print "*",i
+        shapeL = [i + "|"+ x for x in cmds.listRelatives(i,c=1,s=1,f=0) ]
+        for j in shapeL:
+            if cmds.objExists( j+"."+Attr ):
+                # print j,Attr
+                exp= cmds.listConnections( j+"."+Attr, s=1, d=0, scn=1,)
+                if exp:
+                    exp = exp[0]
+                    # print "exp=", exp
+                    inExpConL = []
+                    inputL = cmds.listAttr(exp+".input[*]")
+                    for i in inputL:
+                        inExpConL.append(cmds.listConnections(exp+"."+i,s=1,d=0)[0])
+                        # print "    <->",inExpConL
+                    # print "inExpConL=", inExpConL
+                    compensed= list(set(inExpConL) )
+                    if compensed == ["VisHolder_Main_Ctrl"]:
+                        # print "YEAHHHHHHH"
+                        if cmds.objectType(exp) in ["expression"]:
+                            # print "   ",exp
+                            currentStr = cmds.expression(exp,string=1,q=1 )
+                            # print "    ->",currentStr
+                            activeLvl = currentStr.rsplit("{0}.Controls * {0}.".format(inObj),1)[-1]
+                            
+
+                            if not "." in activeLvl:
+                                # replace the expression by node multiply 
+                                # create Multiply_R_factor node
+                                multiply_Vis = cmds.createNode("multDoubleLinear", name=j + "Ctr_Shape_Switch_Vis#")
+
+                                # connect
+                                
+                                cmds.connectAttr(inObj + "." + mainVisAttr, multiply_Vis + "." + "input1",f=1)
+                                cmds.connectAttr(inObj + "." + activeLvl  , multiply_Vis + "." + "input2",f=1)
+
+                                cmds.connectAttr(multiply_Vis+"."+ "output", j + "." + "visibility",f=1)
+
+
+                                # delete old expression
+                                
+                                cmds.delete(exp)
+                                replacedExpL.append(exp)
+
+                            else:
+                                # print "     @activeLvl:",activeLvl
+                                spkipedObjL.append(j)
+
+                        else:
+                            spkipedObjL.append(j)
+
+                else:
+                    spkipedObjL.append(j)
+
+            else:
+                spkipedObjL.append(j)
+
+    # adding additive rigs here
+    upperBrowsAdditveL = ['Right_Brow_upRidge_03_ctrl', 'Right_Brow_upRidge_01_ctrl', 'Right_Brow_upRidge_04_ctrl', 'Right_Brow_upRidge_02_ctrl', 'Left_Brow_upRidge_03_ctrl', 'Left_Brow_upRidge_04_ctrl', 'Left_Brow_upRidge_01_ctrl', 'Left_Brow_upRidge_02_ctrl']
+    
+    canDo = True
+    for i in upperBrowsAdditveL:
+        if not cmds.objExists(i):
+            canDo=False
+    if canDo:
+        for i in upperBrowsAdditveL:
+            shapeL = [i + "|"+ x for x in cmds.listRelatives(i,c=1,s=1,f=0) ]
+            for j in shapeL:
+                if cmds.objExists( j+"."+Attr ):
+                    # create multi node
+                    multiply_Vis = cmds.createNode("multDoubleLinear", name= j + "Ctr_Shape_Switch_Vis#")
+                    # connect
+                    cmds.connectAttr(inObj + "." + mainVisAttr, multiply_Vis + "." + "input1",f=1)
+                    cmds.connectAttr(inObj + "." + activeLvl  , multiply_Vis + "." + "input2",f=1)
+                    cmds.connectAttr(multiply_Vis+"."+ "output", j + "." + "visibility",f=1)
+        
+
+
+    print len(replacedExpL)
+    return [True,len(replacedExpL)]
+
+
+def chr_reArrangeCtr_displayLevel(*args, **kwargs):
+    """ Description: Re order the controlers in the right display level, and optimise speed by replacing expressions by nodes.
+        Return : [BOOL,Int(number of replaced expressions)]
+        Dependencies : cmds - 
+    """
+    print "chr_reArrangeCtr_displayLevel()"
+
+    #body
+    toLvl0L=['Head_Bulge_End_Ctrl', 'Head_Bulge_End_Handle_Ctrl',]
+    
+    # facial 01
+    toLvl1L=['Right_UpperLip_1_Ctrl', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Right_LowerLip_1_Ctrl', 'Top_Teeth', 'Tongue_1', 'Tongue_0', 
+    'Tongue_3', 'Tongue_2', 'Left_MouthCorner', 'LowerLip_Center', 'Right_LowerLip_2_Ctrl', 'Left_UpperLip_2_Ctrl', 'Right_MouthCorner', 
+    'Right_UpperLip_2_Ctrl', 'Bottom_Teeth_Global', 'Top_Teeth_Global', 'Left_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Tongue_2', 'Right_Tongue_3', 
+    'Bottom_Teeth', 'Right_Tongue_1', 'Left_LowerLip_1_Ctrl', 'Right_Top_Teeth', 'Right_Bottom_Teeth', 'UpperLip_Center', 'Left_UpperLip_1_Ctrl', 
+    'Left_LowerLip_2_Ctrl', 'Left_nostril', 'Right_nostril', 'Noze_Main_Ctrl', 'Left_CheekBone', 'Right_CheekBone', 'Left_Cheek', 'Right_Cheek', 
+    'Right_LowerEye_2_Ctrl', 'Right_UpperEye_1_Ctrl', 'Right_UpperEye_3_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_LowerEye_3_Ctrl', 'Right_LowerEye_0_Ctrl', 
+    'Right_LowerEye_1_Ctrl', 'Right_UpperLid_Main_Ctrl', 'Right_Eyelid_In', 'Right_Eyelid_Out', 'Right_LowerLid_Main_Ctrl', 'Right_UpperEye_2_Ctrl', 
+    'Left_Eyelid_Out', 'Left_UpperLid_Main_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Left_LowerEye_2_Ctrl', 'Left_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 
+    'Left_UpperEye_0_Ctrl', 'Left_LowerEye_3_Ctrl', 'Left_Eyelid_In', 'Left_UpperEye_2_Ctrl', 'Left_UpperEye_1_Ctrl', 'Left_UpperEye_3_Ctrl', 
+    'Right_EyeBrow_out_1', 'Right_EyeBrow_in_1', 'Right_EyeBrow_in', 'Right_EyeBrow_out', 'Right_EyeBrow_Global', 'Left_EyeBrow_in', 'Left_EyeBrow_out_1', 
+    'Left_EyeBrow_out', 'Left_EyeBrow_in_1', 'Left_EyeBrow_Global', 'EyeBrow_Middle', 'Right_Eye_Pupille_Main_Ctrl', 'Left_Eye_Pupille_Main_Ctrl', 
+    'Right_Eye_Bulge', 'Left_Eye_Bulge', 'Head_Bulge_Start_Ctrl']
+
+
+    # facial 02
+    toLvl2L=['Right_Base_Levator1', 'Right_Base_Levator', 'Base_UpperLip_Main_Ctrl', 'Left_Base_Levator', 'Left_Base_Levator1', 'Left_Base_Depressor1', 
+    'Left_Base_Depressor', 'Base_Depressor', 'Right_Base_Depressor', 'Right_Base_Depressor1', 'Right_Brow_ridge_in', 'Right_Brow_ridge_out_1', 
+    'Right_Brow_ridge_out', 'Right_Brow_ridge_in_1', 'Right_Brow_upRidge_03_ctrl', 'Right_Brow_upRidge_01_ctrl', 'Right_Brow_upRidge_04_ctrl', 
+    'Right_Brow_upRidge_02_ctrl', 'Left_Brow_ridge_out_1', 'Left_Brow_ridge_in_1', 'Left_Brow_ridge_in', 'Left_Brow_ridge_out', 'Left_Brow_upRidge_03_ctrl', 
+    'Left_Brow_upRidge_04_ctrl', 'Left_Brow_upRidge_01_ctrl', 'Left_Brow_upRidge_02_ctrl',
+    ]+['Left_Eye', 'Right_Eye',
+    ]+['Right_Riso_0_Ctrl', 'Right_Zygo_0_Ctrl', 'Right_Levator1_1_Ctrl', 'Right_Levator_1_Ctrl', 'Left_Levator_1_Ctrl', 
+        'Left_Levator1_1_Ctrl', 'Left_Zygo_0_Ctrl', 'Left_Riso_0_Ctrl']
+
+    # to not touch
+    toLvl3L= ['Left_Arm_Root', 'Right_Arm_Root',"Aim",
+            ]+['Left_Depressor1_Handle_1_Control', 'Left_Depressor_Handle_1_Control', 'Right_Depressor_Handle_1_Control', 
+            'Right_Depressor1_Handle_1_Control', 'Right_Zygo_1_Ctrl', 'Left_Zygo_1_Ctrl',
+            ]+  ['Right_Riso_1_Ctrl', 'Right_Levator_0_Ctrl', 'Right_Levator1_0_Ctrl', 'Left_Riso_1_Ctrl', 'Left_Levator1_0_Ctrl', 'Left_Levator_0_Ctrl']
+
+
+    # vars
+    inObj = "VisHolder_Main_Ctrl"
+    mainVisAttr= "Controls"
+    lvl0 = "Controls_0"
+    lvl1 = "Controls_1"
+    lvl2 = "Controls_2"
+    lvl3 = "Controls_3"
+    
+
+    # start settings loop
+    allL = toLvl0L+toLvl1L+toLvl2L+toLvl3L
+    if len(allL):
+        for i in allL :
+            curLvl = lvl0
+
+            if i in toLvl1L:
+                curLvl = lvl1
+            elif i in toLvl2L:
+                curLvl = lvl2
+            elif i in toLvl3L:
+                # handle le cas ou il n y a pas d attribut "controls_3" dans le rig
+                if not cmds.objExists(inObj+"."+lvl3):
+                    # print "ADD ATTR"
+                    cmds.addAttr( inObj, longName=lvl3, attributeType="enum",enumName="False:True", keyable=True,  dv=0)
+                    cmds.setAttr(inObj + "."+lvl3,channelBox=1)
+                    movAttrL=  ["Head","Head_Res","Body_res","Deformers","SmoothLevel","Geometry","RigStuff"]
+                    movAttrL.reverse()
+                    for mattr in [lvl3]+movAttrL:
+                        # print "*****",mattr
+                        lock = cmds.getAttr(inObj+"."+mattr,l=1)
+                        cmds.setAttr(inObj+"."+mattr,l=0)
+                        cmds.deleteAttr(inObj,at=mattr)
+                        cmds.undo()
+                        cmds.setAttr(inObj+"."+mattr,l=lock)
+                    
+                curLvl = lvl3
+
+            if cmds.objExists(i):
+                # print "****",i
+                if cmds.listRelatives(i,c=1,s=1,):
+                    shapeL = [i+"|"+ x for x in cmds.listRelatives(i,c=1,s=1,)]
+                    if shapeL:
+                        for j in shapeL:
+                            if "IK" in j:
+                                print "**************************************",j
+                            if cmds.connectionInfo( j + "."+ "visibility",isDestination=True):
+                                multiply_Vis = cmds.listConnections( j + "."+ "visibility",s=1,d=0, scn=1,)[0]
+                                # print "multiply_Vis=", multiply_Vis
+                                # print curLvl, cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0]
+                                if not curLvl  in cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0] :
+                                    # print "connect"
+                                    # cmds.disconnectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2" )
+                                    cmds.connectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2", f=1)
+
+                else:
+                    print "NO SHAPE FOUND ON {0}".format(i)
+
+    return [True,""]
+
+
+def improveArcades(*args, **kwargs):
+    """ Description: replace automove behavior by independant link to each individual brow ctr and Add a blend attribut to control it.
+        Return : [True,debugL]
+        Dependencies : cmds - 
+    """
+    print "improveArcades()"
+
+    follow_dv = 0.5
+    follow_attrN = "follow"
+    headCtr = "Head_FK"
+    browLL = ['Left_EyeBrow_in', 'Left_EyeBrow_in_1', 'Left_EyeBrow_out_1', 'Left_EyeBrow_out']
+    arcadeLL = ['Left_Brow_ridge_in', 'Left_Brow_ridge_in_1', 'Left_Brow_ridge_out_1', 'Left_Brow_ridge_out']
+    browRL = ['Right_EyeBrow_in', 'Right_EyeBrow_in_1', 'Right_EyeBrow_out_1', 'Right_EyeBrow_out']
+    arcadeRL= ['Right_Brow_ridge_in', 'Right_Brow_ridge_in_1', 'Right_Brow_ridge_out_1', 'Right_Brow_ridge_out',]
+
+    oSwitchGpL = "TK_Right_Brow_ridge_switcher_Root_RigParameters"
+    oSwitchGpR = "TK_Left_Brow_ridge_switcher_Root_RigParameters"
+
+    oToDeleteLL = ["TK_Right_Brow_ridge_switcher_Parent_0","TK_Right_Brow_ridge_switcher_Parent_1","TK_Right_Brow_ridge_switcher_Root_RigParameters"]
+                
+    oToDeleteLR = ["TK_Left_Brow_ridge_switcher_Parent_0","TK_Left_Brow_ridge_switcher_Parent_1","TK_Left_Brow_ridge_switcher_Root_RigParameters"]
+
+    oToDeleteL = oToDeleteLL+ oToDeleteLR
+    browL = browLL + browRL
+    ctrL = arcadeLL + arcadeRL 
+    canDo = True
+       
+    for i in ctrL + oToDeleteL + browL:
+        if not cmds.objExists(i):
+            canDo = False
+    if canDo:
+
+        # deleting base obj -------------------------------------------------------------------------------------------------
+        for i in oToDeleteL:
+            cmds.delete(i)
+
+        for i in ctrL:
+            print "*",i
+            ctrRoot = cmds.listRelatives(cmds.listRelatives(i,p=1)[0],p=1)[0]
+            allCstL = [x for x in cmds.listHistory(ctrRoot, levels=1,) if "Constraint" in   cmds.objectType(x)]
+            print ctrRoot
+            print "    ",len(allCstL), allCstL
+
+            # deleting connected ---------------------------------------------------------------------------------------------
+            for cst in allCstL:
+                try:
+                    print "        ", cmds.objectType(cst)
+                    theParent = cmds.listConnections(cst + '.target[0].targetParentMatrix', d=False, s=True)[0]
+                    print "    DELETING->",theParent
+                    cmds.delete(theParent)
+                    pass
+                except:
+                    pass
+
+        
+
+        # constraining each little ctrl arcade<- brow
+        for daddy, ctr in zip(browL,ctrL):
+            
+            # get ctrRoot
+            oCtrRoot = cmds.listRelatives(ctr,p=1)[0]
+            
+            # unlock srt de ctrRoot
+            for attr in ["sx", "sy", "sz","rx","ry","rz", "tx","ty","tz"]:
+                cmds.setAttr(ctrRoot+"."+attr,l=0,k=1)
+            
+            # create a matched child group for the constraint rig to avoid the 180 and scale -1 probleme
+            ctrRoot = cmds.group(name= ctr + "_followRig_grp",em=1,p=oCtrRoot)
+            cmds.xform(ctrRoot,t=(0,0,0),ro=(0,0,0),s=(1,1,1))
+
+            # parent ctr to it
+            cmds.parent(ctr,ctrRoot)
+            cmds.xform(ctr,t=(0,0,0),ro=(0,0,0),s=(1,1,1))
+
+            # constraining ctrl head
+            cmds.parentConstraint(headCtr,ctrRoot, mo=1)
+            # cmds.scaleConstraint(headCtr,ctrRoot, mo=1)
+
+            # ----------------------------------------------------------------------------------- parent cst tree
+            # get all the plugs on the cst
+            pCst = cmds.parentConstraint(daddy,ctrRoot, mo=1)[0]
+            activeTargetL = getCstActiveWeightPlugs(pCst)
+            
+            # creating reverse node and add attr to ctr
+            reverse_N = cmds.createNode("reverse", name=ctrRoot + "reverse_Cst")
+            if not cmds.objExists(ctr+ "."+ follow_attrN):
+                cmds.addAttr(ctr, longName=follow_attrN, attributeType="float", keyable=True, min=0, max=1, dv=follow_dv)
+            
+            # connect
+            cmds.connectAttr(ctr + "."+ follow_attrN, activeTargetL[1], f=True)
+            cmds.connectAttr(ctr + "."+ follow_attrN, reverse_N + ".inputX", f=True)
+            cmds.connectAttr(reverse_N + ".outputX", activeTargetL[0], f=True)
+              
+            # ----------------------------------------------------------------------------------- scale cst tree
+            sCst = cmds.scaleConstraint(daddy,ctrRoot, mo=1)[0]
+            activeTargetL = getCstActiveWeightPlugs(sCst)
+            
+            # connect
+            cmds.connectAttr(ctr + "."+ follow_attrN, activeTargetL[1], f=True)
+            cmds.connectAttr(ctr + "."+ follow_attrN, reverse_N + ".inputY", f=True)
+            cmds.connectAttr(reverse_N + ".outputY", activeTargetL[0], f=True)
