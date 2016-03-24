@@ -171,7 +171,7 @@ class checkModule(object):
 
         # 2   checkAssetStructure()
         result,debugD = jpZ.checkAssetStructure(assetgpN="asset", expectedL=["grp_rig","grp_geo"],
-        additionalL=["grp_placeHolders"])
+        additionalL=["grp_placeHolders","grp_light"])
         # prints -------------------
         self.printF("checkAssetStructure()", st="t")
         self.printF(result, st="r")
