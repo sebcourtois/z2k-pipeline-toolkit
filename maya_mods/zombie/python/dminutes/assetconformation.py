@@ -134,6 +134,7 @@ def setSubdiv(GUI= False ):
     if not mc.ls("|asset|grp_geo", l = True):
         logMessage = "#### {:>7}: 'setSubdiv' No '|asset|grp_geo' found".format("Error")
         if GUI == True: raise ValueError(logMessage)
+        print logMessage
         logL.append(logMessage)
         returnB = False
 
@@ -152,6 +153,7 @@ def setSubdiv(GUI= False ):
     if not subdivSets:
         logMessage = "#### {:>7}: 'setSubdiv' No subdivision set could be found (set_subdiv_*). Please create them first".format("Error")
         if GUI == True: raise ValueError(logMessage)
+        print logMessage
         logL.append(logMessage)
         returnB = False
     processedTransL =[]
@@ -196,18 +198,24 @@ def setSubdiv(GUI= False ):
     
     if processedTransL and not skippedTransL:
         logMessage = "#### {:>7}: 'setSubdiv' {} meshes processed".format("Info", len(processedTransL))
-        if GUI == True: print logMessage
+        print logMessage
         logL.append(logMessage)
     if processedTransL and skippedTransL:
         logMessage = "#### {:>7}: 'setSubdiv' {} meshes processed and {} instances skipped ".format("Info", len(processedTransL), len(skippedTransL))
-        if GUI == True: print logMessage
+        print logMessage
         logL.append(logMessage)
 
     if "set_subdiv_init" in subdivSets and mc.sets("set_subdiv_init", query = True) != None:
         logMessage = "#### {:>7}: 'setSubdiv' A geo object is still in the 'set_subdiv_init', please asssign it to a 'set_subdiv*'".format("Error")
         if GUI == True: mc.confirmDialog( title='Error:', message=logMessage, button=['Ok'], defaultButton='Ok' )
+        print logMessage
         logL.append(logMessage)
         returnB = False
+
+    if not logL:
+        logMessage = "#### {:>7}: 'setSubdiv' Donne properly".format("Info")
+        print logMessage
+        logL.append(logMessage)
 
     return dict(returnB=returnB, logL=logL)
 
@@ -480,7 +488,6 @@ class Asset_File_Conformer:
                 print "#### {:>7}: could not find: '{}', shading has not been done yet, let's try using '{}'".format("Error",self.sourceFile, self.sourceFile.replace("Ref","") )
                 self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile+".ma"))
                 self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
-
         else:
             raise ValueError("#### Error: the choosen sourceFile '"+sourceFile+"'' is not correct")
 
@@ -764,6 +771,7 @@ class Asset_File_Conformer:
 
 
 
+
     def transferSG(self):
         if self.sourceTargetListMatch == True:
             i = -1
@@ -794,7 +802,22 @@ class Asset_File_Conformer:
                     sgTransferFailed +=1
                     continue
 
+                #store uv linking
+                uvLinkD={}
                 sourceShadEngList = mc.ls(mc.listHistory(sourceShape,future = True),type="shadingEngine")
+                textureNodeL = []
+                for each in sourceShadEngList:
+                    preview_shader =  mc.listConnections(each+'.surfaceShader',connections = False)
+                    render_shader =  mc.listConnections(each+'.aiSurfaceShader',connections = False)
+                    if not preview_shader: preview_shader = []
+                    if not render_shader: render_shader = []
+                    shaderL = list(set(preview_shader) | set(render_shader))
+                    eachTextureL  = mc.ls(mc.listHistory(shaderL),type="file")
+                    if eachTextureL:
+                        textureNodeL.extend(eachTextureL)
+                for each in textureNodeL:
+                    uvLinkD[each] = mc.uvLink( query=True, texture=each )[0]
+
                 #print sourceShape+" --> "+targetShape
                 if len(sourceShadEngList) == 1:
                     mc.sets(targetShape,e=True, forceElement=sourceShadEngList[0])
@@ -804,6 +827,10 @@ class Asset_File_Conformer:
                     print ("#### {:>7}: no 'shader' found on source object: '{}' transform".format("Error",sourceShape))
                     sgTransferFailed +=1
 
+                #linkBack UVs
+                for each in textureNodeL:
+                    mc.uvLink( make=True, texture=each, uvSet= uvLinkD[each].replace(sourceShape,targetShape) )
+                    print uvLinkD[each].replace(sourceShape,targetShape)
 
             if sgTransferFailed ==0:
                 print "#### {:>7}: materials has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
@@ -1018,7 +1045,7 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
     """
     outSucceedB = True
     outLogL = []
-    mc.refresh()
+    mc.refresh(suspend = True)
     undeletable = ['sideShape','frontShape','front','sideShape','side','perspShape','perspShape','persp','topShape','top','topShape','frontShape','characterPartition',
                 'defaultObjectSet','initialShadingGroup','defaultLightSet','renderPartition','initialParticleSE','strokeGlobals','defaultRenderQuality','defaultRenderingList1',
                 'defaultTextureList1','renderLayerManager','particleCloud1','hyperGraphInfo','shaderGlow1','hardwareRenderingGlobals','globalCacheControl','postProcessList1',
@@ -1124,7 +1151,7 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
         logMessage ="#### {:>7}: 'softClean' has deleted {} namespaces: {}".format("Info",len(returnL[1]),returnL[1])
         if GUI == True : print logMessage
         outLogL.append(logMessage)
-
+    mc.refresh(suspend = False)
     return outSucceedB, outLogL
 
 
@@ -1288,3 +1315,38 @@ def standInchecks():
         mc.setAttr(eachProxy+".primaryVisibility" ,0)
         mc.setAttr(eachProxy+".visibleInReflections" ,0)
         mc.setAttr(eachProxy+".visibleInRefractions" ,0)
+
+
+
+def setInstancerLod(inParent="", lod=2, gui=True):
+    """
+    lod = 0 : geometry
+    lod = 1 : bounding boxes
+    lod = 2 : bounding box
+    """
+    if lod == 0: 
+        lodS = "geometry"
+    elif lod == 1: 
+        lodS = "bounding boxes"
+    elif lod == 2: 
+        lodS = "bounding box"
+    else:
+        log.printL("e", "'{}' is not valid for 'lod' input, pick a value between 0 and 2".format( lod))
+        return
+
+    log = miscUtils.LogBuilder(gui=gui, funcName ="setShadingMask")
+    if not inParent:
+        instancerL = mc.ls( type='instancer', l =True)
+    else:
+        descendentL = mc.listRelatives(inParent, type='instancer',allDescendents= True, fullPath=True)
+        parentRootL = mc.ls(inParent, type='instancer', l =True)
+        if not descendentL: descendentL = []
+        if not parentRootL: parentRootL = []
+        instancerL = descendentL + parentRootL
+
+    for each in instancerL:
+        miscUtils.setAttrC(each+".levelOfDetail",lod)
+
+    log.printL("i", "{} instancer(s) switched to : '{}' lod".format( len(each), lodS))
+           
+    return dict(resultB=log.resultB, logL=log.logL)
