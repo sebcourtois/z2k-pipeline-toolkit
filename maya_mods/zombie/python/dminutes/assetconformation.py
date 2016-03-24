@@ -771,6 +771,7 @@ class Asset_File_Conformer:
 
 
 
+
     def transferSG(self):
         if self.sourceTargetListMatch == True:
             i = -1
@@ -801,7 +802,22 @@ class Asset_File_Conformer:
                     sgTransferFailed +=1
                     continue
 
+                #store uv linking
+                uvLinkD={}
                 sourceShadEngList = mc.ls(mc.listHistory(sourceShape,future = True),type="shadingEngine")
+                textureNodeL = []
+                for each in sourceShadEngList:
+                    preview_shader =  mc.listConnections(each+'.surfaceShader',connections = False)
+                    render_shader =  mc.listConnections(each+'.aiSurfaceShader',connections = False)
+                    if not preview_shader: preview_shader = []
+                    if not render_shader: render_shader = []
+                    shaderL = list(set(preview_shader) | set(render_shader))
+                    eachTextureL  = mc.ls(mc.listHistory(shaderL),type="file")
+                    if eachTextureL:
+                        textureNodeL.extend(eachTextureL)
+                for each in textureNodeL:
+                    uvLinkD[each] = mc.uvLink( query=True, texture=each )[0]
+
                 #print sourceShape+" --> "+targetShape
                 if len(sourceShadEngList) == 1:
                     mc.sets(targetShape,e=True, forceElement=sourceShadEngList[0])
@@ -811,6 +827,10 @@ class Asset_File_Conformer:
                     print ("#### {:>7}: no 'shader' found on source object: '{}' transform".format("Error",sourceShape))
                     sgTransferFailed +=1
 
+                #linkBack UVs
+                for each in textureNodeL:
+                    mc.uvLink( make=True, texture=each, uvSet= uvLinkD[each].replace(sourceShape,targetShape) )
+                    print uvLinkD[each].replace(sourceShape,targetShape)
 
             if sgTransferFailed ==0:
                 print "#### {:>7}: materials has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
