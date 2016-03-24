@@ -1295,3 +1295,38 @@ def standInchecks():
         mc.setAttr(eachProxy+".primaryVisibility" ,0)
         mc.setAttr(eachProxy+".visibleInReflections" ,0)
         mc.setAttr(eachProxy+".visibleInRefractions" ,0)
+
+
+
+def setInstancerLod(inParent="", lod=2, gui=True):
+    """
+    lod = 0 : geometry
+    lod = 1 : bounding boxes
+    lod = 2 : bounding box
+    """
+    if lod == 0: 
+        lodS = "geometry"
+    elif lod == 1: 
+        lodS = "bounding boxes"
+    elif lod == 2: 
+        lodS = "bounding box"
+    else:
+        log.printL("e", "'{}' is not valid for 'lod' input, pick a value between 0 and 2".format( lod))
+        return
+
+    log = miscUtils.LogBuilder(gui=gui, funcName ="setShadingMask")
+    if not inParent:
+        instancerL = mc.ls( type='instancer', l =True)
+    else:
+        descendentL = mc.listRelatives(inParent, type='instancer',allDescendents= True, fullPath=True)
+        parentRootL = mc.ls(inParent, type='instancer', l =True)
+        if not descendentL: descendentL = []
+        if not parentRootL: parentRootL = []
+        instancerL = descendentL + parentRootL
+
+    for each in instancerL:
+        miscUtils.setAttrC(each+".levelOfDetail",lod)
+
+    log.printL("i", "{} instancer(s) switched to : '{}' lod".format( len(each), lodS))
+           
+    return dict(resultB=log.resultB, logL=log.logL)
