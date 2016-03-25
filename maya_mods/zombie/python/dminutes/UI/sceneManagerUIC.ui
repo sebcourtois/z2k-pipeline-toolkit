@@ -548,7 +548,7 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_8">
           <property name="spacing">
-           <number>6</number>
+           <number>4</number>
           </property>
           <property name="leftMargin">
            <number>4</number>
@@ -606,6 +606,19 @@
              </widget>
             </item>
            </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="sm_setupAnimatic_bt">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>26</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Update Animatic</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>

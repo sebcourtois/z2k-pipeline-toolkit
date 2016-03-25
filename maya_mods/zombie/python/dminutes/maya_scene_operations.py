@@ -3,7 +3,7 @@ import os
 import os.path as osp
 import re
 import shutil
-
+from collections import namedtuple
 #from itertools import izip
 
 import pymel.core as pc
@@ -15,7 +15,7 @@ from dminutes.shotconformation import removeRefEditByAttr
 from pytaya.util.sysutils import withSelectionRestored
 from collections import OrderedDict
 from pytaya.core.transform import matchTransform
-from pytd.util.fsutils import jsonWrite, copyFile, pathResolve
+from pytd.util.fsutils import jsonWrite, pathResolve
 from zomblib.editing import makeFilePath, movieToJpegSequence
 
 pc.mel.source("AEimagePlaneTemplate.mel")
@@ -100,14 +100,19 @@ def getSceneContent(sceneManager):
 def getImagePlaneItems(create=False):
 
     oImgPlane = None
+    oCamXfm = None
 
     oImgPlaneList = pc.ls("cam_animatic:assetShape->imgPlane_animatic")
     if oImgPlaneList:
         oImgPlane = oImgPlaneList[0]
 
+    oCamList = pc.ls("cam_animatic:asset")
+    if oCamList:
+        oCamXfm = oCamList[0]
+
     if not oImgPlane:
         if not create:
-            return None, None
+            return oImgPlane, oCamXfm
         else:
             # - Create new Animatic Camera
             if not pc.namespace(exists='cam_animatic'):
@@ -336,10 +341,10 @@ def do(s_inCommand, s_inTask, sceneManager):
     cmdBaseCallable = cmd.get('BASE')
     if cmdBaseCallable != None:
         cmdBaseCallable(sceneManager)
-        print '{} initialization done ! ({})'.format("base", sceneManager.context)
+        #print '{} initialization done ! ({})'.format("base", sceneManager.context)
 
     cmdCallable(sceneManager)
-    print '{} initialization done ! ({})'.format(s_inTask, sceneManager.context)
+    #print '{} initialization done ! ({})'.format(s_inTask, sceneManager.context)
 
 def setMayaProject(sProjName):
 
@@ -637,7 +642,6 @@ def smoothSetToRenderLayer(sSetName):
     if sDelList:
         mc.editRenderLayerMembers(sRndLyr, *sDelList, remove=True, noRecurse=True)
 
-
 def listSmoothableMeshes(project=None, warn=True):
 
     from pytaya.util import apiutils as mapi
@@ -719,6 +723,134 @@ def listSmoothableMeshes(project=None, warn=True):
 
     return smoothData, numAllFaces
 
+def getAnimaticInfos(sceneManager):
+
+    damShot = sceneManager.getDamShot()
+
+    sPubMoviePath = damShot.getPath('public', 'animatic_capture')
+    sLocMoviePath = osp.normpath(osp.join(sceneManager.getWipCaptureDir(damShot),
+                                          osp.basename(sPubMoviePath)))
+    sAnimaticImgPath = makeFilePath(osp.splitext(sLocMoviePath)[0],
+                                    "animatic", "jpg", frame=1)
+    sAudioPath = damShot.getPath('public', 'animatic_sound')
+    sAudioEnvPath = damShot.getLibrary().absToEnvPath(sAudioPath)
+
+    File = namedtuple("File", ["path", "found"])
+
+    infos = {"public_movie":sPubMoviePath,
+            "local_movie":sLocMoviePath,
+            "first_image":sAnimaticImgPath,
+            "public_audio":sAudioEnvPath,
+            }
+
+    found = lambda p: osp.isfile(pathResolve(p))
+    infos = dict((k, File(p, found(p))) for k, p in infos.iteritems())
+
+    bNewerMovie = True
+    if infos["public_movie"].found and infos["local_movie"].found:
+        bNewerMovie = osp.getmtime(infos["public_movie"].path) > osp.getmtime(infos["local_movie"].path)
+
+    infos["newer_movie"] = bNewerMovie
+
+    return infos
+
+def setupAnimatic(sceneManager, create=True, checkUpdate=False):
+
+    oImgPlane, oImgPlaneCam = getImagePlaneItems(create=False)
+    if (not create) and (not oImgPlaneCam):
+        pc.displayError("Animatic camera not found: 'Shot Setup' needed.")
+        return
+
+    sErrorList = []
+    sPanelList = tuple(iterPanelsFromCam(oImgPlaneCam)) if oImgPlaneCam else []
+    bHidden = oImgPlane.getAttr("hideOnPlayback") if oImgPlane else False
+
+    infos = getAnimaticInfos(sceneManager)
+
+    sPubMoviePath = infos["public_movie"].path
+
+    sAnimaticImgPath = ""
+    if infos["public_movie"].found:
+
+        sLocMoviePath = infos["local_movie"].path
+        sAnimaticImgPath = infos["first_image"].path
+
+        if oImgPlane:
+            sCurImgPlanePath = pathResolve(oImgPlane.getAttr("imageName"))
+            if osp.normcase(sCurImgPlanePath) != osp.normcase(sAnimaticImgPath):
+                print "deleting", oImgPlaneCam
+                pc.delete(oImgPlaneCam);pc.refresh()
+                oImgPlane, oImgPlaneCam = None, None
+
+        pc.currentTime(101);pc.refresh()
+        bForce = False# if inDevMode() else False
+
+        bUpdate = (infos["newer_movie"] or bForce)
+        if bUpdate:
+            sLocDirPath = osp.dirname(sLocMoviePath)
+            if not osp.exists(sLocDirPath):
+                os.makedirs(sLocDirPath)
+            print "\nCopying '{}'\n     to '{}'".format(sPubMoviePath, sLocMoviePath)
+            shutil.copy2(sPubMoviePath, sLocMoviePath)
+
+        bImgSeqFound = infos["first_image"].found
+        if bImgSeqFound and bUpdate:
+
+            if oImgPlaneCam:
+                print "deleting", oImgPlaneCam
+                pc.delete(oImgPlaneCam);pc.refresh()
+                oImgPlane, oImgPlaneCam = None, None
+
+            print "deleting", osp.dirname(sAnimaticImgPath)
+            shutil.rmtree(osp.dirname(sAnimaticImgPath), ignore_errors=False)
+
+        if (not bImgSeqFound) or bUpdate:
+            sImgSeqDirPath = osp.dirname(sAnimaticImgPath)
+            if not osp.exists(sImgSeqDirPath):
+                os.makedirs(sImgSeqDirPath)
+            movieToJpegSequence(sLocMoviePath, sImgSeqDirPath, "animatic")
+    else:
+        sErrorList.append("Animatic movie not found: '{}'.".format(sPubMoviePath))
+
+    if not (oImgPlaneCam and oImgPlane):
+        oImgPlane, oImgPlaneCam = getImagePlaneItems(create=True)
+        if sPanelList:
+            for sPanel in sPanelList:
+                pc.modelPanel(sPanel, e=True, camera=oImgPlaneCam)
+        oImgPlane.setAttr("hideOnPlayback", bHidden)
+
+    if oImgPlane and sAnimaticImgPath:
+        try:
+            pc.imagePlane(oImgPlane, edit=True, fileName=sAnimaticImgPath)
+        except RuntimeError as e:
+            if not "Unable to load the image file" in e.message:
+                sErrorList.append(toStr(e))
+        try:
+            #offset +1 because ffmpeg duplicates the first frame during movie conversion to jpegs.
+            oImgPlane.setAttr("frameOffset", (-100 + 1))
+            pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
+        except Exception as e:
+            pc.displayWarning(toStr(e))
+
+    #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
+    sAudioEnvPath = infos["public_audio"].path
+    pc.mel.DeleteAllSounds()
+    if infos["public_audio"].found:
+        # --- Import Sound
+        # - Import current shot Sound
+        sAudioNode = pc.sound(offset=101, file=sAudioEnvPath, name='audio')
+
+        # - Show Sound in Timeline
+        aPlayBackSliderPython = pc.mel.eval('$tmpVar=$gPlayBackSlider')
+        pc.timeControl(aPlayBackSliderPython, e=True, sound=sAudioNode, displaySound=True)
+    else:
+        sErrorList.append("Animatic sound not found: '{}'.".format(pathResolve(sAudioEnvPath)))
+
+    if sErrorList:
+        pc.displayError("\n" + "\n".join(sErrorList))
+
+    return oImgPlane, oImgPlaneCam
+
 @withSelectionRestored
 def init_previz_scene(sceneManager):
 
@@ -730,7 +862,6 @@ def init_previz_scene(sceneManager):
 
     sStepName = sceneManager.context["step"]["code"].lower()
     proj = sceneManager.context["damProject"]
-    shotLib = proj.getLibrary("public", "shot_lib")
     sShotCode = sceneManager.context['entity']['code']
 
     if sStepName == "animation":
@@ -815,90 +946,11 @@ def init_previz_scene(sceneManager):
             pc.parentConstraint(oShotCam, oStereoCam, maintainOffset=True)
             oShotCam.attr("focalLength") >> oStereoCam.attr("focalLength")
 
-    damShot = sceneManager.getDamShot()
-    #sgEntity = sceneManager.context['entity']
-    #image plane "Y:\shot\...\00_data\sqXXXX_shXXXXa_animatic.mov"
-    sPubMoviePath = damShot.getPath('public', 'animatic_capture')
-
-    sLocMoviePath = osp.normpath(osp.join(sceneManager.getWipCaptureDir(damShot),
-                                          osp.basename(sPubMoviePath)))
-
-    sImgSeqDirPath = osp.splitext(sLocMoviePath)[0]
-    sFirstImgPath = makeFilePath(sImgSeqDirPath, "animatic", "jpg", frame=1)
-
-    oImgPlane, oImgPlaneCam = getImagePlaneItems(create=False)
-
-    if osp.isfile(sPubMoviePath):
-
-        if oImgPlane:
-            sCurImgPlanePath = pathResolve(oImgPlane.getAttr("imageName"))
-            if osp.normcase(sCurImgPlanePath) != osp.normcase(sFirstImgPath):
-                print "deleting", oImgPlaneCam
-                pc.delete(oImgPlaneCam);pc.refresh()
-                oImgPlane, oImgPlaneCam = None, None
-
-        pc.currentTime(101)
-        pc.refresh()
-
-        bForce = False if inDevMode() else False
-
-        sDirPath = osp.dirname(sLocMoviePath)
-        if not osp.exists(sDirPath):
-            os.makedirs(sDirPath)
-        _, bMovieCopied = copyFile(sPubMoviePath, sLocMoviePath, update=(not bForce))
-
-        bImgSeqFound = osp.exists(sFirstImgPath)
-        if bImgSeqFound and bMovieCopied:
-
-            if oImgPlaneCam:
-                print "deleting", oImgPlaneCam
-                pc.delete(oImgPlaneCam);pc.refresh()
-                oImgPlane, oImgPlaneCam = None, None
-
-            print "deleting", osp.dirname(sFirstImgPath)
-            shutil.rmtree(osp.dirname(sFirstImgPath), ignore_errors=False)
-
-        if (not bImgSeqFound) or bMovieCopied:
-            if not osp.exists(sImgSeqDirPath):
-                os.makedirs(sImgSeqDirPath)
-            movieToJpegSequence(sLocMoviePath, sImgSeqDirPath, "animatic")
-    else:
-        pc.displayError("Animatic movie not found: '{}'".format(sPubMoviePath))
-
-    if not (oImgPlaneCam and oImgPlane):
-        oImgPlane, oImgPlaneCam = getImagePlaneItems(create=True)
-
-    if oImgPlane:
-        try:
-            pc.imagePlane(oImgPlane, edit=True, fileName=sFirstImgPath)
-        except RuntimeError as e:
-            if not "Unable to load the image file" in e.message:
-                raise
-        try:
-            #offset +1 because ffmpeg duplicates the first frame during movie conversion to jpegs.
-            oImgPlane.setAttr("frameOffset", (-100 + 1))
-            pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
-        except Exception as e:
-            pc.displayWarning(toStr(e))
-
-    arrangeViews(oShotCam.getShape(), oImgPlaneCam, oStereoCam)
-
-    #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
-    soundPath = damShot.getPath('public', 'animatic_sound')
-    pc.mel.DeleteAllSounds()
-    if osp.isfile(soundPath):
-        # --- Import Sound
-        # - Import current shot Sound
-        soundEnvPath = shotLib.absToEnvPath(soundPath)
-        audio_shot = pc.sound(offset=101, file=soundEnvPath, name='audio')
-
-        # - Show Sound in Timeline
-        aPlayBackSliderPython = pc.mel.eval('$tmpVar=$gPlayBackSlider')
-        pc.timeControl(aPlayBackSliderPython, e=True, sound=audio_shot, displaySound=True)
-    else:
-        pc.warning('Sound file cannot be found ({0})'.format(soundPath))
+    _, oAnimaticCam = setupAnimatic(sceneManager)
 
     reArrangeAssets()
+    arrangeViews(oShotCam.getShape(), oAnimaticCam, oStereoCam)
+
 
 
 COMMANDS = {

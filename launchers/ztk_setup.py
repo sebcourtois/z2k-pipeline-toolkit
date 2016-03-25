@@ -288,6 +288,7 @@ class Z2kToolkit(object):
         cmdArgs = sys.argv[1:]
         sCmd = ""
         sCmdList = ("install", "launch", "release")
+        launchArgs = []
         if len(sys.argv) > 2:
             sCmd = sys.argv[1]
             if sCmd == "launch":
