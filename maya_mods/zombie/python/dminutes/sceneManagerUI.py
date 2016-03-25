@@ -10,15 +10,15 @@ import maya.cmds as mc
 import pymel.core
 
 from pytd.util.fsutils import pathResolve
-from pytd.util.sysutils import inDevMode, toStr
+from pytd.util.sysutils import inDevMode, toStr, getCaller
 from pytd.util.logutils import logMsg
-#from pytd.util.sysutils import getCaller
 from pytd.util.qtutils import setWaitCursor
 
 from zomblib import rvutils
 
 import dminutes.maya_scene_operations as mop
 from dminutes import sceneManager
+from pytaya.util.sysutils import withSelectionRestored
 
 osp = os.path
 pc = pymel.core
@@ -120,6 +120,9 @@ def launch():
         sWdgName = mc.control("smoothGroup", q=True, fullPathName=True)
         QWIDGETS["smoothGroup"] = pc.ui.toPySideObject(sWdgName)
 
+        sWdgName = mc.control("sm_setupAnimatic_bt", q=True, fullPathName=True)
+        QWIDGETS["sm_setupAnimatic_bt"] = pc.ui.toPySideObject(sWdgName)
+
         sState = pc.optionVar.get("Z2K_SM_dockState")
         if sState:
             states.update(state=sState)
@@ -198,25 +201,29 @@ def initialize():
     if SG_ENGINE.currentUser.get("login").lower() != "mariong":
         pc.control("sm_increment_chk", edit=True, visible=False)
 
-def updateButtons():
-    """Update buttons availability from maya_scene_operations commands dictionary"""
 
-    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
-    for buttonName in ACTION_BUTTONS:
-        _, action, _ = buttonName.split('_')
-        enable = (('task' in SCENE_MANAGER.context)
-                    and mop.canDo(action, SCENE_MANAGER.context['task']['content'])
-                    and SCENE_MANAGER.entitiesMatchUp(sceneInfos))
-        pc.control(buttonName, edit=True, enable=enable)
-
-    refreshContextUI()
+test_toggle = False
 
 def refreshContextUI():
     """Update buttons availability from contexts (scene Context / UI Context)"""
 
+    global test_toggle
+
+    if not mc.control(SCENE_MANAGER_DOCK, q=True, visible=True):
+        return
+
+    #print getCaller()
+
     sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
     bRcsMatchUp = SCENE_MANAGER.resourcesMatchUp(sceneInfos)
     bPublishable = bRcsMatchUp and SCENE_MANAGER.scenePublishable(sceneInfos)
+
+    for buttonName in ACTION_BUTTONS:
+        _, action, _ = buttonName.rsplit("|", 1)[-1].split('_')
+        bEnabled = (('task' in SCENE_MANAGER.context)
+                    and mop.canDo(action, SCENE_MANAGER.context['task']['content'])
+                    and bRcsMatchUp)
+        pc.control(buttonName, edit=True, enable=bEnabled)
 
     pc.control('sm_switchContext_bt', edit=True, enable=not bPublishable)
 
@@ -230,6 +237,24 @@ def refreshContextUI():
     sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
     bEnabled = (sCtxStep not in ("previz 3d", "stereo")) and bPublishable
     pc.control('sm_editCam_bt', edit=True, enable=bEnabled)
+
+    _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
+    bEnabled = True if (bRcsMatchUp and oImgPlaneCam) else False
+    pc.button('sm_setupAnimatic_bt', edit=True, enable=bEnabled)
+    sInfo = " - NEEDED !"
+    sLabel = pc.button('sm_setupAnimatic_bt', q=True, label=True).rsplit(sInfo, 1)[0]
+    sStyle = "background-color: none;"
+    if bEnabled:
+        infos = mop.getAnimaticInfos(SCENE_MANAGER)
+        pc.button('sm_setupAnimatic_bt', q=True, label=True)
+        if infos["newer_movie"]:
+            if (sInfo not in sLabel):
+                sLabel += sInfo
+                sStyle = "background-color:rgba(200, 0, 0, 90);"
+    QWIDGETS["sm_setupAnimatic_bt"].setStyleSheet(sStyle)
+    pc.button('sm_setupAnimatic_bt', edit=True, label=sLabel)
+
+    test_toggle = not test_toggle
 
     pc.checkBox('sm_imgPlane_chk', edit=True, value=mop.isImgPlaneHidden())
     pc.checkBox('sm_increment_chk', edit=True, value=pc.optionVar.get("Z2K_SM_increment", False))
@@ -388,63 +413,65 @@ def connectCallbacks():
 
     #buttons
     pc.button('sm_detect_bt', edit=True, c=doDetect)
-
-    pc.button('sm_refreshScene_bt', edit=True, c=doRefreshSceneInfo)
-    pc.button('sm_selectRefs_bt', edit=True, c=doSelectRefs)
-
-    pc.button('sm_updScene_bt', edit=True, c=doUpdateScene)
-    pc.button('sm_updShotgun_bt', edit=True, c=doUpdateShotgun)
-    pc.button('sm_capture_bt', edit=True, c=doCapture)
-    pc.button('sm_wipCapture_bt', edit=True, c=doWipCapture)
-
-    pc.button('sm_incrementSave_bt', edit=True, c=doSaveWip)
-
     pc.button('sm_switchContext_bt', edit=True, c=doSwitchContext)
 
+    #misc. operations
     pc.button('sm_shotgunPage_bt', edit=True, c=doShowInShotgun)
     pc.button('sm_wipCaptureDir_bt', edit=True, c=doShowWipCapturesDir)
     pc.button('sm_rvScreeningRoom_bt', edit=True, c=doShowSequenceInRv)
 
-    #davos
-    pc.button('sm_unlock_bt', edit=True, c=doUnlock)
-    pc.button('sm_edit_bt', edit=True, c=doEdit)
-    pc.button('sm_publish_bt', edit=True, c=doPublish)
-    pc.button('sm_createFolder_bt', edit=True, c=doCreateFolder)
-
-    #action buttons
-    buttonName = 'sm_init_bt'
-    pc.button(buttonName, edit=True, c=doInit)
-    ACTION_BUTTONS.append(buttonName)
-
+    #shot operations
+    ACTION_BUTTONS.append(pc.button('sm_init_bt', edit=True, c=doInitScene))
+    pc.button('sm_setupAnimatic_bt', edit=True, c=doSetupAnimatic)
     pc.button('sm_editCam_bt', edit=True, c=doEditCam)
-    pc.checkBox('sm_imgPlane_chk', edit=True, cc=doShowImagePlane)
-    pc.checkBox('sm_increment_chk', edit=True, cc=updIncrementalSaveState)
-    pc.checkBox('sm_sendToRv_chk', edit=True, cc=updAddCaptureToRvState)
-    pc.checkBox('sm_blocking_chk', edit=True, cc=updBlockingAnimState)
-    pc.checkBox('sm_updAllViews_chk', edit=True, cc=setAllViewsUpdated)
 
+    #Smooth on capture
+    QWIDGETS["smoothGroup"].clicked[bool].connect(updSmoothOnCaptureState)
     pc.button('sm_smoothAdd_bt', edit=True, c=doAddToSmooth)
     pc.button('sm_smoothRem_bt', edit=True, c=doDelFromSmooth)
     pc.button('sm_smoothSelect_bt', edit=True, c=doSelectSmoothed)
-
     pc.button('sm_clearIncluded_bt', edit=True, c=partial(doClearObjectSet,
                                                           "set_applySmoothOnCapture"))
     pc.button('sm_clearExcluded_bt', edit=True, c=partial(doClearObjectSet,
                                                           "set_ignoreSmoothOnCapture"))
-
     pc.button('sm_selectIncluded_bt', edit=True, c=partial(doSelectSetMembers,
                                                           "set_applySmoothOnCapture"))
     pc.button('sm_selectExcluded_bt', edit=True, c=partial(doSelectSetMembers,
                                                           "set_ignoreSmoothOnCapture"))
 
+    #Playback options
+    pc.checkBox('sm_imgPlane_chk', edit=True, cc=doShowImagePlane)
+    pc.checkBox('sm_blocking_chk', edit=True, cc=updBlockingAnimState)
+    pc.checkBox('sm_updAllViews_chk', edit=True, cc=setAllViewsUpdated)
+
+
+    #Capture operations
+    pc.checkBox('sm_sendToRv_chk', edit=True, cc=updAddCaptureToRvState)
+    pc.checkBox('sm_increment_chk', edit=True, cc=updIncrementalSaveState)
+    pc.button('sm_capture_bt', edit=True, c=doCapture)
+    pc.button('sm_wipCapture_bt', edit=True, c=doWipCapture)
+
+    #File operations
+#    pc.button('sm_unlock_bt', edit=True, c=doUnlock)
+#    pc.button('sm_edit_bt', edit=True, c=doEdit)
+#    pc.button('sm_createFolder_bt', edit=True, c=doCreateFolder)
+    pc.button('sm_incrementSave_bt', edit=True, c=doIncrementSave)
+    pc.button('sm_publish_bt', edit=True, c=doPublish)
+
+    #Related assets
     QWIDGETS["relatedAssetsGroup"].clicked[bool].connect(updRelatedAssetsShown)
-    QWIDGETS["smoothGroup"].clicked[bool].connect(updSmoothOnCaptureState)
+    pc.button('sm_refreshScene_bt', edit=True, c=doRefreshSceneInfo)
+    pc.button('sm_selectRefs_bt', edit=True, c=doSelectRefs)
+    pc.button('sm_updScene_bt', edit=True, c=doUpdateScene)
+    pc.button('sm_updShotgun_bt', edit=True, c=doUpdateShotgun)
 
     pc.button('sm_pouet_bt', edit=True, c=doPouet)
-    #buttonName = 'sm_create_bt'
-    #pc.button(buttonName, edit=True, c=doCreate)
-    #ACTION_BUTTONS.append(buttonName)
 
+@withSelectionRestored
+def doSetupAnimatic(*args):
+    mop.setupAnimatic(SCENE_MANAGER, create=False)
+    pc.refresh()
+    refreshContextUI()
 
 def setAllViewsUpdated(bEnable):
     mc.playbackOptions(e=True, view="all" if bEnable else "active")
@@ -517,6 +544,8 @@ def updSmoothOnCaptureState(bEnable=None, warn=True):
         QWIDGETS["smoothGroup"].setTitle("Smooth On Capture ({} meshes - {:,} faces)"
                                          .format(len(smoothData), numFaces))
         return smoothData
+
+#def updA
 
 def updRelatedAssetsShown(bEnable):
     pc.optionVar["Z2K_SM_listAssets"] = bEnable
@@ -619,7 +648,7 @@ def doTaskChanged(*args, **kwargs):
 
 def doVersionChanged(*args):
     """I don't use versions at all in the end..."""
-    updateButtons()
+    refreshContextUI()
     #print pc.textScrollList("sm_versions_lb", query=True, selectItem=True)
 
 def doRefreshFileStatus(*args):
@@ -832,7 +861,7 @@ def doCapture(*args , **kwargs):
 def doWipCapture(*args):
     doCapture(*args, quick=True)
 
-def doSaveWip(*args):
+def doIncrementSave(*args):
     if SCENE_MANAGER.assertScenePublishable():
         SCENE_MANAGER.saveIncrement()
     else:
@@ -882,7 +911,7 @@ def doCreateFolder(*args):
     SCENE_MANAGER.createFolder()
 
 #action buttons
-def doInit(*args):
+def doInitScene(*args):
     """Button is named 'Shot Setup'"""
 
     sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
@@ -890,8 +919,9 @@ def doInit(*args):
 
     SCENE_MANAGER.do('init')
     doRefreshSceneInfo()
+    refreshContextUI()
 
-def doCreate(*args):
+def doCreateScene(*args):
     """Associated button is hidden (forbidden)"""
     SCENE_MANAGER.do('create')
     doRefreshSceneInfo()

@@ -771,6 +771,7 @@ class Asset_File_Conformer:
 
 
 
+
     def transferSG(self):
         if self.sourceTargetListMatch == True:
             i = -1
@@ -801,7 +802,22 @@ class Asset_File_Conformer:
                     sgTransferFailed +=1
                     continue
 
+                #store uv linking
+                uvLinkD={}
                 sourceShadEngList = mc.ls(mc.listHistory(sourceShape,future = True),type="shadingEngine")
+                textureNodeL = []
+                for each in sourceShadEngList:
+                    preview_shader =  mc.listConnections(each+'.surfaceShader',connections = False)
+                    render_shader =  mc.listConnections(each+'.aiSurfaceShader',connections = False)
+                    if not preview_shader: preview_shader = []
+                    if not render_shader: render_shader = []
+                    shaderL = list(set(preview_shader) | set(render_shader))
+                    eachTextureL  = mc.ls(mc.listHistory(shaderL),type="file")
+                    if eachTextureL:
+                        textureNodeL.extend(eachTextureL)
+                for each in textureNodeL:
+                    uvLinkD[each] = mc.uvLink( query=True, texture=each )[0]
+
                 #print sourceShape+" --> "+targetShape
                 if len(sourceShadEngList) == 1:
                     mc.sets(targetShape,e=True, forceElement=sourceShadEngList[0])
@@ -811,6 +827,10 @@ class Asset_File_Conformer:
                     print ("#### {:>7}: no 'shader' found on source object: '{}' transform".format("Error",sourceShape))
                     sgTransferFailed +=1
 
+                #linkBack UVs
+                for each in textureNodeL:
+                    mc.uvLink( make=True, texture=each, uvSet= uvLinkD[each].replace(sourceShape,targetShape) )
+                    print uvLinkD[each].replace(sourceShape,targetShape)
 
             if sgTransferFailed ==0:
                 print "#### {:>7}: materials has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
@@ -1295,3 +1315,38 @@ def standInchecks():
         mc.setAttr(eachProxy+".primaryVisibility" ,0)
         mc.setAttr(eachProxy+".visibleInReflections" ,0)
         mc.setAttr(eachProxy+".visibleInRefractions" ,0)
+
+
+
+def setInstancerLod(inParent="", lod=2, gui=True):
+    """
+    lod = 0 : geometry
+    lod = 1 : bounding boxes
+    lod = 2 : bounding box
+    """
+    if lod == 0: 
+        lodS = "geometry"
+    elif lod == 1: 
+        lodS = "bounding boxes"
+    elif lod == 2: 
+        lodS = "bounding box"
+    else:
+        log.printL("e", "'{}' is not valid for 'lod' input, pick a value between 0 and 2".format( lod))
+        return
+
+    log = miscUtils.LogBuilder(gui=gui, funcName ="setShadingMask")
+    if not inParent:
+        instancerL = mc.ls( type='instancer', l =True)
+    else:
+        descendentL = mc.listRelatives(inParent, type='instancer',allDescendents= True, fullPath=True)
+        parentRootL = mc.ls(inParent, type='instancer', l =True)
+        if not descendentL: descendentL = []
+        if not parentRootL: parentRootL = []
+        instancerL = descendentL + parentRootL
+
+    for each in instancerL:
+        miscUtils.setAttrC(each+".levelOfDetail",lod)
+
+    log.printL("i", "{} instancer(s) switched to : '{}' lod".format( len(each), lodS))
+           
+    return dict(resultB=log.resultB, logL=log.logL)

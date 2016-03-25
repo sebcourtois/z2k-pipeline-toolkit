@@ -22,15 +22,15 @@ def setArnoldRenderOption(outputFormat):
 
     print ""
     print "#### {:>7}: runing rendering.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
+    aspectRatio = 1.85
 
 
-
-    if mc.ls("|asset") and (mc.file(q=True, list = True)[0].split("/")[-4]) == "asset":
-        shadingMode = True
-        print "#### info: Shading mode render options"
-    else:
+    if mc.ls("|shot") and (mc.file(q=True, list = True)[0].split("/")[-4]) == "shot":
         shadingMode = False
-        print "#### info: Lighting mode render options"       
+        print "#### info: Lighting mode render options"
+    else:
+        shadingMode = True
+        print "#### info: Shading mode render options"       
 
     #TEMPORAIRE
     mc.workspace(fileRule=["images","images"])
@@ -63,7 +63,7 @@ def setArnoldRenderOption(outputFormat):
         
     else:
         print "#### error: no '*:cam_*' camera could be found in the scene"
-        return
+        
     
 
   
