@@ -104,6 +104,8 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldDriver.autocrop",1)
     mc.setAttr("defaultArnoldDriver.mergeAOVs",1)
     mc.setAttr("defaultArnoldRenderOptions.aovMode",2)#batch only
+    mc.setAttr("defaultArnoldRenderOptions.threads_autodetect",0)
+    mc.setAttr("defaultArnoldRenderOptions.threads",-1)
 
 
 
@@ -286,7 +288,7 @@ def createBatchRender():
     
     renderBatch_obj.write("set DAVOS_USER="+davosUser+"\n\n")
 
-    renderBatch_obj.write('set option=-r arnold -lic on\n')
+    renderBatch_obj.write('set option=-r arnold -lic on -ai:threads 0\n')
     renderBatch_obj.write('set image=-im '+outputImageName+'\n')
     renderBatch_obj.write('set path=-rd '+os.path.normpath(outputFilePath)+'\n')
     workingFile = os.path.normpath(workingFile)
