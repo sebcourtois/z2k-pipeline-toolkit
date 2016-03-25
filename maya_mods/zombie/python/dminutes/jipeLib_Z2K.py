@@ -23,6 +23,18 @@ import os
 import maya.cmds as cmds
 import itertools
 from dminutes import assetconformation
+import tkRig as tk
+reload (tk)
+
+# TK wrap/TWEAK 
+
+def tkMirror(*args, **kwargs):
+    # jp TK mirror wrap
+    print "tkMirror()"
+    cursel = cmds.ls(sl=1)
+    if cursel:
+        tk.mirrorPose(cursel)
+
 
 # general function
 
@@ -758,6 +770,62 @@ def z2k_selAll_asset_Ctr(*args, **kwargs):
             toSel = "set_control"
         cmds.select(toSel)
     return toSel
+
+
+##### SPINE TWEAK #####
+def spineTweak():
+    '''
+    Tweak toonKit spine
+    :return:
+    '''
+
+    # Get ikSpline curve
+    curv = 'Spine_IK_Init_Crv'
+
+    # Get and stock cv's positions
+    cvPosList = list()
+    for i in range(0,5):
+        cvName = curv + '.cv[%s]'%i
+        pos = cmds.xform(cvName, q=True, a=True, translation=True)
+        cvPosList.append(pos)
+
+    # Detache skin on curve
+    cmds.skinCluster( 'Spine_IK_Init_CrvShape', unbind=True, e=True)
+
+    # Reapply stocked positions
+    for i in range(0,5):
+        cvName = curv + '.cv[%s]'%i
+        pos = cmds.xform(cvName, translation=cvPosList[i])
+
+    # List driver joints
+    drivJointList = ['Spine_IK_Start_Ctrl_Def', 'Spine_IK_FK1_Ctrl_Def', 'Spine_IK_FK2_Ctrl_Def', 'Spine_IK_FK3_Ctrl_Def','Spine_IK_End_Ctrl_Def']
+
+    # Select curve and bones
+    drivJointList.append(curv)
+    cmds.select(drivJointList)
+
+    # Bind skin to curve
+    skinCl = cmds.skinCluster(toSelectedBones=True, normalizeWeights=2, skinMethod=0)[0]
+
+    # Set skin weights
+    for i in range(0,5):
+        cvName = curv + '.cv[%s]'%i
+        cmds.select(cvName)
+
+        if i == 0:
+            cmds.skinPercent(skinCl, transformValue=[('Spine_IK_Start_Ctrl_Def', 1)], normalize=True)
+
+        elif i == 1:
+            cmds.skinPercent(skinCl, transformValue=[('Spine_IK_Start_Ctrl_Def', 1)], normalize=True)
+
+        elif i == 2:
+            cmds.skinPercent(skinCl, transformValue=[('Spine_IK_FK1_Ctrl_Def', 1)], normalize=True)
+
+        elif i == 3:
+            cmds.skinPercent(skinCl, transformValue=[('Spine_IK_FK2_Ctrl_Def', 1)], normalize=True)
+
+        elif i == 4:
+            cmds.skinPercent(skinCl, transformValue=[('Spine_IK_FK3_Ctrl_Def', 1)], normalize=True)
 
 #--------------------- CHECK FUNCTION ------------------------------
 def checkBaseStructure(*args, **kwargs):
