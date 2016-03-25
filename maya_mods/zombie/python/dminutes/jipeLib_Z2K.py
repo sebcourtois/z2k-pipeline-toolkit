@@ -32,6 +32,7 @@ def tkMirror(*args, **kwargs):
     # jp TK mirror wrap
     print "tkMirror()"
     cursel = cmds.ls(sl=1)
+    print "cursel=", cursel
     if cursel:
         tk.mirrorPose(cursel)
 
@@ -2008,13 +2009,14 @@ def chr_CstScaleandOptimFix(bridgeName="Dn_Teeth_Bridge", RootPrefixeToCut="TK_"
                 print "cst=", cst
 
                 print "    ", theRootFilter
-                if "_prCns" in cst:
+                if cmds.objectType(cst) in ["parentConstraint"]:
+                # if "_prCns" in cst:
                     if cmds.objExists(cst):
                         if not theRootFilter in cst:
                             # get cst conn
                             theParent = cmds.listConnections(cst + '.target[0].targetParentMatrix', d=False, s=True)[0]
                             theChild = cmds.listConnections(cst + '.constraintTranslate.constraintTranslateX', d=True, s=False)[0]
-                            print theChild, "c->p", theParent
+                            print "*", theChild, "c->p", theParent
 
                             # re parent has it has to be
                             cmds.parent (theChild, theParent)
