@@ -935,16 +935,16 @@ def checkBaseStructure(*args, **kwargs):
         return toReturnB, debugD
 
 def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig", "grp_geo"],
-        additionalL=["grp_placeHolders","grp_light"], *args, **kwargs):
+        additionalL=["grp_placeHolders"],extraL=["grp_light"], *args, **kwargs):
         """ Description: check inside the asset_gp
             Return : [result,debugDict]
             Dependencies : cmds - 
         """
-        print "checkAssetStructure()",
+        print "checkAssetStructure()"
         extendedL = expectedL[:]
         # switch expeted list depending on the name of the scene
         sceneName = os.path.basename(cmds.file(q=1, l=1)[0])
-        if sceneName[:3] in ["set"]:
+        if sceneName[:3] in ["set",]:
             print "it's a set"
             extendedL.extend(additionalL)
         if "render" in sceneName.split("_")[3]:
@@ -958,10 +958,10 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig", "grp_geo"],
             childL = cmds.listRelatives(assetgpN, c=True)
             print tab, expect_str, childL
             debugD[expect_str] = {}
-            print "*", sorted(expectedL)
-            print "*", sorted(childL)
-            print "*", sorted(extendedL)
-            if (sorted(expectedL) == sorted(childL)) or (sorted(extendedL) == sorted(childL)) :
+            print "*expectedL:", sorted(expectedL)
+            print "*childL   :", sorted(childL)
+            print "*extendedL:", sorted(extendedL)
+            if ( sorted(expectedL) == sorted(childL) ) or ( sorted(extendedL) == sorted(childL)) or ( sorted(expectedL+extraL) == sorted(childL))  :
                 toReturnB = True
                 debugD[ expect_str ]["result"] = "OK"
                 print tab, toReturnB
@@ -1900,26 +1900,29 @@ def chr_clean_set_control_bad_members(*args, **kwargs):
 
 def chr_rename_Teeth_BS_attribs(*args, **kwargs):
     # reset all attr of selected controls
-
+    print "chr_rename_Teeth_BS_attribs()"
     debugL = []
     toRenameUpL = ["Top_Teeth_Global.upperteeth_gum", "Top_Teeth_Global.upperteeth_high", "Top_Teeth_Global.upperteeth_round", "Top_Teeth_Global.uppertteeth_assymetry", "Top_Teeth_Global.upperteeth_squeez"]
     toRenameDnL = ["Bottom_Teeth_Global.lowerteeth_gum", "Bottom_Teeth_Global.lowerteeth_high", "Bottom_Teeth_Global.lowerteeth_round", "Bottom_Teeth_Global.lowerteeth_assymetry", "Bottom_Teeth_Global.lowerteeth_squeez", ]
     allRL = toRenameUpL + toRenameDnL
     print allRL
+    canDo = True
+    for i in allRL:
+        if not cmds.objExists(i):
+            canDo = False
+    if canDo:
+        # reorder attr a l arrache qui foiraient de TK
+        if cmds.objExists("Bottom_Teeth_Global.lowerteeth_assymetry"):
+            cmds.deleteAttr("Bottom_Teeth_Global.lowerteeth_assymetry")
+            cmds.undo()
 
-
-    # reorder attr a l arrache qui foiraient de TK
-    if cmds.objExists("Bottom_Teeth_Global.lowerteeth_assymetry"):
-        cmds.deleteAttr("Bottom_Teeth_Global.lowerteeth_assymetry")
-        cmds.undo()
-
-    for j in allRL:
-        if  cmds.objExists(j):
-            print "renaming", j
-            newName = j.replace("uppertteeth", "upperteeth").replace("lower", "").replace("upper", "")
-            print j, newName
-            cmds.renameAttr(j , newName.rsplit(".")[-1])
-            debugL.append("{0} has been renamed".format(j))
+        for j in allRL:
+            if  cmds.objExists(j):
+                print "renaming", j
+                newName = j.replace("uppertteeth", "upperteeth").replace("lower", "").replace("upper", "")
+                print j, newName
+                cmds.renameAttr(j , newName.rsplit(".")[-1])
+                debugL.append("{0} has been renamed".format(j))
 
     return True, debugL
 
@@ -2814,3 +2817,134 @@ def improveArcades(*args, **kwargs):
             cmds.connectAttr(ctr + "."+ follow_attrN, activeTargetL[1], f=True)
             cmds.connectAttr(ctr + "."+ follow_attrN, reverse_N + ".inputY", f=True)
             cmds.connectAttr(reverse_N + ".outputY", activeTargetL[0], f=True)
+
+
+
+def chr_Fix_LookAt(*args, **kwargs):
+    """ Description: Fix des bug potientiel sur le rig du lookAt. Lorsque que la contrainte n'est pas
+                     faite sur le bon objet du rig.
+        Return : [True,LIST]
+        Dependencies : cmds - 
+    """
+    print "chr_Fix_LookAt()"
+            
+    # var
+    toReturnB = True
+    debugL = []
+    LsideD = {"TargetGP" : "TK_Left_Eye_Root",
+    "badSourceGP" : "TK_Left_Eye_Direction_Root",
+    "goodSourceGP" : "TK_Left_Eye_Direction_Output",
+    "currentSourceGP" :"",
+    "fixBool" : False,
+    }
+    RsideD = {"TargetGP" : "TK_Right_Eye_Root",
+    "badSourceGP" : "TK_Right_Eye_Direction_Root",
+    "goodSourceGP" : "TK_Right_Eye_Direction_Output",
+    "currentSourceGP" :"",
+    "fixBool" : False,
+    }
+    AllDictL = [LsideD,RsideD]
+    # TargetGP = "TK_Left_Eye_Root"
+    # badSourceGP = "TK_Left_Eye_Direction_Root"
+    # goodSourceGP = "TK_Left_Eye_Direction_Output"
+    # currentSourceGP =""
+    # fixBool = False
+    
+    for curD in AllDictL:
+        TargetGP = curD["TargetGP"]
+        badSourceGP = curD["badSourceGP"]
+        goodSourceGP = curD["goodSourceGP"]
+        currentSourceGP =curD["currentSourceGP"]
+        fixBool = curD["fixBool"]
+
+        # start each
+        allCstL = [x for x in cmds.listHistory(TargetGP, levels=1,) if "Constraint" in   cmds.objectType(x)]
+        print "allCstL=", allCstL
+
+        # get current source
+        if len(allCstL):
+            for cst in allCstL:
+                if cmds.objectType(cst) in ["parentConstraint"]:
+                    currentSourceGP =cmds.listConnections(cst + '.target[0].targetParentMatrix', d=False, s=True)[0]    
+                    
+        else:
+            currentSourceGP = ""
+
+        print "currentSourceGP=", currentSourceGP
+
+        # checks
+        print currentSourceGP,"<>",goodSourceGP
+        if not currentSourceGP in [goodSourceGP]:
+            print "  bad Source"
+            fixBool = True
+            debugL.append(TargetGP)
+        else:
+            print "  good Source"
+        
+        # Fix 
+        if fixBool:
+            # delete constraint
+            if len(allCstL):
+                cmds.delete(allCstL)
+
+            # create new constraint
+            pcst= cmds.parentConstraint(goodSourceGP,TargetGP,mo=True)
+            scst= cmds.scaleConstraint(goodSourceGP,TargetGP,mo=True)
+
+    
+    return [True,debugL]
+
+
+
+def chr_fix_mirror_parameters(*args, **kwargs):
+    """ Description: Fix les problems d' attribut de mirror sur les controlers des rig delivered. Les valeur sont souvent mauvaise.
+                     Ce fix recopy les parametre de aurelien_polo sur l asset en cours.
+        Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
+        Dependencies : cmds - 
+    """
+    
+    print "chr_fix_mirror_parametersAA()"
+    debugL = []
+    outTrueL =['Left_Bottom_Teeth', 'Right_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Top_Teeth', 'Right_Shoulder', 'Left_Shoulder', 'Left_Hand_0', 'Left_Thumb_0', 'Left_Thumb_1', 'Left_Thumb_2', 'Left_Meta_Index', 'Left_Index_0', 'Left_Index_1', 'Left_Index_2', 'Left_Pinky_Meta_Bone_Ctrl', 'Right_Middle_1', 'Right_Middle_2', 'Right_Ring_Meta_Bone_Ctrl', 'Right_Ring_0_Bone_Ctrl', 'Right_Ring_1_Bone_Ctrl', 'Right_Ring_2_Bone_Ctrl', 'Right_Foot_FK_0', 'Right_Foot_FK_1', 'Left_Arm_FK_1', 'Left_Arm_FK_0', 'Left_Pinky_0_Bone_Ctrl', 'Left_Pinky_1_Bone_Ctrl', 'Left_Pinky_2_Bone_Ctrl', 'Left_Meta_Middle', 'Left_Middle_0', 'Left_Middle_1', 'Left_Middle_2', 'Left_Ring_Meta_Bone_Ctrl', 'Left_Ring_0_Bone_Ctrl', 'Left_Ring_1_Bone_Ctrl', 'Left_Ring_2_Bone_Ctrl', 'Right_Leg_FK_0', 'Right_Foot_Heel', 'Right_Foot_Reverse_0', 'Right_Foot_Reverse_1', 'Right_Foot_Reverse_2', 'Left_EyeBrow_out_1', 'Left_EyeBrow_in', 'Left_EyeBrow_out', 'Right_Arm_FK_1', 'Right_Arm_FK_0', 'Right_Hand_0', 'Right_Thumb_0', 'Left_nostril', 'Right_nostril', 'Right_Ear_Bone_Ctrl', 'Right_Thumb_1', 'Right_Thumb_2', 'Right_Meta_Index', 'Right_Index_0', 'Right_Index_1', 'Right_Index_2', 'Right_Pinky_Meta_Bone_Ctrl', 'Right_Pinky_0_Bone_Ctrl', 'Right_Pinky_1_Bone_Ctrl', 'Right_Pinky_2_Bone_Ctrl', 'Right_Meta_Middle', 'Right_Middle_0', 'Left_UpperEye_0_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_UpperEye_1_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_UpperEye_3_Ctrl', 'Right_LowerEye_0_Ctrl', 'Right_LowerEye_1_Ctrl', 'Right_LowerEye_2_Ctrl', 'Right_LowerEye_3_Ctrl', 'Right_Leg_FK_1', 'Right_Levator1_0_Ctrl', 'Right_Levator1_1_Ctrl', 'Right_Levator_0_Ctrl', 'Right_Levator_1_Ctrl', 'Right_Cheek', 'Right_Zygo_0_Ctrl', 'Right_Zygo_1_Ctrl', 'Left_Foot_FK_0', 'Right_Riso_0_Ctrl', 'Right_Riso_1_Ctrl', 'Left_Zygo_0_Ctrl', 'Left_Zygo_1_Ctrl', 'Left_Levator1_0_Ctrl', 'Left_Levator1_1_Ctrl', 'Left_Levator_0_Ctrl', 'Left_Levator_1_Ctrl', 'Left_Riso_0_Ctrl', 'Left_Riso_1_Ctrl', 'Left_CheekBone', 'Right_CheekBone', 'Right_Tongue_2', 'Right_Tongue_3', 'Right_Tongue_1', 'Left_Foot_FK_1', 'Left_Foot_Heel', 'Left_Foot_Reverse_0', 'Left_Foot_Reverse_1', 'Left_Foot_Reverse_2', 'Left_Leg_FK_1', 'Left_Leg_FK_0', 'Left_UpperEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_UpperEye_3_Ctrl', 'Left_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_LowerEye_2_Ctrl', 'Left_LowerEye_3_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_in_1', 'Right_Brow_ridge_in', 'Right_Brow_ridge_out_1', 'Right_EyeBrow_out_1', 'Right_EyeBrow_in', 'Right_Brow_ridge_in_1', 'Right_EyeBrow_out', 'Right_Brow_ridge_out', 'Left_EyeBrow_Global', 'Left_EyeBrow_in_1']
+    outFalseL = ['Bottom_Teeth_Global', 'Bottom_Teeth', 'Top_Teeth_Global', 'Top_Teeth', 'Right_Hand_ParamHolder_Main_Ctrl', 'Left_Foot_ParamHolder_Main_Ctrl', 'Right_Foot_ParamHolder_Main_Ctrl', 'Left_Hand_ParamHolder_Main_Ctrl', 'Left_Arm_Root', 'Right_Leg_Extra_0', 'Right_Arm_Extra_6', 'Right_Arm_Round_Root', 'Right_Arm_Root_Tangent', 'Right_Arm_End', 'Right_Arm_End_Tangent', 'Right_Arm_Elbow', 'Right_Arm_Round_0', 'Right_Arm_Round_1', 'Right_Arm_Extra_0', 'Right_Arm_Extra_1', 'Right_Arm_Extra_2', 'Right_Arm_Extra_3', 'Right_Arm_Extra_4', 'Right_Arm_Extra_5', 'Right_Leg_upV', 'Left_Arm_Extra_0', 'Left_Arm_Extra_1', 'Left_Arm_Extra_2', 'Left_Arm_Extra_3', 'Left_Arm_Extra_4', 'Left_Arm_Extra_5', 'Left_Arm_Extra_6', 'Left_Arm_Round_Root', 'Left_Arm_Round_Root_Tangent', 'Left_Arm_Round_Eff', 'Left_Arm_Round_Eff_Tangent', 'Left_Arm_Elbow', 'Left_Arm_Round_0', 'Left_Arm_Round_1', 'Left_Arm_IK', 'Left_Arm_upV', 'Left_Cheek', 'Left_Depressor_Handle_1_Control', 'Left_Depressor1_Handle_1_Control', 'Left_MouthCorner', 'Left_LowerLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 'Left_LowerLip_Inter', 'Left_UpperLip_1_Ctrl', 'Left_UpperLip_2_Ctrl', 'Left_UpperLip_Inter', 'Left_Leg_Extra_5', 'Left_Leg_Extra_6', 'Left_Leg_Round_Root', 'Left_Leg_Round_Root_Tangent', 'Left_Leg_Round_Eff', 'Left_Leg_Round_Eff_Tangent', 'Left_Leg_Knee', 'Left_Leg_Round_0', 'Left_Leg_Round_1', 'Left_Pant_Bottom_Global_Main_Ctrl', 'Left_Pant_Ext_Main_Ctrl', 'Left_Pant_Int_Main_Ctrl', 'Left_Pant_Front_Main_Ctrl', 'Left_Pant_Back_Main_Ctrl', 'Right_Leg_IK', 'Left_Brow_ridge_in', 'Left_Brow_ridge_out_1', 'Left_Brow_ridge_in_1', 'Left_Brow_ridge_out', 'Right_Collar_0_1_Bone_Ctrl', 'Right_Collar_0_2_Bone_Ctrl', 'Right_Arm_upV', 'Right_Arm_Root', 'Right_Arm_IK', 'Left_Collar_2_2_Bone_Ctrl', 'Left_Collar_1_0_Bone_Ctrl', 'Left_Collar_1_2_Bone_Ctrl', 'Back_Collar_1_Bone_Ctrl', 'Back_Collar_2_Bone_Ctrl', 'Left_UpperLid_Main_Ctrl', 'Left_Eyelid_Out', 'Left_Eyelid_In', 'Left_Eye_Target_Main_Ctrl', 'Left_Eye', 'Left_Eye_Pupille_Main_Ctrl', 'Right_Eye_Target_Main_Ctrl', 'Right_Eye', 'Right_Eye_Pupille_Main_Ctrl', 'Right_Leg_Root', 'Right_Base_Depressor', 'Right_Base_Levator1', 'Right_Base_Depressor1', 'Right_Base_Levator', 'Right_Depressor1_Handle_1_Control', 'Right_UpperLip_1_Ctrl', 'Right_UpperLip_2_Ctrl', 'Right_UpperLip_Inter', 'Right_MouthCorner', 'Right_LowerLip_1_Ctrl', 'Right_LowerLip_2_Ctrl', 'Right_LowerLip_Inter', 'Right_Depressor_Handle_1_Control', 'Left_Base_Levator', 'Left_Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator1', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Left_Leg_Extra_0', 'Left_Leg_Extra_1', 'Left_Leg_Extra_2', 'Left_Leg_Extra_3', 'Left_Leg_Extra_4', 'Left_Leg_IK', 'Left_Leg_upV', 'Left_Leg_Root', 'Right_Leg_Extra_1', 'Right_Leg_Extra_2', 'Right_Leg_Extra_3', 'Right_Leg_Extra_4', 'Right_Leg_Extra_5', 'Right_Leg_Extra_6', 'Right_Leg_Round_Root', 'Right_Leg_Round_Root_Tangent', 'Right_Leg_Round_End', 'Right_Leg_Round_End_Tangent', 'Right_Leg_Knee', 'Right_Leg_Round_0', 'Right_Leg_Round_1', 'Right_Pant_Bottom_Global_Main_Ctrl', 'Right_Pant_Ext_Main_Ctrl', 'Right_Pant_Int_Main_Ctrl', 'Right_Pant_Front_Main_Ctrl', 'Right_Pant_Back_Main_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Right_LowerLid_Main_Ctrl', 'Right_UpperLid_Main_Ctrl', 'Right_Eyelid_Out', 'Right_Eyelid_In', 'Right_Collar_1_0_Bone_Ctrl', 'Right_Collar_1_2_Bone_Ctrl', 'Right_Collar_2_1_Bone_Ctrl', 'Right_Collar_2_2_Bone_Ctrl', 'Left_Collar_0_1_Bone_Ctrl', 'Left_Collar_0_2_Bone_Ctrl', 'Left_Collar_2_1_Bone_Ctrl', 'Right_Eye_Bulge', 'Left_Ear_Bone_Ctrl', 'Left_Eye_Bulge']
+
+    theAttr = "_OSCAR_Attributes.Mirror"
+    for i in outTrueL:
+        # print  i + theAttr
+        if cmds.objExists( i + theAttr):
+            print i,"set to TRUE"
+            cmds.setAttr( i + theAttr,True)
+    for i in outFalseL:
+        if cmds.objExists( i + theAttr):
+            cmds.setAttr( i + theAttr,False)
+            print i,"set to FALSE"
+
+    return [True,debugL]
+
+
+def chr_fixCornerNeutralsRotation(*args,**kwargs):
+    """ Description: Remet à zero la rotation des corners_neutral pose qui decale la symetrie de la bouche.
+                     La rotation n'influant aucun autres objet du rig.
+        Return : [True,LIST]
+        Dependencies : cmds - 
+    """
+    print "chr_fixCornerNeutralsRotation()"
+
+    debugL = []
+    leftSide = 'TK_Left_MouthCorner_Locals_Root|TK_Left_MouthCorner_Locals_Main_Ctrl_NeutralPose'
+    rightSide = 'TK_Right_MouthCorner_Locals_Root|TK_Right_MouthCorner_Locals_Main_Ctrl_NeutralPose'
+    toFixL =  [leftSide, rightSide]
+               
+    attrL = ["rx","ry","rz"]
+    for i in toFixL:
+        print "  ",i
+        for attr in attrL:
+            if cmds.objExists(i):
+                oldVal = cmds.getAttr(i + "." + attr)
+                print "    ",attr, "=",oldVal
+                if cmds.getAttr(i + "." + attr) not in [0]:
+                    cmds.setAttr(i + "." + attr,0)
+                    debugL.append(i)
+            else:
+                print i,"doesn't exist!"
+    return [True,debugL] 
