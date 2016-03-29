@@ -578,7 +578,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=17, e=True)
+        self.pBar_upd(step=1, maxValue=20, e=True)
 
 
         # 1 connectVisibility ()
@@ -807,6 +807,56 @@ class checkModule(object):
         if not resultD["resultB"]:
             boolResult = False
         self.pBar_upd(step= 1,)
+
+
+
+        # 18 ----- chr_Fix_LookAt () 
+        self.printF("chr_Fix_LookAt()", st="t")
+        result,debugL = jpZ.chr_Fix_LookAt()
+        # prints -------------------
+        self.printF(result, st="r")
+        if debugL:
+            for i in debugL:
+                self.printF("  -",i)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+        
+
+        # 19 ----- chr_fix_mirror_parameters () 
+        self.printF("chr_fix_mirror_parameters()", st="t")
+        result,debugL = jpZ.chr_fix_mirror_parameters()
+        # prints -------------------
+        self.printF(result, st="r")
+        if debugL:
+            for i in debugL:
+                self.printF("  -",i)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 20 ----- chr_fixCornerNeutralsRotation () 
+        self.printF("chr_fixCornerNeutralsRotation()", st="t")
+        result,debugL = jpZ.chr_fixCornerNeutralsRotation()
+        # prints -------------------
+        self.printF(result, st="r")
+        if debugL:
+            for i in debugL:
+                self.printF("  -",i)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+
 
 
 

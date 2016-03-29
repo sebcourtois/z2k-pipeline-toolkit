@@ -830,7 +830,7 @@ class Asset_File_Conformer:
                 #linkBack UVs
                 for each in textureNodeL:
                     mc.uvLink( make=True, texture=each, uvSet= uvLinkD[each].replace(sourceShape,targetShape) )
-                    print uvLinkD[each].replace(sourceShape,targetShape)
+                    #print uvLinkD[each].replace(sourceShape,targetShape)
 
             if sgTransferFailed ==0:
                 print "#### {:>7}: materials has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
