@@ -392,7 +392,11 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
                 #mc.setAttr(myAiRaySwitch+".camera", 0.5,0.5,0.5, type = "double3")
                 #mc.setAttr(myAiRaySwitch+".refraction", 0.5,0.5,0.5, type = "double3")
                 myAiRaySwitch = cameraNameSpace+":env_aiRaySwitch"
-                mc.connectAttr(myAiRaySwitch+".message", 'defaultArnoldRenderOptions.background', force =True)
+                myAiSky = mc.ls(cameraNameSpace+":env_aiSky", type= "aiSky")
+                if myAiSky:
+                    mc.connectAttr(myAiSky[0]+".message", 'defaultArnoldRenderOptions.background', force =True)
+                else:
+                    mc.connectAttr(myAiRaySwitch+".message", 'defaultArnoldRenderOptions.background', force =True)
 
 
     else:
