@@ -21,6 +21,7 @@
 ################################################################
 import os
 import maya.cmds as cmds
+import maya.mel as mel
 import itertools
 from dminutes import assetconformation
 import tkRig as tk
@@ -29,12 +30,85 @@ reload (tk)
 # TK wrap/TWEAK 
 
 def tkMirror(*args, **kwargs):
-    # jp TK mirror wrap
-    print "tkMirror()"
-    cursel = cmds.ls(sl=1)
+    # special case of added controlers
+    # upperBrowL = ['Left_Brow_upRidge_01_ctrl', 'Left_Brow_upRidge_02_ctrl', 'Left_Brow_upRidge_03_ctrl', 'Left_Brow_upRidge_04_ctrl', 
+    #             'Right_Brow_upRidge_01_ctrl', 'Right_Brow_upRidge_02_ctrl', 'Right_Brow_upRidge_03_ctrl', 'Right_Brow_upRidge_04_ctrl'
+    #             ]
+    upperBrowD = {'Left_Brow_upRidge_01_ctrl':'Right_Brow_upRidge_01_ctrl',
+                  'Left_Brow_upRidge_02_ctrl':'Right_Brow_upRidge_02_ctrl',
+                  'Left_Brow_upRidge_03_ctrl':'Right_Brow_upRidge_03_ctrl',
+                  'Left_Brow_upRidge_04_ctrl':'Right_Brow_upRidge_04_ctrl', 
+
+                  'Right_Brow_upRidge_01_ctrl':'Left_Brow_upRidge_01_ctrl',
+                  'Right_Brow_upRidge_02_ctrl':'Left_Brow_upRidge_02_ctrl',
+                  'Right_Brow_upRidge_03_ctrl':'Left_Brow_upRidge_03_ctrl',
+                  'Right_Brow_upRidge_04_ctrl':'Left_Brow_upRidge_04_ctrl',   
+                
+                }
+
+    cursel= cmds.ls(sl=1)
+    upperSymL = []
+    tkendSel = []
     print "cursel=", cursel
-    if cursel:
-        tk.mirrorPose(cursel)
+    for i  in cursel:
+        # print "    *",i.split(":",1)[-1]
+
+        if  i.split(":",1)[-1] in upperBrowD.keys():
+            upperSymL.append(i)
+        else:
+            tkendSel.append(i)
+
+    # jp TK mirror wrap
+    print "upperSymL=", upperSymL
+    print "tkendSel=", tkendSel
+    if tkendSel:
+        tk.mirrorPose(tkendSel)
+
+    # jp upperSymLspecial mirror
+    # set the values
+    attrTableD = {  "sx":1,
+                    "sy":1,
+                    "sz":1,
+                    "rx":-1,
+                    "ry":-1,
+                    "rz":1,
+                    "tx":1,
+                    "ty":1,
+                    "tz":-1,
+       }
+
+    oppositeValD={}
+    for i in upperSymL:
+        
+        # get corresponding opposite side
+        if ":" in i:
+            curChr = i.split(":",1)[0] 
+            key = i.split(":",1)[-1]
+            oppositeSide =curChr+":"+ upperBrowD[key]
+        else:
+            curChr = i
+            key = i
+            oppositeSide = upperBrowD[i]
+
+        print "*",i,"<>",oppositeSide
+
+        
+        # get the values
+        oppositeValD[oppositeSide]={}
+        print i,"<>", oppositeSide
+        for attr,fact in attrTableD.iteritems():
+            # print "  ",attr,fact
+            curVal = cmds.getAttr(i+"."+attr)
+            print "    curval=", curVal
+            oppositeValD[oppositeSide][attr]=fact*curVal
+
+    # set attr
+    for obj,attrD in oppositeValD.iteritems():
+        print "->",obj
+        for attr,val in attrD.iteritems():
+            print "   ",attr,val
+            cmds.setAttr(obj+"."+attr,val)
+        
 
 
 # general function
@@ -1986,7 +2060,7 @@ def chr_CstScaleandOptimFix(bridgeName="Dn_Teeth_Bridge", RootPrefixeToCut="TK_"
                       et refait la contrainte pour lier au reste proprement, afin d'enlever les problemes de scale.
     
         Return : [BOOL,LIST]
-        Dependencies : cmds - 
+        Dependencies : cmds - getTypeInHierarchy()
     """
     print "chr_CstScaleandOptimFix()"
 
@@ -2590,24 +2664,42 @@ def chr_replace_chr_vis_Exp_System(*args, **kwargs):
                 spkipedObjL.append(j)
 
     # adding additive rigs here
-    upperBrowsAdditveL = ['Right_Brow_upRidge_03_ctrl', 'Right_Brow_upRidge_01_ctrl', 'Right_Brow_upRidge_04_ctrl', 'Right_Brow_upRidge_02_ctrl', 'Left_Brow_upRidge_03_ctrl', 'Left_Brow_upRidge_04_ctrl', 'Left_Brow_upRidge_01_ctrl', 'Left_Brow_upRidge_02_ctrl']
-    
+    upperBrowBreakL  = ['Right_Brow_upRidge_03_ctrl', 'Right_Brow_upRidge_01_ctrl', 'Right_Brow_upRidge_04_ctrl', 'Right_Brow_upRidge_02_ctrl', 
+                          'Left_Brow_upRidge_03_ctrl', 'Left_Brow_upRidge_04_ctrl', 'Left_Brow_upRidge_01_ctrl', 'Left_Brow_upRidge_02_ctrl']
+
+    upperBrowsAdditveL = ["Left_Brow_upRidge_grp", "Right_Brow_upRidge_grp"]
     canDo = True
     for i in upperBrowsAdditveL:
         if not cmds.objExists(i):
             canDo=False
     if canDo:
-        for i in upperBrowsAdditveL:
+        print "* upperBrow disconnection:"
+        for i in upperBrowBreakL:
             shapeL = [i + "|"+ x for x in cmds.listRelatives(i,c=1,s=1,f=0) ]
             for j in shapeL:
+                conL = cmds.listConnections(j+".v",s=1,d=0,p=1)
+                if conL:
+                    print "isCon",conL
+
+                    cmds.disconnectAttr( conL[0], j + ".visibility")
+                    if cmds.objectType(conL[0]) in ["multDoubleLinear"] :
+                        print "deleting inCon"
+                        cmds.delete(conL[0].split(".")[0])
+
+        print "* upperBrowsAdditveL connexion:"
+        for j in upperBrowsAdditveL:
+            # shapeL = [i + "|"+ x for x in cmds.listRelatives(i,c=1,s=1,f=0) ]
+            # for j in shapeL:
                 if cmds.objExists( j+"."+Attr ):
                     # create multi node
                     multiply_Vis = cmds.createNode("multDoubleLinear", name= j + "Ctr_Shape_Switch_Vis#")
                     # connect
                     cmds.connectAttr(inObj + "." + mainVisAttr, multiply_Vis + "." + "input1",f=1)
-                    cmds.connectAttr(inObj + "." + activeLvl  , multiply_Vis + "." + "input2",f=1)
+                    cmds.connectAttr(inObj + "." + lvl2  , multiply_Vis + "." + "input2",f=1)
                     cmds.connectAttr(multiply_Vis+"."+ "output", j + "." + "visibility",f=1)
-        
+                    print "  multiply_Vis=", multiply_Vis
+                    print "  mainVisAttr=", mainVisAttr
+                    print "  activeLvl=", activeLvl
 
 
     print len(replacedExpL)
@@ -2877,10 +2969,9 @@ def chr_Fix_LookAt(*args, **kwargs):
         if not currentSourceGP in [goodSourceGP]:
             print "  bad Source"
             fixBool = True
-            debugL.append(TargetGP)
         else:
             print "  good Source"
-        
+            debugL.append(TargetGP+": Allready OK")
         # Fix 
         if fixBool:
             # delete constraint
@@ -2891,6 +2982,7 @@ def chr_Fix_LookAt(*args, **kwargs):
             pcst= cmds.parentConstraint(goodSourceGP,TargetGP,mo=True)
             scst= cmds.scaleConstraint(goodSourceGP,TargetGP,mo=True)
 
+            debugL.append(TargetGP+": Fixed")
     
     return [True,debugL]
 
@@ -2914,6 +3006,7 @@ def chr_fix_mirror_parameters(*args, **kwargs):
         if cmds.objExists( i + theAttr):
             print i,"set to TRUE"
             cmds.setAttr( i + theAttr,True)
+
     for i in outFalseL:
         if cmds.objExists( i + theAttr):
             cmds.setAttr( i + theAttr,False)
@@ -2944,7 +3037,10 @@ def chr_fixCornerNeutralsRotation(*args,**kwargs):
                 print "    ",attr, "=",oldVal
                 if cmds.getAttr(i + "." + attr) not in [0]:
                     cmds.setAttr(i + "." + attr,0)
-                    debugL.append(i)
+                    debugL.append(i+": Fixed")
+                else:
+                    debugL.append(i+": AllReady OK")
             else:
                 print i,"doesn't exist!"
+                debugL.append(i+": Doesn't exist")
     return [True,debugL] 

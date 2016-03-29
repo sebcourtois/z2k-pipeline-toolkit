@@ -578,7 +578,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=17, e=True)
+        self.pBar_upd(step=1, maxValue=20, e=True)
 
 
         # 1 connectVisibility ()
