@@ -214,6 +214,7 @@ class asset_lib(object):
                    "environment3d",
                    "fx_previz",
                    "crowd_previz",
+                   "vegetation3d",
                    )
 
     child_sections = asset_types
@@ -479,7 +480,7 @@ class set3d(object):
     sg_type = "Set 3D"
     aliases = (prefix, sg_type,)
     assetType = prefix
-    template_dir = "asset_envSet"
+    template_dir = "asset_envSetVeg"
 
     public_path = join(asset_lib.public_path, "{assetType}")
     private_path = join(asset_lib.private_path, "{assetType}")
@@ -521,5 +522,14 @@ class environment3d(set3d):
 
     dependency_types = asset_lib.dependency_types
 
+class vegetation3d(set3d):
 
+    entity_class = "davos.core.damtypes.DamAsset"
+
+    prefix = "veg"
+    sg_type = "Veg 3D"
+    aliases = (prefix, sg_type,)
+    assetType = prefix
+
+    dependency_types = asset_lib.dependency_types
 
