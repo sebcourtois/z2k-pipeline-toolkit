@@ -146,7 +146,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=15, e=True)
+        self.pBar_upd(step=1, maxValue=14, e=True)
 
         # steps
 
@@ -337,17 +337,18 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)     
 
-        # 15   import light rig"
-        self.printF("assetconformation: import light rig", st="t")
-        resultD = assetconformation.importGrpLgt(lgtRig = "lgtRig_character", gui=False)
-        # prints -------------------
-        self.printF(resultD["resultB"], st="r")
-        for each in resultD["logL"]:
-            self.printF( each )
-        # --------------------------
-        if not resultD["resultB"]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        # je ne veux plus importer les lights dans les refs de persos a cause de crash lors de rendu arnold
+        # # 15   import light rig"
+        # self.printF("assetconformation: import light rig", st="t")
+        # resultD = assetconformation.importGrpLgt(lgtRig = "lgtRig_character", gui=False)
+        # # prints -------------------
+        # self.printF(resultD["resultB"], st="r")
+        # for each in resultD["logL"]:
+        #     self.printF( each )
+        # # --------------------------
+        # if not resultD["resultB"]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
         
 
         # colors
