@@ -110,7 +110,7 @@ class shot_lib(object):
                     "geoCache -> geoCache_dir":{},
                     "{name}_anim.ma -> anim_scene":None,
                     "{name}_anim.mov -> anim_capture":None,
-                    #"{name}_ref.mov -> animRef_movie":None,
+                    "{name}_ref.mov -> animRef_movie":None,
                    },
                 },
             },
@@ -119,7 +119,6 @@ class shot_lib(object):
     sg_step_map = {"01_previz":"Previz 3D",
                    "01_stereo":"Stereo",
                    "02_layout":"Layout",
-                   #"03_blocking":"Blocking",
                    "04_anim":"Animation",
                    }
 
@@ -156,6 +155,7 @@ class shot_lib(object):
                     },
     "animRef_movie":{"create_sg_version":True,
                      "sg_uploaded_movie":True,
+                     "sg_path_to_movie":True,
                      "sg_tasks":("Animation|reference",),
                      "sg_status":"rev",
                     },
