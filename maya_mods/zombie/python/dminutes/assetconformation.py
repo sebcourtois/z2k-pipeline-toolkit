@@ -442,12 +442,14 @@ def setShadingMask(selectFailingNodes = False, gui = True):
 
 
 
-
 class Asset_File_Conformer:
     def __init__(self):
         if mc.ls("|asset"):        
             self.mainFilePath = mc.file(q=True, list = True)[0]
             self.mainFilePathElem = self.mainFilePath.split("/")
+
+            self.log = miscUtils.LogBuilder(gui=False)
+
             if self.mainFilePathElem[-2] != "ref":
                 self.assetName = self.mainFilePathElem[-2]
                 self.assetType = self.mainFilePathElem[-3]
@@ -466,11 +468,13 @@ class Asset_File_Conformer:
 
 
     def loadFile(self,sourceFile = "renderRef", reference = True):
-
+        self.log.funcName ="loadFile"
         mc.refresh()
 
         if  not (self.mainFilePathElem[-4] == "asset" or self.mainFilePathElem[-5] == "asset"):
-            raise ValueError("#### Error: you are not working in an 'asset' structure directory")
+            txt= "you are not working in an 'asset' structure directory"
+            self.log.printL("e", txt)
+            raise ValueError(txt)
 
         if sourceFile in ["render","anim","modeling","previz"]:
             self.sourceFile = sourceFile
@@ -489,23 +493,26 @@ class Asset_File_Conformer:
                 self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile+".ma"))
                 self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
         else:
-            raise ValueError("#### Error: the choosen sourceFile '"+sourceFile+"'' is not correct")
-
+            txt= "The choosen sourceFile '{}' is not correct".format(sourceFile)
+            self.log.printL("e", txt)
+            raise ValueError(txt)
 
         if reference:
-            print "#### {:>7}: reference '{}'".format("Info",self.renderFilePath_exp)
+            txt = "Reference '{}'".format(self.renderFilePath_exp)
+            self.log.printL("i", txt)
             mc.file( self.renderFilePath_exp, type= fileType, ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True, reference = True )
         else:
-            print "#### {:>7}: importing '{}'".format("Info",self.renderFilePath_exp)
+            txt = "importing '{}'".format(self.renderFilePath_exp)
+            self.log.printL("i", txt)
             mc.file( self.renderFilePath_exp, i= True, type= fileType, ignoreVersion=True, namespace=self.sourceFile, preserveReferences= False )
         mc.refresh()
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
     def cleanFile(self, verbose = False):
         toReturnB = True
         outLogL = []
-        # mc.select("persp")
-        # mc.select(clear=True)
+        self.log.funcName ="cleanFile"
         mc.refresh()
 
         refNodeList = mc.ls(type = "reference")
@@ -514,9 +521,8 @@ class Asset_File_Conformer:
                 fileRef= pm.FileReference(each)
                 #fileRef = mc.referenceQuery(each,filename=True)# other way to do it
                 try:
-                    logMessage ="#### {:>7}: 'cleanFile' removing reference '{}'".format("Info",fileRef.path)
-                    if verbose == True : print logMessage
-                    outLogL.append(logMessage)
+                    txt = "removing reference '{}'".format(fileRef.path)
+                    self.log.printL("i", txt)
                     fileRef.remove()
                 except :
                     pass
@@ -532,21 +538,16 @@ class Asset_File_Conformer:
         for each in nameSpaceList:
             if re.match('^render[0-9]{0,3}', each) or re.match('^anim[0-9]{0,3}', each) or re.match('^renderRef[0-9]{0,3}', each) or re.match('^animRef[0-9]{0,3}', each) or re.match('^modeling[0-9]{0,3}', each) or re.match('^previz[0-9]{0,3}', each):
                 mc.namespace(removeNamespace=each, deleteNamespaceContent=True)
-
-                logMessage ="#### {:>7}: 'cleanFile' removing namespace and its content: '{:<10}' ".format("Info",each)
-                if verbose == True : print logMessage
-                outLogL.append(logMessage)
+                txt = "removing namespace and its content: '{:<10}'".format(each)
+                self.log.printL("i", txt)
 
         if not outLogL:
-            logMessage ="#### {:>7}: 'cleanFile' nothing to clean, no '_render', '_renderRef','_anim','_animRef', '_previz' or '_modeling' reference found".format("Info",each)
-            if verbose == True : print logMessage
-            outLogL.append(logMessage)
+            txt = "Nothing to clean, no '_render', '_renderRef','_anim','_animRef', '_previz' or '_modeling' reference found"
+            self.log.printL("i", txt)
         mc.refresh()
 
-        return toReturnB, outLogL
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
-
-    
 
     def initSourceTargetList(self, sourceFile = "", targetObjects = "set_meshCache"):
         """
@@ -555,6 +556,7 @@ class Asset_File_Conformer:
             - selection, (2 transforms expected) fisrt object selected is the source, the second is the target
 
         """
+        self.log.funcName ="initSourceTargetList"
         self.sourceList =[]
         self.targetList =[]
         errorOnTarget = 0
@@ -567,19 +569,21 @@ class Asset_File_Conformer:
                 if mc.ls("set_meshCache"):
                     targetObjects = mc.ls(mc.sets("set_meshCache",q=1),l=1)
                 else:
-                    print ("#### {:>7}: no 'set_meshCache' could be found".format("Error"))
+                    self.log.printL("e", "No 'set_meshCache' could be found")
                     errorOnTarget = errorOnTarget + 1
                     targetObjects= []                   
 
             for eachTarget in targetObjects:
                 if mc.ls(eachTarget):
                     if mc.nodeType (eachTarget)!= "transform":
-                        print ("#### {:>7}: no '{}' target object has not the right type, only 'transform' nodes accepted".format("Error", eachTarget))
+                        txt = "'{}' target object has not the right type, only 'transform' nodes accepted".format(eachTarget)
+                        self.log.printL("e", txt)
                         errorOnTarget = errorOnTarget + 1
                     else:
                         self.targetList.append(eachTarget)
                 else:
-                    print ("#### {:>7}: no '{}' target object could be found".format("Error", eachTarget))
+                    txt = "No '{}' target object could be found".format(eachTarget)
+                    self.log.printL("e", txt)
                     errorOnTarget = errorOnTarget + 1
 
             for eachTarget in self.targetList:
@@ -588,17 +592,18 @@ class Asset_File_Conformer:
 
                 if mc.ls(eachSource):
                     if mc.nodeType (eachSource)!= "transform":
-                        print ("#### {:>7}: no '{}' source object has not the right type, only 'transform' nodes accepted".format("Error", eachSource))
+                        txt = "No '{}' source object has not the right type, only 'transform' nodes accepted".format(eachSource)
+                        self.log.printL("e", txt)
                         errorOnSource = errorOnSource + 1
                     else:
                         self.sourceList.append(eachSource)
                 else:
                     errorOnSource = errorOnSource + 1
-                    print ("#### {:>7}: target --> '{:<30}'  has no correspondig source --> '{}'".format("Error", eachTarget, eachSource))
+                    txt = "Target --> '{:<30}'  has no correspondig source --> '{}'".format(eachTarget, eachSource)
+                    self.log.printL("e", txt)
 
             if errorOnTarget != 0: self.targetList =[]
             if errorOnSource != 0: self.sourceList =[]
-
 
         elif targetObjects == "selection":
             mySelection = mc.ls(selection=True)
@@ -606,33 +611,35 @@ class Asset_File_Conformer:
                 if mc.nodeType(mySelection[0]) == "transform":
                     self.sourceList = [mySelection[0]]
                 else:
-                    print ("#### {:>7}: selected source is not a 'transform' node".format("Error"))
+                    self.log.printL("e", "Selected source is not a 'transform' node")
                     errorOnSource = errorOnSource + 1
 
                 if mc.nodeType(mySelection[1]) == "transform":
                     self.targetList = [mySelection[1]]
                 else:
-                    print ("#### {:>7}: selected target is not a 'transform' node".format("Error"))
+                    self.log.printL("e", "Selected target is not a 'transform' node")
                     errorOnTarget = errorOnTarget + 1
             else:
-                print ("#### {:>7}: 2 objects must be selected, source first then target".format("Error"))
-                print ("#### {:>7}: selection {}".format("Error", mySelection))
+                self.log.printL("e", "2 objects must be selected, source first then target")
+                self.log.printL("e", "Selection {}".format(mySelection))
     
-
         else:
-            raise ValueError("#### Error: can't recognize targetObjects: '"+targetObjects+"'' value, should be 'set_meshCache' or a list")
+            txt = "Can't recognize targetObjects: '{}' value, should be 'set_meshCache' or a list".format(targetObjects)
+            self.log.printL("e", txt)
+            raise ValueError(txt)
 
         if self.targetList and errorOnTarget == 0 and errorOnSource == 0:
             self.sourceTargetListMatch = True
-            print "#### {:>7}: target and source list are conform".format("Info")
+            self.log.printL("i", "Target and source list are conform")
         else:
             self.sourceTargetListMatch = False
-            print "#### {:>7}: target list and source list not conform".format("Error")
+            self.log.printL("e", "Target list and source list not conform")
 
-
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
     def printSourceTarget(self):
+        self.log.funcName ="printSourceTarget"
         if self.targetList and len(self.sourceList) == len(self.targetList):
             targetNb = len (self.targetList)
             i = 0
@@ -640,24 +647,24 @@ class Asset_File_Conformer:
                 print self.sourceList[i]+" --> "+self.targetList[i]
                 i+=1
         else:
-            print "#### {:>7}: target list and source list not conform".format("Error")
-            print "#### {:>7}: source {}".format( self.sourceList)
-            print "#### {:>7}: target {}".format( self.targetList)
-
+            self.log.printL("e", "Target list and source list not conform")
+            self.log.printL("e", "Source {}".format( self.sourceList))
+            self.log.printL("e", "Target {}".format( self.targetList))
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
     def checkSourceTargetTopoMatch(self):
+        self.log.funcName ="checkSourceTargetTopoMatch"
         if self.sourceTargetListMatch == True:
             i = 0
             topoMismatch = 0
             while  i < len(self.targetList):
-
                 sourceVrtxCnt = len(mc.getAttr(self.sourceList[i]+".vrts[:]"))
                 targetVrtxCnt = len(mc.getAttr(self.targetList[i]+".vrts[:]"))
                 if sourceVrtxCnt != targetVrtxCnt:
                     topoMismatch = topoMismatch + 1
-                    print ("#### {:>7}: Vertex number mismatch: '{}' vertex nb = {} -- '{}' vertex nb = {}".format(self.sourceList[i],sourceVrtxCnt, self.targetList[i],targetVrtxCnt))
-
+                    txt="Vertex number mismatch: '{}' vertex nb = {} -- '{}' vertex nb = {}".format(self.sourceList[i],sourceVrtxCnt, self.targetList[i],targetVrtxCnt)
+                    self.log.printL("e", txt)
                 # sourceBBox =  mc.exactWorldBoundingBox(self.sourceList[i])
                 # targetBBox =  mc.exactWorldBoundingBox(self.targetList[i])
                 # if masterBBox != targetBBox:
@@ -668,21 +675,22 @@ class Asset_File_Conformer:
                 targetWorldArea =  mc.polyEvaluate(self.targetList[i], worldArea= True)
                 areaDifF = abs(float(sourceWorldArea - targetWorldArea)/sourceWorldArea *100)
                 if areaDifF > areaTolF:
-                    print "#### {:>7}: World area is {:.3f} percent different: '{}' -- '{}'".format("Warning",areaDifF, self.sourceList[i], self.targetList[i])
-
+                    txt="World area is {:.3f} percent different: '{}' -- '{}'".format(areaDifF, self.sourceList[i], self.targetList[i])
+                    self.log.printL("w", txt)
                 i+=1
-
             if topoMismatch == 0:
                 self.sourceTargetTopoMatch = True
             else:
                 self.sourceTargetTopoMatch = False
         else:
-            print "#### {:>7}: cannot check topoligie, target and source list mismatch".format("Error")
+            self.log.printL("e", "Cannot check topoligie, target and source list mismatch")
+
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
 
     def transferUV(self):
-
+        self.log.funcName ="transferUV"
         if self.sourceTargetListMatch == True:
             i = -1
             uvTransferFailed = 0
@@ -691,19 +699,22 @@ class Asset_File_Conformer:
                 shapeOrig = False
                 sourceShapeList = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=True)
                 if len(sourceShapeList)==0:
-                    print ("#### {:>7}: source, no shape coud be found under transform : '{}'".format(self.sourceList[i]))
+                    txt = "No shape coud be found under source transform: '{}'".format(self.sourceList[i])
+                    self.log.printL("e", txt)
                     uvTransferFailed +=1
                     continue
                 elif len(sourceShapeList)==1:
                     sourceShape = sourceShapeList[0]
                 else:
-                    print ("#### {:>7}: several 'shapes' were found under: '{}' transform".format(self.sourceList[i]))
+                    txt = "Several 'shapes' were found under source transform: '{}' ".format(self.sourceList[i])
+                    self.log.printL("e", txt)
                     uvTransferFailed +=1
                     continue
 
                 targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
                 if len(targetShapeList)==0:
-                    print ("#### {:>7}: target, no shape coud be found under transform: '{}'".format(self.targetList[i]))
+                    txt="No shape coud be found under target transform: '{}'".format(self.targetList[i])
+                    self.log.printL("e", txt)
                     uvTransferFailed +=1
                     continue
                 elif len(targetShapeList)==1:
@@ -717,7 +728,8 @@ class Asset_File_Conformer:
                         targetShape = shapeOrigList[0]
                         shapeOrig = True
                     else:
-                        print ("#### {:>7}: several 'ShapeOrig' were found under: '{}' transform".format("Error",self.targetList[i]))
+                        txt = "several 'ShapeOrig' were found under target transform: '{}' ".format(self.targetList[i])
+                        self.log.printL("e", txt)
                         uvTransferFailed +=1
                         continue
 
@@ -745,34 +757,26 @@ class Asset_File_Conformer:
                         mc.transferAttributes( sourceShape, targetShape, sampleSpace=sampleSpace, transferUVs=2 )
                         mc.delete(targetShape, constructionHistory = True)
 
-
             # targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
             # targetShapeList.remove(targetShape)
             # for each in targetShapeList:
             #     if mc.getAttr(each+".intermediateObject") == 1 and not mc.listConnections( each+".inMesh",source=True) and "ShapeOrig" in each:
             #         shapeOrigList.append(each)
 
-
             if uvTransferFailed ==0:
-                print "#### {:>7}: UVs has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
+                txt="UVs has been transfered properly for all the {} object(s)".format(len(self.targetList))
+                self.log.printL("i", txt)
             else:
-                print ("#### {:>7}: UVs transfer failed for {} object(s)".format("Error",uvTransferFailed))
-
+                txt="UVs transfer failed for {} object(s)".format(uvTransferFailed)
+                self.log.printL("e", txt)
         else:
-            print "#### {:>7}: cannot transfer uvs, target and source list mismatch".format("Error")
-            return False
+            self.log.printL("e", "Cannot transfer uvs, target and source list mismatch")
 
-
-
-        if uvTransferFailed == 0:
-            return True
-        else:
-            return False
-
-
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
     def transferSG(self):
+        self.log.funcName ="transferSG"
         if self.sourceTargetListMatch == True:
             i = -1
             sgTransferFailed = 0
@@ -780,25 +784,29 @@ class Asset_File_Conformer:
                 i+=1
                 sourceShapeList = mc.ls(mc.listRelatives(self.sourceList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
                 if len(sourceShapeList)==0:
-                    print ("#### {:>7}: source, no shape coud be found under transform : '{}'".format(self.sourceList[i]))
+                    txt = "No shape coud be found under source transform : '{}'".format(self.sourceList[i])
+                    self.log.printL("e", txt)
                     sgTransferFailed +=1
                     continue
                 elif len(sourceShapeList)==1:
                     sourceShape = sourceShapeList[0]
                 else:
-                    print ("#### {:>7}: several 'shapes' were found under: '{}' transform".format(self.sourceList[i]))
+                    txt="Several 'shapes' were found under source transform: '{}'".format(self.sourceList[i])
+                    self.log.printL("e", txt)
                     sgTransferFailed +=1
                     continue
 
                 targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
                 if len(targetShapeList)==0:
-                    print ("#### {:>7}: target, no shape coud be found under transform: '{}'".format(self.sourceList[i]))
+                    txt= "No shape coud be found under target transform: '{}'".format(self.targetList[i])
+                    self.log.printL("e", txt)
                     sgTransferFailed +=1
                     continue
                 elif len(targetShapeList)==1:
                     targetShape = targetShapeList[0]
                 else:
-                    print ("#### {:>7}: several 'shapes' were found under: '{}' transform".format(self.sourceList[i]))
+                    txt="Several 'shapes' were found under target transform: '{}'".format(self.targetList[i])
+                    self.log.printL("e", txt)
                     sgTransferFailed +=1
                     continue
 
@@ -824,29 +832,29 @@ class Asset_File_Conformer:
                 elif len(sourceShadEngList) > 0:
                     mc.transferShadingSets(sourceShape,targetShape, sampleSpace=0, searchMethod=3)
                 else:
-                    print ("#### {:>7}: no 'shader' found on source object: '{}' transform".format("Error",sourceShape))
+                    txt="No 'shader' found on source transform: '{}'".format(sourceShape)
+                    self.log.printL("e", txt)
                     sgTransferFailed +=1
 
                 #linkBack UVs
                 for each in textureNodeL:
                     mc.uvLink( make=True, texture=each, uvSet= uvLinkD[each].replace(sourceShape,targetShape) )
-                    #print uvLinkD[each].replace(sourceShape,targetShape)
 
             if sgTransferFailed ==0:
-                print "#### {:>7}: materials has been transfered properly for all the {} object(s)".format("Info",len(self.targetList))
+                txt="Materials have been transfered properly for all the {} object(s)".format(len(self.targetList))
+                self.log.printL("i", txt)
             else:
-                print ("#### {:>7}: materials transfer failed for {} object(s)".format("Error",sgTransferFailed))
+                txt="Materials transfer failed for {} object(s)".format(sgTransferFailed)
+                self.log.printL("e", txt)
 
         else:
-            print "#### {:>7}: cannot transfer materials, target and source list mismatch".format("Error")
-            return False
-        if sgTransferFailed == 0:
-            return True
-        else:
-            return False
+            self.log.printL("e", "Cannot transfer materials, target and source list mismatch")
+
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
     def removeNameSpaceFromShadNodes(self, objectList = [], verbose = False):
+        self.log.funcName ="removeNameSpaceFromShadNodes"
         shadEngList = []
         shapeList = miscUtils.getShape(objectList, failIfNoShape = False)
         renamedShadNodeNb = 0
@@ -870,21 +878,26 @@ class Asset_File_Conformer:
                         mc.lockNode(each, lock=False)
                         newEach= mc.rename(each,each.split(":")[-1],ignoreShape=True)
                         renamedShadNodeNb += 1
-                        if verbose: print "#### {:>7}: Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
-        print ("#### {:>7}: name space removed from {} shading nodes(s)".format("Info",renamedShadNodeNb))
+                        if verbose:
+                            txt="Remove from any namespace:  '{}' --> '{}' ".format(each,newEach)
+                            self.log.printL("i", txt)
+        txt= "Name space removed from {} shading nodes(s)".format(renamedShadNodeNb)
+        self.log.printL("i", txt)
         mc.refresh()
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
     def disconnectAiMaterials(self):
         """
-        not finished yet
+        not finished yet, we finaly decided to keep arnold shaders in animation files
         """
+        self.log.funcName ="disconnectAiMaterials"
         mc.refresh()
         shadEngineList = mc.ls("*",type = "shadingEngine")
         shadEngineList.remove("initialParticleSE")
         shadEngineList.remove("initialShadingGroup")
         if not shadEngineList :
-            print "#### {:>7}: no shading engine".format("Error")
+            self.log.printL("e", "No shading engine")
             return
         for each in shadEngineList:
             matShadNode =  mc.listConnections(each+'.aiSurfaceShader',connections = True, plugs=True)
@@ -892,31 +905,41 @@ class Asset_File_Conformer:
 
 
     def smoothPolyDisplay(self, inMeshList = [], verbose = False, shapeOrigOnly = True):
+        self.log.funcName ="smoothPolyDisplay"
         intSel = mc.ls(selection=True)
         for each in inMeshList:
                 shapeOrigL = miscUtils.getShapeOrig(TransformS = each)
                 if len(shapeOrigL)==0:
                     if shapeOrigOnly:
-                        print "#### {:>7}: 'smoothPolyDisplay' no shapeOrig found under '{}' skipping operation on this mesh ".format("Warning",len(shapeOrigL),each, shapeOrigL)
+                        txt="No shapeOrig found under '{}' skipping operation on this mesh ".format(each)
+                        self.log.printL("w", txt)
                         continue
                     else:
-                        print "#### {:>7}: 'smoothPolyDisplay' no shapeOrig found under '{}', proceeding with the shape".format("Warning",len(shapeOrigL),each, shapeOrigL)
+                        txt="No shapeOrig found under '{}', proceeding with the shape".format(each)
+                        self.log.printL("w", txt)
                         target = each
                 elif len(shapeOrigL)==1:
                     target = shapeOrigL[0]
                 elif len(shapeOrigL)>1: 
                     target = shapeOrigL[0]
-                    print "#### {:>7}: 'smoothPolyDisplay' {} shapeOrig found under '{}', proceeding with the first one: '{}'".format("Warning",len(shapeOrigL),each, target)
+                    txt="{} shapeOrig found under '{}', proceeding with the first one: '{}'".format(len(shapeOrigL),each, target)
+                    self.log.printL("w", txt)
 
                 mc.polySoftEdge (target, angle=180, constructionHistory=True)
                 mc.bakePartialHistory(target, prePostDeformers=True)
-                if verbose == True: print "#### {:>7}: smoothPolyDisplay -> '{:^30}'".format("Info",each)
-        print ("#### {:>7}: smoothPolyDisplay done on {} object(s)".format("Info",len(inMeshList)))
+                if verbose == True:
+                    txt="Done on '{:^30}'".format(each)
+                    self.log.printL("i", txt)
+        txt="Done on {} object(s)".format(len(inMeshList))
+        self.log.printL("i", txt)
         mc.select(intSel, replace=True)
+
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
 
     def transferRenderAttr(self, transferArnoldAttr =  True):
+        self.log.funcName ="transferRenderAttr"
         shapeAttrList = ["boundaryRule", "continuity", "smoothUVs", "propagateEdgeHardness", "keepMapBorders", "keepBorder", "keepHardEdge",
                         "castsShadows", "receiveShadows", "holdOut", "motionBlur", "primaryVisibility",
                         "smoothShading", "visibleInReflections", "visibleInRefractions", "doubleSided", "opposite"]
@@ -934,9 +957,11 @@ class Asset_File_Conformer:
                 targetShapeLn = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = True, l=False)
                 if len(sourceShapeLn) != 1 or len(targetShapeLn) != 1:
                     if len(sourceShapeLn) != 1:
-                        print ("#### {:>7}: {} shape(s) found under transform: '{}'".format(len(sourceShapeLn), self.sourceList[i]))
+                        txt= "{} shape(s) found under transform: '{}'".format(len(sourceShapeLn), self.sourceList[i])
+                        self.log.printL("e", txt)
                     if len(targetShapeLn) != 1:
-                        print ("#### {:>7}: {} shape(s) found under transform: '{}'".format(len(targetShapeLn), self.targetList[i]))
+                        txt="{} shape(s) found under transform: '{}'".format(len(targetShapeLn), self.targetList[i])
+                        self.log.printL("e", txt)
                     shapeTransferFailed += 1
                 else:
                     for each in shapeAttrList:
@@ -947,22 +972,23 @@ class Asset_File_Conformer:
                 i+=1
             if shapeTransferFailed != 0 or attrTransferFailed != 0:
                 if shapeTransferFailed != 0:
-                    print ("#### {:>7}: Rendering attribute transfer failed for {} shape(s)".format(shapeTransferFailed))
+                    txt="Rendering attribute transfer failed for {} shape(s)".format(shapeTransferFailed)
+                    self.log.printL("e", txt)
                 if attrTransferFailed != 0:
-                    print ("#### {:>7}: Rendering attribute transfer failed for {} attribute(s)".format("Warning",attrTransferFailed))
+                    txt="Rendering attribute transfer failed for {} attribute(s)".format(attrTransferFailed)
+                    self.log.printL("w", txt)
             else:
-                print ("#### {:>7}: Rendering attribute transfered properly {} on object(s)".format("Info",len(self.targetList)))
+                txt="Rendering attribute transfered properly {} on object(s)".format(len(self.targetList))
+                self.log.printL("i", txt)
         else:
-            print "#### {:>7}: cannot transfer rendering attributes, target and source list mismatch".format("Error")
+            self.log.printL("e", "Cannot transfer rendering attributes, target and source list mismatch")
 
-        if shapeTransferFailed == 0:
-            return True
-        else:
-            return False
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
 
     def disconnectAllShadEng(self, objectList = [], verbose = False):
+        self.log.funcName ="disconnectAllShadEng"
         disconnectShapes = []
         shapeList = miscUtils.getShape(objectList, failIfNoShape = False)
         for eachShape in shapeList:
@@ -982,13 +1008,14 @@ class Asset_File_Conformer:
                                 disconnectShapes.append(eachShape)
                             if verbose == True: print result
                         if i>200: break
-        print "#### {:>7}: shader have been disconnected on {} object(s) ".format("Info", len(disconnectShapes))
+        txt="Shaders have been disconnected on {} object(s) ".format(len(disconnectShapes))
+        self.log.printL("i", txt)
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
 
     def deleteUnusedShadingNodes(self):
-        # mc.select("persp")
-        # mc.select(clear=True)
+        self.log.funcName ="deleteUnusedShadingNodes"
 
         ignoredShadEngL = [u'initialParticleSE', u'initialShadingGroup']
         ignoredNodeTypeL = [u'colorManagementGlobals', u'mesh', u'shape']
@@ -1007,17 +1034,13 @@ class Asset_File_Conformer:
         for each in allShadEngL:
             allShadNodeL.extend(mc.hyperShade (listUpstreamNodes= each))
 
-
         usedShadEnL = mc.listConnections(mc.ls("*",type="mesh"), destination = True, source = False, type = "shadingEngine")
         if not usedShadEnL: usedShadEnL=[]
         usedShadNodeL = list(usedShadEnL)
         for each in usedShadEnL:
             usedShadNodeL.extend(mc.hyperShade (listUpstreamNodes= each))
 
-
         unusedShadNodeL = mc.ls(list(set(allShadNodeL)-set(usedShadNodeL)-set(ignoredNodeL)))
-
-
         if unusedShadNodeL:
             mc.lockNode(unusedShadNodeL,lock=False)
             deletedNodeList = []
@@ -1030,10 +1053,14 @@ class Asset_File_Conformer:
                 except:
                     undeletableNodeList.append(each)
 
-            if deletedNodeList : print "#### {:>7}: {:>4} unused shading nodes deleted: {}".format("Info",  len(deletedNodeList), deletedNodeList)
-            if undeletableNodeList: print "#### {:>7}: {:>4} unused shading nodes could not be deleted: {}".format("Info",  len(undeletableNodeList), undeletableNodeList)
+            if deletedNodeList : 
+                txt="{:>4} unused shading nodes deleted: {}".format(len(deletedNodeList), deletedNodeList)
+                self.log.printL("i", txt)
+            if undeletableNodeList: 
+                txt="{:>4} unused shading nodes could not be deleted: {}".format(len(undeletableNodeList), undeletableNodeList)
+                self.log.printL("i", txt)
         mc.refresh()
-
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
 
