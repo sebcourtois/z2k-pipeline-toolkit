@@ -8,6 +8,7 @@ reload (miscUtils)
 def orientAssetLightAsCam(shotCamL=[],gui=True):
 
     log = miscUtils.LogBuilder(gui=gui, funcName ="orientAssetLightAsCam")
+    shotCamL = mc.ls(shotCamL,type="camera", l=True)
 
     if not shotCamL:
         shotCamL = mc.ls("*:cam_shot_defaultShape",type="camera", l=True)
@@ -25,7 +26,8 @@ def orientAssetLightAsCam(shotCamL=[],gui=True):
     i=1
     for each in orientAsCamL:
         mc.delete( mc.listRelatives(each,children=True, type="orientConstraint"))
-        mc.orientConstraint( shotCamL[0],each,name = "orientAsCamera_constraint"+str(i))
+        shotCamTransS = mc.listRelatives(shotCamL[0],parent=True, type="transform")
+        mc.orientConstraint( shotCamTransS,each, maintainOffset = False, name = "orientAsCamera_constraint"+str(i))
         txt= "{:^48} --> constrained to --> {}".format(each, shotCamL[0].split("|")[-1])
         log.printL("i", txt)
         i+=1

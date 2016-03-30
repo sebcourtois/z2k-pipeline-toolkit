@@ -578,7 +578,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=20, e=True)
+        self.pBar_upd(step=1, maxValue=19, e=True)
 
 
         # 1 connectVisibility ()
@@ -793,24 +793,22 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        
+        # je ne veux plus importer les lights dans les refs de persos a cause de crash lors de rendu arnold
         # 17   import light rig"
-        self.printF("assetconformation: import light rig", st="t")
-        resultD = assetconformation.importGrpLgt(lgtRig = "lgtRig_character", gui=False, hideLgt = True)
-
-        # prints -------------------
-        self.printF(resultD["resultB"], st="r")
-        for each in resultD["logL"]:
-            self.printF( each )
-
-        # --------------------------
-        if not resultD["resultB"]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        # self.printF("assetconformation: import light rig", st="t")
+        # resultD = assetconformation.importGrpLgt(lgtRig = "lgtRig_character", gui=False, hideLgt = True)
+        # # prints -------------------
+        # self.printF(resultD["resultB"], st="r")
+        # for each in resultD["logL"]:
+        #     self.printF( each )
+        # # --------------------------
+        # if not resultD["resultB"]:
+        #     boolResult = False
+        # self.pBar_upd(step= 1,)
 
 
 
-        # 18 ----- chr_Fix_LookAt () 
+        # 17 ----- chr_Fix_LookAt () 
         self.printF("chr_Fix_LookAt()", st="t")
         result,debugL = jpZ.chr_Fix_LookAt()
         # prints -------------------
@@ -825,7 +823,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
         
 
-        # 19 ----- chr_fix_mirror_parameters () 
+        # 18 ----- chr_fix_mirror_parameters () 
         self.printF("chr_fix_mirror_parameters()", st="t")
         result,debugL = jpZ.chr_fix_mirror_parameters()
         # prints -------------------
@@ -840,7 +838,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 20 ----- chr_fixCornerNeutralsRotation () 
+        # 19 ----- chr_fixCornerNeutralsRotation () 
         self.printF("chr_fixCornerNeutralsRotation()", st="t")
         result,debugL = jpZ.chr_fixCornerNeutralsRotation()
         # prints -------------------
