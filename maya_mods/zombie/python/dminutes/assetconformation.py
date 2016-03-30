@@ -158,6 +158,7 @@ def setSubdiv(GUI= False ):
         returnB = False
     processedTransL =[]
     skippedTransL =[]
+    nonManifoldObjL = []
     for eachSetSubdiv in subdivSets:
         geoInSet = mc.ls(mc.sets(eachSetSubdiv, query = True),l=True)
         if not geoInSet: geoInSet = []       
@@ -166,6 +167,9 @@ def setSubdiv(GUI= False ):
             previewSubdivLevel = subdivLevel    
             if  0 <= subdivLevel <=9 :
                 for eachGeo in geoInSet:
+                    nonManifoldEdgesL = mc.polyInfo( eachGeo,nme=True )
+                    if nonManifoldEdgesL:
+                        nonManifoldObjL.append(eachGeo)
                     if mc.nodeType(eachGeo)!="mesh":
                         eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)[0]
                     eachGeoParentL = mc.listRelatives(eachGeoShape, allParents = True, fullPath = True)
@@ -207,7 +211,14 @@ def setSubdiv(GUI= False ):
 
     if "set_subdiv_init" in subdivSets and mc.sets("set_subdiv_init", query = True) != None:
         logMessage = "#### {:>7}: 'setSubdiv' A geo object is still in the 'set_subdiv_init', please asssign it to a 'set_subdiv*'".format("Error")
-        if GUI == True: mc.confirmDialog( title='Error:', message=logMessage, button=['Ok'], defaultButton='Ok' )
+        #if GUI == True: mc.confirmDialog( title='Error:', message=logMessage, button=['Ok'], defaultButton='Ok' )
+        print logMessage
+        logL.append(logMessage)
+        returnB = False
+
+    if nonManifoldObjL:
+        logMessage = "#### {:>7}: 'setSubdiv' '{}' object as non manifold edges please please use the 'modeling --> mesh --> cleanup' maya tools to fix that: {}".format("Error", len(nonManifoldObjL), nonManifoldObjL)
+        #if GUI == True: mc.confirmDialog( title='Error:', message=logMessage, button=['Ok'], defaultButton='Ok' )
         print logMessage
         logL.append(logMessage)
         returnB = False
