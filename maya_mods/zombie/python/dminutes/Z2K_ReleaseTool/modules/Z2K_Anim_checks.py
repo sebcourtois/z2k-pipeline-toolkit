@@ -541,10 +541,10 @@ class checkModule(object):
 
 
 
-        # 8 resetSRT (controlObjL)
-        result,debugD = jpZ.resetSRT(inObjL=controlObjL)
+        # 8 resetCTR (controlObjL)
+        result,debugD = jpZ.resetCTR(inObjL=controlObjL, userDefined=True, SRT=True)
         # prints -------------------
-        self.printF("resetSRT()", st="t")
+        self.printF("resetCTR()", st="t")
         self.printF(result, st="r")
         self.printF ( " Reseted : {0}/{1}".format( len(debugD["resetedL"]),len(controlObjL), ) )
         self.printF ( " error on: {0}/{1}".format( len(debugD["errors"]),len(controlObjL), ) )
