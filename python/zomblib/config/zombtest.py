@@ -39,6 +39,9 @@ class set3d(zomb.set3d):
 class environment3d(zomb.environment3d):
     pass
 
+class vegetation3d(zomb.vegetation3d):
+    pass
+
 class fx_previz(zomb.fx_previz):
     pass
 

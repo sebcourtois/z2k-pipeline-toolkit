@@ -40,7 +40,8 @@ def getStereoInfosRecorder(sStereoCam):
 int $frame = frame;
 float $sep = abs({camera}.stereoRightOffset);
 float $conv = abs({camera}.filmBackOutputRight);
-string $cmd = `format -s $frame -s $sep -s $conv "mop.recStereoInfos(^1s, separation=^2s, convergence=^3s)"`;
+float $zero = {camera}.zeroParallax;
+string $cmd = `format -s $frame -s $sep -s $conv -s $zero "mop.recStereoInfos(^1s, separation=^2s, convergence=^3s, zeroParallax=^4s)"`;
 //print $cmd;
 python($cmd);""".format(camera=sStereoCam)
 
@@ -126,7 +127,6 @@ def getImagePlaneItems(create=False):
             oCamXfm, oCamShape = pc.camera(name='cam_animatic:asset', aspectRatio=1.77, displayFilmGate=True)
             oCamXfm.rename('cam_animatic:asset')
             oCamShape.setAttr('visibility', 0)
-            #mc.parent( CAM_Animatic[0], grpDict['GD_ROOT'] )
 
             _, oImgPlane = pc.imagePlane(camera=oCamShape,
                                          showInAllViews=False,
@@ -135,6 +135,13 @@ def getImagePlaneItems(create=False):
     else:
         oCamXfm = oImgPlane.getParent(3)
         oCamShape = oCamXfm.getShape()
+
+    if oCamXfm:
+        sCamGrp = GRP_FOR_ASSET_TYPE["cam"]
+        if mc.objExists(sCamGrp):
+            oCamParent = oCamXfm.getParent()
+            if (not oCamParent) or oCamParent.nodeName() != sCamGrp:
+                pc.parent(oCamXfm, sCamGrp)
 
     #SET DE L'IMAGE PLANE
     sImgPlane = oImgPlane.name()
@@ -244,19 +251,21 @@ def getRoot(o_inObj):
 
     return obj
 
+GRP_FOR_ASSET_TYPE = {
+'cam':'grp_camera',
+'chr':'grp_character',
+'set':'grp_set',
+'prp':'grp_prop',
+'env':'grp_environment',
+'c2d':'grp_character2D',
+'vhl':'grp_vehicle',
+'fxp':'grp_fx',
+'cwp':'grp_crowd',
+}
+
 def reArrangeAssets():
     #this is the template, it lacks grp_prop, grp_crowd, grp_vehicle, grp_fx, grp_light (and eventually grp_extra_rig, grp_trash)
-    structure = {
-        'cam':'grp_camera',
-        'chr':'grp_character',
-        'set':'grp_set',
-        'prp':'grp_prop',
-        'env':'grp_environment',
-        'c2d':'grp_character2D',
-        'vhl':'grp_vehicle',
-        'fxp':'grp_fx',
-        'cwp':'grp_crowd',
-        }
+    structure = GRP_FOR_ASSET_TYPE
 
     #Collect references
     refs = pc.listReferences(namespaces=True)
@@ -445,7 +454,7 @@ def init_scene_base(sceneManager):
     importSceneStructure(sceneManager)
 
 def arrangeViews(oShotCam, oImgPlaneCam=None, oStereoCam=None,
-                 singleView=False, stereoDisplay="anaglyph"):
+                 singleView=False, stereoDisplay=""):
 
     # Set Viewport
     if singleView:
@@ -477,7 +486,8 @@ def arrangeViews(oShotCam, oImgPlaneCam=None, oStereoCam=None,
         stereoPanel = "StereoPanel"
         mc.scriptedPanel(stereoPanel, e=True, rp=perspView)
         mc.stereoCameraView("StereoPanelEditor", e=True, rigRoot=oStereoCam.name())
-        mc.stereoCameraView("StereoPanelEditor", e=True, displayMode=stereoDisplay)
+        if stereoDisplay:
+            mc.stereoCameraView("StereoPanelEditor", e=True, displayMode=stereoDisplay)
         perspView = "StereoPanelEditor"
 
     mc.modelEditor(perspView, e=True, activeView=True)
@@ -949,7 +959,7 @@ def init_previz_scene(sceneManager):
     _, oAnimaticCam = setupAnimatic(sceneManager)
 
     reArrangeAssets()
-    arrangeViews(oShotCam.getShape(), oAnimaticCam, oStereoCam)
+    arrangeViews(oShotCam.getShape(), oAnimaticCam, oStereoCam, stereoDisplay="interlace")
 
 
 

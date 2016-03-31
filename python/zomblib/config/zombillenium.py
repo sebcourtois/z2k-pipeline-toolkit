@@ -95,7 +95,8 @@ class shot_lib(object):
                  "{step:01_stereo} -> stereo_dir":
                     {
                      "{name}_stereo.ma -> stereo_scene":None,
-                     "{name}_stereo.mov -> stereo_capture":None,
+                     "{name}_left.mov -> left_capture":None,
+                     "{name}_right.mov -> right_capture":None,
                      "{name}_stereoCam.atom -> stereoCam_anim":None,
                      "{name}_stereoInfo.json -> stereoCam_info":None,
                     },
@@ -109,6 +110,7 @@ class shot_lib(object):
                     "geoCache -> geoCache_dir":{},
                     "{name}_anim.ma -> anim_scene":None,
                     "{name}_anim.mov -> anim_capture":None,
+                    "{name}_ref.mov -> animRef_movie":None,
                    },
                 },
             },
@@ -117,36 +119,47 @@ class shot_lib(object):
     sg_step_map = {"01_previz":"Previz 3D",
                    "01_stereo":"Stereo",
                    "02_layout":"Layout",
-                   #"03_blocking":"Blocking",
                    "04_anim":"Animation",
                    }
 
     resources_settings = {
     "previz_scene":{"outcomes":("previz_capture",),
                     "create_sg_version":True,
-                    "upload_to_sg":"previz_capture",
+                    "sg_uploaded_movie":"previz_capture",
+                    "sg_path_to_movie":"previz_capture",
                     "sg_tasks":("previz 3D",),
                     "sg_status":"rev",
                     },
-    "stereo_scene":{"outcomes":("stereo_capture",),
+    "stereo_scene":{"outcomes":("right_capture", "left_capture"),
                     "create_sg_version":True,
-                    "upload_to_sg":"stereo_capture",
+                    "sg_uploaded_movie":"right_capture",
+                    "sg_path_to_movie":"left_capture",
                     "sg_tasks":("stereo",),
                     "sg_status":"rev",
                     },
 
     "layout_scene":{"outcomes":("layout_capture",),
                     "create_sg_version":True,
-                    "upload_to_sg":"layout_capture",
+                    "sg_uploaded_movie":"layout_capture",
+                    "sg_path_to_movie":"layout_capture",
                     "sg_tasks":("layout",),
                     "sg_status":"rev",
                     },
+
     "anim_scene":{"outcomes":("anim_capture",),
                   "create_sg_version":True,
-                  "upload_to_sg":"anim_capture",
+                  "sg_uploaded_movie":"anim_capture",
+                  "sg_path_to_movie":"anim_capture",
                   "sg_tasks":("animation",),
                   "sg_status":"rev",
                     },
+    "animRef_movie":{"create_sg_version":True,
+                     "sg_uploaded_movie":True,
+                     "sg_path_to_movie":True,
+                     "sg_tasks":("Animation|reference",),
+                     "sg_status":"rev",
+                    },
+
     "animatic_capture":{"create_sg_version":True,
                         "sg_tasks":("animatic",),
                         "sg_status":"rev",
@@ -181,7 +194,7 @@ class misc_lib(object):
     public_path_envars = ('ZOMB_MISC_PATH',)
     private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
-    free_publish = True
+    free_to_publish = True
 
 class asset_lib(object):
 
@@ -201,6 +214,7 @@ class asset_lib(object):
                    "environment3d",
                    "fx_previz",
                    "crowd_previz",
+                   "vegetation3d",
                    )
 
     child_sections = asset_types
@@ -466,7 +480,7 @@ class set3d(object):
     sg_type = "Set 3D"
     aliases = (prefix, sg_type,)
     assetType = prefix
-    template_dir = "asset_envSet"
+    template_dir = "asset_envSetVeg"
 
     public_path = join(asset_lib.public_path, "{assetType}")
     private_path = join(asset_lib.private_path, "{assetType}")
@@ -508,5 +522,14 @@ class environment3d(set3d):
 
     dependency_types = asset_lib.dependency_types
 
+class vegetation3d(set3d):
 
+    entity_class = "davos.core.damtypes.DamAsset"
+
+    prefix = "veg"
+    sg_type = "Veg 3D"
+    aliases = (prefix, sg_type,)
+    assetType = prefix
+
+    dependency_types = asset_lib.dependency_types
 
