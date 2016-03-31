@@ -107,6 +107,12 @@ def cleanAsset (GUI = True):
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
                 assetconformation.setSubdiv()
+                r2a = assetconformation.Asset_File_Conformer()
+                r2a.cleanFile()
+                r2a.loadFile(sourceFile ="renderRef" , reference = False)
+                r2a.initSourceTargetList()
+                r2a.checkSourceTargetTopoMatch()
+                r2a.cleanFile()
 
 
 
@@ -135,7 +141,7 @@ def cleanAsset (GUI = True):
             if GUI == True: 
                 msgS = baseMessage2S+"""
     - delete geo history,\n    - make all mesh unique,\n    - conform mesh shapes names,\n    - create set subdiv,\n    - apply set subdiv,\n    - create 'set_meshCache',   
-    - delete all unused nodes (unconnected to an asset dag node), except render layers,\n    - conform all shaders names,\n    - conform shader masks"""
+    - delete all unused nodes (unconnected to an asset dag node), except render layers,\n    - conform all shaders names,\n    - conform shader masks,\n    - compare meshes topologies with anim file"""
                 answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 miscUtils.deleteUnknownNodes()
@@ -150,6 +156,15 @@ def cleanAsset (GUI = True):
                 assetconformation.createSetMeshCache()
                 shading.checkShaderName( GUI = True, inParent = "|asset|grp_geo" )
                 assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
+                r2a = assetconformation.Asset_File_Conformer()
+                r2a.cleanFile()
+                r2a.loadFile(sourceFile ="animRef" , reference = False)
+                r2a.initSourceTargetList()
+                r2a.checkSourceTargetTopoMatch()
+                resultD = r2a.cleanFile()
+                if not resultD["resultB"]:
+                    mc.confirmDialog( title='Error: Topologie mismach', message="The file you are working on, mismach the anim file. Please check the log for more details", button=['Ok'], defaultButton='Ok' )
+
 
     return resultB, logL
 

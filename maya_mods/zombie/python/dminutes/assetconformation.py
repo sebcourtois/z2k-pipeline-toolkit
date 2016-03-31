@@ -276,7 +276,7 @@ def previewSubdiv(enable = True, filter = ""):
 
 def setShadingMask(selectFailingNodes = False, gui = True):
 
-    log = miscUtils.LogBuilder(gui=gui, funcName ="setShadingMask")
+    log = miscUtils.LogBuilder(gui=gui, funcName ="'setShadingMask'")
 
     dmnMask00_R = ["chr_"]
     dmnMask00_G = ["prp_"]
@@ -459,7 +459,7 @@ class Asset_File_Conformer:
             self.mainFilePath = mc.file(q=True, list = True)[0]
             self.mainFilePathElem = self.mainFilePath.split("/")
 
-            self.log = miscUtils.LogBuilder(gui=False)
+            self.log = miscUtils.LogBuilder(gui=False, logL = [], resultB = True)
 
             if self.mainFilePathElem[-2] != "ref":
                 self.assetName = self.mainFilePathElem[-2]
@@ -479,7 +479,7 @@ class Asset_File_Conformer:
 
 
     def loadFile(self,sourceFile = "renderRef", reference = True):
-        self.log.funcName ="loadFile"
+        self.log.funcName ="'loadFile' "
         mc.refresh()
 
         if  not (self.mainFilePathElem[-4] == "asset" or self.mainFilePathElem[-5] == "asset"):
@@ -500,7 +500,8 @@ class Asset_File_Conformer:
             fileType ="mayaBinary"
             print self.renderFilePath_exp
             if not os.path.isfile(self.renderFilePath_exp):
-                print "#### {:>7}: could not find: '{}', shading has not been done yet, let's try using '{}'".format("Error",self.sourceFile, self.sourceFile.replace("Ref","") )
+                txt = "Could not find: '{}', ref file has not been released yet, let's do it: '{}'".format(self.sourceFile, self.sourceFile.replace("Ref",""))
+                self.log.printL("w", txt)
                 self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile+".ma"))
                 self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
         else:
@@ -523,7 +524,7 @@ class Asset_File_Conformer:
     def cleanFile(self, verbose = False):
         toReturnB = True
         outLogL = []
-        self.log.funcName ="cleanFile"
+        self.log.funcName ="'cleanFile' "
         mc.refresh()
 
         refNodeList = mc.ls(type = "reference")
@@ -567,7 +568,7 @@ class Asset_File_Conformer:
             - selection, (2 transforms expected) fisrt object selected is the source, the second is the target
 
         """
-        self.log.funcName ="initSourceTargetList"
+        self.log.funcName ="'initSourceTargetList' "
         self.sourceList =[]
         self.targetList =[]
         errorOnTarget = 0
@@ -650,7 +651,7 @@ class Asset_File_Conformer:
 
 
     def printSourceTarget(self):
-        self.log.funcName ="printSourceTarget"
+        self.log.funcName ="'printSourceTarget' "
         if self.targetList and len(self.sourceList) == len(self.targetList):
             targetNb = len (self.targetList)
             i = 0
@@ -665,7 +666,7 @@ class Asset_File_Conformer:
 
 
     def checkSourceTargetTopoMatch(self):
-        self.log.funcName ="checkSourceTargetTopoMatch"
+        self.log.funcName ="'checkSourceTargetTopoMatch' "
         if self.sourceTargetListMatch == True:
             i = 0
             topoMismatch = 0
@@ -701,7 +702,7 @@ class Asset_File_Conformer:
 
 
     def transferUV(self):
-        self.log.funcName ="transferUV"
+        self.log.funcName ="'transferUV' "
         if self.sourceTargetListMatch == True:
             i = -1
             uvTransferFailed = 0
@@ -787,7 +788,7 @@ class Asset_File_Conformer:
 
 
     def transferSG(self):
-        self.log.funcName ="transferSG"
+        self.log.funcName ="'transferSG' "
         if self.sourceTargetListMatch == True:
             i = -1
             sgTransferFailed = 0
@@ -865,7 +866,7 @@ class Asset_File_Conformer:
 
 
     def removeNameSpaceFromShadNodes(self, objectList = [], verbose = False):
-        self.log.funcName ="removeNameSpaceFromShadNodes"
+        self.log.funcName ="'removeNameSpaceFromShadNodes' "
         shadEngList = []
         shapeList = miscUtils.getShape(objectList, failIfNoShape = False)
         renamedShadNodeNb = 0
@@ -902,7 +903,7 @@ class Asset_File_Conformer:
         """
         not finished yet, we finaly decided to keep arnold shaders in animation files
         """
-        self.log.funcName ="disconnectAiMaterials"
+        self.log.funcName ="'disconnectAiMaterials' "
         mc.refresh()
         shadEngineList = mc.ls("*",type = "shadingEngine")
         shadEngineList.remove("initialParticleSE")
@@ -916,7 +917,7 @@ class Asset_File_Conformer:
 
 
     def smoothPolyDisplay(self, inMeshList = [], verbose = False, shapeOrigOnly = True):
-        self.log.funcName ="smoothPolyDisplay"
+        self.log.funcName ="'smoothPolyDisplay' "
         intSel = mc.ls(selection=True)
         for each in inMeshList:
                 shapeOrigL = miscUtils.getShapeOrig(TransformS = each)
@@ -950,7 +951,7 @@ class Asset_File_Conformer:
 
 
     def transferRenderAttr(self, transferArnoldAttr =  True):
-        self.log.funcName ="transferRenderAttr"
+        self.log.funcName ="'transferRenderAttr' "
         shapeAttrList = ["boundaryRule", "continuity", "smoothUVs", "propagateEdgeHardness", "keepMapBorders", "keepBorder", "keepHardEdge",
                         "castsShadows", "receiveShadows", "holdOut", "motionBlur", "primaryVisibility",
                         "smoothShading", "visibleInReflections", "visibleInRefractions", "doubleSided", "opposite"]
@@ -999,7 +1000,7 @@ class Asset_File_Conformer:
 
 
     def disconnectAllShadEng(self, objectList = [], verbose = False):
-        self.log.funcName ="disconnectAllShadEng"
+        self.log.funcName ="'disconnectAllShadEng' "
         disconnectShapes = []
         shapeList = miscUtils.getShape(objectList, failIfNoShape = False)
         for eachShape in shapeList:
@@ -1026,7 +1027,7 @@ class Asset_File_Conformer:
 
 
     def deleteUnusedShadingNodes(self):
-        self.log.funcName ="deleteUnusedShadingNodes"
+        self.log.funcName ="'deleteUnusedShadingNodes' "
 
         ignoredShadEngL = [u'initialParticleSE', u'initialShadingGroup']
         ignoredNodeTypeL = [u'colorManagementGlobals', u'mesh', u'shape']
