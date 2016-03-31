@@ -29,6 +29,11 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
 
     bDryRun = (not doSplit)
 
+    # checks if csv file is writable
+    if exportCsv:
+        sCsvPath = in_sEdlPath.replace('.edl', '.csv')
+        open(sCsvPath, 'w').close()
+
     proj = DamProject(os.environ.get("DAVOS_INIT_PROJECT"))
     shotLib = proj.getLibrary("public", "shot_lib")
 
@@ -110,6 +115,11 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
                     sPubSoundPath = damShot.getPath("public", "animatic_sound")
                     copyFile(sPrivSoundPath, sPubSoundPath, dry_run=bDryRun)
 
+                    soundFile = shotLib.getEntry(sPubSoundPath, dbNode=True)
+                    if not soundFile._dbnode:
+                        dbNode = soundFile.createDbNode(check=False)
+                        print "created:", dbNode
+
             percent = counter * 100 / lenShots
             bar = ["-" for _ in range(int(percent * .5))]
             print ("\nShot {0:04d}/{1:04d} {2:.0f}% |{3:<50}|"
@@ -120,14 +130,13 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
                      startseconds * FPS,
                      endseconds * FPS,
                      (endseconds - startseconds) * FPS + 1,
-                     101,
-                     101 + (endseconds - startseconds) * FPS)
+                     101, 101 + (endseconds - startseconds) * FPS)
+
         csv += "{0},{1:.0f},{2:.0f},{3:.0f},{4:.0f},{5:.0f}\n".format(*fmtFields)
 
     if exportCsv:
-        outPath = in_sEdlPath.replace('.edl', '.csv')
-        with open(outPath, 'w') as f:
-            print outPath
+        with open(sCsvPath, 'w') as f:
+            print sCsvPath
             f.write(csv)
     else:
         print csv
