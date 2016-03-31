@@ -794,6 +794,7 @@ class checkModule(object):
 
 
         # je ne veux plus importer les lights dans les refs de persos a cause de crash lors de rendu arnold
+        # OK
         # 17   import light rig"
         # self.printF("assetconformation: import light rig", st="t")
         # resultD = assetconformation.importGrpLgt(lgtRig = "lgtRig_character", gui=False, hideLgt = True)
