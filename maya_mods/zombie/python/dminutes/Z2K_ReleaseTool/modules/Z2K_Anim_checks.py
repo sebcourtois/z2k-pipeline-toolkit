@@ -541,10 +541,10 @@ class checkModule(object):
 
 
 
-        # 8 resetSRT (controlObjL)
-        result,debugD = jpZ.resetSRT(inObjL=controlObjL)
+        # 8 resetCTR (controlObjL)
+        result,debugD = jpZ.resetCTR(inObjL=controlObjL, userDefined=True, SRT=True)
         # prints -------------------
-        self.printF("resetSRT()", st="t")
+        self.printF("resetCTR()", st="t")
         self.printF(result, st="r")
         self.printF ( " Reseted : {0}/{1}".format( len(debugD["resetedL"]),len(controlObjL), ) )
         self.printF ( " error on: {0}/{1}".format( len(debugD["errors"]),len(controlObjL), ) )
@@ -794,6 +794,7 @@ class checkModule(object):
 
 
         # je ne veux plus importer les lights dans les refs de persos a cause de crash lors de rendu arnold
+        # OK
         # 17   import light rig"
         # self.printF("assetconformation: import light rig", st="t")
         # resultD = assetconformation.importGrpLgt(lgtRig = "lgtRig_character", gui=False, hideLgt = True)

@@ -827,11 +827,15 @@ class SceneManager():
                             mc.setAttr(sMesh + k, v)
 
             mop.setImgPlaneHidden(bImgPlnViz)
+
             if bArrangeViews:
                 pc.mel.setNamedPanelLayout("Saved Before Capture")
                 sPanelConf = mc.getPanel(configWithLabel="Saved Before Capture")
                 if sPanelConf:
                     mc.deleteUI(sPanelConf, panelConfig=True)
+
+                if oStereoCam:
+                    mc.stereoCameraView("StereoPanelEditor", e=True, displayMode="interlace")
 
         if sRecorder:
             sPrivInfoPath = damShot.getPath("private", "stereoCam_info")

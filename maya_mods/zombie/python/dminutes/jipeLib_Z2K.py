@@ -58,13 +58,13 @@ def tkMirror(*args, **kwargs):
         else:
             tkendSel.append(i)
 
-    # jp TK mirror wrap
+    # jp TK mirror wrap ----------------------------------------------------------
     print "upperSymL=", upperSymL
     print "tkendSel=", tkendSel
     if tkendSel:
         tk.mirrorPose(tkendSel)
 
-    # jp upperSymLspecial mirror
+    # jp upperSymLspecial mirror ------------------------------------------------
     # set the values
     attrTableD = {  "sx":1,
                     "sy":1,
@@ -99,21 +99,78 @@ def tkMirror(*args, **kwargs):
         for attr,fact in attrTableD.iteritems():
             # print "  ",attr,fact
             curVal = cmds.getAttr(i+"."+attr)
-            print "    curval=", curVal
+            # print "    curval=", curVal
             oppositeValD[oppositeSide][attr]=fact*curVal
+
 
     # set attr
     for obj,attrD in oppositeValD.iteritems():
         print "->",obj
         for attr,val in attrD.iteritems():
-            print "   ",attr,val
+            # print "   ",attr,val
             cmds.setAttr(obj+"."+attr,val)
         
 
 
 # general function
 
+def collectAttr(InObjList,mode = "all",*args,**kwargs):
+        ''' Description : collect the attrib of the passed InObjList,
+                          mode  = ["all"/"selection"]
+                Return : list of the obj.attributs
+                Dependencies : cmds -
+        '''
+        gChannelBoxName = mel.eval('$temp=$gChannelBoxName')
+        outlist = []
 
+        # ----- internal function -----
+        def objLAttrLloop (objL,attrList,*args,**kwargs):
+            # loop to append obj.attr to outputList excluding bad results.
+            outlist = []
+            if type(objL) is list:
+                for obj in objL:
+                    try:
+                        if cmds.objExists(obj):
+                            for attr in attrList:
+                                outlist.append(obj + "." + attr)
+                    except:
+                        pass
+            return outlist
+        # -----------------------------------
+
+        if len(InObjList) > 0:
+            if mode in ["all"]:
+                for obj in InObjList:
+                    try:
+                        attrList = cmds.listAttr(obj, k=True)
+                        attrList.extend(cmds.listAttr(obj, cb=True))
+                    except:
+                        pass
+
+                    for attr in attrList:
+                        outlist.append(obj + "." + attr)
+                    # print obj
+            if mode in ["selection"]:
+                mainObjL = cmds.channelBox(gChannelBoxName, q=True, mol=True,)
+                shapeObjL = cmds.channelBox(gChannelBoxName, q=True, sol=True,)
+                historyObjL = cmds.channelBox(gChannelBoxName, q=True, hol=True,)
+                outputObjL = cmds.channelBox(gChannelBoxName, q=True, ool=True,)
+                mainSelAttrL = cmds.channelBox(gChannelBoxName, q=True, sma=True,)
+                shapeSelAttrL = cmds.channelBox(gChannelBoxName, q=True, ssa=True,)
+                historySelAttrL = cmds.channelBox(gChannelBoxName, q=True, sha=True,)
+                outputSelAttrL = cmds.channelBox(gChannelBoxName, q=True, soa=True,)
+
+                # print mainObjL, shapeObjL, historyObjL, outputObjL
+                # print mainSelAttrL, shapeSelAttrL, historySelAttrL, outputSelAttrL
+
+                # append the output list with the selected attributs
+                outlist = objLAttrLloop(mainObjL, mainSelAttrL)
+                outlist.extend( objLAttrLloop(shapeObjL, shapeSelAttrL))
+                outlist.extend( objLAttrLloop(historyObjL, historySelAttrL))
+                outlist.extend( objLAttrLloop(outputObjL, outputSelAttrL))
+
+        # print outlist
+        return outlist
 
 # Z2K base general functions -----------------
 def getBaseModPath(*args, **kwargs):
@@ -384,9 +441,9 @@ def getCstActiveWeightPlugs(theCst,*args, **kwargs):
     for i in cmds.listAttr( theCst+".target[:]",multi=1):
         if "targetParentMatrix" in i:
             if cmds.getAttr(theCst + "."+ i):
-                print "    theCst=",i,cmds.getAttr(theCst+"."+i)
+                # print "    theCst=",i,cmds.getAttr(theCst+"."+i)
                 activeTarget.append(theCst+"."+i.split(".targetParentMatrix",1)[0]+".targetWeight" )
-    print "activeTarget=", activeTarget
+    # print "activeTarget=", activeTarget
     return activeTarget
 
 
@@ -2000,6 +2057,56 @@ def chr_rename_Teeth_BS_attribs(*args, **kwargs):
 
     return True, debugL
 
+def chr_rename_Teeth_BS_attribs_Vampires(*args, **kwargs):
+    # reset all attr of selected controls
+    print "chr_rename_Teeth_BS_attribs_Vampires()"
+    debugL = []
+    toRenameUpL = [
+                'Top_Teeth_Global.upperteeth_canines',
+                'Top_Teeth_Global.upperteeth_gencivedown',
+                'Top_Teeth_Global.upperteeth_gum',
+                'Top_Teeth_Global.upperteeth_high',
+                'Top_Teeth_Global.upperteeth_pointues_100',
+                'Top_Teeth_Global.upperteeth_pointues_50',
+                'Top_Teeth_Global.upperteeth_pointues_75',
+                'Top_Teeth_Global.upperteeth_pointues_avant',
+                'Top_Teeth_Global.upperteeth_round',
+                'Top_Teeth_Global.upperteeth_squeez',
+                ]
+    toRenameDnL = [
+                'Bottom_Teeth_Global.lowerteeth_basique',
+                'Bottom_Teeth_Global.lowerteeth_canines',
+                'Bottom_Teeth_Global.lowerteeth_genciveUp',
+                'Bottom_Teeth_Global.lowerteeth_pointu_100',
+                'Bottom_Teeth_Global.lowerteeth_pointu_50',
+                'Bottom_Teeth_Global.lowerteeth_pointu_75',
+                'Bottom_Teeth_Global.lowerteeth_pointues_avant',
+                'Bottom_Teeth_Global.lowertteeth_high',
+                'Bottom_Teeth_Global.lowertteeth_round',
+                'Bottom_Teeth_Global.lowertteeth_squeez',
+                ]
+    allRL = toRenameUpL + toRenameDnL
+    print allRL
+    canDo = True
+    for i in allRL:
+        if not cmds.objExists(i):
+            canDo = False
+    if canDo:
+        # reorder attr a l arrache qui foiraient de TK
+        # if cmds.objExists("Bottom_Teeth_Global.lowerteeth_assymetry"):
+        #     cmds.deleteAttr("Bottom_Teeth_Global.lowerteeth_assymetry")
+        #     cmds.undo()
+
+        for j in allRL:
+            if  cmds.objExists(j):
+                print "renaming", j
+                newName = j.replace("uppertteeth", "upperteeth").replace("lower", "").replace("upper", "")
+                print j, newName
+                cmds.renameAttr(j , newName.rsplit(".")[-1])
+                debugL.append("{0} has been renamed".format(j))
+
+    return True, debugL
+
 def chr_TongueFix(*args, **kwargs):
     print "chr_TongueFix()"
     # WIP
@@ -2811,7 +2918,7 @@ def chr_reArrangeCtr_displayLevel(*args, **kwargs):
 def improveArcades(*args, **kwargs):
     """ Description: replace automove behavior by independant link to each individual brow ctr and Add a blend attribut to control it.
         Return : [True,debugL]
-        Dependencies : cmds - 
+        Dependencies : cmds -  getCstActiveWeightPlugs()
     """
     print "improveArcades()"
 
@@ -3044,3 +3151,48 @@ def chr_fixCornerNeutralsRotation(*args,**kwargs):
                 print i,"doesn't exist!"
                 debugL.append(i+": Doesn't exist")
     return [True,debugL] 
+
+
+def chr_fix_EybrowUpper_ExtCorner(*args, **kwargs):
+    print "chr_fix_EybrowUpper_ExtCorner()"
+    ctrAL =  ['Right_Brow_upRidge_04_offset_grp', 'Left_Brow_upRidge_04_offset_grp']
+    ctrBL =  ['Left_Brow_upRidge_04_drive_grp','Right_Brow_upRidge_04_drive_grp']
+    ctrL=ctrAL + ctrBL
+
+    canDo = True
+    notFoundL = []
+    fixedL=[]
+    for i in ctrL:
+        if not cmds.objExists(i):
+            notFoundL.append(i)
+    # if canDo:
+    for i in ctrL:
+        
+        if cmds.objExists(i):
+            print "-"*20,"* fixing",i
+            # get cst
+            allCstL = getTypeInHierarchy(cursel=i, theType="constraint")
+            print ">>>>>",allCstL
+            for cst in allCstL:
+                for target in cmds.listAttr(cst + '.target[*]'):
+                    if ".targetParentMatrix" in target:
+                        theParent = cmds.listConnections(cst + "."+target, d=False, s=True)[0]
+                        #print "parent=",theParent
+                        if theParent in ["Head_FK","Head_FK_grp_offset_Pivot"]:
+                            print "  *GOODparent=",theParent
+                            plugL = getCstActiveWeightPlugs(cst) 
+                            for thePlug in plugL:   
+                                print " thePlug=",thePlug,cmds.getAttr(thePlug)
+                                theSource = cmds.listConnections(thePlug,s=1,d=0,p=1)[0]
+                                cmds.setAttr(theSource,1)
+                                print "    theSource=",theSource,cmds.getAttr(theSource)
+                                
+                        else:
+                            print "*BADparent=",theParent
+                            theSource = cmds.listConnections(thePlug,s=1,d=0,p=1)[0]
+                            cmds.setAttr(theSource,0)
+                            print "    theSource=",theSource,cmds.getAttr(theSource)
+                            fixedL.append(i+"."+theSource)
+    
+    print "notFoundL=", notFoundL
+    print "fixedL=", fixedL

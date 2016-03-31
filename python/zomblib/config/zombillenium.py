@@ -110,7 +110,7 @@ class shot_lib(object):
                     "geoCache -> geoCache_dir":{},
                     "{name}_anim.ma -> anim_scene":None,
                     "{name}_anim.mov -> anim_capture":None,
-                    #"{name}_ref.mov -> animRef_movie":None,
+                    "{name}_ref.mov -> animRef_movie":None,
                    },
                 },
             },
@@ -119,7 +119,6 @@ class shot_lib(object):
     sg_step_map = {"01_previz":"Previz 3D",
                    "01_stereo":"Stereo",
                    "02_layout":"Layout",
-                   #"03_blocking":"Blocking",
                    "04_anim":"Animation",
                    }
 
@@ -156,6 +155,7 @@ class shot_lib(object):
                     },
     "animRef_movie":{"create_sg_version":True,
                      "sg_uploaded_movie":True,
+                     "sg_path_to_movie":True,
                      "sg_tasks":("Animation|reference",),
                      "sg_status":"rev",
                     },
@@ -214,6 +214,7 @@ class asset_lib(object):
                    "environment3d",
                    "fx_previz",
                    "crowd_previz",
+                   "vegetation3d",
                    )
 
     child_sections = asset_types
@@ -479,7 +480,7 @@ class set3d(object):
     sg_type = "Set 3D"
     aliases = (prefix, sg_type,)
     assetType = prefix
-    template_dir = "asset_envSet"
+    template_dir = "asset_envSetVeg"
 
     public_path = join(asset_lib.public_path, "{assetType}")
     private_path = join(asset_lib.private_path, "{assetType}")
@@ -521,5 +522,14 @@ class environment3d(set3d):
 
     dependency_types = asset_lib.dependency_types
 
+class vegetation3d(set3d):
 
+    entity_class = "davos.core.damtypes.DamAsset"
+
+    prefix = "veg"
+    sg_type = "Veg 3D"
+    aliases = (prefix, sg_type,)
+    assetType = prefix
+
+    dependency_types = asset_lib.dependency_types
 
