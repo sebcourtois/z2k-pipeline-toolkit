@@ -510,13 +510,23 @@ class Asset_File_Conformer:
             raise ValueError(txt)
 
         if reference:
-            txt = "Reference '{}'".format(self.renderFilePath_exp)
-            self.log.printL("i", txt)
-            mc.file( self.renderFilePath_exp, type= fileType, ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True, reference = True )
+
+            if os.path.isfile(self.renderFilePath_exp):
+                mc.file( self.renderFilePath_exp, type= fileType, ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True, reference = True )
+                txt = "Reference '{}'".format(self.renderFilePath_exp)
+                self.log.printL("i", txt)
+            else:
+                txt = "Cannot import file '{}'".format(self.renderFilePath_exp)
+                self.log.printL("e", txt)
         else:
-            txt = "importing '{}'".format(self.renderFilePath_exp)
-            self.log.printL("i", txt)
-            mc.file( self.renderFilePath_exp, i= True, type= fileType, ignoreVersion=True, namespace=self.sourceFile, preserveReferences= False )
+
+            if os.path.isfile(self.renderFilePath_exp):
+                mc.file( self.renderFilePath_exp, i= True, type= fileType, ignoreVersion=True, namespace=self.sourceFile, preserveReferences= False )
+                txt = "importing '{}'".format(self.renderFilePath_exp)
+                self.log.printL("i", txt)
+            else:
+                txt = "Cannot import file '{}'".format(self.renderFilePath_exp)
+                self.log.printL("e", txt)
         mc.refresh()
         return dict(resultB=self.log.resultB, logL=self.log.logL)
 
