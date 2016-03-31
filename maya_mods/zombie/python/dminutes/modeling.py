@@ -774,28 +774,40 @@ def compareHDToPreviz():
     the asset node should have this kind of name: "nameSpace:asset_previz". then select the previz asset transform and the master asst transform, 
     run the script and read the log
     """
+    # compare asset_hi to asset_previz ( compare translate-rotate of group are the same and local pivot rotate-scale of hi must be 0).
+    import maya.cmds as cmds
+    import math
 
     DECIMAL_NB = 3
+    EPSILON = 0.001 # if less than epsilon its zero !
     BOX_SCALE = 0.1 # 10%
+
     listWarning=[]
+
 
     def bboxPrintWarning(listWarning):
         print("\n*** Bbox warning if more than " + str(1./BOX_SCALE) + " % different between Hi and Previz ***")
         for warning in listWarning:
             print("\tWARNING: "+warning)
 
-    def compareMinMaxHiToPreviz(hiMin, hiMax, previzMin, previzMax, boxScale):
-        ##print("hiMin = " + str(hiMin) + " hiMax = " + str(hiMax) + " previzMin = " + str(previzMin) + " previzMax = " + str(previzMax) + " boxScale = " + str(boxScale))
-        errMin = False
-        errMax = False
-        center = (previzMin + previzMax) / 2.
-        delta = math.fabs(previzMax-previzMin)
-        deltaHalf = delta / 2.
-        if math.fabs(hiMin-previzMin) > delta*boxScale:
-            errMin = True
-        if math.fabs(hiMax-previzMax) > delta*boxScale:
-            errMax = True
-        return errMin, errMax
+    # compare values 'hi' min-max to 'preview' min-max
+    def compareMinMaxHiToPreviz(hiMin, hiMax, previzMin, previzMax, boxError):
+        ##print("hiMin = " + str(hiMin) + " hiMax = " + str(hiMax) + " previzMin = " + str(previzMin) + " previzMax = " + str(previzMax) + " boxError = " + str(boxError))
+        errCenter = False
+        errDelta = False
+        previzCenter = (previzMin + previzMax) / 2.
+        hiCenter = (hiMin + hiMax) / 2
+        centerDelta = math.fabs(previzCenter-hiCenter) # difference of two centers.
+        previzDelta = math.fabs(previzMax-previzMin)
+        if centerDelta > previzDelta*boxError: # if diff. center > bbox size * boxError, error in position of the box.
+            errCenter = True
+
+        hiDelta = math.fabs(hiMax-hiMin)
+
+        if math.fabs(hiDelta-previzDelta) > previzDelta*boxError:
+            errDelta = True
+
+        return errCenter, errDelta
 
     def compareBboxHiToPreviz(groupHi, groupPreviz, boxScale, listWarning): # ex. boxScale = 0.1 (10%)
         hiBbox = cmds.exactWorldBoundingBox(groupHi)
@@ -803,23 +815,31 @@ def compareHDToPreviz():
         previzBbox = cmds.exactWorldBoundingBox(groupPreviz)
         ##print("\tbbox previz = %f" % previzBbox[0], "%f" % previzBbox[1], "%f" % previzBbox[2], "%f" % previzBbox[3], "%f" % previzBbox[4], "%f" % previzBbox[5])
 
-        errMin, errMax = compareMinMaxHiToPreviz(hiBbox[0], hiBbox[3], previzBbox[0], previzBbox[3], boxScale)
-        if errMin:
-            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[0],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[0],2)))
-        if errMax:
-            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[3],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[3],2)))
+        errCenterX, errDeltaX = compareMinMaxHiToPreviz(hiBbox[0], hiBbox[3], previzBbox[0], previzBbox[3], boxScale)
 
-        errMin, errMax = compareMinMaxHiToPreviz(hiBbox[1], hiBbox[4], previzBbox[1], previzBbox[4], boxScale)
-        if errMin:
-            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[1],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[1],2)))
-        if errMax:
-            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[4],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[4],2)))
+        errCenterY, errDeltaY = compareMinMaxHiToPreviz(hiBbox[1], hiBbox[4], previzBbox[1], previzBbox[4], boxScale)
             
-        errMin, errMax = compareMinMaxHiToPreviz(hiBbox[2], hiBbox[5], previzBbox[2], previzBbox[5], boxScale)
-        if errMin:
-            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[2],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[2],2)))
-        if errMax:
-            listWarning.append(str(groupHi) + " bbox xmin = " + str(floatLimitDecimal(hiBbox[5],2)) + " instead previz = " + str(floatLimitDecimal(previzBbox[5],2)))
+        errCenterZ, errDeltaZ = compareMinMaxHiToPreviz(hiBbox[2], hiBbox[5], previzBbox[2], previzBbox[5], boxScale)
+
+        if errCenterX or errCenterY or errCenterZ:
+            warn = " has bbox position mismatch in "
+            if errCenterX:
+                warn += "X "
+            if errCenterY:
+                warn += "Y "
+            if errCenterZ:
+                warn += "Z "
+            listWarning.append(str(groupHi) + warn)
+
+        if errDeltaX or errDeltaY or errDeltaZ:
+            warn = " has bbox size mismatch in "
+            if errDeltaX:
+                warn += "X "
+            if errDeltaY:
+                warn += "Y "
+            if errDeltaZ:
+                warn += "Z "
+            listWarning.append(str(groupHi) + warn)
             
 
     #print(cmds.nodeType("grp_bureauArriere_grp_livre_to_ctrl_livre_prCns"))
@@ -838,6 +858,9 @@ def compareHDToPreviz():
         
     def vectorLimitDecimal(vector, decimalNb):
         return [floatLimitDecimal(vector[0],decimalNb), floatLimitDecimal(vector[1],decimalNb), floatLimitDecimal(vector[2],decimalNb)]
+
+    def cmp2zero(vec):
+        return ((math.fabs(vec[0]) > EPSILON) or (math.fabs(vec[1]) > EPSILON) or (math.fabs(vec[2]) > EPSILON))
 
     ## previz is the ref, hi could have more group but not less, and check localspace pivot translate et scale MUST be 0 !
 
@@ -864,22 +887,22 @@ def compareHDToPreviz():
             if is_group(groupPreviz) and "grp_" in groupPreviz.split("|")[-1] and not "grp_geo_" in groupPreviz.split("|")[-1]: # if the transform is a group
                 ##print("\tgroupPreviz = " + str(groupPreviz))
                 # get positions, rotations of locator
-                rotPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,ws=1,ro=1), DECIMAL_NB) #get rotations
-                posPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,ws=1,t=1), DECIMAL_NB) # gettranslations
+                rotPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,r=1,ro=1), DECIMAL_NB) # get rotations
+                posPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,r=1,t=1), DECIMAL_NB) # get translations
                 #print rotPreviz
                 #print posPreviz
                 groupHi=""
                 if namespacePreviz != "": # if namespace, remove it to build groupHi
-                    groupHi = groupPreviz.replace(assetPreviz, assetHi).replace(namespacePreviz, "") #build groupPreviz name 
+                    groupHi = groupPreviz.replace(assetPreviz, assetHi).replace(namespacePreviz, "") # build groupPreviz name 
                 else:
                     groupHi = groupPreviz.replace(assetPreviz, assetHi) #build groupPreviz name
                 #print("\tgroupHi = " + groupHi)
                 if cmds.objExists(groupHi): # test if group exists ?
-                    rotHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,ws=1,ro=1), DECIMAL_NB) # get rotations
-                    posHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,ws=1,t=1), DECIMAL_NB) # get translations
+                    rotHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,r=1,ro=1), DECIMAL_NB) # get rotations
+                    posHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,r=1,t=1), DECIMAL_NB) # get translations
                     error = False
                     if cmp(rotHi, rotPreviz):
-                        print("\tERROR in group: " + groupHi + " has different rotate values: " + str(rotHi) + " instead of previz : " +str(rotPreviz))
+                        print("\tERROR in group: " + groupHi + " has different rotate values: " + str(rotHi) + " instead of previz : " + str(rotPreviz))
                         error = True
                         errorCount += 1
                     if cmp(posHi, posPreviz):
@@ -887,14 +910,14 @@ def compareHDToPreviz():
                         error = True
                         errorCount += 1
                     # test local pivot rotate and scale
-                    localPivotRotateHi =cmds.xform(groupHi,q=True,os=1,rp=1) # get local rotate pivot
-                    localPivotScaleHi =cmds.xform(groupHi,q=True,os=1,sp=1) # get local scale pivot
-                    if cmp(localPivotRotateHi, [0,0,0]):
+                    localPivotRotateHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,os=1,rp=1), DECIMAL_NB) # get local rotate pivot
+                    localPivotScaleHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,os=1,sp=1), DECIMAL_NB) # get local scale pivot
+                    if cmp2zero(localPivotRotateHi): # compare to zero with epsilon precision.
                         print("\tERROR in group: " + groupHi + " has local pivot rotate values: " + str(localPivotRotateHi))
                         error = True
                         errorCount += 1
-                    if cmp(localPivotScaleHi, [0,0,0]):
-                        print("\tERROR in group: " + groupHi + " has local pivot scale values: " + str(localPivotScaleHi))
+                    if cmp2zero(localPivotScaleHi):
+                        print("\tERROR in group: " + groupHi + " has local pivot scale values: " +  str(localPivotScaleHi))
                         error = True
                         errorCount += 1
 
@@ -921,7 +944,6 @@ def compareHDToPreviz():
         print("**** checking done")
     else:
         print ("\n***** please select both asset hi-def and asset previz and try again")
-
 
 
 
