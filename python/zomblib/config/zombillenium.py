@@ -494,7 +494,6 @@ class set3d(object):
             "{name}_previzRef.mb -> previz_ref":None,
             "{name}_animRef.mb -> anim_ref":None,
             "{name}_renderRef.mb -> render_ref":None,
-            #"{name}_masterRef.mb -> master_ref":None,
             },
         "review -> review_dir":
             {
@@ -502,13 +501,19 @@ class set3d(object):
             "{name}_master.mov -> master_review":None,
             },
         "texture -> texture_dir":{},
+        "geometry -> geometry_dir":{},
 
         "{name}_previz.ma -> previz_scene":None,
         "{name}_master.ma -> master_scene":None,
         },
     }
 
-    resources_settings = asset_lib.resources_settings
+    resources_settings = {
+    "geometry_dir":{"free_to_publish":True,
+                    },
+    }
+    resources_settings.update(asset_lib.resources_settings)
+
     dependency_types = asset_lib.dependency_types
 
 class environment3d(set3d):
