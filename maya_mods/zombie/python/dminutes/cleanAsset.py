@@ -158,12 +158,13 @@ def cleanAsset (GUI = True):
                 assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
                 r2a = assetconformation.Asset_File_Conformer()
                 r2a.cleanFile()
-                r2a.loadFile(sourceFile ="animRef" , reference = False)
-                r2a.initSourceTargetList()
-                r2a.checkSourceTargetTopoMatch()
-                resultD = r2a.cleanFile()
-                if not resultD["resultB"]:
-                    mc.confirmDialog( title='Error: Topologie mismach', message="The file you are working on, mismach the anim file. Please check the log for more details", button=['Ok'], defaultButton='Ok' )
+                resultD = r2a.loadFile(sourceFile ="animRef" , reference = False)
+                if resultD['fileLoadedB']:
+                    r2a.initSourceTargetList()
+                    r2a.checkSourceTargetTopoMatch()
+                    resultD = r2a.cleanFile()
+                    if not resultD["resultB"]:
+                        mc.confirmDialog( title='Error: Topologie mismach', message="The file you are working on, mismach the anim file. Please check the log for more details", button=['Ok'], defaultButton='Ok' )
 
 
     return resultB, logL
