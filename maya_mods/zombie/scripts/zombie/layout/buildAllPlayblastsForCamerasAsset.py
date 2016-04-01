@@ -1,0 +1,3 @@
+
+from dminutes import  buildAllPlayblastsForCamerasAsset
+reload (buildAllPlayblastsForCamerasAsset)
