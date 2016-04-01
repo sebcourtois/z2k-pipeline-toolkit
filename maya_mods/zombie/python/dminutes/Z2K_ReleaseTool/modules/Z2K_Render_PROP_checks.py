@@ -353,13 +353,13 @@ class checkModule(object):
         # 15   compare meshes topologies with anim file"
         self.printF("assetconformation: compare meshes topologies with anim file", st="t")
         resultD={}
-        print "resultD",resultD
         compMesh = assetconformation.Asset_File_Conformer()
         compMesh.cleanFile()
-        compMesh.loadFile(sourceFile ="animRef" , reference = False)
-        compMesh.initSourceTargetList()
-        compMesh.checkSourceTargetTopoMatch()
-        resultD = compMesh.cleanFile()
+        resultD = compMesh.loadFile(sourceFile ="animRef" , reference = False)
+        if resultD['fileLoadedB']:
+            compMesh.initSourceTargetList()
+            compMesh.checkSourceTargetTopoMatch()
+            resultD = compMesh.cleanFile()
         # prints -------------------
         self.printF(resultD['resultB'], st="r")
         for each in resultD["logL"]:

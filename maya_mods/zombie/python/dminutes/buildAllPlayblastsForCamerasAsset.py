@@ -1,6 +1,7 @@
 # Build all playblast for all cameras and concat them in one final movie.
 import maya.cmds as cmds
 from shotgun_api3 import shotgun
+import subprocess
 import os
 
 SERVER_PATH = "https://zombillenium.shotgunstudio.com"
@@ -16,8 +17,8 @@ projectId = 67 # Zombillenium
 
 GRP_MOD_CAMS = "GRP_MOD_CAMS"
 MIN_PLAYBLAST_TIME = 50 #
-FFMPEG = r"Z:\tool\z2k-pipeline-toolkit\movSplitter\ffmpeg\bin\ffmpeg.exe" 
-
+#FFMPEG = r"Z:\tool\z2k-pipeline-toolkit\movSplitter\ffmpeg\bin\ffmpeg.exe" 
+FFMPEG = os.environ["ZOMB_TOOL_PATH"]+r"\z2k-pipeline-toolkit\movSplitter\ffmpeg\bin\ffmpeg.exe" 
 PATH_TMP = r"C:\tmp\zomb"
 
 if not os.path.exists(PATH_TMP):

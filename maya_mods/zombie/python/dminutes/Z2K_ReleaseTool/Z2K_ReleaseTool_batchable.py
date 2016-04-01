@@ -59,8 +59,12 @@ import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_PROP_checks as Z2K_check_PREV
 reload(Z2K_check_PREVIZ_PROP)
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_CHAR_checks as Z2K_check_PREVIZ_CHAR
 reload(Z2K_check_PREVIZ_CHAR)
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_SET_checks as Z2K_check_PREVIZ_SET
-reload(Z2K_check_PREVIZ_SET)
+try:
+    import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_SET_checks as Z2K_check_PREVIZ_SET
+    reload(Z2K_check_PREVIZ_SET)
+except:
+    import dminutes.Z2K_ReleaseTool.modules.Z2K_Previz_Set_checks as Z2K_check_PREVIZ_SET
+    reload(Z2K_check_PREVIZ_SET)
 
 # anim checks
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Anim_checks as  Z2K_check_ANIM
