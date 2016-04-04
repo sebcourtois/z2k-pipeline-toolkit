@@ -202,7 +202,7 @@ class asset_lib(object):
     public_path = join(expand('$ZOMB_ASSET_LOC'), "{proj.dir_name}", dir_name)
     private_path = join(project.private_path, dir_name)
 
-    public_path_envars = ('ZOMB_ASSET_PATH', 'ZOMB_TEXTURE_PATH')
+    public_path_envars = ('ZOMB_ASSET_PATH', 'ZOMB_TEXTURE_PATH', 'ZOMB_GEOMETRY_PATH')
     private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
     asset_types = ("camera",
@@ -259,7 +259,8 @@ class asset_lib(object):
     }
 
     dependency_types = {
-    "texture_dep":{"location":"texture_dir", "checksum":True, "env_var":"ZOMB_TEXTURE_PATH"}
+    "texture_dep":{"location":"texture_dir", "checksum":True, "env_var":"ZOMB_TEXTURE_PATH"},
+    "geometry_dep":{"location":"geometry_dir", "checksum":True, "env_var":"ZOMB_GEOMETRY_PATH"},
     }
 
 class camera(object):
