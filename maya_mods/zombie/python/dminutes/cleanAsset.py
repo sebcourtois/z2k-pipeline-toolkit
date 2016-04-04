@@ -100,12 +100,14 @@ def cleanAsset (GUI = True):
 
 
     elif fileType == "anim":
-            if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=baseMessageS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
+            if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=baseMessageS+"""\n    - create set subdiv,\n    - apply set subdiv""", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel": 
                 rendering.deleteAovs()
                 miscUtils.deleteUnknownNodes()
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
+                assetconformation.setSubdiv()
+                assetconformation.createSubdivSets()
                 assetconformation.setSubdiv()
                 r2a = assetconformation.Asset_File_Conformer()
                 r2a.cleanFile()
