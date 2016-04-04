@@ -367,8 +367,11 @@ class checkModule(object):
         # --------------------------
         if not resultD["resultB"]:
             boolResult = False
-        self.pBar_upd(step= 1,) 
-        
+        self.pBar_upd(step= 1,)           
+
+
+
+
 
         # colors
         print "*btn_preClean:",boolResult
