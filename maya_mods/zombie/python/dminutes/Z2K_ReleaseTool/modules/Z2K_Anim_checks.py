@@ -871,9 +871,9 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 19 ----- chr_fixCornerNeutralsRotation () 
-        self.printF("chr_fixCornerNeutralsRotation()", st="t")
-        result,debugL = jpZ.chr_fixCornerNeutralsRotation()
+        # 19 ----- chr_fix_MouthCornerNeutralsRotation () 
+        self.printF("chr_fix_MouthCornerNeutralsRotation()", st="t")
+        result,debugL = jpZ.chr_fix_MouthCornerNeutralsRotation()
         # prints -------------------
         self.printF(result, st="r")
         if debugL:
@@ -887,8 +887,8 @@ class checkModule(object):
 
 
 
-
-
+        # chr_fix_EybrowUpper_ExtCorner_cst
+        # chr_fix_cheeks_cst
 
 
         # colors

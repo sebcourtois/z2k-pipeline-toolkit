@@ -392,7 +392,7 @@ def scanTextureFiles(damEntity):
             sUdimPat = makeUdimFilePattern(sNodeAbsPath)
             sTexAbsPathList = sorted(iterPaths(osp.dirname(sNodeAbsPath), dirs=False,
                                                recursive=False,
-                                               keepFiles=ignorePatterns(sUdimPat)
+                                               onlyFiles=ignorePatterns(sUdimPat)
                                                ))
             sUdimPathList = sTexAbsPathList[:]
 
