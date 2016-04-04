@@ -513,11 +513,15 @@ class Asset_File_Conformer:
             if os.path.isfile(self.renderFilePath_exp):
                 if os.stat(self.renderFilePath_exp).st_size > 75000:
                     mc.file( self.renderFilePath_exp, type= fileType, ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True, reference = True )
+                    txt = "referencing: '{}'".format(self.renderFilePath_exp)
+                    self.log.printL("i", txt)
                     fileLoadedB = True
         else:
             if os.path.isfile(self.renderFilePath_exp):
                 if os.stat(self.renderFilePath_exp).st_size > 75000:
                     mc.file( self.renderFilePath_exp, i= True, type= fileType, ignoreVersion=True, namespace=self.sourceFile, preserveReferences= False )
+                    txt = "importing: '{}'".format(self.renderFilePath_exp)
+                    self.log.printL("i", txt)
                     fileLoadedB = True
         if not fileLoadedB:
             txt = "File is missing or empty: '{}'".format(self.renderFilePath_exp)
