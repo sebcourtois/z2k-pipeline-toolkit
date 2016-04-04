@@ -113,6 +113,39 @@ def tkMirror(*args, **kwargs):
 
 
 # general function
+def setCamForAnim(camera="", *args, **kwargs):
+    """ Description: Set the camera parameters to keep it locked appart the one needed for '2d' pan zoom work.
+        Return : [Bool,debugL]
+        Dependencies : cmds - 
+    """
+    print "setCamForAnim()"
+    debugL = []
+    # unlock the node
+    cmds.lockNode( camera,lock=False)
+
+    # lock all
+    attrL = cmds.listAttr(camera,k=1)
+    for attr in attrL:
+        cmds.setAttr(camera+"."+ attr,l=True)
+    
+    # unlock specifik attr
+    cmds.setAttr(camera+".filmOffset",l=False)
+    cmds.setAttr(camera+".horizontalFilmOffset",l=False)
+    cmds.setAttr(camera+".verticalFilmOffset",l=False)
+    cmds.setAttr(camera+".preScale",l=False)
+    cmds.setAttr(camera+".postProjection",l=False)
+    cmds.setAttr(camera+".postScale",l=False)
+
+    cmds.setAttr(camera+".nearClipPlane",l=False)
+    cmds.setAttr(camera+".farClipPlane",l=False)
+    
+    cmds.setAttr(camera+".panZoomEnabled",l=False)
+    cmds.setAttr(camera+".horizontalPan",l=False)
+    cmds.setAttr(camera+".verticalPan",l=False)
+    cmds.setAttr(camera+".zoom",l=False)
+
+    return [True,debugL]
+
 
 def collectAttr(InObjList,mode = "all",*args,**kwargs):
         ''' Description : collect the attrib of the passed InObjList,
@@ -1823,7 +1856,7 @@ def deleteActiveBlendShape_grp(*args, **kwargs):
                 cmds.delete(gp)
             except Exception, err:
                 print err
-    return True
+    return toReturnB
 
 def get_BS_TargetObjD(BS_Node="", *args, **kwargs):
     # construction correspondance dictionnary {ObjName:corresponding BS index}
@@ -2033,14 +2066,16 @@ def chr_rename_Teeth_BS_attribs(*args, **kwargs):
     # reset all attr of selected controls
     print "chr_rename_Teeth_BS_attribs()"
     debugL = []
-    toRenameUpL = ["Top_Teeth_Global.upperteeth_gum", "Top_Teeth_Global.upperteeth_high", "Top_Teeth_Global.upperteeth_round", "Top_Teeth_Global.uppertteeth_assymetry", "Top_Teeth_Global.upperteeth_squeez"]
+    toRenameUpL = ["Top_Teeth_Global.upperteeth_gum", "Top_Teeth_Global.upperteeth_high", "Top_Teeth_Global.upperteeth_round", "Top_Teeth_Global.upperteeth_assymetry", "Top_Teeth_Global.upperteeth_squeez"]
     toRenameDnL = ["Bottom_Teeth_Global.lowerteeth_gum", "Bottom_Teeth_Global.lowerteeth_high", "Bottom_Teeth_Global.lowerteeth_round", "Bottom_Teeth_Global.lowerteeth_assymetry", "Bottom_Teeth_Global.lowerteeth_squeez", ]
     allRL = toRenameUpL + toRenameDnL
-    print allRL
+    # print allRL
     canDo = True
     for i in allRL:
         if not cmds.objExists(i):
+            print "    ",i,"doesn't exists"
             canDo = False
+    print "    canDo=", canDo
     if canDo:
         # reorder attr a l arrache qui foiraient de TK
         if cmds.objExists("Bottom_Teeth_Global.lowerteeth_assymetry"):
@@ -2052,9 +2087,13 @@ def chr_rename_Teeth_BS_attribs(*args, **kwargs):
                 print "renaming", j
                 newName = j.replace("uppertteeth", "upperteeth").replace("lowertteeth","lowerteeth").replace("lower", "").replace("upper", "")
                 print j,"->", newName
+
+                # delete existant danq le cas ou l'attribut exist deja mais n'est connected to nothing.
+                if cmds.objExists(newName):
+                    if not cmds.listConnections(newName,s=0,d=1):
+                        cmds.deleteAttr(newName)
                 cmds.renameAttr(j , newName.rsplit(".")[-1])
                 debugL.append("{0} has been renamed".format(j))
-
     return True, debugL
 
 def chr_rename_Teeth_BS_attribs_Vampires(*args, **kwargs):
@@ -2077,6 +2116,7 @@ def chr_rename_Teeth_BS_attribs_Vampires(*args, **kwargs):
                 'Bottom_Teeth_Global.lowerteeth_basique',
                 'Bottom_Teeth_Global.lowerteeth_canines',
                 'Bottom_Teeth_Global.lowerteeth_genciveUp',
+                'Bottom_Teeth_Global.lowerteeth_gum',# added jp
                 'Bottom_Teeth_Global.lowerteeth_pointu_100',
                 'Bottom_Teeth_Global.lowerteeth_pointu_50',
                 'Bottom_Teeth_Global.lowerteeth_pointu_75',
