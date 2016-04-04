@@ -70,7 +70,6 @@ from dminutes.Z2K_ReleaseTool.modules import *
 
 
 from dminutes import miscUtils
-
 reload (miscUtils)
 
 from dminutes import assetconformation
@@ -578,19 +577,32 @@ class checkModule(object):
         self.pBar_upd(step=1, maxValue=1, e=True)
 
         # steps
-
-
-
         # 1   apply shader from render file"
         self.printF("assetconformation: apply shader from render file", st="t")
         resultD={}
-        compMesh = assetconformation.Asset_File_Conformer()
-        compMesh.cleanFile()
-        resultD = compMesh.loadFile(sourceFile ="animRef" , reference = False)
+        r2a = assetconformation.Asset_File_Conformer()
+        cmds.refresh(suspend = True)
+        r2a.cleanFile()
+        resultD = r2a.loadFile(sourceFile ="renderRef" , reference = False)
+        r2a.initSourceTargetList()
+        r2a.checkSourceTargetTopoMatch()
+        #print 'resultD: ',resultD
         if resultD['fileLoadedB']:
-            compMesh.initSourceTargetList()
-            compMesh.checkSourceTargetTopoMatch()
-            resultD = compMesh.cleanFile()
+            if r2a.sourceTargetListMatch and r2a.sourceTargetTopoMatch:
+                r2a.smoothPolyDisplay(r2a.targetList)
+                r2a.transferRenderAttr()
+                r2a.transferUV()
+                r2a.disconnectAllShadEng(r2a.targetList)
+                r2a.transferSG()
+                r2a.deleteUnusedShadingNodes()
+                r2a.removeNameSpaceFromShadNodes(r2a.targetList)
+                r2a.cleanFile()
+                cmds.refresh()
+                assetconformation.fixMaterialInfo()
+                resultD = r2a.deleteUnusedShadingNodes()
+            else:
+                resultD = r2a.cleanFile()
+        cmds.refresh(suspend = False)
         # prints -------------------
         self.printF(resultD['resultB'], st="r")
         for each in resultD["logL"]:
@@ -600,6 +612,11 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,) 
 
+        # colors
+        print "*btn_CleanObjects:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+        
+        return boolResult
 
 
 
@@ -1022,7 +1039,7 @@ class checkModule(object):
         cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects) )
 
         self.BApplyShadersFromRender = cmds.button("Apply shaders from render file",)
-        cmds.button(self.BApplyShadersFromRender,e=1,c= partial( self.btn_specialSettings,self.BApplyShadersFromRender) )
+        cmds.button(self.BApplyShadersFromRender,e=1,c= partial( self.btn_applyShadersFromRender,self.BApplyShadersFromRender) )
         
         self.BSpecialSettings = cmds.button("Apply Special_Settings",)
         cmds.button(self.BSpecialSettings,e=1,c= partial( self.btn_specialSettings,self.BSpecialSettings) )
