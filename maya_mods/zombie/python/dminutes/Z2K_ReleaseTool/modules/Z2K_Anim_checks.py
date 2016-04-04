@@ -70,7 +70,6 @@ from dminutes.Z2K_ReleaseTool.modules import *
 
 
 from dminutes import miscUtils
-
 reload (miscUtils)
 
 from dminutes import assetconformation
@@ -104,6 +103,7 @@ class checkModule(object):
             self.BCleanScene=""
             self.BCleanObjects=""
             self.BSpecialSettings =""
+            self.BApplyShadersFromRender=""
             self.BDebugBoardF=""
             self.BDebugBoard = ""
             self.BCleanAll=""
@@ -560,17 +560,66 @@ class checkModule(object):
         if not jpZ.checkSRT(inObjL =controlObjL, verbose=True)[0] :
             boolResult = False
         self.pBar_upd(step= 1,)
-
-        
-
-
-
+      
 
         # colors
         print "*btn_CleanObjects:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
         
         return boolResult
+
+    @jpZ.waiter
+    def btn_applyShadersFromRender(self, controlN="", *args, **kwargs):
+        boolResult=True
+        boolResultL = []
+        warnB=False
+        # set progress bar
+        self.pBar_upd(step=1, maxValue=1, e=True)
+
+        # steps
+        # 1   apply shader from render file"
+        self.printF("assetconformation: apply shader from render file", st="t")
+        resultD={}
+        r2a = assetconformation.Asset_File_Conformer()
+        cmds.refresh(suspend = True)
+        r2a.cleanFile()
+        resultD = r2a.loadFile(sourceFile ="renderRef" , reference = False)
+        r2a.initSourceTargetList()
+        r2a.checkSourceTargetTopoMatch()
+        #print 'resultD: ',resultD
+        if resultD['fileLoadedB']:
+            if r2a.sourceTargetListMatch and r2a.sourceTargetTopoMatch:
+                r2a.smoothPolyDisplay(r2a.targetList)
+                r2a.transferRenderAttr()
+                r2a.transferUV()
+                r2a.disconnectAllShadEng(r2a.targetList)
+                r2a.transferSG()
+                r2a.deleteUnusedShadingNodes()
+                r2a.removeNameSpaceFromShadNodes(r2a.targetList)
+                r2a.cleanFile()
+                cmds.refresh()
+                assetconformation.fixMaterialInfo()
+                resultD = r2a.deleteUnusedShadingNodes()
+            else:
+                resultD = r2a.cleanFile()
+        cmds.refresh(suspend = False)
+        # prints -------------------
+        self.printF(resultD['resultB'], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,) 
+
+        # colors
+        print "*btn_CleanObjects:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+        
+        return boolResult
+
+
+
 
     @jpZ.waiter
     def btn_specialSettings(self, controlN="", *args, **kwargs):
@@ -839,9 +888,9 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 19 ----- chr_fixCornerNeutralsRotation () 
-        self.printF("chr_fixCornerNeutralsRotation()", st="t")
-        result,debugL = jpZ.chr_fixCornerNeutralsRotation()
+        # 19 ----- chr_fix_MouthCornerNeutralsRotation () 
+        self.printF("chr_fix_MouthCornerNeutralsRotation()", st="t")
+        result,debugL = jpZ.chr_fix_MouthCornerNeutralsRotation()
         # prints -------------------
         self.printF(result, st="r")
         if debugL:
@@ -855,8 +904,8 @@ class checkModule(object):
 
 
 
-
-
+        # chr_fix_EybrowUpper_ExtCorner_cst
+        # chr_fix_cheeks_cst
 
 
         # colors
@@ -878,6 +927,7 @@ class checkModule(object):
         cmds.button(self.BCleanScene, e=1, bgc= defCol)
         cmds.button(self.BCleanObjects, e=1, bgc= defCol)
         cmds.button(self.BCleanAll, e=1, bgc= defCol)
+        cmds.button(self.BApplyShadersFromRender, e=1, bgc= defCol)
         cmds.button(self.BSpecialSettings, e=1, bgc= defCol)
 
     def btn_cleanAll(self,  *args, **kwargs):
@@ -892,6 +942,8 @@ class checkModule(object):
             boolResult = False
         
         if not self.btn_CleanObjects(controlN=self.BCleanObjects, ):
+            boolResult = False
+        if not self.btn_applyShadersFromRender(controlN=self.BApplyShadersFromRender, ):
             boolResult = False
         if not self.btn_specialSettings(controlN=self.BSpecialSettings, ):
             boolResult = False
@@ -985,6 +1037,9 @@ class checkModule(object):
 
         self.BCleanObjects = cmds.button("CleanObjects",)
         cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects) )
+
+        self.BApplyShadersFromRender = cmds.button("Apply shaders from render file",)
+        cmds.button(self.BApplyShadersFromRender,e=1,c= partial( self.btn_applyShadersFromRender,self.BApplyShadersFromRender) )
         
         self.BSpecialSettings = cmds.button("Apply Special_Settings",)
         cmds.button(self.BSpecialSettings,e=1,c= partial( self.btn_specialSettings,self.BSpecialSettings) )
