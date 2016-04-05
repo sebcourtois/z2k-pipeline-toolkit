@@ -78,6 +78,7 @@ class MrcFile(DrcFile):
     def mayaImportScene(self, **kwargs):
 
         sNamespace = kwargs.pop("namespace", kwargs.pop("ns", ""))
+        bAsRef = kwargs.pop("reference", kwargs.pop("r", True))
 
         sRefDepth = kwargs.pop("loadReferenceDepth", kwargs.pop("lrd", None))
         if sRefDepth is None:
@@ -102,7 +103,7 @@ class MrcFile(DrcFile):
         if not sNamespace:
             sNamespace = underJoin((self.name.split(".", 1)[0], padded(1, 2)))
 
-        return myasys.importFile(p, reference=True, namespace=sNamespace, **kwargs)
+        return myasys.importFile(p, reference=bAsRef, namespace=sNamespace, **kwargs)
 
     def mayaImportImage(self):
 

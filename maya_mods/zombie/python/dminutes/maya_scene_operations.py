@@ -25,6 +25,17 @@ CAM_GLOBAL = 'Global_SRT'
 CAM_LOCAL = 'Local_SRT'
 CAM_DOLLY = 'Dolly'
 
+
+def undoAtOnce(func):
+    def doIt(*args, **kwargs):
+        mc.undoInfo(openChunk=True)
+        try:
+            res = func(*args, **kwargs)
+        finally:
+            mc.undoInfo(closeChunk=True)
+        return res
+    return doIt
+
 STEREO_INFOS = {}
 def recStereoInfos(frame, **kwargs):
     global STEREO_INFOS
@@ -338,6 +349,7 @@ def canDo(s_inCommand, s_inTask):
 
     return None
 
+@undoAtOnce
 def do(s_inCommand, s_inTask, sceneManager):
     cmd = COMMANDS.get(s_inCommand)
     if cmd == None:
@@ -416,7 +428,6 @@ def create_previz_scene(sceneManager):
     else:
         print 'previz creation failed to Edit and save !'
 
-#Inits
 def init_shot_constants(sceneManager):
     start = 101
 
@@ -920,6 +931,13 @@ def init_previz_scene(sceneManager):
     if not oShotCam:
         oShotCam = sceneManager.importShotCam()
         bCamAdded = True
+    else:
+        oCamRef = oShotCam.referenceFile()
+        if oCamRef:
+            bWasLocked = oCamRef.refNode.getAttr("locked")
+            oShotCam = setCamRefLocked(oShotCam, False)
+            oCamRef.importContents()
+            setShotCamLocked(oShotCam, bWasLocked)
 
     sceneInfos = sceneManager.infosFromCurrentScene()
     bRcsMatchUp = sceneManager.resourcesMatchUp(sceneInfos)
@@ -935,9 +953,6 @@ def init_previz_scene(sceneManager):
                         mc.setAttr(each + ".texturing", 1)
             except Exception as e:
                 pc.displayWarning(toStr(e))
-
-        if not oShotCam.isReferenced():
-            switchShotCamToRef(sceneManager, oShotCam)
 
         if ((not sceneManager.isShotCamEdited()) or bCamAdded) and sceneManager.camAnimFilesExist():
             sceneManager.importShotCamAbcFile()
@@ -1062,7 +1077,6 @@ def switchShotCamToRef(scnMng, oShotCam):
                               option="replace",
                               match="string",
                               selected="childrenToo")
-
     finally:
         os.remove(sAtomFilePath)
 
@@ -1084,7 +1098,7 @@ def setReferenceLocked(oFileRef, bLocked):
         if bLoaded:
             mc.file(loadReference=oRefNode.name())
 
-def setRefCamLocked(oCam, bLocked):
+def setCamRefLocked(oCam, bLocked):
 
     oFileRef = oCam.referenceFile()
     sCam = oCam.name()
@@ -1098,6 +1112,52 @@ def setRefCamLocked(oCam, bLocked):
         pc.refresh()
 
     return oCam
+
+def setShotCamLocked(oShotCam, bLocked):
+
+#    sExcludeList = ("aspectRatio",
+#                    "visibility",
+#                    "filmOffset",
+#                    "horizontalFilmOffset",
+#                    "verticalFilmOffset",
+#                    "preScale",
+#                    "postProjection",
+#                    "postScale",
+#                    "nearClipPlane",
+#                    "farClipPlane",
+#                    "panZoomEnabled",
+#                    "pan",
+#                    "horizontalPan",
+#                    "verticalPan",
+#                    "zoom")
+
+    sPattern = oShotCam.namespace() + "*"
+
+    sAttrList = tuple((x + y) for x in "trs" for y in "xyz")
+
+    for sObj in mc.ls(sPattern, type="transform"):
+
+        mc.lockNode(sObj, lock=False)
+
+        for sAttr in sAttrList:
+            mc.setAttr(sObj + "." + sAttr, lock=bLocked)
+
+        if bLocked:
+            mc.lockNode(sObj, lock=True)
+
+
+    sAttrList = ("focalLength", "horizontalFilmAperture", "verticalFilmAperture")
+
+    for sObj in mc.ls(sPattern, type="camera"):
+
+        mc.lockNode(sObj, lock=False)
+
+        for sAttr in sAttrList:
+            mc.setAttr(sObj + "." + sAttr, lock=bLocked)
+
+        if bLocked:
+            mc.lockNode(sObj, lock=True)
+
 
 def saveDisplayLayersState():
 

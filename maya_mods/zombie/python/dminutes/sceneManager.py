@@ -33,7 +33,7 @@ import dminutes.infoSetExp as infoE
 from pytd.util.sysutils import toStr
 from pytd.util.strutils import padded
 from pytaya.core.general import copyAttrs, getObject
-from dminutes.maya_scene_operations import setRefCamLocked
+from pytaya.util.sysutils import withSelectionRestored
 
 reload(jpZ)
 reload(camIE)
@@ -620,6 +620,7 @@ class SceneManager():
 
         return mc.workspace(expandName=p)
 
+    @mop.undoAtOnce
     def capture(self, saveScene=False, increment=False, quick=True, sendToRv=False, smoothData=None):
         # BUG pas de son alors que son present dans la scene
         # BUG first frame decalee dupliquee dans les fichier output
@@ -638,6 +639,12 @@ class SceneManager():
         #sShotCam = oShotCam.name()
         CAPTURE_INFOS['cam'] = oShotCam.getShape().name()
         oCamRef = oShotCam.referenceFile()
+        if oCamRef:
+            bWasLocked = oCamRef.refNode.getAttr("locked")
+            oShotCam = mop.setCamRefLocked(oShotCam, False)
+            oCamRef.importContents()
+            mop.setShotCamLocked(oShotCam, bWasLocked)
+            oCamRef = None
 
         pubCaptItemList = []
         for sCaptRcName in MOV_FOR_TASK.get(sTask, MOV_FOR_STEP[sStep]):
@@ -740,9 +747,9 @@ class SceneManager():
 
             captItemList.append((sCaptRcName, sCapturePath))
 
-        if oCamRef:
-            bWasLocked = oCamRef.refNode.getAttr("locked")
-            oShotCam = mop.setRefCamLocked(oShotCam, False)
+#        if oCamRef:
+#            bWasLocked = oCamRef.refNode.getAttr("locked")
+#            oShotCam = mop.setCamRefLocked(oShotCam, False)
 
         bImgPlnViz = mop.isImgPlaneHidden()
         mop.setImgPlaneHidden(True)
@@ -815,8 +822,8 @@ class SceneManager():
                 mc.delete(sRecorder)
 
             oShotCam.setAttr('aspectRatio', 1.7778)
-            if oCamRef and bWasLocked:
-                oShotCam = mop.setRefCamLocked(oShotCam, True)
+#            if oCamRef and bWasLocked:
+#                oShotCam = mop.setCamRefLocked(oShotCam, True)
 
             if numSmoothed:
                 for i in xrange(numSmoothed):
@@ -999,10 +1006,6 @@ class SceneManager():
             oShotCam = self.getShotCamera(fail=True)
         except Exception as e:
             raise AssertionError(toStr(e) + sFixMsg)
-
-        if self.context["step"]["code"].lower() != "previz 3d":
-            if not oShotCam.isReferenced():
-                raise AssertionError("Shot Camera is NOT a reference !" + sFixMsg)
 
     def publish(self):
         try:
@@ -1277,7 +1280,7 @@ class SceneManager():
 
         damCam = self.context["damProject"].getAsset("cam_shot_default")
         camFile = damCam.getResource("public", "scene")
-        camFile.mayaImportScene(ns=sCamNspace)
+        camFile.mayaImportScene(ns=sCamNspace, reference=False)
         mc.refresh()
 
         try:
@@ -1298,11 +1301,6 @@ class SceneManager():
         return DamShot(proj, name=sShotCode)
 
     def getShotCamAbcNode(self):
-
-        #damShot = self.getDamShot()
-
-        #sFileName = os.path.basename(damShot.getPath("public", "camera_abc"))
-        #sAbcNodeName = os.path.splitext(sFileName)[0] + "_AlembicNode"
 
         sShotCamNs = self.mkShotCamNamespace()
 
@@ -1462,9 +1460,12 @@ class SceneManager():
         oCamAstGrp = pc.PyNode(self.mkShotCamNamespace() + ":asset")
         sCamAstGrp = oCamAstGrp.longName()
         oFileRef = oCamAstGrp.referenceFile()
+        oShotCam = self.getShotCamera()
 
         if oFileRef:
             mop.setReferenceLocked(oFileRef, False)
+        else:
+            mop.setShotCamLocked(oShotCam, False)
 
         try:
             mc.select(sCamAstGrp)
@@ -1477,59 +1478,63 @@ class SceneManager():
                 pc.lockNode(oAbcNode, lock=True)
         finally:
             if oFileRef:
-                setRefCamLocked(self.getShotCamera(), True)
+                mop.setCamRefLocked(self.getShotCamera(), True)
+            else:
+                mop.setShotCamLocked(oShotCam, True)
 
         return oAbcNode
 
+    @withSelectionRestored
     def editShotCam(self):
 
+        oShotCam = self.getShotCamera()
         damShot = self.getDamShot()
         atomFile = damShot.getResource("public", "camera_atom", fail=True)
 
         sCamAstGrp = self.mkShotCamNamespace() + ":asset"
         oCamAstGrp = pc.PyNode(sCamAstGrp)
+
         oFileRef = oCamAstGrp.referenceFile()
         if oFileRef:
-
             bLocked = oFileRef.refNode.getAttr("locked")
             if bLocked:
-                setRefCamLocked(self.getShotCamera(), False)
-
-            oAbcNode = self.getShotCamAbcNode()
-            if oAbcNode:
-                pc.lockNode(oAbcNode, lock=False)
-                pc.delete(oAbcNode)
-            elif not bLocked:
-                pc.displayWarning("Shot camera is already editable.")
-                return
-
-            try:
-                pc.select(sCamAstGrp)
-                myasys.importAtomFile(atomFile.absPath(),
-                                      targetTime="from_file",
-                                      option="replace",
-                                      match="string",
-                                      selected="childrenToo")
-            except:
-                self.importShotCamAbcFile()
-                raise
+                oShotCam = mop.setCamRefLocked(self.getShotCamera(), False)
         else:
-            pc.displayWarning("Shot camera is not referenced !")
+            bLocked = oShotCam.isLocked()
+            if bLocked:
+                mop.setShotCamLocked(oShotCam, False)
+
+        oAbcNode = self.getShotCamAbcNode()
+        if oAbcNode:
+            pc.lockNode(oAbcNode, lock=False)
+            pc.delete(oAbcNode)
+        elif not bLocked:
+            pc.displayWarning("Shot camera is already edited.")
             return
+
+        try:
+            mc.select(sCamAstGrp)
+            myasys.importAtomFile(atomFile.absPath(),
+                                  targetTime="from_file",
+                                  option="replace",
+                                  match="string",
+                                  selected="childrenToo")
+        except:
+            self.importShotCamAbcFile()
+            raise
 
     def isShotCamEdited(self):
 
         if self.getShotCamAbcNode():
             return False
 
-        sCamAstGrp = self.mkShotCamNamespace() + ":asset"
-        oCamAstGrp = pc.PyNode(sCamAstGrp)
+        oShotCam = self.getShotCamera()
 
-        oFileRef = oCamAstGrp.referenceFile()
+        oFileRef = oShotCam.referenceFile()
         if oFileRef:
             return (not oFileRef.refNode.getAttr("locked")) and (not self.getShotCamAbcNode())
         else:
-            return True
+            return (not oShotCam.isLocked()) and (not self.getShotCamAbcNode())
 
     def showInShotgun(self):
         self.context['damProject']._shotgundb.showInBrowser(self.context['entity'])

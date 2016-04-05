@@ -467,6 +467,7 @@ def connectCallbacks():
 
     pc.button('sm_pouet_bt', edit=True, c=doPouet)
 
+@mop.undoAtOnce
 @withSelectionRestored
 def doSetupAnimatic(*args):
     mop.setupAnimatic(SCENE_MANAGER, create=False)
