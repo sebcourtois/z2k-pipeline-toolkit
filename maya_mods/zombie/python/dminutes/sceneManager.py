@@ -402,7 +402,7 @@ class SceneManager():
 
         self.assertEntitiesMatchUp(sceneInfos)
 
-        ctxRcFile = self.entryFromContext()
+        ctxRcFile = self.rcFileFromContext()
         if not ctxRcFile:
             raise AssertionError("Could not get davos resource from current context.")
 
@@ -516,7 +516,7 @@ class SceneManager():
         self.context['lock'] = "Error"
 
         if not entry:
-            entry = self.entryFromContext()
+            entry = self.rcFileFromContext()
         else:
             self.context['lock'] = entry.getLockOwner()
 
@@ -537,7 +537,7 @@ class SceneManager():
 
         return damEntity
 
-    def entryFromContext(self, fail=False):
+    def rcFileFromContext(self, fail=False):
         """Get davos entry from UI data"""
 
         entry = None
@@ -569,7 +569,7 @@ class SceneManager():
             damShot.createDirsAndFiles()
 
     def save(self, force=True):
-        entry = self.entryFromContext()
+        entry = self.rcFileFromContext()
 
         if not entry:
             pc.error("Cannot get entry for context {0}".format(self.context))
@@ -585,7 +585,7 @@ class SceneManager():
 
     def saveIncrement(self, force=True):
         # new incrementing system based on the last versoin present in the folder
-        entry = self.entryFromContext()
+        entry = self.rcFileFromContext()
 
         if entry == None:
             pc.error("Cannot get entry for context {0}".format(self.context))
@@ -924,7 +924,7 @@ class SceneManager():
 
         result = "Yes" if editInPlace else "No"
 
-        if editInPlace == None:
+        if editInPlace is None:
             result = pc.confirmDialog(title='Edit options',
                                       message='Do you want to use current scene for this edit ?',
                                       button=['Yes', 'No'],
@@ -1000,7 +1000,7 @@ class SceneManager():
 
         #curScnFile = proj.entryFromPath(currentScene, fail=True)
 
-        sFixMsg = " Please, apply a 'Shot Setup' and retry."
+        sFixMsg = "\n\nPlease, apply a 'Shot Setup' and retry."
         oShotCam = None
         try:
             oShotCam = self.getShotCamera(fail=True)
@@ -1018,16 +1018,12 @@ class SceneManager():
                              cancelButton="OK",
                              dismissString="OK",
                              icon="critical")
-            return
+            return False
 
-        rslt = publishCurrentScene(dependencies=False,
-                                   prePublishFunc=self.prePublishCurrentScene)
-        if rslt is None:
-            return
+        res = publishCurrentScene(prePublishFunc=self.prePublishCurrentScene,
+                                  dependencies=False)
 
-        # here is the original publish
-        if rslt is not None:
-            pc.confirmDialog(title='Publish OK', message='{0} was published successfully'.format(rslt[0].name))
+        return res
 
     def getShotgunContent(self):
         #print 'getShotgunContent ' + self.context['entity']['code']

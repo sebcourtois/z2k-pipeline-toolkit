@@ -815,7 +815,7 @@ def doRefreshSceneInfo(*args):
 
 def doUnlock(*args):
     """Simply unlocks current entry, but button is hidden (forbidden)"""
-    entry = SCENE_MANAGER.entryFromContext()
+    entry = SCENE_MANAGER.rcFileFromContext()
 
     if entry == None:
         pc.error("Cannot get entry form context {0}".format(SCENE_MANAGER.context))
@@ -868,25 +868,38 @@ def doIncrementSave(*args):
     else:
         doDetect(args)
 
-def doSwitchContext(*args):
+def doSwitchContext(*args, **kwargs):
     """Use the current scene for an edition on the entry currently showing in the UI 
     (basically an edit, creating folders if needed)"""
 
     sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
 
-    if (SCENE_MANAGER.resourcesMatchUp(sceneInfos)
-        and SCENE_MANAGER.scenePublishable(sceneInfos)):
+    if SCENE_MANAGER.resourcesMatchUp(sceneInfos) and SCENE_MANAGER.scenePublishable(sceneInfos):
         pc.warning("Your context is already matching !!")
         return
 
-    sMsg = "Your entity already have published versions, are you sure you want to use current scene ?"
-    if (len(SCENE_MANAGER.getVersions()) == 0
-        or pc.confirmDialog(title="Entity override", message=sMsg) == "Confirm"):
-        SCENE_MANAGER.edit(True)
-        doTaskChanged()
-        #print "after", SCENE_MANAGER.context['task']['content']
-    else:
-        pc.warning("Switch context aborted !")
+    if kwargs.get("prompt", True):
+
+#        sStep = SCENE_MANAGER.context["step"]["code"]
+#        sEntity = SCENE_MANAGER.context["entity"]["code"]
+#        sMsg = "Use current scene to edit '{}' scene of '{}' ?".format(sStep.upper(), sEntity)
+
+        pubFile = SCENE_MANAGER.rcFileFromContext(fail=True)
+        sMsg = "Use the current scene to work on '{}' ?".format(pubFile.nextVersionName())
+
+        sRes = pc.confirmDialog(title='DO YOU WANT TO...',
+                                message=sMsg,
+                                button=['OK', 'Cancel'],
+                                defaultButton='Cancel',
+                                cancelButton='Cancel',
+                                dismissString='Cancel',
+                                icon="question")
+        if sRes == "Cancel":
+            pc.displayWarning("Canceled !")
+            return
+
+    SCENE_MANAGER.edit(True)
+    doTaskChanged()
 
 #davos
 def doEdit(*args):
@@ -898,12 +911,32 @@ def doEdit(*args):
         doDetect(args)
 
 def doPublish(*args):
+
     if SCENE_MANAGER.assertScenePublishable():
-        SCENE_MANAGER.publish()
+
+        res = SCENE_MANAGER.publish()
         doTaskChanged()
         #doRefreshFileStatus()
+
+        if not res:
+            return
+
+        sMsg = '"{}" published successfully !\n\n'.format(res[0].name)
+        sRes = pc.confirmDialog(title='DO YOU WANT TO...',
+                                message=sMsg + "Continue working on this scene ?",
+                                button=['Yes', 'No'],
+                                defaultButton='No',
+                                cancelButton='No',
+                                dismissString='No',
+                                icon="question")
+        if sRes == "No":
+            return
+
+        doSwitchContext(prompt=False)
     else:
         doDetect(args)
+
+
 
 def doCreateFolder(*args):
     """Associated button is hidden (forbidden)"""
