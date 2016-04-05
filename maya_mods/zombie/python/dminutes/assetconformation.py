@@ -489,17 +489,20 @@ class Asset_File_Conformer:
 
         if sourceFile in ["render","anim","modeling","previz"]:
             self.sourceFile = sourceFile
+            namespace = sourceFile
             self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile+".ma"))
             self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
             fileType ="mayaAscii"
 
         elif sourceFile in ["renderRef", "animRef"]:
             self.sourceFile = sourceFile
+            namespace = sourceFile
             self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,"ref",self.assetName+"_"+self.sourceFile+".mb"))
             self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
             fileType ="mayaBinary"
             if not os.path.isfile(self.renderFilePath_exp):
                 txt = "Could not find: '{}', ref file has not been released yet, let's do it: '{}'".format(self.sourceFile, self.sourceFile.replace("Ref",""))
+                namespace = self.sourceFile.replace("Ref","")
                 self.log.printL("w", txt)
                 self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile.replace("Ref","")+".ma"))
                 self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
@@ -512,14 +515,14 @@ class Asset_File_Conformer:
         if reference:
             if os.path.isfile(self.renderFilePath_exp):
                 if os.stat(self.renderFilePath_exp).st_size > 75000:
-                    mc.file( self.renderFilePath_exp, type= fileType, ignoreVersion=True, namespace=self.sourceFile, preserveReferences= True, reference = True )
+                    mc.file( self.renderFilePath_exp, type= fileType, ignoreVersion=True, namespace=namespace, preserveReferences= True, reference = True )
                     txt = "referencing: '{}'".format(self.renderFilePath_exp)
                     self.log.printL("i", txt)
                     fileLoadedB = True
         else:
             if os.path.isfile(self.renderFilePath_exp):
                 if os.stat(self.renderFilePath_exp).st_size > 75000:
-                    mc.file( self.renderFilePath_exp, i= True, type= fileType, ignoreVersion=True, namespace=self.sourceFile, preserveReferences= False )
+                    mc.file( self.renderFilePath_exp, i= True, type= fileType, ignoreVersion=True, namespace=namespace, preserveReferences= False )
                     txt = "importing: '{}'".format(self.renderFilePath_exp)
                     self.log.printL("i", txt)
                     fileLoadedB = True
