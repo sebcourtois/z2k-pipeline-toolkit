@@ -479,6 +479,15 @@ class Asset_File_Conformer:
 
 
     def loadFile(self,sourceFile = "renderRef", reference = True):
+        
+        panelL = mc.getPanel( visiblePanels=True )
+        panelToCloseL=["hyperShadePanel","polyTexturePlacementPanel"]
+        for each in panelL:
+            for eachPanel in panelToCloseL:
+                if eachPanel in each:
+                    print each
+                    mc.deleteUI(each, panel = True)
+
         self.log.funcName ="'loadFile' "
         mc.refresh()
 
