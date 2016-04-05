@@ -185,6 +185,7 @@ def initialize():
     pc.control("sm_edit_bt", edit=True, visible=False)
     pc.control("sm_addOnly_bt", edit=True, visible=False)
     pc.control("sm_project_bt", edit=True, visible=False)
+    #pc.control('sm_updateThumb_bt', edit=True, visible=False)
     #pc.control("sm_disconnect_bt", edit=True, visible=False)
     if not inDevMode():
         pc.control("sm_pouet_bt", edit=True, visible=False)
@@ -419,6 +420,7 @@ def connectCallbacks():
     pc.button('sm_shotgunPage_bt', edit=True, c=doShowInShotgun)
     pc.button('sm_wipCaptureDir_bt', edit=True, c=doShowWipCapturesDir)
     pc.button('sm_rvScreeningRoom_bt', edit=True, c=doShowSequenceInRv)
+    pc.button('sm_viewLatest_bt', edit=True, c=doPlayLatestCapture)
 
     #shot operations
     ACTION_BUTTONS.append(pc.button('sm_init_bt', edit=True, c=doInitScene))
@@ -467,6 +469,10 @@ def connectCallbacks():
 
     pc.button('sm_pouet_bt', edit=True, c=doPouet)
 
+def doPlayLatestCapture(*args):
+    bSend = pc.checkBox('sm_sendToRv_chk', query=True, value=True)
+    SCENE_MANAGER.playLatestCapture(bSend)
+
 @mop.undoAtOnce
 @withSelectionRestored
 def doSetupAnimatic(*args):
@@ -489,9 +495,7 @@ def doSelectSetMembers(sSetName, bChecked):
         pc.displayWarning("Nothing to select.")
 
 def doSelectSmoothed(*args):
-
     smoothData = updSmoothOnCaptureState()
-
     if not smoothData:
         pc.displayWarning("Nothing to select.")
         return
@@ -545,8 +549,6 @@ def updSmoothOnCaptureState(bEnable=None, warn=True):
         QWIDGETS["smoothGroup"].setTitle("Smooth On Capture ({} meshes - {:,} faces)"
                                          .format(len(smoothData), numFaces))
         return smoothData
-
-#def updA
 
 def updRelatedAssetsShown(bEnable):
     pc.optionVar["Z2K_SM_listAssets"] = bEnable
@@ -727,7 +729,6 @@ def doRefreshSceneInfo(*args):
     sceneInfoWdg.clear()
     pc.refresh()
 
-
     sCtxStep = ""
     try:
         sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
@@ -851,7 +852,6 @@ def doCapture(*args , **kwargs):
 
         bSend = pc.checkBox('sm_sendToRv_chk', query=True, value=True)
         smoothData = updSmoothOnCaptureState()
-
         SCENE_MANAGER.capture(saveScene=(not bQuick), increment=bIncrement, quick=bQuick,
                               sendToRv=bSend, smoothData=smoothData)
 #        if not bQuick:
