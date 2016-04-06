@@ -1492,7 +1492,7 @@ def dmnToonMode (mode = ""):
 
 
     elif mode == "setOutdoor":
-        if assetType ==  "set":
+        if assetType ==  "set" or assetType ==  "veg":
             myMessage = "You are about to set the following defaut values on all the dmnToon in the scene:\n   - rimToonWeight = 0\n   - incidenceWeight = 0\n   - contourWeight = 0\n   - occlusionWeight = 0.666\n   - toonSoftness = 1\n   - occlusionMaxDist = 100\n    Do you want to continue?"
             answer =  mc.confirmDialog( title='Confirm: setOutdoor', message=myMessage, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer == "Cancel": 
