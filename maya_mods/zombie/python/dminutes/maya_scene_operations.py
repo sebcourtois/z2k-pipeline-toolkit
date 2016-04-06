@@ -665,7 +665,7 @@ def smoothSetToRenderLayer(sSetName):
 
 def listSmoothableMeshes(project=None, warn=True):
 
-    from pytaya.util import apiutils as mapi
+    from pytaya.util import apiutils as myapi
 
     maxFaxes = pc.optionVar["smpSizeOfMeshForWarning"]
     nonSmoothableList = []
@@ -700,7 +700,7 @@ def listSmoothableMeshes(project=None, warn=True):
             nonSmoothableList.append((sMesh, "'displaySmoothMesh' attribute is locked."))
             continue
 
-        dagPath = mapi.getDagPath(sMesh)
+        dagPath = myapi.getDagPath(sMesh)
         if not dagPath.isVisible():
             continue
 

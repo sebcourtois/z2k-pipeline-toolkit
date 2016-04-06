@@ -185,6 +185,7 @@ def initialize():
     pc.control("sm_edit_bt", edit=True, visible=False)
     pc.control("sm_addOnly_bt", edit=True, visible=False)
     pc.control("sm_project_bt", edit=True, visible=False)
+    #pc.control('sm_updateThumb_bt', edit=True, visible=False)
     #pc.control("sm_disconnect_bt", edit=True, visible=False)
     if not inDevMode():
         pc.control("sm_pouet_bt", edit=True, visible=False)
@@ -419,6 +420,7 @@ def connectCallbacks():
     pc.button('sm_shotgunPage_bt', edit=True, c=doShowInShotgun)
     pc.button('sm_wipCaptureDir_bt', edit=True, c=doShowWipCapturesDir)
     pc.button('sm_rvScreeningRoom_bt', edit=True, c=doShowSequenceInRv)
+    pc.button('sm_viewLatest_bt', edit=True, c=doPlayLatestCapture)
 
     #shot operations
     ACTION_BUTTONS.append(pc.button('sm_init_bt', edit=True, c=doInitScene))
@@ -467,6 +469,10 @@ def connectCallbacks():
 
     pc.button('sm_pouet_bt', edit=True, c=doPouet)
 
+def doPlayLatestCapture(*args):
+    bSend = pc.checkBox('sm_sendToRv_chk', query=True, value=True)
+    SCENE_MANAGER.playLatestCapture(bSend)
+
 @mop.undoAtOnce
 @withSelectionRestored
 def doSetupAnimatic(*args):
@@ -489,9 +495,7 @@ def doSelectSetMembers(sSetName, bChecked):
         pc.displayWarning("Nothing to select.")
 
 def doSelectSmoothed(*args):
-
     smoothData = updSmoothOnCaptureState()
-
     if not smoothData:
         pc.displayWarning("Nothing to select.")
         return
@@ -545,8 +549,6 @@ def updSmoothOnCaptureState(bEnable=None, warn=True):
         QWIDGETS["smoothGroup"].setTitle("Smooth On Capture ({} meshes - {:,} faces)"
                                          .format(len(smoothData), numFaces))
         return smoothData
-
-#def updA
 
 def updRelatedAssetsShown(bEnable):
     pc.optionVar["Z2K_SM_listAssets"] = bEnable
@@ -727,7 +729,6 @@ def doRefreshSceneInfo(*args):
     sceneInfoWdg.clear()
     pc.refresh()
 
-
     sCtxStep = ""
     try:
         sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
@@ -815,7 +816,7 @@ def doRefreshSceneInfo(*args):
 
 def doUnlock(*args):
     """Simply unlocks current entry, but button is hidden (forbidden)"""
-    entry = SCENE_MANAGER.entryFromContext()
+    entry = SCENE_MANAGER.rcFileFromContext()
 
     if entry == None:
         pc.error("Cannot get entry form context {0}".format(SCENE_MANAGER.context))
@@ -851,7 +852,6 @@ def doCapture(*args , **kwargs):
 
         bSend = pc.checkBox('sm_sendToRv_chk', query=True, value=True)
         smoothData = updSmoothOnCaptureState()
-
         SCENE_MANAGER.capture(saveScene=(not bQuick), increment=bIncrement, quick=bQuick,
                               sendToRv=bSend, smoothData=smoothData)
 #        if not bQuick:
@@ -868,25 +868,38 @@ def doIncrementSave(*args):
     else:
         doDetect(args)
 
-def doSwitchContext(*args):
+def doSwitchContext(*args, **kwargs):
     """Use the current scene for an edition on the entry currently showing in the UI 
     (basically an edit, creating folders if needed)"""
 
     sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
 
-    if (SCENE_MANAGER.resourcesMatchUp(sceneInfos)
-        and SCENE_MANAGER.scenePublishable(sceneInfos)):
+    if SCENE_MANAGER.resourcesMatchUp(sceneInfos) and SCENE_MANAGER.scenePublishable(sceneInfos):
         pc.warning("Your context is already matching !!")
         return
 
-    sMsg = "Your entity already have published versions, are you sure you want to use current scene ?"
-    if (len(SCENE_MANAGER.getVersions()) == 0
-        or pc.confirmDialog(title="Entity override", message=sMsg) == "Confirm"):
-        SCENE_MANAGER.edit(True)
-        doTaskChanged()
-        #print "after", SCENE_MANAGER.context['task']['content']
-    else:
-        pc.warning("Switch context aborted !")
+    if kwargs.get("prompt", True):
+
+#        sStep = SCENE_MANAGER.context["step"]["code"]
+#        sEntity = SCENE_MANAGER.context["entity"]["code"]
+#        sMsg = "Use current scene to edit '{}' scene of '{}' ?".format(sStep.upper(), sEntity)
+
+        pubFile = SCENE_MANAGER.rcFileFromContext(fail=True)
+        sMsg = "Use the current scene to work on '{}' ?".format(pubFile.nextVersionName())
+
+        sRes = pc.confirmDialog(title='DO YOU WANT TO...',
+                                message=sMsg,
+                                button=['OK', 'Cancel'],
+                                defaultButton='Cancel',
+                                cancelButton='Cancel',
+                                dismissString='Cancel',
+                                icon="question")
+        if sRes == "Cancel":
+            pc.displayWarning("Canceled !")
+            return
+
+    SCENE_MANAGER.edit(True)
+    doTaskChanged()
 
 #davos
 def doEdit(*args):
@@ -898,12 +911,32 @@ def doEdit(*args):
         doDetect(args)
 
 def doPublish(*args):
+
     if SCENE_MANAGER.assertScenePublishable():
-        SCENE_MANAGER.publish()
+
+        res = SCENE_MANAGER.publish()
         doTaskChanged()
         #doRefreshFileStatus()
+
+        if not res:
+            return
+
+        sMsg = '"{}" published successfully !\n\n'.format(res[0].name)
+        sRes = pc.confirmDialog(title='DO YOU WANT TO...',
+                                message=sMsg + "Continue working on this scene ?",
+                                button=['Yes', 'No'],
+                                defaultButton='No',
+                                cancelButton='No',
+                                dismissString='No',
+                                icon="question")
+        if sRes == "No":
+            return
+
+        doSwitchContext(prompt=False)
     else:
         doDetect(args)
+
+
 
 def doCreateFolder(*args):
     """Associated button is hidden (forbidden)"""
