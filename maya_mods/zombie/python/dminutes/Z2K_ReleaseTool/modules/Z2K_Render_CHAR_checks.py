@@ -353,7 +353,7 @@ class checkModule(object):
         # 15   compare meshes topologies with anim file"
         self.printF("assetconformation: compare meshes topologies with anim file", st="t")
         resultD={}
-        compMesh = assetconformation.Asset_File_Conformer()
+        compMesh =assetconformation.Asset_File_Conformer(gui=self.GUI)
         compMesh.cleanFile()
         resultD = compMesh.loadFile(sourceFile ="animRef" , reference = False)
         if resultD['fileLoadedB']:
