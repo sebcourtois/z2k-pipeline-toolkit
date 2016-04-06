@@ -2098,6 +2098,7 @@ def chr_rename_Teeth_BS_attribs(*args, **kwargs):
 
 def chr_rename_Teeth_BS_attribs_Vampires(*args, **kwargs):
     # reset all attr of selected controls
+    # WIP to re arrange because of the apply BS_tertiaire adaptation.
     print "chr_rename_Teeth_BS_attribs_Vampires()"
     debugL = []
     toRenameUpL = [
@@ -3196,7 +3197,7 @@ def chr_fix_MouthCornerNeutralsRotation(*args,**kwargs):
     return [True,debugL] 
 
 
-def chr_fix_EybrowUpper_ExtCorner_cst(*args, **kwargs):
+def chr_fix_EyebrowUpper_ExtCorner_cst(*args, **kwargs):
     print "chr_fix_EybrowUpper_ExtCorner()"
     ctrAL =  ['Right_Brow_upRidge_04_offset_grp', 'Left_Brow_upRidge_04_offset_grp']
     ctrBL =  ['Left_Brow_upRidge_04_drive_grp','Right_Brow_upRidge_04_drive_grp',"Left_Brow_upRidge_04_drive_customAxis_grp"]
@@ -3319,5 +3320,35 @@ def chr_fix_cheeks_cst(*args, **kwargs):
 
 
 
+def chr_fix_EyebrowUpper_Cst_average(*args, **kwargs):
+    """ Description: set al constraint interpretation type to 'shortest' because sometime it's 'average'
+                     and this make the cst to flip
+        Return : [True,LIST]
+        Dependencies : cmds - getTypeInHierarchy()
+    """
+    
+    print "chr_fix_EyebrowUpper_Cst_average()"
+    toReturnB=True
+    debugL = []
+    theAttr = "interpType"
+    theVal = 2 # "shortest"
+    objL = ['Right_Brow_upRidge_03_offset_grp', 'Right_Brow_upRidge_02_drive_grp', 
+            'Right_Brow_upRidge_01_drive_grp','Right_Brow_upRidge_04_drive_grp',
+            'Left_Brow_upRidge_01_drive_grp', 'Left_Brow_upRidge_02_drive_grp', 
+            'Left_Brow_upRidge_03_drive_grp','Left_Brow_upRidge_04_drive_customAxis_grp'
+            ]
+    canDo = True
+    for i in objL:
+        if not cmds.objExists (i):
+            canDo=False
+    if canDo:
+        for obj in objL:
+            cstL = getTypeInHierarchy(cursel=obj, theType="constraint")
+            print cstL
+            if len(cstL):
+                for j in cstL:
+                    if cmds.objExists(j+"."+ theAttr):
+                        cmds.setAttr(j+"."+ theAttr,theVal)
 
+    return [toReturnB,debugL]
 

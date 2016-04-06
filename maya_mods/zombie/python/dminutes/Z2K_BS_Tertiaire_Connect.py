@@ -22,7 +22,7 @@
 ################################################################
 
 
-
+# !!!!!!! SEE in script/misc/ z2k_BS_Tertaire_TOOL it replace this one   !!!!!!!
 
 
 ############### Importing other LIBS ####################
@@ -77,7 +77,11 @@ def jipe_multiAttr_BSConnector(tableDL={},importNS="BS",connectTargetShapeOnly=F
                                     return
                                     # delete BUGGED
                                     # for drivenMesh,valL in drivenMeshD.iteritems():
-                                    
+                                    result = cmds.confirmDialog( title='bsd check: {0}'.format(BS_Node), message="Delete old BS_Node ?",
+                                        button=["YES","ABOARD"], defaultButton='ABOARD', cancelButton='ABOARD', dismissString='ABOARD' )
+                                    if result:
+                                        cmds.delete(BS_Node)
+                                        print "BS_NODE DELETED"
                             
 
             except:
