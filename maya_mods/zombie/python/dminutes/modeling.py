@@ -6,6 +6,7 @@ import pymel.core.runtime as pmr
 import maya.cmds as cmds
 
 import re
+import os
 import string
 import math
 
@@ -1598,6 +1599,32 @@ def groupEachMesh():
         print "#### {:>7}: 'groupEachMesh' '{}' transforms grouped under their own group".format("Info",len(newSelL))
 
     if newSelL: cmds.select(newSelL)
+
+def assGeoExport(objectL=[], gui=True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="assGeoExport")
+    initSelL=cmds.ls(selection=True, l=True)
+    mainFilePath = cmds.file(q=True, list = True)[0]
+    mainFile = mainFilePath.split("/")[-1]
+    geometryDir = miscUtils.pathJoin(mainFilePath.replace("/"+mainFile,""),"geometry")
+    if not os.path.isdir(geometryDir):
+        txt= "directory doesn't exist: "+geometryDir
+        log.printL("e", txt, guiPopUp = True)
+        raise valueError (txt)             
+
+    
+    for each in objectL:
+        standInRad = each.split("|")[-1].replace("geo_","").replace("aux_","")
+        fileName = miscUtils.pathJoin(geometryDir,standInRad+".ass")
+        txt= "exporting: "+fileName
+        log.printL("i", txt)
+        cmds.select(each)                        
+        #cmds.file( fileName, exportSelected = True, type= "ASS Export",force=True, options= "-mask 249;-lightLinks 0;-shadowLinks 0")
+
+        eachParent = each.replace("|"+each.split("|")[-1],"")
+        print eachParent
+        eachStandIn = eachParent+"|std_"+standInRad
+        if not(cmds.ls(eachStandIn)):
+            print "non"
 
 
 
