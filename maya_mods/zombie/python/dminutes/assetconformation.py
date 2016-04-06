@@ -454,7 +454,7 @@ def setShadingMask(selectFailingNodes = False, gui = True):
 
 
 class Asset_File_Conformer:
-    def __init__(self):
+    def __init__(self, gui = True):
         if mc.ls("|asset"):        
             self.mainFilePath = mc.file(q=True, list = True)[0]
             self.mainFilePathElem = self.mainFilePath.split("/")
@@ -467,7 +467,7 @@ class Asset_File_Conformer:
             else:
                 self.assetName = self.mainFilePathElem[-3]
                 self.assetType = self.mainFilePathElem[-4]
-
+            self.gui=gui
             self.assetFileType = self.mainFilePathElem[-1].split("-")[0].split("_")[-1]
             self.sourceList =[]
             self.targetList =[]
@@ -479,14 +479,15 @@ class Asset_File_Conformer:
 
 
     def loadFile(self,sourceFile = "renderRef", reference = True):
-        
-        panelL = mc.getPanel( visiblePanels=True )
-        panelToCloseL=["hyperShadePanel","polyTexturePlacementPanel"]
-        for each in panelL:
-            for eachPanel in panelToCloseL:
-                if eachPanel in each:
-                    print each
-                    mc.deleteUI(each, panel = True)
+        if self.gui == True:
+            panelL = mc.getPanel( visiblePanels=True )
+            panelToCloseL=["hyperShadePanel","polyTexturePlacementPanel"]
+            for each in panelL:
+                for eachPanel in panelToCloseL:
+                    if eachPanel in each:
+                        print each
+                        mc.deleteUI(each, panel = True)
+
 
         self.log.funcName ="'loadFile' "
         mc.refresh()

@@ -575,19 +575,18 @@ class checkModule(object):
         warnB=False
         # set progress bar
         self.pBar_upd(step=1, maxValue=1, e=True)
-
         # steps
         # 1   apply shader from render file"
         self.printF("assetconformation: apply shader from render file", st="t")
         resultD={}
-        r2a = assetconformation.Asset_File_Conformer()
+        r2a = assetconformation.Asset_File_Conformer(gui=self.GUI)
         cmds.refresh(suspend = True)
         r2a.cleanFile()
+        #self.printF('resultD_0: '+str(resultD))
         resultD = r2a.loadFile(sourceFile ="renderRef" , reference = False)
-        r2a.initSourceTargetList()
-        r2a.checkSourceTargetTopoMatch()
-        #print 'resultD: ',resultD
         if resultD['fileLoadedB']:
+            r2a.initSourceTargetList()
+            r2a.checkSourceTargetTopoMatch()
             if r2a.sourceTargetListMatch and r2a.sourceTargetTopoMatch:
                 r2a.smoothPolyDisplay(r2a.targetList)
                 r2a.transferRenderAttr()
@@ -603,14 +602,15 @@ class checkModule(object):
             else:
                 resultD = r2a.cleanFile()
         cmds.refresh(suspend = False)
-        # prints -------------------
+        #prints -------------------
         self.printF(resultD['resultB'], st="r")
         for each in resultD["logL"]:
             self.printF( each )
         # --------------------------
         if not resultD["resultB"]:
             boolResult = False
-        self.pBar_upd(step= 1,) 
+        self.pBar_upd(step= 1,)
+
 
         # colors
         print "*btn_CleanObjects:",boolResult
