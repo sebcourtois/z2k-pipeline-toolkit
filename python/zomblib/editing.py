@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 from collections import OrderedDict
 import subprocess
+from zomblib import rvutils
 
 osp = os.path
 
@@ -221,3 +222,21 @@ def movieToJpegSequence(sMoviePath, sOutDirPath, sBaseFileName, padding=4):
     sFilename = ".".join((sBaseFileName, "{:0{}d}".format(1, padding), sExt))
     return makeFilePath(sOutDirPath, sBaseFileName, sExt, frame=1, padding=padding)
 
+def playMovie(sMoviePath, pushToRv="", sequenceId=None):
+
+    sCmd = ""
+    bShell = False
+    if pushToRv:
+        sTag = pushToRv
+        if not rvutils.sessionExists(sTag):
+            return rvutils.openToSgSequence(sequenceId, tag=sTag, source=sMoviePath)
+        else:
+            sLauncherLoc = osp.dirname(os.environ["Z2K_LAUNCH_SCRIPT"])
+            p = osp.join(sLauncherLoc, "rvpush.bat")
+            sCmd = p + " -tag {} merge {}".format(sTag, osp.normpath(sMoviePath))
+
+    if not sCmd:
+        sCmd = "start {}".format(osp.normpath(sMoviePath))
+        bShell = True
+
+    return subprocess.call(sCmd, shell=bShell)

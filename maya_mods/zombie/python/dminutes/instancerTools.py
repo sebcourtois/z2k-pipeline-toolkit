@@ -37,6 +37,7 @@ import re
 import random
 import traceback
 import customUi as ui
+import random
 
 def maya_main_window():
     '''
@@ -717,20 +718,23 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
             mc.setAttr(my_nParticle+".maxCount",self.maxParticleCount)
             mc.setAttr(my_nParticle+".radius",self.particleRadius)
             mc.setAttr(my_nParticle+".emissionOverlapPruning",self.emisOverlapPruning)
+            mc.setAttr(my_nParticle+".collide",0)
+            mc.setAttr(my_nParticle+".seed[0]",random.randint(1, 300))
             cTime = mc.currentTime(q=True)
             initTime = mc.currentTime(q=True)
-            mc.refresh(suspend = True)
+            #mc.refresh(suspend = True)
             particleCount = 0
             a = 0
             while (a < self.frameDuration) and (particleCount < self.maxParticleCount):
                 cTime = mc.currentTime(cTime+1)
-
+                #print "cTime:",cTime
                 if self.perFrameEmissionRate*a > self.maxParticleCount:
                     particleCount = mc.nParticle( my_nParticle, q=True, ct = True)
+                    #print "particleCount:", particleCount
                 a += 1
 
             particleCount = int(mc.nParticle( my_nParticle, q=True, ct = True))
-            mc.refresh(suspend = False)
+            #mc.refresh(suspend = False)
 
             #################
             ####  Instantiate (transforms) the master and align the instances on every particle, 

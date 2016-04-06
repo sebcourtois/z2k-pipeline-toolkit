@@ -111,7 +111,7 @@ def cleanAsset (GUI = True):
                 assetconformation.setSubdiv()
                 r2a = assetconformation.Asset_File_Conformer()
                 r2a.cleanFile()
-                r2a.loadFile(sourceFile ="renderRef" , reference = False)
+                r2a.loadFile(sourceFile ="renderRef" , reference = True)
                 r2a.initSourceTargetList()
                 r2a.checkSourceTargetTopoMatch()
                 r2a.cleanFile()
@@ -160,7 +160,7 @@ def cleanAsset (GUI = True):
                 assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
                 r2a = assetconformation.Asset_File_Conformer()
                 r2a.cleanFile()
-                resultD = r2a.loadFile(sourceFile ="animRef" , reference = False)
+                resultD = r2a.loadFile(sourceFile ="animRef" , reference = True)
                 if resultD['fileLoadedB']:
                     r2a.initSourceTargetList()
                     r2a.checkSourceTargetTopoMatch()

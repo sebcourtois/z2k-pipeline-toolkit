@@ -5,7 +5,6 @@
 import os
 import re
 import stat
-import subprocess
 from collections import OrderedDict
 import shutil
 
@@ -16,24 +15,23 @@ import maya.mel
 #import tkMayaCore as tkc
 from pytd.util.fsutils import pathResolve, normCase, pathSuffixed
 from pytd.util.logutils import logMsg
-
+from pytd.util.sysutils import toStr
+from pytd.util.strutils import padded
+from pytaya.core.general import copyAttrs, getObject
 from pytaya.core import system as myasys
 
 from davos.core import damproject
 from davos.core.damtypes import DamShot, DamAsset
 from davos_maya.tool.publishing import publishCurrentScene
 
-from zomblib import shotgunengine, rvutils
+from zomblib import shotgunengine
+from zomblib.editing import playMovie
 
 import dminutes.maya_scene_operations as mop
 import dminutes.jipeLib_Z2K as jpZ
 import dminutes.camImpExp as camIE
 import dminutes.infoSetExp as infoE
 #from dminutes.miscUtils import deleteUnknownNodes
-from pytd.util.sysutils import toStr
-from pytd.util.strutils import padded
-from pytaya.core.general import copyAttrs, getObject
-from pytaya.util.sysutils import withSelectionRestored
 
 reload(jpZ)
 reload(camIE)
@@ -71,6 +69,8 @@ MOV_FOR_TASK = {}
 
 
 LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
+
+MAX_INCR = 50
 
 def rcFromTask(sgTask, fail=False):
 
@@ -134,6 +134,18 @@ def restoreSelection(func):
 
         return ret
     return doIt
+
+def iterIncrementFiles(sFilePath):
+
+    for i in xrange(1, MAX_INCR + 1):
+        p = pathSuffixed(sFilePath, "." + padded(i, 2))
+        try:
+            st = os.stat(p)
+        except OSError:
+            continue
+
+        if stat.S_ISREG(st.st_mode):
+            yield dict(path=p, mtime=st.st_mtime, num=i)
 
 @restoreSelection
 def makeCapture(sFilePath, start, end, width, height, displaymode="",
@@ -402,7 +414,7 @@ class SceneManager():
 
         self.assertEntitiesMatchUp(sceneInfos)
 
-        ctxRcFile = self.entryFromContext()
+        ctxRcFile = self.rcFileFromContext()
         if not ctxRcFile:
             raise AssertionError("Could not get davos resource from current context.")
 
@@ -516,7 +528,7 @@ class SceneManager():
         self.context['lock'] = "Error"
 
         if not entry:
-            entry = self.entryFromContext()
+            entry = self.rcFileFromContext()
         else:
             self.context['lock'] = entry.getLockOwner()
 
@@ -537,7 +549,7 @@ class SceneManager():
 
         return damEntity
 
-    def entryFromContext(self, fail=False):
+    def rcFileFromContext(self, fail=False):
         """Get davos entry from UI data"""
 
         entry = None
@@ -569,7 +581,7 @@ class SceneManager():
             damShot.createDirsAndFiles()
 
     def save(self, force=True):
-        entry = self.entryFromContext()
+        entry = self.rcFileFromContext()
 
         if not entry:
             pc.error("Cannot get entry for context {0}".format(self.context))
@@ -585,7 +597,7 @@ class SceneManager():
 
     def saveIncrement(self, force=True):
         # new incrementing system based on the last versoin present in the folder
-        entry = self.entryFromContext()
+        entry = self.rcFileFromContext()
 
         if entry == None:
             pc.error("Cannot get entry for context {0}".format(self.context))
@@ -620,6 +632,46 @@ class SceneManager():
 
         return mc.workspace(expandName=p)
 
+    def playLatestCapture(self, sendToRv):
+
+        context = self.context
+        proj = context['damProject']
+        sStep = context['step']['code']
+        sTask = context['task']['content']
+        damShot = self.getDamShot()
+        sWipCaptDirPath = self.getWipCaptureDir(damShot)
+        seqId = context["entity"]["sg_sequence"]["id"]
+
+        sScenePath = pc.sceneName()
+        sceneFile = proj.entryFromPath(sScenePath, space="private")
+        v, w = sceneFile.getEditNums()
+
+        sCaptRcName = MOV_FOR_TASK.get(sTask, MOV_FOR_STEP[sStep])[-1]
+
+        pubCaptFile = damShot.getRcFile("public", sCaptRcName, weak=True, dbNode=False)
+        privCaptFile = pubCaptFile.getEditFile(v, w, weak=True)
+
+        sLatestPath = privCaptFile.absPath() if privCaptFile.isFile() else ""
+
+        sWipCaptPath = osp.join(sWipCaptDirPath, privCaptFile.name)
+        incrementFiles = sorted(iterIncrementFiles(sWipCaptPath), key=lambda d:d["mtime"])
+        if incrementFiles:
+            wipFile = incrementFiles[-1]
+            if not sLatestPath:
+                sLatestPath = wipFile["path"]
+            elif wipFile["mtime"] > osp.getmtime(sLatestPath):
+                sLatestPath = wipFile["path"]
+
+        if not sLatestPath:
+            pc.displayError("No capture has been made yet.")
+            return
+
+        playKwargs = dict()
+        if sendToRv:
+            playKwargs.update(pushToRv="playblast", sequenceId=seqId)
+
+        return playMovie(sLatestPath, **playKwargs)
+
     @mop.undoAtOnce
     def capture(self, saveScene=False, increment=False, quick=True, sendToRv=False, smoothData=None):
         # BUG pas de son alors que son present dans la scene
@@ -630,13 +682,15 @@ class SceneManager():
 
         context = self.context
         proj = context['damProject']
-
         sStep = context['step']['code']
         sTask = context['task']['content']
-
         damShot = self.getDamShot()
+
         oShotCam = self.getShotCamera(fail=True)
-        #sShotCam = oShotCam.name()
+
+        sWipCaptDirPath = self.getWipCaptureDir(damShot)
+        seqId = context["entity"]["sg_sequence"]["id"]
+
         CAPTURE_INFOS['cam'] = oShotCam.getShape().name()
         oCamRef = oShotCam.referenceFile()
         if oCamRef:
@@ -646,14 +700,10 @@ class SceneManager():
             mop.setShotCamLocked(oShotCam, bWasLocked)
             oCamRef = None
 
-        pubCaptItemList = []
+        pubCaptureFiles = []
         for sCaptRcName in MOV_FOR_TASK.get(sTask, MOV_FOR_STEP[sStep]):
             pubCaptFile = damShot.getRcFile("public", sCaptRcName, weak=True, dbNode=False)
-            pubCaptItemList.append((sCaptRcName, pubCaptFile))
-
-#        toto = [("stereoCameraView -e -displayMode rightEye StereoPanelEditor", "right"),
-#          ("stereoCameraView -e -displayMode leftEye StereoPanelEditor", "left"),
-#          ]
+            pubCaptureFiles.append((sCaptRcName, pubCaptFile))
 
         oStereoCam = None
         if sStep.lower() == "stereo":
@@ -687,7 +737,7 @@ class SceneManager():
                     if latestAbcFile:
                         sCamFile = latestAbcFile.name
 
-        CAPTURE_INFOS['cam_file'] = sCamFile#.rsplit(".", 1)[0]
+        CAPTURE_INFOS['cam_file'] = sCamFile
 
         if not quick:
             #Get start/end from shotgun
@@ -710,46 +760,31 @@ class SceneManager():
             if not sSavedFile:
                 raise RuntimeError("Could not save current scene !")
 
-        #Infer capture path
+        #Infer captures path
         sScenePath = pc.sceneName()
         CAPTURE_INFOS['scene'] = os.path.basename(sScenePath)
 
         sceneFile = proj.entryFromPath(sScenePath, space="private")
         v, w = sceneFile.getEditNums()
 
-        def iterIncrementFiles(sFilePath, count):
-            for i in xrange(1, count + 1):
-                p = pathSuffixed(sFilePath, "." + padded(i, 2))
-                try:
-                    st = os.stat(p)
-                except OSError:
-                    continue
-
-                if stat.S_ISREG(st.st_mode):
-                    yield dict(path=p, mtime=st.st_mtime, num=i)
-
-        captItemList = []
-        for sCaptRcName, pubCaptFile in pubCaptItemList:
+        outCapturePaths = []
+        for sCaptRcName, pubCaptFile in pubCaptureFiles:
             privCaptFile = pubCaptFile.getEditFile(v, w, weak=True)
-            sCapturePath = privCaptFile.absPath()
             if quick:
-                sCapturePath = osp.join(self.getWipCaptureDir(damShot),
-                                        os.path.basename(sCapturePath))
-                maxIncr = 50
-                incrementFiles = sorted(iterIncrementFiles(sCapturePath, maxIncr),
+                sWipCaptPath = osp.join(sWipCaptDirPath, privCaptFile.name)
+
+                incrementFiles = sorted(iterIncrementFiles(sWipCaptPath),
                                         key=lambda d:d["mtime"])
                 if incrementFiles:
                     incrFile = incrementFiles[-1]
-                    j = (incrFile["num"] % maxIncr) + 1
-                    sCapturePath = pathSuffixed(sCapturePath, "." + padded(j, 2))
+                    j = (incrFile["num"] % MAX_INCR) + 1
+                    sCapturePath = pathSuffixed(sWipCaptPath, "." + padded(j, 2))
                 else:
-                    sCapturePath = pathSuffixed(sCapturePath, "." + padded(1, 2))
+                    sCapturePath = pathSuffixed(sWipCaptPath, "." + padded(1, 2))
+            else:
+                sCapturePath = privCaptFile.absPath()
 
-            captItemList.append((sCaptRcName, sCapturePath))
-
-#        if oCamRef:
-#            bWasLocked = oCamRef.refNode.getAttr("locked")
-#            oShotCam = mop.setCamRefLocked(oShotCam, False)
+            outCapturePaths.append((sCaptRcName, sCapturePath))
 
         bImgPlnViz = mop.isImgPlaneHidden()
         mop.setImgPlaneHidden(True)
@@ -795,7 +830,7 @@ class SceneManager():
 
             savedHudValues = createHUD()
 
-            for sCaptRcName, sCapturePath in captItemList:
+            for sCaptRcName, sCapturePath in outCapturePaths:
 
                 if oStereoCam:
                     sStereoMode = sCaptRcName.split("_", 1)[0] + "Eye"
@@ -822,8 +857,6 @@ class SceneManager():
                 mc.delete(sRecorder)
 
             oShotCam.setAttr('aspectRatio', 1.7778)
-#            if oCamRef and bWasLocked:
-#                oShotCam = mop.setCamRefLocked(oShotCam, True)
 
             if numSmoothed:
                 for i in xrange(numSmoothed):
@@ -851,24 +884,11 @@ class SceneManager():
             except Exception as e:
                 pc.displayError("Could not write stereo infos: " + toStr(e))
 
-        sCmd = ""
-        bShell = False
-
+        playKwargs = dict()
         if sendToRv:
-            sTag = "playblast"
-            if not rvutils.sessionExists(sTag):
-                seqId = context["entity"]["sg_sequence"]["id"]
-                return rvutils.openToSgSequence(seqId, tag=sTag, source=sOutFilePath)
-            else:
-                sLauncherLoc = osp.dirname(os.environ["Z2K_LAUNCH_SCRIPT"])
-                p = osp.join(sLauncherLoc, "rvpush.bat")
-                sCmd = p + " -tag {} merge {}".format(sTag, osp.normpath(sOutFilePath))
+            playKwargs.update(pushToRv="playblast", sequenceId=seqId)
 
-        if not sCmd:
-            sCmd = "start {}".format(osp.normpath(sOutFilePath))
-            bShell = True
-
-        return subprocess.call(sCmd, shell=bShell)
+        return playMovie(sOutFilePath, **playKwargs)
 
     def edit(self, editInPlace=None, onBase=False, createFolders=False):
         privFile = None
@@ -924,7 +944,7 @@ class SceneManager():
 
         result = "Yes" if editInPlace else "No"
 
-        if editInPlace == None:
+        if editInPlace is None:
             result = pc.confirmDialog(title='Edit options',
                                       message='Do you want to use current scene for this edit ?',
                                       button=['Yes', 'No'],
@@ -1000,12 +1020,14 @@ class SceneManager():
 
         #curScnFile = proj.entryFromPath(currentScene, fail=True)
 
-        sFixMsg = " Please, apply a 'Shot Setup' and retry."
+        sFixMsg = "\n\nPlease, apply a 'Shot Setup' and retry."
         oShotCam = None
         try:
             oShotCam = self.getShotCamera(fail=True)
         except Exception as e:
             raise AssertionError(toStr(e) + sFixMsg)
+
+        return oShotCam
 
     def publish(self):
         try:
@@ -1018,16 +1040,12 @@ class SceneManager():
                              cancelButton="OK",
                              dismissString="OK",
                              icon="critical")
-            return
+            return False
 
-        rslt = publishCurrentScene(dependencies=False,
-                                   prePublishFunc=self.prePublishCurrentScene)
-        if rslt is None:
-            return
+        res = publishCurrentScene(prePublishFunc=self.prePublishCurrentScene,
+                                  dependencies=False)
 
-        # here is the original publish
-        if rslt is not None:
-            pc.confirmDialog(title='Publish OK', message='{0} was published successfully'.format(rslt[0].name))
+        return res
 
     def getShotgunContent(self):
         #print 'getShotgunContent ' + self.context['entity']['code']
@@ -1484,7 +1502,7 @@ class SceneManager():
 
         return oAbcNode
 
-    @withSelectionRestored
+    @restoreSelection
     def editShotCam(self):
 
         oShotCam = self.getShotCamera()
