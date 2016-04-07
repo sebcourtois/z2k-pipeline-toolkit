@@ -128,8 +128,9 @@ class Z2K_BS_Tertiaire_Tool_GUI (object):
         # importNS : not implemented
         # connectTargetShapeOnly: not implemented
         # connectAttrToBsOnly : not implemented
+        print "jipe_multiAttr_BSConnector()"
         result =True
-        
+        BS_NodeL = []
         # pre-loop check for connected Target BS:
         allreadyTestedL=[]
         for attrHodlerD in tableDL: 
@@ -140,11 +141,13 @@ class Z2K_BS_Tertiaire_Tool_GUI (object):
                             print "        drivenMesh:",drivenMesh
                             BS_Node = valL[0]
                             print "# ",BS_Node
-
+                            if cmds.objExists(BS_Node):
+                                if not BS_Node in BS_NodeL:
+                                    BS_NodeL.append(BS_Node)
                             # check for connected targets
                             if BS_Node not in allreadyTestedL:
                                 objTargetD = jpZ.get_BS_TargetObjD(BS_Node=BS_Node)
-                                print "    ",objTargetD
+                                print "    objTargetD=",objTargetD
                                 allreadyTestedL.append(BS_Node)
 
                                 if len(objTargetD):
@@ -165,14 +168,22 @@ class Z2K_BS_Tertiaire_Tool_GUI (object):
                                         
                                 
 
-                except:
+                except Exception,err:
+                    print "ERROR=",Exception,err
                     pass
                
+        print "BS_NodeL=",BS_NodeL
+        if len(BS_NodeL):
+            # delete BUGGED
+            # for drivenMesh,valL in drivenMeshD.iteritems():
+            result = cmds.confirmDialog( title='REPLACE_ALL BS_NODE', message="There is existing BS_NODE:\n  {0}\nDO YOU WANT TO DELETE ALL old BS_Node ?".format(BS_NodeL),
+                button=["YES","KEEP","ABOARD"], defaultButton='ABOARD', cancelButton='ABOARD', dismissString='ABOARD' )
+            if result in ["YES"]:
+                cmds.delete(BS_NodeL)
+                print "BS_NODE DELETED"
 
-        
-
-        
-
+            if result in ["ABOARD"]:
+                sys.exit()
 
         # loop in tableDL ------------------------------------------------
         #for attrN,dico in tableDL.iteritems():
@@ -231,7 +242,7 @@ class Z2K_BS_Tertiaire_Tool_GUI (object):
 
                         # create the BS node if it doesn t exists
                         if not cmds.objExists(BS_Node):
-                            cmds.blendShape(drivenMesh, name=BS_Node)
+                            cmds.blendShape(drivenMesh, name=BS_Node,foc=True)
                         # enable negative values on BS node
                         cmds.setAttr( BS_Node+ ".supportNegativeWeights", 1)
 

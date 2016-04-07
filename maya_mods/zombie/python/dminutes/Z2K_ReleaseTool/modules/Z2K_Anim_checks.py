@@ -930,9 +930,9 @@ class checkModule(object):
 
 
 
-        # chr_fix_EybrowUpper_ExtCorner_cst
-        # chr_fix_cheeks_cst
-
+        # 20 ----- chr_fix_EyebrowUpper_ExtCorner_cst()
+        # 21 ----- chr_fix_cheeks_cst()
+        # 22 ----- chr_fix_EyebrowUpper_Cst_average()
 
         # colors
         print "*btn_specialSettings:",boolResult
