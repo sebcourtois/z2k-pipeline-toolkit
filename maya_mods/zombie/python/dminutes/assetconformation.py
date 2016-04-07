@@ -64,7 +64,7 @@ def checkGroupNamingConvention(printInfo = True, inParent = "*"):
 
 
 
-def createSubdivSets(GUI = True):
+def createSubdivSets(GUI = True, defaultSetSubdiv = "set_subdiv_init"):
     """
     This function creates a "set_subdiv_init" that gather all the "geo_*" objects found in the scene.
     and bunch of empty sets named "set_subdiv_X" (where X is a digit) are also created.
@@ -75,9 +75,23 @@ def createSubdivSets(GUI = True):
     returnB = True
     logL = []
 
+    assetType = ""
+
+    if mc.ls("|asset"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        assetType = mainFilePathElem[-3]
+
+
     subdivSets = mc.ls("set_subdiv_*", type = "objectSet")
     subdivPartitions = mc.ls("par_*", type = "partition")
-    existingGeo = mc.ls("geo_*", type = "transform")
+    setMeshcacheL = mc.ls("set_meshCache", type="objectSet")
+
+    if setMeshcacheL and assetType == 'chr':
+        existingGeo=mc.ls(mc.sets(setMeshcacheL[0], query = True),l=True)
+    else:
+        existingGeo = mc.ls("geo_*", type = "transform",l=True)
+
     subdivSetsInitList = ["set_subdiv_init","set_subdiv_0","set_subdiv_1","set_subdiv_2","set_subdiv_3"]
     if not existingGeo:
         logMessage = "#### {:>7}: 'createSubdivSets' 'geo_*' object could be foud in the scene".format("Error")
@@ -106,11 +120,11 @@ def createSubdivSets(GUI = True):
     addedGeoToInitSet = []
     for eachGeo in existingGeo:
         if eachGeo not in geoInSet:
-            mc.sets(eachGeo, forceElement="set_subdiv_init")
+            mc.sets(eachGeo, forceElement=defaultSetSubdiv)
             addedGeoToInitSet.append(eachGeo)
 
     if addedGeoToInitSet:
-        logMessage = "#### {:>7}: 'createSubdivSets' {} geo added to 'set_subdiv_init': {}".format("Info",len(addedGeoToInitSet),addedGeoToInitSet)
+        logMessage = "#### {:>7}: 'createSubdivSets' {} geo added to '{}': {}".format("Info",len(addedGeoToInitSet),defaultSetSubdiv,addedGeoToInitSet)
         if GUI == True: print logMessage
         logL.append(logMessage)
 
