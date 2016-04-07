@@ -1,5 +1,6 @@
 import maya.cmds as mc
 import pymel.core as pm
+import maya.utils as mu
 import re
 import string
 import os
@@ -517,8 +518,8 @@ class Asset_File_Conformer:
             for each in panelL:
                 for eachPanel in panelToCloseL:
                     if eachPanel in each:
-                        print each
-                        mc.deleteUI(each, panel = True)
+                        mu.executeDeferred("mc.deleteUI(each, panel = True)")
+
 
 
         self.log.funcName ="'loadFile' "
