@@ -13,11 +13,6 @@ import pymel.util as pmu
 #from pytd.util.logutils import logMsg
 from pytaya.core import system as myasys
 
-#from pytd.gui.dialogs import confirmDialog
-#from pytd.util.logutils import logMsg
-#from pytaya.core.general import lsNodes
-#from pytd.util.fsutils import pathResolve
-
 from davos.tools import publish_dependencies
 
 from .general import entityFromScene, projectFromScene
@@ -26,8 +21,7 @@ from pytd.util.sysutils import toStr, inDevMode, timer
 from pytd.gui.dialogs import confirmDialog
 from pytd.util.fsutils import normCase
 from davos.core.damtypes import DamAsset
-from pytaya.tool import cleaning
-#from pytd.util.fsutils import pathRelativeTo
+from pytaya.core import cleaning
 
 osp = os.path
 
