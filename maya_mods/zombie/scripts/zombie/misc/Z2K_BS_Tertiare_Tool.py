@@ -141,7 +141,7 @@ class Z2K_BS_Tertiaire_Tool_GUI (object):
                             print "        drivenMesh:",drivenMesh
                             BS_Node = valL[0]
                             print "# ",BS_Node
-                            if cmds.objExists(BS_node):
+                            if cmds.objExists(BS_Node):
                                 if not BS_Node in BS_NodeL:
                                     BS_NodeL.append(BS_Node)
                             # check for connected targets
@@ -169,7 +169,7 @@ class Z2K_BS_Tertiaire_Tool_GUI (object):
                                 
 
                 except Exception,err:
-                    print "ERROR=",Exception
+                    print "ERROR=",Exception,err
                     pass
                
         print "BS_NodeL=",BS_NodeL
