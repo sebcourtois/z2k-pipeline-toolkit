@@ -229,13 +229,40 @@ class checkModule(object):
         boolResultL = []
         warnB=False
         # set progress bar
-        self.pBar_upd(step=1, maxValue=10, e=True)
+        self.pBar_upd(step=1, maxValue=12, e=True)
 
         # steps
 
 
 
-        # 1 Apply_Delete_setSubdiv()
+
+        # 1   create subdiv sets
+        self.printF("assetconformation: create subdiv sets ", st="t")
+        resultD = assetconformation.createSubdivSets(GUI = False)
+        # prints -------------------
+        self.printF(resultD["returnB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["returnB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 2   apply setSubdiv
+        self.printF("assetconformation: apply setSubdiv ", st="t")
+        resultD = assetconformation.setSubdiv(GUI = False)
+        # prints -------------------
+        self.printF(resultD["returnB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["returnB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 3 Apply_Delete_setSubdiv()
         result,setSub,deletedL = jpZ.Apply_Delete_setSubdiv()
         # prints -------------------
         self.printF("Apply_Delete_setSubdiv()", st="t")
@@ -249,8 +276,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-
-        # 2 cleanRefNodes()
+        # 4 cleanRefNodes()
         result,objtoDeleteL,deletedL = jpZ.cleanRefNodes()
         # prints -------------------
         self.printF("cleanRefNodes()", st="t")
@@ -263,7 +289,7 @@ class checkModule(object):
 
 
  
-        # 3 cleanMentalRayNodes()
+        # 5 cleanMentalRayNodes()
         result,toDeleteL,deletedL,failL = jpZ.cleanMentalRayNodes()
         # prints -------------------
         self.printF("cleanMentalRayNodes()", st="t")
@@ -280,7 +306,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 4 remove_All_NS()
+        # 6 remove_All_NS()
         result= jpZ.remove_All_NS(NSexclusionL=[""], limit=100)[0]
         # prints -------------------
         self.printF("remove_All_NS()", st="t")
@@ -292,7 +318,7 @@ class checkModule(object):
 
 
 
-        # 5 cleanDisplayLayerWithSet()
+        # 7 cleanDisplayLayerWithSet()
         result,debugL = jpZ.cleanDisplayLayerWithSet(setL=["set_meshCache","set_control"],layerL=["geometry","control"])
         # prints -------------------
         self.printF("cleanDisplayLayerWithSet()", st="t")
@@ -306,7 +332,7 @@ class checkModule(object):
 
 
 
-        # 6 cleanUnUsedAnimCurves()
+        # 8 cleanUnUsedAnimCurves()
         result,debugD = jpZ.cleanUnUsedAnimCurves( )
         # prints -------------------
         self.printF( "cleanUnUsedAnimCurves()", st="t")
@@ -331,7 +357,7 @@ class checkModule(object):
 
 
 
-        # 7 cleanUnusedConstraint()
+        # 9 cleanUnusedConstraint()
         result,debugD = jpZ.cleanUnusedConstraint()
         # prints -------------------
         self.printF( "cleanUnusedConstraint()", st="t")
@@ -356,7 +382,7 @@ class checkModule(object):
 
 
 
-        # 8 CleanDisconnectedNodes()
+        # 10 CleanDisconnectedNodes()
         result,debugD = jpZ.CleanDisconnectedNodes()
         # prints -------------------
         self.printF( "CleanDisconnectedNodes()", st="t")
@@ -381,7 +407,7 @@ class checkModule(object):
               
 
 
-        # 9 cleanTurtleNodes
+        # 11 cleanTurtleNodes
         result,toDeleteL,deletedL,failL = jpZ.cleanTurtleNodes()
         # prints -------------------
         self.printF("cleanTurtleNodes()", st="t")
@@ -397,7 +423,7 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
-        # 10 ----- chr_delete_BS_active_group ()
+        # 12 ----- chr_delete_BS_active_group ()
         result,debugL = jpZ.chr_delete_BS_active_group()
         # prints -------------------
         self.printF("chr_delete_BS_active_group()", st="t")
@@ -577,7 +603,7 @@ class checkModule(object):
         self.pBar_upd(step=1, maxValue=1, e=True)
         # steps
         # 1   apply shader from render file"
-        self.printF("assetconformation: apply shader from render file", st="t")
+        self.printF("applyShadersFromRender", st="t")
         resultD={}
         r2a = assetconformation.Asset_File_Conformer(gui=self.GUI)
         cmds.refresh(suspend = True)
