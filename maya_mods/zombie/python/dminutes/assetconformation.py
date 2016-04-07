@@ -90,7 +90,10 @@ def createSubdivSets(GUI = True, defaultSetSubdiv = "set_subdiv_init"):
     if setMeshcacheL and assetType == 'chr':
         existingGeo=mc.ls(mc.sets(setMeshcacheL[0], query = True),l=True)
     else:
-        existingGeo = mc.ls("geo_*", type = "transform",l=True)
+        #existingGeo = mc.ls("geo_*", type = "transform",l=True)
+        meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
+        existingGeo = list(meshList)
+        existingGeo.extend(instanceList)
 
     subdivSetsInitList = ["set_subdiv_init","set_subdiv_0","set_subdiv_1","set_subdiv_2","set_subdiv_3"]
     if not existingGeo:
@@ -173,6 +176,7 @@ def setSubdiv(GUI= False ):
     processedTransL =[]
     skippedTransL =[]
     nonManifoldObjL = []
+    nonMeshObjectL = []
     for eachSetSubdiv in subdivSets:
         geoInSet = mc.ls(mc.sets(eachSetSubdiv, query = True),l=True)
         if not geoInSet: geoInSet = []       
@@ -185,16 +189,22 @@ def setSubdiv(GUI= False ):
                     if nonManifoldEdgesL:
                         nonManifoldObjL.append(eachGeo)
                     if mc.nodeType(eachGeo)!="mesh":
-                        eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)[0]
+                        eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)
+                        if eachGeoShape:
+                            eachGeoShape = eachGeoShape[0]
+                        else:
+                            nonMeshObjectL.append(eachGeo)
+                            continue
+
                     eachGeoParentL = mc.listRelatives(eachGeoShape, allParents = True, fullPath = True)
                     if not set(eachGeoParentL) & set(processedTransL):
-                        mc.setAttr(eachGeoShape+".displaySmoothMesh",0)
-                        mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
-                        mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
-                        mc.setAttr(eachGeoShape+".useGlobalSmoothDrawType",1)
+                        miscUtils.setAttrC(eachGeoShape+".displaySmoothMesh",0)
+                        miscUtils.setAttrC(eachGeoShape+".useSmoothPreviewForRender",0)
+                        miscUtils.setAttrC(eachGeoShape+".renderSmoothLevel",0)
+                        miscUtils.setAttrC(eachGeoShape+".useGlobalSmoothDrawType",1)
                         if not mc.getAttr(eachGeoShape+".smoothLevel", lock = True):
                             if previewSubdivLevel == 0:
-                                mc.setAttr(eachGeoShape+".smoothLevel", 0)
+                                miscUtils.setAttrC(eachGeoShape+".smoothLevel", 0)
                             if previewSubdivLevel == 1:
                                 mc.connectAttr("|asset|grp_geo.smoothLevel1", eachGeoShape+".smoothLevel", f=True)
                             if previewSubdivLevel > 1:
@@ -205,14 +215,14 @@ def setSubdiv(GUI= False ):
                             logL.append(logMessage)
                             returnB = False
                         else:
-                            mc.setAttr(eachGeoShape+".aiSubdivType",1)
-                            mc.setAttr(eachGeoShape+".aiSubdivIterations",subdivLevel)
+                            miscUtils.setAttrC(eachGeoShape+".aiSubdivType",1)
+                            miscUtils.setAttrC(eachGeoShape+".aiSubdivIterations",subdivLevel)
                         processedTransL.append(eachGeo)
                     else:
                         skippedTransL.append(eachGeo)
           
-    mc.setAttr("|asset|grp_geo.smoothLevel1", 1)
-    mc.setAttr("|asset|grp_geo.smoothLevel2", 2)
+    miscUtils.setAttrC("|asset|grp_geo.smoothLevel1", 1)
+    miscUtils.setAttrC("|asset|grp_geo.smoothLevel2", 2)
     
     if processedTransL and not skippedTransL:
         logMessage = "#### {:>7}: 'setSubdiv' {} meshes processed".format("Info", len(processedTransL))
@@ -236,6 +246,14 @@ def setSubdiv(GUI= False ):
         print logMessage
         logL.append(logMessage)
         returnB = False
+
+    if nonMeshObjectL:
+        logMessage = "#### {:>7}: 'setSubdiv' '{}' objects without shape: {}".format("Error", len(nonMeshObjectL), nonMeshObjectL)
+        #if GUI == True: mc.confirmDialog( title='Error:', message=logMessage, button=['Ok'], defaultButton='Ok' )
+        print logMessage
+        logL.append(logMessage)
+        returnB = False
+
 
     if not logL:
         logMessage = "#### {:>7}: 'setSubdiv' Donne properly".format("Info")
