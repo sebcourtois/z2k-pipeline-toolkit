@@ -114,7 +114,7 @@ def createSubdivSets(GUI = True, defaultSetSubdiv = "set_subdiv_init"):
         if GUI == True: print logMessage
         logL.append(logMessage)
 
-    geoInSet = mc.sets(subdivSets, query = True)
+    geoInSet = mc.ls(mc.sets(subdivSets, query = True),l=True)
     if geoInSet == None: geoInSet = []
 
     addedGeoToInitSet = []
