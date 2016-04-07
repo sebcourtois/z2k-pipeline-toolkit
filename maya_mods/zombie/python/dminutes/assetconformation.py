@@ -546,6 +546,7 @@ class Asset_File_Conformer:
             if not os.path.isfile(self.renderFilePath_exp):
                 txt = "Could not find: '{}', ref file has not been released yet, let's do it: '{}'".format(self.sourceFile, self.sourceFile.replace("Ref",""))
                 namespace = self.sourceFile.replace("Ref","")
+                fileType ="mayaAscii"
                 self.log.printL("w", txt)
                 self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile.replace("Ref","")+".ma"))
                 self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))
