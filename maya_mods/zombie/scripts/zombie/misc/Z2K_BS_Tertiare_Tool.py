@@ -177,7 +177,7 @@ class Z2K_BS_Tertiaire_Tool_GUI (object):
             # delete BUGGED
             # for drivenMesh,valL in drivenMeshD.iteritems():
             result = cmds.confirmDialog( title='REPLACE_ALL BS_NODE', message="There is existing BS_NODE:\n  {0}\nDO YOU WANT TO DELETE ALL old BS_Node ?".format(BS_NodeL),
-                button=["YES","KEEP","ABOARD"], defaultButton='ABOARD', cancelButton='ABOARD', dismissString='ABOARD' )
+                button=["DELETE","KEEP","ABOARD"], defaultButton='ABOARD', cancelButton='ABOARD', dismissString='ABOARD' )
             if result in ["YES"]:
                 cmds.delete(BS_NodeL)
                 print "BS_NODE DELETED"
@@ -205,6 +205,7 @@ class Z2K_BS_Tertiaire_Tool_GUI (object):
                 print "    attrN=", attrN
                 print "    attrParamL=", attrParamL
                 print "    drivenMeshD=", drivenMeshD
+
 
                 # Attrib part --------------------------------------------------------------------------------------
                 # delete old attrib

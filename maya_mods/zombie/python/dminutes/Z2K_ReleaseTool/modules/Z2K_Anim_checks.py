@@ -933,7 +933,10 @@ class checkModule(object):
         # 20 ----- chr_fix_EyebrowUpper_ExtCorner_cst()
         # 21 ----- chr_fix_cheeks_cst()
         # 22 ----- chr_fix_EyebrowUpper_Cst_average()
+        # 23 ----- chr_add_frontFootTwist_goodCTR()
 
+
+        
         # colors
         print "*btn_specialSettings:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
