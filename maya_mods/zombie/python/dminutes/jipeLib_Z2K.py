@@ -2098,6 +2098,7 @@ def chr_rename_Teeth_BS_attribs(*args, **kwargs):
 
 def chr_rename_Teeth_BS_attribs_Vampires(*args, **kwargs):
     # reset all attr of selected controls
+    # WIP to re arrange because of the apply BS_tertiaire adaptation.
     print "chr_rename_Teeth_BS_attribs_Vampires()"
     debugL = []
     toRenameUpL = [
@@ -2714,6 +2715,7 @@ def chr_hideCurveAiAttr(*args, **kwargs):
 
     return [True, doneL]
 
+
 def chr_replace_chr_vis_Exp_System(*args, **kwargs):
     print "chr_replace_chr_vis_Exp_System()"
     """ Description: Remplace le system original de toonkit comportant environ 320 expression par des nodes multiplyLinear
@@ -3061,7 +3063,6 @@ def improveArcades(*args, **kwargs):
             cmds.connectAttr(reverse_N + ".outputY", activeTargetL[0], f=True)
 
 
-
 def chr_Fix_LookAt(*args, **kwargs):
     """ Description: Fix des bug potientiel sur le rig du lookAt. Lorsque que la contrainte n'est pas
                      faite sur le bon objet du rig.
@@ -3137,7 +3138,6 @@ def chr_Fix_LookAt(*args, **kwargs):
     return [True,debugL]
 
 
-
 def chr_fix_mirror_parameters(*args, **kwargs):
     """ Description: Fix les problems d' attribut de mirror sur les controlers des rig delivered. Les valeur sont souvent mauvaise.
                      Ce fix recopy les parametre de aurelien_polo sur l asset en cours.
@@ -3196,7 +3196,7 @@ def chr_fix_MouthCornerNeutralsRotation(*args,**kwargs):
     return [True,debugL] 
 
 
-def chr_fix_EybrowUpper_ExtCorner_cst(*args, **kwargs):
+def chr_fix_EyebrowUpper_ExtCorner_cst(*args, **kwargs):
     print "chr_fix_EybrowUpper_ExtCorner()"
     ctrAL =  ['Right_Brow_upRidge_04_offset_grp', 'Left_Brow_upRidge_04_offset_grp']
     ctrBL =  ['Left_Brow_upRidge_04_drive_grp','Right_Brow_upRidge_04_drive_grp',"Left_Brow_upRidge_04_drive_customAxis_grp"]
@@ -3245,7 +3245,6 @@ def chr_fix_EybrowUpper_ExtCorner_cst(*args, **kwargs):
     print "fixedL=", fixedL
 
 
-
 def chr_fix_cheeks_cst(*args, **kwargs):
     """ Description: Ajout un parent "fk_head" à la contrainte des cheeks_controls 
                      Ils deviennent contraint a 50% sur les corners mouth
@@ -3264,6 +3263,7 @@ def chr_fix_cheeks_cst(*args, **kwargs):
     for i in ctrL:
         if not cmds.objExists(i):
             notFoundL.append(i)
+            canDo=False
     if canDo:
         for i in ctrL:
             
@@ -3315,9 +3315,87 @@ def chr_fix_cheeks_cst(*args, **kwargs):
     print "fixedL=", fixedL
 
 
+def chr_fix_EyebrowUpper_Cst_average(*args, **kwargs):
+    """ Description: set al constraint interpretation type to 'shortest' because sometime it's 'average'
+                     and this make the cst to flip
+        Return : [True,LIST]
+        Dependencies : cmds - getTypeInHierarchy()
+    """
+    
+    print "chr_fix_EyebrowUpper_Cst_average()"
+    toReturnB=True
+    debugL = []
+    theAttr = "interpType"
+    theVal = 2 # "shortest"
+    objL = ['Right_Brow_upRidge_03_offset_grp', 'Right_Brow_upRidge_02_drive_grp', 
+            'Right_Brow_upRidge_01_drive_grp','Right_Brow_upRidge_04_drive_grp',
+            'Left_Brow_upRidge_01_drive_grp', 'Left_Brow_upRidge_02_drive_grp', 
+            'Left_Brow_upRidge_03_drive_grp','Left_Brow_upRidge_04_drive_customAxis_grp'
+            ]
+    canDo = True
+    for i in objL:
+        if not cmds.objExists (i):
+            canDo=False
+    if canDo:
+        for obj in objL:
+            cstL = getTypeInHierarchy(cursel=obj, theType="constraint")
+            print cstL
+            if len(cstL):
+                for j in cstL:
+                    if cmds.objExists(j+"."+ theAttr):
+                        cmds.setAttr(j+"."+ theAttr,theVal)
+
+    return [toReturnB,debugL]
+
 #to do: fixe scaling on the hands
 
+# to do : Fixe dynamics default values!! fuck****TK
 
 
+# to do : add good foot front roll ctr
+def chr_add_frontFootTwist_goodCTR(*args, **kwargs):
+    """ Description: ma_description
+        Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
+        Dependencies : cmds - matchByXformMatrix()
+    """
+    
+    print 'chr_add_front_FootRoll_goodCTR()'
+    theAttrN = "twist"
+    theAttrType = "float"
+    theDv = 0
+    theMin = -360
+    theMax = 360
+    keyable = 1
+    ctrL = ['Left_Foot_Reverse_0','Right_Foot_Reverse_0']
+    
+    # get parents
+    ctrParentL = [cmds.listRelatives(x,p=1, ni=1, type="transform")[0] for x in ctrL]
+    ctrTargetParentL = [ cmds.listRelatives(x,p=1, ni=1, type="transform")[0] for x in ctrParentL]
 
+    print "ctrTargetParentL=", ctrTargetParentL
 
+    for p,c in zip(ctrTargetParentL,ctrL):
+        # unlock parents
+
+        # matched gp
+        frontFootRollGP= cmds.group(name=p.split("_",1)[0]+"_"+"frontFootRollGP",em=True)
+        matchByXformMatrix(cursel=[p,frontFootRollGP], mode=0)
+        
+        # zero orientations
+        cmds.xform(frontFootRollGP , ro=(0, 0, 0) )
+        frontFootRollGP_zero = frontFootRollGP+"_zero"
+        cmds.duplicate(frontFootRollGP, name=frontFootRollGP_zero)
+        cmds.parent(frontFootRollGP,frontFootRollGP_zero)
+        
+        #parent to targetParent
+        cmds.parent(frontFootRollGP_zero,p)
+        ctrParent = cmds.listRelatives(c,p=1, ni=1, type="transform")[0]
+        cmds.parent(ctrParent,frontFootRollGP)
+        
+
+        # create attr + connect
+
+        if not cmds.objExists(c + "." + theAttrN):
+            cmds.addAttr(c, longName=theAttrN, attributeType=theAttrType, keyable=keyable, dv=theDv, min=theMin, max=theMax)
+
+        cmds.connectAttr(c + "." + theAttrN,frontFootRollGP + "." + 'ry' )

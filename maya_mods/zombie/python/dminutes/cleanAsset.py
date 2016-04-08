@@ -106,7 +106,6 @@ def cleanAsset (GUI = True):
                 miscUtils.deleteUnknownNodes()
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
-                assetconformation.setSubdiv()
                 assetconformation.createSubdivSets()
                 assetconformation.setSubdiv()
                 r2a = assetconformation.Asset_File_Conformer()

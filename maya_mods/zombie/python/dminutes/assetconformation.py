@@ -1,5 +1,6 @@
 import maya.cmds as mc
 import pymel.core as pm
+import maya.utils as mu
 import re
 import string
 import os
@@ -64,7 +65,7 @@ def checkGroupNamingConvention(printInfo = True, inParent = "*"):
 
 
 
-def createSubdivSets(GUI = True):
+def createSubdivSets(GUI = True, defaultSetSubdiv = "set_subdiv_init"):
     """
     This function creates a "set_subdiv_init" that gather all the "geo_*" objects found in the scene.
     and bunch of empty sets named "set_subdiv_X" (where X is a digit) are also created.
@@ -75,9 +76,26 @@ def createSubdivSets(GUI = True):
     returnB = True
     logL = []
 
+    assetType = ""
+
+    if mc.ls("|asset"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        assetType = mainFilePathElem[-3]
+
+
     subdivSets = mc.ls("set_subdiv_*", type = "objectSet")
     subdivPartitions = mc.ls("par_*", type = "partition")
-    existingGeo = mc.ls("geo_*", type = "transform")
+    setMeshcacheL = mc.ls("set_meshCache", type="objectSet")
+
+    if setMeshcacheL and assetType == 'chr':
+        existingGeo=mc.ls(mc.sets(setMeshcacheL[0], query = True),l=True)
+    else:
+        #existingGeo = mc.ls("geo_*", type = "transform",l=True)
+        meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
+        existingGeo = list(meshList)
+        existingGeo.extend(instanceList)
+
     subdivSetsInitList = ["set_subdiv_init","set_subdiv_0","set_subdiv_1","set_subdiv_2","set_subdiv_3"]
     if not existingGeo:
         logMessage = "#### {:>7}: 'createSubdivSets' 'geo_*' object could be foud in the scene".format("Error")
@@ -100,17 +118,17 @@ def createSubdivSets(GUI = True):
         if GUI == True: print logMessage
         logL.append(logMessage)
 
-    geoInSet = mc.sets(subdivSets, query = True)
+    geoInSet = mc.ls(mc.sets(subdivSets, query = True),l=True)
     if geoInSet == None: geoInSet = []
 
     addedGeoToInitSet = []
     for eachGeo in existingGeo:
         if eachGeo not in geoInSet:
-            mc.sets(eachGeo, forceElement="set_subdiv_init")
+            mc.sets(eachGeo, forceElement=defaultSetSubdiv)
             addedGeoToInitSet.append(eachGeo)
 
     if addedGeoToInitSet:
-        logMessage = "#### {:>7}: 'createSubdivSets' {} geo added to 'set_subdiv_init': {}".format("Info",len(addedGeoToInitSet),addedGeoToInitSet)
+        logMessage = "#### {:>7}: 'createSubdivSets' {} geo added to '{}': {}".format("Info",len(addedGeoToInitSet),defaultSetSubdiv,addedGeoToInitSet)
         if GUI == True: print logMessage
         logL.append(logMessage)
 
@@ -159,6 +177,7 @@ def setSubdiv(GUI= False ):
     processedTransL =[]
     skippedTransL =[]
     nonManifoldObjL = []
+    nonMeshObjectL = []
     for eachSetSubdiv in subdivSets:
         geoInSet = mc.ls(mc.sets(eachSetSubdiv, query = True),l=True)
         if not geoInSet: geoInSet = []       
@@ -171,16 +190,22 @@ def setSubdiv(GUI= False ):
                     if nonManifoldEdgesL:
                         nonManifoldObjL.append(eachGeo)
                     if mc.nodeType(eachGeo)!="mesh":
-                        eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)[0]
+                        eachGeoShape =  mc.listRelatives(eachGeo, noIntermediate=True, shapes=True, path=True)
+                        if eachGeoShape:
+                            eachGeoShape = eachGeoShape[0]
+                        else:
+                            nonMeshObjectL.append(eachGeo)
+                            continue
+
                     eachGeoParentL = mc.listRelatives(eachGeoShape, allParents = True, fullPath = True)
                     if not set(eachGeoParentL) & set(processedTransL):
-                        mc.setAttr(eachGeoShape+".displaySmoothMesh",0)
-                        mc.setAttr(eachGeoShape+".useSmoothPreviewForRender",0)
-                        mc.setAttr(eachGeoShape+".renderSmoothLevel",0)
-                        mc.setAttr(eachGeoShape+".useGlobalSmoothDrawType",1)
+                        miscUtils.setAttrC(eachGeoShape+".displaySmoothMesh",0)
+                        miscUtils.setAttrC(eachGeoShape+".useSmoothPreviewForRender",0)
+                        miscUtils.setAttrC(eachGeoShape+".renderSmoothLevel",0)
+                        miscUtils.setAttrC(eachGeoShape+".useGlobalSmoothDrawType",1)
                         if not mc.getAttr(eachGeoShape+".smoothLevel", lock = True):
                             if previewSubdivLevel == 0:
-                                mc.setAttr(eachGeoShape+".smoothLevel", 0)
+                                miscUtils.setAttrC(eachGeoShape+".smoothLevel", 0)
                             if previewSubdivLevel == 1:
                                 mc.connectAttr("|asset|grp_geo.smoothLevel1", eachGeoShape+".smoothLevel", f=True)
                             if previewSubdivLevel > 1:
@@ -191,14 +216,14 @@ def setSubdiv(GUI= False ):
                             logL.append(logMessage)
                             returnB = False
                         else:
-                            mc.setAttr(eachGeoShape+".aiSubdivType",1)
-                            mc.setAttr(eachGeoShape+".aiSubdivIterations",subdivLevel)
+                            miscUtils.setAttrC(eachGeoShape+".aiSubdivType",1)
+                            miscUtils.setAttrC(eachGeoShape+".aiSubdivIterations",subdivLevel)
                         processedTransL.append(eachGeo)
                     else:
                         skippedTransL.append(eachGeo)
           
-    mc.setAttr("|asset|grp_geo.smoothLevel1", 1)
-    mc.setAttr("|asset|grp_geo.smoothLevel2", 2)
+    miscUtils.setAttrC("|asset|grp_geo.smoothLevel1", 1)
+    miscUtils.setAttrC("|asset|grp_geo.smoothLevel2", 2)
     
     if processedTransL and not skippedTransL:
         logMessage = "#### {:>7}: 'setSubdiv' {} meshes processed".format("Info", len(processedTransL))
@@ -222,6 +247,14 @@ def setSubdiv(GUI= False ):
         print logMessage
         logL.append(logMessage)
         returnB = False
+
+    if nonMeshObjectL:
+        logMessage = "#### {:>7}: 'setSubdiv' '{}' objects without shape: {}".format("Error", len(nonMeshObjectL), nonMeshObjectL)
+        #if GUI == True: mc.confirmDialog( title='Error:', message=logMessage, button=['Ok'], defaultButton='Ok' )
+        print logMessage
+        logL.append(logMessage)
+        returnB = False
+
 
     if not logL:
         logMessage = "#### {:>7}: 'setSubdiv' Donne properly".format("Info")
@@ -454,7 +487,7 @@ def setShadingMask(selectFailingNodes = False, gui = True):
 
 
 class Asset_File_Conformer:
-    def __init__(self):
+    def __init__(self, gui = True):
         if mc.ls("|asset"):        
             self.mainFilePath = mc.file(q=True, list = True)[0]
             self.mainFilePathElem = self.mainFilePath.split("/")
@@ -467,7 +500,7 @@ class Asset_File_Conformer:
             else:
                 self.assetName = self.mainFilePathElem[-3]
                 self.assetType = self.mainFilePathElem[-4]
-
+            self.gui=gui
             self.assetFileType = self.mainFilePathElem[-1].split("-")[0].split("_")[-1]
             self.sourceList =[]
             self.targetList =[]
@@ -479,14 +512,15 @@ class Asset_File_Conformer:
 
 
     def loadFile(self,sourceFile = "renderRef", reference = True):
-        
-        panelL = mc.getPanel( visiblePanels=True )
-        panelToCloseL=["hyperShadePanel","polyTexturePlacementPanel"]
-        for each in panelL:
-            for eachPanel in panelToCloseL:
-                if eachPanel in each:
-                    print each
-                    mc.deleteUI(each, panel = True)
+        if self.gui == True:
+            panelL = mc.getPanel( visiblePanels=True )
+            panelToCloseL=["hyperShadePanel","polyTexturePlacementPanel"]
+            for each in panelL:
+                for eachPanel in panelToCloseL:
+                    if eachPanel in each:
+                        mu.executeDeferred("mc.deleteUI(each, panel = True)")
+
+
 
         self.log.funcName ="'loadFile' "
         mc.refresh()
@@ -512,6 +546,7 @@ class Asset_File_Conformer:
             if not os.path.isfile(self.renderFilePath_exp):
                 txt = "Could not find: '{}', ref file has not been released yet, let's do it: '{}'".format(self.sourceFile, self.sourceFile.replace("Ref",""))
                 namespace = self.sourceFile.replace("Ref","")
+                fileType ="mayaAscii"
                 self.log.printL("w", txt)
                 self.renderFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_TEXTURE_PATH",self.assetType,self.assetName,self.assetName+"_"+self.sourceFile.replace("Ref","")+".ma"))
                 self.renderFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(self.renderFilePath)))

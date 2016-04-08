@@ -183,7 +183,7 @@ class checkModule(object):
 
         # 3   clean file (remove file comparator refs (previz, anim, render....))
         self.printF("asset conformation: clean files ", st="t")
-        r2a = assetconformation.Asset_File_Conformer()
+        r2a = assetconformation.Asset_File_Conformer(gui=self.GUI)
         resultD = r2a.cleanFile()
         # prints -------------------
         self.printF(resultD['resultB'], st="r")
