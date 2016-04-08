@@ -112,24 +112,6 @@ class DavosSetup(ToolSetup):
                 pm.mel.ScriptEditor()
                 pm.mel.handleScriptEditorAction("showStackTrace")
 
-        import logging
-
-        sMuteModList = ["requests.packages.urllib3.connectionpool",
-                        "pytd.util.external.parse",
-                        "PIL.Image", ]
-
-        for sModule in sMuteModList:
-
-            if not sModule:
-                continue
-
-            try:
-                logger = logging.getLogger(sModule)
-                if logger:
-                    logger.disabled = True
-            except Exception as e:
-                pm.displayWarning(toStr(e))
-
     def beforeReloading(self, *args):
         file_browser.kill()
 
