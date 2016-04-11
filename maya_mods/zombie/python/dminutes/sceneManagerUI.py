@@ -880,10 +880,6 @@ def doSwitchContext(*args, **kwargs):
 
     if kwargs.get("prompt", True):
 
-#        sStep = SCENE_MANAGER.context["step"]["code"]
-#        sEntity = SCENE_MANAGER.context["entity"]["code"]
-#        sMsg = "Use current scene to edit '{}' scene of '{}' ?".format(sStep.upper(), sEntity)
-
         pubFile = SCENE_MANAGER.rcFileFromContext(fail=True)
         sMsg = "Use the current scene to work on '{}' ?".format(pubFile.nextVersionName())
 

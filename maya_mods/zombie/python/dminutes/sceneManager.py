@@ -549,7 +549,7 @@ class SceneManager():
 
         return damEntity
 
-    def rcFileFromContext(self, fail=False):
+    def rcFileFromContext(self, weak=False, fail=False):
         """Get davos entry from UI data"""
 
         entry = None
@@ -563,7 +563,7 @@ class SceneManager():
         if sRcName:
             try:
                 damEntity = self.getDamEntity()
-                entry = damEntity.getResource("public", sRcName)
+                entry = damEntity.getRcFile("public", sRcName, weak=weak, fail=fail)
             except Exception as e:
                 if fail:
                     raise
@@ -890,7 +890,7 @@ class SceneManager():
 
         return playMovie(sOutFilePath, **playKwargs)
 
-    def edit(self, editInPlace=None, onBase=False, createFolders=False):
+    def edit(self, editInPlace=None, onBase=False):
         privFile = None
 
         damEntity = self.getDamEntity()
@@ -916,31 +916,13 @@ class SceneManager():
 
         entry = proj.entryFromPath(path)
         if not entry:
-            if createFolders:
-                msg = ("Entity '{0}' does not exists, do yout want to create it ?"
-                       .format(damEntity.name))
-                result = pc.confirmDialog(title='Non existing entity',
-                                          message=msg,
-                                          button=['Yes', 'No'],
-                                          defaultButton='Yes',
-                                          cancelButton='No',
-                                          dismissString='No')
-                if result == "Yes":
-                    self.createFolder()
-                    entry = proj.entryFromPath(path)
-                    if entry == None:
-                        pc.error("Problem editing the entity !")
-                else:
-                    pc.warning('Edit cancelled by user !')
-                    return ''
-            else:
-                sMsg = "No such file: '{}'".format(path)
-                pc.confirmDialog(title='SORRY !',
-                                 message=sMsg,
-                                 button=["OK"],
-                                 icon="critical",
-                                )
-                raise EnvironmentError(sMsg)
+            sMsg = "No such file: '{}'".format(path)
+            pc.confirmDialog(title='SORRY !',
+                             message=sMsg,
+                             button=["OK"],
+                             icon="critical",
+                            )
+            raise EnvironmentError(sMsg)
 
         result = "Yes" if editInPlace else "No"
 
@@ -1325,19 +1307,16 @@ class SceneManager():
         def iterFuture(sAbcNode):
             sFutureList = mc.listHistory(sAbcNode, future=True)
             if sFutureList is not None:
-                for sNode in sFutureList:
-                    if sNode != sAbcNode and sNode.startswith(sShotCamNs + ":"):
-                        yield sNode
+                sFutureList.remove(sAbcNode)
+                for sNodePath in sFutureList:
+                    sNodeName = sNodePath.rsplit("|", 1)[-1]
+                    if sNodeName.startswith(sShotCamNs + ":"):
+                        yield sNodePath
 
         sAbcNodeList = []
         for sAbcNode in mc.ls(type="AlembicNode"):
-
             sFuturList = tuple(iterFuture(sAbcNode))
-            if not sFuturList:
-                mc.lockNode(sAbcNode, lock=False)
-                print "delete unused '{}'".format(sAbcNode)
-                mc.delete(sAbcNode)
-            else:
+            if sFuturList:
                 sAbcNodeList.append(sAbcNode)
 
         if not sAbcNodeList:
