@@ -799,13 +799,35 @@ class Asset_File_Conformer:
                         uvTransferFailed +=1
                         continue
 
-                # sampleSpace: Selects which space the attribute transfer is performed in. 
-                # 0 is world space, (default)
-                # 1 is model space, 
-                # 4 is component-based, 
-                # 5 is topology-based
+                #if target shape is connected to a 'pointOnPolyConstraint' (uses uvs) then we must keep the original uvs, otherwise to avoid loosing the constraint info
+                # pntOnPolyConsL = mc.ls(mc.listHistory(self.targetList[i],future=True),type='pointOnPolyConstraint')
+                # if pntOnPolyConsL:
+                #     UVSetL = mc.polyUVSet( myShape,query=True, allUVSets=True )
+                #     each = UVSetL[0]
+                #     #mc.polyUVSet(myShape,rename=True, newUVSet='anim_'+each, uvSet= each)
 
-                #print ("#### {:>7}: 'transferUV' from '{}' --> {}".format("Drebug",sourceShape,targetShape))
+                #     uvi=0
+                #     while uvi<10:
+                #         uvSetName = mc.getAttr(myShape+'.uvSet['+str(uvi)+'].uvSetName')
+                #         print "uvSetName: ", uvSetName
+                #         if uvSetName  == 'anim_'+each:
+                #             break
+                #         uvi+=1
+                #     for eachCons in pntOnPolyConsL:
+                #         mc.setAttr (eachCons+".nodeState", 2)
+                #         #mc.connectAttr( myShape+".uvSet["+str(uvi)+"].uvSetName", eachCons+".target[0].targetUVSetName",force=True)
+                #         mc.connectAttr(myShape+".uvSet["+str(uvi)+"].uvSetPoints[0]", eachCons+".target[0].targetUV",force=True)
+                #         mc.setAttr (eachCons+".nodeState", 0)
+
+
+
+                    # sampleSpace: Selects which space the attribute transfer is performed in. 
+                    # 0 is world space, (default)
+                    # 1 is model space, 
+                    # 4 is component-based, 
+                    # 5 is topology-based
+
+                    #print ("#### {:>7}: 'transferUV' from '{}' --> {}".format("Drebug",sourceShape,targetShape))
                 sampleSpace = 4
                 if shapeOrig == True: 
                     mc.setAttr(targetShape+".intermediateObject", 0)
@@ -822,6 +844,8 @@ class Asset_File_Conformer:
                     else:
                         mc.transferAttributes( sourceShape, targetShape, sampleSpace=sampleSpace, transferUVs=2 )
                         mc.delete(targetShape, constructionHistory = True)
+
+
 
             # targetShapeList = mc.ls(mc.listRelatives(self.targetList[i], allDescendents = True, fullPath = True, type = "mesh"), noIntermediate = False, l=True)
             # targetShapeList.remove(targetShape)
@@ -974,6 +998,13 @@ class Asset_File_Conformer:
         self.log.funcName ="'smoothPolyDisplay' "
         intSel = mc.ls(selection=True)
         for each in inMeshList:
+                #if target shape is connected to a 'pointOnPolyConstraint' (uses uvs) then we must keep the original uvs, otherwise to avoid loosing the constraint info
+                pntOnPolyConsL = mc.ls(mc.listHistory(each,future=True),type='pointOnPolyConstraint')
+                if pntOnPolyConsL:
+                    txt = "'skipping {}' a 'pointOnPolyConstraint' is using a uvSet ".format(each)
+                    self.log.printL("w", txt)
+                    continue
+
                 shapeOrigL = miscUtils.getShapeOrig(TransformS = each)
                 if len(shapeOrigL)==0:
                     if shapeOrigOnly:
