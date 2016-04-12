@@ -491,8 +491,8 @@ class Asset_File_Conformer:
         if mc.ls("|asset"):        
             self.mainFilePath = mc.file(q=True, list = True)[0]
             self.mainFilePathElem = self.mainFilePath.split("/")
-
-            self.log = miscUtils.LogBuilder(gui=False, logL = [], resultB = True)
+            self.gui=gui
+            self.log = miscUtils.LogBuilder(gui=gui, logL = [], resultB = True)
 
             if self.mainFilePathElem[-2] != "ref":
                 self.assetName = self.mainFilePathElem[-2]
@@ -500,7 +500,7 @@ class Asset_File_Conformer:
             else:
                 self.assetName = self.mainFilePathElem[-3]
                 self.assetType = self.mainFilePathElem[-4]
-            self.gui=gui
+            
             self.assetFileType = self.mainFilePathElem[-1].split("-")[0].split("_")[-1]
             self.sourceList =[]
             self.targetList =[]
@@ -902,6 +902,7 @@ class Asset_File_Conformer:
 
                 #store uv linking
                 uvLinkD={}
+                mc.refresh()
                 sourceShadEngList = mc.ls(mc.listHistory(sourceShape,future = True),type="shadingEngine")
                 textureNodeL = []
                 for each in sourceShadEngList:
@@ -914,9 +915,11 @@ class Asset_File_Conformer:
                     if eachTextureL:
                         textureNodeL.extend(eachTextureL)
                 #print "--"
+                #print "source: {}  --> target: {}".format(sourceShape, targetShape)
+
                 for each in textureNodeL:
-                    uvLinkD[each] = mc.uvLink( query=True, texture=each )[0]
-                    #print "GET",each, uvLinkD[each]
+                    uvLinkD[each] = mc.uvLink( query=True, texture=each )
+                    #print "GET: each: {}, uvLinkD[each]: {}".format(each, uvLinkD[each])
 
                 #print sourceShape+" --> "+targetShape
                 if len(sourceShadEngList) == 1:
@@ -929,9 +932,15 @@ class Asset_File_Conformer:
                     sgTransferFailed +=1
 
                 #linkBack UVs
+                mc.refresh()
                 for each in textureNodeL:
-                    mc.uvLink( make=True, texture=each, uvSet= uvLinkD[each].replace(sourceShape,targetShape) )
-                    #print "SET",each, uvLinkD[each], sourceShape, targetShape
+                    if isinstance(uvLinkD[each], (list,tuple,set)):
+                        for eachUVSet in uvLinkD[each]:
+                            mc.uvLink( make=True, texture=each, uvSet= eachUVSet.replace(sourceShape,targetShape) )
+                            #print "-> SET: textureNode: {}, uvLinkD[each]: {}".format(each, eachUVSet)
+                    else:
+                        mc.uvLink( make=True, texture=each, uvSet= uvLinkD[each].replace(sourceShape,targetShape) )                            
+                        #print "-> SET: textureNode: {}, uvLinkD[each]: {}".format(each, uvLinkD[each])
 
             if sgTransferFailed ==0:
                 txt="Materials have been transfered properly for all the {} object(s)".format(len(self.targetList))
