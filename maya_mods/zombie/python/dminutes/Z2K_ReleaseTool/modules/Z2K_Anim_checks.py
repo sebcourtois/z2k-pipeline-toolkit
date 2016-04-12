@@ -653,7 +653,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=19, e=True)
+        self.pBar_upd(step=1, maxValue=23, e=True)
 
 
         # 1 connectVisibility ()
@@ -891,7 +891,7 @@ class checkModule(object):
         self.printF(result, st="r")
         if debugL:
             for i in debugL:
-                self.printF("  -",i)
+                self.printF("  -"+i)
         # --------------------------
         # --------------------------
         if not result :
@@ -906,7 +906,7 @@ class checkModule(object):
         self.printF(result, st="r")
         if debugL:
             for i in debugL:
-                self.printF("  -",i)
+                self.printF("  -"+i)
         # --------------------------
         # --------------------------
         if not result :
@@ -921,7 +921,7 @@ class checkModule(object):
         self.printF(result, st="r")
         if debugL:
             for i in debugL:
-                self.printF("  -",i)
+                self.printF("  -"+i)
         # --------------------------
         # --------------------------
         if not result :
@@ -930,13 +930,74 @@ class checkModule(object):
 
 
 
-        # 20 ----- chr_fix_EyebrowUpper_ExtCorner_cst()
-        # 21 ----- chr_fix_cheeks_cst()
-        # 22 ----- chr_fix_EyebrowUpper_Cst_average()
-        # 23 ----- chr_add_frontFootTwist_goodCTR()
+        # 20 ----- (chr_add_frontFootTwist_goodCTR)
+        self.printF("chr_add_frontFootTwist_goodCTR()", st="t")
+        result,debugL = jpZ.chr_add_frontFootTwist_goodCTR()
+        # prints -------------------
+        self.printF(result, st="r")
+        if debugL:
+            for i in debugL:
+                self.printF(i)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
 
+
+
+        # 21 ----- chr_fix_cheeks_cst()
+        self.printF("chr_fix_cheeks_cst()", st="t")
+        result,debugL = jpZ.chr_fix_cheeks_cst()
+        # prints -------------------
+        self.printF(result, st="r")
+        if debugL:
+            for i in debugL:
+                self.printF("  -"+i)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+
+        # 22 ----- chr_fix_EyebrowUpper_Cst_average()
+        self.printF("chr_fix_EyebrowUpper_Cst_average()", st="t")
+        result,debugL = jpZ.chr_fix_EyebrowUpper_Cst_average()
+        # prints -------------------
+        self.printF(result, st="r")
+        if debugL:
+            for i in debugL:
+                self.printF(i)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+
+        # 23 ----- (chr_fix_EyebrowUpper_ExtCorner_cst)
+        self.printF("chr_fix_EyebrowUpper_ExtCorner_cst()", st="t")
+        result,debugL = jpZ.chr_fix_EyebrowUpper_ExtCorner_cst()
+        # prints -------------------
+        self.printF(result, st="r")
+        if debugL:
+            for i in debugL:
+                self.printF(i)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
 
         
+
+
+
         # colors
         print "*btn_specialSettings:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
@@ -956,8 +1017,8 @@ class checkModule(object):
         cmds.button(self.BCleanScene, e=1, bgc= defCol)
         cmds.button(self.BCleanObjects, e=1, bgc= defCol)
         cmds.button(self.BCleanAll, e=1, bgc= defCol)
-        cmds.button(self.BApplyShadersFromRender, e=1, bgc= defCol)
         cmds.button(self.BSpecialSettings, e=1, bgc= defCol)
+        cmds.button(self.BApplyShadersFromRender, e=1, bgc= defCol)
 
     def btn_cleanAll(self,  *args, **kwargs):
         print "btn_cleanAll()"
@@ -966,16 +1027,15 @@ class checkModule(object):
         boolResult = True
         if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
             boolResult = False
-        
         if not self.btn_CleanScene(controlN=self.BCleanScene, ):
             boolResult = False
-        
         if not self.btn_CleanObjects(controlN=self.BCleanObjects, ):
-            boolResult = False
-        if not self.btn_applyShadersFromRender(controlN=self.BApplyShadersFromRender, ):
             boolResult = False
         if not self.btn_specialSettings(controlN=self.BSpecialSettings, ):
             boolResult = False
+
+        # if not self.btn_applyShadersFromRender(controlN=self.BApplyShadersFromRender, ):
+        #     boolResult = False
         
         # colors
         self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""],)
@@ -1067,11 +1127,11 @@ class checkModule(object):
         self.BCleanObjects = cmds.button("CleanObjects",)
         cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects) )
 
-        self.BApplyShadersFromRender = cmds.button("Apply shaders from render file",)
-        cmds.button(self.BApplyShadersFromRender,e=1,c= partial( self.btn_applyShadersFromRender,self.BApplyShadersFromRender) )
-        
         self.BSpecialSettings = cmds.button("Apply Special_Settings",)
         cmds.button(self.BSpecialSettings,e=1,c= partial( self.btn_specialSettings,self.BSpecialSettings) )
+        
+        self.BApplyShadersFromRender = cmds.button("Apply shaders from render file",)
+        cmds.button(self.BApplyShadersFromRender,e=1,c= partial( self.btn_applyShadersFromRender,self.BApplyShadersFromRender) )
         
         
 
