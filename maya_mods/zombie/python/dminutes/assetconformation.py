@@ -913,8 +913,10 @@ class Asset_File_Conformer:
                     eachTextureL  = mc.ls(mc.listHistory(shaderL),type="file")
                     if eachTextureL:
                         textureNodeL.extend(eachTextureL)
+                #print "--"
                 for each in textureNodeL:
                     uvLinkD[each] = mc.uvLink( query=True, texture=each )[0]
+                    #print "GET",each, uvLinkD[each]
 
                 #print sourceShape+" --> "+targetShape
                 if len(sourceShadEngList) == 1:
@@ -929,6 +931,7 @@ class Asset_File_Conformer:
                 #linkBack UVs
                 for each in textureNodeL:
                     mc.uvLink( make=True, texture=each, uvSet= uvLinkD[each].replace(sourceShape,targetShape) )
+                    #print "SET",each, uvLinkD[each], sourceShape, targetShape
 
             if sgTransferFailed ==0:
                 txt="Materials have been transfered properly for all the {} object(s)".format(len(self.targetList))
