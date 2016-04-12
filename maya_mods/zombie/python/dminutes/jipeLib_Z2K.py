@@ -3052,6 +3052,7 @@ def chr_Fix_LookAt(*args, **kwargs):
     print "chr_Fix_LookAt()"
             
     # var
+    canDo = True
     toReturnB = True
     debugL = []
     LsideD = {"TargetGP" : "TK_Left_Eye_Root",
@@ -3080,40 +3081,45 @@ def chr_Fix_LookAt(*args, **kwargs):
         currentSourceGP =curD["currentSourceGP"]
         fixBool = curD["fixBool"]
 
-        # start each
-        allCstL = [x for x in cmds.listHistory(TargetGP, levels=1,) if "Constraint" in   cmds.objectType(x)]
-        print "allCstL=", allCstL
+        for i in [TargetGP,badSourceGP,goodSourceGP,currentSourceGP]:
+            if not cmds.objExists(i):
+                canDo = False
 
-        # get current source
-        if len(allCstL):
-            for cst in allCstL:
-                if cmds.objectType(cst) in ["parentConstraint"]:
-                    currentSourceGP =cmds.listConnections(cst + '.target[0].targetParentMatrix', d=False, s=True)[0]    
-                    
-        else:
-            currentSourceGP = ""
+        if canDo:
+            # start each
+            allCstL = [x for x in cmds.listHistory(TargetGP, levels=1,) if "Constraint" in   cmds.objectType(x)]
+            print "allCstL=", allCstL
 
-        print "currentSourceGP=", currentSourceGP
-
-        # checks
-        print currentSourceGP,"<>",goodSourceGP
-        if not currentSourceGP in [goodSourceGP]:
-            print "  bad Source"
-            fixBool = True
-        else:
-            print "  good Source"
-            debugL.append(TargetGP+": Allready OK")
-        # Fix 
-        if fixBool:
-            # delete constraint
+            # get current source
             if len(allCstL):
-                cmds.delete(allCstL)
+                for cst in allCstL:
+                    if cmds.objectType(cst) in ["parentConstraint"]:
+                        currentSourceGP =cmds.listConnections(cst + '.target[0].targetParentMatrix', d=False, s=True)[0]    
+                        
+            else:
+                currentSourceGP = ""
 
-            # create new constraint
-            pcst= cmds.parentConstraint(goodSourceGP,TargetGP,mo=True)
-            scst= cmds.scaleConstraint(goodSourceGP,TargetGP,mo=True)
+            print "currentSourceGP=", currentSourceGP
 
-            debugL.append(TargetGP+": Fixed")
+            # checks
+            print currentSourceGP,"<>",goodSourceGP
+            if not currentSourceGP in [goodSourceGP]:
+                print "  bad Source"
+                fixBool = True
+            else:
+                print "  good Source"
+                debugL.append(TargetGP+": Allready OK")
+            # Fix 
+            if fixBool:
+                # delete constraint
+                if len(allCstL):
+                    cmds.delete(allCstL)
+
+                # create new constraint
+                pcst= cmds.parentConstraint(goodSourceGP,TargetGP,mo=True)
+                scst= cmds.scaleConstraint(goodSourceGP,TargetGP,mo=True)
+
+                debugL.append(TargetGP+": Fixed")
     
     return [True,debugL]
 
@@ -3456,4 +3462,5 @@ def chr_BS_teeth_clean_BS_and_Attrib_Names(*args, **kwargs):
 
     else:
         debugL.append("Nothing Done")
+        
     return [toReturnB,debugL]
