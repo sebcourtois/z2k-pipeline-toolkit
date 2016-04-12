@@ -1583,8 +1583,6 @@ def disableShapeOverrides(inObjL=[], *args, **kwargs):
     return [toReturnB, debugD]
 
 
-
-
 def connectVisibility(connectOnShape=True, force=True, driverObj="Global_SRT", driverAttr="showMesh", *args, **kwargs):
     """ Description: cree et connect un attrib "showMesh" au visibility des shape du "set_meshCache"
         Return : True
@@ -2066,7 +2064,7 @@ def chr_rename_Teeth_BS_attribs(*args, **kwargs):
     # reset all attr of selected controls
     print "chr_rename_Teeth_BS_attribs()"
     debugL = []
-    toRenameUpL = ["Top_Teeth_Global.upperteeth_gum", "Top_Teeth_Global.upperteeth_high", "Top_Teeth_Global.upperteeth_round", "Top_Teeth_Global.upperteeth_assymetry", "Top_Teeth_Global.upperteeth_squeez"]
+    toRenameUpL = ["Top_Teeth_Global.upperteeth_gum", "Top_Teeth_Global.upperteeth_high", "Top_Teeth_Global.upperteeth_round", "Top_Teeth_Global.uppertteeth_assymetry", "Top_Teeth_Global.upperteeth_squeez"]
     toRenameDnL = ["Bottom_Teeth_Global.lowerteeth_gum", "Bottom_Teeth_Global.lowerteeth_high", "Bottom_Teeth_Global.lowerteeth_round", "Bottom_Teeth_Global.lowerteeth_assymetry", "Bottom_Teeth_Global.lowerteeth_squeez", ]
     allRL = toRenameUpL + toRenameDnL
     # print allRL
@@ -2469,31 +2467,13 @@ def chr_neckBulge_Factor_to_zero(*args, **kwargs):
 
     if cmds.objExists("Head_ParamHolder_Main_Ctrl.Neck_Bulge_Factor"):
         cmds.setAttr("Head_ParamHolder_Main_Ctrl.Neck_Bulge_Factor", 0)
+
     return True
 
-def chr_BS_teeth_Noze_Fix(*args, **kwargs):
-    print "chr_BS_teeth_Noze_Fix()"
-    # fix the teeth squeeze BS and add the noze pinch bs to the characters
 
 
-    # get asset BS path (have to contain all teeth and additif BS shapes)
-
-    # get asset bsd file
-
-    # check correspondance
 
 
-    # import BS  in the scene
-
-    # apply .bsd file
-
-    # delete importe objects
-
-
-def armTwistFix (*args, **kwargs):
-    print "armTwistFix()"
-
-    # Left_Rounding_Deformer_End_Crv_upV_pathCns_Mult1 #tweak rotation
 
 
 def chr_improve_Knuckles(*args, **kwargs):
@@ -3072,6 +3052,7 @@ def chr_Fix_LookAt(*args, **kwargs):
     print "chr_Fix_LookAt()"
             
     # var
+    canDo = True
     toReturnB = True
     debugL = []
     LsideD = {"TargetGP" : "TK_Left_Eye_Root",
@@ -3100,40 +3081,45 @@ def chr_Fix_LookAt(*args, **kwargs):
         currentSourceGP =curD["currentSourceGP"]
         fixBool = curD["fixBool"]
 
-        # start each
-        allCstL = [x for x in cmds.listHistory(TargetGP, levels=1,) if "Constraint" in   cmds.objectType(x)]
-        print "allCstL=", allCstL
+        for i in [TargetGP,badSourceGP,goodSourceGP,currentSourceGP]:
+            if not cmds.objExists(i):
+                canDo = False
 
-        # get current source
-        if len(allCstL):
-            for cst in allCstL:
-                if cmds.objectType(cst) in ["parentConstraint"]:
-                    currentSourceGP =cmds.listConnections(cst + '.target[0].targetParentMatrix', d=False, s=True)[0]    
-                    
-        else:
-            currentSourceGP = ""
+        if canDo:
+            # start each
+            allCstL = [x for x in cmds.listHistory(TargetGP, levels=1,) if "Constraint" in   cmds.objectType(x)]
+            print "allCstL=", allCstL
 
-        print "currentSourceGP=", currentSourceGP
-
-        # checks
-        print currentSourceGP,"<>",goodSourceGP
-        if not currentSourceGP in [goodSourceGP]:
-            print "  bad Source"
-            fixBool = True
-        else:
-            print "  good Source"
-            debugL.append(TargetGP+": Allready OK")
-        # Fix 
-        if fixBool:
-            # delete constraint
+            # get current source
             if len(allCstL):
-                cmds.delete(allCstL)
+                for cst in allCstL:
+                    if cmds.objectType(cst) in ["parentConstraint"]:
+                        currentSourceGP =cmds.listConnections(cst + '.target[0].targetParentMatrix', d=False, s=True)[0]    
+                        
+            else:
+                currentSourceGP = ""
 
-            # create new constraint
-            pcst= cmds.parentConstraint(goodSourceGP,TargetGP,mo=True)
-            scst= cmds.scaleConstraint(goodSourceGP,TargetGP,mo=True)
+            print "currentSourceGP=", currentSourceGP
 
-            debugL.append(TargetGP+": Fixed")
+            # checks
+            print currentSourceGP,"<>",goodSourceGP
+            if not currentSourceGP in [goodSourceGP]:
+                print "  bad Source"
+                fixBool = True
+            else:
+                print "  good Source"
+                debugL.append(TargetGP+": Allready OK")
+            # Fix 
+            if fixBool:
+                # delete constraint
+                if len(allCstL):
+                    cmds.delete(allCstL)
+
+                # create new constraint
+                pcst= cmds.parentConstraint(goodSourceGP,TargetGP,mo=True)
+                scst= cmds.scaleConstraint(goodSourceGP,TargetGP,mo=True)
+
+                debugL.append(TargetGP+": Fixed")
     
     return [True,debugL]
 
@@ -3347,9 +3333,7 @@ def chr_fix_EyebrowUpper_Cst_average(*args, **kwargs):
 
     return [toReturnB,debugL]
 
-#to do: fixe scaling on the hands
 
-# to do : Fixe dynamics default values!! fuck****TK
 
 
 # to do : add good foot front roll ctr
@@ -3367,35 +3351,116 @@ def chr_add_frontFootTwist_goodCTR(*args, **kwargs):
     theMax = 360
     keyable = 1
     ctrL = ['Left_Foot_Reverse_0','Right_Foot_Reverse_0']
-    
-    # get parents
-    ctrParentL = [cmds.listRelatives(x,p=1, ni=1, type="transform")[0] for x in ctrL]
-    ctrTargetParentL = [ cmds.listRelatives(x,p=1, ni=1, type="transform")[0] for x in ctrParentL]
+    allreadyDoneB = False
+    for i in ctrL:
+        if cmds.objExists(i+"."+ theAttrN):
+            allreadyDoneB = True
+    if not allreadyDoneB:
+        # get parents
+        ctrParentL = [cmds.listRelatives(x,p=1, ni=1, type="transform")[0] for x in ctrL]
+        ctrTargetParentL = [ cmds.listRelatives(x,p=1, ni=1, type="transform")[0] for x in ctrParentL]
 
-    print "ctrTargetParentL=", ctrTargetParentL
+        print "ctrTargetParentL=", ctrTargetParentL
 
-    for p,c in zip(ctrTargetParentL,ctrL):
-        # unlock parents
+        for p,c in zip(ctrTargetParentL,ctrL):
+            # unlock parents
 
-        # matched gp
-        frontFootRollGP= cmds.group(name=p.split("_",1)[0]+"_"+"frontFootRollGP",em=True)
-        matchByXformMatrix(cursel=[p,frontFootRollGP], mode=0)
+            # matched gp
+            frontFootRollGP= cmds.group(name=p.split("_",1)[0]+"_"+"frontFootRollGP",em=True)
+            matchByXformMatrix(cursel=[p,frontFootRollGP], mode=0)
+            
+            # zero orientations
+            cmds.xform(frontFootRollGP , ro=(0, 0, 0) )
+            frontFootRollGP_zero = frontFootRollGP+"_zero"
+            cmds.duplicate(frontFootRollGP, name=frontFootRollGP_zero)
+            cmds.parent(frontFootRollGP,frontFootRollGP_zero)
+            
+            #parent to targetParent
+            cmds.parent(frontFootRollGP_zero,p)
+            ctrParent = cmds.listRelatives(c,p=1, ni=1, type="transform")[0]
+            cmds.parent(ctrParent,frontFootRollGP)
+            
+
+            # create attr + connect
+
+            if not cmds.objExists(c + "." + theAttrN):
+                cmds.addAttr(c, longName=theAttrN, attributeType=theAttrType, keyable=keyable, dv=theDv, min=theMin, max=theMax)
+
+            cmds.connectAttr(c + "." + theAttrN,frontFootRollGP + "." + 'ry' )
+
+    else:
+        print "    -> AllReady DONE"
+
+# to do textureEditorIsolateSelectSet autoDelete dans cleanScene
+
+# to do: fixe scaling on the hands
+
+# to do : Fixe dynamics default values!! fuck****TK
+
+# to do : armTwistFix
+def armTwistFix (*args, **kwargs):
+    print "armTwistFix()"
+    # Left_Rounding_Deformer_End_Crv_upV_pathCns_Mult1 #tweak rotation
+
+# wip or not to do
+def chr_BS_teeth_clean_BS_and_Attrib_Names(*args, **kwargs):
+    print "chr_BS_teeth_clean_BS_and_Attrib_Names()"
+
+    # rename the bs node to be allways good
+    teeth_up = "geo_upperteeth"
+    teeth_dn = "geo_lowerteeth"
+    bs_upperteethN = "bs_upperteeth"
+    bs_lowerteethN = "bs_lowerteeth"
+    debugL = []
+    toReturnB = True
+    canDo=True
+
+    for i in [teeth_up,teeth_dn]:
+        if not cmds.objExists(i):
+            canDo = False
+
+    if canDo:
+        bsNTeeth_upL = [x for x in cmds.listHistory(teeth_up, ) if "blendShape" in cmds.objectType(x)]
+        bsNTeeth_dnL = [x for x in cmds.listHistory(teeth_dn, ) if "blendShape" in cmds.objectType(x)]
+        print "bsNTeeth_upL=", bsNTeeth_upL
+        print "bsNTeeth_dnL=", bsNTeeth_dnL
+        if len (bsNTeeth_upL) ==1 :
+            cmds.rename (bsNTeeth_upL[0], bs_upperteethN)
+        else:
+            debugL.append("upperTeeth: error: muliple BS _node")
+        if len (bsNTeeth_dnL) ==1 :
+            cmds.rename (bsNTeeth_dnL[0], bs_lowerteethN)
+        else:
+            debugL.append("lowerteeth: error: muliple BS _node")
+
+        # get asset BS path (have to contain all teeth and additif BS shapes)
+
+        # get asset bsd file
+
+        # check correspondance
+
+        # import BS  in the scene
+
+        # apply .bsd file
+
+        # delete importe objects
+
+        # delete old Attributes with wrong names
+        todeleteUpL = ["Top_Teeth_Global.upperteeth_gum", "Top_Teeth_Global.upperteeth_high", "Top_Teeth_Global.upperteeth_round", "Top_Teeth_Global.uppertteeth_assymetry", "Top_Teeth_Global.upperteeth_squeez"]
+        todeleteDnL = ["Bottom_Teeth_Global.lowerteeth_gum", "Bottom_Teeth_Global.lowerteeth_high", "Bottom_Teeth_Global.lowerteeth_round", "Bottom_Teeth_Global.lowerteeth_assymetry", "Bottom_Teeth_Global.lowerteeth_squeez", ]
+        allDL = todeleteUpL + todeleteDnL
+        # print allDL
+        canDo = True
+        for i in allDL:
+            if not cmds.objExists(i):
+                print "    ",i,"doesn't exists"
+                canDo = False
+        print "    canDo=", canDo
+        if canDo:
+            for i in allDL:
+                cmds.deleteAttr(i)
+
+    else:
+        debugL.append("Nothing Done")
         
-        # zero orientations
-        cmds.xform(frontFootRollGP , ro=(0, 0, 0) )
-        frontFootRollGP_zero = frontFootRollGP+"_zero"
-        cmds.duplicate(frontFootRollGP, name=frontFootRollGP_zero)
-        cmds.parent(frontFootRollGP,frontFootRollGP_zero)
-        
-        #parent to targetParent
-        cmds.parent(frontFootRollGP_zero,p)
-        ctrParent = cmds.listRelatives(c,p=1, ni=1, type="transform")[0]
-        cmds.parent(ctrParent,frontFootRollGP)
-        
-
-        # create attr + connect
-
-        if not cmds.objExists(c + "." + theAttrN):
-            cmds.addAttr(c, longName=theAttrN, attributeType=theAttrType, keyable=keyable, dv=theDv, min=theMin, max=theMax)
-
-        cmds.connectAttr(c + "." + theAttrN,frontFootRollGP + "." + 'ry' )
+    return [toReturnB,debugL]
