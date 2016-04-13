@@ -653,7 +653,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=23, e=True)
+        self.pBar_upd(step=1, maxValue=24, e=True)
 
 
         # 1 connectVisibility ()
@@ -995,7 +995,20 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
         
-
+        # 24 ----- (chr_add_frontFootTwist_goodCTR)
+        self.printF("chr_add_frontFootTwist_goodCTR()", st="t")
+        result,debugL = jpZ.chr_add_frontFootTwist_goodCTR()
+        # prints -------------------
+        self.printF(result, st="r")
+        if debugL:
+            for i in debugL:
+                self.printF(i)
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+        
 
 
         # colors
