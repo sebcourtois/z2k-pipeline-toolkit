@@ -1409,7 +1409,7 @@ def resetCTR(inObjL=[], userDefined=True, SRT=True, *args, **kwargs):
         # print i
         if SRT:
             # if  not checkSRT([i])[0]:
-            # print "    reseting",i
+            print "    reseting",i
             try:
                 cmds.xform(i, ro=(0, 0, 0), t=(0, 0, 0), s=(1, 1, 1))
                 resetedL.append(i)
