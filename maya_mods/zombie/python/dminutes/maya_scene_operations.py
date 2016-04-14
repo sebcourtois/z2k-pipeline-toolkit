@@ -36,6 +36,16 @@ def undoAtOnce(func):
         return res
     return doIt
 
+def withoutUndo(func):
+    def doIt(*args, **kwargs):
+        mc.undoInfo(stateWithoutFlush=False)
+        try:
+            res = func(*args, **kwargs)
+        finally:
+            mc.undoInfo(stateWithoutFlush=True)
+        return res
+    return doIt
+
 STEREO_INFOS = {}
 def recStereoInfos(frame, **kwargs):
     global STEREO_INFOS
@@ -377,11 +387,32 @@ def setMayaProject(sProjName):
 
     mc.workspace(update=True)
     mc.workspace(sProjName, openWorkspace=True)
+
     if not mc.workspace(fileRuleEntry="movie"):
         mc.workspace(fileRule=("movie", "captures"))
         mc.workspace(saveWorkspace=True)
 
+    if not mc.workspace(fileRuleEntry="alembicCache"):
+        mc.workspace(fileRule=("alembicCache", "cache/alembic"))
+        mc.workspace(saveWorkspace=True)
+
     return sMyaProjPath
+
+def getWipCaptureDir(damShot):
+
+    p = osp.join(mc.workspace(fileRuleEntry="movie"),
+                 damShot.sequence,
+                 damShot.name,)
+
+    return mc.workspace(expandName=p)
+
+def getAlembicCacheDir(damShot):
+
+    p = osp.join(mc.workspace(fileRuleEntry="alembicCache"),
+                 damShot.sequence,
+                 damShot.name,)
+
+    return mc.workspace(expandName=p)
 
 def importSceneStructure(sceneManager):
     #Import only if does not exists...
@@ -749,7 +780,7 @@ def getAnimaticInfos(sceneManager):
     damShot = sceneManager.getDamShot()
 
     sPubMoviePath = damShot.getPath('public', 'animatic_capture')
-    sLocMoviePath = osp.normpath(osp.join(sceneManager.getWipCaptureDir(damShot),
+    sLocMoviePath = osp.normpath(osp.join(getWipCaptureDir(damShot),
                                           osp.basename(sPubMoviePath)))
     sAnimaticImgPath = makeFilePath(osp.splitext(sLocMoviePath)[0],
                                     "animatic", "jpg", frame=1)

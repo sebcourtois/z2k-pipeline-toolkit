@@ -621,17 +621,6 @@ class SceneManager():
 
         return None
 
-    def getWipCaptureDir(self, damShot=None):
-
-        if not damShot:
-            damShot = self.getDamShot()
-
-        p = osp.join(mc.workspace(fileRuleEntry="movie"),
-                        damShot.sequence,
-                        damShot.name,)
-
-        return mc.workspace(expandName=p)
-
     def playLatestCapture(self, sendToRv):
 
         context = self.context
@@ -639,7 +628,7 @@ class SceneManager():
         sStep = context['step']['code']
         sTask = context['task']['content']
         damShot = self.getDamShot()
-        sWipCaptDirPath = self.getWipCaptureDir(damShot)
+        sWipCaptDirPath = mop.getWipCaptureDir(damShot)
         seqId = context["entity"]["sg_sequence"]["id"]
 
         sScenePath = pc.sceneName()
@@ -688,7 +677,7 @@ class SceneManager():
 
         oShotCam = self.getShotCamera(fail=True)
 
-        sWipCaptDirPath = self.getWipCaptureDir(damShot)
+        sWipCaptDirPath = mop.getWipCaptureDir(damShot)
         seqId = context["entity"]["sg_sequence"]["id"]
 
         CAPTURE_INFOS['cam'] = oShotCam.getShape().name()
