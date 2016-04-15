@@ -278,7 +278,7 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False , inPare
                 else:
                     continue
                 materialParticule = str(materialName)
-                if "dagNode" in mc.nodeType(item, inherited=True):
+                if "dagNode" in mc.nodeType(item, inherited=True) and mc.nodeType(item)!="place3dTexture":
                     continue
                 if connectedToSeveralSG (item):
                     materialParticule = "shared"
