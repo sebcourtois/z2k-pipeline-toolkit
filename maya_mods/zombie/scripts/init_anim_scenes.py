@@ -5,10 +5,10 @@ from itertools import groupby
 
 import pymel.core as pm
 
-from pytd.util.fsutils import pathResolve, pathSplitDirs, pathJoin
+#from pytd.util.fsutils import pathResolve, pathSplitDirs, pathJoin
 
 from davos.core.damproject import DamProject
-from davos.core.damtypes import *
+#from davos.core.damtypes import *
 
 from pytaya.core import system as myasys
 
@@ -111,7 +111,10 @@ def launch(shots=None, sequences=None, dryRun=True):
             print "scene:".upper(), privLayoutScn.absPath(), '\n'
             myasys.openScene(privLayoutScn.absPath(), force=True, fail=False, lrd="none")
 
-            deleteUnknownNodes()
+            try:
+                deleteUnknownNodes()
+            except Exception as e:
+                pm.displayWarning(e)
             pm.refresh()
 
             print "\nsave as:".upper(), pubAnimScn.absPath()
