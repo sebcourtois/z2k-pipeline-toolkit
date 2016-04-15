@@ -278,7 +278,7 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False , inPare
                 else:
                     continue
                 materialParticule = str(materialName)
-                if "dagNode" in mc.nodeType(item, inherited=True):
+                if "dagNode" in mc.nodeType(item, inherited=True) and mc.nodeType(item)!="place3dTexture":
                     continue
                 if connectedToSeveralSG (item):
                     materialParticule = "shared"
@@ -1618,7 +1618,7 @@ def cleanlgtRig( verbose = False):
     refNodeList = mc.ls(type = "reference")
 
     for each in refNodeList:
-        if re.match('^lgtRig[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) or re.match('^tmpEnv[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN$', each) :
+        if re.match('^lgtRig[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN', each) or re.match('^tmpEnv[0-9]{0,3}[:]{0,1}[a-zA-Z0-9_]{0,128}RN', each) :
             fileRef= pm.FileReference(each)
             #fileRef = mc.referenceQuery(each,filename=True)# other way to do it
             try:

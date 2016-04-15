@@ -784,6 +784,9 @@ def compareHDToPreviz():
     BOX_SCALE = 0.1 # 10%
 
     listWarning=[]
+    dictWarning={}
+
+    _DW = 0 # 1 if Dreamwall, 0 if 2Minutes
 
 
     def bboxPrintWarning(listWarning):
@@ -817,9 +820,7 @@ def compareHDToPreviz():
         ##print("\tbbox previz = %f" % previzBbox[0], "%f" % previzBbox[1], "%f" % previzBbox[2], "%f" % previzBbox[3], "%f" % previzBbox[4], "%f" % previzBbox[5])
 
         errCenterX, errDeltaX = compareMinMaxHiToPreviz(hiBbox[0], hiBbox[3], previzBbox[0], previzBbox[3], boxScale)
-
-        errCenterY, errDeltaY = compareMinMaxHiToPreviz(hiBbox[1], hiBbox[4], previzBbox[1], previzBbox[4], boxScale)
-            
+        errCenterY, errDeltaY = compareMinMaxHiToPreviz(hiBbox[1], hiBbox[4], previzBbox[1], previzBbox[4], boxScale)       
         errCenterZ, errDeltaZ = compareMinMaxHiToPreviz(hiBbox[2], hiBbox[5], previzBbox[2], previzBbox[5], boxScale)
 
         if errCenterX or errCenterY or errCenterZ:
@@ -863,15 +864,66 @@ def compareHDToPreviz():
     def cmp2zero(vec):
         return ((math.fabs(vec[0]) > EPSILON) or (math.fabs(vec[1]) > EPSILON) or (math.fabs(vec[2]) > EPSILON))
 
+    def createSetForJulien(name, object):
+        cmds.sets(object, n=name)    
+
+    def findGroupHiNotExistingInPreviz(assetHi, assetPreviz):
+        groupsHi = cmds.listRelatives(assetHi, ad=True, f=True,type='transform') # get all transforms with ful path
+        for groupHi in groupsHi:
+            if is_group(groupHi) and "grp_" in groupHi.split("|")[-1] and not "grp_geo_" in groupHi.split("|")[-1]: # if the transform is a group
+                #print("groupHi : " + groupHi)
+                namespacePreviz = ""
+                if "previz:" in assetPreviz:
+                    namespacePreviz = assetPreviz.split(":")[0] + ":" # get namespace
+                groupPreviz = (groupHi.replace(assetHi, assetPreviz)).replace("grp_", namespacePreviz+"grp_") # build groupPreviz name from groupHi
+                #print("namespacePreviz = " + namespacePreviz)
+                #print ("groupPreviz : " + groupPreviz)
+                
+                if not cmds.objExists(groupPreviz): # if groupPreviz doesnt exist, groupHi exist only in Hi !
+                    #print ("groupPreviz : " + groupPreviz)
+                    print ("\t\t" + groupHi)
+                    createSetForJulien("Set_INFO_GroupOnlyExistingInHi_"+groupHi, groupHi)
+
+    def computeBboxVolume(bbox):
+        return (math.fabs(bbox[3]-bbox[0])*math.fabs(bbox[4]-bbox[1])*math.fabs(bbox[5]-bbox[2])) 
+                   
+    def compareBboxVolumeHiToPreviz(groupHi, groupPreviz): # ex. boxScale = 0.1 (10%)
+        ##print("groupHi = " + groupHi + " groupPreviz = " + groupPreviz)
+        hiBbox = cmds.exactWorldBoundingBox(groupHi)
+        ##print("\tbbox hi = %f" % hiBbox[0], "%f" % hiBbox[1], "%f" % hiBbox[2], "%f" % hiBbox[3], "%f" % hiBbox[4], "%f" % hiBbox[5])
+        previzBbox = cmds.exactWorldBoundingBox(groupPreviz)
+        ##print("\tbbox previz = %f" % previzBbox[0], "%f" % previzBbox[1], "%f" % previzBbox[2], "%f" % previzBbox[3], "%f" % previzBbox[4], "%f" % previzBbox[5])
+        
+        hiVol = computeBboxVolume(hiBbox)
+        previzVol = computeBboxVolume(previzBbox)    
+        ##print("hiVol = " + str(hiVol) + "  previzVol = " + str(previzVol))
+        
+        if (hiVol > 0.001) and (previzVol > 0.001): # some volume maybe zero because all vertex are on one plane ...
+            diffBbox = math.fabs(hiVol - previzVol)
+            percent = diffBbox / previzVol
+            ##print("percent diff = " + str(percent*100))
+            return percent
+        else:
+            return 99999
+        
+
     ## previz is the ref, hi could have more group but not less, and check localspace pivot translate et scale MUST be 0 !
 
     namespacePreviz = ""
     errorCount = 0;
-    sel = cmds.ls(sl=True, type='transform') # get the transform(s) selecte
-    print sel
+    sel = cmds.ls(sl=True, type='transform') # get the transform(s) selected
+    ##print sel
     if len(sel) == 2: # test if current selection has 2 nodes
         assetPreviz = sel[1]
         assetHi = sel[0]
+        
+        print("\n***** checking group : " + assetHi + " to group : " + assetPreviz)
+        
+        if not _DW:
+            print("\t*** INFO: Groups only existing in Hi")
+            findGroupHiNotExistingInPreviz(assetHi, assetPreviz)
+            print("\n")
+        
         if "previz" in sel[0]:
             assetPreviz = sel[0]
             assetHi = sel[1]
@@ -879,7 +931,7 @@ def compareHDToPreviz():
         if "previz:" in assetPreviz:
             namespacePreviz = assetPreviz.split(":")[0] + ":" # get namespace
 
-        print("\n***** comparing translations and rotations value from " + assetHi + " to reference " + assetPreviz)
+        print("\t*** comparing translations and rotations value from " + assetHi + " to reference " + assetPreviz)
         groupsPreviz = cmds.listRelatives(assetPreviz, ad=True, f=True,type='transform') # get all transforms with ful path
         #print ("* " + str(groupsPreviz))
         for groupPreviz in groupsPreviz:
@@ -887,6 +939,7 @@ def compareHDToPreviz():
              
             if is_group(groupPreviz) and "grp_" in groupPreviz.split("|")[-1] and not "grp_geo_" in groupPreviz.split("|")[-1]: # if the transform is a group
                 ##print("\tgroupPreviz = " + str(groupPreviz))
+                
                 # get positions, rotations of locator
                 rotPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,r=1,ro=1), DECIMAL_NB) # get rotations
                 posPreviz = vectorLimitDecimal(cmds.xform(groupPreviz,q=True,r=1,t=1), DECIMAL_NB) # get translations
@@ -903,32 +956,67 @@ def compareHDToPreviz():
                     posHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,r=1,t=1), DECIMAL_NB) # get translations
                     error = False
                     if cmp(rotHi, rotPreviz):
-                        print("\tERROR in group: " + groupHi + " has different rotate values: " + str(rotHi) + " instead of previz : " + str(rotPreviz))
+                        print("\t\tERROR in group: " + groupHi + " has different rotate values: " + str(rotHi) + " instead of previz : " + str(rotPreviz))
                         error = True
                         errorCount += 1
+                        if not _DW:
+                            createSetForJulien("Set_ERROR_"+str(groupHi)+"_hasDifferentRotateValues", groupHi)
                     if cmp(posHi, posPreviz):
-                        print("\tERROR in group: " + groupHi + " has different translation values: " + str(posHi) + " instead of previz : "+ str(posPreviz))
+                        print("\t\tERROR in group: " + groupHi + " has different translation values: " + str(posHi) + " instead of previz : "+ str(posPreviz))
                         error = True
                         errorCount += 1
+                        if not _DW:
+                            createSetForJulien("Set_ERROR_"+str(groupHi)+"_hasDifferentTranslationValues", groupHi)
                     # test local pivot rotate and scale
                     localPivotRotateHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,os=1,rp=1), DECIMAL_NB) # get local rotate pivot
                     localPivotScaleHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,os=1,sp=1), DECIMAL_NB) # get local scale pivot
                     if cmp2zero(localPivotRotateHi): # compare to zero with epsilon precision.
-                        print("\tERROR in group: " + groupHi + " has local pivot rotate values: " + str(localPivotRotateHi))
+                        print("\t\tERROR in group: " + groupHi + " has local pivot rotate values: " + str(localPivotRotateHi))
                         error = True
                         errorCount += 1
+                        if not _DW:
+                            createSetForJulien("Set_ERROR_"+str(groupHi)+"_hasLocalPivotRotateNotZero", groupHi)
                     if cmp2zero(localPivotScaleHi):
-                        print("\tERROR in group: " + groupHi + " has local pivot scale values: " +  str(localPivotScaleHi))
+                        print("\t\tERROR in group: " + groupHi + " has local pivot scale values: " +  str(localPivotScaleHi))
                         error = True
                         errorCount += 1
+                        if not _DW:
+                            createSetForJulien("Set_ERROR_"+str(groupHi)+"_hasLocalPivotScaleNotZero", groupHi)
 
-                    compareBboxHiToPreviz(groupHi, groupPreviz, BOX_SCALE, listWarning)
+                    if _DW:
+                        compareBboxHiToPreviz(groupHi, groupPreviz, BOX_SCALE, listWarning)
+                    else:
+                        percent = compareBboxVolumeHiToPreviz(groupHi, groupPreviz)
+                        if percent > BOX_SCALE: 
+                            if (percent == 99999):
+                                dictWarning["ERROR: " + groupHi] = -1
+                                createSetForJulien("Set_ERROR_Bbox_"+str(groupHi)+"_hasVolumeEqualZero", groupHi)
+                                error = True
+                                errorCount += 1
+                            else:
+                                dictWarning["WARNING: " + groupHi + " volume is different than previz"] = percent
+                                createSetForJulien("Set_WARNING_Bbox"+str(groupHi)+"_hasVolueGretaerThanPrvizBy_" + str(floatLimitDecimal(percent*100,DECIMAL_NB)) + "_percent", groupHi)
                      
                 else:
-                    print("\tERROR: group: " + groupHi + " is missing")
+                    print("\t\tERROR: group: " + groupHi + " is missing")
+                    error = True
+                    errorCount += 1
+                    ##if not _DW:
+                    ##    createSetForJulien("Set_ERROR_"+str(groupHi)+"_isMissing", groupHi)
+                        
 
-        bboxPrintWarning(listWarning) # print list warning for bbox.
+        if _DW:
+            bboxPrintWarning(listWarning) # print list warning for bbox.
+        else:
+            listEllipseWarning = sorted(dictWarning.items(), key=lambda t: t[1], reverse=True) # sort by value greatest to smallest.
+            print("\n\t*** Bbox warning if more than " + str(1./BOX_SCALE) + " % different between Hi and Previz ***")
+            for warn in listEllipseWarning:
+                if warn[1] == -1: # volume is zero
+                    print("\t\t" + warn[0] + " can't compare volume because object are flat")
+                else:
+                    print ("\t\t" + warn[0] + " by " + str(floatLimitDecimal(warn[1]*100,DECIMAL_NB)) + " %")
 
+        print("\n")
         if (errorCount != 0):
             if (errorCount == 1):
                 print("**** " + str(errorCount) + " error found ")
