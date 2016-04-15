@@ -14,6 +14,7 @@ from pytaya.core import system as myasys
 
 from pytd.gui.itemviews.utils import toDisplayText
 from pytd.util.sysutils import inDevMode, toStr
+from dminutes.miscUtils import deleteUnknownNodes
 
 
 def iterSeqDirPaths(shotLib, sSeqList):
@@ -109,6 +110,8 @@ def launch(shots=None, sequences=None, dryRun=True):
 
             print "scene:".upper(), privLayoutScn.absPath(), '\n'
             myasys.openScene(privLayoutScn.absPath(), force=True, fail=False, lrd="none")
+
+            deleteUnknownNodes()
             pm.refresh()
 
             print "\nsave as:".upper(), pubAnimScn.absPath()

@@ -1,5 +1,5 @@
 
-import sys
+#import sys
 import os
 
 import pymel.core as pm
@@ -7,7 +7,7 @@ import pymel.core as pm
 from pytd.util.fsutils import pathResolve, pathSplitDirs, pathJoin
 
 from davos.core.damproject import DamProject
-from davos.core.damtypes import *
+#from davos.core.damtypes import *
 
 from pytaya.core import system as myasys
 

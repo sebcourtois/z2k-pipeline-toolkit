@@ -1409,7 +1409,7 @@ def resetCTR(inObjL=[], userDefined=True, SRT=True, *args, **kwargs):
         # print i
         if SRT:
             # if  not checkSRT([i])[0]:
-            # print "    reseting",i
+            print "    reseting",i
             try:
                 cmds.xform(i, ro=(0, 0, 0), t=(0, 0, 0), s=(1, 1, 1))
                 resetedL.append(i)
@@ -3133,8 +3133,8 @@ def chr_fix_mirror_parameters(*args, **kwargs):
     
     print "chr_fix_mirror_parametersAA()"
     debugL = []
-    outTrueL =['Left_Bottom_Teeth', 'Right_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Top_Teeth', 'Right_Shoulder', 'Left_Shoulder', 'Left_Hand_0', 'Left_Thumb_0', 'Left_Thumb_1', 'Left_Thumb_2', 'Left_Meta_Index', 'Left_Index_0', 'Left_Index_1', 'Left_Index_2', 'Left_Pinky_Meta_Bone_Ctrl', 'Right_Middle_1', 'Right_Middle_2', 'Right_Ring_Meta_Bone_Ctrl', 'Right_Ring_0_Bone_Ctrl', 'Right_Ring_1_Bone_Ctrl', 'Right_Ring_2_Bone_Ctrl', 'Right_Foot_FK_0', 'Right_Foot_FK_1', 'Left_Arm_FK_1', 'Left_Arm_FK_0', 'Left_Pinky_0_Bone_Ctrl', 'Left_Pinky_1_Bone_Ctrl', 'Left_Pinky_2_Bone_Ctrl', 'Left_Meta_Middle', 'Left_Middle_0', 'Left_Middle_1', 'Left_Middle_2', 'Left_Ring_Meta_Bone_Ctrl', 'Left_Ring_0_Bone_Ctrl', 'Left_Ring_1_Bone_Ctrl', 'Left_Ring_2_Bone_Ctrl', 'Right_Leg_FK_0', 'Right_Foot_Heel', 'Right_Foot_Reverse_0', 'Right_Foot_Reverse_1', 'Right_Foot_Reverse_2', 'Left_EyeBrow_out_1', 'Left_EyeBrow_in', 'Left_EyeBrow_out', 'Right_Arm_FK_1', 'Right_Arm_FK_0', 'Right_Hand_0', 'Right_Thumb_0', 'Left_nostril', 'Right_nostril', 'Right_Ear_Bone_Ctrl', 'Right_Thumb_1', 'Right_Thumb_2', 'Right_Meta_Index', 'Right_Index_0', 'Right_Index_1', 'Right_Index_2', 'Right_Pinky_Meta_Bone_Ctrl', 'Right_Pinky_0_Bone_Ctrl', 'Right_Pinky_1_Bone_Ctrl', 'Right_Pinky_2_Bone_Ctrl', 'Right_Meta_Middle', 'Right_Middle_0', 'Left_UpperEye_0_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_UpperEye_1_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_UpperEye_3_Ctrl', 'Right_LowerEye_0_Ctrl', 'Right_LowerEye_1_Ctrl', 'Right_LowerEye_2_Ctrl', 'Right_LowerEye_3_Ctrl', 'Right_Leg_FK_1', 'Right_Levator1_0_Ctrl', 'Right_Levator1_1_Ctrl', 'Right_Levator_0_Ctrl', 'Right_Levator_1_Ctrl', 'Right_Cheek', 'Right_Zygo_0_Ctrl', 'Right_Zygo_1_Ctrl', 'Left_Foot_FK_0', 'Right_Riso_0_Ctrl', 'Right_Riso_1_Ctrl', 'Left_Zygo_0_Ctrl', 'Left_Zygo_1_Ctrl', 'Left_Levator1_0_Ctrl', 'Left_Levator1_1_Ctrl', 'Left_Levator_0_Ctrl', 'Left_Levator_1_Ctrl', 'Left_Riso_0_Ctrl', 'Left_Riso_1_Ctrl', 'Left_CheekBone', 'Right_CheekBone', 'Right_Tongue_2', 'Right_Tongue_3', 'Right_Tongue_1', 'Left_Foot_FK_1', 'Left_Foot_Heel', 'Left_Foot_Reverse_0', 'Left_Foot_Reverse_1', 'Left_Foot_Reverse_2', 'Left_Leg_FK_1', 'Left_Leg_FK_0', 'Left_UpperEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_UpperEye_3_Ctrl', 'Left_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_LowerEye_2_Ctrl', 'Left_LowerEye_3_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_in_1', 'Right_Brow_ridge_in', 'Right_Brow_ridge_out_1', 'Right_EyeBrow_out_1', 'Right_EyeBrow_in', 'Right_Brow_ridge_in_1', 'Right_EyeBrow_out', 'Right_Brow_ridge_out', 'Left_EyeBrow_Global', 'Left_EyeBrow_in_1']
-    outFalseL = ['Bottom_Teeth_Global', 'Bottom_Teeth', 'Top_Teeth_Global', 'Top_Teeth', 'Right_Hand_ParamHolder_Main_Ctrl', 'Left_Foot_ParamHolder_Main_Ctrl', 'Right_Foot_ParamHolder_Main_Ctrl', 'Left_Hand_ParamHolder_Main_Ctrl', 'Left_Arm_Root', 'Right_Leg_Extra_0', 'Right_Arm_Extra_6', 'Right_Arm_Round_Root', 'Right_Arm_Root_Tangent', 'Right_Arm_End', 'Right_Arm_End_Tangent', 'Right_Arm_Elbow', 'Right_Arm_Round_0', 'Right_Arm_Round_1', 'Right_Arm_Extra_0', 'Right_Arm_Extra_1', 'Right_Arm_Extra_2', 'Right_Arm_Extra_3', 'Right_Arm_Extra_4', 'Right_Arm_Extra_5', 'Right_Leg_upV', 'Left_Arm_Extra_0', 'Left_Arm_Extra_1', 'Left_Arm_Extra_2', 'Left_Arm_Extra_3', 'Left_Arm_Extra_4', 'Left_Arm_Extra_5', 'Left_Arm_Extra_6', 'Left_Arm_Round_Root', 'Left_Arm_Round_Root_Tangent', 'Left_Arm_Round_Eff', 'Left_Arm_Round_Eff_Tangent', 'Left_Arm_Elbow', 'Left_Arm_Round_0', 'Left_Arm_Round_1', 'Left_Arm_IK', 'Left_Arm_upV', 'Left_Cheek', 'Left_Depressor_Handle_1_Control', 'Left_Depressor1_Handle_1_Control', 'Left_MouthCorner', 'Left_LowerLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 'Left_LowerLip_Inter', 'Left_UpperLip_1_Ctrl', 'Left_UpperLip_2_Ctrl', 'Left_UpperLip_Inter', 'Left_Leg_Extra_5', 'Left_Leg_Extra_6', 'Left_Leg_Round_Root', 'Left_Leg_Round_Root_Tangent', 'Left_Leg_Round_Eff', 'Left_Leg_Round_Eff_Tangent', 'Left_Leg_Knee', 'Left_Leg_Round_0', 'Left_Leg_Round_1', 'Left_Pant_Bottom_Global_Main_Ctrl', 'Left_Pant_Ext_Main_Ctrl', 'Left_Pant_Int_Main_Ctrl', 'Left_Pant_Front_Main_Ctrl', 'Left_Pant_Back_Main_Ctrl', 'Right_Leg_IK', 'Left_Brow_ridge_in', 'Left_Brow_ridge_out_1', 'Left_Brow_ridge_in_1', 'Left_Brow_ridge_out', 'Right_Collar_0_1_Bone_Ctrl', 'Right_Collar_0_2_Bone_Ctrl', 'Right_Arm_upV', 'Right_Arm_Root', 'Right_Arm_IK', 'Left_Collar_2_2_Bone_Ctrl', 'Left_Collar_1_0_Bone_Ctrl', 'Left_Collar_1_2_Bone_Ctrl', 'Back_Collar_1_Bone_Ctrl', 'Back_Collar_2_Bone_Ctrl', 'Left_UpperLid_Main_Ctrl', 'Left_Eyelid_Out', 'Left_Eyelid_In', 'Left_Eye_Target_Main_Ctrl', 'Left_Eye', 'Left_Eye_Pupille_Main_Ctrl', 'Right_Eye_Target_Main_Ctrl', 'Right_Eye', 'Right_Eye_Pupille_Main_Ctrl', 'Right_Leg_Root', 'Right_Base_Depressor', 'Right_Base_Levator1', 'Right_Base_Depressor1', 'Right_Base_Levator', 'Right_Depressor1_Handle_1_Control', 'Right_UpperLip_1_Ctrl', 'Right_UpperLip_2_Ctrl', 'Right_UpperLip_Inter', 'Right_MouthCorner', 'Right_LowerLip_1_Ctrl', 'Right_LowerLip_2_Ctrl', 'Right_LowerLip_Inter', 'Right_Depressor_Handle_1_Control', 'Left_Base_Levator', 'Left_Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator1', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Left_Leg_Extra_0', 'Left_Leg_Extra_1', 'Left_Leg_Extra_2', 'Left_Leg_Extra_3', 'Left_Leg_Extra_4', 'Left_Leg_IK', 'Left_Leg_upV', 'Left_Leg_Root', 'Right_Leg_Extra_1', 'Right_Leg_Extra_2', 'Right_Leg_Extra_3', 'Right_Leg_Extra_4', 'Right_Leg_Extra_5', 'Right_Leg_Extra_6', 'Right_Leg_Round_Root', 'Right_Leg_Round_Root_Tangent', 'Right_Leg_Round_End', 'Right_Leg_Round_End_Tangent', 'Right_Leg_Knee', 'Right_Leg_Round_0', 'Right_Leg_Round_1', 'Right_Pant_Bottom_Global_Main_Ctrl', 'Right_Pant_Ext_Main_Ctrl', 'Right_Pant_Int_Main_Ctrl', 'Right_Pant_Front_Main_Ctrl', 'Right_Pant_Back_Main_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Right_LowerLid_Main_Ctrl', 'Right_UpperLid_Main_Ctrl', 'Right_Eyelid_Out', 'Right_Eyelid_In', 'Right_Collar_1_0_Bone_Ctrl', 'Right_Collar_1_2_Bone_Ctrl', 'Right_Collar_2_1_Bone_Ctrl', 'Right_Collar_2_2_Bone_Ctrl', 'Left_Collar_0_1_Bone_Ctrl', 'Left_Collar_0_2_Bone_Ctrl', 'Left_Collar_2_1_Bone_Ctrl', 'Right_Eye_Bulge', 'Left_Ear_Bone_Ctrl', 'Left_Eye_Bulge']
+    outTrueL =['Left_Bottom_Teeth', 'Right_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Top_Teeth', 'Left_Cheek', 'Right_Shoulder', 'Left_Shoulder', 'Left_Hand_0', 'Left_Thumb_0', 'Left_Thumb_1', 'Left_Thumb_2', 'Left_Meta_Index', 'Left_Index_0', 'Left_Index_1', 'Left_Index_2', 'Left_Pinky_Meta_Bone_Ctrl', 'Right_Middle_1', 'Right_Middle_2', 'Right_Ring_Meta_Bone_Ctrl', 'Right_Ring_0_Bone_Ctrl', 'Right_Ring_1_Bone_Ctrl', 'Right_Ring_2_Bone_Ctrl', 'Right_Foot_FK_0', 'Right_Foot_FK_1', 'Left_Arm_FK_1', 'Left_Arm_FK_0', 'Left_Pinky_0_Bone_Ctrl', 'Left_Pinky_1_Bone_Ctrl', 'Left_Pinky_2_Bone_Ctrl', 'Left_Meta_Middle', 'Left_Middle_0', 'Left_Middle_1', 'Left_Middle_2', 'Left_Ring_Meta_Bone_Ctrl', 'Left_Ring_0_Bone_Ctrl', 'Left_Ring_1_Bone_Ctrl', 'Left_Ring_2_Bone_Ctrl', 'Right_Leg_FK_0', 'Right_Foot_Heel', 'Right_Foot_Reverse_0', 'Right_Foot_Reverse_1', 'Right_Foot_Reverse_2', 'Left_EyeBrow_out_1', 'Left_EyeBrow_in', 'Left_EyeBrow_out', 'Right_Arm_FK_1', 'Right_Arm_FK_0', 'Right_Hand_0', 'Right_Thumb_0', 'Left_nostril', 'Right_nostril', 'Right_Ear_Bone_Ctrl', 'Right_Thumb_1', 'Right_Thumb_2', 'Right_Meta_Index', 'Right_Index_0', 'Right_Index_1', 'Right_Index_2', 'Right_Pinky_Meta_Bone_Ctrl', 'Right_Pinky_0_Bone_Ctrl', 'Right_Pinky_1_Bone_Ctrl', 'Right_Pinky_2_Bone_Ctrl', 'Right_Meta_Middle', 'Right_Middle_0', 'Left_UpperEye_0_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_UpperEye_1_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_UpperEye_3_Ctrl', 'Right_LowerEye_0_Ctrl', 'Right_LowerEye_1_Ctrl', 'Right_LowerEye_2_Ctrl', 'Right_LowerEye_3_Ctrl', 'Right_Leg_FK_1', 'Right_Levator1_0_Ctrl', 'Right_Levator1_1_Ctrl', 'Right_Levator_0_Ctrl', 'Right_Levator_1_Ctrl', 'Right_Cheek', 'Right_Zygo_0_Ctrl', 'Right_Zygo_1_Ctrl', 'Left_Foot_FK_0', 'Right_Riso_0_Ctrl', 'Right_Riso_1_Ctrl', 'Left_Zygo_0_Ctrl', 'Left_Zygo_1_Ctrl', 'Left_Levator1_0_Ctrl', 'Left_Levator1_1_Ctrl', 'Left_Levator_0_Ctrl', 'Left_Levator_1_Ctrl', 'Left_Riso_0_Ctrl', 'Left_Riso_1_Ctrl', 'Left_CheekBone', 'Right_CheekBone', 'Right_Tongue_2', 'Right_Tongue_3', 'Right_Tongue_1', 'Left_Foot_FK_1', 'Left_Foot_Heel', 'Left_Foot_Reverse_0', 'Left_Foot_Reverse_1', 'Left_Foot_Reverse_2', 'Left_Leg_FK_1', 'Left_Leg_FK_0', 'Left_UpperEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_UpperEye_3_Ctrl', 'Left_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_LowerEye_2_Ctrl', 'Left_LowerEye_3_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_in_1', 'Right_Brow_ridge_in', 'Right_Brow_ridge_out_1', 'Right_EyeBrow_out_1', 'Right_EyeBrow_in', 'Right_Brow_ridge_in_1', 'Right_EyeBrow_out', 'Right_Brow_ridge_out', 'Left_EyeBrow_Global', 'Left_EyeBrow_in_1']
+    outFalseL = ['Bottom_Teeth_Global', 'Bottom_Teeth', 'Top_Teeth_Global', 'Top_Teeth', 'Right_Hand_ParamHolder_Main_Ctrl', 'Left_Foot_ParamHolder_Main_Ctrl', 'Right_Foot_ParamHolder_Main_Ctrl', 'Left_Hand_ParamHolder_Main_Ctrl', 'Left_Arm_Root', 'Right_Leg_Extra_0', 'Right_Arm_Extra_6', 'Right_Arm_Round_Root', 'Right_Arm_Root_Tangent', 'Right_Arm_End', 'Right_Arm_End_Tangent', 'Right_Arm_Elbow', 'Right_Arm_Round_0', 'Right_Arm_Round_1', 'Right_Arm_Extra_0', 'Right_Arm_Extra_1', 'Right_Arm_Extra_2', 'Right_Arm_Extra_3', 'Right_Arm_Extra_4', 'Right_Arm_Extra_5', 'Right_Leg_upV', 'Left_Arm_Extra_0', 'Left_Arm_Extra_1', 'Left_Arm_Extra_2', 'Left_Arm_Extra_3', 'Left_Arm_Extra_4', 'Left_Arm_Extra_5', 'Left_Arm_Extra_6', 'Left_Arm_Round_Root', 'Left_Arm_Round_Root_Tangent', 'Left_Arm_Round_Eff', 'Left_Arm_Round_Eff_Tangent', 'Left_Arm_Elbow', 'Left_Arm_Round_0', 'Left_Arm_Round_1', 'Left_Arm_IK', 'Left_Arm_upV', 'Left_Depressor_Handle_1_Control', 'Left_Depressor1_Handle_1_Control', 'Left_MouthCorner', 'Left_LowerLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 'Left_LowerLip_Inter', 'Left_UpperLip_1_Ctrl', 'Left_UpperLip_2_Ctrl', 'Left_UpperLip_Inter', 'Left_Leg_Extra_5', 'Left_Leg_Extra_6', 'Left_Leg_Round_Root', 'Left_Leg_Round_Root_Tangent', 'Left_Leg_Round_Eff', 'Left_Leg_Round_Eff_Tangent', 'Left_Leg_Knee', 'Left_Leg_Round_0', 'Left_Leg_Round_1', 'Left_Pant_Bottom_Global_Main_Ctrl', 'Left_Pant_Ext_Main_Ctrl', 'Left_Pant_Int_Main_Ctrl', 'Left_Pant_Front_Main_Ctrl', 'Left_Pant_Back_Main_Ctrl', 'Right_Leg_IK', 'Left_Brow_ridge_in', 'Left_Brow_ridge_out_1', 'Left_Brow_ridge_in_1', 'Left_Brow_ridge_out', 'Right_Collar_0_1_Bone_Ctrl', 'Right_Collar_0_2_Bone_Ctrl', 'Right_Arm_upV', 'Right_Arm_Root', 'Right_Arm_IK', 'Left_Collar_2_2_Bone_Ctrl', 'Left_Collar_1_0_Bone_Ctrl', 'Left_Collar_1_2_Bone_Ctrl', 'Back_Collar_1_Bone_Ctrl', 'Back_Collar_2_Bone_Ctrl', 'Left_UpperLid_Main_Ctrl', 'Left_Eyelid_Out', 'Left_Eyelid_In', 'Left_Eye_Target_Main_Ctrl', 'Left_Eye', 'Left_Eye_Pupille_Main_Ctrl', 'Right_Eye_Target_Main_Ctrl', 'Right_Eye', 'Right_Eye_Pupille_Main_Ctrl', 'Right_Leg_Root', 'Right_Base_Depressor', 'Right_Base_Levator1', 'Right_Base_Depressor1', 'Right_Base_Levator', 'Right_Depressor1_Handle_1_Control', 'Right_UpperLip_1_Ctrl', 'Right_UpperLip_2_Ctrl', 'Right_UpperLip_Inter', 'Right_MouthCorner', 'Right_LowerLip_1_Ctrl', 'Right_LowerLip_2_Ctrl', 'Right_LowerLip_Inter', 'Right_Depressor_Handle_1_Control', 'Left_Base_Levator', 'Left_Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator1', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Left_Leg_Extra_0', 'Left_Leg_Extra_1', 'Left_Leg_Extra_2', 'Left_Leg_Extra_3', 'Left_Leg_Extra_4', 'Left_Leg_IK', 'Left_Leg_upV', 'Left_Leg_Root', 'Right_Leg_Extra_1', 'Right_Leg_Extra_2', 'Right_Leg_Extra_3', 'Right_Leg_Extra_4', 'Right_Leg_Extra_5', 'Right_Leg_Extra_6', 'Right_Leg_Round_Root', 'Right_Leg_Round_Root_Tangent', 'Right_Leg_Round_End', 'Right_Leg_Round_End_Tangent', 'Right_Leg_Knee', 'Right_Leg_Round_0', 'Right_Leg_Round_1', 'Right_Pant_Bottom_Global_Main_Ctrl', 'Right_Pant_Ext_Main_Ctrl', 'Right_Pant_Int_Main_Ctrl', 'Right_Pant_Front_Main_Ctrl', 'Right_Pant_Back_Main_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Right_LowerLid_Main_Ctrl', 'Right_UpperLid_Main_Ctrl', 'Right_Eyelid_Out', 'Right_Eyelid_In', 'Right_Collar_1_0_Bone_Ctrl', 'Right_Collar_1_2_Bone_Ctrl', 'Right_Collar_2_1_Bone_Ctrl', 'Right_Collar_2_2_Bone_Ctrl', 'Left_Collar_0_1_Bone_Ctrl', 'Left_Collar_0_2_Bone_Ctrl', 'Left_Collar_2_1_Bone_Ctrl', 'Right_Eye_Bulge', 'Left_Ear_Bone_Ctrl', 'Left_Eye_Bulge']
 
     theAttr = "_OSCAR_Attributes.Mirror"
     for i in outTrueL:
@@ -3191,6 +3191,7 @@ def chr_fix_EyebrowUpper_ExtCorner_cst(*args, **kwargs):
     canDo = True
     notFoundL = []
     fixedL=[]
+    debugL=[]
     for i in ctrL:
         if not cmds.objExists(i):
             notFoundL.append(i)
@@ -3230,6 +3231,7 @@ def chr_fix_EyebrowUpper_ExtCorner_cst(*args, **kwargs):
     print "notFoundL=", notFoundL
     print "fixedL=", fixedL
 
+    return [True,debugL]
 
 def chr_fix_cheeks_cst(*args, **kwargs):
     """ Description: Ajout un parent "fk_head" à la contrainte des cheeks_controls 
@@ -3246,6 +3248,7 @@ def chr_fix_cheeks_cst(*args, **kwargs):
     canDo = True
     notFoundL = []
     fixedL=[]
+    debugL=[]
     for i in ctrL:
         if not cmds.objExists(i):
             notFoundL.append(i)
@@ -3269,7 +3272,7 @@ def chr_fix_cheeks_cst(*args, **kwargs):
                                 cmds.parentConstraint("Head_FK",i,mo=1)
                                 cmds.scaleConstraint("Head_FK",i,)
 
-
+                                debugL.append(i + " DONE")
                                 # connecting
                                 # # create multiply node
                                 # multiply_T_N = cmds.createNode("multiplyDivide", name=j + "Multiply_T_facto")
@@ -3290,7 +3293,8 @@ def chr_fix_cheeks_cst(*args, **kwargs):
                                 #     print "    theSource=",theSource,cmds.getAttr(theSource)
                                     
                             else:
-                                print "  ->already ok"
+                                print i+ "  ->already ok"
+                                # debugL.append(i+ "  ->already DONE")
                                 # print "*BADparent=",theParent
                                 # theSource = cmds.listConnections(thePlug,s=1,d=0,p=1)[0]
                                 # cmds.setAttr(theSource,0)
@@ -3299,7 +3303,8 @@ def chr_fix_cheeks_cst(*args, **kwargs):
     
     print "notFoundL=", notFoundL
     print "fixedL=", fixedL
-
+    debugL = list(set(debugL))
+    return [True,debugL]
 
 def chr_fix_EyebrowUpper_Cst_average(*args, **kwargs):
     """ Description: set al constraint interpretation type to 'shortest' because sometime it's 'average'
@@ -3336,7 +3341,7 @@ def chr_fix_EyebrowUpper_Cst_average(*args, **kwargs):
 
 
 
-# to do : add good foot front roll ctr
+
 def chr_add_frontFootTwist_goodCTR(*args, **kwargs):
     """ Description: ma_description
         Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
@@ -3352,44 +3357,57 @@ def chr_add_frontFootTwist_goodCTR(*args, **kwargs):
     keyable = 1
     ctrL = ['Left_Foot_Reverse_0','Right_Foot_Reverse_0']
     allreadyDoneB = False
+    debugL=[]
+
     for i in ctrL:
         if cmds.objExists(i+"."+ theAttrN):
             allreadyDoneB = True
     if not allreadyDoneB:
-        # get parents
-        ctrParentL = [cmds.listRelatives(x,p=1, ni=1, type="transform")[0] for x in ctrL]
-        ctrTargetParentL = [ cmds.listRelatives(x,p=1, ni=1, type="transform")[0] for x in ctrParentL]
+        canDo =True
+        for i in ctrL:
+            if not cmds.objExists(i):
+                canDo = False
+        if canDo:
+            # get parents
+            ctrParentL = [cmds.listRelatives(x,p=1, ni=1, type="transform")[0] for x in ctrL]
+            ctrTargetParentL = [ cmds.listRelatives(x,p=1, ni=1, type="transform")[0] for x in ctrParentL]
 
-        print "ctrTargetParentL=", ctrTargetParentL
+            print "ctrTargetParentL=", ctrTargetParentL
 
-        for p,c in zip(ctrTargetParentL,ctrL):
-            # unlock parents
+            for p,c in zip(ctrTargetParentL,ctrL):
+                # unlock parents
 
-            # matched gp
-            frontFootRollGP= cmds.group(name=p.split("_",1)[0]+"_"+"frontFootRollGP",em=True)
-            matchByXformMatrix(cursel=[p,frontFootRollGP], mode=0)
-            
-            # zero orientations
-            cmds.xform(frontFootRollGP , ro=(0, 0, 0) )
-            frontFootRollGP_zero = frontFootRollGP+"_zero"
-            cmds.duplicate(frontFootRollGP, name=frontFootRollGP_zero)
-            cmds.parent(frontFootRollGP,frontFootRollGP_zero)
-            
-            #parent to targetParent
-            cmds.parent(frontFootRollGP_zero,p)
-            ctrParent = cmds.listRelatives(c,p=1, ni=1, type="transform")[0]
-            cmds.parent(ctrParent,frontFootRollGP)
-            
+                # matched gp
+                frontFootRollGP= cmds.group(name=p.split("_",1)[0]+"_"+"frontFootRollGP",em=True)
+                matchByXformMatrix(cursel=[p,frontFootRollGP], mode=0)
+                
+                # zero orientations
+                cmds.xform(frontFootRollGP , ro=(0, 0, 0) )
+                frontFootRollGP_zero = frontFootRollGP+"_zero"
+                cmds.duplicate(frontFootRollGP, name=frontFootRollGP_zero)
+                cmds.parent(frontFootRollGP,frontFootRollGP_zero)
+                
+                #parent to targetParent
+                cmds.parent(frontFootRollGP_zero,p)
+                ctrParent = cmds.listRelatives(c,p=1, ni=1, type="transform")[0]
+                cmds.parent(ctrParent,frontFootRollGP)
+                
 
-            # create attr + connect
+                # create attr + connect
 
-            if not cmds.objExists(c + "." + theAttrN):
-                cmds.addAttr(c, longName=theAttrN, attributeType=theAttrType, keyable=keyable, dv=theDv, min=theMin, max=theMax)
+                if not cmds.objExists(c + "." + theAttrN):
+                    cmds.addAttr(c, longName=theAttrN, attributeType=theAttrType, keyable=keyable, dv=theDv, min=theMin, max=theMax)
 
-            cmds.connectAttr(c + "." + theAttrN,frontFootRollGP + "." + 'ry' )
+                cmds.connectAttr(c + "." + theAttrN,frontFootRollGP + "." + 'ry' )
+        else:
+            print "    -> NOTHING DONE"
+            debugL.append("    -> NOTHING DONE")
 
     else:
         print "    -> AllReady DONE"
+        debugL.append("    -> AllReady DONE")
+
+    return [True, debugL]
 
 # to do textureEditorIsolateSelectSet autoDelete dans cleanScene
 
@@ -3401,6 +3419,11 @@ def chr_add_frontFootTwist_goodCTR(*args, **kwargs):
 def armTwistFix (*args, **kwargs):
     print "armTwistFix()"
     # Left_Rounding_Deformer_End_Crv_upV_pathCns_Mult1 #tweak rotation
+
+
+
+
+
 
 # wip or not to do
 def chr_BS_teeth_clean_BS_and_Attrib_Names(*args, **kwargs):
@@ -3418,6 +3441,7 @@ def chr_BS_teeth_clean_BS_and_Attrib_Names(*args, **kwargs):
     for i in [teeth_up,teeth_dn]:
         if not cmds.objExists(i):
             canDo = False
+            print i, "DOESN'T EXISTS!"
 
     if canDo:
         bsNTeeth_upL = [x for x in cmds.listHistory(teeth_up, ) if "blendShape" in cmds.objectType(x)]
@@ -3446,19 +3470,24 @@ def chr_BS_teeth_clean_BS_and_Attrib_Names(*args, **kwargs):
         # delete importe objects
 
         # delete old Attributes with wrong names
-        todeleteUpL = ["Top_Teeth_Global.upperteeth_gum", "Top_Teeth_Global.upperteeth_high", "Top_Teeth_Global.upperteeth_round", "Top_Teeth_Global.uppertteeth_assymetry", "Top_Teeth_Global.upperteeth_squeez"]
+        todeleteUpL = ["Top_Teeth_Global.upperteeth_gum", "Top_Teeth_Global.upperteeth_high", "Top_Teeth_Global.upperteeth_round", "Top_Teeth_Global.upperteeth_assymetry","Top_Teeth_Global.uppertteeth_assymetry", "Top_Teeth_Global.upperteeth_squeez"]
         todeleteDnL = ["Bottom_Teeth_Global.lowerteeth_gum", "Bottom_Teeth_Global.lowerteeth_high", "Bottom_Teeth_Global.lowerteeth_round", "Bottom_Teeth_Global.lowerteeth_assymetry", "Bottom_Teeth_Global.lowerteeth_squeez", ]
         allDL = todeleteUpL + todeleteDnL
         # print allDL
         canDo = True
-        for i in allDL:
-            if not cmds.objExists(i):
-                print "    ",i,"doesn't exists"
-                canDo = False
-        print "    canDo=", canDo
+        # for i in allDL:
+        #     if not cmds.objExists(i):
+        #         print "    ",i,"doesn't exists"
+        #         canDo = False
+        # print "    canDo=", canDo
         if canDo:
             for i in allDL:
-                cmds.deleteAttr(i)
+                if cmds.objExists(i):
+                    try:
+                        cmds.setAttr(i,0)
+                        cmds.deleteAttr(i)
+                    except Exception,err:
+                        print Exception,err
 
     else:
         debugL.append("Nothing Done")

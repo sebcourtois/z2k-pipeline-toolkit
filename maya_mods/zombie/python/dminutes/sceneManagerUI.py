@@ -194,7 +194,7 @@ def initialize():
     loadContextFromScene()
 
     damShot = SCENE_MANAGER.getDamShot()
-    sAnn = "Create a capture into local project: '{}'".format(SCENE_MANAGER.getWipCaptureDir(damShot))
+    sAnn = "Create a capture into local project: '{}'".format(mop.getWipCaptureDir(damShot))
     pc.control("sm_wipCapture_bt", edit=True, annotation=sAnn)
     sAnn = "Create a PUBLISHABLE capture into private area: '{}'".format(damShot.getPath("private", "entity_dir"))
     pc.control("sm_capture_bt", edit=True, annotation=sAnn)
@@ -514,7 +514,7 @@ def doShowInShotgun(*args):
     SCENE_MANAGER.showInShotgun()
 
 def doShowWipCapturesDir(*args):
-    p = SCENE_MANAGER.getWipCaptureDir().replace("/", "\\")
+    p = mop.getWipCaptureDir(SCENE_MANAGER.getDamShot()).replace("/", "\\")
     if osp.isdir(p):
         subprocess.call("explorer {}".format(p))
     else:
