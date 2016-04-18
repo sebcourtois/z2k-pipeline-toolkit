@@ -148,7 +148,6 @@ def setSubdiv(GUI= False ):
     returnB = True
     logL = []
 
-
     if not mc.ls("|asset|grp_geo", l = True):
         logMessage = "#### {:>7}: 'setSubdiv' No '|asset|grp_geo' found".format("Error")
         if GUI == True: raise ValueError(logMessage)
@@ -156,14 +155,13 @@ def setSubdiv(GUI= False ):
         logL.append(logMessage)
         returnB = False
 
-    
+
     userDefinedAttr =(mc.listAttr("|asset|grp_geo",userDefined=True))
     if userDefinedAttr:
         if "smoothLevel1" in userDefinedAttr:
             mc.deleteAttr ("|asset|grp_geo.smoothLevel1")            
         if "smoothLevel2" in userDefinedAttr:
             mc.deleteAttr ("|asset|grp_geo.smoothLevel2") 
-
     mc.addAttr("|asset|grp_geo",ln = "smoothLevel1", at = "long", min = 0, max = 1,dv = 0, keyable = True) 
     mc.addAttr("|asset|grp_geo",ln = "smoothLevel2", at = "long", min = 0, max = 2,dv = 0, keyable = True)
 
@@ -211,17 +209,25 @@ def setSubdiv(GUI= False ):
                             if previewSubdivLevel > 1:
                                 mc.connectAttr("|asset|grp_geo.smoothLevel2", eachGeoShape+".smoothLevel",f=True)
                         if not mc.attributeQuery ("aiSubdivType", node = eachGeoShape , exists = True):
-                            logMessage = "#### {:>7}: 'setSubdiv' {}.aiSubdivType attribute coud not be found, please check if Arnold is properly installed on your computer".format(eachGeoShape)
-                            if GUI == True: raise ValueError(logMessage)
-                            logL.append(logMessage)
-                            returnB = False
+                                try:
+                                    mc.loadPlugin("mtoa")
+                                except Exception,err:
+                                    print err
+                                    miscUtils.setAttrC(eachGeoShape+".aiSubdivType",1)
+                                    miscUtils.setAttrC(eachGeoShape+".aiSubdivIterations",subdivLevel)
+                                if not mc.attributeQuery ("aiSubdivType", node = eachGeoShape , exists = True):
+                                    logMessage = "#### {:>7}: 'setSubdiv' {}.aiSubdivType attribute coud not be found, please check if Arnold is properly installed on your computer".format("Error",eachGeoShape)
+                                    if GUI == True: raise ValueError(logMessage)
+                                    logL.append(logMessage)
+                                    returnB = False
                         else:
+
                             miscUtils.setAttrC(eachGeoShape+".aiSubdivType",1)
                             miscUtils.setAttrC(eachGeoShape+".aiSubdivIterations",subdivLevel)
                         processedTransL.append(eachGeo)
                     else:
                         skippedTransL.append(eachGeo)
-          
+
     miscUtils.setAttrC("|asset|grp_geo.smoothLevel1", 1)
     miscUtils.setAttrC("|asset|grp_geo.smoothLevel2", 2)
     
@@ -260,6 +266,7 @@ def setSubdiv(GUI= False ):
         logMessage = "#### {:>7}: 'setSubdiv' Donne properly".format("Info")
         print logMessage
         logL.append(logMessage)
+
 
     return dict(returnB=returnB, logL=logL)
 
@@ -739,6 +746,18 @@ class Asset_File_Conformer:
                 areaTolF = 0.01 #percentage world area tolerance
                 sourceWorldArea =  mc.polyEvaluate(self.sourceList[i], worldArea= True)
                 targetWorldArea =  mc.polyEvaluate(self.targetList[i], worldArea= True)
+                if not isinstance(sourceWorldArea,float):
+                    self.log.printL("e", "Cannot check topoligie, {} is not a valid mesh".format(self.sourceList[i]))
+                    if sourceVrtxCnt == targetVrtxCnt:
+                        topoMismatch +=1
+                    i+=1
+                    continue
+                if not isinstance(targetWorldArea,float):
+                    self.log.printL("e", "Cannot check topoligie, {} is not a valid mesh".format(self.targetList[i]))
+                    if sourceVrtxCnt == targetVrtxCnt:
+                        topoMismatch +=1
+                    i+=1
+                    continue
                 areaDifF = abs(float(sourceWorldArea - targetWorldArea)/sourceWorldArea *100)
                 if areaDifF > areaTolF:
                     txt="World area is {:.3f} percent different: '{}' -- '{}'".format(areaDifF, self.sourceList[i], self.targetList[i])
