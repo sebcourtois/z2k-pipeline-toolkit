@@ -46,6 +46,23 @@ def withoutUndo(func):
         return res
     return doIt
 
+def withParallelEval(func):
+    def doIt(*args, **kwargs):
+        sEvalMode = mc.evaluationManager(q=True, mode=True)[0]
+        if sEvalMode != "parallel":
+            mc.evaluationManager(e=True, mode="parallel")
+            mc.refresh()
+        else:
+            sEvalMode = ""
+
+        try:
+            res = func(*args, **kwargs)
+        finally:
+            if sEvalMode:
+                mc.evaluationManager(e=True, mode=sEvalMode)
+        return res
+    return doIt
+
 STEREO_INFOS = {}
 def recStereoInfos(frame, **kwargs):
     global STEREO_INFOS
