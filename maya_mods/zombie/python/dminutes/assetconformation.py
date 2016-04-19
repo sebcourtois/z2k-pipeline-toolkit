@@ -194,6 +194,8 @@ def setSubdiv(GUI= False ):
                         else:
                             nonMeshObjectL.append(eachGeo)
                             continue
+                    else:
+                        eachGeoShape =eachGeo
 
                     eachGeoParentL = mc.listRelatives(eachGeoShape, allParents = True, fullPath = True)
                     if not set(eachGeoParentL) & set(processedTransL):
