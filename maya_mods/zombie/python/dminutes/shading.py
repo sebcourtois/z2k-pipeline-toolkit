@@ -1440,7 +1440,7 @@ def dmnToonPreset (preset = ""):
                 miscUtils.setAttrC(each+".lambertWeight", 0)
                 miscUtils.setAttrC(each+".incidenceWeight", 0)
                 miscUtils.setAttrC(each+".occlusionWeight", 0)  
-                miscUtils.setAttrC(each+".toonWeight", 0)
+                miscUtils.setAttrC(each+".toonWeight", 1)
                 miscUtils.setAttrC(each+".contourWeight", 0)
                 miscUtils.setAttrC(each+".contourId", 1)
 
