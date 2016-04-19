@@ -3541,7 +3541,7 @@ def chr_BS_teeth_clean_BS_and_Attrib_Names(*args, **kwargs):
 
 
 
-def chr_fixdyn_defaultValues(*args, **kwargs):
+def chr_fix_Dynamic_defaultValues(*args, **kwargs):
     """ Description: set les valeurs par default des dynamiques sur les ctrs to False.
         Return : [BOOL,LIST]
         Dependencies : cmds - z2k_Select_Dyn_CTR() - getSetContent()
