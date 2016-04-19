@@ -653,7 +653,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=24, e=True)
+        self.pBar_upd(step=1, maxValue=25, e=True)
 
 
         # 1 connectVisibility ()
@@ -1009,6 +1009,20 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
         
+        
+        # 25 ----- (chr_fix_Dynamic_defaultValues)
+        self.printF("chr_fix_Dynamic_defaultValues()", st="t")
+        result,debugL = jpZ.chr_fix_Dynamic_defaultValues()
+        # prints -------------------
+        self.printF(result, st="r")
+        if debugL:
+            self.printF("  - {0} default values setted on dynamic controls".format( len(debugL)  ) )
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
 
 
         # colors

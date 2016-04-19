@@ -922,6 +922,51 @@ def UnusedNodeAnalyse(execptionTL=['containerBase', 'entity'], specificTL=[] , m
 
 
 # Z2k func
+def z2k_Select_Dyn_CTR( objL = [], mode="select", *args, **kwargs):
+    print "z2k_Select_Dyn_CTR()"
+    """ Description: select toonkit dyn ctrs
+                    objL = object list to get the namespace from.
+                    mode = "select" : select objects
+                    mode = "info": return simplement la liste des objects.
+        Return : LIST
+        Dependencies : cmds - getSetContent()
+    """
+    dynAttrL = ['STIFNESS', 'RESET', 'DAMPING', 'ATTENUATION', 'COLLIDE']
+    dynShortAttrL = ['RESET', 'ATTENUATION', 'COLLIDE']
+    toSel = None
+    outSelL = []
+    if not len (objL):
+        cursel = cmds.ls(sl=1)
+    else:
+        cursel = objL
+
+    if len(cursel):
+        if ":" in cursel[0]:
+            toSel = cursel[0].split(":")[0] + ":set_control"
+        else:
+            toSel = "set_control"
+        # print "toSels=", toSel     
+        allCtrL= getSetContent(inSetL=[toSel])
+        print "allCtrL=", allCtrL
+
+        if allCtrL:
+            for i in allCtrL:
+                custAttrL = cmds.listAttr(i,ud=1)
+                if custAttrL:
+                    testL = [ x.upper() for x in custAttrL ]
+                    # print "testL    =", testL
+                    # print "dynAttrL =", dynAttrL 
+                    if ( set(dynAttrL).issubset( set( testL)  ) ) or ( set(dynShortAttrL).issubset( set( testL)  ) ) :
+                        outSelL.append(i)
+        
+        if mode in ["select"]:
+            if len(outSelL):
+                cmds.select(outSelL)
+
+    else:
+        cmds.confirmDialog(m="Please select first a controler of your character",b="OK")
+
+    return [outSelL]
 
 def z2k_selAll_asset_Ctr(*args, **kwargs):
     print "z2k_selAll_asset_Ctr()"
@@ -3413,7 +3458,7 @@ def chr_add_frontFootTwist_goodCTR(*args, **kwargs):
 
 # to do: fixe scaling on the hands
 
-# to do : Fixe dynamics default values!! fuck****TK
+
 
 # to do : armTwistFix
 def armTwistFix (*args, **kwargs):
@@ -3493,3 +3538,28 @@ def chr_BS_teeth_clean_BS_and_Attrib_Names(*args, **kwargs):
         debugL.append("Nothing Done")
         
     return [toReturnB,debugL]
+
+
+
+def chr_fixdyn_defaultValues(*args, **kwargs):
+    """ Description: set les valeurs par default des dynamiques sur les ctrs to False.
+        Return : [BOOL,LIST]
+        Dependencies : cmds - z2k_Select_Dyn_CTR() - getSetContent()
+    """
+    # dynAttrL = ['STIFNESS', 'RESET', 'DAMPING', 'ATTENUATION', 'COLLIDE']
+    dyn_ResetDefaultVal = 1
+    debugL = []
+    theSet= "*:set_control"
+
+    ctrL = getSetContent(inSetL=[theSet])
+    dynCtrL = z2k_Select_Dyn_CTR(objL=ctrL, mode="info")[0]
+    print "dynCtrL=", dynCtrL
+    for i in dynCtrL:
+        attrL = ["Reset","reset","RESET"]
+        for attr in attrL:
+            if cmds.objExists(i + "." + attr):
+                cmds.addAttr(i + "." + attr,e=1,dv=dyn_ResetDefaultVal )
+                debugL.append(i)
+                print "YEAH",i
+    debugL = list(set(debugL))
+    return [True,debugL]

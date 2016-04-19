@@ -38,44 +38,18 @@ def exportCaches():
 
     mc.AbcExport(v=True, j=sJobList)
 
-
-def importCaches():
-
-    damShot = entityFromScene()
-    sAbcDirPath = mop.getAlembicCacheDir(damShot)
-
-    for sGeoGrp in gpucaching.iterGeoGroups():
-
-        sNmspc = sGeoGrp.rsplit("|", 1)[-1].rsplit(":", 1)[0]
-        sBaseName = sNmspc + "_cache"
-        sAbcPath = pathJoin(sAbcDirPath, sBaseName + ".abc")
-
-        if not osp.isfile(sAbcPath):
-            continue
-
-        print "\nImporting caches from '{}'".format(sAbcPath)
-
-        sAbcNodeList = mc.file(sAbcPath, type="Alembic", r=True, ns=sBaseName,
-                               rnn=True, mergeNamespacesOnClash=False, gl=True)
-        #mc.refresh()
-        sFoundList = mc.ls(sAbcNodeList, type="AlembicNode")
-        if not sFoundList:
-            pm.displayInfo("No Alembic Node imported !")
-            continue
-
-        sRefAbcNode = sFoundList[0]
+def connectAlembicToMeshes(sRefAbcNode, sTargetNamespace):
 
         sAbcMeshXfmList = mc.listConnections(sRefAbcNode, s=False, d=True, type="mesh")
-#        sAbcMeshXfmList = tuple(s.rsplit("|", 1)[0] for s in mc.ls(sAbcNodeList, type="mesh", long=True, ni=True))
+#        sAbcMeshXfmList = tuple(s.rsplit("|", 1)[0] for s in mc.ls(sNewNodeList, type="mesh", long=True, ni=True))
 
         if not sAbcMeshXfmList:
             pm.displayInfo("No meshes has been cached !")
-            continue
+            return
 
         print len(sAbcMeshXfmList), "cached meshes."
 
         sDupAbcNode = mc.duplicate(sRefAbcNode, ic=True)[0]
-        print sDupAbcNode
 
 #        sAbcMeshXfmList = mc.ls(sAbcMeshXfmList, long=False)# just to convert long to short names.
 #        sAbcNmspc = sAbcMeshXfmList[0].rsplit("|", 1)[-1].rsplit(":", 1)[0]
@@ -83,7 +57,7 @@ def importCaches():
         for sAbcMeshXfm in sAbcMeshXfmList:
 
             sRndMeshXfm = sAbcMeshXfm.rsplit("|", 1)[-1].rsplit(":", 1)[-1]
-            sRndMeshXfm = sNmspc + ":" + sRndMeshXfm
+            sRndMeshXfm = sTargetNamespace + ":" + sRndMeshXfm
 
             sFoundList = mc.ls(sRndMeshXfm, type="transform")
             if not sFoundList:
@@ -121,7 +95,6 @@ def importCaches():
                     sMsg += "\n    - '{}': {} faces".format(sRndMeshXfm, rndStat["face"])
                     pm.displayInfo(sMsg)
 
-
             sTransfNode = mc.polyTransfer(sRndMeshXfm, ao=sAbcMeshXfm,
                                           uv=False, v=True, vc=False, ch=True)[0]
             sAbcOutAttr = mc.listConnections(sAbcMeshShape, s=True, d=False,
@@ -132,4 +105,40 @@ def importCaches():
 
             mc.hide(sAbcMeshXfm)
 
+def importCaches():
 
+    damShot = entityFromScene()
+    sAbcDirPath = mop.getAlembicCacheDir(damShot)
+
+    oFileRefList = []
+
+    try:
+        for sGeoGrp in gpucaching.iterGeoGroups():
+
+            sAstNmspc = sGeoGrp.rsplit("|", 1)[-1].rsplit(":", 1)[0]
+            sBaseName = sAstNmspc + "_cache"
+            sAbcPath = pathJoin(sAbcDirPath, sBaseName + ".abc")
+
+            if not osp.isfile(sAbcPath):
+                pm.displayWarning("No such alembic file: '{}'".format(sAbcPath))
+                continue
+
+            print "\nImporting caches from '{}'".format(sAbcPath)
+
+            sNewNodeList = mc.file(sAbcPath, type="Alembic", r=True, ns=sBaseName,
+                                   rnn=True, mergeNamespacesOnClash=False, gl=True)
+
+            oFileRef = pm.PyNode(sNewNodeList[0]).referenceFile()
+            oFileRefList.append(oFileRef)
+
+            sFoundList = mc.ls(sNewNodeList, type="AlembicNode")
+            if not sFoundList:
+                pm.displayInfo("No Alembic Node imported !")
+                continue
+
+            sRefAbcNode = sFoundList[0]
+
+            connectAlembicToMeshes(sRefAbcNode, sAstNmspc)
+    finally:
+        for oFileRef in oFileRefList:
+            oFileRef.remove()
