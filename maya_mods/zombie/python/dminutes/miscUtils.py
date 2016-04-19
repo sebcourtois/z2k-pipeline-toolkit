@@ -152,13 +152,15 @@ def deleteUnknownNodes(GUI = True):
         logL.append(logMessage)
         if GUI == True: print logMessage
 
+    mc.flushUndo()
+    mc.refresh()
     try:
         mc.unloadPlugin("Turtle",force = True)
         mc.unknownPlugin( "Turtle", r=True )
     except:
         pass
     try:
-        mc.unloadPlugin("Mayatomr",force = True)
+        mc.evalDeferred("mc.unloadPlugin('Mayatomr',force = True)")
         mc.unknownPlugin( "Mayatomr", r=True )
     except:
         pass
