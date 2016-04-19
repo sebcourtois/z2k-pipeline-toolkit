@@ -34,83 +34,88 @@ def tkMirror(*args, **kwargs):
     # upperBrowL = ['Left_Brow_upRidge_01_ctrl', 'Left_Brow_upRidge_02_ctrl', 'Left_Brow_upRidge_03_ctrl', 'Left_Brow_upRidge_04_ctrl', 
     #             'Right_Brow_upRidge_01_ctrl', 'Right_Brow_upRidge_02_ctrl', 'Right_Brow_upRidge_03_ctrl', 'Right_Brow_upRidge_04_ctrl'
     #             ]
-    upperBrowD = {'Left_Brow_upRidge_01_ctrl':'Right_Brow_upRidge_01_ctrl',
-                  'Left_Brow_upRidge_02_ctrl':'Right_Brow_upRidge_02_ctrl',
-                  'Left_Brow_upRidge_03_ctrl':'Right_Brow_upRidge_03_ctrl',
-                  'Left_Brow_upRidge_04_ctrl':'Right_Brow_upRidge_04_ctrl', 
+    try:
+        cmds.undoInfo(openChunck = True)
 
-                  'Right_Brow_upRidge_01_ctrl':'Left_Brow_upRidge_01_ctrl',
-                  'Right_Brow_upRidge_02_ctrl':'Left_Brow_upRidge_02_ctrl',
-                  'Right_Brow_upRidge_03_ctrl':'Left_Brow_upRidge_03_ctrl',
-                  'Right_Brow_upRidge_04_ctrl':'Left_Brow_upRidge_04_ctrl',   
-                
-                }
+        upperBrowD = {'Left_Brow_upRidge_01_ctrl':'Right_Brow_upRidge_01_ctrl',
+                      'Left_Brow_upRidge_02_ctrl':'Right_Brow_upRidge_02_ctrl',
+                      'Left_Brow_upRidge_03_ctrl':'Right_Brow_upRidge_03_ctrl',
+                      'Left_Brow_upRidge_04_ctrl':'Right_Brow_upRidge_04_ctrl', 
 
-    cursel= cmds.ls(sl=1)
-    upperSymL = []
-    tkendSel = []
-    print "cursel=", cursel
-    for i  in cursel:
-        # print "    *",i.split(":",1)[-1]
+                      'Right_Brow_upRidge_01_ctrl':'Left_Brow_upRidge_01_ctrl',
+                      'Right_Brow_upRidge_02_ctrl':'Left_Brow_upRidge_02_ctrl',
+                      'Right_Brow_upRidge_03_ctrl':'Left_Brow_upRidge_03_ctrl',
+                      'Right_Brow_upRidge_04_ctrl':'Left_Brow_upRidge_04_ctrl',   
+                    
+                    }
 
-        if  i.split(":",1)[-1] in upperBrowD.keys():
-            upperSymL.append(i)
-        else:
-            tkendSel.append(i)
+        cursel= cmds.ls(sl=1)
+        upperSymL = []
+        tkendSel = []
+        print "cursel=", cursel
+        for i  in cursel:
+            # print "    *",i.split(":",1)[-1]
 
-    # jp TK mirror wrap ----------------------------------------------------------
-    print "upperSymL=", upperSymL
-    print "tkendSel=", tkendSel
-    if tkendSel:
-        tk.mirrorPose(tkendSel)
+            if  i.split(":",1)[-1] in upperBrowD.keys():
+                upperSymL.append(i)
+            else:
+                tkendSel.append(i)
 
-    # jp upperSymLspecial mirror ------------------------------------------------
-    # set the values
-    attrTableD = {  "sx":1,
-                    "sy":1,
-                    "sz":1,
-                    "rx":-1,
-                    "ry":-1,
-                    "rz":1,
-                    "tx":1,
-                    "ty":1,
-                    "tz":-1,
-       }
+        # jp TK mirror wrap ----------------------------------------------------------
+        print "upperSymL=", upperSymL
+        print "tkendSel=", tkendSel
+        if tkendSel:
+            tk.mirrorPose(tkendSel)
 
-    oppositeValD={}
-    for i in upperSymL:
+        # jp upperSymLspecial mirror ------------------------------------------------
+        # set the values
+        attrTableD = {  "sx":1,
+                        "sy":1,
+                        "sz":1,
+                        "rx":-1,
+                        "ry":-1,
+                        "rz":1,
+                        "tx":1,
+                        "ty":1,
+                        "tz":-1,
+           }
+
+        oppositeValD={}
+        for i in upperSymL:
+            
+            # get corresponding opposite side
+            if ":" in i:
+                curChr = i.split(":",1)[0] 
+                key = i.split(":",1)[-1]
+                oppositeSide =curChr+":"+ upperBrowD[key]
+            else:
+                curChr = i
+                key = i
+                oppositeSide = upperBrowD[i]
+
+            print "*",i,"<>",oppositeSide
+
+            
+            # get the values
+            oppositeValD[oppositeSide]={}
+            print i,"<>", oppositeSide
+            for attr,fact in attrTableD.iteritems():
+                # print "  ",attr,fact
+                curVal = cmds.getAttr(i+"."+attr)
+                # print "    curval=", curVal
+                oppositeValD[oppositeSide][attr]=fact*curVal
+
+
+        # set attr
+        for obj,attrD in oppositeValD.iteritems():
+            print "->",obj
+            for attr,val in attrD.iteritems():
+                # print "   ",attr,val
+                cmds.setAttr(obj+"."+attr,val)
         
-        # get corresponding opposite side
-        if ":" in i:
-            curChr = i.split(":",1)[0] 
-            key = i.split(":",1)[-1]
-            oppositeSide =curChr+":"+ upperBrowD[key]
-        else:
-            curChr = i
-            key = i
-            oppositeSide = upperBrowD[i]
-
-        print "*",i,"<>",oppositeSide
-
-        
-        # get the values
-        oppositeValD[oppositeSide]={}
-        print i,"<>", oppositeSide
-        for attr,fact in attrTableD.iteritems():
-            # print "  ",attr,fact
-            curVal = cmds.getAttr(i+"."+attr)
-            # print "    curval=", curVal
-            oppositeValD[oppositeSide][attr]=fact*curVal
-
-
-    # set attr
-    for obj,attrD in oppositeValD.iteritems():
-        print "->",obj
-        for attr,val in attrD.iteritems():
-            # print "   ",attr,val
-            cmds.setAttr(obj+"."+attr,val)
-        
-
+    except Exception,err:
+        print Exception,err
+        cmds.undoInfo(closeChunck = True)
 
 # general function
 def setCamForAnim(camera="", *args, **kwargs):
@@ -964,7 +969,8 @@ def z2k_Select_Dyn_CTR( objL = [], mode="select", *args, **kwargs):
                 cmds.select(outSelL)
 
     else:
-        cmds.confirmDialog(m="Please select first a controler of your character",b="OK")
+        if mode in ["select"]:
+            cmds.confirmDialog(m="Please select first a controler of your character",b="OK")
 
     return [outSelL]
 
@@ -2427,11 +2433,15 @@ def chr_changeCtrDisplays(*args, **kwargs):
 
 
     #allready done test
-    if getColor(objL="Fly_Main_Ctrl")[0] in [greenC] and getColor(objL="BigDaddy")[0] in [redDarkC]:
+    if cmds.objExists("Fly_Main_Ctrl") and cmds.objExists("BigDaddy"):
+        if getColor(objL="Fly_Main_Ctrl")[0] in [greenC] and getColor(objL="BigDaddy")[0] in [redDarkC]:
+            canDo = False
+            print "Tweak Allready done"
+            debugL.append("Tweak Allready done")
+    else:
         canDo = False
-        print "Tweak Allready done"
-        debugL.append("Tweak Allready done")
-
+        print "Nothing to tweak"
+        debugL.append("Nothing to tweak")
     # for k in greenL+brownLightL+redDarkL:
     #     if not cmds.objExists(k):
     #         canDo = False
@@ -2933,54 +2943,56 @@ def chr_reArrangeCtr_displayLevel(*args, **kwargs):
     lvl2 = "Controls_2"
     lvl3 = "Controls_3"
     
+    if cmds.objExists(inObj):
+        # start settings loop
+        allL = toLvl0L+toLvl1L+toLvl2L+toLvl3L
+        if len(allL):
+            for i in allL :
+                curLvl = lvl0
 
-    # start settings loop
-    allL = toLvl0L+toLvl1L+toLvl2L+toLvl3L
-    if len(allL):
-        for i in allL :
-            curLvl = lvl0
+                if i in toLvl1L:
+                    curLvl = lvl1
+                elif i in toLvl2L:
+                    curLvl = lvl2
+                elif i in toLvl3L:
+                    # handle le cas ou il n y a pas d attribut "controls_3" dans le rig
+                    if not cmds.objExists(inObj+"."+lvl3):
+                        # print "ADD ATTR"
+                        cmds.addAttr( inObj, longName=lvl3, attributeType="enum",enumName="False:True", keyable=True,  dv=0)
+                        cmds.setAttr(inObj + "."+lvl3,channelBox=1)
+                        movAttrL=  ["Head","Head_Res","Body_res","Deformers","SmoothLevel","Geometry","RigStuff"]
+                        movAttrL.reverse()
+                        for mattr in [lvl3]+movAttrL:
+                            # print "*****",mattr
+                            lock = cmds.getAttr(inObj+"."+mattr,l=1)
+                            cmds.setAttr(inObj+"."+mattr,l=0)
+                            cmds.deleteAttr(inObj,at=mattr)
+                            cmds.undo()
+                            cmds.setAttr(inObj+"."+mattr,l=lock)
+                        
+                    curLvl = lvl3
 
-            if i in toLvl1L:
-                curLvl = lvl1
-            elif i in toLvl2L:
-                curLvl = lvl2
-            elif i in toLvl3L:
-                # handle le cas ou il n y a pas d attribut "controls_3" dans le rig
-                if not cmds.objExists(inObj+"."+lvl3):
-                    # print "ADD ATTR"
-                    cmds.addAttr( inObj, longName=lvl3, attributeType="enum",enumName="False:True", keyable=True,  dv=0)
-                    cmds.setAttr(inObj + "."+lvl3,channelBox=1)
-                    movAttrL=  ["Head","Head_Res","Body_res","Deformers","SmoothLevel","Geometry","RigStuff"]
-                    movAttrL.reverse()
-                    for mattr in [lvl3]+movAttrL:
-                        # print "*****",mattr
-                        lock = cmds.getAttr(inObj+"."+mattr,l=1)
-                        cmds.setAttr(inObj+"."+mattr,l=0)
-                        cmds.deleteAttr(inObj,at=mattr)
-                        cmds.undo()
-                        cmds.setAttr(inObj+"."+mattr,l=lock)
-                    
-                curLvl = lvl3
+                if cmds.objExists(i):
+                    # print "****",i
+                    if cmds.listRelatives(i,c=1,s=1,):
+                        shapeL = [i+"|"+ x for x in cmds.listRelatives(i,c=1,s=1,)]
+                        if shapeL:
+                            for j in shapeL:
+                                if "IK" in j:
+                                    print "**************************************",j
+                                if cmds.connectionInfo( j + "."+ "visibility",isDestination=True):
+                                    multiply_Vis = cmds.listConnections( j + "."+ "visibility",s=1,d=0, scn=1,)[0]
+                                    # print "multiply_Vis=", multiply_Vis
+                                    # print curLvl, cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0]
+                                    if not curLvl  in cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0] :
+                                        # print "connect"
+                                        # cmds.disconnectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2" )
+                                        cmds.connectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2", f=1)
 
-            if cmds.objExists(i):
-                # print "****",i
-                if cmds.listRelatives(i,c=1,s=1,):
-                    shapeL = [i+"|"+ x for x in cmds.listRelatives(i,c=1,s=1,)]
-                    if shapeL:
-                        for j in shapeL:
-                            if "IK" in j:
-                                print "**************************************",j
-                            if cmds.connectionInfo( j + "."+ "visibility",isDestination=True):
-                                multiply_Vis = cmds.listConnections( j + "."+ "visibility",s=1,d=0, scn=1,)[0]
-                                # print "multiply_Vis=", multiply_Vis
-                                # print curLvl, cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0]
-                                if not curLvl  in cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0] :
-                                    # print "connect"
-                                    # cmds.disconnectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2" )
-                                    cmds.connectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2", f=1)
-
-                else:
-                    print "NO SHAPE FOUND ON {0}".format(i)
+                    else:
+                        print "NO SHAPE FOUND ON {0}".format(i)
+    else:
+        print "Nothing Done"
 
     return [True,""]
 
