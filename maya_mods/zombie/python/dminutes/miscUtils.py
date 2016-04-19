@@ -159,13 +159,21 @@ def deleteUnknownNodes(GUI = True):
         mc.unknownPlugin( "Turtle", r=True )
     except:
         pass
+
+    
     try:
-        mc.evalDeferred("mc.unloadPlugin('Mayatomr',force = True)")
+        mc.evalDeferred("unloadMr()")
         mc.unknownPlugin( "Mayatomr", r=True )
     except:
         pass
 
     return resultB, logL
+
+
+    def unloadMr():
+        import maya.cmds as mc
+        mc.unloadPlugin('Mayatomr',force = True)
+        
 
 
 def setAttrC(*args, **kwargs):
