@@ -103,7 +103,6 @@ def cleanAsset (GUI = True):
             if GUI == True: answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=baseMessageS+"""\n    - create set subdiv,\n    - apply set subdiv""", button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel": 
                 rendering.deleteAovs()
-                miscUtils.deleteUnknownNodes()
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
                 assetconformation.createSubdivSets()
@@ -114,6 +113,7 @@ def cleanAsset (GUI = True):
                 r2a.initSourceTargetList()
                 r2a.checkSourceTargetTopoMatch()
                 r2a.cleanFile()
+                miscUtils.deleteUnknownNodes()
 
 
 
@@ -125,7 +125,6 @@ def cleanAsset (GUI = True):
                 answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 #rendering.deleteAovs()
-                miscUtils.deleteUnknownNodes()
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
                 modeling.geoGroupDeleteHistory()
@@ -137,6 +136,7 @@ def cleanAsset (GUI = True):
                 assetconformation.setSubdiv()
                 shading.checkShaderName( GUI = True , inParent = "|asset|grp_geo")
                 assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
+                miscUtils.deleteUnknownNodes()
 
     elif fileType == "render":
             if GUI == True: 
@@ -145,7 +145,6 @@ def cleanAsset (GUI = True):
     - delete all unused nodes (unconnected to an asset dag node), except render layers,\n    - conform all shaders names,\n    - conform shader masks,\n    - compare meshes topologies with anim file"""
                 answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
-                miscUtils.deleteUnknownNodes()
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
                 modeling.geoGroupDeleteHistory()
@@ -166,7 +165,7 @@ def cleanAsset (GUI = True):
                     resultD = r2a.cleanFile()
                     if not resultD["resultB"]:
                         mc.confirmDialog( title='Error: Topologie mismach', message="The file you are working on, mismach the anim file. Please check the log for more details", button=['Ok'], defaultButton='Ok' )
-
+                miscUtils.deleteUnknownNodes()
 
     return resultB, logL
 
