@@ -159,10 +159,13 @@ def deleteUnknownNodes(GUI = True):
         mc.unknownPlugin( "Turtle", r=True )
     except:
         pass
-
+        
+    def unloadMr():
+        import maya.cmds as mc
+        mc.unloadPlugin('Mayatomr',force = True)
     
     try:
-        mc.evalDeferred("unloadMr()")
+        mc.evalDeferred(unloadMr)
         mc.unknownPlugin( "Mayatomr", r=True )
     except:
         pass
@@ -170,9 +173,7 @@ def deleteUnknownNodes(GUI = True):
     return resultB, logL
 
 
-    def unloadMr():
-        import maya.cmds as mc
-        mc.unloadPlugin('Mayatomr',force = True)
+
         
 
 
