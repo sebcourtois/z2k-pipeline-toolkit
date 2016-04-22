@@ -9,7 +9,7 @@
 # Date : 2015-26-08
 # Comment : wip
 # TO DO:
-#       - add set all dynamic OFF
+#       x add set all dynamic OFF
 #       x connect shape visibility to a control -> btn_specialSettings
 #       x Add debug file in input of th e class ; a reporter sur les check des autres
 #       x add turttle check
@@ -1052,8 +1052,9 @@ class checkModule(object):
         
 
         boolResult = True
+        boolResultStructure = True
         if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
-            boolResult = False
+            boolResultStructure = False
         if not self.btn_CleanScene(controlN=self.BCleanScene, ):
             boolResult = False
         if not self.btn_CleanObjects(controlN=self.BCleanObjects, ):
@@ -1061,6 +1062,13 @@ class checkModule(object):
         if not self.btn_specialSettings(controlN=self.BSpecialSettings, ):
             boolResult = False
 
+        # recheck after fixing!
+        print "*"*80
+        print "RE-CHECKING STRUCTURE "
+        print "*"*80
+        if not boolResultStructure in [True]:
+            if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
+                boolResult = False
         # if not self.btn_applyShadersFromRender(controlN=self.BApplyShadersFromRender, ):
         #     boolResult = False
         
