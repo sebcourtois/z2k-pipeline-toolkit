@@ -1273,3 +1273,15 @@ def iterPanelsFromCam(oCamXfm, visible=False):
             if sVizPanels and (sPanel not in sVizPanels):
                 continue
             yield sPanel
+
+def iterGeoGroups(**kwargs):
+
+    if kwargs.get("selected", kwargs.get("sl", False)):
+        sNspcList = set(n.rsplit("|", 1)[-1].rsplit(":", 1)[0] for n in mc.ls(sl=True))
+    else:
+        sNspcList = mc.namespaceInfo(listOnlyNamespaces=True)
+
+    for sNspc in sNspcList:
+        sGeoGrp = sNspc + ":grp_geo"
+        if mc.objExists(sGeoGrp):
+            yield sGeoGrp
