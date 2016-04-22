@@ -865,7 +865,7 @@ def compareHDToPreviz():
         return ((math.fabs(vec[0]) > EPSILON) or (math.fabs(vec[1]) > EPSILON) or (math.fabs(vec[2]) > EPSILON))
 
     def createSetForJulien(name, object):
-        cmds.sets(object, n=name)    
+        cmds.sets(object, n="previz:"+name)    
 
     def findGroupHiNotExistingInPreviz(assetHi, assetPreviz):
         groupsHi = cmds.listRelatives(assetHi, ad=True, f=True,type='transform') # get all transforms with ful path
@@ -885,7 +885,16 @@ def compareHDToPreviz():
                     createSetForJulien("Set_INFO_GroupOnlyExistingInHi_"+groupHi, groupHi)
 
     def computeBboxVolume(bbox):
-        return (math.fabs(bbox[3]-bbox[0])*math.fabs(bbox[4]-bbox[1])*math.fabs(bbox[5]-bbox[2])) 
+        Xab = bbox[3]-bbox[0]
+        if Xab == 0:
+            Xab = 0.0001
+        Yab = bbox[4]-bbox[1]
+        if Yab == 0:
+            Yab = 0.0001
+        Zab = bbox[5]-bbox[2]
+        if Zab == 0:
+            Zab = 0.0001
+        return (math.fabs(Xab)*math.fabs(Yab)*math.fabs(Zab)) 
                    
     def compareBboxVolumeHiToPreviz(groupHi, groupPreviz): # ex. boxScale = 0.1 (10%)
         ##print("groupHi = " + groupHi + " groupPreviz = " + groupPreviz)
@@ -905,10 +914,21 @@ def compareHDToPreviz():
             return percent
         else:
             return 99999
-        
+
+    if not _DW:
+        result = cmds.promptDialog(title='Compare HD to Previz',message='Enter a % volume tolerance :',text= '20',button=['OK', 'Cancel'],defaultButton='OK',cancelButton='Cancel',dismissString='Cancel')
+        if result == 'OK':
+            text = cmds.promptDialog(query=True, text=True) 
+            try:
+                BOX_SCALE = float(text)/100
+                if not 0<BOX_SCALE<1:
+                    raise ValueError ("the entered value '"+text+"' must be an 0 < integer < 100")
+            except:
+                raise ValueError ("the entered text '"+text+"' must be an 0 < integer < 100")
+        else:
+            return
 
     ## previz is the ref, hi could have more group but not less, and check localspace pivot translate et scale MUST be 0 !
-
     namespacePreviz = ""
     errorCount = 0;
     sel = cmds.ls(sl=True, type='transform') # get the transform(s) selected
@@ -960,13 +980,13 @@ def compareHDToPreviz():
                         error = True
                         errorCount += 1
                         if not _DW:
-                            createSetForJulien("Set_ERROR_"+str(groupHi)+"_hasDifferentRotateValues", groupHi)
+                            createSetForJulien("Set_ERROR_"+str(groupHi)+"_hasDifferentRotateValues", [groupHi,groupPreviz])
                     if cmp(posHi, posPreviz):
                         print("\t\tERROR in group: " + groupHi + " has different translation values: " + str(posHi) + " instead of previz : "+ str(posPreviz))
                         error = True
                         errorCount += 1
                         if not _DW:
-                            createSetForJulien("Set_ERROR_"+str(groupHi)+"_hasDifferentTranslationValues", groupHi)
+                            createSetForJulien("Set_ERROR_"+str(groupHi)+"_hasDifferentTranslationValues", [groupHi,groupPreviz])
                     # test local pivot rotate and scale
                     localPivotRotateHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,os=1,rp=1), DECIMAL_NB) # get local rotate pivot
                     localPivotScaleHi = vectorLimitDecimal(cmds.xform(groupHi,q=True,os=1,sp=1), DECIMAL_NB) # get local scale pivot
@@ -995,7 +1015,7 @@ def compareHDToPreviz():
                                 errorCount += 1
                             else:
                                 dictWarning["WARNING: " + groupHi + " volume is different than previz"] = percent
-                                createSetForJulien("Set_WARNING_Bbox"+str(groupHi)+"_hasVolueGretaerThanPrvizBy_" + str(floatLimitDecimal(percent*100,DECIMAL_NB)) + "_percent", groupHi)
+                                createSetForJulien("Set_WARNING_Bbox"+str(groupHi)+"_hasVolueGretaerThanPrvizBy_" + str(floatLimitDecimal(percent*100,DECIMAL_NB)) + "_percent", [groupHi,groupPreviz])
                      
                 else:
                     print("\t\tERROR: group: " + groupHi + " is missing")

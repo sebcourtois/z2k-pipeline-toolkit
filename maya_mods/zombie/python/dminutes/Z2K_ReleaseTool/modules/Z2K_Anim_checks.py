@@ -9,7 +9,7 @@
 # Date : 2015-26-08
 # Comment : wip
 # TO DO:
-#       - add set all dynamic OFF
+#       x add set all dynamic OFF
 #       x connect shape visibility to a control -> btn_specialSettings
 #       x Add debug file in input of th e class ; a reporter sur les check des autres
 #       x add turttle check
@@ -653,7 +653,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=24, e=True)
+        self.pBar_upd(step=1, maxValue=25, e=True)
 
 
         # 1 connectVisibility ()
@@ -1009,6 +1009,20 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
         
+        
+        # 25 ----- (chr_fix_Dynamic_defaultValues)
+        self.printF("chr_fix_Dynamic_defaultValues()", st="t")
+        result,debugL = jpZ.chr_fix_Dynamic_defaultValues()
+        # prints -------------------
+        self.printF(result, st="r")
+        if debugL:
+            self.printF("  - {0} default values setted on dynamic controls".format( len(debugL)  ) )
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
 
 
         # colors
@@ -1038,8 +1052,9 @@ class checkModule(object):
         
 
         boolResult = True
+        boolResultStructure = True
         if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
-            boolResult = False
+            boolResultStructure = False
         if not self.btn_CleanScene(controlN=self.BCleanScene, ):
             boolResult = False
         if not self.btn_CleanObjects(controlN=self.BCleanObjects, ):
@@ -1047,6 +1062,13 @@ class checkModule(object):
         if not self.btn_specialSettings(controlN=self.BSpecialSettings, ):
             boolResult = False
 
+        # recheck after fixing!
+        print "*"*80
+        print "RE-CHECKING STRUCTURE "
+        print "*"*80
+        if not boolResultStructure in [True]:
+            if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
+                boolResult = False
         # if not self.btn_applyShadersFromRender(controlN=self.BApplyShadersFromRender, ):
         #     boolResult = False
         

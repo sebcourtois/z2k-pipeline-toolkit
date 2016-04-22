@@ -28,89 +28,229 @@ import tkRig as tk
 reload (tk)
 
 # TK wrap/TWEAK 
-
 def tkMirror(*args, **kwargs):
     # special case of added controlers
     # upperBrowL = ['Left_Brow_upRidge_01_ctrl', 'Left_Brow_upRidge_02_ctrl', 'Left_Brow_upRidge_03_ctrl', 'Left_Brow_upRidge_04_ctrl', 
     #             'Right_Brow_upRidge_01_ctrl', 'Right_Brow_upRidge_02_ctrl', 'Right_Brow_upRidge_03_ctrl', 'Right_Brow_upRidge_04_ctrl'
     #             ]
-    upperBrowD = {'Left_Brow_upRidge_01_ctrl':'Right_Brow_upRidge_01_ctrl',
-                  'Left_Brow_upRidge_02_ctrl':'Right_Brow_upRidge_02_ctrl',
-                  'Left_Brow_upRidge_03_ctrl':'Right_Brow_upRidge_03_ctrl',
-                  'Left_Brow_upRidge_04_ctrl':'Right_Brow_upRidge_04_ctrl', 
+    try:
+        cmds.undoInfo(openChunk = True)
 
-                  'Right_Brow_upRidge_01_ctrl':'Left_Brow_upRidge_01_ctrl',
-                  'Right_Brow_upRidge_02_ctrl':'Left_Brow_upRidge_02_ctrl',
-                  'Right_Brow_upRidge_03_ctrl':'Left_Brow_upRidge_03_ctrl',
-                  'Right_Brow_upRidge_04_ctrl':'Left_Brow_upRidge_04_ctrl',   
+        realSymD = {
+                    'Right_Teeth_dn_01_ctrl':'Left_Teeth_dn_01_ctrl',
+                    'Right_Teeth_dn_02_ctrl':'Left_LowerLip_1_Ctrl_Left_Teeth_dn_02_ctrl_grp_Left_Teeth_dn_02_ctrl_grp',
+                    'Right_Teeth_up_01_Ctrl':'Left_Teeth_up_01_Ctrl',
+                    'Right_Teeth_up_02_Ctrl':'Left_Teeth_up_02_Ctrl',
+                    'Right_Jaw_Corner_01_ctrl':'Left_Jaw_Corner_01_ctrl',
+                    'Right_Jaw_Corner_02_ctrl':'Left_Jaw_Corner_02_ctrl',
+                    'Right_Jaw_Corner_03_ctrl':'Left_Jaw_Corner_03_ctrl',
+
+                    'Left_Teeth_dn_01_ctrl':'Right_Teeth_dn_01_ctrl',
+                    'Left_LowerLip_1_Ctrl_Left_Teeth_dn_02_ctrl_grp_Left_Teeth_dn_02_ctrl_grp':'Right_Teeth_dn_02_ctrl',
+                    'Left_Teeth_up_01_Ctrl':'Right_Teeth_up_01_Ctrl',
+                    'Left_Teeth_up_02_Ctrl':'Right_Teeth_up_02_Ctrl',
+                    'Left_Jaw_Corner_01_ctrl':'Right_Jaw_Corner_01_ctrl',
+                    'Left_Jaw_Corner_02_ctrl':'Right_Jaw_Corner_02_ctrl',
+                    'Left_Jaw_Corner_03_ctrl':'Right_Jaw_Corner_03_ctrl',
+
+                    }
+        upperBrowD = {'Left_Brow_upRidge_01_ctrl':'Right_Brow_upRidge_01_ctrl',
+                      'Left_Brow_upRidge_02_ctrl':'Right_Brow_upRidge_02_ctrl',
+                      'Left_Brow_upRidge_03_ctrl':'Right_Brow_upRidge_03_ctrl',
+                      'Left_Brow_upRidge_04_ctrl':'Right_Brow_upRidge_04_ctrl', 
+
+                      'Right_Brow_upRidge_01_ctrl':'Left_Brow_upRidge_01_ctrl',
+                      'Right_Brow_upRidge_02_ctrl':'Left_Brow_upRidge_02_ctrl',
+                      'Right_Brow_upRidge_03_ctrl':'Left_Brow_upRidge_03_ctrl',
+                      'Right_Brow_upRidge_04_ctrl':'Left_Brow_upRidge_04_ctrl',   
+                      
+                    }
+
+        customAllSymD = dict(realSymD,**upperBrowD )
+        upperSymL = []
+        customAllSymL = []
+        tkendSel = []
+
+        cursel= cmds.ls(sl=1)
+        print "cursel=", cursel
+        for i  in cursel:
+            # print "    *",i.split(":",1)[-1]
+
+            if  i.split(":",1)[-1] in customAllSymD.keys():
+                customAllSymL.append(i)
+            else:
+                tkendSel.append(i)
+
+        # jp TK mirror wrap ----------------------------------------------------------
+        print "upperSymL=", upperSymL
+        print "tkendSel=", tkendSel
+        if tkendSel:
+            tk.mirrorPose(tkendSel)
+
+        # jp upperSymLspecial mirror ------------------------------------------------
+        # set the values
+        attrTableD = {  "sx":1,
+                        "sy":1,
+                        "sz":1,
+                        "rx":-1,
+                        "ry":-1,
+                        "rz":1,
+                        "tx":1,
+                        "ty":1,
+                        "tz":-1,
+           }
+        oppositeValD={}
+
+        for i in customAllSymL:
+            
+            # get corresponding opposite side
+            if ":" in i:
+                curChr = i.split(":",1)[0] 
+                key = i.split(":",1)[-1]
+                oppositeSide =curChr+":"+ customAllSymD[key]
+            else:
+                curChr = i
+                key = i
+                oppositeSide = customAllSymD[i]
+
+            print "*",i,"<>",oppositeSide
+
+            
+            
+            # get the values
+            oppositeValD[oppositeSide]={}
+            print i,"<>", oppositeSide
+            
+            
+            for attr,fact in attrTableD.iteritems():
+
+
+                # upperBrow case ---------------------------------
+                if i.split(":",1)[-1] in upperBrowD.keys():
+                    print "upperBrow case"
+                    curVal = cmds.getAttr(i+"."+attr)
+                    oppositeValD[oppositeSide][attr]=fact*curVal
                 
-                }
+                # realSym case  ---------------------------------
+                elif  i.split(":",1)[-1] in realSymD.keys():
+                    print "realSym case"
 
-    cursel= cmds.ls(sl=1)
-    upperSymL = []
-    tkendSel = []
-    print "cursel=", cursel
-    for i  in cursel:
-        # print "    *",i.split(":",1)[-1]
+                    curVal = cmds.getAttr(i+"."+attr)
+                    oppositeValD[oppositeSide][attr]=curVal
 
-        if  i.split(":",1)[-1] in upperBrowD.keys():
-            upperSymL.append(i)
-        else:
-            tkendSel.append(i)
 
-    # jp TK mirror wrap ----------------------------------------------------------
-    print "upperSymL=", upperSymL
-    print "tkendSel=", tkendSel
-    if tkendSel:
-        tk.mirrorPose(tkendSel)
 
-    # jp upperSymLspecial mirror ------------------------------------------------
-    # set the values
-    attrTableD = {  "sx":1,
-                    "sy":1,
-                    "sz":1,
-                    "rx":-1,
-                    "ry":-1,
-                    "rz":1,
-                    "tx":1,
-                    "ty":1,
-                    "tz":-1,
-       }
 
-    oppositeValD={}
-    for i in upperSymL:
+        # set attr
+        for obj,attrD in oppositeValD.iteritems():
+            print "->",obj
+            for attr,val in attrD.iteritems():
+                # print "   ",attr,val
+                if cmds.objExists(obj+"."+attr):
+                    cmds.setAttr(obj+"."+attr,val)
         
-        # get corresponding opposite side
-        if ":" in i:
-            curChr = i.split(":",1)[0] 
-            key = i.split(":",1)[-1]
-            oppositeSide =curChr+":"+ upperBrowD[key]
-        else:
-            curChr = i
-            key = i
-            oppositeSide = upperBrowD[i]
+    except Exception,err:
+        print Exception,err
+        cmds.undoInfo(closeChunk = True)
 
-        print "*",i,"<>",oppositeSide
+def tkMirror_old(*args, **kwargs):
+    # special case of added controlers
+    # upperBrowL = ['Left_Brow_upRidge_01_ctrl', 'Left_Brow_upRidge_02_ctrl', 'Left_Brow_upRidge_03_ctrl', 'Left_Brow_upRidge_04_ctrl', 
+    #             'Right_Brow_upRidge_01_ctrl', 'Right_Brow_upRidge_02_ctrl', 'Right_Brow_upRidge_03_ctrl', 'Right_Brow_upRidge_04_ctrl'
+    #             ]
+    try:
+        cmds.undoInfo(openChunk = True)
 
+        realSymD = {
+        'Right_Teeth_dn_01_ctrl':'Left_Teeth_dn_01_ctrl',
+        'Right_Teeth_dn_02_ctrl':'Left_Teeth_dn_02_ctrl',
+        'Right_Teeth_up_01_Ctrl':'Left_Teeth_up_01_Ctrl',
+        'Right_Teeth_up_02_Ctrl':'Left_Teeth_up_02_Ctrl',
+
+
+
+
+
+
+                    }
+        upperBrowD = {'Left_Brow_upRidge_01_ctrl':'Right_Brow_upRidge_01_ctrl',
+                      'Left_Brow_upRidge_02_ctrl':'Right_Brow_upRidge_02_ctrl',
+                      'Left_Brow_upRidge_03_ctrl':'Right_Brow_upRidge_03_ctrl',
+                      'Left_Brow_upRidge_04_ctrl':'Right_Brow_upRidge_04_ctrl', 
+
+                      'Right_Brow_upRidge_01_ctrl':'Left_Brow_upRidge_01_ctrl',
+                      'Right_Brow_upRidge_02_ctrl':'Left_Brow_upRidge_02_ctrl',
+                      'Right_Brow_upRidge_03_ctrl':'Left_Brow_upRidge_03_ctrl',
+                      'Right_Brow_upRidge_04_ctrl':'Left_Brow_upRidge_04_ctrl',   
+                    
+                    }
+
+        cursel= cmds.ls(sl=1)
+        upperSymL = []
+        tkendSel = []
+        print "cursel=", cursel
+        for i  in cursel:
+            # print "    *",i.split(":",1)[-1]
+
+            if  i.split(":",1)[-1] in upperBrowD.keys():
+                upperSymL.append(i)
+            else:
+                tkendSel.append(i)
+
+        # jp TK mirror wrap ----------------------------------------------------------
+        print "upperSymL=", upperSymL
+        print "tkendSel=", tkendSel
+        if tkendSel:
+            tk.mirrorPose(tkendSel)
+
+        # jp upperSymLspecial mirror ------------------------------------------------
+        # set the values
+        attrTableD = {  "sx":1,
+                        "sy":1,
+                        "sz":1,
+                        "rx":-1,
+                        "ry":-1,
+                        "rz":1,
+                        "tx":1,
+                        "ty":1,
+                        "tz":-1,
+           }
+        oppositeValD={}
+        for i in upperSymL:
+            
+            # get corresponding opposite side
+            if ":" in i:
+                curChr = i.split(":",1)[0] 
+                key = i.split(":",1)[-1]
+                oppositeSide =curChr+":"+ upperBrowD[key]
+            else:
+                curChr = i
+                key = i
+                oppositeSide = upperBrowD[i]
+
+            print "*",i,"<>",oppositeSide
+
+            
+            # get the values
+            oppositeValD[oppositeSide]={}
+            print i,"<>", oppositeSide
+            for attr,fact in attrTableD.iteritems():
+                # print "  ",attr,fact
+                curVal = cmds.getAttr(i+"."+attr)
+                # print "    curval=", curVal
+                oppositeValD[oppositeSide][attr]=fact*curVal
+
+
+        # set attr
+        for obj,attrD in oppositeValD.iteritems():
+            print "->",obj
+            for attr,val in attrD.iteritems():
+                # print "   ",attr,val
+                cmds.setAttr(obj+"."+attr,val)
         
-        # get the values
-        oppositeValD[oppositeSide]={}
-        print i,"<>", oppositeSide
-        for attr,fact in attrTableD.iteritems():
-            # print "  ",attr,fact
-            curVal = cmds.getAttr(i+"."+attr)
-            # print "    curval=", curVal
-            oppositeValD[oppositeSide][attr]=fact*curVal
-
-
-    # set attr
-    for obj,attrD in oppositeValD.iteritems():
-        print "->",obj
-        for attr,val in attrD.iteritems():
-            # print "   ",attr,val
-            cmds.setAttr(obj+"."+attr,val)
-        
-
+    except Exception,err:
+        print Exception,err
+        cmds.undoInfo(closeChunk = True)
 
 # general function
 def setCamForAnim(camera="", *args, **kwargs):
@@ -922,6 +1062,52 @@ def UnusedNodeAnalyse(execptionTL=['containerBase', 'entity'], specificTL=[] , m
 
 
 # Z2k func
+def z2k_Select_Dyn_CTR( objL = [], mode="select", *args, **kwargs):
+    print "z2k_Select_Dyn_CTR()"
+    """ Description: select toonkit dyn ctrs
+                    objL = object list to get the namespace from.
+                    mode = "select" : select objects
+                    mode = "info": return simplement la liste des objects.
+        Return : LIST
+        Dependencies : cmds - getSetContent()
+    """
+    dynAttrL = ['STIFNESS', 'RESET', 'DAMPING', 'ATTENUATION', 'COLLIDE']
+    dynShortAttrL = ['RESET', 'ATTENUATION', 'COLLIDE']
+    toSel = None
+    outSelL = []
+    if not len (objL):
+        cursel = cmds.ls(sl=1)
+    else:
+        cursel = objL
+
+    if len(cursel):
+        if ":" in cursel[0]:
+            toSel = cursel[0].split(":")[0] + ":set_control"
+        else:
+            toSel = "set_control"
+        # print "toSels=", toSel     
+        allCtrL= getSetContent(inSetL=[toSel])
+        print "allCtrL=", allCtrL
+
+        if allCtrL:
+            for i in allCtrL:
+                custAttrL = cmds.listAttr(i,ud=1)
+                if custAttrL:
+                    testL = [ x.upper() for x in custAttrL ]
+                    # print "testL    =", testL
+                    # print "dynAttrL =", dynAttrL 
+                    if ( set(dynAttrL).issubset( set( testL)  ) ) or ( set(dynShortAttrL).issubset( set( testL)  ) ) :
+                        outSelL.append(i)
+        
+        if mode in ["select"]:
+            if len(outSelL):
+                cmds.select(outSelL)
+
+    else:
+        if mode in ["select"]:
+            cmds.confirmDialog(m="Please select first a controler of your character",b="OK")
+
+    return [outSelL]
 
 def z2k_selAll_asset_Ctr(*args, **kwargs):
     print "z2k_selAll_asset_Ctr()"
@@ -1409,7 +1595,7 @@ def resetCTR(inObjL=[], userDefined=True, SRT=True, *args, **kwargs):
         # print i
         if SRT:
             # if  not checkSRT([i])[0]:
-            print "    reseting",i
+            # print "    reseting",i
             try:
                 cmds.xform(i, ro=(0, 0, 0), t=(0, 0, 0), s=(1, 1, 1))
                 resetedL.append(i)
@@ -2382,11 +2568,15 @@ def chr_changeCtrDisplays(*args, **kwargs):
 
 
     #allready done test
-    if getColor(objL="Fly_Main_Ctrl")[0] in [greenC] and getColor(objL="BigDaddy")[0] in [redDarkC]:
+    if cmds.objExists("Fly_Main_Ctrl") and cmds.objExists("BigDaddy"):
+        if getColor(objL="Fly_Main_Ctrl")[0] in [greenC] and getColor(objL="BigDaddy")[0] in [redDarkC]:
+            canDo = False
+            print "Tweak Allready done"
+            debugL.append("Tweak Allready done")
+    else:
         canDo = False
-        print "Tweak Allready done"
-        debugL.append("Tweak Allready done")
-
+        print "Nothing to tweak"
+        debugL.append("Nothing to tweak")
     # for k in greenL+brownLightL+redDarkL:
     #     if not cmds.objExists(k):
     #         canDo = False
@@ -2888,54 +3078,56 @@ def chr_reArrangeCtr_displayLevel(*args, **kwargs):
     lvl2 = "Controls_2"
     lvl3 = "Controls_3"
     
+    if cmds.objExists(inObj):
+        # start settings loop
+        allL = toLvl0L+toLvl1L+toLvl2L+toLvl3L
+        if len(allL):
+            for i in allL :
+                curLvl = lvl0
 
-    # start settings loop
-    allL = toLvl0L+toLvl1L+toLvl2L+toLvl3L
-    if len(allL):
-        for i in allL :
-            curLvl = lvl0
+                if i in toLvl1L:
+                    curLvl = lvl1
+                elif i in toLvl2L:
+                    curLvl = lvl2
+                elif i in toLvl3L:
+                    # handle le cas ou il n y a pas d attribut "controls_3" dans le rig
+                    if not cmds.objExists(inObj+"."+lvl3):
+                        # print "ADD ATTR"
+                        cmds.addAttr( inObj, longName=lvl3, attributeType="enum",enumName="False:True", keyable=True,  dv=0)
+                        cmds.setAttr(inObj + "."+lvl3,channelBox=1)
+                        movAttrL=  ["Head","Head_Res","Body_res","Deformers","SmoothLevel","Geometry","RigStuff"]
+                        movAttrL.reverse()
+                        for mattr in [lvl3]+movAttrL:
+                            # print "*****",mattr
+                            lock = cmds.getAttr(inObj+"."+mattr,l=1)
+                            cmds.setAttr(inObj+"."+mattr,l=0)
+                            cmds.deleteAttr(inObj,at=mattr)
+                            cmds.undo()
+                            cmds.setAttr(inObj+"."+mattr,l=lock)
+                        
+                    curLvl = lvl3
 
-            if i in toLvl1L:
-                curLvl = lvl1
-            elif i in toLvl2L:
-                curLvl = lvl2
-            elif i in toLvl3L:
-                # handle le cas ou il n y a pas d attribut "controls_3" dans le rig
-                if not cmds.objExists(inObj+"."+lvl3):
-                    # print "ADD ATTR"
-                    cmds.addAttr( inObj, longName=lvl3, attributeType="enum",enumName="False:True", keyable=True,  dv=0)
-                    cmds.setAttr(inObj + "."+lvl3,channelBox=1)
-                    movAttrL=  ["Head","Head_Res","Body_res","Deformers","SmoothLevel","Geometry","RigStuff"]
-                    movAttrL.reverse()
-                    for mattr in [lvl3]+movAttrL:
-                        # print "*****",mattr
-                        lock = cmds.getAttr(inObj+"."+mattr,l=1)
-                        cmds.setAttr(inObj+"."+mattr,l=0)
-                        cmds.deleteAttr(inObj,at=mattr)
-                        cmds.undo()
-                        cmds.setAttr(inObj+"."+mattr,l=lock)
-                    
-                curLvl = lvl3
+                if cmds.objExists(i):
+                    # print "****",i
+                    if cmds.listRelatives(i,c=1,s=1,):
+                        shapeL = [i+"|"+ x for x in cmds.listRelatives(i,c=1,s=1,)]
+                        if shapeL:
+                            for j in shapeL:
+                                if "IK" in j:
+                                    print "**************************************",j
+                                if cmds.connectionInfo( j + "."+ "visibility",isDestination=True):
+                                    multiply_Vis = cmds.listConnections( j + "."+ "visibility",s=1,d=0, scn=1,)[0]
+                                    # print "multiply_Vis=", multiply_Vis
+                                    # print curLvl, cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0]
+                                    if not curLvl  in cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0] :
+                                        # print "connect"
+                                        # cmds.disconnectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2" )
+                                        cmds.connectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2", f=1)
 
-            if cmds.objExists(i):
-                # print "****",i
-                if cmds.listRelatives(i,c=1,s=1,):
-                    shapeL = [i+"|"+ x for x in cmds.listRelatives(i,c=1,s=1,)]
-                    if shapeL:
-                        for j in shapeL:
-                            if "IK" in j:
-                                print "**************************************",j
-                            if cmds.connectionInfo( j + "."+ "visibility",isDestination=True):
-                                multiply_Vis = cmds.listConnections( j + "."+ "visibility",s=1,d=0, scn=1,)[0]
-                                # print "multiply_Vis=", multiply_Vis
-                                # print curLvl, cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0]
-                                if not curLvl  in cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0] :
-                                    # print "connect"
-                                    # cmds.disconnectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2" )
-                                    cmds.connectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2", f=1)
-
-                else:
-                    print "NO SHAPE FOUND ON {0}".format(i)
+                    else:
+                        print "NO SHAPE FOUND ON {0}".format(i)
+    else:
+        print "Nothing Done"
 
     return [True,""]
 
@@ -3133,8 +3325,9 @@ def chr_fix_mirror_parameters(*args, **kwargs):
     
     print "chr_fix_mirror_parametersAA()"
     debugL = []
-    outTrueL =['Left_Bottom_Teeth', 'Right_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Top_Teeth', 'Left_Cheek', 'Right_Shoulder', 'Left_Shoulder', 'Left_Hand_0', 'Left_Thumb_0', 'Left_Thumb_1', 'Left_Thumb_2', 'Left_Meta_Index', 'Left_Index_0', 'Left_Index_1', 'Left_Index_2', 'Left_Pinky_Meta_Bone_Ctrl', 'Right_Middle_1', 'Right_Middle_2', 'Right_Ring_Meta_Bone_Ctrl', 'Right_Ring_0_Bone_Ctrl', 'Right_Ring_1_Bone_Ctrl', 'Right_Ring_2_Bone_Ctrl', 'Right_Foot_FK_0', 'Right_Foot_FK_1', 'Left_Arm_FK_1', 'Left_Arm_FK_0', 'Left_Pinky_0_Bone_Ctrl', 'Left_Pinky_1_Bone_Ctrl', 'Left_Pinky_2_Bone_Ctrl', 'Left_Meta_Middle', 'Left_Middle_0', 'Left_Middle_1', 'Left_Middle_2', 'Left_Ring_Meta_Bone_Ctrl', 'Left_Ring_0_Bone_Ctrl', 'Left_Ring_1_Bone_Ctrl', 'Left_Ring_2_Bone_Ctrl', 'Right_Leg_FK_0', 'Right_Foot_Heel', 'Right_Foot_Reverse_0', 'Right_Foot_Reverse_1', 'Right_Foot_Reverse_2', 'Left_EyeBrow_out_1', 'Left_EyeBrow_in', 'Left_EyeBrow_out', 'Right_Arm_FK_1', 'Right_Arm_FK_0', 'Right_Hand_0', 'Right_Thumb_0', 'Left_nostril', 'Right_nostril', 'Right_Ear_Bone_Ctrl', 'Right_Thumb_1', 'Right_Thumb_2', 'Right_Meta_Index', 'Right_Index_0', 'Right_Index_1', 'Right_Index_2', 'Right_Pinky_Meta_Bone_Ctrl', 'Right_Pinky_0_Bone_Ctrl', 'Right_Pinky_1_Bone_Ctrl', 'Right_Pinky_2_Bone_Ctrl', 'Right_Meta_Middle', 'Right_Middle_0', 'Left_UpperEye_0_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_UpperEye_1_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_UpperEye_3_Ctrl', 'Right_LowerEye_0_Ctrl', 'Right_LowerEye_1_Ctrl', 'Right_LowerEye_2_Ctrl', 'Right_LowerEye_3_Ctrl', 'Right_Leg_FK_1', 'Right_Levator1_0_Ctrl', 'Right_Levator1_1_Ctrl', 'Right_Levator_0_Ctrl', 'Right_Levator_1_Ctrl', 'Right_Cheek', 'Right_Zygo_0_Ctrl', 'Right_Zygo_1_Ctrl', 'Left_Foot_FK_0', 'Right_Riso_0_Ctrl', 'Right_Riso_1_Ctrl', 'Left_Zygo_0_Ctrl', 'Left_Zygo_1_Ctrl', 'Left_Levator1_0_Ctrl', 'Left_Levator1_1_Ctrl', 'Left_Levator_0_Ctrl', 'Left_Levator_1_Ctrl', 'Left_Riso_0_Ctrl', 'Left_Riso_1_Ctrl', 'Left_CheekBone', 'Right_CheekBone', 'Right_Tongue_2', 'Right_Tongue_3', 'Right_Tongue_1', 'Left_Foot_FK_1', 'Left_Foot_Heel', 'Left_Foot_Reverse_0', 'Left_Foot_Reverse_1', 'Left_Foot_Reverse_2', 'Left_Leg_FK_1', 'Left_Leg_FK_0', 'Left_UpperEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_UpperEye_3_Ctrl', 'Left_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_LowerEye_2_Ctrl', 'Left_LowerEye_3_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_in_1', 'Right_Brow_ridge_in', 'Right_Brow_ridge_out_1', 'Right_EyeBrow_out_1', 'Right_EyeBrow_in', 'Right_Brow_ridge_in_1', 'Right_EyeBrow_out', 'Right_Brow_ridge_out', 'Left_EyeBrow_Global', 'Left_EyeBrow_in_1']
-    outFalseL = ['Bottom_Teeth_Global', 'Bottom_Teeth', 'Top_Teeth_Global', 'Top_Teeth', 'Right_Hand_ParamHolder_Main_Ctrl', 'Left_Foot_ParamHolder_Main_Ctrl', 'Right_Foot_ParamHolder_Main_Ctrl', 'Left_Hand_ParamHolder_Main_Ctrl', 'Left_Arm_Root', 'Right_Leg_Extra_0', 'Right_Arm_Extra_6', 'Right_Arm_Round_Root', 'Right_Arm_Root_Tangent', 'Right_Arm_End', 'Right_Arm_End_Tangent', 'Right_Arm_Elbow', 'Right_Arm_Round_0', 'Right_Arm_Round_1', 'Right_Arm_Extra_0', 'Right_Arm_Extra_1', 'Right_Arm_Extra_2', 'Right_Arm_Extra_3', 'Right_Arm_Extra_4', 'Right_Arm_Extra_5', 'Right_Leg_upV', 'Left_Arm_Extra_0', 'Left_Arm_Extra_1', 'Left_Arm_Extra_2', 'Left_Arm_Extra_3', 'Left_Arm_Extra_4', 'Left_Arm_Extra_5', 'Left_Arm_Extra_6', 'Left_Arm_Round_Root', 'Left_Arm_Round_Root_Tangent', 'Left_Arm_Round_Eff', 'Left_Arm_Round_Eff_Tangent', 'Left_Arm_Elbow', 'Left_Arm_Round_0', 'Left_Arm_Round_1', 'Left_Arm_IK', 'Left_Arm_upV', 'Left_Depressor_Handle_1_Control', 'Left_Depressor1_Handle_1_Control', 'Left_MouthCorner', 'Left_LowerLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 'Left_LowerLip_Inter', 'Left_UpperLip_1_Ctrl', 'Left_UpperLip_2_Ctrl', 'Left_UpperLip_Inter', 'Left_Leg_Extra_5', 'Left_Leg_Extra_6', 'Left_Leg_Round_Root', 'Left_Leg_Round_Root_Tangent', 'Left_Leg_Round_Eff', 'Left_Leg_Round_Eff_Tangent', 'Left_Leg_Knee', 'Left_Leg_Round_0', 'Left_Leg_Round_1', 'Left_Pant_Bottom_Global_Main_Ctrl', 'Left_Pant_Ext_Main_Ctrl', 'Left_Pant_Int_Main_Ctrl', 'Left_Pant_Front_Main_Ctrl', 'Left_Pant_Back_Main_Ctrl', 'Right_Leg_IK', 'Left_Brow_ridge_in', 'Left_Brow_ridge_out_1', 'Left_Brow_ridge_in_1', 'Left_Brow_ridge_out', 'Right_Collar_0_1_Bone_Ctrl', 'Right_Collar_0_2_Bone_Ctrl', 'Right_Arm_upV', 'Right_Arm_Root', 'Right_Arm_IK', 'Left_Collar_2_2_Bone_Ctrl', 'Left_Collar_1_0_Bone_Ctrl', 'Left_Collar_1_2_Bone_Ctrl', 'Back_Collar_1_Bone_Ctrl', 'Back_Collar_2_Bone_Ctrl', 'Left_UpperLid_Main_Ctrl', 'Left_Eyelid_Out', 'Left_Eyelid_In', 'Left_Eye_Target_Main_Ctrl', 'Left_Eye', 'Left_Eye_Pupille_Main_Ctrl', 'Right_Eye_Target_Main_Ctrl', 'Right_Eye', 'Right_Eye_Pupille_Main_Ctrl', 'Right_Leg_Root', 'Right_Base_Depressor', 'Right_Base_Levator1', 'Right_Base_Depressor1', 'Right_Base_Levator', 'Right_Depressor1_Handle_1_Control', 'Right_UpperLip_1_Ctrl', 'Right_UpperLip_2_Ctrl', 'Right_UpperLip_Inter', 'Right_MouthCorner', 'Right_LowerLip_1_Ctrl', 'Right_LowerLip_2_Ctrl', 'Right_LowerLip_Inter', 'Right_Depressor_Handle_1_Control', 'Left_Base_Levator', 'Left_Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator1', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Left_Leg_Extra_0', 'Left_Leg_Extra_1', 'Left_Leg_Extra_2', 'Left_Leg_Extra_3', 'Left_Leg_Extra_4', 'Left_Leg_IK', 'Left_Leg_upV', 'Left_Leg_Root', 'Right_Leg_Extra_1', 'Right_Leg_Extra_2', 'Right_Leg_Extra_3', 'Right_Leg_Extra_4', 'Right_Leg_Extra_5', 'Right_Leg_Extra_6', 'Right_Leg_Round_Root', 'Right_Leg_Round_Root_Tangent', 'Right_Leg_Round_End', 'Right_Leg_Round_End_Tangent', 'Right_Leg_Knee', 'Right_Leg_Round_0', 'Right_Leg_Round_1', 'Right_Pant_Bottom_Global_Main_Ctrl', 'Right_Pant_Ext_Main_Ctrl', 'Right_Pant_Int_Main_Ctrl', 'Right_Pant_Front_Main_Ctrl', 'Right_Pant_Back_Main_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Right_LowerLid_Main_Ctrl', 'Right_UpperLid_Main_Ctrl', 'Right_Eyelid_Out', 'Right_Eyelid_In', 'Right_Collar_1_0_Bone_Ctrl', 'Right_Collar_1_2_Bone_Ctrl', 'Right_Collar_2_1_Bone_Ctrl', 'Right_Collar_2_2_Bone_Ctrl', 'Left_Collar_0_1_Bone_Ctrl', 'Left_Collar_0_2_Bone_Ctrl', 'Left_Collar_2_1_Bone_Ctrl', 'Right_Eye_Bulge', 'Left_Ear_Bone_Ctrl', 'Left_Eye_Bulge']
+    # putain de toonkit de bordel de rig pas identik!!! Left_Cheek Right_Cheek n'est pas toujours oriented pareil ex polo miror doit etre True, sur josefigB doit eter false
+    outTrueL =['Left_Bottom_Teeth', 'Right_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Top_Teeth',  'Right_Shoulder', 'Left_Shoulder', 'Left_Hand_0', 'Left_Thumb_0', 'Left_Thumb_1', 'Left_Thumb_2', 'Left_Meta_Index', 'Left_Index_0', 'Left_Index_1', 'Left_Index_2', 'Left_Pinky_Meta_Bone_Ctrl', 'Right_Middle_1', 'Right_Middle_2', 'Right_Ring_Meta_Bone_Ctrl', 'Right_Ring_0_Bone_Ctrl', 'Right_Ring_1_Bone_Ctrl', 'Right_Ring_2_Bone_Ctrl', 'Right_Foot_FK_0', 'Right_Foot_FK_1', 'Left_Arm_FK_1', 'Left_Arm_FK_0', 'Left_Pinky_0_Bone_Ctrl', 'Left_Pinky_1_Bone_Ctrl', 'Left_Pinky_2_Bone_Ctrl', 'Left_Meta_Middle', 'Left_Middle_0', 'Left_Middle_1', 'Left_Middle_2', 'Left_Ring_Meta_Bone_Ctrl', 'Left_Ring_0_Bone_Ctrl', 'Left_Ring_1_Bone_Ctrl', 'Left_Ring_2_Bone_Ctrl', 'Right_Leg_FK_0', 'Right_Foot_Heel', 'Right_Foot_Reverse_0', 'Right_Foot_Reverse_1', 'Right_Foot_Reverse_2', 'Left_EyeBrow_out_1', 'Left_EyeBrow_in', 'Left_EyeBrow_out', 'Right_Arm_FK_1', 'Right_Arm_FK_0', 'Right_Hand_0', 'Right_Thumb_0', 'Left_nostril', 'Right_nostril', 'Right_Ear_Bone_Ctrl', 'Right_Thumb_1', 'Right_Thumb_2', 'Right_Meta_Index', 'Right_Index_0', 'Right_Index_1', 'Right_Index_2', 'Right_Pinky_Meta_Bone_Ctrl', 'Right_Pinky_0_Bone_Ctrl', 'Right_Pinky_1_Bone_Ctrl', 'Right_Pinky_2_Bone_Ctrl', 'Right_Meta_Middle', 'Right_Middle_0', 'Left_UpperEye_0_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_UpperEye_1_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_UpperEye_3_Ctrl', 'Right_LowerEye_0_Ctrl', 'Right_LowerEye_1_Ctrl', 'Right_LowerEye_2_Ctrl', 'Right_LowerEye_3_Ctrl', 'Right_Leg_FK_1', 'Right_Levator1_0_Ctrl', 'Right_Levator1_1_Ctrl', 'Right_Levator_0_Ctrl', 'Right_Levator_1_Ctrl',  'Right_Zygo_0_Ctrl', 'Right_Zygo_1_Ctrl', 'Left_Foot_FK_0', 'Right_Riso_0_Ctrl', 'Right_Riso_1_Ctrl', 'Left_Zygo_0_Ctrl', 'Left_Zygo_1_Ctrl', 'Left_Levator1_0_Ctrl', 'Left_Levator1_1_Ctrl', 'Left_Levator_0_Ctrl', 'Left_Levator_1_Ctrl', 'Left_Riso_0_Ctrl', 'Left_Riso_1_Ctrl', 'Left_CheekBone', 'Right_CheekBone', 'Right_Tongue_2', 'Right_Tongue_3', 'Right_Tongue_1', 'Left_Foot_FK_1', 'Left_Foot_Heel', 'Left_Foot_Reverse_0', 'Left_Foot_Reverse_1', 'Left_Foot_Reverse_2', 'Left_Leg_FK_1', 'Left_Leg_FK_0', 'Left_UpperEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_UpperEye_3_Ctrl', 'Left_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_LowerEye_2_Ctrl', 'Left_LowerEye_3_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_in_1', 'Right_Brow_ridge_in', 'Right_Brow_ridge_out_1', 'Right_EyeBrow_out_1', 'Right_EyeBrow_in', 'Right_Brow_ridge_in_1', 'Right_EyeBrow_out', 'Right_Brow_ridge_out', 'Left_EyeBrow_Global', 'Left_EyeBrow_in_1']
+    outFalseL = ['Bottom_Teeth_Global', 'Bottom_Teeth', 'Top_Teeth_Global', 'Top_Teeth','Right_Cheek','Left_Cheek', 'Right_Hand_ParamHolder_Main_Ctrl', 'Left_Foot_ParamHolder_Main_Ctrl', 'Right_Foot_ParamHolder_Main_Ctrl', 'Left_Hand_ParamHolder_Main_Ctrl', 'Left_Arm_Root', 'Right_Leg_Extra_0', 'Right_Arm_Extra_6', 'Right_Arm_Round_Root', 'Right_Arm_Root_Tangent', 'Right_Arm_End', 'Right_Arm_End_Tangent', 'Right_Arm_Elbow', 'Right_Arm_Round_0', 'Right_Arm_Round_1', 'Right_Arm_Extra_0', 'Right_Arm_Extra_1', 'Right_Arm_Extra_2', 'Right_Arm_Extra_3', 'Right_Arm_Extra_4', 'Right_Arm_Extra_5', 'Right_Leg_upV', 'Left_Arm_Extra_0', 'Left_Arm_Extra_1', 'Left_Arm_Extra_2', 'Left_Arm_Extra_3', 'Left_Arm_Extra_4', 'Left_Arm_Extra_5', 'Left_Arm_Extra_6', 'Left_Arm_Round_Root', 'Left_Arm_Round_Root_Tangent', 'Left_Arm_Round_Eff', 'Left_Arm_Round_Eff_Tangent', 'Left_Arm_Elbow', 'Left_Arm_Round_0', 'Left_Arm_Round_1', 'Left_Arm_IK', 'Left_Arm_upV', 'Left_Depressor_Handle_1_Control', 'Left_Depressor1_Handle_1_Control', 'Left_MouthCorner', 'Left_LowerLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 'Left_LowerLip_Inter', 'Left_UpperLip_1_Ctrl', 'Left_UpperLip_2_Ctrl', 'Left_UpperLip_Inter', 'Left_Leg_Extra_5', 'Left_Leg_Extra_6', 'Left_Leg_Round_Root', 'Left_Leg_Round_Root_Tangent', 'Left_Leg_Round_Eff', 'Left_Leg_Round_Eff_Tangent', 'Left_Leg_Knee', 'Left_Leg_Round_0', 'Left_Leg_Round_1', 'Left_Pant_Bottom_Global_Main_Ctrl', 'Left_Pant_Ext_Main_Ctrl', 'Left_Pant_Int_Main_Ctrl', 'Left_Pant_Front_Main_Ctrl', 'Left_Pant_Back_Main_Ctrl', 'Right_Leg_IK', 'Left_Brow_ridge_in', 'Left_Brow_ridge_out_1', 'Left_Brow_ridge_in_1', 'Left_Brow_ridge_out', 'Right_Collar_0_1_Bone_Ctrl', 'Right_Collar_0_2_Bone_Ctrl', 'Right_Arm_upV', 'Right_Arm_Root', 'Right_Arm_IK', 'Left_Collar_2_2_Bone_Ctrl', 'Left_Collar_1_0_Bone_Ctrl', 'Left_Collar_1_2_Bone_Ctrl', 'Back_Collar_1_Bone_Ctrl', 'Back_Collar_2_Bone_Ctrl', 'Left_UpperLid_Main_Ctrl', 'Left_Eyelid_Out', 'Left_Eyelid_In', 'Left_Eye_Target_Main_Ctrl', 'Left_Eye', 'Left_Eye_Pupille_Main_Ctrl', 'Right_Eye_Target_Main_Ctrl', 'Right_Eye', 'Right_Eye_Pupille_Main_Ctrl', 'Right_Leg_Root', 'Right_Base_Depressor', 'Right_Base_Levator1', 'Right_Base_Depressor1', 'Right_Base_Levator', 'Right_Depressor1_Handle_1_Control', 'Right_UpperLip_1_Ctrl', 'Right_UpperLip_2_Ctrl', 'Right_UpperLip_Inter', 'Right_MouthCorner', 'Right_LowerLip_1_Ctrl', 'Right_LowerLip_2_Ctrl', 'Right_LowerLip_Inter', 'Right_Depressor_Handle_1_Control', 'Left_Base_Levator', 'Left_Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator1', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Left_Leg_Extra_0', 'Left_Leg_Extra_1', 'Left_Leg_Extra_2', 'Left_Leg_Extra_3', 'Left_Leg_Extra_4', 'Left_Leg_IK', 'Left_Leg_upV', 'Left_Leg_Root', 'Right_Leg_Extra_1', 'Right_Leg_Extra_2', 'Right_Leg_Extra_3', 'Right_Leg_Extra_4', 'Right_Leg_Extra_5', 'Right_Leg_Extra_6', 'Right_Leg_Round_Root', 'Right_Leg_Round_Root_Tangent', 'Right_Leg_Round_End', 'Right_Leg_Round_End_Tangent', 'Right_Leg_Knee', 'Right_Leg_Round_0', 'Right_Leg_Round_1', 'Right_Pant_Bottom_Global_Main_Ctrl', 'Right_Pant_Ext_Main_Ctrl', 'Right_Pant_Int_Main_Ctrl', 'Right_Pant_Front_Main_Ctrl', 'Right_Pant_Back_Main_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Right_LowerLid_Main_Ctrl', 'Right_UpperLid_Main_Ctrl', 'Right_Eyelid_Out', 'Right_Eyelid_In', 'Right_Collar_1_0_Bone_Ctrl', 'Right_Collar_1_2_Bone_Ctrl', 'Right_Collar_2_1_Bone_Ctrl', 'Right_Collar_2_2_Bone_Ctrl', 'Left_Collar_0_1_Bone_Ctrl', 'Left_Collar_0_2_Bone_Ctrl', 'Left_Collar_2_1_Bone_Ctrl', 'Right_Eye_Bulge', 'Left_Ear_Bone_Ctrl', 'Left_Eye_Bulge']
 
     theAttr = "_OSCAR_Attributes.Mirror"
     for i in outTrueL:
@@ -3413,7 +3606,7 @@ def chr_add_frontFootTwist_goodCTR(*args, **kwargs):
 
 # to do: fixe scaling on the hands
 
-# to do : Fixe dynamics default values!! fuck****TK
+
 
 # to do : armTwistFix
 def armTwistFix (*args, **kwargs):
@@ -3493,3 +3686,28 @@ def chr_BS_teeth_clean_BS_and_Attrib_Names(*args, **kwargs):
         debugL.append("Nothing Done")
         
     return [toReturnB,debugL]
+
+
+
+def chr_fix_Dynamic_defaultValues(*args, **kwargs):
+    """ Description: set les valeurs par default des dynamiques sur les ctrs to False.
+        Return : [BOOL,LIST]
+        Dependencies : cmds - z2k_Select_Dyn_CTR() - getSetContent()
+    """
+    # dynAttrL = ['STIFNESS', 'RESET', 'DAMPING', 'ATTENUATION', 'COLLIDE']
+    dyn_ResetDefaultVal = 1
+    debugL = []
+    theSet= "*:set_control"
+
+    ctrL = getSetContent(inSetL=[theSet])
+    dynCtrL = z2k_Select_Dyn_CTR(objL=ctrL, mode="info")[0]
+    print "dynCtrL=", dynCtrL
+    for i in dynCtrL:
+        attrL = ["Reset","reset","RESET"]
+        for attr in attrL:
+            if cmds.objExists(i + "." + attr):
+                cmds.addAttr(i + "." + attr,e=1,dv=dyn_ResetDefaultVal )
+                debugL.append(i)
+                print "YEAH",i
+    debugL = list(set(debugL))
+    return [True,debugL]
