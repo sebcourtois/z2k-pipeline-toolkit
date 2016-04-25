@@ -3711,3 +3711,51 @@ def chr_fix_Dynamic_defaultValues(*args, **kwargs):
                 print "YEAH",i
     debugL = list(set(debugL))
     return [True,debugL]
+
+
+
+
+def chr_unrollSpineCTR(*args, **kwargs):
+    unrollTargetD = {
+    "Spine_IK_joint2":["Spine_IK_Extra_2_Ctrl_NeutralPose","Spine_IK_Extra_2_Ctrl",],
+    "Spine_IK_joint3":["Spine_IK_Extra_3_Ctrl_NeutralPose","Spine_IK_Extra_3_Ctrl",],
+    "Spine_IK_joint4":["Spine_IK_Extra_4_Ctrl_NeutralPose","Spine_IK_Extra_4_Ctrl"],
+    "Spine_IK_joint5":["Spine_IK_Extra_5_Ctrl_NeutralPose","Spine_IK_Extra_5_Ctrl"],
+    "Spine_IK_joint6":["Spine_IK_Extra_6_Ctrl_NeutralPose","Spine_IK_Extra_6_Ctrl"],
+
+
+
+    }
+
+    attrD = {"rx":["input1X","output.outputX",],
+             "ry":["input1Y","output.outputY",],
+             "rz":["input1Z","output.outputZ",],
+            }
+    factorAttrN = "unrollFactor"
+    factorAttrV = -0.5
+
+    for source,targetL in unrollTargetD.iteritems():
+        # factor node for each ctr
+        multi = cmds.createNode("multiplyDivide")
+        cmds.setAttr(multi + "." + "input2X",factorAttrV)
+        cmds.setAttr(multi + "." + "input2Y",factorAttrV)
+        cmds.setAttr(multi + "." + "input2Z",factorAttrV)
+
+        # connections
+        for attr,multiAttrL in attrD.iteritems():
+            anulNode = cmds.createNode("addDoubleLinear", )
+            cmds.setAttr(anulNode+"."+"input2", cmds.getAttr(source+"."+attr)* -1.0 )
+
+            cmds.connectAttr(source+"."+attr,anulNode +"."+ "input1")
+            cmds.connectAttr(anulNode +"."+ "output", multi +"."+ multiAttrL[0])
+            cmds.connectAttr(multi +"."+ multiAttrL[1],targetL[0] +"."+attr)
+
+        # factor connect to attr
+        factP = targetL[1] +"."+ factorAttrN
+        if not cmds.objExists(factP):
+            cmds.addAttr(targetL[1], longName=factorAttrN, attributeType="float", keyable=True, dv=factorAttrV, min=-1, max=1)
+
+
+        cmds.connectAttr(factP,multi + "." + "input2X" )
+        cmds.connectAttr(factP,multi + "." + "input2Y" )
+        cmds.connectAttr(factP,multi + "." + "input2Z" )
