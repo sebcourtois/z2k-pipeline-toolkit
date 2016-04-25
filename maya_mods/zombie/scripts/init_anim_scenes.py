@@ -109,16 +109,16 @@ def launch(shots=None, sequences=None, dryRun=True):
             print 100 * "-"
 
             print "scene:".upper(), privLayoutScn.absPath(), '\n'
-            myasys.openScene(privLayoutScn.absPath(), force=True, fail=False, lrd="none")
-
-            try:
-                deleteUnknownNodes()
-            except Exception as e:
-                pm.displayWarning(e)
-            pm.refresh()
-
-            print "\nsave as:".upper(), pubAnimScn.absPath()
             if not dryRun:
+                myasys.openScene(privLayoutScn.absPath(), force=True, fail=False, lrd="none")
+
+                try:
+                    deleteUnknownNodes()
+                except Exception as e:
+                    pm.displayWarning(e)
+                pm.refresh()
+
+                print "\nsave as:".upper(), pubAnimScn.absPath()
                 pm.saveAs(pubAnimScn.absPath(), force=True)
 
             print (100 * "-") + "\n"
