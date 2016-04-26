@@ -1372,6 +1372,7 @@ def dmnToonPreset (preset = ""):
             miscUtils.setAttrC(each+".reflectionWeight", 1)
             miscUtils.setAttrC(each+".reflectionRoughness", 0)
             miscUtils.setAttrC(each+".reflectionAdditive", 0)
+            miscUtils.setAttrC(each+".fresnelRefraction", 1)
             miscUtils.setAttrC(each+".specularWeight", 1)
             miscUtils.setAttrC(each+".specularRoughness", 0)
 
