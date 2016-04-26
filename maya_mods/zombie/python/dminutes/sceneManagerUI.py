@@ -5,6 +5,7 @@
 import os
 import subprocess
 from functools import partial
+from collections import OrderedDict
 
 import maya.cmds as mc
 import pymel.core
@@ -33,7 +34,7 @@ SCENE_MANAGER_UI = 'sceneManagerUI'
 SG_ENGINE = None
 
 """Various caches for UI lists"""
-CATEG_ITEMS = {}
+ENTITIES_PER_CATEG = {}
 CURRENT_ENTITY_TASKS = {}
 VERSIONS = {}
 
@@ -342,29 +343,16 @@ def refreshOptionMenu(s_inName, a_Items):
 
 def refreshStep(*args, **kwargs):
     """Call when the step is changed (this could be included in 'doStepChanged')"""
-    global CATEG_ITEMS
+    global ENTITIES_PER_CATEG
 
     sgStep = SCENE_MANAGER.context['step']
     if sgStep['entity_type'] == 'Shot':
         pc.control('sm_asset_chooser_grp', edit=True, visible=False)
         pc.control('sm_shot_chooser_grp', edit=True, visible=True)
 
-        shots = SG_ENGINE.getShotsInfo()
+        sequences = SG_ENGINE.getSequencesInfo()
 
-        categ_names = []
-        CATEG_ITEMS = {}
-        for shot in shots:
-            if shot['sg_sequence'] == None:
-                pc.warning('entity {0} with category "None" will be ignored'
-                           .format(shot['code']))
-                continue
-
-            seqName = shot['sg_sequence']['name']
-            if seqName not in CATEG_ITEMS:
-                categ_names.append(seqName)
-                CATEG_ITEMS[seqName] = {}
-
-            CATEG_ITEMS[seqName][shot['code']] = shot
+        categ_names = list(seq["code"] for seq in sequences)
 
         refreshOptionMenu('sm_seq_dd', categ_names)
         doCategChanged(*args, **kwargs)
@@ -376,18 +364,18 @@ def refreshStep(*args, **kwargs):
         assets = SG_ENGINE.getAssetsInfo()
 
         categ_names = []
-        CATEG_ITEMS = {}
+        ENTITIES_PER_CATEG = OrderedDict()
         for asset in assets:
             if asset['sg_asset_type'] == None:
                 pc.warning('entity {0} with category "None" will be ignored'
                            .format(asset['code']))
                 continue
 
-            if not asset['sg_asset_type'] in CATEG_ITEMS:
+            if not asset['sg_asset_type'] in ENTITIES_PER_CATEG:
                 categ_names.append(asset['sg_asset_type'])
-                CATEG_ITEMS[asset['sg_asset_type']] = {}
+                ENTITIES_PER_CATEG[asset['sg_asset_type']] = OrderedDict()
 
-            CATEG_ITEMS[asset['sg_asset_type']][asset['code']] = asset
+            ENTITIES_PER_CATEG[asset['sg_asset_type']][asset['code']] = asset
 
         refreshOptionMenu('sm_categ_dd', categ_names)
         doCategChanged(*args, **kwargs)
@@ -586,13 +574,31 @@ def doStepChanged(*args, **kwargs):
         doEntityChanged(refreshSceneInfo=False)
 
 def doCategChanged(*args, **kwargs):
-    categCtrlName = 'sm_seq_dd' if SCENE_MANAGER.context['step']['entity_type'] == 'Shot' else 'sm_categ_dd'
-    entityCtrlName = 'sm_shot_dd' if SCENE_MANAGER.context['step']['entity_type'] == 'Shot' else 'sm_asset_dd'
 
-    categ = pc.optionMenu(categCtrlName, query=True, value=True)
-    SCENE_MANAGER.context['categ'] = categ
+    global ENTITIES_PER_CATEG
 
-    refreshOptionMenu(entityCtrlName, sorted(CATEG_ITEMS[categ].keys()))
+    sEntiType = SCENE_MANAGER.context['step']['entity_type']
+    if sEntiType == 'Shot':
+        sCateg = pc.optionMenu("sm_seq_dd", query=True, value=True)
+        entityCtrlName = 'sm_shot_dd'
+        infos = SG_ENGINE.getShotsInfo("", sCateg)
+    elif sEntiType == 'Asset':
+        sCateg = pc.optionMenu("sm_categ_dd", query=True, value=True)
+        entityCtrlName = 'sm_asset_dd'
+        infos = SG_ENGINE.getAssetsInfo("", sCateg)
+    else:
+        raise TypeError("Unknown Shotgun Entity type: '{}'".format(sEntiType))
+
+    SCENE_MANAGER.context['categ'] = sCateg
+
+    sEntityList = []
+    ENTITIES_PER_CATEG[sCateg] = OrderedDict()
+
+    if infos:
+        ENTITIES_PER_CATEG[sCateg] = OrderedDict((i["code"], i) for i in infos)
+        sEntityList = list(i["code"] for i in infos)
+
+    refreshOptionMenu(entityCtrlName, sEntityList)
 
     if kwargs.get("runEntityChanged", True):
         doEntityChanged(*args)
@@ -603,10 +609,20 @@ def doEntityChanged(*args, **kwargs):
     #print "doEntityChanged", getCaller(fo=0)
 
     global CURRENT_ENTITY_TASKS
-    entityCtrlName = 'sm_shot_dd' if SCENE_MANAGER.context['step']['entity_type'] == 'Shot' else 'sm_asset_dd'
 
-    entityName = pc.optionMenu(entityCtrlName, query=True, value=True)
-    SCENE_MANAGER.context['entity'] = CATEG_ITEMS[SCENE_MANAGER.context['categ']][entityName]
+    sEntiType = SCENE_MANAGER.context['step']['entity_type']
+
+    if sEntiType == 'Shot':
+        sEntityName = pc.optionMenu('sm_shot_dd', query=True, value=True)
+        #sgEntity = SG_ENGINE.getShotInfo(sEntityName)
+    elif sEntiType == 'Asset':
+        sEntityName = pc.optionMenu('sm_asset_dd', query=True, value=True)
+        #sgEntity = SG_ENGINE.getAssetInfo(sEntityName)
+    else:
+        raise TypeError("Unknown Shotgun Entity type: '{}'".format(sEntiType))
+
+    sCurCateg = SCENE_MANAGER.context['categ']
+    SCENE_MANAGER.context['entity'] = ENTITIES_PER_CATEG[sCurCateg][sEntityName]
 
     #get tasks on entity
     CURRENT_ENTITY_TASKS = {}

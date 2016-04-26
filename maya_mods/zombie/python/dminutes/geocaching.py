@@ -204,6 +204,14 @@ def connectTransforms(astToAbcXfmItems):
 
     for sAstXfm, sAbcXfm in iterMatchedObjects(astToAbcXfmItems):
 
+        astXfmPath = myapi.getDagPath(sAstXfm)
+        if astXfmPath.isInstanced():
+            n = astXfmPath.instanceNumber()
+            if n > 0:
+                pm.displayInfo("Instanced copy number {} ignored: '{}'"
+                               .format(n, sAstXfm))
+                continue
+
         if mc.lockNode(sAstXfm, q=True, lock=True)[0]:
             pm.displayWarning("Locked node ignored: '{}'".format(sAstXfm))
             sLockedList.append(sAstXfm)
@@ -259,6 +267,14 @@ def connectMeshShapes(astToAbcMeshItems):
 
     for sAstMeshShape, sAbcMeshShape in iterMatchedObjects(astToAbcMeshItems):
 
+        astMeshPath = myapi.getDagPath(sAstMeshShape)
+        if astMeshPath.isInstanced():
+            n = astMeshPath.instanceNumber()
+            if n > 0:
+                pm.displayInfo("Instanced copy number {} ignored: '{}'"
+                               .format(n, sAstMeshShape))
+                continue
+
         if mc.lockNode(sAstMeshShape, q=True, lock=True)[0]:
             pm.displayWarning("Locked node ignored: '{}'".format(sAstMeshShape))
             sLockedList.append(sAstMeshShape)
@@ -301,7 +317,7 @@ def connectMeshShapes(astToAbcMeshItems):
                 mc.connectAttr(sAbcOutAttr, sPolyTrans + ".otherPoly", f=True)
         else:
             srcMesh = om.MFnMesh(myapi.getDagPath(sAbcMeshShape))
-            dstMesh = om.MFnMesh(myapi.getDagPath(sAstMeshShape))
+            dstMesh = om.MFnMesh(astMeshPath)
             dstMesh.setPoints(srcMesh.getPoints())
 
     if sLockedList:
