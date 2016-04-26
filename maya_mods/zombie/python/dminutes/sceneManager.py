@@ -817,6 +817,14 @@ class SceneManager():
                 _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
                 mop.arrangeViews(oShotCam, oImgPlaneCam, oStereoCam, singleView=True)
 
+            width, height = (1280, 720)
+            if (not quick) and sStep.lower() == "animation":
+                width, height = (1920, 1080)
+
+            iFontMode = mc.displayPref(q=True, fontSettingMode=True)
+            iFontSize = mc.displayPref(q=True, smallFontSize=True)
+            mc.displayPref(fontSettingMode=2)
+            mc.displayPref(smallFontSize=12)
             savedHudValues = createHUD()
 
             for sCaptRcName, sCapturePath in outCapturePaths:
@@ -826,7 +834,7 @@ class SceneManager():
                     mc.stereoCameraView("StereoPanelEditor", e=True, displayMode=sStereoMode)
                     mc.refresh()
 
-                res = makeCapture(sCapturePath, captureStart, captureEnd, 1280, 720,
+                res = makeCapture(sCapturePath, captureStart, captureEnd, width, height,
                                   format="qt", compression="H.264", camSettings=camSettings,
                                   ornaments=True, play=False, quick=quick)
 
@@ -839,6 +847,8 @@ class SceneManager():
         finally:
             try:
                 restoreHUD(savedHudValues)
+                mc.displayPref(smallFontSize=iFontSize)
+                mc.displayPref(fontSettingMode=iFontMode)
             except Exception as e:
                 pc.displayError(toStr(e))
 

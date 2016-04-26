@@ -51,18 +51,6 @@ def iterMeshesToExport(sGeoGrp):
 
         hideXfm(sMeshPath)
 
-def iterGeoGroups(**kwargs):
-
-    if kwargs.get("selected", kwargs.get("sl", False)):
-        sNspcList = set(n.rsplit("|", 1)[-1].rsplit(":", 1)[0] for n in mc.ls(sl=True))
-    else:
-        sNspcList = mc.namespaceInfo(listOnlyNamespaces=True)
-
-    for sNspc in sNspcList:
-        sGeoGrp = sNspc + ":grp_geo"
-        if mc.objExists(sGeoGrp):
-            yield sGeoGrp
-
 def _batchExport(sOutDirPath, startTime, endTime, bakeCamera):
 
     if (not inDevMode()) and (not mc.about(batch=True)):
@@ -106,17 +94,14 @@ def _batchExport(sOutDirPath, startTime, endTime, bakeCamera):
         mc.delete(sExprNode)
 
 @withSelectionRestored
-def importGpuCache(sNamespace):
-
-    sNamespace = sNamespace.strip(":")
+def importGpuCache(sBaseName):
 
     damShot = entityFromScene()
     sAbcDirPath = mop.getAlembicCacheDir(damShot).replace("\\", "/")
-    sBaseName = "gpu_" + sNamespace + "_grp_geo"
     sAbcPath = pathJoin(sAbcDirPath, sBaseName + ".abc")
 
     if not osp.isfile(sAbcPath):
-        pm.displayInfo("No GPU cache found for '{}'.".format(sNamespace))
+        pm.displayInfo("No GPU cache file: '{}'.".format(sAbcPath))
         return
 
     statinfo = os.stat(sAbcPath)
@@ -145,7 +130,7 @@ def exportSelected():
 
     damShot = entityFromScene()
 
-    sGeoGrpList = tuple(iterGeoGroups(sl=True))
+    sGeoGrpList = tuple(mop.iterGeoGroups(sl=True))
     if not sGeoGrpList:
         raise RuntimeError("Selected assets has NO 'grp_geo' to export.")
 
@@ -218,7 +203,7 @@ def toggleSelected():
 
     sCurSelList = mc.ls(sl=True)
 
-    for sGeoGrp in iterGeoGroups(sl=True):
+    for sGeoGrp in mop.iterGeoGroups(sl=True):
 
         sGpuXfm = "gpu_" + sGeoGrp.replace(":", "_")
         sNspc = sGeoGrp.rsplit("|", 1)[-1].rsplit(":", 1)[0]
@@ -228,11 +213,12 @@ def toggleSelected():
             continue
 
         if not mc.objExists(sGpuXfm):
-            if not importGpuCache(sNspc):
+            if not importGpuCache(sGpuXfm):
                 continue
 
         mc.setAttr(sAstGrp + ".visibility", False)
         mc.setAttr(sGpuXfm + ".visibility", True)
+        _refreshOne(sGpuXfm)
 
         if sGpuXfm in sCurSelList:
             mc.select(sGpuXfm, d=True)
@@ -266,7 +252,7 @@ def setAllCacheVisible(bShow):
 
     sToSelList = []
 
-    for sGeoGrp in tuple(iterGeoGroups()):
+    for sGeoGrp in tuple(mop.iterGeoGroups()):
 
         print sGeoGrp
 
@@ -277,45 +263,56 @@ def setAllCacheVisible(bShow):
 
         bGpuXfmFound = mc.objExists(sGpuXfm)
         if bShow and not bGpuXfmFound:
-            if not importGpuCache(sNspc):
+            if not importGpuCache(sGpuXfm):
                 continue
 
         mc.setAttr(sAstGrp + ".visibility", not bShow)
         if bGpuXfmFound:
             mc.setAttr(sGpuXfm + ".visibility", bShow)
+            if bShow:
+                _refreshOne(sGpuXfm)
 
         if bShow:
             sToSelList.append(sGpuXfm)
         else:
             sToSelList.append(sAstGrp)
 
-    if sToSelList:
-        mc.select(sToSelList, r=True)
+#    if sToSelList:
+#        mc.select(sToSelList, r=True)
 
-def _refreshGpuCaches(sGpuCacheList):
+def _refreshOne(sGpuNode):
 
-    for sGpuShape in sGpuCacheList:
+    if mc.objectType(sGpuNode, isType="transform"):
+        sGpuShape = mc.listRelatives(sGpuNode, c=True, type="gpuCache", path=True)[0]
+    elif mc.objectType(sGpuNode, isType="gpuCache"):
+        sGpuShape = sGpuNode
+    else:
+        raise TypeError("Not a gpuCache node: '{}'".format(sGpuNode))
 
-        sAbcPath = mc.getAttr(sGpuShape + ".cacheFileName")
-        if not sAbcPath:
-            continue
+    sAbcPath = mc.getAttr(sGpuShape + ".cacheFileName")
+    if not sAbcPath:
+        return
 
-        try:
-            statinfo = os.stat(sAbcPath)
-        except OSError as e:
-            pm.displayWarning(toStr(e))
-            continue
+    try:
+        statinfo = os.stat(sAbcPath)
+    except OSError as e:
+        pm.displayWarning(toStr(e))
+        return
 
-        t = mc.getAttr(sGpuShape + ".cacheFileMtime")
-        s = mc.getAttr(sGpuShape + ".cacheFileSize")
+    t = mc.getAttr(sGpuShape + ".cacheFileMtime")
+    s = mc.getAttr(sGpuShape + ".cacheFileSize")
 
-        if (s == statinfo.st_size) and (t == long(statinfo.st_mtime)):
-            pm.displayInfo("'{}' already up-to-date: No refresh needed.".format(sGpuShape))
-            continue
+    if (s == statinfo.st_size) and (t == long(statinfo.st_mtime)):
+        pm.displayInfo("'{}' already up-to-date: No refresh needed.".format(sGpuShape))
+        return
 
-        mc.gpuCache(sGpuShape, e=True, refresh=True)
-        mc.setAttr(sGpuShape + ".cacheFileMtime", long(statinfo.st_mtime))
-        mc.setAttr(sGpuShape + ".cacheFileSize", statinfo.st_size)
+    pm.displayInfo("Refreshing '{}'...".format(sGpuShape))
+
+    mc.gpuCache(sGpuShape, e=True, refresh=True)
+    mc.setAttr(sGpuShape + ".cacheFileMtime", long(statinfo.st_mtime))
+    mc.setAttr(sGpuShape + ".cacheFileSize", statinfo.st_size)
+
+    return True
 
 def refreshSelected():
 
@@ -330,6 +327,6 @@ def refreshSelected():
             sGpuCacheList = mc.ls(type="gpuCache")
 
     if sGpuCacheList:
-        _refreshGpuCaches(sGpuCacheList)
-
+        for sGpuShape in sGpuCacheList:
+            _refreshOne(sGpuShape)
 

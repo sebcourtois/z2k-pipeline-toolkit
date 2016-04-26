@@ -1062,7 +1062,7 @@ class checkModule(object):
         if not self.btn_specialSettings(controlN=self.BSpecialSettings, ):
             boolResult = False
 
-        # recheck after fixing!
+        # recheck after fixing! 
         print "*"*80
         print "RE-CHECKING STRUCTURE "
         print "*"*80
