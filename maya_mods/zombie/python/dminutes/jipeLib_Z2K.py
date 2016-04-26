@@ -3715,47 +3715,71 @@ def chr_fix_Dynamic_defaultValues(*args, **kwargs):
 
 
 
-def chr_unrollSpineCTR(*args, **kwargs):
+def chr_fix_unrollSpineCTR(*args, **kwargs):
+    """ Description: Fix the spine rig, rotation of the FK controlers allway create bad orientation
+                     on the underneath controlers, this re orient them with a factor and a driver attribute.
+        Return : [BOOL,LIST]
+        Dependencies : cmds - 
+    """
+    print "chr_fix_unrollSpineCTR()"
+    debugL = []
+
     unrollTargetD = {
     "Spine_IK_joint2":["Spine_IK_Extra_2_Ctrl_NeutralPose","Spine_IK_Extra_2_Ctrl",],
     "Spine_IK_joint3":["Spine_IK_Extra_3_Ctrl_NeutralPose","Spine_IK_Extra_3_Ctrl",],
     "Spine_IK_joint4":["Spine_IK_Extra_4_Ctrl_NeutralPose","Spine_IK_Extra_4_Ctrl"],
     "Spine_IK_joint5":["Spine_IK_Extra_5_Ctrl_NeutralPose","Spine_IK_Extra_5_Ctrl"],
     "Spine_IK_joint6":["Spine_IK_Extra_6_Ctrl_NeutralPose","Spine_IK_Extra_6_Ctrl"],
-
-
-
     }
 
     attrD = {"rx":["input1X","output.outputX",],
              "ry":["input1Y","output.outputY",],
              "rz":["input1Z","output.outputZ",],
             }
+
     factorAttrN = "unrollFactor"
     factorAttrV = -0.5
 
+    canDo = True
+    # test if allready done, or if it's a valid char
     for source,targetL in unrollTargetD.iteritems():
-        # factor node for each ctr
-        multi = cmds.createNode("multiplyDivide")
-        cmds.setAttr(multi + "." + "input2X",factorAttrV)
-        cmds.setAttr(multi + "." + "input2Y",factorAttrV)
-        cmds.setAttr(multi + "." + "input2Z",factorAttrV)
+        for i in targetL + [source]:
+            if not cmds.objExists (i):
+                canDo = False
 
-        # connections
-        for attr,multiAttrL in attrD.iteritems():
-            anulNode = cmds.createNode("addDoubleLinear", )
-            cmds.setAttr(anulNode+"."+"input2", cmds.getAttr(source+"."+attr)* -1.0 )
+    if canDo:
+        for source,targetL in unrollTargetD.iteritems():
+            # factor create attr if not existing
+            factP = targetL[1] +"."+ factorAttrN
+            if not cmds.objExists(factP):
+                cmds.addAttr(targetL[1], longName=factorAttrN, attributeType="float", keyable=True, dv=factorAttrV, min=-1, max=1)
+            
+                # factor node for each ctr
+                multi = cmds.createNode("multiplyDivide")
+                cmds.setAttr(multi + "." + "input2X",factorAttrV)
+                cmds.setAttr(multi + "." + "input2Y",factorAttrV)
+                cmds.setAttr(multi + "." + "input2Z",factorAttrV)
 
-            cmds.connectAttr(source+"."+attr,anulNode +"."+ "input1")
-            cmds.connectAttr(anulNode +"."+ "output", multi +"."+ multiAttrL[0])
-            cmds.connectAttr(multi +"."+ multiAttrL[1],targetL[0] +"."+attr)
+                # connections
+                for attr,multiAttrL in attrD.iteritems():
+                    anulNode = cmds.createNode("addDoubleLinear", )
+                    cmds.setAttr(anulNode+"."+"input2", cmds.getAttr(source+"."+attr)* -1.0 )
 
-        # factor connect to attr
-        factP = targetL[1] +"."+ factorAttrN
-        if not cmds.objExists(factP):
-            cmds.addAttr(targetL[1], longName=factorAttrN, attributeType="float", keyable=True, dv=factorAttrV, min=-1, max=1)
+                    cmds.connectAttr(source+"."+attr,anulNode +"."+ "input1")
+                    cmds.connectAttr(anulNode +"."+ "output", multi +"."+ multiAttrL[0])
+                    cmds.connectAttr(multi +"."+ multiAttrL[1],targetL[0] +"."+attr)
 
 
-        cmds.connectAttr(factP,multi + "." + "input2X" )
-        cmds.connectAttr(factP,multi + "." + "input2Y" )
-        cmds.connectAttr(factP,multi + "." + "input2Z" )
+
+                cmds.connectAttr(factP,multi + "." + "input2X" )
+                cmds.connectAttr(factP,multi + "." + "input2Y" )
+                cmds.connectAttr(factP,multi + "." + "input2Z" )
+
+            else:
+                print "** Allready applyed on {0}".format(source)
+                debugL.append("Allready applyed on {0}".format(source) )
+        else:
+            print "**Nothing Done"
+            debugL.append("Nothing Done" )
+
+    return [True,debugL]
