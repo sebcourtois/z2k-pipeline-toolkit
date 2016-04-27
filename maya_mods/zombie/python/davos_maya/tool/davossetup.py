@@ -1,6 +1,6 @@
 
 
-from functools import partial
+#from functools import partial
 
 import pymel.core as pm
 import pymel.util as pmu
@@ -18,6 +18,8 @@ from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
 
 from dminutes import sceneManagerUI as smui
+from davos_maya.tool.general import entityFromScene
+from davos.core.damtypes import DamShot
 
 if inDevMode():
     try:
@@ -46,6 +48,14 @@ def doSwitchReferences(*args):
     from davos_maya.tool.reference import switchSelectedReferences
     switchSelectedReferences(filter="*_ref")
 
+def doPublish(*args):
+
+    damEntity = entityFromScene(fail=False)
+    if isinstance(damEntity, DamShot):
+        raise TypeError("Shots can only be published from Scene Manager.")
+
+    publishing.publishCurrentScene(entity=damEntity)
+
 class DavosSetup(ToolSetup):
 
     classMenuName = "davosMenu"
@@ -70,7 +80,7 @@ class DavosSetup(ToolSetup):
 
             pm.menuItem(label="Edit Textures...", c=doEditTextures)
             pm.menuItem(label="Check Dependencies...", c=doDependencyScan)
-            pm.menuItem(label="Publish...", c=publishing.publishCurrentScene)
+            pm.menuItem(label="Publish...", c=doPublish)
 
         ToolSetup.populateMenu(self)
 
