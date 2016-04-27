@@ -675,7 +675,7 @@ def _setPublishableState(resultDct):
         bUpToDate = pubFile.isUpToDate()
 
     if not bUpToDate:
-        sMsg = """Public file appears to have been modified from another site.
+        sMsg = """Public file seems to have been modified from another site.
 Wait for the next file synchronization and retry publishing."""
         scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
     else:
