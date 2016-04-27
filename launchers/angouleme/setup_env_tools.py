@@ -19,6 +19,7 @@ ENVS = {
         "ZOMB_PRIVATE_LOC":"\\\\ZOMBILLENIUM\\ZOMBIDAMAS",
 
         "ZOMB_TOOL_PATH":"\\\\ZOMBILLENIUM\\ZOMBIDAMAS\\zomb\\tool",
+        "DAVOS_SITE":"dmn_angouleme",
         }
 
 try:
