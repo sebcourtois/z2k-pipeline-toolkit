@@ -195,7 +195,7 @@ def setSubdiv(GUI= False ):
                             nonMeshObjectL.append(eachGeo)
                             continue
                     else:
-                        eachGeoShape =eachGeo
+                        eachGeoShape = eachGeo
 
                     eachGeoParentL = mc.listRelatives(eachGeoShape, allParents = True, fullPath = True)
                     if not set(eachGeoParentL) & set(processedTransL):
@@ -345,7 +345,7 @@ def setShadingMask(selectFailingNodes = False, gui = True):
     dmnMask05_B = []# bouches, custom
 
     dmnMask06_R = []# shading decor custom, gradient sourcil sur aurelien et francis, ombre orbites sirus
-    dmnMask06_G = []# shading decor custom
+    dmnMask06_G = []# shading decor custom ,  cheveux Lucie
     dmnMask06_B = []# shading decor custom
 
     dmnMask07_R = []# lighting custom
@@ -736,14 +736,23 @@ class Asset_File_Conformer:
             while  i < len(self.targetList):
                 sourceVrtxCnt = len(mc.getAttr(self.sourceList[i]+".vrts[:]"))
                 targetVrtxCnt = len(mc.getAttr(self.targetList[i]+".vrts[:]"))
-                if sourceVrtxCnt != targetVrtxCnt:
+                polyCompareResultI = mc.polyCompare( self.sourceList[i], self.targetList[i], vertices=False, edges=True, colorSetIndices=False, colorSets=False,  faceDesc=True, userNormals=False, uvSetIndices=False, uvSets=False) 
+                if (sourceVrtxCnt != targetVrtxCnt) or (polyCompareResultI == 4):
                     topoMismatch = topoMismatch + 1
-                    txt="Vertex number mismatch: '{}' vertex nb = {} -- '{}' vertex nb = {}".format(self.sourceList[i],sourceVrtxCnt, self.targetList[i],targetVrtxCnt)
-                    self.log.printL("e", txt)
+                    if sourceVrtxCnt != targetVrtxCnt:
+                        txt="Vertex number mismatch: '{}' vertex nb = {} -- '{}' vertex nb = {}".format(self.sourceList[i],sourceVrtxCnt, self.targetList[i],targetVrtxCnt)
+                        self.log.printL("e", txt)
+                    elif polyCompareResultI == 4:
+                        txt="Face description (topologie/order) mismatch: '{}' different from '{}' ".format(self.sourceList[i], self.targetList[i])
+                        self.log.printL("e", txt)
+                    i+=1
+                    continue
+
                 # sourceBBox =  mc.exactWorldBoundingBox(self.sourceList[i])
                 # targetBBox =  mc.exactWorldBoundingBox(self.targetList[i])
                 # if masterBBox != targetBBox:
                 #     print ("#### {:>7}: Bounding box  mismatch: '{}' -- '{}'".format("Warning",self.sourceList[i], self.targetList[i]))
+                
 
                 areaTolF = 0.01 #percentage world area tolerance
                 sourceWorldArea =  mc.polyEvaluate(self.sourceList[i], worldArea= True)
