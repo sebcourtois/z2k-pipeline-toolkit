@@ -110,6 +110,7 @@ def deleteUnknownNodes(GUI = True):
 
     mentalRayNodeList = mc.ls(mentalRayNodeList)
     turtleNodeList= mc.ls(turtleNodeList)
+    deLightNodeList= mc.ls(deLightNodeList)
     mentalRayDeletedNodeList = []
     turtleDeletedNodeList = []
     delightDeletedNodeList = []
@@ -362,7 +363,7 @@ def getShapeOrig(TransformS = ""):
     return shapeOrigList
 
 
-def cleanLayout()
+def cleanLayout():
     panelL = mc.getPanel( visiblePanels=True )
     panelToCloseL=["hyperShadePanel","polyTexturePlacementPanel"]
     for each in panelL:
