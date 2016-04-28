@@ -112,6 +112,7 @@ def deleteUnknownNodes(GUI = True):
     turtleNodeList= mc.ls(turtleNodeList)
     mentalRayDeletedNodeList = []
     turtleDeletedNodeList = []
+    delightDeletedNodeList = []
 
     for each in mentalRayNodeList:
         try:
@@ -137,7 +138,7 @@ def deleteUnknownNodes(GUI = True):
         try:
             mc.lockNode(each,lock = False)
             mc.delete(each)
-            deLightNodeList.append(each)
+            delightDeletedNodeList.append(each)
         except:
             logMessage = "#### {:>7}: 'deleteUnknownNodes' {} 3dlight node could not be deleted".format("Warning", each)
             logL.append(logMessage)
@@ -154,8 +155,8 @@ def deleteUnknownNodes(GUI = True):
         logL.append(logMessage)
         if GUI == True: print logMessage
 
-    if deLightNodeList:
-        logMessage = "#### {:>7}: 'deleteUnknownNodes'  {} 3delight node(s) deteled: '{}'".format("Info", len(deLightNodeList), deLightNodeList)
+    if delightDeletedNodeList:
+        logMessage = "#### {:>7}: 'deleteUnknownNodes'  {} 3delight node(s) deteled: '{}'".format("Info", len(delightDeletedNodeList), delightDeletedNodeList)
         logL.append(logMessage)
         if GUI == True: print logMessage
 
@@ -360,6 +361,14 @@ def getShapeOrig(TransformS = ""):
             shapeOrigList.append(each)
     return shapeOrigList
 
+
+def cleanLayout()
+    panelL = mc.getPanel( visiblePanels=True )
+    panelToCloseL=["hyperShadePanel","polyTexturePlacementPanel"]
+    for each in panelL:
+        for eachPanel in panelToCloseL:
+            if eachPanel in each:
+                mc.deleteUI(each, panel = True)
 
 
 
