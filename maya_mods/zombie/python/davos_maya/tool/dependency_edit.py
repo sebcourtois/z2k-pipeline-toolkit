@@ -141,7 +141,7 @@ def scanTexturesToEdit(damEntity):
             resultDct["public_file"] = pubFile
 
             if not pubFile.isUpToDate(refresh=False):
-                sMsg = """The file appears to have been modified from another site.
+                sMsg = """The file seems to have been modified from another site.
 File needs to be synced before you can edit it."""
                 scanLogDct.setdefault("error", []).append(('FileOutOfSync', sMsg))
                 #print "File is OUT OF SYNC: '{}'".format(sPubTexPath)

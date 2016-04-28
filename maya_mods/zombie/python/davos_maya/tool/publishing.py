@@ -221,6 +221,7 @@ def publishCurrentScene(*args, **kwargs):
     bWithDeps = kwargs.pop("dependencies", True)
     prePublishFunc = kwargs.pop("prePublishFunc", None)
     postPublishFunc = kwargs.pop("postPublishFunc", None)
+    damEntity = kwargs.pop("entity", None)
 
     myasys.assertCurrentSceneReadWithoutDataLoss()
 
@@ -228,7 +229,9 @@ def publishCurrentScene(*args, **kwargs):
     if not sCurScnPath:
         raise ValueError("Current scene is untitled.".format(sCurScnPath))
 
-    damEntity = entityFromScene(sCurScnPath, fail=False)
+    if not damEntity:
+        damEntity = entityFromScene(sCurScnPath, fail=False)
+
     if damEntity:
         proj = damEntity.project
     else:

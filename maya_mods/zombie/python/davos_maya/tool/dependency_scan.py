@@ -667,26 +667,37 @@ def _setPublishableState(resultDct):
     if not drcFile.isPrivate():
         return
 
-    bPublishable = False
+    bPublishable = True
 
-    bUpToDate = True
-    pubFile = drcFile.getPublicFile(weak=True)
+    pubFile = drcFile.getPublicFile(weak=True, dbNode=False)
+
+    dbNode = pubFile.getDbNode(fromDb=False)
+    if dbNode:
+        pubFile.refresh(simple=True)
+    else:
+        dbNode = pubFile.getDbNode(fromCache=False)
+
+    sSrcFilePath = resultDct["abs_path"]
     if pubFile.exists():
-        bUpToDate = pubFile.isUpToDate()
+        try:
+            pubFile._assertPublishable(sSrcFilePath, refresh=False)
+        except AssertionError as e:
+            bPublishable = False
+            sMsg = toStr(e)
+    elif dbNode:
+        sMsg = """File declared in database but does not exist on your server.
+Wait for the next synchro and retry publishing."""
+        bPublishable = False
 
-    if not bUpToDate:
-        sMsg = """Public file appears to have been modified from another site.
-Wait for the next file synchronization and retry publishing."""
+    if not bPublishable:
         scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
     else:
-        sSrcFilePath = resultDct["abs_path"]
         bModified = True
         if pubFile.exists():
             sPubFilePath = pubFile.absPath()
             bModified = (not filecmp.cmp(sSrcFilePath, sPubFilePath))
             #bDiffers, sSrcChecksum = pubFile.differsFrom(sPubFilePath)
 
-        bPublishable = True
         if not bModified:
             scanLogDct.setdefault("info", []).append(("Not Modified", "File has not been modified"))
         else:

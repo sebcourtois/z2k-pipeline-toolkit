@@ -14,7 +14,7 @@ ENVS = {
         "ZOMB_PRIVATE_LOC":"\\\\lv7000_fileserver\\Zombidamas",
 
         "ZOMB_TOOL_PATH":"\\\\lv7000_fileserver\\Zombidamas\\zomb\\tool",
-
+        "DAVOS_SITE":"dream_wall",
         }
 
 try:
