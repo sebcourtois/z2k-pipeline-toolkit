@@ -639,6 +639,8 @@ class Asset_File_Conformer:
         if sourceFile == "":
             sourceFile = self.sourceFile
 
+
+
         if targetObjects == "set_meshCache" or isinstance(targetObjects, (list,tuple,set)):
             if targetObjects == "set_meshCache":
                 if mc.ls("set_meshCache"):
@@ -663,7 +665,10 @@ class Asset_File_Conformer:
 
             for eachTarget in self.targetList:
                 #eachSource = sourceFile+":"+("|"+sourceFile+":").join(eachTarget.split("|"))
-                eachSource = ("|"+sourceFile+":").join(eachTarget.split("|"))
+                if sourceFile != "root":
+                    eachSource = ("|"+sourceFile+":").join(eachTarget.split("|"))
+                else:
+                    eachSource = eachTarget.replace("|"+self.sourceFile+":","|")
 
                 if mc.ls(eachSource):
                     if mc.nodeType (eachSource)!= "transform":
@@ -747,7 +752,7 @@ class Asset_File_Conformer:
                         self.log.printL("e", txt)                    
                     elif polyCompareResultI == 2 or polyCompareResultI == 6:
                         txt="Edge mismatch: '{}' different from '{}' ".format(self.sourceList[i], self.targetList[i])
-                        self.log.printL("e", txt)
+                        self.log.printL("w", txt)
                     i+=1
                     continue
 
@@ -788,7 +793,7 @@ class Asset_File_Conformer:
 
 
 
-    def transferUV(self):
+    def transferUV(self, sampleSpace = 4):
         self.log.funcName ="'transferUV' "
         if self.sourceTargetListMatch == True:
             i = -1
@@ -861,7 +866,7 @@ class Asset_File_Conformer:
                     # 5 is topology-based
 
                     #print ("#### {:>7}: 'transferUV' from '{}' --> {}".format("Drebug",sourceShape,targetShape))
-                sampleSpace = 4
+                
                 if shapeOrig == True: 
                     mc.setAttr(targetShape+".intermediateObject", 0)
                     mc.setAttr(targetShape+".visibility", 1)
@@ -1057,8 +1062,6 @@ class Asset_File_Conformer:
                         self.log.printL("w", txt)
                         continue
                     else:
-                        txt="No shapeOrig found under '{}', proceeding with the shape".format(each)
-                        self.log.printL("w", txt)
                         target = each
                 elif len(shapeOrigL)==1:
                     target = shapeOrigL[0]
