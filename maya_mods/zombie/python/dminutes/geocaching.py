@@ -256,13 +256,16 @@ def _delUnusedTransferNodes():
 #    mc.delete(sDelList)
 #    mc.refresh()
 
+def meshMismatchStr(st1, st2):
+    return " ".join("{}={}".format(k, v) for k, v in sorted(st1.iteritems()) if v != st2.get(k))
+
 def connectMeshShapes(astToAbcMeshItems):
 
     global UNUSED_TRANSFER_NODES
 
     sLockedList = []
     sVertsDifferList = []
-    sFacesDifferList = []
+    sTopoDifferList = []
     sHasHistoryList = []
 
     for sAstMeshShape, sAbcMeshShape in iterMatchedObjects(astToAbcMeshItems):
@@ -285,8 +288,8 @@ def connectMeshShapes(astToAbcMeshItems):
             pm.displayWarning("Mesh with history ignored: '{}'".format(sAstMeshShape))
             continue
 
-        abcMeshStat = mc.polyEvaluate(sAbcMeshShape, v=True, f=True)
-        astMeshStat = mc.polyEvaluate(sAstMeshShape, v=True, f=True)
+        abcMeshStat = mc.polyEvaluate(sAbcMeshShape, v=True, f=True, e=True, t=True)
+        astMeshStat = mc.polyEvaluate(sAstMeshShape, v=True, f=True, e=True, t=True)
 
         if abcMeshStat != astMeshStat:
             if abcMeshStat["vertex"] != astMeshStat["vertex"]:
@@ -296,12 +299,12 @@ def connectMeshShapes(astToAbcMeshItems):
                 pm.displayWarning(sMsg)
                 sVertsDifferList.extend((sAbcMeshShape, sAstMeshShape))
                 continue
-            elif abcMeshStat["face"] != astMeshStat["face"]:
-                sMsg = "Number of faces differs:"
-                sMsg += "\n    - '{}': {} faces".format(sAbcMeshShape, abcMeshStat["face"])
-                sMsg += "\n    - '{}': {} faces".format(sAstMeshShape, astMeshStat["face"])
+            else:
+                sMsg = "Topology differs:"
+                sMsg += "\n    - '{}': {}".format(sAbcMeshShape, meshMismatchStr(abcMeshStat, astMeshStat))
+                sMsg += "\n    - '{}': {}".format(sAstMeshShape, meshMismatchStr(astMeshStat, abcMeshStat))
                 pm.displayInfo(sMsg)
-                sFacesDifferList.extend((sAbcMeshShape, sAstMeshShape))
+                sTopoDifferList.extend((sAbcMeshShape, sAstMeshShape))
 
         sAbcOutAttr = mc.listConnections(sAbcMeshShape, s=True, d=False,
                                          type="AlembicNode", plugs=True)
@@ -310,12 +313,17 @@ def connectMeshShapes(astToAbcMeshItems):
             sAbcOutAttr = sAbcOutAttr[0]
             bDeformedMesh = True
 
-        if bDeformedMesh or mc.referenceQuery(sAstMeshShape, isNodeReferenced=True):
-            sPolyTrans = mc.polyTransfer(sAstMeshShape, ao=sAbcMeshShape,
-                                         uv=False, v=True, vc=False, ch=True)[0]
+        bSameVerts = False
+        if not bDeformedMesh:
+            bSameVerts = (mc.polyCompare(sAbcMeshShape, sAstMeshShape, vertices=True) == 0)
+
+        if mc.referenceQuery(sAstMeshShape, isNodeReferenced=True):
+            if bDeformedMesh or (not bSameVerts):
+                sPolyTrans = mc.polyTransfer(sAstMeshShape, ao=sAbcMeshShape,
+                                             uv=False, v=True, vc=False, ch=True)[0]
             if bDeformedMesh:
                 mc.connectAttr(sAbcOutAttr, sPolyTrans + ".otherPoly", f=True)
-        else:
+        elif not bSameVerts:
             srcMesh = om.MFnMesh(myapi.getDagPath(sAbcMeshShape))
             dstMesh = om.MFnMesh(astMeshPath)
             dstMesh.setPoints(srcMesh.getPoints())
@@ -334,9 +342,9 @@ def connectMeshShapes(astToAbcMeshItems):
         sObjSet = addLoggingSet("VERTICES_MISMATCH")
         mc.sets(sVertsDifferList, e=True, include=sObjSet)
 
-    if sFacesDifferList:
-        sObjSet = addLoggingSet("FACES_MISMATCH")
-        mc.sets(sFacesDifferList, e=True, include=sObjSet)
+    if sTopoDifferList:
+        sObjSet = addLoggingSet("TOPOLOGY_MISMATCH")
+        mc.sets(sTopoDifferList, e=True, include=sObjSet)
 
 def importCaches(**kwargs):
 
@@ -390,6 +398,7 @@ def importCaches(**kwargs):
             mc.sets(sMemberList, e=True, include=sObjSet)
 
         connectTransforms(astToAbcXfmItems)
+        mc.refresh()
 
         sRefAbcNode = ""
         sFoundList = mc.ls(sNewNodeList, type="AlembicNode")
