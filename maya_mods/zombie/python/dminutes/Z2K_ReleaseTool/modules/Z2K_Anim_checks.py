@@ -1086,8 +1086,8 @@ class checkModule(object):
         if not boolResultStructure in [True]:
             if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
                 boolResult = False
-        # if not self.btn_applyShadersFromRender(controlN=self.BApplyShadersFromRender, ):
-        #     boolResult = False
+        if not self.btn_applyShadersFromRender(controlN=self.BApplyShadersFromRender, ):
+            boolResult = False
         
         # colors
         self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""],)
