@@ -521,14 +521,14 @@ class Asset_File_Conformer:
 
 
     def loadFile(self,sourceFile = "renderRef", reference = True):
-        if self.gui == True:
-            panelL = mc.getPanel( visiblePanels=True )
-            panelToCloseL=["hyperShadePanel","polyTexturePlacementPanel"]
-            for each in panelL:
-                for eachPanel in panelToCloseL:
-                    if eachPanel in each:
-                        mu.executeDeferred("mc.deleteUI(each, panel = True)")
-
+        # if self.gui == True:
+        #     panelL = mc.getPanel( visiblePanels=True )
+        #     panelToCloseL=["hyperShadePanel","polyTexturePlacementPanel"]
+        #     for each in panelL:
+        #         for eachPanel in panelToCloseL:
+        #             if eachPanel in each:
+        #                 mc.deleteUI(each, panel = True)
+        #                 #mu.executeDeferred("mc.deleteUI(each, panel = True)")
 
 
         self.log.funcName ="'loadFile' "
