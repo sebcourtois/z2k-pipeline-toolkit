@@ -153,6 +153,10 @@ def tkMirror(*args, **kwargs):
         print Exception,err
         cmds.undoInfo(closeChunk = True)
 
+    # Fix toonKit error
+    cmds.undoInfo(openChunk = True)
+
+
 def tkMirror_old(*args, **kwargs):
     # special case of added controlers
     # upperBrowL = ['Left_Brow_upRidge_01_ctrl', 'Left_Brow_upRidge_02_ctrl', 'Left_Brow_upRidge_03_ctrl', 'Left_Brow_upRidge_04_ctrl', 
@@ -1524,23 +1528,54 @@ def isSkinned(inObjL=[], verbose=False, printOut=False, *args, **kwargs):
 
 def isHiddenObjInSet(theSet="set_meshCache", *args, **kwargs):
     """ Description: Check s'il y a des obj hidden dans le set
-        Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
-        Dependencies : cmds - 
+        Return : [BOOL,LIST]
+        Dependencies : cmds - getSetContent()
     """
     print "isHiddenObjInSet()"
     toReturnB = True
     debugL = []
     vL = []
-    setContentL = getSetContent(inSetL=[theSet])
-    for i in setContentL:
-        v = cmds.getAttr(i + "." + "v")
-        if not v:
-            debugL.append(i)
-            vL.append(v)
-    if len(debugL):
-        toReturnB = False
+    if cmds.objExists(theSet):
+        setContentL = getSetContent(inSetL=[theSet])
+        for i in setContentL:
+            v = cmds.getAttr(i + "." + "v")
+            if not v:
+                debugL.append(i)
+                vL.append(v)
+        if len(debugL):
+            toReturnB = False
+    else:
+        print "Nothing DONE"
 
     return toReturnB, debugL
+
+def isGroupInSet(theSet="set_control", *args, **kwargs):
+    """ Description: Check s'il y a des obj hidden dans le set
+        Return :  [BOOL,LIST]
+        Dependencies : cmds -  getSetContent()
+    """
+    print "isGroupInCtrSet()"
+
+    debugL = []
+    toReturnB= True
+    if cmds.objExists(theSet):
+        setContentL = getSetContent(inSetL=[theSet])
+        # print cursel
+        for i in setContentL:
+            # print "*",i
+            shapeL = []
+            if cmds.listRelatives(i,c=1,s=1,f=0):
+                shapeL = [i + "|"+ x for x in cmds.listRelatives(i,c=1,s=1,f=0) ]
+
+            # Little gr test
+            if not len(shapeL):
+                debugL.append(i)
+                print "Bad Set Member: '{0}' is a group".format(i)
+                toReturnB = False
+    else:
+        print "Nothing DONE"
+
+    return [toReturnB,debugL]
 
 # ------------------------ cleaning Function -----------------
 # object cleaning
@@ -2897,7 +2932,7 @@ def chr_replace_chr_vis_Exp_System(*args, **kwargs):
     mainVisAttr= "Controls"
     lvl0 = "Controls_0"
     activeLvl = lvl0
-
+    debugL = []
     # activate all to not loose conection info
     # vars
     inObj = "VisHolder_Main_Ctrl"
@@ -2929,63 +2964,82 @@ def chr_replace_chr_vis_Exp_System(*args, **kwargs):
     cursel = cmds.sets("set_control",q=1)
     # print cursel
     for i in cursel:
-        # print "*",i
-        shapeL = [i + "|"+ x for x in cmds.listRelatives(i,c=1,s=1,f=0) ]
-        for j in shapeL:
-            if cmds.objExists( j+"."+Attr ):
-                # print j,Attr
-                exp= cmds.listConnections( j+"."+Attr, s=1, d=0, scn=1,)
-                if exp:
-                    exp = exp[0]
-                    # print "exp=", exp
-                    inExpConL = []
-                    inputL = cmds.listAttr(exp+".input[*]")
-                    for i in inputL:
-                        inExpConL.append(cmds.listConnections(exp+"."+i,s=1,d=0)[0])
-                        # print "    <->",inExpConL
-                    # print "inExpConL=", inExpConL
-                    compensed= list(set(inExpConL) )
-                    if compensed == ["VisHolder_Main_Ctrl"]:
-                        # print "YEAHHHHHHH"
-                        if cmds.objectType(exp) in ["expression"]:
-                            # print "   ",exp
-                            currentStr = cmds.expression(exp,string=1,q=1 )
-                            # print "    ->",currentStr
-                            activeLvl = currentStr.rsplit("{0}.Controls * {0}.".format(inObj),1)[-1]
-                            
+        print "*",i
+        shapeL = []
+        if cmds.listRelatives(i,c=1,s=1,f=0):
+            shapeL = [i + "|"+ x for x in cmds.listRelatives(i,c=1,s=1,f=0) ]
 
-                            if not "." in activeLvl:
-                                # replace the expression by node multiply 
-                                # create Multiply_R_factor node
-                                multiply_Vis = cmds.createNode("multDoubleLinear", name=j + "Ctr_Shape_Switch_Vis#")
-
-                                # connect
+        # Little gr test
+        goB = False
+        if len(shapeL):
+            goB = True
+        else:
+            debugL.append("TO CHECK: SOME OBJ IN set_control are GROUPS!!")
+            print "TO CHECK: SOME OBJ IN set_control are GROUPS!!"
+        if goB:
+            for j in shapeL:
+                if cmds.objExists( j+"."+Attr ):
+                    # print j,Attr
+                    exp= cmds.listConnections( j+"."+Attr, s=1, d=0, scn=1,)
+                    if exp:
+                        # print "exp=", exp
+                        # print "exp[0]",exp[0]
+                        exp = exp[0]
+                        inExpConL = []
+                        inputL = cmds.listAttr(exp+".input[*]")
+                        for i in inputL:
+                            inExpConL.append(cmds.listConnections(exp+"."+i,s=1,d=0)[0])
+                            # print "    <->",inExpConL
+                        # print "inExpConL=", inExpConL
+                        compensed= list(set(inExpConL) )
+                        if compensed == ["VisHolder_Main_Ctrl"]:
+                            # print "YEAHHHHHHH"
+                            if cmds.objectType(exp) in ["expression"]:
+                                print "   exp=",exp
+                                currentStr = cmds.expression(exp,string=1,q=1 )
+                                # print "    ->",currentStr
+                                activeLvl = currentStr.rsplit("{0}.Controls * {0}.".format(inObj),1)[-1]
                                 
-                                cmds.connectAttr(inObj + "." + mainVisAttr, multiply_Vis + "." + "input1",f=1)
-                                cmds.connectAttr(inObj + "." + activeLvl  , multiply_Vis + "." + "input2",f=1)
 
-                                cmds.connectAttr(multiply_Vis+"."+ "output", j + "." + "visibility",f=1)
+                                if not "." in activeLvl:
+                                    # replace the expression by node multiply 
+                                    # create Multiply_R_factor node
+                                    multiply_Vis = cmds.createNode("multDoubleLinear", name=j + "Ctr_Shape_Switch_Vis#")
+
+                                    # connect
+                                    
+                                    cmds.connectAttr(inObj + "." + mainVisAttr, multiply_Vis + "." + "input1",f=1)
+                                    cmds.connectAttr(inObj + "." + activeLvl  , multiply_Vis + "." + "input2",f=1)
+
+                                    cmds.connectAttr(multiply_Vis+"."+ "output", j + "." + "visibility",f=1)
 
 
-                                # delete old expression
-                                
-                                cmds.delete(exp)
-                                replacedExpL.append(exp)
+                                    # delete old expression
+                                    
+                                    cmds.delete(exp)
+                                    replacedExpL.append(exp)
+
+                                else:
+                                    # print "     @activeLvl:",activeLvl
+                                    spkipedObjL.append(j)
 
                             else:
-                                # print "     @activeLvl:",activeLvl
                                 spkipedObjL.append(j)
-
                         else:
                             spkipedObjL.append(j)
+                            # print "compensed tatin:", compensed
+
+                    else:
+                        
+                        spkipedObjL.append(j)
 
                 else:
+                    # print "bub"
                     spkipedObjL.append(j)
 
-            else:
-                spkipedObjL.append(j)
-
-    # adding additive rigs here
+    
+    # adding additive rigs here 
+    print "adding additive upperBrows part"
     upperBrowBreakL  = ['Right_Brow_upRidge_03_ctrl', 'Right_Brow_upRidge_01_ctrl', 'Right_Brow_upRidge_04_ctrl', 'Right_Brow_upRidge_02_ctrl', 
                           'Left_Brow_upRidge_03_ctrl', 'Left_Brow_upRidge_04_ctrl', 'Left_Brow_upRidge_01_ctrl', 'Left_Brow_upRidge_02_ctrl']
 
@@ -3025,7 +3079,7 @@ def chr_replace_chr_vis_Exp_System(*args, **kwargs):
 
 
     print len(replacedExpL)
-    return [True,len(replacedExpL)]
+    return [True,len(replacedExpL),debugL]
 
 
 def chr_reArrangeCtr_displayLevel(*args, **kwargs):
@@ -3715,47 +3769,74 @@ def chr_fix_Dynamic_defaultValues(*args, **kwargs):
 
 
 
-def chr_unrollSpineCTR(*args, **kwargs):
+def chr_fix_unrollSpineCTR(*args, **kwargs):
+    """ Description: Fix the spine rig, rotation of the FK controlers allway create bad orientation
+                     on the underneath controlers, this re orient them with a factor and a driver attribute.
+        Return : [BOOL,LIST]
+        Dependencies : cmds - 
+    """
+    print "chr_fix_unrollSpineCTR()"
+    debugL = []
+
     unrollTargetD = {
     "Spine_IK_joint2":["Spine_IK_Extra_2_Ctrl_NeutralPose","Spine_IK_Extra_2_Ctrl",],
     "Spine_IK_joint3":["Spine_IK_Extra_3_Ctrl_NeutralPose","Spine_IK_Extra_3_Ctrl",],
     "Spine_IK_joint4":["Spine_IK_Extra_4_Ctrl_NeutralPose","Spine_IK_Extra_4_Ctrl"],
     "Spine_IK_joint5":["Spine_IK_Extra_5_Ctrl_NeutralPose","Spine_IK_Extra_5_Ctrl"],
     "Spine_IK_joint6":["Spine_IK_Extra_6_Ctrl_NeutralPose","Spine_IK_Extra_6_Ctrl"],
-
-
-
     }
 
     attrD = {"rx":["input1X","output.outputX",],
              "ry":["input1Y","output.outputY",],
              "rz":["input1Z","output.outputZ",],
             }
+
     factorAttrN = "unrollFactor"
     factorAttrV = -0.5
 
+    canDo = True
+    # test if allready done, or if it's a valid char
     for source,targetL in unrollTargetD.iteritems():
-        # factor node for each ctr
-        multi = cmds.createNode("multiplyDivide")
-        cmds.setAttr(multi + "." + "input2X",factorAttrV)
-        cmds.setAttr(multi + "." + "input2Y",factorAttrV)
-        cmds.setAttr(multi + "." + "input2Z",factorAttrV)
+        for i in targetL + [source]:
+            if not cmds.objExists (i):
+                canDo = False
 
-        # connections
-        for attr,multiAttrL in attrD.iteritems():
-            anulNode = cmds.createNode("addDoubleLinear", )
-            cmds.setAttr(anulNode+"."+"input2", cmds.getAttr(source+"."+attr)* -1.0 )
+    if canDo:
+        for source,targetL in unrollTargetD.iteritems():
+            # factor create attr if not existing
+            factP = targetL[1] +"."+ factorAttrN
+            if not cmds.objExists(factP):
+                cmds.addAttr(targetL[1], longName=factorAttrN, attributeType="float", keyable=True, dv=factorAttrV, min=-1, max=1)
+            
+                # factor node for each ctr
+                multi = cmds.createNode("multiplyDivide")
+                cmds.setAttr(multi + "." + "input2X",factorAttrV)
+                cmds.setAttr(multi + "." + "input2Y",factorAttrV)
+                cmds.setAttr(multi + "." + "input2Z",factorAttrV)
 
-            cmds.connectAttr(source+"."+attr,anulNode +"."+ "input1")
-            cmds.connectAttr(anulNode +"."+ "output", multi +"."+ multiAttrL[0])
-            cmds.connectAttr(multi +"."+ multiAttrL[1],targetL[0] +"."+attr)
+                # connections
+                for attr,multiAttrL in attrD.iteritems():
+                    anulNode = cmds.createNode("addDoubleLinear", )
+                    cmds.setAttr(anulNode+"."+"input2", cmds.getAttr(source+"."+attr)* -1.0 )
 
-        # factor connect to attr
-        factP = targetL[1] +"."+ factorAttrN
-        if not cmds.objExists(factP):
-            cmds.addAttr(targetL[1], longName=factorAttrN, attributeType="float", keyable=True, dv=factorAttrV, min=-1, max=1)
+                    cmds.connectAttr(source+"."+attr,anulNode +"."+ "input1")
+                    cmds.connectAttr(anulNode +"."+ "output", multi +"."+ multiAttrL[0])
+                    cmds.connectAttr(multi +"."+ multiAttrL[1],targetL[0] +"."+attr)
 
 
-        cmds.connectAttr(factP,multi + "." + "input2X" )
-        cmds.connectAttr(factP,multi + "." + "input2Y" )
-        cmds.connectAttr(factP,multi + "." + "input2Z" )
+
+                cmds.connectAttr(factP,multi + "." + "input2X" )
+                cmds.connectAttr(factP,multi + "." + "input2Y" )
+                cmds.connectAttr(factP,multi + "." + "input2Z" )
+
+            else:
+                print "** Allready applyed on {0}".format(source)
+                debugL.append("Allready applyed on {0}".format(source) )
+        else:
+            print "**Nothing Done"
+            debugL.append("Nothing Done" )
+
+    return [True,debugL]
+
+
+
