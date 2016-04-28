@@ -201,9 +201,22 @@ class checkModule(object):
 
 
         # 4   isHiddenObjInSet()
+        self.printF("isHiddenObjInSet(set_meshCache)", st="t")
         result,details = jpZ.isHiddenObjInSet (theSet="set_meshCache")
         # prints -------------------
-        self.printF("isHiddenObjInSet(set_meshCache)", st="t")
+        self.printF(result, st="r")
+        for i in details:
+            self.printF("-" + i)
+        # --------------------------
+        if not result:
+            boolResult = False
+            warnB = True
+        self.pBar_upd(step= 1,)
+
+        # 5   isGroupInSet()
+        self.printF("isGroupInSet(set_control)", st="t")
+        result,details = jpZ.isGroupInSet (theSet="set_control")
+        # prints -------------------
         self.printF(result, st="r")
         for i in details:
             self.printF("-" + i)
@@ -213,6 +226,8 @@ class checkModule(object):
             warnB = True
         self.pBar_upd(step= 1,)
         
+
+
         if boolResultL.count(False)>0:
             warnB=False
 
@@ -838,10 +853,12 @@ class checkModule(object):
         
         # 14 ----- chr_replace_chr_vis_Exp_System () 
         self.printF("chr_replace_chr_vis_Exp_System()", st="t")
-        result,debug = jpZ.chr_replace_chr_vis_Exp_System()
+        result,info,debugL = jpZ.chr_replace_chr_vis_Exp_System()
         # prints -------------------
         self.printF(result, st="r")
-        self.printF("-"+str(debug)+ " expressions replaced")
+        self.printF("-"+str(info,)+ " expressions replaced")
+        if len(debugL):
+             self.printF("- {0}".format( debugL[0]) )
         # --------------------------
         # --------------------------
         if not result :
@@ -1069,8 +1086,8 @@ class checkModule(object):
         if not boolResultStructure in [True]:
             if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
                 boolResult = False
-        # if not self.btn_applyShadersFromRender(controlN=self.BApplyShadersFromRender, ):
-        #     boolResult = False
+        if not self.btn_applyShadersFromRender(controlN=self.BApplyShadersFromRender, ):
+            boolResult = False
         
         # colors
         self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""],)

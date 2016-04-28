@@ -12,6 +12,8 @@ reload (assetconformation)
 from dminutes import shading
 reload (shading)
 
+import maya.utils as mu
+
 def cleanAsset (GUI = True):
     resultB = True
     logL = []
@@ -107,13 +109,18 @@ def cleanAsset (GUI = True):
                 miscUtils.deleteAllColorSet()
                 assetconformation.createSubdivSets()
                 assetconformation.setSubdiv()
-                r2a = assetconformation.Asset_File_Conformer()
-                r2a.cleanFile()
-                r2a.loadFile(sourceFile ="renderRef" , reference = True)
-                r2a.initSourceTargetList()
-                r2a.checkSourceTargetTopoMatch()
-                r2a.cleanFile()
-                miscUtils.deleteUnknownNodes()
+
+                miscUtils.cleanLayout()
+                def r2aFun():
+                    r2a = assetconformation.Asset_File_Conformer()
+                    r2a.cleanFile()
+                    r2a.loadFile(sourceFile ="renderRef" , reference = True)
+                    r2a.initSourceTargetList()
+                    r2a.checkSourceTargetTopoMatch()
+                    r2a.cleanFile()
+                    miscUtils.deleteUnknownNodes()
+
+                mu.executeDeferred(r2aFun)
 
 
 
@@ -156,16 +163,21 @@ def cleanAsset (GUI = True):
                 assetconformation.createSetMeshCache()
                 shading.checkShaderName( GUI = True, inParent = "|asset|grp_geo" )
                 assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
-                r2a = assetconformation.Asset_File_Conformer()
-                r2a.cleanFile()
-                resultD = r2a.loadFile(sourceFile ="animRef" , reference = True)
-                if resultD['fileLoadedB']:
-                    r2a.initSourceTargetList()
-                    r2a.checkSourceTargetTopoMatch()
-                    resultD = r2a.cleanFile()
-                    if not resultD["resultB"]:
-                        mc.confirmDialog( title='Error: Topologie mismach', message="The file you are working on, mismach the anim file. Please check the log for more details", button=['Ok'], defaultButton='Ok' )
-                miscUtils.deleteUnknownNodes()
+
+                miscUtils.cleanLayout()
+                def r2aFun():
+                    r2a = assetconformation.Asset_File_Conformer()
+                    r2a.cleanFile()
+                    resultD = r2a.loadFile(sourceFile ="animRef" , reference = True)
+                    if resultD['fileLoadedB']:
+                        r2a.initSourceTargetList()
+                        r2a.checkSourceTargetTopoMatch()
+                        resultD = r2a.cleanFile()
+                        if not resultD["resultB"]:
+                            mc.confirmDialog( title='Error: Topologie mismach', message="The file you are working on, mismach the anim file. Please check the log for more details", button=['Ok'], defaultButton='Ok' )
+                    miscUtils.deleteUnknownNodes()
+
+                mu.executeDeferred(r2aFun)
 
     return resultB, logL
 

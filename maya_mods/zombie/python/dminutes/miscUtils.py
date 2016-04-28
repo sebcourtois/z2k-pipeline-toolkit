@@ -106,10 +106,14 @@ def deleteUnknownNodes(GUI = True):
                             u'ProductionRapidMotion',u'miContourPreset']
     turtleNodeList = [u'TurtleDefaultBakeLayer',u'TurtleBakeLayerManager',u'TurtleRenderOptions',u'TurtleUIOptions']
 
+    deLightNodeList = [u'delightRenderGlobals']
+
     mentalRayNodeList = mc.ls(mentalRayNodeList)
     turtleNodeList= mc.ls(turtleNodeList)
+    deLightNodeList= mc.ls(deLightNodeList)
     mentalRayDeletedNodeList = []
     turtleDeletedNodeList = []
+    delightDeletedNodeList = []
 
     for each in mentalRayNodeList:
         try:
@@ -131,6 +135,16 @@ def deleteUnknownNodes(GUI = True):
             logL.append(logMessage)
             if GUI == True: print logMessage
 
+    for each in deLightNodeList:
+        try:
+            mc.lockNode(each,lock = False)
+            mc.delete(each)
+            delightDeletedNodeList.append(each)
+        except:
+            logMessage = "#### {:>7}: 'deleteUnknownNodes' {} 3dlight node could not be deleted".format("Warning", each)
+            logL.append(logMessage)
+            if GUI == True: print logMessage
+
     unknownNodes = mc.ls(type = "unknown")
     if unknownNodes:
         logMessage = "#### {:>7}: 'deleteUnknownNodes'  {} unknown node has been found in the scene: {}".format("Warning", len(unknownNodes), unknownNodes)
@@ -139,6 +153,11 @@ def deleteUnknownNodes(GUI = True):
 
     if mentalRayDeletedNodeList:
         logMessage = "#### {:>7}: 'deleteUnknownNodes'  {} Mental Ray node(s) deteled: '{}'".format("Info", len(mentalRayDeletedNodeList), mentalRayDeletedNodeList)
+        logL.append(logMessage)
+        if GUI == True: print logMessage
+
+    if delightDeletedNodeList:
+        logMessage = "#### {:>7}: 'deleteUnknownNodes'  {} 3delight node(s) deteled: '{}'".format("Info", len(delightDeletedNodeList), delightDeletedNodeList)
         logL.append(logMessage)
         if GUI == True: print logMessage
 
@@ -170,6 +189,12 @@ def deleteUnknownNodes(GUI = True):
     except:
         pass
 
+    try:
+        mc.unloadPlugin("3delight_for_maya2016",force = True)
+        mc.unknownPlugin( "3delight_for_maya2016", r=True )
+    except:
+        pass
+        
     return resultB, logL
 
 
@@ -337,6 +362,14 @@ def getShapeOrig(TransformS = ""):
             shapeOrigList.append(each)
     return shapeOrigList
 
+
+def cleanLayout():
+    panelL = mc.getPanel( visiblePanels=True )
+    panelToCloseL=["hyperShadePanel","polyTexturePlacementPanel"]
+    for each in panelL:
+        for eachPanel in panelToCloseL:
+            if eachPanel in each:
+                mc.deleteUI(each, panel = True)
 
 
 
