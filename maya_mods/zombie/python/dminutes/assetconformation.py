@@ -737,13 +737,16 @@ class Asset_File_Conformer:
                 sourceVrtxCnt = len(mc.getAttr(self.sourceList[i]+".vrts[:]"))
                 targetVrtxCnt = len(mc.getAttr(self.targetList[i]+".vrts[:]"))
                 polyCompareResultI = mc.polyCompare( self.sourceList[i], self.targetList[i], vertices=False, edges=True, colorSetIndices=False, colorSets=False,  faceDesc=True, userNormals=False, uvSetIndices=False, uvSets=False) 
-                if (sourceVrtxCnt != targetVrtxCnt) or (polyCompareResultI == 4):
+                if (sourceVrtxCnt != targetVrtxCnt) or (polyCompareResultI != 0):
                     topoMismatch = topoMismatch + 1
                     if sourceVrtxCnt != targetVrtxCnt:
                         txt="Vertex number mismatch: '{}' vertex nb = {} -- '{}' vertex nb = {}".format(self.sourceList[i],sourceVrtxCnt, self.targetList[i],targetVrtxCnt)
                         self.log.printL("e", txt)
-                    elif polyCompareResultI == 4:
+                    elif polyCompareResultI == 4 or polyCompareResultI == 6:
                         txt="Face description (topologie/order) mismatch: '{}' different from '{}' ".format(self.sourceList[i], self.targetList[i])
+                        self.log.printL("e", txt)                    
+                    elif polyCompareResultI == 2 or polyCompareResultI == 6:
+                        txt="Edge mismatch: '{}' different from '{}' ".format(self.sourceList[i], self.targetList[i])
                         self.log.printL("e", txt)
                     i+=1
                     continue
