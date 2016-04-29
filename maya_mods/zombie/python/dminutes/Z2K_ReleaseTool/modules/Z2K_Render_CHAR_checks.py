@@ -57,6 +57,7 @@
 import os,sys
 import maya.cmds as cmds
 import maya.mel as mel
+import maya.utils as mu
 from functools import partial
 import inspect
 
@@ -125,7 +126,7 @@ class checkModule(object):
         # print scene NAME
         infoDict = jpZ.infosFromMayaScene()
         self.printF("ASSET_NAME: {0}  -Version: {1}    - Categorie: {2}".format( infoDict["assetName"],infoDict["version"], infoDict["assetCat"] ) , st="t")
-        self.printF("running Z2K_render_SET_check", st="t")
+        self.printF("running Z2K_render_CHAR_check", st="t")
 
 
     # decorators ---------------------------
@@ -146,7 +147,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=15, e=True)
+        self.pBar_upd(step=1, maxValue=14, e=True)
 
         # steps
 
@@ -349,26 +350,6 @@ class checkModule(object):
         # if not resultD["resultB"]:
         #     boolResult = False
         # self.pBar_upd(step= 1,)
-
-        # 15   compare meshes topologies with anim file"
-        self.printF("assetconformation: compare meshes topologies with anim file", st="t")
-        resultD={}
-        compMesh =assetconformation.Asset_File_Conformer(gui=self.GUI)
-        compMesh.cleanFile()
-        resultD = compMesh.loadFile(sourceFile ="animRef" , reference = False)
-        if resultD['fileLoadedB']:
-            compMesh.initSourceTargetList()
-            compMesh.checkSourceTargetTopoMatch()
-            resultD = compMesh.cleanFile()
-        # prints -------------------
-        self.printF(resultD['resultB'], st="r")
-        for each in resultD["logL"]:
-            self.printF( each )
-        # --------------------------
-        if not resultD["resultB"]:
-            boolResult = False
-        self.pBar_upd(step= 1,) 
-        
 
         # colors
         print "*btn_preClean:",boolResult
@@ -773,6 +754,50 @@ class checkModule(object):
 
         return boolResult
 
+        
+    @jpZ.waiter
+    def btn_CompareMeshTopo(self, controlN="", *args, **kwargs):
+        boolResult=True
+        # 1   compare meshes topologies with anim file"        
+        def r2aCompTopo():
+            # set progress bar
+            boolResult=True
+            self.pBar_upd(step=1, maxValue=1, e=True)
+            self.printF= self.Z2KprintDeco(jpZ.printF)
+            self.printF("assetconformation: compare meshes topologies with anim file", st="t")
+            resultD={}
+            compMesh =assetconformation.Asset_File_Conformer(gui=self.GUI)
+            compMesh.cleanFile()
+            resultD = compMesh.loadFile(sourceFile ="animRef" , reference = False)
+            if resultD['fileLoadedB']:
+                compMesh.initSourceTargetList()
+                compMesh.checkSourceTargetTopoMatch()
+                resultD = compMesh.cleanFile()
+            # prints -------------------
+            self.printF(resultD['resultB'], st="r")
+            for each in resultD["logL"]:
+                self.printF( each )
+            # --------------------------
+            if not resultD["resultB"]:
+                boolResult = False
+            self.pBar_upd(step= 1,)
+            return boolResult
+
+        if self.GUI:
+            miscUtils.cleanLayout()
+            #boolResult = mu.executeDeferred(r2aCompTopo)
+            boolResult = mu.executeInMainThreadWithResult(r2aCompTopo)
+        else:
+            boolResult = r2aCompTopo()
+        
+        # colors
+        print "*btn_CompareMeshTopo:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+        return boolResult
+
+
+
+
 
     def btn_clearAll(self, *args, **kwargs):
         print "btn_clearAll()"
@@ -802,9 +827,12 @@ class checkModule(object):
         print "*2",boolResult
         if not self.btn_CleanObjects(controlN=self.BCleanObjects, ):
             boolResult = False
+        print "*3",boolResult
+        if not self.btn_CompareMeshTopo(controlN=self.BCompareMeshTopo, ):
+            boolResult = False
         
         # colors
-        print "*3",boolResult
+        print "*4",boolResult
         self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""],)
         return boolResult
 
@@ -893,6 +921,9 @@ class checkModule(object):
 
         self.BCleanObjects = cmds.button("CleanObjects",)
         cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects) )
+
+        self.BCompareMeshTopo = cmds.button("CompareMeshTopo",)
+        cmds.button(self.BCompareMeshTopo,e=1,c= partial( self.btn_CompareMeshTopo,self.BCompareMeshTopo) )
         
         self.BValidationPBar = cmds.progressBar(maxValue=3,s=1 )
 
