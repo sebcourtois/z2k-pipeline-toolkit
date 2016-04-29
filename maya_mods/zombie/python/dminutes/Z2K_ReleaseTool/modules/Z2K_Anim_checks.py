@@ -75,6 +75,8 @@ reload (miscUtils)
 
 from dminutes import assetconformation
 reload(assetconformation)
+from dminutes import modeling
+reload(modeling)
 
 
 
@@ -141,7 +143,7 @@ class checkModule(object):
         boolResultL = []
         warnB = False
         # set progress bar
-        self.pBar_upd(step=1, maxValue=3, e=True)
+        self.pBar_upd(step=1, maxValue=5, e=True)
 
         # steps
 
@@ -226,12 +228,10 @@ class checkModule(object):
             boolResult = False
             warnB = True
         self.pBar_upd(step= 1,)
-        
 
 
         if boolResultL.count(False)>0:
             warnB=False
-
 
         # colors
         print "*btn_checkStructure:",boolResult,
@@ -450,12 +450,6 @@ class checkModule(object):
         if not result :
             boolResult = False
         self.pBar_upd(step= 1,) 
-        
-
-        
-
-
-
 
         # colors
         print "*btn_CleanScene:",boolResult
@@ -463,12 +457,13 @@ class checkModule(object):
         
         return boolResult
         
+
     @jpZ.waiter
     def btn_CleanObjects(self, controlN="", *args, **kwargs):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=9, e=True)
+        self.pBar_upd(step=1, maxValue=10, e=True)
 
         meshCacheObjL = jpZ.getSetContent(inSetL=["set_meshCache"] )
         controlObjL = jpZ.getSetContent(inSetL=["set_control"] )
@@ -602,6 +597,23 @@ class checkModule(object):
         if not jpZ.checkSRT(inObjL =controlObjL, verbose=True)[0] :
             boolResult = False
         self.pBar_upd(step= 1,)
+
+        # 10   freeze and reset translation
+        self.printF("modeling: freeze and reset all transforms ", st="t")
+        resultD = modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = False, GUI = False)
+        result = resultD["resultB"]
+        details = resultD["logL"]
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in details:
+            self.printF( each )
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
       
 
         # colors

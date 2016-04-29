@@ -722,51 +722,45 @@ def geoGroupDeleteHistory(GUI=True, freezeVrtxPos = True):
 
 
 
-def freezeResetTransforms(inParent = "*", inVerbose = True, inConform = False, GUI = True):
+def freezeResetTransforms(inParent = "*", inConform = False, GUI = True, selectUnfreezed = False):
     """
     gets all the mesh transforms under de given inParent, an check that all the transforms values are set to 0 (1 for scales)
-    logs infos in case inVerbose is true, freeze and reset the the transforms in case inConform is True.
+    freeze and reset the the transforms in case inConform is True.
     """
-    resultB = True
-    logL = []
-    if GUI == True: print "#### {:>7}: modeling.freezeResetTransforms(inParent = {}, inVerbose = {}, inConform = {})".format("Info",inParent, inVerbose, inConform)
+    log = miscUtils.LogBuilder(gui=GUI, funcName ="freezeResetTransforms")
+
     unFreezedTransfomList = []
     freezedTransfomList = []
+    conformTransfomList = []
     geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
     if instanceTransformL:
-        logMessage = "#### {:>7}: 'freezeResetTransforms': {} objects ignored since they are actually instances: {}".format("Warning", len(instanceTransformL), instanceTransformL)
-        logL.append(logMessage)
-        if GUI == True: print logMessage
+        logMessage = "{} objects ignored since they are actually instances: {}".format(len(instanceTransformL), instanceTransformL)
+        log.printL("w", logMessage)
 
     for each in geoTransformList:
         if (cmds.xform( each, os=True, q=True,  ro=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  t=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  s=True, r = True )!=[1,1,1] or 
             cmds.xform( each, os=True, q=True, rp=True)!=[0,0,0] or cmds.xform( each, os=True, q=True, sp=True)!=[0,0,0]):
-            if inVerbose == True and inConform == False:
+            if inConform == False:
                 unFreezedTransfomList.append(each)
-                if GUI == True: print "#### {:>7}: {:^28} --> has unfreezed tranform values".format("Info", each)
-            if inConform == True:
+            else:
                 cmds.makeIdentity (each ,apply= True, n=0, pn=1)
                 cmds.makeIdentity (each ,apply= False, n=0, pn=1)
                 freezedTransfomList.append(each)
-                if inVerbose == True: print "#### {:>7}: {:^28} --> has been freezed and reset".format("Info", each)
+        else:
+            conformTransfomList.append(each)
 
-    if unFreezedTransfomList !=[] and inVerbose == True:
-        cmds.select(unFreezedTransfomList)
-        logMessage = "#### {:>7}: {} unfreezed transforms have been selected".format("Info", str(len(unFreezedTransfomList)))
-        logL.append(logMessage)
-        if GUI == True: print logMessage
-
+    if unFreezedTransfomList:
+        if selectUnfreezed: cmds.select(unFreezedTransfomList)
+        logMessage = "{} unfreezed transforms found: {}".format(len(unFreezedTransfomList),unFreezedTransfomList)
+        log.printL("e", logMessage)
+    if conformTransfomList:
+        logMessage = "{} transforms checked successfully: {}".format(len(conformTransfomList),conformTransfomList)
+        log.printL("i", logMessage)
     if freezedTransfomList != []:
-        logMessage = "#### {:>7}: {} transforms have been freezed and reset".format("Info", len(freezedTransfomList))
-        logL.append(logMessage)
-        if GUI == True: print logMessage
+        logMessage = "{} transforms have been freezed and reset: {}".format(len(freezedTransfomList),freezedTransfomList)
+        log.printL("i", logMessage)
 
-    if unFreezedTransfomList ==[] and inVerbose == True:
-        logMessage = "#### {:>7}: {} transforms checked successfully".format("Info", str(len(geoTransformList)))
-        logL.append(logMessage)
-        if GUI == True: print logMessage
-
-    return resultB, logL
+    return dict(resultB=log.resultB, logL=log.logL)
 
 
 def compareHDToPreviz():

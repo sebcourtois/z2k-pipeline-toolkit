@@ -287,13 +287,16 @@ class checkModule(object):
        
         # 11   freeze and reset translation
         self.printF("modeling: freeze and reset all transforms ", st="t")
-        result,details = modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = True, GUI = False)
+        resultD = modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = True, GUI = False)
+        result = resultD["resultB"]
+        details = resultD["logL"]
+
         # prints -------------------
         self.printF(result, st="r")
         for each in details:
             self.printF( each )
         # --------------------------
-        if not result:
+        if not result :
             boolResult = False
         self.pBar_upd(step= 1,)
         

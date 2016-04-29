@@ -370,6 +370,13 @@ def cleanLayout():
         for eachPanel in panelToCloseL:
             if eachPanel in each:
                 mc.deleteUI(each, panel = True)
+    myPanelL = mc.getPanel(type="modelPanel")
+    for each in myPanelL:
+        try:
+            mc.modelEditor(each, e=1, displayAppearance="wireframe")
+        except:
+            pass
+
 
 
 
