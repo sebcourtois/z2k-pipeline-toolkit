@@ -301,8 +301,10 @@ def connectMeshShapes(astToAbcMeshItems):
                 continue
             else:
                 sMsg = "Topology differs:"
-                sMsg += "\n    - '{}': {}".format(sAbcMeshShape, meshMismatchStr(abcMeshStat, astMeshStat))
-                sMsg += "\n    - '{}': {}".format(sAstMeshShape, meshMismatchStr(astMeshStat, abcMeshStat))
+                sMsg += ("\n    - cache mesh: {}  ('{}')"
+                         .format(meshMismatchStr(abcMeshStat, astMeshStat), sAbcMeshShape))
+                sMsg += ("\n    - asset mesh: {}  ('{}')"
+                         .format(meshMismatchStr(astMeshStat, abcMeshStat), sAstMeshShape))
                 pm.displayInfo(sMsg)
                 sTopoDifferList.extend((sAbcMeshShape, sAstMeshShape))
 
