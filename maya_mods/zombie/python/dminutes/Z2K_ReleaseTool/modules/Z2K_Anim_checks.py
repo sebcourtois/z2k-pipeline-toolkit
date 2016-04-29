@@ -612,19 +612,18 @@ class checkModule(object):
 
     @jpZ.waiter
     def btn_applyShadersFromRender(self, controlN="", *args, **kwargs):
-        boolResult=True
-        boolResultL = []
-        warnB=False
-        # set progress bar
-        self.pBar_upd(step=1, maxValue=1, e=True)
-        # steps
-        # 1   apply shader from render file"
-        self.printF("applyShadersFromRender", st="t")
-        resultD={}
-        if self.GUI:
-            miscUtils.cleanLayout()
 
         def r2aApplyShaders():
+            self.printF= self.Z2KprintDeco(jpZ.printF)
+            boolResult=True
+            boolResultL = []
+            warnB=False
+            # set progress bar
+            self.pBar_upd(step=1, maxValue=1, e=True)
+            # steps
+            # 1   apply shader from render file"
+            self.printF("applyShadersFromRender", st="t")
+            resultD={}
             r2a = assetconformation.Asset_File_Conformer(gui=self.GUI)
             cmds.refresh(suspend = True)
             try:
@@ -660,9 +659,11 @@ class checkModule(object):
             finally:
                 cmds.refresh(suspend = False)
             return boolResult
-            
+
         if self.GUI:
-            boolResult = mu.executeDeferred(r2aApplyShaders)
+            miscUtils.cleanLayout()
+            #boolResult = mu.executeDeferred(r2aApplyShaders)
+            boolResult = mu.executeInMainThreadWithResult(r2aApplyShaders)
         else:
             boolResult = r2aApplyShaders()
 
