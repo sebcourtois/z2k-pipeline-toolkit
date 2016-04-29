@@ -58,6 +58,7 @@
 import os,sys
 import maya.cmds as cmds
 import maya.mel as mel
+import maya.utils as mu
 from functools import partial
 import inspect
 
@@ -620,38 +621,50 @@ class checkModule(object):
         # 1   apply shader from render file"
         self.printF("applyShadersFromRender", st="t")
         resultD={}
-        r2a = assetconformation.Asset_File_Conformer(gui=self.GUI)
-        cmds.refresh(suspend = True)
-        r2a.cleanFile()
-        #self.printF('resultD_0: '+str(resultD))
-        resultD = r2a.loadFile(sourceFile ="renderRef" , reference = False)
-        if resultD['fileLoadedB']:
-            r2a.initSourceTargetList()
-            r2a.checkSourceTargetTopoMatch()
-            if r2a.sourceTargetListMatch and r2a.sourceTargetTopoMatch:
-                r2a.smoothPolyDisplay(r2a.targetList)
-                r2a.transferRenderAttr()
-                r2a.transferUV()
-                r2a.disconnectAllShadEng(r2a.targetList)
-                r2a.transferSG()
-                r2a.deleteUnusedShadingNodes()
-                r2a.removeNameSpaceFromShadNodes(r2a.targetList)
-                r2a.cleanFile()
-                cmds.refresh()
-                assetconformation.fixMaterialInfo()
-                resultD = r2a.deleteUnusedShadingNodes()
-            else:
-                resultD = r2a.cleanFile()
-        cmds.refresh(suspend = False)
-        #prints -------------------
-        self.printF(resultD['resultB'], st="r")
-        for each in resultD["logL"]:
-            self.printF( each )
-        # --------------------------
-        if not resultD["resultB"]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        if self.GUI:
+            miscUtils.cleanLayout()
 
+        def r2aApplyShaders():
+            r2a = assetconformation.Asset_File_Conformer(gui=self.GUI)
+            cmds.refresh(suspend = True)
+            try:
+                r2a.cleanFile()
+                #self.printF('resultD_0: '+str(resultD))
+                resultD = r2a.loadFile(sourceFile ="renderRef" , reference = False)
+                if resultD['fileLoadedB']:
+                    r2a.initSourceTargetList()
+                    r2a.checkSourceTargetTopoMatch()
+                    if r2a.sourceTargetListMatch and r2a.sourceTargetTopoMatch:
+                        r2a.smoothPolyDisplay(r2a.targetList)
+                        r2a.transferRenderAttr()
+                        r2a.transferUV()
+                        r2a.disconnectAllShadEng(r2a.targetList)
+                        r2a.transferSG()
+                        r2a.deleteUnusedShadingNodes()
+                        r2a.removeNameSpaceFromShadNodes(r2a.targetList)
+                        r2a.cleanFile()
+                        cmds.refresh()
+                        assetconformation.fixMaterialInfo()
+                        resultD = r2a.deleteUnusedShadingNodes()
+                    else:
+                        resultD = r2a.cleanFile()
+                        #prints -------------------
+                self.printF(resultD['resultB'], st="r")
+                for each in resultD["logL"]:
+                    self.printF( each )
+                # --------------------------
+                if not resultD["resultB"]:
+                    boolResult = False
+                self.pBar_upd(step= 1,)
+
+            finally:
+                cmds.refresh(suspend = False)
+            return boolResult
+            
+        if self.GUI:
+            boolResult = mu.executeDeferred(r2aApplyShaders)
+        else:
+            boolResult = r2aApplyShaders()
 
         # colors
         print "*btn_CleanObjects:",boolResult
