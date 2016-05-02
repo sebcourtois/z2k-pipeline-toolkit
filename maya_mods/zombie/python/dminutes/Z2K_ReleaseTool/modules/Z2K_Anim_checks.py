@@ -143,8 +143,9 @@ class checkModule(object):
         boolResultL = []
         warnB = False
         # set progress bar
-        self.pBar_upd(step=1, maxValue=5, e=True)
+        self.pBar_upd(step=1, maxValue=6, e=True)
 
+        meshCacheObjL = jpZ.getSetContent(inSetL=["set_meshCache"] )
         # steps
 
         # 1   checkBaseStructure()
@@ -229,6 +230,21 @@ class checkModule(object):
             warnB = True
         self.pBar_upd(step= 1,)
 
+
+        # 6   freeze and reset translation
+        self.printF("modeling: freeze and reset all transforms ", st="t")
+        resultD={}
+        resultD = modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = False, GUI = False, inGeoTransL= meshCacheObjL )
+        result = resultD["resultB"]
+        details = resultD["logL"]
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in details:
+            self.printF( each )
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
 
         if boolResultL.count(False)>0:
             warnB=False
@@ -463,7 +479,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=10, e=True)
+        self.pBar_upd(step=1, maxValue=9, e=True)
 
         meshCacheObjL = jpZ.getSetContent(inSetL=["set_meshCache"] )
         controlObjL = jpZ.getSetContent(inSetL=["set_control"] )
@@ -598,19 +614,8 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
-        # 10   freeze and reset translation
-        self.printF("modeling: freeze and reset all transforms ", st="t")
-        resultD = modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = False, GUI = False)
-        result = resultD["resultB"]
-        details = resultD["logL"]
-        # prints -------------------
-        self.printF(result, st="r")
-        for each in details:
-            self.printF( each )
-        # --------------------------
-        if not result :
-            boolResult = False
-        self.pBar_upd(step= 1,)
+
+
 
 
 

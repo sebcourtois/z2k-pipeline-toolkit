@@ -722,7 +722,7 @@ def geoGroupDeleteHistory(GUI=True, freezeVrtxPos = True):
 
 
 
-def freezeResetTransforms(inParent = "*", inConform = False, GUI = True, selectUnfreezed = False):
+def freezeResetTransforms(inParent = "*", inConform = False, GUI = True, selectUnfreezed = False, inGeoTransL=[] ):
     """
     gets all the mesh transforms under de given inParent, an check that all the transforms values are set to 0 (1 for scales)
     freeze and reset the the transforms in case inConform is True.
@@ -732,10 +732,13 @@ def freezeResetTransforms(inParent = "*", inConform = False, GUI = True, selectU
     unFreezedTransfomList = []
     freezedTransfomList = []
     conformTransfomList = []
-    geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
-    if instanceTransformL:
-        logMessage = "{} objects ignored since they are actually instances: {}".format(len(instanceTransformL), instanceTransformL)
-        log.printL("w", logMessage)
+    if not inGeoTransL:
+        geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
+        if instanceTransformL:
+            logMessage = "{} objects ignored since they are actually instances: {}".format(len(instanceTransformL), instanceTransformL)
+            log.printL("w", logMessage)
+    else:
+        geoTransformList = list(inGeoTransL)
 
     for each in geoTransformList:
         if (cmds.xform( each, os=True, q=True,  ro=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  t=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  s=True, r = True )!=[1,1,1] or 
