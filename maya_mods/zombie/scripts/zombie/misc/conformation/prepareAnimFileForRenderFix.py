@@ -11,6 +11,7 @@ miscUtils.cleanLayout()
 
 def r2aPrepareAnim():      
 	r2a = assetconformation.Asset_File_Conformer()
+	mc.currentTime (1,edit=True)
 	mc.refresh(suspend = True)
 
 	try: 
