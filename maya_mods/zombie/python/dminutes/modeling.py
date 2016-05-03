@@ -312,8 +312,8 @@ def rigSet(inRoot):
         valid=False
 
     for child in children:
-        if child.name() != "grp_geo" and child.name() != "grp_placeHolders" and child.name() != "grp_rig":
-            pc.warning("Unexpected asset root child {0} (expected 'grp_geo', and eventually 'grp_placeHolders' or 'grp_rig')".format(child.name()))
+        if child.name() != "grp_geo" and child.name() != "grp_placeHolders" and child.name() != "grp_rig"and child.name() != "grp_particles":
+            pc.warning("Unexpected asset root child {0} (expected 'grp_geo', and eventually 'grp_placeHolders', 'grp_rig' or 'grp_particles')".format(child.name()))
             valid=False
 
     if not valid:
