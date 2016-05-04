@@ -3792,7 +3792,7 @@ def chr_fix_unrollSpineCTR(*args, **kwargs):
             }
 
     factorAttrN = "unrollFactor"
-    factorAttrV = -0.5
+    factorAttrV = -0.0
 
     canDo = True
     # test if allready done, or if it's a valid char
