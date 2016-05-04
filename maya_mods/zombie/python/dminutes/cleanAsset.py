@@ -149,7 +149,7 @@ def cleanAsset (GUI = True):
             if GUI == True: 
                 msgS = baseMessage2S+"""
     - delete geo history,\n    - make all mesh unique,\n    - conform mesh shapes names,\n    - create set subdiv,\n    - apply set subdiv,\n    - create 'set_meshCache',   
-    - delete all unused nodes (unconnected to an asset dag node), except render layers,\n    - conform all shaders names,\n    - conform shader masks,\n    - compare meshes topologies with anim file"""
+    - delete all unused nodes (unconnected to an asset dag node), except render layers,\n    - conform all shaders names,\n    - conform shader masks,\n    - freeze and reset transforms,\n    - compare meshes topologies with anim file"""
                 answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 assetconformation.fixMaterialInfo()
@@ -163,6 +163,7 @@ def cleanAsset (GUI = True):
                 assetconformation.createSetMeshCache()
                 shading.checkShaderName( GUI = True, inParent = "|asset|grp_geo" )
                 assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
+                modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = True)
 
                 miscUtils.cleanLayout()
                 def r2aFun():
