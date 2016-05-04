@@ -352,9 +352,9 @@ def setShadingMask(selectFailingNodes = False, gui = True):
     dmnMask07_G = []# lighting custom
     dmnMask07_B = []# lighting custom
 
-    dmnMask08_R = []# lighting custom
-    dmnMask08_G = []# lighting custom
-    dmnMask08_B = []# lighting custom
+    dmnMask08_R = []# lighting custom utility
+    dmnMask08_G = []# lighting custom utility
+    dmnMask08_B = []# lighting custom utility
 
     dmnMask09_R = []#  custom no transparency
     dmnMask09_G = []#  custom no transparency

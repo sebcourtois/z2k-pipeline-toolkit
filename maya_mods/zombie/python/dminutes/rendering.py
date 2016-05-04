@@ -26,10 +26,11 @@ def setArnoldRenderOption(outputFormat):
 
 
     if mc.ls("|shot") and (mc.file(q=True, list = True)[0].split("/")[-4]) == "shot":
-        shadingMode = False
+        renderMode = "render"
+        #renderMode = "finalLayout"
         print "#### info: Lighting mode render options"
     else:
-        shadingMode = True
+        renderMode = "shading"
         print "#### info: Shading mode render options"       
 
     #TEMPORAIRE
@@ -71,12 +72,12 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultResolution.pixelAspect",1)
     mc.setAttr("defaultResolution.deviceAspectRatio",aspectRatio)
     if aspectRatio != 1:
-        if shadingMode:
-            mc.setAttr("defaultResolution.width",1920)
-            mc.setAttr("defaultResolution.height",1920/aspectRatio)
-        else:
+        if renderMode == "render":
             mc.setAttr("defaultResolution.width",2048)
             mc.setAttr("defaultResolution.height",2048/aspectRatio)
+        else:
+            mc.setAttr("defaultResolution.width",1920)
+            mc.setAttr("defaultResolution.height",1920/aspectRatio)
     else:
         mc.setAttr("defaultResolution.width",1080)
         mc.setAttr("defaultResolution.height",1080)
@@ -113,7 +114,7 @@ def setArnoldRenderOption(outputFormat):
 
 
 
-    createAovs()
+    createAovs(renderMode=renderMode)
 
                 
         
@@ -123,16 +124,6 @@ def setArnoldRenderOption(outputFormat):
     elif  outputFormat == "jpg":
         mc.setAttr("defaultArnoldDriver.aiTranslator","jpeg", type = "string")
         mc.setAttr("defaultArnoldRenderOptions.aovMode", 0)
-        
-    
-    if shadingMode == True:
-        mc.setAttr("defaultArnoldRenderOptions.AASamples",4)
-        mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",0)
-        mc.setAttr("defaultArnoldRenderOptions.force_texture_cache_flush_after_render",1)
-    else:
-        mc.setAttr("defaultArnoldRenderOptions.AASamples",8)
-        mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",1)
-        mc.setAttr("defaultArnoldRenderOptions.motion_frames",0.25)
 
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples",3)
@@ -144,6 +135,23 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
     mc.setAttr("defaultArnoldRenderOptions.skipLicenseCheck",1)
     mc.setAttr("defaultArnoldRenderOptions.log_verbosity",1)#warnig + info
+        
+    
+    if renderMode == 'shading':
+        mc.setAttr("defaultArnoldRenderOptions.AASamples",4)
+        mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",0)
+        mc.setAttr("defaultArnoldRenderOptions.force_texture_cache_flush_after_render",1)
+    elif renderMode == 'render':
+        mc.setAttr("defaultArnoldRenderOptions.AASamples",8)
+        mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",1)
+        mc.setAttr("defaultArnoldRenderOptions.motion_frames",0.25)
+    elif renderMode == 'finalLayout':
+        mc.setAttr("defaultArnoldRenderOptions.AASamples",2)
+        mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",1)
+        mc.setAttr("defaultArnoldRenderOptions.motion_frames",0.25)
+        mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples",2)
+
+
 
    
 
@@ -363,17 +371,20 @@ def deleteAovs(GUI = True):
 
 
 
-def createAovs():
+def createAovs(renderMode = "render"):
     if mc.ls("defaultArnoldRenderOptions"):
         myAOVs = aovs.AOVInterface()
         #create aovs, type = rgb
         #unUsedAovNameList = [ "dmn_lambert", "dmn_toon", "dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour"  ],"dmn_rimToon_na1_na2"
-        aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon","dmn_mask_transp","dmn_lgtMask01","dmn_lgtMask02"]
+        if renderMode == "finalLayout":
+            aovNameList = ["dmn_diffuse","dmn_contour_inci_occ", "dmn_mask08"]
+        else:
+            aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon","dmn_mask_transp","dmn_lgtMask01","dmn_lgtMask02"]
+            if not 'aiAOV_Z' in mc.ls( type = "aiAOV"):
+                myAOVs.addAOV( "Z", aovType='float')
         for eachAovName in aovNameList: 
             if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
                 myAOVs.addAOV( eachAovName, aovType='rgb')
-        if not 'aiAOV_Z' in mc.ls( type = "aiAOV"):
-            myAOVs.addAOV( "Z", aovType='float')
         aovs.refreshAliases()
         print "#### {:>7}: 'createAovs' has created {} aovs".format("Info",len(aovNameList))
     else:
