@@ -420,8 +420,10 @@ def listColHD(public = False):
 
 class LogBuilder():
     
-    def __init__(self,gui=True, funcName ="", logL = [], resultB = True, logFile = ""):
+    def __init__(self,gui=True, funcName ="", logL = None, resultB = True, logFile = ""):
         self.gui = gui
+        if not logL:
+            logL = []
         self.funcName = funcName
         self.logL = logL
         self.resultB = resultB

@@ -742,19 +742,19 @@ class Asset_File_Conformer:
                 sourceVrtxCnt = len(mc.getAttr(self.sourceList[i]+".vrts[:]"))
                 targetVrtxCnt = len(mc.getAttr(self.targetList[i]+".vrts[:]"))
                 polyCompareResultI = mc.polyCompare( self.sourceList[i], self.targetList[i], vertices=False, edges=True, colorSetIndices=False, colorSets=False,  faceDesc=True, userNormals=False, uvSetIndices=False, uvSets=False) 
-                if (sourceVrtxCnt != targetVrtxCnt) or (polyCompareResultI != 0):
+                if (sourceVrtxCnt != targetVrtxCnt) or (polyCompareResultI == 4):
                     topoMismatch = topoMismatch + 1
                     if sourceVrtxCnt != targetVrtxCnt:
                         txt="Vertex number mismatch: '{}' vertex nb = {} -- '{}' vertex nb = {}".format(self.sourceList[i],sourceVrtxCnt, self.targetList[i],targetVrtxCnt)
                         self.log.printL("e", txt)
-                    elif polyCompareResultI == 4 or polyCompareResultI == 6:
+                    elif polyCompareResultI == 4:
                         txt="Face description (topologie/order) mismatch: '{}' different from '{}' ".format(self.sourceList[i], self.targetList[i])
                         self.log.printL("e", txt)                    
-                    elif polyCompareResultI == 2 or polyCompareResultI == 6:
-                        txt="Edge mismatch: '{}' different from '{}' ".format(self.sourceList[i], self.targetList[i])
-                        self.log.printL("w", txt)
                     i+=1
                     continue
+                if polyCompareResultI == 6:
+                    txt="Edge mismatch: '{}' different from '{}' ".format(self.sourceList[i], self.targetList[i])
+                    self.log.printL("w", txt)
 
                 # sourceBBox =  mc.exactWorldBoundingBox(self.sourceList[i])
                 # targetBBox =  mc.exactWorldBoundingBox(self.targetList[i])
@@ -1381,8 +1381,8 @@ def importGrpLgt(lgtRig = "lgtRig_character", gui=True, hideLgt = False):
     if hideLgt:
         mc.hide("|asset|grp_light")
 
-
     return dict(resultB=log.resultB, logL=log.logL)
+
 
 
 def fixMaterialInfo (shadingEngineL = [], GUI = True):
@@ -1431,7 +1431,7 @@ def assetGrpClean( clean = True, GUI = True):
 
 
     validDefaultGrpL = ["|asset|grp_geo", "|asset|grp_rig"]
-    validSetGrpL = ["|asset|grp_geo", "|asset|grp_placeHolders", "|asset|grp_rig"]
+    validSetGrpL = ["|asset|grp_geo", "|asset|grp_placeHolders", "|asset|grp_rig", "|asset|grp_particles"]
     validChrGrpL = ["|asset|grp_geo", "|asset|grp_placeHolders", "|asset|grp_rig"]
     if assetType == "set":
         validGrpL = validSetGrpL
@@ -1491,6 +1491,7 @@ def standInchecks():
 
 
 def setInstancerLod(inParent="", lod=2, gui=True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="setInstancerLod")
     """
     lod = 0 : geometry
     lod = 1 : bounding boxes
@@ -1506,7 +1507,6 @@ def setInstancerLod(inParent="", lod=2, gui=True):
         log.printL("e", "'{}' is not valid for 'lod' input, pick a value between 0 and 2".format( lod))
         return
 
-    log = miscUtils.LogBuilder(gui=gui, funcName ="setShadingMask")
     if not inParent:
         instancerL = mc.ls( type='instancer', l =True)
     else:
@@ -1518,7 +1518,29 @@ def setInstancerLod(inParent="", lod=2, gui=True):
 
     for each in instancerL:
         miscUtils.setAttrC(each+".levelOfDetail",lod)
-
-    log.printL("i", "{} instancer(s) switched to : '{}' lod".format( len(each), lodS))
+    log.printL("i", "{} instancer(s) switched to {} lod: '{}'".format( len(instancerL), lodS,instancerL))
            
+    return dict(resultB=log.resultB, logL=log.logL)
+
+
+
+def assetObjectClean( inParent= "|asset|grp_geo", clean = True, GUI = True):
+    log = miscUtils.LogBuilder(gui=GUI, funcName ="assetObjectClean")
+
+    meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = inParent)
+    existingGeoL = list(meshList)
+    existingGeoL.extend(instanceList)
+    auxObjectL=[]
+
+    for each in existingGeoL:
+        if re.match('^aux_[a-zA-Z0-9_]{1,24}$', each.split("|")[-1]):
+            auxObjectL.append(each)
+    if clean:
+        mc.delete(auxObjectL)
+        txt= "deleting {} 'aux_' objects: '{}'".format(len(auxObjectL),auxObjectL)
+        log.printL("i", txt)
+    else:
+        txt= "{} 'aux_' objects found: '{}'".format(len(auxObjectL),auxObjectL)
+        log.printL("i", txt)
+
     return dict(resultB=log.resultB, logL=log.logL)

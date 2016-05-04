@@ -146,7 +146,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=14, e=True)
+        self.pBar_upd(step=1, maxValue=15, e=True)
 
         # steps
 
@@ -184,15 +184,16 @@ class checkModule(object):
         # 3   clean file (remove file comparator refs (previz, anim, render....))
         self.printF("asset conformation: clean files ", st="t")
         r2a = assetconformation.Asset_File_Conformer()
-        result,details = r2a.cleanFile()
-        # prints -------------------
-        self.printF(result, st="r")
-        for each in details:
+        resultD = r2a.cleanFile()
+        #prints -------------------
+        self.printF(resultD['resultB'], st="r")
+        for each in resultD["logL"]:
             self.printF( each )
         # --------------------------
-        if not result:
+        if not resultD["resultB"]:
             boolResult = False
         self.pBar_upd(step= 1,)
+
 
 
         # 4   delete aovs
@@ -338,6 +339,19 @@ class checkModule(object):
         self.pBar_upd(step= 1,)     
 
 
+        # 15   asset Object Clean"
+        self.printF("assetconformation: asset Object Clean", st="t")
+        resultD = assetconformation.assetObjectClean( inParent= "|asset|grp_geo", clean = True, GUI = False)
+        # prints -------------------
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)  
+
+
 
         # colors
         print "*btn_preClean:",boolResult
@@ -419,7 +433,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=9, e=True)
+        self.pBar_upd(step=1, maxValue=10, e=True)
 
         # steps
 
@@ -587,6 +601,19 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
+
+
+        # 10   set Instancer BBbox"
+        self.printF("assetconformation: set Instancer BBbox", st="t")
+        resultD = assetconformation.setInstancerLod(inParent="", lod=2, gui=False)
+        # prints -------------------
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
 
 
         # colors
