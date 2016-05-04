@@ -71,8 +71,12 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultResolution.pixelAspect",1)
     mc.setAttr("defaultResolution.deviceAspectRatio",aspectRatio)
     if aspectRatio != 1:
-        mc.setAttr("defaultResolution.width",1920)
-        mc.setAttr("defaultResolution.height",1920/aspectRatio)
+        if shadingMode:
+            mc.setAttr("defaultResolution.width",1920)
+            mc.setAttr("defaultResolution.height",1920/aspectRatio)
+        else:
+            mc.setAttr("defaultResolution.width",2048)
+            mc.setAttr("defaultResolution.height",2048/aspectRatio)
     else:
         mc.setAttr("defaultResolution.width",1080)
         mc.setAttr("defaultResolution.height",1080)
@@ -128,6 +132,7 @@ def setArnoldRenderOption(outputFormat):
     else:
         mc.setAttr("defaultArnoldRenderOptions.AASamples",8)
         mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",1)
+        mc.setAttr("defaultArnoldRenderOptions.motion_frames",0.25)
 
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples",3)
