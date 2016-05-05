@@ -1289,7 +1289,7 @@ def checkBaseStructure(*args, **kwargs):
         return toReturnB, debugD
 
 def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig", "grp_geo"],
-        additionalL=["grp_placeHolders"],extraL=["grp_light"], *args, **kwargs):
+        additionalL=["grp_placeHolders"],extraL=["grp_light","grp_particles"], *args, **kwargs):
         """ Description: check inside the asset_gp
             Return : [result,debugDict]
             Dependencies : cmds - 
@@ -1315,7 +1315,8 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig", "grp_geo"],
             print "*expectedL:", sorted(expectedL)
             print "*childL   :", sorted(childL)
             print "*extendedL:", sorted(extendedL)
-            if ( sorted(expectedL) == sorted(childL) ) or ( sorted(extendedL) == sorted(childL)) or ( sorted(expectedL+extraL) == sorted(childL))  :
+            print "*extraL:", sorted(extraL)
+            if ( sorted(expectedL) == sorted(childL) ) or ( sorted(extendedL) == sorted(childL)) or ( set(childL).issubset(expectedL+extraL) )  :
                 toReturnB = True
                 debugD[ expect_str ]["result"] = "OK"
                 print tab, toReturnB

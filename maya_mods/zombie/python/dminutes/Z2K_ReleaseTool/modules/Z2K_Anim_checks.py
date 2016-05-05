@@ -230,9 +230,10 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
+
+
         if boolResultL.count(False)>0:
             warnB=False
-
         # colors
         print "*btn_checkStructure:",boolResult,
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], warning=warnB )
@@ -598,9 +599,11 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
+
         # 10   freeze and reset translation
         self.printF("modeling: freeze and reset all transforms ", st="t")
-        resultD = modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = False, GUI = False)
+        resultD={}
+        resultD = modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = False, GUI = False, inGeoTransL= meshCacheObjL )
         result = resultD["resultB"]
         details = resultD["logL"]
         # prints -------------------

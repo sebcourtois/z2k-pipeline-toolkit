@@ -362,7 +362,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=3, e=True)
+        self.pBar_upd(step=1, maxValue=4, e=True)
 
         # steps
 
@@ -418,6 +418,20 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
+        # 4   freeze and reset translation
+        self.printF("modeling: freeze and reset all transforms ", st="t")
+        resultD={}
+        resultD = modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = False, GUI = False)
+        result = resultD["resultB"]
+        details = resultD["logL"]
+        # prints -------------------
+        self.printF(result, st="r")
+        for each in details:
+            self.printF( each )
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
 
 
         # colors
