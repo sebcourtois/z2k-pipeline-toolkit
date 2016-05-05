@@ -23,16 +23,15 @@ class MrcFile(DrcFile):
     def __init__(self, drcLib, absPathOrInfo=None, **kwargs):
         super(MrcFile, self).__init__(drcLib, absPathOrInfo, **kwargs)
 
-    def edit(self, openFile=False, existing="", **kwargs):
+    def edit(self, openFile=False, **kwargs):
 
         self.library.project.assertMayaVersion(pmv.current())
         self.assertIsMayaScene()
 
-        privFile = DrcFile.edit(self, openFile=False, existing=existing)
+        privFile = DrcFile.edit(self, openFile=False, **kwargs)
 
         if openFile and privFile:
-            #kwargs['loadReferenceDepth'] = "default"
-            if not privFile.mayaOpen(checkFile=False, **kwargs):
+            if not privFile.mayaOpen(checkFile=False):
                 self.restoreLockState()
 
         return privFile

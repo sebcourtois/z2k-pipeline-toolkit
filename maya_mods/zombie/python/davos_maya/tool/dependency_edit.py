@@ -136,23 +136,28 @@ def scanTexturesToEdit(damEntity):
                              "buddy_paths":[],
                              "publishable":False,
                              "drc_file":None,
+                             "latest_file":None,
                              }
 
             resultDct["public_file"] = pubFile
 
-            if not pubFile.isUpToDate(refresh=False):
-                sMsg = """The file seems to have been modified from another site.
-File needs to be synced before you can edit it."""
-                scanLogDct.setdefault("error", []).append(('FileOutOfSync', sMsg))
-                #print "File is OUT OF SYNC: '{}'".format(sPubTexPath)
+            try:
+                editSrcFile = pubFile.assertLatestFile(refresh=False)
+            except AssertionError as e:
+                scanLogDct.setdefault("error", []).append(('FileOutOfSync', e.message))
             else:
+                sEditSrcPath = sPubFilePath
+                if editSrcFile != pubFile:
+                    resultDct["latest_file"] = editSrcFile
+                    sEditSrcPath = editSrcFile.absPath()
+
                 privFile = pubFile.getPrivateFile(weak=True)
                 if (bPrivTexDirFound and privFile.exists()):
 
                     sPrivFilePath = privFile.absPath()
                     #bDiffers, _ = pubFile.differsFrom(sPrivFilePath)
-                    bDiffers = (not filecmp.cmp(sPrivFilePath, sPubFilePath))
-                    #print '\n', '\n'.join((str(bDiffers), sPrivFilePath, sPubFilePath))
+                    bDiffers = (not filecmp.cmp(sPrivFilePath, sEditSrcPath))
+                    #print '\n', '\n'.join((str(bDiffers), sPrivFilePath, sEditSrcPath))
                     if bDiffers:
                         sMsg = "a DIFFERENT VERSION already EXISTS in your TEXTURE directory: "
                         sMsg += osp.normpath(sPrivTexDirPath)
@@ -198,8 +203,9 @@ def editTextureFiles(dryRun=False):
         pm.displayInfo("Canceled !")
         return
 
-    pubFileItems = tuple((r["public_file"], r["file_nodes"]) for r in preEditResults
-                         if "error" not in r["scan_log"])
+    pubFileItems = tuple((d["public_file"], d.get("latest_file"), d["file_nodes"])
+                            for d in preEditResults
+                                if "error" not in d["scan_log"])
     if not pubFileItems:
         pm.displayWarning("No public textures to edit !")
         return
@@ -213,9 +219,10 @@ def editTextureFiles(dryRun=False):
     privFile = None
     sCopiedList = []
     numLinked = 0
-    for pubFile, fileNodes in pubFileItems:
+    for pubFile, latestFile, fileNodes in pubFileItems:
 
-        privFile, bCopied = pubFile.copyToPrivateSpace(dry_run=dryRun)
+        privFile, bCopied = pubFile.copyToPrivateSpace(dry_run=dryRun,
+                                                       sourceFile=latestFile)
         if bCopied:
             sCopiedList.append(privFile.name)
         sPrivAbsPath = privFile.absPath()

@@ -292,8 +292,10 @@ class SceneManager():
         return s_inPath
 
     def getTasks(self, b_inMyTasks=False):
-        userOrNone = self.context['damProject']._shotgundb.currentUser if b_inMyTasks else None
-        return self.context['damProject']._shotgundb.getTasks(self.context['entity'], self.context['step'], userOrNone)
+        proj = self.context['damProject']
+        userOrNone = proj._shotgundb.currentUser if b_inMyTasks else None
+        return proj._shotgundb.getTasks(self.context['entity'],
+                                        self.context['step'], userOrNone)
 
     def getVersions(self):
         return self.context['damProject']._shotgundb.getVersions(self.context['task'])
@@ -1132,7 +1134,10 @@ class SceneManager():
                     rcDct["status"] = sMsg
                     continue
 
-                if not mrcFile.isUpToDate(refresh=False):
+                try:
+                    mrcFile.assertUpToDate(refresh=False)
+                except AssertionError as e:
+                    pc.displayWarning(e.message)
                     sMsg = "OUT OF SYNC"
                     rcDct["status"] = sMsg
                     continue
