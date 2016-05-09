@@ -151,8 +151,8 @@ class shot_lib(object):
                   "sg_uploaded_movie":"anim_capture",
                   "sg_path_to_movie":"anim_capture",
                   "sg_tasks":("animation",),
-                  "sg_status":"rev",
-                    },
+                  #"sg_status":"rev",
+                  },
     "animRef_movie":{"create_sg_version":True,
                      "sg_uploaded_movie":True,
                      "sg_path_to_movie":True,
@@ -164,6 +164,7 @@ class shot_lib(object):
                         "sg_tasks":("animatic",),
                         "sg_status":"rev",
                         },
+
     "data_dir":{"default_sync_rules":["all_sites"],
                 },
     "previz_dir":{"default_sync_rules":["all_sites"],

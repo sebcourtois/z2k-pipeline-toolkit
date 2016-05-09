@@ -722,7 +722,7 @@ def geoGroupDeleteHistory(GUI=True, freezeVrtxPos = True):
 
 
 
-def freezeResetTransforms(inParent = "*", inConform = False, GUI = True, selectUnfreezed = False, inGeoTransL=[] ):
+def freezeResetTransforms(inParent = "*", inConform = False, GUI = True, selectUnfreezed = False, inGeoTransL=[]):
     """
     gets all the mesh transforms under de given inParent, an check that all the transforms values are set to 0 (1 for scales)
     freeze and reset the the transforms in case inConform is True.
@@ -741,10 +741,26 @@ def freezeResetTransforms(inParent = "*", inConform = False, GUI = True, selectU
         geoTransformList = list(inGeoTransL)
 
     for each in geoTransformList:
-        if (cmds.xform( each, os=True, q=True,  ro=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  t=True)!=[0,0,0] or cmds.xform( each, os=True, q=True,  s=True, r = True )!=[1,1,1] or 
-            cmds.xform( each, os=True, q=True, rp=True)!=[0,0,0] or cmds.xform( each, os=True, q=True, sp=True)!=[0,0,0]):
+        rotationL = cmds.xform( each, os=True, q=True,  ro=True)
+        translationL=cmds.xform( each, os=True, q=True,  t=True)
+        scaleL = cmds.xform( each, os=True, q=True,  s=True, r = True )
+        rotatePivotL = cmds.xform( each, os=True, q=True, rp=True)
+        scalePivotL = cmds.xform( each, os=True, q=True, sp=True)
+        if (rotationL!=[0,0,0] or translationL!=[0,0,0] or scaleL!=[1,1,1] or rotatePivotL!=[0,0,0] or scalePivotL!=[0,0,0]):
             if inConform == False:
                 unFreezedTransfomList.append(each)
+                logMessage = "{} transform has unfreezed value(s):".format(each)
+                if rotationL!=[0,0,0]:
+                    logMessage = logMessage+" rotation = "+str(rotationL)
+                if translationL!=[0,0,0]:
+                    logMessage = logMessage+" translation = "+str(translationL)
+                if scaleL!=[1,1,1]:
+                    logMessage = logMessage+" scale = "+str(scaleL)
+                if rotatePivotL!=[0,0,0]:
+                    logMessage = logMessage+" rotate pivot = "+str(rotatePivotL)
+                if scalePivotL!=[0,0,0]:
+                    logMessage = logMessage+" scale pivot = "+str(scalePivotL)
+                log.printL("e", logMessage)
             else:
                 cmds.makeIdentity (each ,apply= True, n=0, pn=1)
                 cmds.makeIdentity (each ,apply= False, n=0, pn=1)
