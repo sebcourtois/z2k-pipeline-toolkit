@@ -126,8 +126,10 @@ def switchSelectedReferences(dryRun=False, **kwargs):
             print sMsg
             continue
 
-        if not mrcFile.isUpToDate(refresh=False):
-            sMsg = "File is out of sync: '{}'".format(sRcPath)
+        try:
+            mrcFile.assertUpToDate(refresh=False)
+        except AssertionError as e:
+            sMsg = "File is out of sync: '{}'. {}".format(sRcPath, e.message)
             nonSwitchedRefList.append((oFileRef, sMsg))
             print sMsg
             continue
