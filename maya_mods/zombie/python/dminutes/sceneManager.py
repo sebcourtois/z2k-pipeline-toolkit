@@ -1097,6 +1097,8 @@ class SceneManager():
                 astData.update(name=sAstName, sg_info=okValue, sg_asset_shot_conn=astShotConn)
                 assetDataList.append(astData)
 
+        allMyaFileDct = {}
+        allMyaFileList = []
         for astData in assetDataList:
 
             sAstName = astData['name']
@@ -1105,14 +1107,25 @@ class SceneManager():
 
             damAst = DamAsset(proj, name=sAstName)
             drcLib = damAst.getLibrary()
-            astRcDct = {}
 
             entryFromPath = lambda p: proj.entryFromPath(p, library=drcLib, dbNode=False)
             mayaRcIter = damAst.iterMayaRcItems(filter="*_ref")
             mayaFileItems = tuple((n, entryFromPath(p)) for n, p in mayaRcIter)
 
-            #proj.dbNodesForResources(tuple(f for _, f in mayaFileItems if f))
+            allMyaFileDct[sAstName] = mayaFileItems
+            allMyaFileList.extend(f for _, f in mayaFileItems if f)
 
+        proj.dbNodesForResources(allMyaFileList)
+
+        for astData in assetDataList:
+
+            sAstName = astData['name']
+            if not sAstName:
+                continue
+
+            mayaFileItems = allMyaFileDct[sAstName]
+
+            astRcDct = {}
             for sRcName, mrcFile in mayaFileItems:
 
                 rcDct = {"drc_file":mrcFile, "status":okValue}
@@ -1123,11 +1136,11 @@ class SceneManager():
                     rcDct["status"] = sMsg
                     continue
 
-                cachedDbNode = mrcFile.getDbNode(fromDb=False)
-                if cachedDbNode:
-                    mrcFile.refresh(simple=True)
-                else:
-                    mrcFile.getDbNode(fromCache=False)
+#                cachedDbNode = mrcFile.getDbNode(fromDb=False)
+#                if cachedDbNode:
+#                    mrcFile.refresh(simple=True)
+#                else:
+#                    mrcFile.getDbNode(fromCache=False)
 
                 if not mrcFile.currentVersion:
                     sMsg = "NO VERSION"
