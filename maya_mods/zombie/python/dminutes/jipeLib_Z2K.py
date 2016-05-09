@@ -38,7 +38,7 @@ def tkMirror(*args, **kwargs):
 
         realSymD = {
                     'Right_Teeth_dn_01_ctrl':'Left_Teeth_dn_01_ctrl',
-                    'Right_Teeth_dn_02_ctrl':'Left_LowerLip_1_Ctrl_Left_Teeth_dn_02_ctrl_grp_Left_Teeth_dn_02_ctrl_grp',
+                    'Right_Teeth_dn_02_ctrl':'Left_Teeth_dn_02_Ctrl',
                     'Right_Teeth_up_01_Ctrl':'Left_Teeth_up_01_Ctrl',
                     'Right_Teeth_up_02_Ctrl':'Left_Teeth_up_02_Ctrl',
                     'Right_Jaw_Corner_01_ctrl':'Left_Jaw_Corner_01_ctrl',
@@ -46,7 +46,7 @@ def tkMirror(*args, **kwargs):
                     'Right_Jaw_Corner_03_ctrl':'Left_Jaw_Corner_03_ctrl',
 
                     'Left_Teeth_dn_01_ctrl':'Right_Teeth_dn_01_ctrl',
-                    'Left_LowerLip_1_Ctrl_Left_Teeth_dn_02_ctrl_grp_Left_Teeth_dn_02_ctrl_grp':'Right_Teeth_dn_02_ctrl',
+                    'Left_Teeth_dn_02_Ctrl':'Right_Teeth_dn_02_ctrl',
                     'Left_Teeth_up_01_Ctrl':'Right_Teeth_up_01_Ctrl',
                     'Left_Teeth_up_02_Ctrl':'Right_Teeth_up_02_Ctrl',
                     'Left_Jaw_Corner_01_ctrl':'Right_Jaw_Corner_01_ctrl',
