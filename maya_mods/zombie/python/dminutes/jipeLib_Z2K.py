@@ -64,7 +64,7 @@ def tkMirror(*args, **kwargs):
                       'Left_Brow_upRidge_04_ctrl':'Right_Brow_upRidge_04_ctrl', 
 
                       'Left_CheekBone_Ctrl': 'Right_CheekBone_Ctrl',
-                      
+
                       'Right_Brow_upRidge_01_ctrl':'Left_Brow_upRidge_01_ctrl',
                       'Right_Brow_upRidge_02_ctrl':'Left_Brow_upRidge_02_ctrl',
                       'Right_Brow_upRidge_03_ctrl':'Left_Brow_upRidge_03_ctrl',
@@ -3801,7 +3801,7 @@ def chr_fix_unrollSpineCTR(*args, **kwargs):
             }
 
     factorAttrN = "unrollFactor"
-    factorAttrV = -0.0
+    factorAttrV = -0.5
 
     canDo = True
     # test if allready done, or if it's a valid char
@@ -3844,6 +3844,8 @@ def chr_fix_unrollSpineCTR(*args, **kwargs):
         else:
             print "**Nothing Done"
             debugL.append("Nothing Done" )
+
+        
 
     return [True,debugL]
 
