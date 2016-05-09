@@ -34,7 +34,7 @@ def tkMirror(*args, **kwargs):
     #             'Right_Brow_upRidge_01_ctrl', 'Right_Brow_upRidge_02_ctrl', 'Right_Brow_upRidge_03_ctrl', 'Right_Brow_upRidge_04_ctrl'
     #             ]
     try:
-        cmds.undoInfo(openChunk = True)
+        # cmds.undoInfo(openChunk = True)
 
         realSymD = {
                     'Right_Teeth_dn_01_ctrl':'Left_Teeth_dn_01_ctrl',
@@ -45,6 +45,8 @@ def tkMirror(*args, **kwargs):
                     'Right_Jaw_Corner_02_ctrl':'Left_Jaw_Corner_02_ctrl',
                     'Right_Jaw_Corner_03_ctrl':'Left_Jaw_Corner_03_ctrl',
 
+                    
+
                     'Left_Teeth_dn_01_ctrl':'Right_Teeth_dn_01_ctrl',
                     'Left_Teeth_dn_02_Ctrl':'Right_Teeth_dn_02_ctrl',
                     'Left_Teeth_up_01_Ctrl':'Right_Teeth_up_01_Ctrl',
@@ -53,16 +55,22 @@ def tkMirror(*args, **kwargs):
                     'Left_Jaw_Corner_02_ctrl':'Right_Jaw_Corner_02_ctrl',
                     'Left_Jaw_Corner_03_ctrl':'Right_Jaw_Corner_03_ctrl',
 
+                    
+
                     }
         upperBrowD = {'Left_Brow_upRidge_01_ctrl':'Right_Brow_upRidge_01_ctrl',
                       'Left_Brow_upRidge_02_ctrl':'Right_Brow_upRidge_02_ctrl',
                       'Left_Brow_upRidge_03_ctrl':'Right_Brow_upRidge_03_ctrl',
                       'Left_Brow_upRidge_04_ctrl':'Right_Brow_upRidge_04_ctrl', 
 
+                      'Left_CheekBone_Ctrl': 'Right_CheekBone_Ctrl',
+                      
                       'Right_Brow_upRidge_01_ctrl':'Left_Brow_upRidge_01_ctrl',
                       'Right_Brow_upRidge_02_ctrl':'Left_Brow_upRidge_02_ctrl',
                       'Right_Brow_upRidge_03_ctrl':'Left_Brow_upRidge_03_ctrl',
                       'Right_Brow_upRidge_04_ctrl':'Left_Brow_upRidge_04_ctrl',   
+
+                      'Right_CheekBone_Ctrl': 'Left_CheekBone_Ctrl',
                       
                     }
 
@@ -151,10 +159,10 @@ def tkMirror(*args, **kwargs):
         
     except Exception,err:
         print Exception,err
-        cmds.undoInfo(closeChunk = True)
+        # cmds.undoInfo(closeChunk = True)
 
     # Fix toonKit error
-    cmds.undoInfo(openChunk = True)
+    # cmds.undoInfo(openChunk = True)
 
 
 def tkMirror_old(*args, **kwargs):
