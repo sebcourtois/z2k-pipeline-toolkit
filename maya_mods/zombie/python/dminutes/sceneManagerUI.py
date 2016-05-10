@@ -132,12 +132,10 @@ def launch():
 #        if not mc.window(SCENE_MANAGER_UI, q=True, exists=True):
 #            mc.showWindow(SCENE_MANAGER_UI)
 
+        sLabel = mc.window(sLoadedUi, q=True, title=True)
         mc.dockControl(SCENE_MANAGER_DOCK, area='left', content=sLoadedUi,
-                       allowedArea=['left'], retain=True,
-                       label=mc.window(sLoadedUi, q=True, title=True),
+                       allowedArea=['left'], retain=True, label=sLabel,
                        closeCommand=saveDockState, **states)
-
-#        print sDock, sLoadedUi, mc.control(sLoadedUi, q=True, fullPathName=True)
 
         connectCallbacks()
 
