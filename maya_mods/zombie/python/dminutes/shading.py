@@ -26,117 +26,6 @@ def connectedToSeveralSG(myNode = ""):
         return False
 
 
-#DEPRECATED, use checkShaderName() instead
-def conformShaderName(shadEngineList = "selection", selectWrongShadEngine = True, verbose = True, GUI = True ):
-    """
-    DEPRECATED, use checkShaderName() instead
-    shadEngineList : selection, all
-    conform the shading tree attached to the selected shading engine , or all the shading trees , depending on the shadEngineList value.
-    The initial shading engines are skipped so the ones that do not follow the proper 
-    naming convention:  'sgr_materialName' where is composed of 24 alphanumeric characters maximum"
-    the shading tree is splited in 2 parts:
-        - surfaceShader SG input: this shading tree describes the shader for preview, these nodes will recieve a 'pre_' prefix
-        - aiSurfaceShader SG input: his shader tree is dedicated o arnold renders and wil recieve a 'mat_' prefix
-    all the nodes will be renamed : 'mat_materialName_nodeType' or 'pre_materialName_nodeType'
-    'materialName' part comes from the shading engine name and 'nodeType' is the node's type
-    """
-    if verbose == True: print ""
-    if verbose == True: print "#### {:>7}: running conformShaderName(shadEngineList = {}, selectWrongShadEngine = {} )".format("info",shadEngineList, selectWrongShadEngine)
-    returnB = True
-    logL = []
-    correctShadEngine =[]
-    wrongShadEngine = []
-
-    permitted_preview_shader_type = ["lambert","surfaceShader"]
-    permitted_render_shader_type = ["aiStandard", "dmnToon"]
-
-    if shadEngineList == "all":
-        shadEngineList = mc.ls(":*",type = "shadingEngine")
-        shadEngineList.remove("initialParticleSE")
-        shadEngineList.remove("initialShadingGroup")
-        if not shadEngineList :
-            print "#### {:>7}: no shading engine to conform".format("Warning")
-            return
-
-    elif shadEngineList == "selection":
-        shadEngineList = mc.ls(selection = True,type = "shadingEngine")
-        if "initialParticleSE" in shadEngineList: shadEngineList.remove("initialParticleSE")
-        if "initialShadingGroup" in shadEngineList: shadEngineList.remove("initialShadingGroup")
-        shadEngineListTemp = shadEngineList
-        for each in shadEngineListTemp:
-            if ":" in each: shadEngineList.remove(each) 
-        if not shadEngineList : 
-            print "#### {:>7}: no shading engine selected".format("Warning")
-            return
-    elif isinstance(shadEngineList, (basestring)):
-            shadEngineList = [shadEngineList]
-
-    if not isinstance(shadEngineList, (list,tuple,set)):
-        print "#### {:>7}: shadEngineList must be a list. shadEngineList: {}".format("Error", shadEngineList)
-        return
-    if shadEngineList == []: 
-        print "#### {:>7}: No shading engine to process, shadEngineList is empty".format("Error")
-        return
-
-    for each in shadEngineList:
-        #check shading group name convention
-        if not re.match('^sgr_[a-zA-Z0-9]{1,24}$', each):
-            wrongShadEngine.append((each,"does not match naming convention 'sgr_materialName' where is composed of 24 alphanumeric characters maximum"))
-        else:
-            #check that 2 different2 shading nodes are plugged into the surfaceShader and aiSurfaceShader input of the SG node
-            correctShadEngine.append(each)
-            materialName = each.split("sgr_")[-1]
-            preview_shader =  mc.listConnections(each+'.surfaceShader',connections = True)
-            render_shader =  mc.listConnections(each+'.aiSurfaceShader',connections = True)
-            if not preview_shader or not render_shader:
-                wrongShadEngine.append((each,"the preview_shader or render_shader is missing: "))
-                continue
-            else:
-                preview_shader = preview_shader[-1]
-                render_shader = render_shader[-1]
-                 
-            if preview_shader == render_shader:
-                wrongShadEngine.append((each,"surfaceShader and aiSurfaceShader connected to the same node: "+preview_shader))
-                continue
-            #check that the type of the preview and render nodes is permitted
-            preview_shader_type = mc.nodeType(preview_shader)
-            render_shader_type = mc.nodeType(render_shader)
-            if preview_shader_type not in permitted_preview_shader_type:
-                wrongShadEngine.append((each,preview_shader+" unauthorized preview shader node type: "+preview_shader_type+" should be one of the following: "+str(permitted_preview_shader_type)))
-                continue
-
-            for item in mc.listHistory (preview_shader):
-                materialParticule = str(materialName)
-                if "dagNode" in mc.nodeType(item, inherited=True):
-                    continue
-                if connectedToSeveralSG (item):
-                    materialParticule = "shared"
-                preview_shader_type = mc.nodeType(item)
-                if not re.match('pre_'+materialParticule+'_'+preview_shader_type+'[0-9]{0,3}$',preview_shader) and  not mc.lockNode(item, q=True)[-1] and not mc.ls(item, defaultNodes = True):
-                    preview_shader = mc.rename(item,'pre_'+materialParticule+'_'+preview_shader_type)
-                
-            for item in mc.listHistory (render_shader):
-                materialParticule = str(materialName)
-                if "dagNode" in mc.nodeType(item, inherited=True):
-                    continue
-                if connectedToSeveralSG (item):
-                    materialParticule = "shared"
-                render_shader_type = mc.nodeType(item)
-                if not re.match('mat_'+materialParticule+'_'+render_shader_type+'[0-9]{0,3}$',render_shader) and  not mc.lockNode(item, q=True)[-1] and not mc.ls(item, defaultNodes = True):
-                    render_shader = mc.rename(item,'mat_'+materialParticule+'_'+render_shader_type)
-            if verbose == True: print "#### {:>7}: {:^28} tree has been conformed properly".format("Info", each)
-
-    if  wrongShadEngine != [] and selectWrongShadEngine == True:
-        mc.select(clear = True)
-        for each in wrongShadEngine:
-            print "#### {:>7}: {:^28} {}".format("Error", each[0], each[1])
-            if selectWrongShadEngine == True: 
-                mc.select(each[0], ne = True, add = True)
-        print "#### {:>7}: Problematics shading engines have been selected".format("Error")
-        if GUI == True:
-            mc.confirmDialog( title = 'Shader Name Error', message = 'Some shaders are not conform, please read the log to get more information', button = ['Ok'], defaultButton = 'Ok' )
-    return wrongShadEngine if wrongShadEngine != [] else  None
-
 
 def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False , inParent = ""):
     """
@@ -243,6 +132,7 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False , inPare
                 materialParticule = str(materialName)
                 if "dagNode" in mc.nodeType(item, inherited=True):
                     continue
+ 
                 if connectedToSeveralSG (item):
                     materialParticule = "shared"
 
@@ -698,7 +588,7 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
     the script
         - check the existence of the 'preShadNode', replace it, if it has a wrong type, create it doesn't exists
         - gets the 'matTextureInput' connection of the 'matShadNodeTypeList' and duplicate it then connect the new texture node in the 'preShadNode.preTextureInput'
-        - conform the shding tree nodes names using conformShaderName() function
+        - conform the shding tree nodes names using checkShaderName() function
 
     """
     if verbose == True: print ""
@@ -854,7 +744,7 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
                     result = mc.duplicate(preShadTextInputConnection, upstreamNodes = True)[0]
                     mc.connectAttr(result+".outColor", preShadNode+preTextureInput, force =True)
                     if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: texture file node duplicated".format("Info", shadingEngine)
-                    conformShaderName(shadingEngine, selectWrongShadEngine = False, verbose = False )
+                    checkShaderName(shadEngineList = shadingEngine,  GUI = gui, checkOnly = False , inParent = "")
                     continue
                 else:
                     if verbose == True: print "#### {:>7}: {:^28} Preview shader ok".format("Info", shadingEngine)
@@ -863,7 +753,7 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
             result = mc.duplicate(matShadTextInputConnection, upstreamNodes = True)[0]
             mc.connectAttr(result+".outColor", preShadNode+preTextureInput, force =True)
             if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: texture file node duplicated".format("Info", shadingEngine)
-            conformShaderName(shadingEngine, selectWrongShadEngine = False, verbose = False )
+            checkShaderName(shadEngineList = shadingEngine,  GUI = gui, checkOnly = False , inParent = "")
             #if the color is black or white replace it with the color from the render shader
         elif rgbSumF == 0 or rgbSumF ==3:
             try: 
@@ -908,7 +798,6 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
     else :
         raise ValueError("#### Error: no '|asset' could be found in this scene")
 
-    conformShaderName("all", selectWrongShadEngine = False, verbose = False )
 
     if fileNodeList == "all":
         fileNodeList = mc.ls("pre_*",type ="file")
@@ -1104,7 +993,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
         print "#### {:>7}: 'fileNodeList' is not a string".format("Error")
         return
 
-    conformShaderName("all", selectWrongShadEngine = False, verbose = False )
+
     mc.arnoldFlushCache(textures=True)
 
     if fileNodeList == "all":
@@ -1324,8 +1213,9 @@ def createShadingGroup():
         my_sgr = mc.sets(renderable=True,noSurfaceShader=True,empty=True, name=myName)
         mc.sets(each, forceElement=my_sgr)
     print "#### {:>7}:  {} shading groups created, assigned and conformed".format("Info",len(transformMeshList))
-    conformPreviewShadingTree( shadEngineList = "all", verbose = False, selectWrongShadEngine = False)
-    conformShaderName(shadEngineList = "all", selectWrongShadEngine = False, verbose = False )
+    conformPreviewShadingTree( shadEngineList = "all", verbose = False, selectWrongShadEngine = False)  
+    checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False , inParent = "")
+
 
 
 
