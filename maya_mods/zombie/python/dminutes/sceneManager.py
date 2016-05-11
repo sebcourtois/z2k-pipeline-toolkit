@@ -1160,7 +1160,7 @@ class SceneManager():
 
         return assetDataList
 
-    def updateScene(self, addOnly=True):
+    def updateSceneAssets(self):
         """Updates scene Assets from shotgun shot<=>assets linking"""
 
         sgEntity = self.context["entity"]
@@ -1215,53 +1215,87 @@ class SceneManager():
 
         return True if count else False
 
-    def updateShotgun(self, addOnly=True):
+    def updateShotgunAssets(self):
 
         sgEntity = self.context["entity"]
         if sgEntity["type"].lower() != "shot":
             raise NotImplementedError("Only applies to shots.")
 
         #sShotCode = sgEntity["code"]
-        sMsg = "You're about to update related assets in Shotgun.\n\nUpdate DB from Scene ?"
-        sRes = pc.confirmDialog(title='ARE YOU SURE ?',
+        sMsg = "You're about to update related assets in Shotgun.\n\nUpdate Assets In Shotgun ?"
+        sRes = pc.confirmDialog(title='DO YOU WANT TO...',
                                 message=sMsg,
                                 button=['OK', 'Cancel'],
                                 defaultButton='Cancel',
                                 cancelButton='Cancel',
                                 dismissString='Cancel',
-                                icon="warning")
+                                icon="question")
         if sRes == "Cancel":
             pc.displayInfo("Canceled !")
-            return
+            return False
 
         proj = self.context['damProject']
+        sg = proj._shotgundb.sg
+        sgProj = {"type":"Project", "id":proj._shotgundb._getProjectId()}
 
         assetDataList = self.listRelatedAssets()
         assetDataDct = OrderedDict((astData['name'], astData)
                                         for astData in assetDataList
                                             if astData["resource"] != noneValue)
-        sAstNameList = assetDataDct.keys()
 
-        sgProj = {"type":"Project", "id":proj._shotgundb._getProjectId()}
-        filters = [["project", "is", sgProj],
-                   ["code", "in", sAstNameList],
-                   ]
+        filters = [["project", "is", sgProj], ["code", "in", assetDataDct.keys()]]
+        scnSgAstList = sg.find("Asset", filters, ["code", "parents", "sg_sous_type"])
 
-        sg = proj._shotgundb.sg
+        addSgAstList = (sgAst for sgAst in scnSgAstList
+                        if assetDataDct[sgAst["code"]]["sg_info"] == noneValue)
 
-        sgAssetList = sg.find("Asset", filters, ["code"])
-#        sAstCodeList = tuple(sgAst["code"] for sgAst in sgAssetList)
-#        sAstNotInSgList = tuple(s for s in sAstNameList if s not in sAstCodeList)
+        addSgAstDct = dict((d["parents"][0]["name"], d)
+                                for d in addSgAstList if  d["parents"])
 
-        proj.updateSgEntity(sgEntity, assets=sgAssetList)
+        remSgAstList = tuple(d["sg_asset_shot_conn"]["asset"] for d in assetDataList
+                             if d["sg_info"] == okValue and d["resource"] == noneValue)
 
-        filters = [["shot", "is", sgEntity],
-                   ]
+        sMsgList = []
+        for remSgAst in remSgAstList:
+
+            if remSgAst["sg_sous_type"] != "1-primaire":
+                continue
+
+            parents = remSgAst["parents"]
+            if not parents:
+                continue
+
+            sParentName = parents[0]["name"]
+            if sParentName in addSgAstDct:
+                sMsg = "'{}' WITH '{}'".format(addSgAstDct[sParentName]["code"],
+                                                 remSgAst["code"])
+                sMsgList.append(sMsg)
+
+        if sMsgList:
+            sSep = "\n- "
+            sMsg = "You are going to replace:\n".upper() + sSep
+            sMsg += sSep.join(sMsgList)
+            sRes = pc.confirmDialog(title='WARNING !!',
+                                    message=sMsg,
+                                    button=['OK', 'Cancel'],
+                                    defaultButton='Cancel',
+                                    cancelButton='Cancel',
+                                    dismissString='Cancel',
+                                    icon="warning")
+            if sRes == "Cancel":
+                pc.displayInfo("Canceled !")
+                return False
+
+        proj.updateSgEntity(sgEntity, assets=scnSgAstList)
+
+        filters = [["shot", "is", sgEntity], ]
         astShotConnList = sg.find("AssetShotConnection", filters, ["sg_occurences", "asset"])
         for astShotConn in astShotConnList:
             sAstName = astShotConn["asset"]["name"]
             iOccur = assetDataDct[sAstName]["occurences"]
             proj.updateSgEntity(astShotConn, sg_occurences=iOccur)
+
+        return True
 
     def do(self, s_inCmd):
         mop.do(s_inCmd, self.context['task']['content'], self)

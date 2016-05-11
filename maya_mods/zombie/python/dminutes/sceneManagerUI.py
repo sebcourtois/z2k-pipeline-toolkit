@@ -840,19 +840,18 @@ def doUnlock(*args):
 
 def doUpdateScene(*args):
     """Matches scene Assets with Shotgun Assets"""
-    addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
-    if SCENE_MANAGER.updateScene(addOnly):
+    #addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
+    if SCENE_MANAGER.updateSceneAssets():
         doRefreshSceneInfo(args)
 
     pc.displayWarning("Done !")
 
 def doUpdateShotgun(*args):
     """Matches Shotgun Assets with scene Assets (NOT IMPLEMENTED)"""
-    addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
-    SCENE_MANAGER.updateShotgun(addOnly)
-    doRefreshSceneInfo(args)
-
-    pc.displayWarning("Done !")
+    #addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
+    if SCENE_MANAGER.updateShotgunAssets():
+        doRefreshSceneInfo(args)
+        pc.displayWarning("Done !")
 
 #@timer
 def doCapture(*args , **kwargs):
@@ -980,7 +979,7 @@ def doEditCam(*args):
                             defaultButton='Cancel',
                             cancelButton='Cancel',
                             dismissString='Cancel',
-                            icon="warning")
+                            icon="question")
     if sRes == "Cancel":
         pc.displayInfo("Canceled !")
         return
