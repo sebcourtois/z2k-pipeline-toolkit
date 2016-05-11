@@ -34,7 +34,7 @@ def tkMirror(*args, **kwargs):
     #             'Right_Brow_upRidge_01_ctrl', 'Right_Brow_upRidge_02_ctrl', 'Right_Brow_upRidge_03_ctrl', 'Right_Brow_upRidge_04_ctrl'
     #             ]
     try:
-        # cmds.undoInfo(openChunk = True)
+        cmds.undoInfo(openChunk = True)
 
         realSymD = {
                     'Right_Teeth_dn_01_ctrl':'Left_Teeth_dn_01_ctrl',
@@ -161,8 +161,9 @@ def tkMirror(*args, **kwargs):
         print Exception,err
         # cmds.undoInfo(closeChunk = True)
 
-    # Fix toonKit error
-    # cmds.undoInfo(openChunk = True)
+    finally:
+        # Fix toonKit error
+        cmds.undoInfo(closeChunk = True)
 
 
 def tkMirror_old(*args, **kwargs):
@@ -3574,23 +3575,30 @@ def chr_fix_EyebrowUpper_Cst_average(*args, **kwargs):
     debugL = []
     theAttr = "interpType"
     theVal = 2 # "shortest"
-    objL = ['Right_Brow_upRidge_03_offset_grp', 'Right_Brow_upRidge_02_drive_grp', 
+    objLA = ['Right_Brow_upRidge_03_offset_grp', 'Right_Brow_upRidge_02_drive_grp', 
             'Right_Brow_upRidge_01_drive_grp','Right_Brow_upRidge_04_drive_grp',
             'Left_Brow_upRidge_01_drive_grp', 'Left_Brow_upRidge_02_drive_grp', 
             'Left_Brow_upRidge_03_drive_grp','Left_Brow_upRidge_04_drive_customAxis_grp'
             ]
-    canDo = True
-    for i in objL:
-        if not cmds.objExists (i):
-            canDo=False
-    if canDo:
-        for obj in objL:
-            cstL = getTypeInHierarchy(cursel=obj, theType="constraint")
-            print cstL
-            if len(cstL):
-                for j in cstL:
-                    if cmds.objExists(j+"."+ theAttr):
-                        cmds.setAttr(j+"."+ theAttr,theVal)
+    objLB = ['Left_Brow_upRidge_04_drive_grp', 'Left_Brow_upRidge_03_drive_grp', 'Left_Brow_upRidge_02_drive_grp', 
+            'Left_Brow_upRidge_01_drive_grp', 'Right_Brow_upRidge_01_drive_grp', 'Right_Brow_upRidge_02_drive_grp',
+            'Right_Brow_upRidge_03_drive_grp', 'Right_Brow_upRidge_04_drive_grp',
+            ]
+
+    for theList in [objLA,objLB]:
+        print "theList=", theList
+        canDo = True
+        for i in theList:
+            if not cmds.objExists (i):
+                canDo=False
+        if canDo:
+            for obj in theList:
+                cstL = getTypeInHierarchy(cursel=obj, theType="constraint")
+                print "*cstL=",cstL
+                if len(cstL):
+                    for j in cstL:
+                        if cmds.objExists(j+"."+ theAttr):
+                            cmds.setAttr(j+"."+ theAttr,theVal)
 
     return [toReturnB,debugL]
 
