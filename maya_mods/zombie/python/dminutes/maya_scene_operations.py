@@ -458,7 +458,7 @@ def create_scene_base(sceneManager):
     print 'base creation done ! ({0})'.format(sceneManager.context)
 
 def create_previz_scene(sceneManager):
-    sceneManager.updateScene()
+    sceneManager.updateSceneAssets()
 
     init_scene_base(sceneManager)
     init_previz_scene(sceneManager)
