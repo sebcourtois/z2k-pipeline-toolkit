@@ -51,12 +51,14 @@ RC_FOR_STEP = {'Previz 3D':'previz_scene',
                'Stereo':'stereo_scene',
                'Layout':'layout_scene',
                'Animation':'anim_scene',
+               'Final Layout':'finalLayout_scene',
                }
 RC_FOR_TASK = {}#{'previz 3D':'previz_scene', 'layout':'layout_scene'}
 
 REF_FOR_STEP = {'Previz 3D':'previz_ref',
                 'Layout':'anim_ref',
                 'Animation':'anim_ref',
+                'Final Layout':'render_ref',
                 }
 REF_FOR_TASK = {}
 
@@ -64,6 +66,7 @@ MOV_FOR_STEP = {'Previz 3D':('previz_capture',),
                 'Stereo':('right_capture', 'left_capture',),
                 'Layout':('layout_capture',),
                 'Animation':('anim_capture',),
+                'Final Layout':('finalLayout_capture',),
                }
 MOV_FOR_TASK = {}
 
@@ -1195,7 +1198,7 @@ class SceneManager():
                 mrcFile.mayaImportScene()
 
             except Exception, err:
-                errorTxt = "{0}: {1}".format(astData['name'], err)
+                errorTxt = "'{0}' : {1}".format(astData['name'], err)
                 print errorTxt
                 errorL.append(errorTxt)
             else:
@@ -1205,8 +1208,9 @@ class SceneManager():
             mop.reArrangeAssets()
 
         if len(errorL):
-            mc.confirmDialog(title='Error',
-                               message="Could not import:\n{0}".format("\n".join(errorL)),
+            sSep = "\n- "
+            mc.confirmDialog(title='WARNING !',
+                               message="Could not import:\n{}".format(sSep + sSep.join(errorL)),
                                button=['OK'],
                                defaultButton='OK',
                                cancelButton='OK',

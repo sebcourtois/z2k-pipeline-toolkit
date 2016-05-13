@@ -4,19 +4,22 @@ import os.path as osp
 import re
 import shutil
 from collections import namedtuple
+from collections import OrderedDict
 #from itertools import izip
 
 import pymel.core as pc
 import maya.cmds as mc
 
 from pytd.util.sysutils import toStr, inDevMode
-from davos_maya.tool.reference import loadAssetRefsToDefaultFile, listPrevizRefMeshes
-from dminutes.shotconformation import removeRefEditByAttr
-from pytaya.util.sysutils import withSelectionRestored
-from collections import OrderedDict
-from pytaya.core.transform import matchTransform
 from pytd.util.fsutils import jsonWrite, pathResolve
+
+from pytaya.util.sysutils import withSelectionRestored
+from pytaya.core.transform import matchTransform
+
+from davos_maya.tool import reference as myaref
 from zomblib.editing import makeFilePath, movieToJpegSequence
+from dminutes.shotconformation import removeRefEditByAttr
+
 
 pc.mel.source("AEimagePlaneTemplate.mel")
 
@@ -461,7 +464,7 @@ def create_previz_scene(sceneManager):
     sceneManager.updateSceneAssets()
 
     init_scene_base(sceneManager)
-    init_previz_scene(sceneManager)
+    setupShotScene(sceneManager)
 
     reArrangeAssets()
 
@@ -723,7 +726,7 @@ def listSmoothableMeshes(project=None, warn=True):
     numMeshes = len(sAllMeshSet)
     numFailure = 0
 
-    sPrevizMeshSet = set(listPrevizRefMeshes(project=project))
+    sPrevizMeshSet = set(myaref.listPrevizRefMeshes(project=project))
     if sPrevizMeshSet:
         sCommonSet = sAllMeshSet & sPrevizMeshSet
         if sCommonSet:
@@ -921,7 +924,7 @@ def setupAnimatic(sceneManager, create=True, checkUpdate=False):
     return oImgPlane, oImgPlaneCam
 
 @withSelectionRestored
-def init_previz_scene(sceneManager):
+def setupShotScene(sceneManager):
 
     # --- Set Viewport 2.0 AO default Value
     pc.setAttr('hardwareRenderingGlobals.ssaoAmount', 0.3)
@@ -942,7 +945,23 @@ def init_previz_scene(sceneManager):
 
             oFileRefList = pc.listReferences(loaded=False, unloaded=True)
 
-            loadAssetRefsToDefaultFile(project=proj, selected=False)
+            myaref.loadAssetRefsToDefaultFile(project=proj, selected=False)
+
+            for oFileRef in oFileRefList:
+                if not oFileRef.isLoaded():
+                    oFileRef.load()
+
+    elif sStepName == "final layout":
+
+        if not pc.listReferences(loaded=True, unloaded=False):
+
+            oFileRefList = pc.listReferences(loaded=False, unloaded=True)
+            for oFileRef in oFileRefList:
+                oFileRef.clean()
+
+            mc.refresh()
+
+            myaref.loadAssetsAsRenderRef(project=proj, selected=False)
 
             for oFileRef in oFileRefList:
                 if not oFileRef.isLoaded():
@@ -1024,8 +1043,6 @@ def init_previz_scene(sceneManager):
     reArrangeAssets()
     arrangeViews(oShotCam.getShape(), oAnimaticCam, oStereoCam, stereoDisplay="interlace")
 
-
-
 COMMANDS = {
     'create':{
         'BASE':create_scene_base,
@@ -1033,10 +1050,11 @@ COMMANDS = {
     },
     'init':{
         'BASE':init_scene_base,
-        'previz 3D':init_previz_scene,
-        'stereo':init_previz_scene,
-        'layout':init_previz_scene,
-        'animation':init_previz_scene,
+        'previz 3D':setupShotScene,
+        'stereo':setupShotScene,
+        'layout':setupShotScene,
+        'animation':setupShotScene,
+        'final layout':setupShotScene,
     }
 }
 
@@ -1277,11 +1295,17 @@ def iterPanelsFromCam(oCamXfm, visible=False):
 def iterGeoGroups(**kwargs):
 
     if kwargs.get("selected", kwargs.get("sl", False)):
-        sNspcList = set(n.rsplit("|", 1)[-1].rsplit(":", 1)[0] for n in mc.ls(sl=True))
+        sNmspcList = set(n.rsplit("|", 1)[-1].rsplit(":", 1)[0] for n in mc.ls(sl=True))
     else:
-        sNspcList = mc.namespaceInfo(listOnlyNamespaces=True)
+        sNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
 
-    for sNspc in sNspcList:
-        sGeoGrp = sNspc + ":grp_geo"
+    for sNmspc in sNmspcList:
+
+        if sNmspc.endswith("_cache"):
+            continue
+
+        sGeoGrp = sNmspc + ":grp_geo"
         if mc.objExists(sGeoGrp):
             yield sGeoGrp
+
+

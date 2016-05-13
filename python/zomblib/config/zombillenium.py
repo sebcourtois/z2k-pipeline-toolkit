@@ -107,10 +107,16 @@ class shot_lib(object):
                    },
                 "{step:04_anim} -> anim_dir":
                    {
-                    "geoCache -> geoCache_dir":{},
+                    "geoCache -> animCache_dir":{},
                     "{name}_anim.ma -> anim_scene":None,
                     "{name}_anim.mov -> anim_capture":None,
                     "{name}_ref.mov -> animRef_movie":None,
+                   },
+                "{step:06_finalLayout} -> finalLayout_dir":
+                   {
+                    "geoCache -> finalLayoutCache_dir":{},
+                    "{name}_finalLayout.ma -> finalLayout_scene":None,
+                    "{name}_finalLayout.mov -> finalLayout_capture":None,
                    },
                 },
             },
@@ -120,6 +126,7 @@ class shot_lib(object):
                    "01_stereo":"Stereo",
                    "02_layout":"Layout",
                    "04_anim":"Animation",
+                   "06_finalLayout":"Final Layout",
                    }
 
     resources_settings = {
@@ -153,6 +160,15 @@ class shot_lib(object):
                   "sg_tasks":("animation",),
                   #"sg_status":"rev",
                   },
+
+    "finalLayout_scene":{"outcomes":("finalLayout_capture",),
+                  "create_sg_version":True,
+                  "sg_uploaded_movie":"finalLayout_capture",
+                  "sg_path_to_movie":"finalLayout_capture",
+                  "sg_tasks":("final layout",),
+                  #"sg_status":"rev",
+                  },
+
     "animRef_movie":{"create_sg_version":True,
                      "sg_uploaded_movie":True,
                      "sg_path_to_movie":True,
@@ -171,9 +187,14 @@ class shot_lib(object):
                   },
     "layout_dir":{"default_sync_rules":["all_sites"],
                   },
-    "anim_dir":{"default_sync_rules":["dmn_paris", "online",
+    "anim_dir":{"default_sync_rules":["online", "dmn_paris",
                                       "dream_wall", "pipangai"],
                 },
+    "finalLayout_dir":{"default_sync_rules":["all_sites"],
+                       },
+    "finalLayoutCache_dir":{"default_sync_rules":["online", "dmn_paris",
+                                                  "dream_wall", "dmn_angouleme"],
+                            },
     }
 
 class output_lib(object):

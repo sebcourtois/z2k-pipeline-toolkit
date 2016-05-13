@@ -1,9 +1,9 @@
 
-
+import os
 import os.path as osp
 
 from pytd.util.fsutils import pathJoin
-from pytd.util.sysutils import grouper
+from pytd.util.sysutils import grouper, argToSet
 
 import maya.api.OpenMaya as om
 import maya.cmds as mc
@@ -58,7 +58,8 @@ def listChildMeshes(sXfm, longName=False):
 
 def transferOutConnections(sSrcNode, sDstNode):
 
-    sConnectList = mc.listConnections(sSrcNode, s=0, d=1, c=1, p=1)
+    sConnectList = mc.listConnections(sSrcNode, s=False, d=True, c=True, p=True,
+                                      skipConversionNodes=True)
     if not sConnectList:
         return
 
@@ -97,7 +98,9 @@ def exportCaches(**kwargs):
 
     damShot = entityFromScene()
 
-    sAbcDirPath = mop.getAlembicCacheDir(damShot)
+    sAbcDirPath = mop.getAlembicCacheDir(damShot).replace("\\", "/")
+    if not osp.exists(sAbcDirPath):
+        os.makedirs(sAbcDirPath)
 
     frameRange = (pm.playbackOptions(q=True, animationStartTime=True),
                  pm.playbackOptions(q=True, animationEndTime=True))
@@ -111,9 +114,9 @@ def exportCaches(**kwargs):
         print sJob
         sJobList.append(sJob)
 
-    mc.AbcExport(v=True, j=sJobList)
+    return mc.AbcExport(v=True, j=sJobList)
 
-def iterTransformMapping(sSrcDagRoot, sTrgtNamespace, longName=False):
+def getTransformMapping(sSrcDagRoot, sTrgtNamespace, consider=None, longName=False):
 
     oSrcDagRoot = pm.PyNode(sSrcDagRoot)
     sSrcNamespace = oSrcDagRoot.namespace()
@@ -129,10 +132,36 @@ def iterTransformMapping(sSrcDagRoot, sTrgtNamespace, longName=False):
     oTrgtDagRoot = pm.PyNode(sTrgtDagRoot)
     sTrgtDagRoot = oTrgtDagRoot.longName()
 
-    sSrcDagList = mc.ls(sSrcDagRoot, dag=True, long=longName, ni=True)
-    for sSrcDagPath in mc.ls(sSrcDagList, exactType="transform"):
+    sConsiderList = mc.ls(consider, long=longName, ni=True) if consider else None
+    canLog = lambda s: (not sConsiderList) or (sConsiderList and (s in sConsiderList))
+
+    mappingItems = mc.ls(sSrcDagRoot, dag=True, long=longName, ni=True)
+    mappingItems = mc.ls(mappingItems, exactType="transform", long=longName)
+
+    sNoMatchList = []
+    sMultiMatchList = []
+    sLockedList = []
+    #mappingItems = sSrcDagList[:]
+
+    for i, sSrcDagPath in enumerate(mappingItems):
 
         found = None
+
+        if mc.lockNode(sSrcDagPath, q=True, lock=True)[0]:
+            if canLog(sSrcDagPath):
+                pm.displayWarning("Locked node ignored: '{}'".format(sSrcDagPath))
+                sLockedList.append(sSrcDagPath)
+            continue
+
+        srcDagPath = myapi.getDagPath(sSrcDagPath)
+        if srcDagPath.isInstanced():
+            n = srcDagPath.instanceNumber()
+            if n > 0:
+                if canLog(sSrcDagPath):
+                    pm.displayInfo("Instanced copy number {} ignored: '{}'"
+                                   .format(n, sSrcDagPath))
+                continue
+
         if longName:
             sTrgtDagPath = sSrcDagPath.split(sSrcDagRoot, 1)[-1].replace(sSrcNamespace, sTrgtNamespace)
             sTrgtDagPath = sTrgtDagRoot + sTrgtDagPath
@@ -150,82 +179,160 @@ def iterTransformMapping(sSrcDagRoot, sTrgtNamespace, longName=False):
                 if len(sFoundList) == 1:
                     found = sFoundList[0]
                 else:
-                    pm.displayWarning("Multiple objects named '{}'".format(sTrgtDagPath))
+                    if canLog(sSrcDagPath):
+                        pm.displayWarning("Multiple objects named '{}'".format(sTrgtDagPath))
+                        sMultiMatchList.append(sSrcDagPath)
                     found = sFoundList
 
         if not found:
-            pm.displayWarning("No such object: '{}'".format(sTrgtDagPath))
+            if canLog(sSrcDagPath):
+                pm.displayWarning("No such object: '{}'".format(sTrgtDagPath))
+                sNoMatchList.append(sSrcDagPath)
 
-        yield sSrcDagPath, found
+        mappingItems[i] = (sSrcDagPath, found)
+
+    if sLockedList:
+        sObjSet = addLoggingSet("lockedNodes_" + sSrcNamespace.strip(":"))
+        mc.sets(sLockedList, e=True, include=sObjSet)
+
+    if sNoMatchList:
+        sObjSet = addLoggingSet("noObjMatch_" + sSrcNamespace.strip(":"))
+        mc.sets(sNoMatchList, e=True, include=sObjSet)
+
+    if sMultiMatchList:
+        sObjSet = addLoggingSet("multiObjsMatch_" + sSrcNamespace.strip(":"))
+        mc.sets(sMultiMatchList, e=True, include=sObjSet)
+
+    return tuple(itm for itm in mappingItems if not isinstance(itm, basestring))
 
 def iterMatchedObjects(objMappingItems):
     for s, t in objMappingItems:
         if t and isinstance(t, basestring):
             yield s, t
 
-def iterMeshMapping(xfmMappingItems, longName=False):
+def getMeshMapping(xfmMappingItems, consider=None, longName=False):
 
-    for sSrcXfm, sTrgtXfm in iterMatchedObjects(xfmMappingItems):
+    sConsiderList = mc.ls(consider, long=longName, ni=True) if consider else None
+    canLog = lambda s: (not sConsiderList) or (sConsiderList and (s in sConsiderList))
 
-        sMeshShapeList = listChildMeshes(sSrcXfm, longName=longName)
-        if not sMeshShapeList:
-            continue
-        elif len(sMeshShapeList) > 1:
-            pm.displayWarning("Multiple mesh shapes found under '{}'.".format(sSrcXfm))
-            continue
+    sLockedList = []
+    sNoMatchList = []
+    sMultiMatchList = []
 
+    def iterSrcMeshShapes(xfmMappingItems):
+
+        for sSrcXfm, sTrgtXfm in iterMatchedObjects(xfmMappingItems):
+
+            sMeshShapeList = listChildMeshes(sSrcXfm, longName=longName)
+            if not sMeshShapeList:
+                continue
+
+            if len(sMeshShapeList) > 1:
+                pm.displayWarning("Multiple mesh shapes found under '{}'.".format(sSrcXfm))
+                continue
+
+            sSrcMeshShape = sMeshShapeList[0]
+
+            if mc.lockNode(sSrcMeshShape, q=True, lock=True)[0]:
+                if canLog(sSrcXfm):
+                    pm.displayWarning("Locked node ignored: '{}'".format(sSrcMeshShape))
+                    sLockedList.append(sSrcMeshShape)
+                continue
+
+            srcDagPath = myapi.getDagPath(sSrcMeshShape)
+            if srcDagPath.isInstanced():
+                n = srcDagPath.instanceNumber()
+                if n > 0:
+                    if canLog(sSrcXfm):
+                        pm.displayInfo("Instanced copy number {} ignored: '{}'"
+                                       .format(n, sSrcMeshShape))
+                    continue
+
+            yield sSrcXfm, sTrgtXfm, sSrcMeshShape
+
+    mappingItems = list(iterSrcMeshShapes(xfmMappingItems))
+
+    sSrcXfm = None
+    for i, items in enumerate(mappingItems):
+
+        sSrcXfm, sTrgtXfm, sSrcMeshShape = items
         found = None
-
-        sSrcMeshShape = sMeshShapeList[0]
 
         sMeshShapeList = listChildMeshes(sTrgtXfm, longName=longName)
         if sMeshShapeList:
             if len(sMeshShapeList) == 1:
                 found = sMeshShapeList[0]
             else:
-                pm.displayWarning("Multiple mesh shapes found under '{}'.".format(sTrgtXfm))
+                if canLog(sSrcXfm):
+                    pm.displayWarning("Multiple mesh shapes found under '{}'.".format(sTrgtXfm))
+                    sMultiMatchList.append(sSrcXfm)
                 found = sMeshShapeList
-        else:
+        elif canLog(sSrcXfm):
             pm.displayWarning("No mesh shape found under '{}'.".format(sTrgtXfm))
+            sNoMatchList.append(sSrcXfm)
 
-        yield sSrcMeshShape, found
+        mappingItems[i] = (sSrcMeshShape, found) if found else None
 
-def filteredXfmAttrs(sXfm):
+    if sLockedList:
+        sObjSet = addLoggingSet("lockedNodes_" + getNamespace(sLockedList[0]))
+        mc.sets(sLockedList, e=True, include=sObjSet)
+
+    if sSrcXfm is not None:
+
+        sNamespace = getNamespace(sSrcXfm)
+        if sNoMatchList:
+            sObjSet = addLoggingSet("noShapeMatch_" + sNamespace)
+            mc.sets(sNoMatchList, e=True, include=sObjSet)
+
+        if sMultiMatchList:
+            sObjSet = addLoggingSet("multiShapesMatch_" + sNamespace)
+            mc.sets(sMultiMatchList, e=True, include=sObjSet)
+
+    return tuple(itm for itm in mappingItems if itm)
+
+def relevantXfmAttrs(sXfm):
 
     flags = dict(unlocked=True, connectable=True, scalar=True)
 
     sAttrSet = set(listForNone(mc.listAttr(sXfm, keyable=True, **flags)))
     sAttrSet.update(listForNone(mc.listAttr(sXfm, userDefined=True, **flags)))
+
     return sAttrSet
 
-def connectTransforms(astToAbcXfmItems):
+def transferXfmAttrs(astToAbcXfmMap, only=None, attrs=None, discardAttrs=None, dryRun=False):
+
+    if isinstance(astToAbcXfmMap, dict):
+        astToAbcXfmItems = tuple(astToAbcXfmMap.iteritems())
+    else:
+        astToAbcXfmItems = astToAbcXfmMap
+
+    sDiscardAttrSet = argToSet(discardAttrs)
+    sOnlyAttrSet = argToSet(attrs)
 
     sLockedList = []
+    sOnlyList = mc.ls(only, long=True, ni=True) if only else only
 
     for sAstXfm, sAbcXfm in iterMatchedObjects(astToAbcXfmItems):
 
-        astXfmPath = myapi.getDagPath(sAstXfm)
-        if astXfmPath.isInstanced():
-            n = astXfmPath.instanceNumber()
-            if n > 0:
-                pm.displayInfo("Instanced copy number {} ignored: '{}'"
-                               .format(n, sAstXfm))
-                continue
-
-        if mc.lockNode(sAstXfm, q=True, lock=True)[0]:
-            pm.displayWarning("Locked node ignored: '{}'".format(sAstXfm))
-            sLockedList.append(sAstXfm)
+        astDagPath = myapi.getDagPath(sAstXfm)
+        if sOnlyList and (astDagPath.fullPathName() not in sOnlyList):
             continue
 
-        sAbcAttrSet = set(iterConnectedAttrs(sAbcXfm, s=True, d=False))
-        sAbcAttrSet.update(filteredXfmAttrs(sAbcXfm))
+        sAbcAttrSet = relevantXfmAttrs(sAbcXfm)
+        sAstAttrSet = relevantXfmAttrs(sAstXfm)
 
-        sAttrList = list(filteredXfmAttrs(sAstXfm) & sAbcAttrSet)
-        for sAttr in sAttrList:
-            breakConnections("input", sAstXfm + "." + sAttr)
+        if sOnlyAttrSet:
+            sSameAttrSet = sAbcAttrSet & sAstAttrSet & sOnlyAttrSet
+        else:
+            sAbcAttrSet.update(iterConnectedAttrs(sAbcXfm, s=True, d=False))
+            sSameAttrSet = (sAstAttrSet & sAbcAttrSet) - sDiscardAttrSet
 
-        mc.copyAttr(sAbcXfm, sAstXfm, values=True, inConnections=True,
-                    keepSourceConnections=True, at=sAttrList)
+        if not dryRun:
+            for sAttr in sSameAttrSet:
+                breakConnections("input", sAstXfm + "." + sAttr)
+
+            mc.copyAttr(sAbcXfm, sAstXfm, values=True, inConnections=True,
+                        keepSourceConnections=True, attribute=tuple(sSameAttrSet))
 
     if sLockedList:
         sNmspc = getNamespace(sLockedList[0])
@@ -259,29 +366,29 @@ def _delUnusedTransferNodes():
 def meshMismatchStr(st1, st2):
     return " ".join("{}={}".format(k, v) for k, v in sorted(st1.iteritems()) if v != st2.get(k))
 
-def connectMeshShapes(astToAbcMeshItems):
+def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
 
     global UNUSED_TRANSFER_NODES
 
-    sLockedList = []
+    if isinstance(astToAbcMeshMap, dict):
+        astToAbcMeshItems = tuple(astToAbcMeshMap.iteritems())
+    else:
+        astToAbcMeshItems = astToAbcMeshMap
+
     sVertsDifferList = []
     sTopoDifferList = []
     sHasHistoryList = []
 
+    sOnlyList = mc.ls(only, long=True, ni=True) if only else only
+
     for sAstMeshShape, sAbcMeshShape in iterMatchedObjects(astToAbcMeshItems):
 
         astMeshPath = myapi.getDagPath(sAstMeshShape)
-        if astMeshPath.isInstanced():
-            n = astMeshPath.instanceNumber()
-            if n > 0:
-                pm.displayInfo("Instanced copy number {} ignored: '{}'"
-                               .format(n, sAstMeshShape))
-                continue
-
-        if mc.lockNode(sAstMeshShape, q=True, lock=True)[0]:
-            pm.displayWarning("Locked node ignored: '{}'".format(sAstMeshShape))
-            sLockedList.append(sAstMeshShape)
+        sAstMeshXfm = astMeshPath.fullPathName().rsplit("|", 1)[0]
+        if sOnlyList and (sAstMeshXfm not in sOnlyList):
             continue
+
+        #print sAstMeshShape, sAbcMeshShape
 
         if mc.listConnections(sAstMeshShape + ".inMesh", s=True, d=False):
             sHasHistoryList.append(sAstMeshShape)
@@ -300,10 +407,10 @@ def connectMeshShapes(astToAbcMeshItems):
                 sVertsDifferList.extend((sAbcMeshShape, sAstMeshShape))
                 continue
             else:
-                sMsg = "Topology differs:"
-                sMsg += ("\n    - cache mesh: {}  ('{}')"
+                sMsg = "Same vertices but topology differs:"
+                sMsg += ("\n    - cache mesh: {}  on '{}'"
                          .format(meshMismatchStr(abcMeshStat, astMeshStat), sAbcMeshShape))
-                sMsg += ("\n    - asset mesh: {}  ('{}')"
+                sMsg += ("\n    - asset mesh: {}  on '{}'"
                          .format(meshMismatchStr(astMeshStat, abcMeshStat), sAstMeshShape))
                 pm.displayInfo(sMsg)
                 sTopoDifferList.extend((sAbcMeshShape, sAstMeshShape))
@@ -320,20 +427,16 @@ def connectMeshShapes(astToAbcMeshItems):
             bSameVerts = (mc.polyCompare(sAbcMeshShape, sAstMeshShape, vertices=True) == 0)
 
         if mc.referenceQuery(sAstMeshShape, isNodeReferenced=True):
-            if bDeformedMesh or (not bSameVerts):
+            if (bDeformedMesh or (not bSameVerts)) and (not dryRun):
                 sPolyTrans = mc.polyTransfer(sAstMeshShape, ao=sAbcMeshShape,
                                              uv=False, v=True, vc=False, ch=True)[0]
-            if bDeformedMesh:
+            if bDeformedMesh and (not dryRun):
                 mc.connectAttr(sAbcOutAttr, sPolyTrans + ".otherPoly", f=True)
         elif not bSameVerts:
             srcMesh = om.MFnMesh(myapi.getDagPath(sAbcMeshShape))
             dstMesh = om.MFnMesh(astMeshPath)
-            dstMesh.setPoints(srcMesh.getPoints())
-
-    if sLockedList:
-        sNmspc = getNamespace(sLockedList[0])
-        sObjSet = addLoggingSet("lockedNodes_" + sNmspc)
-        mc.sets(sLockedList, e=True, include=sObjSet)
+            if not dryRun:
+                dstMesh.setPoints(srcMesh.getPoints())
 
     if sHasHistoryList:
         sNmspc = getNamespace(sHasHistoryList[0])
@@ -350,10 +453,18 @@ def connectMeshShapes(astToAbcMeshItems):
 
 def importCaches(**kwargs):
 
+    bDryRun = kwargs.pop("dryRun", False)
+    bRemoveRefs = kwargs.pop("removeRefs", False)
+    bUseCacheObjset = kwargs.pop("useCacheSet", True)
+
     damShot = entityFromScene()
     sAbcDirPath = mop.getAlembicCacheDir(damShot)
 
     oAbcRefList = []
+
+    def abort(oAbcRef):
+        if bRemoveRefs and bDryRun:
+            oAbcRef.remove()
 
     for sAstGeoGrp in mop.iterGeoGroups(**kwargs):
 
@@ -361,46 +472,45 @@ def importCaches(**kwargs):
         sBaseName = sAstNmspc + "_cache"
         sAbcPath = pathJoin(sAbcDirPath, sBaseName + ".abc")
 
+        print "\nImporting caches from '{}'".format(sAbcPath)
+
         if not osp.isfile(sAbcPath):
             pm.displayWarning("No such alembic file: '{}'".format(sAbcPath))
             continue
-
-        print "\nImporting caches from '{}'".format(sAbcPath)
 
         sNewNodeList = mc.file(sAbcPath, type="Alembic", r=True, ns=sBaseName,
                                rnn=True, mergeNamespacesOnClash=False, gl=True)
 
         oAbcRef = pm.PyNode(sNewNodeList[0]).referenceFile()
-        oAbcRefList.append(oAbcRef)
+        if not (bRemoveRefs and bDryRun):
+            oAbcRefList.append(oAbcRef)
+#        else:
+#            mc.refresh()
         sAbcNmspc = oAbcRef.namespace
 
-        sObjSet = ""
-        astToAbcXfmItems = tuple(iterTransformMapping(sAstGeoGrp, sAbcNmspc))
-        sMemberList = tuple(s for s, t in astToAbcXfmItems if not t)
-        if sMemberList:
-            sObjSet = addLoggingSet("noMatch_" + sAbcNmspc)
-            mc.sets(sMemberList, e=True, include=sObjSet)
+        sCacheObjList = None
+        if bUseCacheObjset:
 
-        sMemberList = tuple(s for s, t in astToAbcXfmItems if isinstance(t, (tuple, list)))
-        if sMemberList:
-            sObjSet = addLoggingSet("multiMatches_" + sAbcNmspc)
-            mc.sets(sMemberList, e=True, include=sObjSet)
+            sCacheObjsetName = sAstNmspc + ":set_meshCache"
+            sCacheObjset = mop.getNode(sCacheObjsetName)
+            if not sCacheObjset:
+                pm.displayError("Could not found '{}' !".format(sCacheObjsetName))
+                abort(oAbcRef);continue
 
-        astToAbcMeshItems = tuple(iterMeshMapping(astToAbcXfmItems))
-        sMemberList = tuple(s for s, t in astToAbcMeshItems if not t)
-        if sMemberList:
-            if not sObjSet:
-                sObjSet = addLoggingSet("noMatch_" + sAbcNmspc)
-            mc.sets(sMemberList, e=True, include=sObjSet)
+            sCacheObjList = mc.sets(sCacheObjset, q=True)
+            if not sCacheObjList:
+                pm.displayError("'{}' is empty !".format(sCacheObjsetName))
+                abort(oAbcRef);continue
 
-        sMemberList = tuple(s for s, t in astToAbcMeshItems if isinstance(t, (tuple, list)))
-        if sMemberList:
-            if not sObjSet:
-                sObjSet = addLoggingSet("multiMatches_" + sAbcNmspc)
-            mc.sets(sMemberList, e=True, include=sObjSet)
+        astToAbcXfmItems = getTransformMapping(sAstGeoGrp, sAbcNmspc,
+                                                consider=sCacheObjList)
 
-        connectTransforms(astToAbcXfmItems)
-        mc.refresh()
+        astToAbcMeshItems = getMeshMapping(astToAbcXfmItems,
+                                           consider=sCacheObjList)
+
+        transferXfmAttrs(astToAbcXfmItems, only=sCacheObjList,
+                         discardAttrs="visibility", dryRun=bDryRun)
+        #mc.refresh()
 
         sRefAbcNode = ""
         sFoundList = mc.ls(sNewNodeList, type="AlembicNode")
@@ -408,32 +518,40 @@ def importCaches(**kwargs):
             #pm.displayInfo("No Alembic Node imported !")
             sRefAbcNode = sFoundList[0]
 
-        connectMeshShapes(astToAbcMeshItems)
+        transferMeshShapes(astToAbcMeshItems, only=sCacheObjList, dryRun=bDryRun)
+        transferXfmAttrs(astToAbcXfmItems, attrs="visibility", dryRun=bDryRun)
 
-        if sRefAbcNode:
+        if sRefAbcNode and (not bDryRun):
             sDupAbcNode = mc.duplicate(sRefAbcNode, ic=True)[0]
             transferOutConnections(sRefAbcNode, sDupAbcNode)
 
+        abort(oAbcRef)
+
     mc.refresh()
 
-    bRemoveRefs = False
+    bKeepRefInLog = False
 
     sRefNodeSet = set()
     sLogSetName = "log_CACHE_IMPORT"
     if LOGGING_SETS:
         oObjSet = pm.sets(LOGGING_SETS, n=sLogSetName)
-        if bRemoveRefs:
+        if bRemoveRefs and bKeepRefInLog:
             sRefNodeSet = set(pm.referenceQuery(oObj, referenceNode=True, topReference=True)
                               for oObj in oObjSet.flattened() if oObj.isReferenced())
 
     if bRemoveRefs:
-        for i, oAbcRef in enumerate(oAbcRefList):
-            if oAbcRef.refNode.name() not in sRefNodeSet:
-                oAbcRef.remove()
-                oAbcRefList[i] = None
+        if bKeepRefInLog:
+            for i, oAbcRef in enumerate(oAbcRefList):
+                if oAbcRef.refNode.name() not in sRefNodeSet:
+                    oAbcRef.remove()
+                    oAbcRefList[i] = None
 
-        if oAbcRefList:
-            print "\nReferences kept because some of their objects appear in '{}' set:".format(sLogSetName)
+            if oAbcRefList:
+                print "\nReferences kept because some of their objects appear in '{}' set:".format(sLogSetName)
+                for oAbcRef in oAbcRefList:
+                    if oAbcRef:
+                        print "    - '{}': '{}'".format(oAbcRef.refNode, oAbcRef)
+        else:
             for oAbcRef in oAbcRefList:
-                if oAbcRef:
-                    print "    - '{}': '{}'".format(oAbcRef.refNode, oAbcRef)
+                oAbcRef.remove()
+
