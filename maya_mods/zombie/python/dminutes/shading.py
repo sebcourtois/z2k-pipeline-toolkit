@@ -1368,13 +1368,18 @@ def dmnToonMode (mode = ""):
             if answer == "Cancel": 
                 return
             for each in dmnToonNodeList:
-                miscUtils.setAttrC(each+".rimToonWeight", 0)
-                miscUtils.setAttrC(each+".incidenceWeight", 0)
-                miscUtils.setAttrC(each+".contourWeight", 0)
-                miscUtils.setAttrC(each+".occlusionWeight", 0.666)
-                miscUtils.setAttrC(each+".toonSoftness", 1)
+                try: 
+                    scriptLock = mc.getAttr (each+".scriptLock")
+                except:
+                    scriptLock = False
+                if not scriptLock:
+                    miscUtils.setAttrC(each+".rimToonWeight", 0)
+                    miscUtils.setAttrC(each+".incidenceWeight", 0)
+                    miscUtils.setAttrC(each+".contourWeight", 0)
+                    miscUtils.setAttrC(each+".occlusionWeight", 0.666)
+                    miscUtils.setAttrC(each+".toonSoftness", 1)
 
-                miscUtils.setAttrC(each+".occlusionMaxDist", 10)
+                    miscUtils.setAttrC(each+".occlusionMaxDist", 10)
 
             print "#### {:>7}: {} dmnToon nodes switched to {} mode".format("Info",len(dmnToonNodeList),mode)
         else:  
@@ -1389,13 +1394,18 @@ def dmnToonMode (mode = ""):
             if answer == "Cancel": 
                 return
             for each in dmnToonNodeList:
-                miscUtils.setAttrC(each+".rimToonWeight", 0)
-                miscUtils.setAttrC(each+".incidenceWeight", 0)
-                miscUtils.setAttrC(each+".contourWeight", 0)
-                miscUtils.setAttrC(each+".occlusionWeight", 0.666)
-                miscUtils.setAttrC(each+".toonSoftness", 1)
+                try: 
+                    scriptLock = mc.getAttr (each+".scriptLock")
+                except:
+                    scriptLock = False
+                if not scriptLock:
+                    miscUtils.setAttrC(each+".rimToonWeight", 0)
+                    miscUtils.setAttrC(each+".incidenceWeight", 0)
+                    miscUtils.setAttrC(each+".contourWeight", 0)
+                    miscUtils.setAttrC(each+".occlusionWeight", 0.666)
+                    miscUtils.setAttrC(each+".toonSoftness", 1)
 
-                miscUtils.setAttrC(each+".occlusionMaxDist", 100)
+                    miscUtils.setAttrC(each+".occlusionMaxDist", 100)
 
             print "#### {:>7}: {} dmnToon nodes switched to {} mode".format("Info",len(dmnToonNodeList),mode)
         else:  
@@ -1409,13 +1419,18 @@ def dmnToonMode (mode = ""):
             if answer == "Cancel": 
                 return
             for each in dmnToonNodeList:
-                miscUtils.setAttrC(each+".rimToonWeight", 1)
-                miscUtils.setAttrC(each+".incidenceWeight", 0.333)
-                miscUtils.setAttrC(each+".contourWeight", 0)
-                miscUtils.setAttrC(each+".occlusionWeight", 0.666)
-                miscUtils.setAttrC(each+".toonSoftness", 1)
+                try: 
+                    scriptLock = mc.getAttr (each+".scriptLock")
+                except:
+                    scriptLock = False
+                if not scriptLock:
+                    miscUtils.setAttrC(each+".rimToonWeight", 1)
+                    miscUtils.setAttrC(each+".incidenceWeight", 0.333)
+                    miscUtils.setAttrC(each+".contourWeight", 0)
+                    miscUtils.setAttrC(each+".occlusionWeight", 0.666)
+                    miscUtils.setAttrC(each+".toonSoftness", 1)
 
-                miscUtils.setAttrC(each+".occlusionMaxDist", 5)
+                    miscUtils.setAttrC(each+".occlusionMaxDist", 5)
 
             print "#### {:>7}: {} dmnToon nodes switched to {} mode".format("Info",len(dmnToonNodeList),mode)
         else:  
@@ -1429,13 +1444,18 @@ def dmnToonMode (mode = ""):
             if answer == "Cancel": 
                 return
             for each in dmnToonNodeList:
-                miscUtils.setAttrC(each+".rimToonWeight", 1)
-                miscUtils.setAttrC(each+".incidenceWeight", 0.333)
-                miscUtils.setAttrC(each+".contourWeight", 1)
-                miscUtils.setAttrC(each+".occlusionWeight", 0.333)
-                miscUtils.setAttrC(each+".toonSoftness", 0)
+                try: 
+                    scriptLock = mc.getAttr (each+".scriptLock")
+                except:
+                    scriptLock = False
+                if not scriptLock:
+                    miscUtils.setAttrC(each+".rimToonWeight", 1)
+                    miscUtils.setAttrC(each+".incidenceWeight", 0.333)
+                    miscUtils.setAttrC(each+".contourWeight", 1)
+                    miscUtils.setAttrC(each+".occlusionWeight", 0.333)
+                    miscUtils.setAttrC(each+".toonSoftness", 0)
 
-                miscUtils.setAttrC(each+".occlusionMaxDist", 5)
+                    miscUtils.setAttrC(each+".occlusionMaxDist", 5)
 
             print "#### {:>7}: {} dmnToon nodes switched to {} mode".format("Info",len(dmnToonNodeList),mode)
         else:  
@@ -1449,15 +1469,20 @@ def dmnToonMode (mode = ""):
             if answer == "Cancel": 
                 return
             for each in dmnToonNodeList:
-                miscUtils.setAttrC(each+".rimToonWeight", 0)
-                miscUtils.setAttrC(each+".incidenceWeight", 0)
-                miscUtils.setAttrC(each+".contourWeight", 0)
-                miscUtils.setAttrC(each+".occlusionWeight", 0)
-                miscUtils.setAttrC(each+".toonWeight", 0)
-                miscUtils.setAttrC(each+".lambertWeight", 0)
+                try: 
+                    scriptLock = mc.getAttr (each+".scriptLock")
+                except:
+                    scriptLock = False
+                if not scriptLock:
+                    miscUtils.setAttrC(each+".rimToonWeight", 0)
+                    miscUtils.setAttrC(each+".incidenceWeight", 0)
+                    miscUtils.setAttrC(each+".contourWeight", 0)
+                    miscUtils.setAttrC(each+".occlusionWeight", 0)
+                    miscUtils.setAttrC(each+".toonWeight", 0)
+                    miscUtils.setAttrC(each+".lambertWeight", 0)
 
-                miscUtils.setAttrC(each+".ambientIntensity", 0)
-                miscUtils.setAttrC(each+".diffuseIntensity", 1)
+                    miscUtils.setAttrC(each+".ambientIntensity", 0)
+                    miscUtils.setAttrC(each+".diffuseIntensity", 1)
 
             print "#### {:>7}: {} dmnToon nodes switched to {} mode".format("Info",len(dmnToonNodeList),mode)
         else:  
@@ -1543,7 +1568,19 @@ def cleanlgtRig( verbose = False):
 
 
 
+def scriptLockShadingNode(nodeList=[],lock=True, type="dmnToon"):
+    for each in nodeList:
+        if mc.nodeType(each) == type:
+            try:
+                mc.getAttr (each+".scriptLock")
+                scriptLockExist = True
+            except:
+                scriptLockExist = False
+                
+            if not scriptLockExist:
 
+                mc.addAttr(each,ln = "scriptLock", at = "bool")
+            mc.setAttr(each+'.scriptLock',lock)
 
 
 
