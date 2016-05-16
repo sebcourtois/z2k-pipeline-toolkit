@@ -132,6 +132,7 @@ def cleanAsset (GUI = True):
                 answer =  mc.confirmDialog( title='clean '+fileType+' '+assetType+' asset', message=msgS, button=['Proceed','Cancel'], defaultButton='Proceed', cancelButton='Cancel', dismissString='Cancel' )
             if answer != "Cancel":
                 #rendering.deleteAovs()
+                miscUtils.cleanLayout()
                 assetconformation.fixMaterialInfo()
                 miscUtils.deleteAllColorSet()
                 modeling.geoGroupDeleteHistory()

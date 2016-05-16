@@ -801,8 +801,10 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
                     if 0< self.incVar <= 90:
                         angBet[0] = angBet[0]+random.uniform(-self.incVar,self.incVar)
                         angBet[2] = angBet[2]+random.uniform(-self.incVar,self.incVar)
-                    if self.sclMinVar != self.sclMaxVar != 1:
+                    if self.sclMinVar != self.sclMaxVar:
                         randScale = random.uniform(self.sclMinVar,self.sclMaxVar)
+                    else:
+                        randScale = self.sclMinVar
                     if self.elevMinVar != self.elevMaxVar != 0:
                         positionList[1] = positionList[1]+random.uniform(self.elevMinVar,self.elevMaxVar)
                     mc.nParticle(particleNodeShape, e=True, at='position', order=a, vv=positionList)             
