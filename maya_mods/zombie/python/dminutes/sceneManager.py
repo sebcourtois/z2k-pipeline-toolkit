@@ -7,6 +7,7 @@ import re
 import stat
 from collections import OrderedDict
 import shutil
+from itertools import izip
 
 import pymel.core as pc
 import maya.cmds as mc
@@ -1043,8 +1044,8 @@ class SceneManager():
         """Compare Shotgun shot<=>assets linking and scene content"""
         logMsg(log='all')
 
-        sgAstShotConns = self.getShotgunContent()
-        assetShotConnDct = dict((d['asset']['name'], d) for d in sgAstShotConns)
+        astShotConnList = self.getShotgunContent()
+        assetShotConnDct = dict((d['asset']['name'].lower(), d) for d in astShotConnList)
 
         assetDataList = []
 
@@ -1084,17 +1085,18 @@ class SceneManager():
 
             astData.update(pathData)
 
-            sAstName = astData["name"]
-            if sAstName in assetShotConnDct:
-                astData.update(sg_info=okValue, sg_asset_shot_conn=assetShotConnDct[sAstName])
-                sFoundAstList.append(sAstName)
+            sAstKey = astData["name"].lower()
+            if sAstKey in assetShotConnDct:
+                astData.update(sg_info=okValue, sg_asset_shot_conn=assetShotConnDct[sAstKey])
+                sFoundAstList.append(sAstKey)
 
             assetDataList.append(astData)
 
-        for sAstName, astShotConn in assetShotConnDct.iteritems():
-            if sAstName not in sFoundAstList:
+        for sAstKey, astShotConn in assetShotConnDct.iteritems():
+            if sAstKey not in sFoundAstList:
                 astData = initData.copy()
-                astData.update(name=sAstName, sg_info=okValue, sg_asset_shot_conn=astShotConn)
+                astData.update(name=astShotConn['asset']['name'], sg_info=okValue,
+                               sg_asset_shot_conn=astShotConn)
                 assetDataList.append(astData)
 
         allMyaFileDct = {}
@@ -1115,7 +1117,10 @@ class SceneManager():
             allMyaFileDct[sAstName] = mayaFileItems
             allMyaFileList.extend(f for _, f in mayaFileItems if f)
 
-        proj.dbNodesForResources(allMyaFileList)
+        dbNodeList = proj.dbNodesForResources(allMyaFileList)
+        for mrcFile, dbNode in izip(allMyaFileList, dbNodeList):
+            if not dbNode:
+                mrcFile.getDbNode(fromCache=False)
 
         for astData in assetDataList:
 
