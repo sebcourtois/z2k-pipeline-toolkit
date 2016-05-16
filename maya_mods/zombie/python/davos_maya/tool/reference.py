@@ -18,6 +18,7 @@ from pytaya.core.reference import processSelectedReferences
 from pytaya.core.reference import listReferences
 
 from davos_maya.tool.general import entityFromScene, projectFromScene
+from dminutes.shotconformation import removeRefEditByAttr
 
 
 @processSelectedReferences
@@ -73,7 +74,7 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
         return
 
     i = 0
-    oFileRefList = []
+    swicthItems = []
     nonSwitchedRefList = []
     for oFileRef, assetRc in izip(oSelRefList, assetRcList):
 
@@ -135,21 +136,30 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
             print sMsg
             continue
 
-        oFileRefList.append(oFileRef)
+        swicthItems.append((oFileRef, mrcFile))
 
-    numOkRefs = len(oFileRefList)
+    oFileRefList = tuple(r for r, _ in swicthItems)
+    numOkRefs = len(swicthItems)
     if not dryRun:
-        if cleanEdits:
-            for i, oFileRef in enumerate(oFileRefList):
-                print "Unloading {}/{}: '{}' ...".format(i + 1, numOkRefs, oFileRef.refNode.name())
-                oFileRef.unload()
-                mc.refresh()
-            for i, oFileRef in enumerate(oFileRefList):
-                print "Cleaning edits on {}/{}: '{}' ...".format(i + 1, numOkRefs, oFileRef.refNode.name())
-                oFileRef.clean()
-            mc.refresh()
 
         for i, oFileRef in enumerate(oFileRefList):
+            print "Unloading {}/{}: '{}' ...".format(i + 1, numOkRefs, oFileRef.refNode.name())
+            oFileRef.unload()
+            mc.refresh()
+
+        if cleanEdits:
+            for i, oFileRef in enumerate(oFileRefList):
+                    print "Cleaning edits on {}/{}: '{}' ...".format(i + 1, numOkRefs, oFileRef.refNode.name())
+                    oFileRef.clean()
+
+        if not cleanEdits:
+            sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution")
+            removeRefEditByAttr(attr=sAttrList, GUI=False)
+
+        mc.refresh()
+
+        for i, (oFileRef, mrcFile) in enumerate(swicthItems):
+            #oFileRef, mrcFile = items
             print "Switching {}/{}: '{}' ...".format(i + 1, numOkRefs, oFileRef.refNode.name())
             try:
                 oFileRef.replaceWith(mrcFile.envPath())

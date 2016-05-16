@@ -451,6 +451,7 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
         sObjSet = addLoggingSet("TOPOLOGY_MISMATCH")
         mc.sets(sTopoDifferList, e=True, include=sObjSet)
 
+
 def importCaches(**kwargs):
 
     bDryRun = kwargs.pop("dryRun", False)
@@ -466,11 +467,13 @@ def importCaches(**kwargs):
         if bRemoveRefs and bDryRun:
             oAbcRef.remove()
 
+    oAbcRefDct = dict(pm.listReferences(namespaces=True, references=True))
+
     for sAstGeoGrp in mop.iterGeoGroups(**kwargs):
 
         sAstNmspc = sAstGeoGrp.rsplit("|", 1)[-1].rsplit(":", 1)[0]
-        sBaseName = sAstNmspc + "_cache"
-        sAbcPath = pathJoin(sAbcDirPath, sBaseName + ".abc")
+        sAbcNmspc = sAstNmspc + "_cache"
+        sAbcPath = pathJoin(sAbcDirPath, sAbcNmspc + ".abc")
 
         print "\nImporting caches from '{}'".format(sAbcPath)
 
@@ -478,15 +481,21 @@ def importCaches(**kwargs):
             pm.displayWarning("No such alembic file: '{}'".format(sAbcPath))
             continue
 
-        sNewNodeList = mc.file(sAbcPath, type="Alembic", r=True, ns=sBaseName,
-                               rnn=True, mergeNamespacesOnClash=False, gl=True)
+        if sAbcNmspc in oAbcRefDct:
+            oAbcRef = oAbcRefDct[sAbcNmspc]
+            oAbcRef.load()
+            sAbcNodeList = mc.ls(sAbcNmspc + ":*")
+        else:
+            sAbcNodeList = mc.file(sAbcPath, type="Alembic", r=True, ns=sAbcNmspc,
+                                   rnn=True, mergeNamespacesOnClash=False, gl=True)
 
-        oAbcRef = pm.PyNode(sNewNodeList[0]).referenceFile()
+            oAbcRef = pm.PyNode(sAbcNodeList[0]).referenceFile()
+            sAbcNmspc = oAbcRef.namespace
+
         if not (bRemoveRefs and bDryRun):
             oAbcRefList.append(oAbcRef)
 #        else:
 #            mc.refresh()
-        sAbcNmspc = oAbcRef.namespace
 
         sCacheObjList = None
         if bUseCacheObjset:
@@ -508,18 +517,18 @@ def importCaches(**kwargs):
         astToAbcMeshItems = getMeshMapping(astToAbcXfmItems,
                                            consider=sCacheObjList)
 
-        transferXfmAttrs(astToAbcXfmItems, only=sCacheObjList,
-                         discardAttrs="visibility", dryRun=bDryRun)
+        transferXfmAttrs(astToAbcXfmItems, only=sCacheObjList, dryRun=bDryRun)
+
         #mc.refresh()
 
         sRefAbcNode = ""
-        sFoundList = mc.ls(sNewNodeList, type="AlembicNode")
+        sFoundList = mc.ls(sAbcNodeList, type="AlembicNode")
         if sFoundList:
             #pm.displayInfo("No Alembic Node imported !")
             sRefAbcNode = sFoundList[0]
 
         transferMeshShapes(astToAbcMeshItems, only=sCacheObjList, dryRun=bDryRun)
-        transferXfmAttrs(astToAbcXfmItems, attrs="visibility", dryRun=bDryRun)
+        #transferXfmAttrs(astToAbcXfmItems, attrs="visibility", dryRun=bDryRun)
 
         if sRefAbcNode and (not bDryRun):
             sDupAbcNode = mc.duplicate(sRefAbcNode, ic=True)[0]
@@ -554,4 +563,11 @@ def importCaches(**kwargs):
         else:
             for oAbcRef in oAbcRefList:
                 oAbcRef.remove()
+
+#def processAllOrSelected(func):
+#    def doIt(*args, **kwargs):
+#
+#
+#
+#    return doIt
 

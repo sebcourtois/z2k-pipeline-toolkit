@@ -267,7 +267,8 @@ def refreshContextUI():
     QWIDGETS["relatedAssetsGroup"].setChecked(bListAssets)
     if bListAssets:
         pc.control('sm_updScene_bt', edit=True, enable=bPublishable)
-        pc.control('sm_updShotgun_bt', edit=True, enable=bPublishable)
+        pc.control('sm_updShotgun_bt', edit=True, enable=bPublishable and
+                   (sCtxStep in ("previz 3d", "layout", "final layout")))
         pc.control('sm_selectRefs_bt', edit=True, enable=bRcsMatchUp)
 
     bEnable = pc.optionVar.get("Z2K_SM_smoothOnCapture", False)

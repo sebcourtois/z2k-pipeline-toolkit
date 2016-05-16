@@ -955,11 +955,10 @@ def setupShotScene(sceneManager):
 
         if not pc.listReferences(loaded=True, unloaded=False):
 
-            oFileRefList = pc.listReferences(loaded=False, unloaded=True)
-            for oFileRef in oFileRefList:
-                oFileRef.clean()
+            sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution")
+            removeRefEditByAttr(attr=sAttrList, GUI=False)
 
-            mc.refresh()
+            oFileRefList = pc.listReferences(loaded=False, unloaded=True)
 
             myaref.loadAssetsAsRenderRef(project=proj, selected=False)
 
