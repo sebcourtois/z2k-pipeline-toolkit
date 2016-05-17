@@ -34,7 +34,7 @@ def tkMirror(*args, **kwargs):
     #             'Right_Brow_upRidge_01_ctrl', 'Right_Brow_upRidge_02_ctrl', 'Right_Brow_upRidge_03_ctrl', 'Right_Brow_upRidge_04_ctrl'
     #             ]
     try:
-        cmds.undoInfo(openChunk = True)
+        # cmds.undoInfo(openChunk = True)
 
         realSymD = {
                     'Right_Teeth_dn_01_ctrl':'Left_Teeth_dn_01_ctrl',
