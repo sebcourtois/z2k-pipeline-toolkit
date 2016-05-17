@@ -3172,7 +3172,7 @@ def chr_reArrangeCtr_displayLevel(*args, **kwargs):
                     curLvl = lvl3
 
                 if cmds.objExists(i):
-                    # print "****",i
+                    print "* analysing:",i
                     if cmds.listRelatives(i,c=1,s=1,):
                         shapeL = [i+"|"+ x for x in cmds.listRelatives(i,c=1,s=1,)]
                         if shapeL:
@@ -3181,11 +3181,22 @@ def chr_reArrangeCtr_displayLevel(*args, **kwargs):
                                     print "**************************************",j
                                 if cmds.connectionInfo( j + "."+ "visibility",isDestination=True):
                                     multiply_Vis = cmds.listConnections( j + "."+ "visibility",s=1,d=0, scn=1,)[0]
-                                    # print "multiply_Vis=", multiply_Vis
-                                    # print curLvl, cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0]
+                                    if cmds.objectType(multiply_Vis) in ["multDoubleLinear"]:
+                                        print "    multiply_Vis=", multiply_Vis
+                                        print "    current Level of display:",curLvl, cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0]
+                                    else:
+                                        print "    Error: NO multDoubleLinear Connected to {0}".format(j)
+                                        print "    -->Try to fix error!"
+                                        multiply_Vis = cmds.createNode("multDoubleLinear")
+                                        cmds.connectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2", f=1)
+                                        cmds.connectAttr(inObj + "." + "Controls", multiply_Vis + "." + "input1", f=1)
+
                                     if not curLvl  in cmds.listConnections(multiply_Vis + "." + "input2",p=1)[0] :
-                                        # print "connect"
-                                        # cmds.disconnectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2" )
+                                        print "      ->connecting"
+                                        try:
+                                            cmds.disconnectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2" )
+                                        except:
+                                            print "        no disconnection needed"
                                         cmds.connectAttr(inObj + "." + curLvl, multiply_Vis + "." + "input2", f=1)
 
                     else:
