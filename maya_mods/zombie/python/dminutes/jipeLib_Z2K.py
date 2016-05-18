@@ -160,10 +160,12 @@ def tkMirror(*args, **kwargs):
     except Exception,err:
         print Exception,err
         # cmds.undoInfo(closeChunk = True)
+        print "Mirror Error: {0}\n{1}".formation(Exception,err)
 
     finally:
         # Fix toonKit error
-        cmds.undoInfo(closeChunk = True)
+        print "Mirror Done"
+        # cmds.undoInfo(closeChunk = True)
 
 
 def tkMirror_old(*args, **kwargs):
