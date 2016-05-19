@@ -166,6 +166,7 @@ def tkMirror(*args, **kwargs):
         # Fix toonKit error
         print "Mirror Done"
         # cmds.undoInfo(closeChunk = True)
+        pass
 
 
 def tkMirror_old(*args, **kwargs):
