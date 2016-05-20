@@ -11,7 +11,7 @@ import maya.mel
 
 
 
-def setArnoldRenderOption(outputFormat):
+def setArnoldRenderOption(outputFormat, renderMode = ""):
 
     """
     this scripts sets the Arnold render options for production
@@ -24,14 +24,14 @@ def setArnoldRenderOption(outputFormat):
     print "#### {:>7}: runing rendering.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
     aspectRatio = 1.85
 
-
-    if mc.ls("|shot") and (mc.file(q=True, list = True)[0].split("/")[-4]) == "shot":
-        renderMode = "render"
-        #renderMode = "finalLayout"
-        print "#### info: Lighting mode render options"
-    else:
-        renderMode = "shading"
-        print "#### info: Shading mode render options"       
+    if renderMode == "":
+        if mc.ls("|shot") and (mc.file(q=True, list = True)[0].split("/")[-4]) == "shot":
+            renderMode = "render"
+            
+            print "#### info: Lighting mode render options"
+        else:
+            renderMode = "shading"
+            print "#### info: Shading mode render options"       
 
     #TEMPORAIRE
     mc.workspace(fileRule=["images","images"])
@@ -41,8 +41,12 @@ def setArnoldRenderOption(outputFormat):
     
     #get the "cam_" camera, stops if nothing found
     # if the camera has  an "aspectRatio" extra attribute sets the camera according to it
-    # make the camera renderable  
-    myCamName = mc.ls('*:cam_*',type = "camera")
+    # make the camera renderable
+    if renderMode == "shading":
+        myCamName = mc.ls('*:cam_shot_default*',type = "camera")
+    else:
+        myCamName = mc.ls('*:cam_*',type = "camera")
+
     if myCamName :
         if len(myCamName)>1:
             print "#### warning: several 'cam_*' have been found, proceeding with: "+myCamName[0]
@@ -131,7 +135,8 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.GISssSamples",0)
     mc.setAttr("defaultArnoldRenderOptions.GIVolumeSamples",3)
     mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp",1)
-    mc.setAttr("defaultArnoldRenderOptions.AASampleClamp",2.5)
+    mc.setAttr("defaultArnoldRenderOptions.AASampleClamp",1)
+    mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp_AOVs",1)
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
     mc.setAttr("defaultArnoldRenderOptions.skipLicenseCheck",1)
     mc.setAttr("defaultArnoldRenderOptions.log_verbosity",1)#warnig + info
@@ -150,9 +155,7 @@ def setArnoldRenderOption(outputFormat):
         mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",1)
         mc.setAttr("defaultArnoldRenderOptions.motion_frames",0.25)
         mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples",2)
-
-
-
+        mc.setAttr("defaultArnoldRenderOptions.aovMode", 1)
    
 
     mc.setAttr("defaultArnoldRenderOptions.GITotalDepth",4)
@@ -164,6 +167,119 @@ def setArnoldRenderOption(outputFormat):
     mc.setAttr("defaultArnoldRenderOptions.GIVolumeDepth",1)
     mc.setAttr("defaultArnoldRenderOptions.autoTransparencyDepth",10)
     
+    print "#### info: render options are now production ready"
+
+
+def setArnoldRenderOptionShot(outputFormat="exr", renderMode = 'finalLayout'):
+
+    """
+    this scripts sets the Arnold render options for production
+    it also gets the rendering camera, and set the aovs
+    sting --> "outputFormat": define the frame rendering format, only "png" and "exr" accepted.
+                                "exr" also activate the AOVss
+    """
+
+    print ""
+    print "#### {:>7}: runing rendering.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
+         
+    #TEMPORAIRE
+    #mc.workspace(fileRule=["images","images"])
+
+    # mmToIncheFactor = 0.0393700787401575
+    # camApertureInche = 35 * mmToIncheFactor 
+    
+    # from davos_maya.tool.general import entityFromScene
+    # from dminutes import maya_scene_operations as mop
+    # damShot = entityFromScene()
+    # oShotCam = mop.getShotCamera(damShot.name)
+
+    #     myCamName = mc.ls('*:cam_*',type = "camera")
+    #     allCam = mc.ls(type = "camera")
+    #     for eachCam in allCam:
+    #         if eachCam != myCamName:
+    #             mc.setAttr (eachCam+".renderable", 0)
+    #         else:
+    #             mc.setAttr (myCamName+".renderable", 1)     
+
+    mc.colorManagementPrefs(e=True, cmEnabled=False)
+
+    animationStartTime =  mc.playbackOptions( animationStartTime = True , q= True)
+    animationEndTime =  mc.playbackOptions( animationEndTime = True , q= True)
+
+    mc.setAttr("defaultRenderGlobals.startFrame",animationStartTime)
+    mc.setAttr("defaultRenderGlobals.endFrame",animationEndTime)
+    mc.setAttr("defaultRenderGlobals.byFrameStep",1)
+    mc.setAttr("defaultRenderGlobals.outFormatControl",0)
+    mc.setAttr("defaultRenderGlobals.animation",1)
+    mc.setAttr("defaultRenderGlobals.putFrameBeforeExt",1)
+    mc.setAttr("defaultRenderGlobals.extensionPadding",4)
+    mc.setAttr("defaultRenderGlobals.currentRenderer","arnold", type = "string")
+
+    maya.mel.eval('setMayaSoftwareFrameExt(3,0)')
+
+    deleteAovs(GUI = True)
+    createAovs(renderMode=renderMode)
+
+    #arnold Settings
+
+    #Image output settings
+    mc.setAttr("defaultArnoldDriver.aiTranslator","png", type = "string")
+    mc.setAttr("defaultArnoldDriver.pngFormat",0)
+
+    mc.setAttr("defaultArnoldDriver.aiTranslator","exr", type = "string")    
+    mc.setAttr("defaultArnoldDriver.exrCompression",3)#zip
+    mc.setAttr("defaultArnoldDriver.halfPrecision",1)
+    mc.setAttr("defaultArnoldDriver.autocrop",1)
+    mc.setAttr("defaultArnoldDriver.mergeAOVs",1)
+    mc.setAttr("defaultArnoldRenderOptions.threads_autodetect",0)
+    mc.setAttr("defaultArnoldRenderOptions.threads",-1)
+    mc.setAttr("defaultArnoldRenderOptions.aovMode", 1)
+
+    if outputFormat == "png":
+        mc.setAttr("defaultArnoldDriver.aiTranslator","png", type = "string")        
+    elif  outputFormat == "jpg":
+        mc.setAttr("defaultArnoldDriver.aiTranslator","jpeg", type = "string")
+
+    mc.setAttr("defaultArnoldRenderOptions.GIDiffuseSamples",0)
+    mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples",3)
+    mc.setAttr("defaultArnoldRenderOptions.GIRefractionSamples",0)
+    mc.setAttr("defaultArnoldRenderOptions.GISssSamples",0)
+    mc.setAttr("defaultArnoldRenderOptions.GIVolumeSamples",3)
+    mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp",1)
+    mc.setAttr("defaultArnoldRenderOptions.AASampleClamp",1)
+    mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp_AOVs",1)
+    mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures",1)
+    mc.setAttr("defaultArnoldRenderOptions.skipLicenseCheck",1)
+    mc.setAttr("defaultArnoldRenderOptions.log_verbosity",1)#warnig + info
+    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",1)
+    mc.setAttr("defaultArnoldRenderOptions.motion_frames",0.25)
+
+    if renderMode == 'render':
+        mc.setAttr("defaultArnoldRenderOptions.AASamples",8)
+        mc.setAttr ("defaultRenderLayer.attributeOverrideScript",  "castsShadows=1 receiveShadows=1",type = "string")
+        resolution = 2048
+    elif renderMode == 'finalLayout':
+        mc.setAttr("defaultArnoldRenderOptions.AASamples",2)
+        mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples",2)
+        mc.setAttr ("defaultRenderLayer.attributeOverrideScript",  "castsShadows=0 receiveShadows=0",type = "string")
+        resolution = 1920
+ 
+    mc.setAttr("defaultArnoldRenderOptions.GITotalDepth",4)
+    mc.setAttr("defaultArnoldRenderOptions.GIDiffuseDepth",0)
+    mc.setAttr("defaultArnoldRenderOptions.GIGlossyDepth",1)
+    mc.setAttr("defaultArnoldRenderOptions.GIDiffuseDepth",0)
+    mc.setAttr("defaultArnoldRenderOptions.GIRefractionDepth",4)
+    mc.setAttr("defaultArnoldRenderOptions.GIReflectionDepth",2)
+    mc.setAttr("defaultArnoldRenderOptions.GIVolumeDepth",1)
+    mc.setAttr("defaultArnoldRenderOptions.autoTransparencyDepth",10)
+
+    aspectRatio = 1.85
+    ### Maya settings 
+    mc.setAttr("defaultResolution.pixelAspect",1)
+    mc.setAttr("defaultResolution.deviceAspectRatio",aspectRatio)
+    mc.setAttr("defaultResolution.width",resolution)
+    mc.setAttr("defaultResolution.height",resolution/aspectRatio)
+
     print "#### info: render options are now production ready"
 
 
@@ -377,7 +493,7 @@ def createAovs(renderMode = "render"):
         #create aovs, type = rgb
         #unUsedAovNameList = [ "dmn_lambert", "dmn_toon", "dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour"  ],"dmn_rimToon_na1_na2"
         if renderMode == "finalLayout":
-            aovNameList = ["dmn_diffuse","dmn_contour_inci_occ", "dmn_mask08"]
+            aovNameList = ["dmn_mask08"]
         else:
             aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon","dmn_mask_transp","dmn_lgtMask01","dmn_lgtMask02"]
             if not 'aiAOV_Z' in mc.ls( type = "aiAOV"):
@@ -391,4 +507,89 @@ def createAovs(renderMode = "render"):
         print "#### {:>7}: 'createAovs' no 'defaultArnoldRenderOptions' found in the scene cannot create aovs".format("Info")
 
 
+def plugFinalLayoutCustomShader(dmnToonList=[], dmnInput = "dmnMask08", gui= True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="plugFinalLayoutCustomShader")
 
+    if not dmnToonList:
+        dmnToonList = mc.ls(type="dmnToon")
+
+    preConnectedInputL = []
+    failedDmnToonL = []
+    SuccededDmnToonL = []
+
+    for each in dmnToonList:
+
+        dmnInputConnection = mc.listConnections(each+'.'+dmnInput,connections = False, destination = False, source =True, plugs = True)
+        if dmnInputConnection:
+            preConnectedInputL.append(each)
+            continue
+
+        aiUtilNode = mc.shadingNode("aiUtility", asShader=True, name = "mat_finalLayout_aiUtility")
+        mc.setAttr(aiUtilNode+'.shadeMode', 2)
+        mc.setAttr(aiUtilNode+'.colorMode', 21)
+        aiAmbientOccNode = mc.shadingNode("aiAmbientOcclusion", asShader=True, name = "mat_finalLayout_aiAmbientOcclusion")
+        mc.setAttr(aiAmbientOccNode+'.samples', 2)
+        mc.setAttr(aiAmbientOccNode+'.spread', 0.8)
+        mc.setAttr(aiAmbientOccNode+'.farClip', 10)
+
+        try: 
+            mc.connectAttr(aiUtilNode+'.outColor', aiAmbientOccNode+'.white', force =True)
+            mc.connectAttr(aiAmbientOccNode+'.outColor', each+'.'+dmnInput, force =True)
+
+            opacityConnection = mc.listConnections(each+'.opacity',connections = False, destination = False, source =True, plugs = True)
+            opacityValue = mc.getAttr(each+'.opacity')
+            if opacityConnection:
+                opacityConnection = opacityConnection [0]
+                mc.connectAttr(opacityConnection, aiAmbientOccNode+'.opacity', force =True)
+            else:
+                mc.setAttr(aiAmbientOccNode+'.opacity', opacityValue[0][0], opacityValue[0][1] ,opacityValue[0][2], type = "double3")
+            SuccededDmnToonL.append(each)
+
+        except Exception,err:
+            log.printL("e", "{}".format(err))
+            failedDmnToonL.append(each)
+
+    if preConnectedInputL:
+        log.printL("i", "{} noded(s) skipped since '{}' input is already connected: '{}'".format( len(preConnectedInputL), dmnInput ,preConnectedInputL))
+    if failedDmnToonL:
+        log.printL("e", "{} noded(s) could not be proceeded : '{}'".format( len(failedDmnToonL), dmnInput ,failedDmnToonL))
+    if SuccededDmnToonL:
+        log.printL("i", "{} noded(s) proceeded: '{}'".format( len(SuccededDmnToonL) ,SuccededDmnToonL))
+
+
+
+def createFinalLayoutLight( gui=True, shotCam = "cam_shot_default_01:cam_shot_default"):
+
+    log = miscUtils.LogBuilder(gui=gui, funcName ="createFinalLayoutLight")
+
+    if mc.ls("|shot"):        
+        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePathElem = mainFilePath.split("/")
+        assetName = mainFilePathElem[-2]
+        assetType = mainFilePathElem[-3]
+        assetFileType = mainFilePathElem[-1].split("-")[0].split("_")[-1]
+        if  mainFilePathElem[-4] == "asset":
+            lgtRigFilePath = miscUtils.normPath(miscUtils.pathJoin("$ZOMB_MISC_PATH","shading","lightRigs",lgtRig+".ma"))
+            lgtRigFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(lgtRigFilePath)))
+        else:
+            txt= "You are not working in an 'asset' structure directory"
+            log.printL("e", txt, guiPopUp = True)
+            raise ValueError(txt)
+    else :
+        log.printL("e", "No '|asset' could be found in this scene", guiPopUp = True)
+        raise ValueError(txt)
+
+    grpLgt =  mc.ls("grp_light*", l=True)
+    mc.delete(grpLgt)
+
+    log.printL("i", "Importing '{}'".format(lgtRigFilePath_exp))
+    finalLayLight = mc.directionalLight(name= "lgt_finalLayout_directionalLight")
+    mc.setAttr(finalLayLight+'.aiCastShadows', 0)
+    mc.group( finalLayLight, name="grp_light",parent="shot")
+
+    finalLayLight = mc.ls(finalLayLight.replace("Shape",""), type="transform")[-1]
+
+    mc.orientConstraint(shotCam , finalLayLight, name="cst_orientLightAsCAm")
+
+
+    return dict(resultB=log.resultB, logL=log.logL)
