@@ -31,3 +31,16 @@ def entityFromScene(scenePath="", fail=True):
     damEntity = proj.entityFromPath(sCurScnPath, fail=fail)
 
     return damEntity
+
+def assertCurrentSceneMatches(sRcName, msg=""):
+
+    sCurScnPath = pm.sceneName()
+    damEntity = entityFromScene(sCurScnPath)
+    privScnFile = damEntity.getLibrary("private").getEntry(sCurScnPath, dbNode=False)
+    pubScnFile = privScnFile.getPublicFile()
+
+    if pubScnFile != damEntity.getResource("public", sRcName, dbNode=False):
+        sMsg = "Current scene is NOT a '{}'.".format(sRcName) if not msg else msg
+        raise AssertionError(sMsg)
+
+    return damEntity, privScnFile, pubScnFile

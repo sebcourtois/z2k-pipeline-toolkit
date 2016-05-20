@@ -90,7 +90,7 @@ def scanTexturesToEdit(damEntity):
             l = srcRes["udim_paths"]
             if l:
                 sSelUdimFileSet.update(l)
-                #print srcRes["abs_path"], srcRes["buddy_paths"]
+                #print srcRes["abs_path"], srcRes["fellow_paths"]
 
     for srcRes in scanResults:
 
@@ -114,7 +114,7 @@ def scanTexturesToEdit(damEntity):
             if sPubTexPath not in sSelUdimFileSet:
                 continue
 
-        sPubPathList = [sPubTexPath] + srcRes["buddy_paths"]
+        sPubPathList = [sPubTexPath] + srcRes["fellow_paths"]
         for i, sPubFilePath in enumerate(sPubPathList):
 
             scanLogDct = {}
@@ -133,7 +133,7 @@ def scanTexturesToEdit(damEntity):
                 resultDct = {"abs_path":sPubFilePath,
                              "scan_log":scanLogDct,
                              "file_nodes":[],
-                             "buddy_paths":[],
+                             "fellow_paths":[],
                              "publishable":False,
                              "drc_file":None,
                              "latest_file":None,
@@ -194,7 +194,10 @@ def editTextureFiles(dryRun=False):
     pubScnFile.assertEditedVersion(privScnFile, outcomes=False, remember=False)
     pubScnFile.ensureLocked()
 
-    preEditResults = dependency_scan.launch(damEntity, scanFunc=scanTexturesToEdit,
+    def scanFunc():
+        return scanTexturesToEdit(damEntity)
+
+    preEditResults = dependency_scan.launch(damEntity, scanFunc=scanFunc,
                                             modal=True,
                                             okLabel="Edit",
                                             expandTree=True,

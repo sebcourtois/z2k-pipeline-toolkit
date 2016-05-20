@@ -12,10 +12,10 @@ from pytd.util.sysutils import inDevMode, toStr
 from pytaya.core import modeling
 from pytaya.core import rendering
 from pytaya.util.sysutils import withSelectionRestored
-#from pytaya.core import system as myasys
 
 from davos_maya.tool.general import entityFromScene
 from dminutes import maya_scene_operations as mop
+from dminutes.geocaching import iterGeoGroups
 
 reload(modeling)
 reload(rendering)
@@ -97,7 +97,7 @@ def _batchExport(sOutDirPath, startTime, endTime, bakeCamera):
 def importGpuCache(sBaseName):
 
     damShot = entityFromScene()
-    sAbcDirPath = mop.getAlembicCacheDir(damShot).replace("\\", "/")
+    sAbcDirPath = mop.getGeoCacheDir(damShot).replace("\\", "/")
     sAbcPath = pathJoin(sAbcDirPath, sBaseName + ".abc")
 
     if not osp.isfile(sAbcPath):
@@ -130,13 +130,13 @@ def exportSelected():
 
     damShot = entityFromScene()
 
-    sGeoGrpList = tuple(mop.iterGeoGroups(sl=True))
+    sGeoGrpList = tuple(iterGeoGroups(sl=True))
     if not sGeoGrpList:
         raise RuntimeError("Selected assets has NO 'grp_geo' to export.")
 
     sShotCam = mop.getShotCamera(damShot.name, fail=True).name()
 
-    sAbcDirPath = mop.getAlembicCacheDir(damShot).replace("\\", "/")
+    sAbcDirPath = mop.getGeoCacheDir(damShot).replace("\\", "/")
     if not osp.exists(sAbcDirPath):
         os.makedirs(sAbcDirPath)
 
@@ -203,7 +203,7 @@ def toggleSelected():
 
     sCurSelList = mc.ls(sl=True)
 
-    for sGeoGrp in mop.iterGeoGroups(sl=True):
+    for sGeoGrp in iterGeoGroups(sl=True):
 
         sGpuXfm = "gpu_" + sGeoGrp.replace(":", "_")
         sNspc = sGeoGrp.rsplit("|", 1)[-1].rsplit(":", 1)[0]
@@ -252,7 +252,7 @@ def setAllCacheVisible(bShow):
 
     sToSelList = []
 
-    for sGeoGrp in tuple(mop.iterGeoGroups()):
+    for sGeoGrp in tuple(iterGeoGroups()):
 
         print sGeoGrp
 

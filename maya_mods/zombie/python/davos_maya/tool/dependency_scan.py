@@ -145,7 +145,9 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
                     wrappedNode = WrappedNode(fileNode)
                     wrappedNodes.append(wrappedNode)
 
-                    itemData = {"texts": [sNodeName, "", fileNode.getAttr("fileTextureName")],
+                    fileAttr = fileNode.listAttr(usedAsFilename=True)[0]
+
+                    itemData = {"texts": [sNodeName, "", fileAttr.get()],
                                 "roles":{Qt.UserRole:(0, wrappedNode)},
                                 "type":NODE_ITEM_TYPE
                                 }
@@ -257,7 +259,7 @@ def scanReferenceFiles(proj):
         resultDct = {"abs_path":sAbsPath,
                      "scan_log":scanLogDct,
                      "file_nodes":fileNodeDct[sNormPath],
-                     "buddy_paths":[],
+                     "fellow_paths":[],
                      "udim_paths":[],
                      "publishable":False,
                      "drc_file":drcFile,
@@ -311,7 +313,7 @@ def scanNodeAttrFiles(proj, **kwargs):
             resultDct = {"abs_path":sAbsPath,
                          "scan_log":scanLogDct,
                          "file_nodes":fileNodeDct[sNormPath],
-                         "buddy_paths":[],
+                         "fellow_paths":[],
                          "udim_paths":[],
                          "publishable":False,
                          "drc_file":drcFile,
@@ -344,7 +346,7 @@ def scanTextureFiles(damEntity):
     try:
         sPrivTexDirPath = damEntity.getPath("private", "texture_dir")
     except AttributeError as e:
-        pm.displayInfo(toStr(e))
+        pm.displayWarning(e.message)
         return []
 
     sPubTexDirPath = damEntity.getPath("public", "texture_dir")
@@ -424,10 +426,11 @@ def scanTextureFiles(damEntity):
             texFile = None
             bExists = osp.isfile(sTexAbsPath)
 
-            resultDct = {"abs_path":sTexAbsPath,
+            resultDct = {"dependency_type":"texture_dep",
+                         "abs_path":sTexAbsPath,
                          "scan_log":scanLogDct,
                          "file_nodes":fileNodeDct[sTexNormPath],
-                         "buddy_paths":[],
+                         "fellow_paths":[],
                          "udim_paths":sUdimPathList,
                          "publishable":False,
                          "drc_file":None,
@@ -522,46 +525,47 @@ def scanTextureFiles(damEntity):
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadFilename', sMsg))
                 sMsg = ""
 
-            # list buddy (associated) files
-            sBuddyItems = []
+            # list fellow (associated) files
+            sFellowItems = []
             if sTexExt == ".tga":
                 bColor = (sChannel == "col")
                 sPsdSeverity = sHighSeverity if bColor else "info"
-                sBuddyItems = [(".tx", "warning"), (".psd", sPsdSeverity)]
+                sFellowItems = [(".tx", "warning"), (".psd", sPsdSeverity)]
 
             elif sTexExt == ".jpg":
-                sBuddyItems.append(("HD.jpg", "info"))
+                sFellowItems.append(("HD.jpg", "info"))
 
-            for sBuddySufx, sBudSeverity in sBuddyItems:
+            for sFellowSufx, sBudSeverity in sFellowItems:
 
-                sSuffix = sBuddySufx
-                if sSeqsExt and ("." in sBuddySufx):
-                    sSuffix = sBuddySufx.replace(".", sSeqsExt + ".")
-                sBuddyPath = "".join((sBasePath, sSuffix))
+                sSuffix = sFellowSufx
+                if sSeqsExt and ("." in sFellowSufx):
+                    sSuffix = sFellowSufx.replace(".", sSeqsExt + ".")
+                sFellowPath = "".join((sBasePath, sSuffix))
 
-                if not osp.isfile(sBuddyPath):
+                if not osp.isfile(sFellowPath):
                     if not bPublicFile:
-                        sBuddyLabel = "".join(s.capitalize()for s in sBuddySufx.split("."))
-                        sStatusCode = sBuddyLabel.upper() + "FileNotFound"
+                        sFellowLabel = "".join(s.capitalize()for s in sFellowSufx.split("."))
+                        sStatusCode = sFellowLabel.upper() + "FileNotFound"
                         if sBudSeverity != "info":
-                            scanLogDct.setdefault(sBudSeverity, []).append((sStatusCode, sBuddyPath))
+                            scanLogDct.setdefault(sBudSeverity, []).append((sStatusCode, sFellowPath))
                 else:
-                    sFoundFileList.append(normCase(sBuddyPath))
+                    sFoundFileList.append(normCase(sFellowPath))
 
                     budScanLogDct = {}
-                    budFile = proj.entryFromPath(sBuddyPath)
+                    budFile = proj.entryFromPath(sFellowPath)
                     if budFile and budFile.isPublic():
 
-                        budScanLogDct.setdefault("info", []).append(('PublicFiles', sBuddyPath))
+                        budScanLogDct.setdefault("info", []).append(('PublicFiles', sFellowPath))
 
-                        if normCase(osp.dirname(sBuddyPath)) == normCase(sPubTexDirPath):
+                        if normCase(osp.dirname(sFellowPath)) == normCase(sPubTexDirPath):
                             privBudFile = budFile.getPrivateFile(weak=True)
                             sPrivFileList.append(normCase(privBudFile.absPath()))
 
-                    budResultDct = {"abs_path":sBuddyPath,
+                    budResultDct = {"dependency_type":"texture_dep",
+                                    "abs_path":sFellowPath,
                                     "scan_log":budScanLogDct,
                                     "file_nodes":[],
-                                    "buddy_paths":[],
+                                    "fellow_paths":[],
                                     "udim_paths":[],
                                     "publishable":False,
                                     "drc_file":budFile,
@@ -604,8 +608,8 @@ def scanTextureFiles(damEntity):
             resultDctList = [resultDct]
             if foundBudResList:
                 resultDctList.extend(foundBudResList)
-                sBuddyFileList = list(brd["abs_path"] for brd in foundBudResList)
-                resultDct["buddy_paths"] = sBuddyFileList
+                sFellowFileList = list(brd["abs_path"] for brd in foundBudResList)
+                resultDct["fellow_paths"] = sFellowFileList
 
             for resDct in resultDctList:
                 if resDct["exists"]:
@@ -638,15 +642,107 @@ def scanTextureFiles(damEntity):
             else:
                 continue
 
-            resultDct = {"abs_path":p,
+            resultDct = {"dependency_type":"texture_dep",
+                         "abs_path":p,
                          "scan_log":scanLogDct,
                          "file_nodes":[],
-                         "buddy_paths":[],
+                         "fellow_paths":[],
                          "udim_paths":[],
                          "publishable":False,
                          "drc_file":None,
                          }
             addResult(resultDct)
+
+    if scanResults:
+        scanResults[-1]["scan_severities"] = sAllSeveritySet
+        scanResults[-1]["publish_count"] = publishCount
+
+    return scanResults
+
+@setWaitCursor
+def scanAlembicFiles(damEntity, sSrcAbcDirPath):
+
+    proj = damEntity.project
+    #sAstName = damEntity.name
+
+    library = damEntity.getLibrary()
+
+    sPubTexDirPath = damEntity.getPath("public", "finalLayoutCache_dir")
+    if osp.exists(sPubTexDirPath):
+        pubTexDir = proj.entryFromPath(sPubTexDirPath)
+        pubTexDir.loadChildDbNodes()
+
+    allFileNodes = lsNodes("*", type='AlembicNode', not_rn=True)
+    scanResults = []
+    fileNodeDct = {}
+
+    sAllSeveritySet = set()
+    #sFoundFileList = []
+    publishCount = 0
+
+    def addResult(res):
+        scanResults.append(res)
+        sAllSeveritySet.update(res["scan_log"].iterkeys())
+
+    for fileNode in allFileNodes:
+
+        scanLogDct = {}
+
+        sAbcPath = fileNode.getAttr("abc_File")
+        if not sAbcPath:
+            continue
+
+        sAbcAbsPath = pathResolve(sAbcPath)
+        sAbcNormPath = normCase(sAbcAbsPath)
+
+        if sAbcNormPath in fileNodeDct:
+            fileNodeDct[sAbcNormPath].append(fileNode)
+            continue
+        else:
+            fileNodeDct[sAbcNormPath] = [fileNode]
+
+        bPublicFile = False
+        bExists = osp.isfile(sAbcAbsPath)
+
+        resultDct = {"dependency_type":"finalLayoutCache_dep",
+                     "abs_path":sAbcAbsPath,
+                     "scan_log":scanLogDct,
+                     "file_nodes":fileNodeDct[sAbcNormPath],
+                     "fellow_paths":[],
+                     "publishable":False,
+                     "drc_file":None,
+                     "exists":bExists,
+                     "public_file":None,
+                    }
+
+        sAbcDirPath, sAbcFilename = osp.split(sAbcAbsPath)
+
+        if not bExists:
+            scanLogDct.setdefault("error", []).append(('FileNotFound', sAbcAbsPath))
+            addResult(resultDct); continue
+        else:
+            #sFoundFileList.append(sAbcNormPath)
+            abcFile = proj.entryFromPath(sAbcAbsPath, dbNode=False)
+            resultDct["drc_file"] = abcFile
+
+            if abcFile and abcFile.isPublic():
+                bPublicFile = True
+                sHighSeverity = "warning"
+                scanLogDct.setdefault("info", []).append(('PublicFiles', sAbcAbsPath))
+                resultDct["public_file"] = abcFile
+            else:
+                sAbcPubPath = pathJoin(sPubTexDirPath, sAbcFilename)
+                resultDct["public_file"] = library._weakFile(sAbcPubPath, dbNode=False)
+
+        if (not bPublicFile) and (normCase(sAbcDirPath) != normCase(sSrcAbcDirPath)):
+            sMsg = ("Not in '{}'".format(osp.normpath(sSrcAbcDirPath)))
+            scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
+
+        _setPublishableState(resultDct)
+        if resultDct["publishable"]:
+            publishCount += 1
+
+        addResult(resultDct)
 
     if scanResults:
         scanResults[-1]["scan_severities"] = sAllSeveritySet
@@ -661,15 +757,15 @@ def _setPublishableState(resultDct):
         return
 
     drcFile = resultDct["drc_file"]
-    if not drcFile:
-        return
 
-    if not drcFile.isPrivate():
-        return
+    if drcFile:
+        if drcFile.isPublic():
+            return
+        pubFile = drcFile.getPublicFile(weak=True, dbNode=False)
+    else:
+        pubFile = resultDct.get("public_file")
 
     bPublishable = True
-
-    pubFile = drcFile.getPublicFile(weak=True, dbNode=False)
 
     dbNode = pubFile.getDbNode(fromDb=False)
     if dbNode:
@@ -702,17 +798,19 @@ Wait for the next synchro and retry publishing."""
             scanLogDct.setdefault("info", []).append(("Not Modified", "File has not been modified"))
         else:
             sMsg = ""
-            sBuddyFileList = resultDct["buddy_paths"]
-            if sBuddyFileList:
-                sExtList = tuple(osp.splitext(p)[-1] for p in sBuddyFileList)
+            sFellowFileList = resultDct["fellow_paths"]
+            if sFellowFileList:
+                sExtList = tuple(osp.splitext(p)[-1] for p in sFellowFileList)
                 sMsg = (", ".join(s.upper() for s in sExtList) + " found"
-                        if sBuddyFileList else "")
+                        if sFellowFileList else "")
             elif inDevMode():
                 sMsg = resultDct["abs_path"]
 
             scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
 
     resultDct["publishable"] = bPublishable
+
+    return bPublishable
 
 dialog = None
 
@@ -727,7 +825,7 @@ def launch(damEntity=None, scanFunc=None, modal=False, okLabel="OK",
     if scanFunc is None:
         scanResults = scanTextureFiles(damEntity)
     else:
-        scanResults = scanFunc(damEntity)
+        scanResults = scanFunc()
 
     if not scanResults:
         return scanResults

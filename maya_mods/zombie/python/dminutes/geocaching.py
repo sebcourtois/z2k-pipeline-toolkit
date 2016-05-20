@@ -2,7 +2,9 @@
 import os
 import os.path as osp
 
-from pytd.util.fsutils import pathJoin
+from collections import OrderedDict
+
+from pytd.util.fsutils import pathJoin, jsonWrite
 from pytd.util.sysutils import grouper, argToSet
 
 import maya.api.OpenMaya as om
@@ -13,15 +15,62 @@ import pymel.core as pm
 
 from pytaya.util import apiutils as myapi
 
-from davos_maya.tool.general import entityFromScene
+from davos_maya.tool.general import entityFromScene, assertCurrentSceneMatches
 
 from dminutes import maya_scene_operations as mop
 
 reload(mop)
 
-
 LOGGING_SETS = []
 UNUSED_TRANSFER_NODES = []
+
+
+def iterGeoGroups(**kwargs):
+
+    bSelected = kwargs.get("selected", False)
+    sObjList = kwargs.get("among", None)
+    sNmspcList = kwargs.get("namespaces", None)
+
+    if sObjList:
+        bSelected = False
+
+    if bSelected:
+        sObjList = mc.ls(sl=True, type="dagNode", o=True)
+
+    if sObjList:
+        sNmspcList = set(o.rsplit("|", 1)[-1].rsplit(":", 1)[0] for o in sObjList)
+    elif sNmspcList is None:
+        sNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
+
+    for sNmspc in sNmspcList:
+
+        if sNmspc.endswith("_cache"):
+            continue
+
+        sGeoGrp = sNmspc + ":grp_geo"
+        if mc.objExists(sGeoGrp):
+            yield sGeoGrp
+
+def withParallelEval(func):
+    def doIt(*args, **kwargs):
+        sEvalMode = mc.evaluationManager(q=True, mode=True)[0]
+        if sEvalMode != "parallel":
+            mc.evaluationManager(e=True, mode="parallel")
+            mc.refresh()
+        else:
+            sEvalMode = ""
+
+        try:
+            res = func(*args, **kwargs)
+        finally:
+            if sEvalMode:
+                mc.evaluationManager(e=True, mode=sEvalMode)
+        return res
+    return doIt
+
+def genShotNames(iSeq, *shotNums):
+    for n in shotNums:
+        yield "sq{:04d}_sh{:04d}a".format(iSeq, n)
 
 def getNamespace(sNode):
     return sNode.rsplit("|", 1)[-1].rsplit(":", 1)[0]
@@ -54,7 +103,6 @@ def listChildMeshes(sXfm, longName=False):
         return []
 
     return mc.ls(res, ni=True)
-
 
 def transferOutConnections(sSrcNode, sDstNode):
 
@@ -93,12 +141,73 @@ def breakConnections(sSide, sNodeAttr):
 
     return sConnectList
 
-@mop.withParallelEval
+def relevantXfmAttrs(sXfm):
+
+    flags = dict(unlocked=True, connectable=True, scalar=True)
+
+    sAttrSet = set(listForNone(mc.listAttr(sXfm, keyable=True, **flags)))
+    sAttrSet.update(listForNone(mc.listAttr(sXfm, userDefined=True, **flags)))
+
+    return set(at for at in sAttrSet if not (("." in at) and not mc.objExists(sXfm + "." + at)))
+
+def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None):
+
+    sDiscardAttrSet = argToSet(discardAttrs)
+
+    listAttrs = lambda n: listForNone(mc.listAttr(n, scalar=True, settable=True,
+                                                 visible=True, connectable=True))
+
+    bCheckIfExists = True
+    if callable(attrs):
+        sOnlyAttrSet = set()
+        listAttrs = attrs
+        bCheckIfExists = False
+    else:
+        sOnlyAttrSet = argToSet(attrs)
+
+    outData = OrderedDict()
+    for sNode in sNodeList:
+
+        sAttrSet = set(listAttrs(sNode))
+        if not sAttrSet:
+            continue
+
+        if sOnlyAttrSet:
+            sAttrSet &= sOnlyAttrSet
+
+        sAttrSet -= sDiscardAttrSet
+        if not sAttrSet:
+            continue
+
+        values = OrderedDict()
+
+        for sAttr in sAttrSet:
+
+            sNodeAttr = sNode + "." + sAttr
+
+            if bCheckIfExists and ("." in sAttr) and not mc.objExists(sNodeAttr):
+                continue
+
+            values[sAttr] = mc.getAttr(sNodeAttr)
+
+        outData[sNode] = values
+
+    return jsonWrite(sFilePath, outData)
+
+@withParallelEval
 def exportCaches(**kwargs):
 
-    damShot = entityFromScene()
+    sProcessLabel = kwargs.pop("processLabel", "Export")
+    bDryRun = kwargs.pop("dryRun", False)
 
-    sAbcDirPath = mop.getAlembicCacheDir(damShot).replace("\\", "/")
+    sMsg = "Caches can only be exported from an animation scene."
+    damShot = assertCurrentSceneMatches("anim_scene", msg=sMsg)[0]
+
+    sGeoGrpList = _confirmProcessing(sProcessLabel, **kwargs)
+    if not sGeoGrpList:
+        return False
+
+    sAbcDirPath = mop.getGeoCacheDir(damShot).replace("\\", "/")
     if not osp.exists(sAbcDirPath):
         os.makedirs(sAbcDirPath)
 
@@ -106,15 +215,52 @@ def exportCaches(**kwargs):
                  pm.playbackOptions(q=True, animationEndTime=True))
 
     sJobList = []
-    for sGeoGrp in mop.iterGeoGroups(**kwargs):
+    exportData = OrderedDict(source_scene=pm.sceneName())
+    jobsData = []
+
+    sJobOpts = "-noNormals -uvWrite -writeVisibility"
+    sJobFmt = "{options} -frameRange {frameRange[0]} {frameRange[1]} -root {root} -file {file}"
+
+    for sGeoGrp in sGeoGrpList:
+
+        if not mc.ls(sGeoGrp, dag=True, type="mesh"):
+            continue
+
         sNmspc = getNamespace(sGeoGrp)
         sAbcPath = pathJoin(sAbcDirPath, sNmspc + "_cache.abc")
-        sJob = ("-noNormals -uvWrite -writeVisibility -frameRange {range[0]} {range[1]} -root {root} -file {file}"
-                .format(range=frameRange, root=sGeoGrp, file=sAbcPath))
-        print sJob
-        sJobList.append(sJob)
 
-    return mc.AbcExport(v=True, j=sJobList)
+        jobKwargs = dict(options=sJobOpts, frameRange=frameRange, root=sGeoGrp, file=sAbcPath)
+        sJobCmd = sJobFmt.format(**jobKwargs)
+
+        sJobList.append(sJobCmd)
+        jobsData.append(jobKwargs)
+        print sJobCmd
+
+    exportData["jobs"] = jobsData
+
+    if not bDryRun:
+        try:
+            mc.AbcExport(v=True, j=sJobList)
+        finally:
+            p = pathJoin(sAbcDirPath, "abcExport.json")
+            jsonWrite(p, exportData)
+
+    return exportData
+
+def exportLayoutData():
+
+    sMsg = "Layout data can only be exported from a layout scene."
+    damShot = assertCurrentSceneMatches("layout_scene", msg=sMsg)[0]
+
+    sAbcDirPath = mop.getGeoCacheDir(damShot)
+    sFilePath = pathJoin(sAbcDirPath, damShot.name + "_layoutData.json")
+
+    exportScalarAttrs(sFilePath, mc.ls(mc.ls("*:asset", dag=True), et="transform"),
+                      attrs=relevantXfmAttrs)
+
+    pm.displayInfo("Layout data exported to '{}'".format(os.path.normpath(sFilePath)))
+
+    return sFilePath
 
 def getTransformMapping(sSrcDagRoot, sTrgtNamespace, consider=None, longName=False):
 
@@ -290,15 +436,6 @@ def getMeshMapping(xfmMappingItems, consider=None, longName=False):
 
     return tuple(itm for itm in mappingItems if itm)
 
-def relevantXfmAttrs(sXfm):
-
-    flags = dict(unlocked=True, connectable=True, scalar=True)
-
-    sAttrSet = set(listForNone(mc.listAttr(sXfm, keyable=True, **flags)))
-    sAttrSet.update(listForNone(mc.listAttr(sXfm, userDefined=True, **flags)))
-
-    return sAttrSet
-
 def transferXfmAttrs(astToAbcXfmMap, only=None, attrs=None, discardAttrs=None, dryRun=False):
 
     if isinstance(astToAbcXfmMap, dict):
@@ -341,6 +478,58 @@ def transferXfmAttrs(astToAbcXfmMap, only=None, attrs=None, discardAttrs=None, d
 
     return True
 
+def transferVisibilities(astToAbcXfmMap, dryRun=False):
+
+    if isinstance(astToAbcXfmMap, dict):
+        astToAbcXfmItems = tuple(astToAbcXfmMap.iteritems())
+    else:
+        astToAbcXfmItems = astToAbcXfmMap
+
+    sAttr = "visibility"
+
+    sHiddenList = []
+    sShowedList = []
+
+    for sAstXfm, sAbcXfm in iterMatchedObjects(astToAbcXfmItems):
+
+        sAbcVizAttr = sAbcXfm + "." + sAttr
+        sAstVizAttr = sAstXfm + "." + sAttr
+
+        bAbcViz = mc.getAttr(sAbcVizAttr)
+        bAstViz = mc.getAttr(sAstVizAttr)
+
+        if bAstViz == bAbcViz:
+            continue
+
+        if bAstViz:
+            sHiddenList.append(sAstXfm)
+            sMsg = "hidden: '{}'".format(sAstXfm)
+        else:
+            sShowedList.append(sAstXfm)
+            sMsg = "showed: '{}'".format(sAstXfm)
+
+        pm.displayInfo(sMsg)
+
+        try:
+            if not dryRun:
+                mc.setAttr(sAstVizAttr, bAbcViz)
+        except RuntimeError as e:
+            sMsg = e.message.strip()
+            if "locked or connected" in sMsg:
+                pm.displayWarning(sMsg)
+            else:
+                raise
+
+    if sHiddenList:
+        sNmspc = getNamespace(sHiddenList[0])
+        sObjSet = addLoggingSet("hidden_" + sNmspc)
+        mc.sets(sHiddenList, e=True, include=sObjSet)
+
+    if sShowedList:
+        sNmspc = getNamespace(sShowedList[0])
+        sObjSet = addLoggingSet("showed_" + sNmspc)
+        mc.sets(sShowedList, e=True, include=sObjSet)
+
 def _delUnusedTransferNodes():
 
     global UNUSED_TRANSFER_NODES
@@ -362,6 +551,8 @@ def _delUnusedTransferNodes():
 #    mc.refresh()
 #    mc.delete(sDelList)
 #    mc.refresh()
+
+    return
 
 def meshMismatchStr(st1, st2):
     return " ".join("{}={}".format(k, v) for k, v in sorted(st1.iteritems()) if v != st2.get(k))
@@ -451,6 +642,50 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
         sObjSet = addLoggingSet("TOPOLOGY_MISMATCH")
         mc.sets(sTopoDifferList, e=True, include=sObjSet)
 
+def _confirmProcessing(sProcessLabel, **kwargs):
+
+    bSelected = kwargs.pop("selected", None)
+
+    sObjList = None
+    bPrompt = False
+    if bSelected is None:
+        bPrompt = True
+        sSelList = mc.ls(sl=True, type="dagNode", o=True)
+        if sSelList:
+            bSelected = True
+            sObjList = sSelList
+        else:
+            bSelected = False
+
+    sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, among=sObjList, **kwargs))
+    if not sGeoGrpList:
+        sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
+        raise RuntimeError(sMsg)
+    elif bPrompt:
+        numGeoGrp = len(sGeoGrpList)
+        if bSelected:
+            sSep = "\n - "
+            sMsg = ("{} caches for {} selected asset{} ?\n"
+                    .format(sProcessLabel, numGeoGrp,
+                            "s" if numGeoGrp > 1 else ""))
+            sMsg += (sSep + sSep.join(sGeoGrpList))
+        else:
+            sMsg = "{} caches for all assets ?".format(sProcessLabel)
+
+        sRes = pm.confirmDialog(title='DO YOU WANT TO...',
+                                message=sMsg,
+                                button=['OK', 'Cancel'],
+                                icon="question")
+        if sRes == "Cancel":
+            pm.displayInfo("Canceled !")
+            return
+
+    return sGeoGrpList
+
+def seperatorStr(numLines, width=120, decay=20, reverse=False):
+    lines = (((numLines - 1 - i) * (width - ((i + 1) * decay)) * " ").center((width - (i * decay)), "#")
+             for i in xrange(numLines))
+    return "\n".join(sorted((l.center(width) for l in lines), reverse=reverse))
 
 def importCaches(**kwargs):
 
@@ -458,24 +693,50 @@ def importCaches(**kwargs):
     bRemoveRefs = kwargs.pop("removeRefs", False)
     bUseCacheObjset = kwargs.pop("useCacheSet", True)
 
-    damShot = entityFromScene()
-    sAbcDirPath = mop.getAlembicCacheDir(damShot)
-
-    oAbcRefList = []
-
+    sepWidth = 120
     def abort(oAbcRef):
         if bRemoveRefs and bDryRun:
             oAbcRef.remove()
 
+    if not bDryRun:
+        sMsg = "Caches can only be imported onto a final layout scene."
+        damShot = assertCurrentSceneMatches("finalLayout_scene", msg=sMsg)[0]
+    else:
+        damShot = entityFromScene()
+
+    sAbcDirPath = mop.getGeoCacheDir(damShot)
+    if not osp.isdir(sAbcDirPath):
+        raise EnvironmentError("No such directory: '{}'".format(sAbcDirPath))
+
+    sNmspcList = tuple(f.rsplit("_cache.abc")[0] for f in os.listdir(sAbcDirPath))
+
+    sProcessLabel = kwargs.pop("processLabel", "Import")
+    sGeoGrpList = _confirmProcessing(sProcessLabel, **kwargs)
+    if not sGeoGrpList:
+        return False
+
+    oAbcRefList = []
     oAbcRefDct = dict(pm.listReferences(namespaces=True, references=True))
 
-    for sAstGeoGrp in mop.iterGeoGroups(**kwargs):
+    pm.mel.ScriptEditor()
+    pm.mel.handleScriptEditorAction("maximizeHistory")
+
+    print  r"""
+   ______           __            ____                           __     _____ __             __           __
+  / ____/___ ______/ /_  ___     /  _/___ ___  ____  ____  _____/ /_   / ___// /_____ ______/ /____  ____/ /
+ / /   / __ `/ ___/ __ \/ _ \    / // __ `__ \/ __ \/ __ \/ ___/ __/   \__ \/ __/ __ `/ ___/ __/ _ \/ __  / 
+/ /___/ /_/ / /__/ / / /  __/  _/ // / / / / / /_/ / /_/ / /  / /_    ___/ / /_/ /_/ / /  / /_/  __/ /_/ /  
+\____/\__,_/\___/_/ /_/\___/  /___/_/ /_/ /_/ .___/\____/_/   \__/   /____/\__/\__,_/_/   \__/\___/\__,_/   
+                                           /_/                                                                                                                                                                               
+""".rstrip()
+
+    for sAstGeoGrp in sGeoGrpList:
 
         sAstNmspc = sAstGeoGrp.rsplit("|", 1)[-1].rsplit(":", 1)[0]
         sAbcNmspc = sAstNmspc + "_cache"
         sAbcPath = pathJoin(sAbcDirPath, sAbcNmspc + ".abc")
 
-        print "\nImporting caches from '{}'".format(sAbcPath)
+        print "\n" + (" " + sAstNmspc + " ").center(sepWidth, "-") + "\nImporting caches from '{}'".format(sAbcPath)
 
         if not osp.isfile(sAbcPath):
             pm.displayWarning("No such alembic file: '{}'".format(sAbcPath))
@@ -500,15 +761,15 @@ def importCaches(**kwargs):
         sCacheObjList = None
         if bUseCacheObjset:
 
-            sCacheObjsetName = sAstNmspc + ":set_meshCache"
-            sCacheObjset = mop.getNode(sCacheObjsetName)
+            sCacheSetName = sAstNmspc + ":set_meshCache"
+            sCacheObjset = mop.getNode(sCacheSetName)
             if not sCacheObjset:
-                pm.displayError("Could not found '{}' !".format(sCacheObjsetName))
+                pm.displayError("Could not found '{}' !".format(sCacheSetName))
                 abort(oAbcRef);continue
 
             sCacheObjList = mc.sets(sCacheObjset, q=True)
             if not sCacheObjList:
-                pm.displayError("'{}' is empty !".format(sCacheObjsetName))
+                pm.displayError("'{}' is empty !".format(sCacheSetName))
                 abort(oAbcRef);continue
 
         astToAbcXfmItems = getTransformMapping(sAstGeoGrp, sAbcNmspc,
@@ -517,9 +778,8 @@ def importCaches(**kwargs):
         astToAbcMeshItems = getMeshMapping(astToAbcXfmItems,
                                            consider=sCacheObjList)
 
-        transferXfmAttrs(astToAbcXfmItems, only=sCacheObjList, dryRun=bDryRun)
-
-        #mc.refresh()
+        transferXfmAttrs(astToAbcXfmItems, only=sCacheObjList, dryRun=bDryRun,
+                         discardAttrs="visibility")
 
         sRefAbcNode = ""
         sFoundList = mc.ls(sAbcNodeList, type="AlembicNode")
@@ -528,13 +788,22 @@ def importCaches(**kwargs):
             sRefAbcNode = sFoundList[0]
 
         transferMeshShapes(astToAbcMeshItems, only=sCacheObjList, dryRun=bDryRun)
-        #transferXfmAttrs(astToAbcXfmItems, attrs="visibility", dryRun=bDryRun)
+        transferVisibilities(astToAbcXfmItems, dryRun=bDryRun)
 
         if sRefAbcNode and (not bDryRun):
             sDupAbcNode = mc.duplicate(sRefAbcNode, ic=True)[0]
             transferOutConnections(sRefAbcNode, sDupAbcNode)
 
         abort(oAbcRef)
+
+    print r"""
+   ______           __            ____                           __     ____                 
+  / ____/___ ______/ /_  ___     /  _/___ ___  ____  ____  _____/ /_   / __ \____  ____  ___ 
+ / /   / __ `/ ___/ __ \/ _ \    / // __ `__ \/ __ \/ __ \/ ___/ __/  / / / / __ \/ __ \/ _ \
+/ /___/ /_/ / /__/ / / /  __/  _/ // / / / / / /_/ / /_/ / /  / /_   / /_/ / /_/ / / / /  __/
+\____/\__,_/\___/_/ /_/\___/  /___/_/ /_/ /_/ .___/\____/_/   \__/  /_____/\____/_/ /_/\___/ 
+                                           /_/                                                                                                                                      
+""".rstrip()
 
     mc.refresh()
 
@@ -564,10 +833,4 @@ def importCaches(**kwargs):
             for oAbcRef in oAbcRefList:
                 oAbcRef.remove()
 
-#def processAllOrSelected(func):
-#    def doIt(*args, **kwargs):
-#
-#
-#
-#    return doIt
-
+    return True

@@ -145,14 +145,12 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
         for i, oFileRef in enumerate(oFileRefList):
             print "Unloading {}/{}: '{}' ...".format(i + 1, numOkRefs, oFileRef.refNode.name())
             oFileRef.unload()
-            mc.refresh()
 
         if cleanEdits:
             for i, oFileRef in enumerate(oFileRefList):
                     print "Cleaning edits on {}/{}: '{}' ...".format(i + 1, numOkRefs, oFileRef.refNode.name())
                     oFileRef.clean()
-
-        if not cleanEdits:
+        else:
             sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution")
             removeRefEditByAttr(attr=sAttrList, GUI=False)
 
@@ -162,7 +160,7 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
             #oFileRef, mrcFile = items
             print "Switching {}/{}: '{}' ...".format(i + 1, numOkRefs, oFileRef.refNode.name())
             try:
-                oFileRef.replaceWith(mrcFile.envPath())
+                oFileRef.load(mrcFile.envPath())
             except Exception as e:
                 sMsg = toStr(e)
                 nonSwitchedRefList.append((oFileRef, sMsg))
@@ -483,6 +481,29 @@ def loadAssetsAsRenderRef(project=None, dryRun=False, selected=False):
     print sMsg
     displayFunc(sMsgHeader + "More details in Script Editor ----" + (70 * ">"))
 
+def importAssetRefsFromNamespaces(proj, sNmspcList, sRcName):
+
+    renderRefDct = {}
+    for sNmspc in sNmspcList:
+
+        sAstName = "_".join(sNmspc.split("_")[:3])
+        try:
+            damAst = proj.getAsset(sAstName)
+            mrcFile = damAst.getRcFile("public", sRcName, dbNode=False, fail=True)
+        except Exception as e:
+            renderRefDct[sNmspc] = e.message.strip()
+            continue
+
+        renderRefDct[sNmspc] = mrcFile
+
+    for sNmspc, mrcFile in sorted(renderRefDct.iteritems()):
+
+        if isinstance(mrcFile, basestring):
+            continue
+
+        mrcFile.mayaImportScene(ns=sNmspc)
+
+    return renderRefDct
 
 def listPrevizRefMeshes(project=None):
 

@@ -2,9 +2,7 @@
 import os
 import subprocess
 from tempfile import NamedTemporaryFile
-
 from itertools import izip
-from collections import OrderedDict
 
 import pymel.core as pm
 import pymel.util as pmu
@@ -22,6 +20,7 @@ from pytd.gui.dialogs import confirmDialog
 from pytd.util.fsutils import normCase
 from davos.core.damtypes import DamAsset
 from pytaya.core import cleaning
+from pytd.util.strutils import labelify
 
 osp = os.path
 
@@ -34,126 +33,79 @@ class PublishContext(object):
         self.prePublishInfos = prePublishInfos
         self.entity = kwargs.get("entity")
 
-def publishSceneDependencies(damEntity, depScanResults, prePublishInfos, **kwargs):
+def publishSceneDependencies(damEntity, sDependType, depScanResults, prePublishInfos, **kwargs):
 
     bDryRun = kwargs.pop("dryRun", False if not inDevMode() else bDevDryRun)
     sComment = prePublishInfos["comment"]
 
     proj = damEntity.project
 
-    sAllPathList = []
-    sBuddyPathList = []
-    sTexPathList = []
-    depDataDct = {}
+    sAllSrcPathList = []
+    sFellowPathList = []
+    sDependPathList = []
+    dependDataDct = {}
     for result in depScanResults:
 
+        if result["dependency_type"] != sDependType:
+            continue
+
         sAbsPath = result["abs_path"]
-        depDataDct[normCase(sAbsPath)] = result
+        dependDataDct[normCase(sAbsPath)] = result
 
         if not result["publishable"]:
             continue
 
-        if result["file_nodes"] or result["udim_paths"]:
-            sTexPathList.append(sAbsPath)
+        if result["file_nodes"] or result.get("udim_paths"):
+            sDependPathList.append(sAbsPath)
         else:
-            sBuddyPathList.append(sAbsPath)
+            sFellowPathList.append(sAbsPath)
 
-        sAllPathList.append(sAbsPath)
+        sAllSrcPathList.append(sAbsPath)
 
-    if not sAllPathList:
+    if not sAllSrcPathList:
         pm.displayInfo("No dependencies to publish.")
         return (not bDryRun)
 
-    if sTexPathList:
+    if sDependPathList:
 
         pm.mel.ScriptEditor()
         pm.mel.handleScriptEditorAction("maximizeHistory")
 
-        print "\n" + " Publishing texture files ".center(120, '-')
+        sDependLabel = labelify(sDependType.rsplit("_dep", 1)[0])
+        print "\n" + " Publishing {} files ".format(sDependLabel).center(120, '-')
 
-        publishItemsList = proj.publishDependencies("texture_dep",
-                                                      damEntity,
-                                                      sTexPathList,
-                                                      sComment,
-                                                      dryRun=bDryRun,
-                                                      **kwargs)
+        publishedDependItems = proj.publishDependencies(sDependType,
+                                                        damEntity,
+                                                        sDependPathList,
+                                                        sComment,
+                                                        dryRun=bDryRun,
+                                                        **kwargs)
 
-        publishItemsDct = OrderedDict(izip((normCase(p) for p in sTexPathList),
-                                            publishItemsList))
+        sUnchangedList = list(_filterNotPublishedPaths(sDependPathList, publishedDependItems))
 
-        sMsgFmt = "\nRelinking '{}' node: \n    from '{}'\n      to '{}'"
-
-        sUnchangedList = []
-        sUpdNodeList = []
-        for sTexPath, publishItems in izip(sTexPathList, publishItemsList):
-
-            versionFile = publishItems[1]
-            if not versionFile:
-                sUnchangedList.append(sTexPath)
-
-            sTexNormPath = normCase(sTexPath)
-
-            pubFile = None
-            depData = depDataDct[sTexNormPath]
-
-            sUdimPathList = depData["udim_paths"]
-            if sUdimPathList:
-                sUdimPath = sUdimPathList[0]
-                sUdimNormPath = normCase(sUdimPath)
-                if sUdimNormPath != sTexNormPath:
-                    pubFile = publishItemsDct.get(sUdimNormPath, (None, None))[0]
-                    if not pubFile:
-                        pubFile = proj.entryFromPath(sUdimPath, dbNode=False)
-                    depData = depDataDct[sUdimNormPath]
-
-            if pubFile is None:
-                pubFile = publishItems[0]
-
-            sPubEnvPath = pubFile.envPath("ZOMB_TEXTURE_PATH")
-
-            fileNodeList = depData["file_nodes"]
-            for fileNode in fileNodeList:
-
-                sNodeName = fileNode.name()
-                if sNodeName in sUpdNodeList:
-                    continue
-
-                sMsg = (sMsgFmt.format(sNodeName,
-                                       fileNode.getAttr("fileTextureName"),
-                                       sPubEnvPath))
-                print sMsg
-
-                if not bDryRun:
-                    fileNode.setAttr("fileTextureName", sPubEnvPath)
-
-                sUpdNodeList.append(sNodeName)
-
-    if sBuddyPathList:
+    if sFellowPathList:
         bUseSubprocess = False
         if not bUseSubprocess:
 
-            print "\n" + " Publishing related files (.psd, .tx, etc...) ".center(120, '-')
+            print "\n" + " Publishing fellow files (.psd, .tx, etc...) ".center(120, '-')
 
-            publishItemsList = proj.publishDependencies("texture_dep",
-                                                         damEntity,
-                                                         sBuddyPathList,
-                                                         sComment,
-                                                         dryRun=bDryRun,
-                                                         **kwargs)
+            publishedFellowItems = proj.publishDependencies(sDependType,
+                                                            damEntity,
+                                                            sFellowPathList,
+                                                            sComment,
+                                                            dryRun=bDryRun,
+                                                            **kwargs)
 
-            for sBuddyPath, publishItems in izip(sBuddyPathList, publishItemsList):
-                versionFile = publishItems[1]
-                if not versionFile:
-                    sUnchangedList.append(sBuddyPath)
+            sUnchangedList.extend(_filterNotPublishedPaths(sFellowPathList, publishedFellowItems))
 
         else:
             sMsg = """
-    Opening a new process to publish associated files: .psd, .tx, etc...
+    Opening a new process to publish fellow files: .psd, .tx, etc...
         """
             pm.displayWarning(sMsg)
 
             with NamedTemporaryFile(suffix=".txt", delete=False) as tmpFile:
-                tmpFile.write("\n".join(sBuddyPathList))
+                tmpFile.write("\n".join(sFellowPathList))
 
             p = publish_dependencies.__file__
 
@@ -164,7 +116,7 @@ def publishSceneDependencies(damEntity, depScanResults, prePublishInfos, **kwarg
                         "launch", "--update", "0", "--renew", "1",
                         sPython27Path,
                         sScriptPath,
-                        proj.name, "texture_dep",
+                        proj.name, sDependType,
                         damEntity.sgEntityType.lower(),
                         damEntity.name, tmpFile.name,
                         sComment, "--dryRun", str(int(bDryRun)),
@@ -176,27 +128,91 @@ def publishSceneDependencies(damEntity, depScanResults, prePublishInfos, **kwarg
 
             subprocess.Popen(sCmdArgs)
 
-    total = len(sAllPathList)
+    linkDependenciesToPublic(damEntity, sDependType, sDependPathList,
+                             publishedDependItems, dependDataDct, dryRun=bDryRun)
+
+    total = len(sAllSrcPathList)
     sSep = "\n"
 
-    w = len(max(sAllPathList, key=len))
+    w = len(max(sAllSrcPathList, key=len))
 
-    sUpdatedList = sAllPathList
+    sUpdatedList = sAllSrcPathList
     if sUnchangedList:
         count = len(sUnchangedList)
         sMsgTag = " Unchanged files: {}/{} ".format(count, total).center(w, '-')
         sMsgFiles = sSep.join(sUnchangedList)
         print sSep + sSep.join((sMsgTag, sMsgFiles, sMsgTag))
 
-        sUpdatedList = list(p for p in sAllPathList if p not in sUnchangedList)
+        sUpdatedList = list(p for p in sAllSrcPathList if p not in sUnchangedList)
 
     if sUpdatedList:
         count = len(sUpdatedList)
-        sMsgTag = " Updated files: {}/{} ".format(count, total).center(w, '-')
+        sMsgTag = " Published files: {}/{} ".format(count, total).center(w, '-')
         sMsgFiles = sSep.join(sUpdatedList)
         print sSep + sSep.join((sMsgTag, sMsgFiles, sMsgTag))
 
     return (not bDryRun)
+
+def linkDependenciesToPublic(damEntity, sDependType, sDepPathList, publishedItems,
+                             dependDataDct, **kwargs):
+
+    bDryRun = kwargs.pop("dryRun", False if not inDevMode() else bDevDryRun)
+
+    publishedItemsDct = dict(izip((normCase(p) for p in sDepPathList),
+                                        publishedItems))
+
+    sMsgFmt = "\nRelinking '{}' node: \n    from '{}'\n      to '{}'"
+
+    proj = damEntity.project
+
+    depConfDct = damEntity.getDependencyConf(sDependType)
+    sEnvVarName = depConfDct.get("env_var", "")
+
+    sLinkedList = []
+    for sTexPath, pubItems in izip(sDepPathList, publishedItems):
+
+        sTexNormPath = normCase(sTexPath)
+
+        pubFile = None
+        depData = dependDataDct[sTexNormPath]
+
+        sUdimPathList = depData.get("udim_paths")
+        if sUdimPathList:
+            sUdimPath = sUdimPathList[0]
+            sUdimNormPath = normCase(sUdimPath)
+            if sUdimNormPath != sTexNormPath:
+                pubFile = publishedItemsDct.get(sUdimNormPath, (None, None))[0]
+                if not pubFile:
+                    pubFile = proj.entryFromPath(sUdimPath, dbNode=False)
+                depData = dependDataDct[sUdimNormPath]
+
+        if pubFile is None:
+            pubFile = pubItems[0]
+
+        sPubEnvPath = pubFile.envPath(sEnvVarName)
+
+        fileNodeList = depData["file_nodes"]
+        for fileNode in fileNodeList:
+
+            sNodeName = fileNode.name()
+            if sNodeName in sLinkedList:
+                continue
+
+            fileAttr = fileNode.listAttr(usedAsFilename=True)[0]
+
+            sMsg = (sMsgFmt.format(sNodeName, fileAttr.get(), sPubEnvPath))
+            print sMsg
+
+            if not bDryRun:
+                fileAttr.set(sPubEnvPath)
+
+            sLinkedList.append(sNodeName)
+
+def _filterNotPublishedPaths(sSrcPathList, publishedItems):
+    for sSrcPath, pubItems in izip(sSrcPathList, publishedItems):
+        versionFile = pubItems[1]
+        if not versionFile:
+            yield sSrcPath
 
 def quickSceneCleanUp(damEntity):
 
@@ -212,9 +228,11 @@ def quickSceneCleanUp(damEntity):
 
     # optimize scene
     pmu.putEnv("MAYA_TESTING_CLEANUP", "1")
-    sCleanOptions = ("referencedOption",)
-    pm.mel.scOpt_performOneCleanup(sCleanOptions)
-    pmu.putEnv("MAYA_TESTING_CLEANUP", "")
+    sCleanOptList = ("referencedOption",)
+    try:
+        pm.mel.scOpt_performOneCleanup(sCleanOptList)
+    finally:
+        pmu.putEnv("MAYA_TESTING_CLEANUP", "")
 
 def publishCurrentScene(*args, **kwargs):
 
@@ -281,7 +299,8 @@ def publishCurrentScene(*args, **kwargs):
         prePublishFunc(publishCtx)
 
     if damEntity and depScanResults:
-        if not publishSceneDependencies(damEntity, depScanResults, prePublishInfos):
+        if not publishSceneDependencies(damEntity, "texture_dep",
+                                        depScanResults, prePublishInfos):
             return
 
     sSavedScnPath = myasys.saveScene(prompt=False, checkError=False)

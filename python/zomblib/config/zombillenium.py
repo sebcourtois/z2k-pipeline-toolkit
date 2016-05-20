@@ -197,6 +197,10 @@ class shot_lib(object):
                             },
     }
 
+    dependency_types = {
+    "finalLayoutCache_dep":{"location":"finalLayoutCache_dir", "checksum":True},
+    }
+
 class output_lib(object):
 
     dir_name = "output"

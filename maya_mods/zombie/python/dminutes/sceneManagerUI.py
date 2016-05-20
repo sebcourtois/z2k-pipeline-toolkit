@@ -755,7 +755,7 @@ def doRefreshSceneInfo(*args):
 
     assetDataList = SCENE_MANAGER.listRelatedAssets()
 
-    headerData = ["NB", "ASSET NAME", "ASSET FILE", "SHOTGUN LINK"]
+    headerData = ["NB", "ASSET NAME", "ASSET FILE", "SHOTGUN"]
 
     sRcNameList = set()
     for astData in assetDataList:

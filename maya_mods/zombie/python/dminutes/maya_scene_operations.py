@@ -8,10 +8,11 @@ from collections import OrderedDict
 #from itertools import izip
 
 import pymel.core as pc
+import pymel.util as pmu
 import maya.cmds as mc
 
 from pytd.util.sysutils import toStr, inDevMode
-from pytd.util.fsutils import jsonWrite, pathResolve
+from pytd.util.fsutils import jsonWrite, pathResolve, jsonRead
 
 from pytaya.util.sysutils import withSelectionRestored
 from pytaya.core.transform import matchTransform
@@ -20,7 +21,6 @@ from davos_maya.tool import reference as myaref
 from zomblib.editing import makeFilePath, movieToJpegSequence
 from dminutes.shotconformation import removeRefEditByAttr
 
-
 pc.mel.source("AEimagePlaneTemplate.mel")
 
 CAMPATTERN = 'cam_sq????_sh?????:*'
@@ -28,6 +28,9 @@ CAM_GLOBAL = 'Global_SRT'
 CAM_LOCAL = 'Local_SRT'
 CAM_DOLLY = 'Dolly'
 
+
+def getNamespace(sNode):
+    return sNode.rsplit("|", 1)[-1].rsplit(":", 1)[0]
 
 def undoAtOnce(func):
     def doIt(*args, **kwargs):
@@ -46,23 +49,6 @@ def withoutUndo(func):
             res = func(*args, **kwargs)
         finally:
             mc.undoInfo(stateWithoutFlush=True)
-        return res
-    return doIt
-
-def withParallelEval(func):
-    def doIt(*args, **kwargs):
-        sEvalMode = mc.evaluationManager(q=True, mode=True)[0]
-        if sEvalMode != "parallel":
-            mc.evaluationManager(e=True, mode="parallel")
-            mc.refresh()
-        else:
-            sEvalMode = ""
-
-        try:
-            res = func(*args, **kwargs)
-        finally:
-            if sEvalMode:
-                mc.evaluationManager(e=True, mode=sEvalMode)
         return res
     return doIt
 
@@ -426,7 +412,7 @@ def getWipCaptureDir(damShot):
 
     return mc.workspace(expandName=p)
 
-def getAlembicCacheDir(damShot):
+def getGeoCacheDir(damShot):
 
     p = osp.join(mc.workspace(fileRuleEntry="alembicCache"),
                  damShot.sequence,
@@ -934,7 +920,8 @@ def setupShotScene(sceneManager):
 
     sStepName = sceneManager.context["step"]["code"].lower()
     proj = sceneManager.context["damProject"]
-    sShotCode = sceneManager.context['entity']['code']
+    damShot = sceneManager.getDamShot()
+    sShotCode = damShot.name
 
     if sStepName == "animation":
 
@@ -953,18 +940,65 @@ def setupShotScene(sceneManager):
 
     elif sStepName == "final layout":
 
-        if not pc.listReferences(loaded=True, unloaded=False):
+        if not pc.listReferences(loaded=True, unloaded=True):
 
-            sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution")
-            removeRefEditByAttr(attr=sAttrList, GUI=False)
+            sAbcDirPath = getGeoCacheDir(damShot)
+            if not osp.isdir(sAbcDirPath):
+                raise EnvironmentError("Could not found caches directory: '{}'".format(sAbcDirPath))
+
+#            sNmspcList = tuple(f.rsplit("_cache.abc")[0] for f in os.listdir(sAbcDirPath)
+#                               if f.endswith("_cache.abc"))
+
+            p = osp.join(sAbcDirPath, "abcExport.json")
+            exportData = jsonRead(p)
+            sNmspcList = tuple(getNamespace(j["root"]) for j in exportData["jobs"])
+
+            assetRefDct = myaref.importAssetRefsFromNamespaces(proj, sNmspcList, "render_ref")
+
+            importLayoutVisibilities(damShot)
+
+            errorItems = tuple((k, v) for k, v in assetRefDct.iteritems() if isinstance(v, basestring))
+            if errorItems:
+                print 120 * "-"
+                for sNmspc, sMsg in errorItems:
+                    pc.displayError("'{}': {}".format(sNmspc, sMsg))
+
+        elif not pc.listReferences(loaded=True, unloaded=False):
 
             oFileRefList = pc.listReferences(loaded=False, unloaded=True)
+            for oFileRef in oFileRefList:
+                oFileRef.clean()
 
             myaref.loadAssetsAsRenderRef(project=proj, selected=False)
 
             for oFileRef in oFileRefList:
                 if not oFileRef.isLoaded():
                     oFileRef.load()
+
+            # optimize scene
+            pmu.putEnv("MAYA_TESTING_CLEANUP", "1")
+            sCleanOptList = ['nurbsSrfOption',
+                             'ptConOption',
+                             'pbOption',
+                             'deformerOption',
+                             'unusedSkinInfsOption',
+                             'groupIDnOption',
+                             'animationCurveOption',
+                             'snapshotOption',
+                             'unitConversionOption',
+                             'shaderOption',
+                             'displayLayerOption',
+                             'renderLayerOption',
+                             'setsOption',
+                             'referencedOption',
+                             'brushOption']
+            try:
+                pc.mel.scOpt_performOneCleanup(sCleanOptList)
+            except Exception as e:
+                pc.displayWarning(e.message)
+                pmu.putEnv("MAYA_TESTING_CLEANUP", "")
+
+            importLayoutVisibilities(damShot)
 
     #rename any other shot camera
     remainingCamera = None
@@ -1091,6 +1125,38 @@ def exportCamAlembic(**kwargs):
     print sHeader
 
     return res
+
+def importLayoutVisibilities(damShot):
+
+    sAbcDirPath = getGeoCacheDir(damShot)
+    sFilePath = osp.join(sAbcDirPath, damShot.name + "_layoutData.json")
+
+    layoutData = jsonRead(sFilePath)
+
+    for sObj, values in layoutData.iteritems():
+
+        if not mc.objExists(sObj):
+            continue
+
+        for sAttr, v in values.iteritems():
+
+            if "visibility" not in sAttr.lower():
+                continue
+
+            sObjAttr = sObj + "." + sAttr
+
+            if mc.getAttr(sObjAttr) == v:
+                continue
+
+            try:
+                mc.setAttr(sObjAttr, v)
+            except RuntimeError as e:
+                if "locked or connected" in e.message:
+                    pass
+                else:
+                    raise#pm.displayWarning(e.message.strip())
+
+    pc.displayInfo("Layout visibilities imported.")
 
 def switchShotCamToRef(scnMng, oShotCam):
 
@@ -1290,21 +1356,5 @@ def iterPanelsFromCam(oCamXfm, visible=False):
             if sVizPanels and (sPanel not in sVizPanels):
                 continue
             yield sPanel
-
-def iterGeoGroups(**kwargs):
-
-    if kwargs.get("selected", kwargs.get("sl", False)):
-        sNmspcList = set(n.rsplit("|", 1)[-1].rsplit(":", 1)[0] for n in mc.ls(sl=True))
-    else:
-        sNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
-
-    for sNmspc in sNmspcList:
-
-        if sNmspc.endswith("_cache"):
-            continue
-
-        sGeoGrp = sNmspc + ":grp_geo"
-        if mc.objExists(sGeoGrp):
-            yield sGeoGrp
 
 
