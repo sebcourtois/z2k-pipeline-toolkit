@@ -1558,7 +1558,7 @@ def releaseDateCompare(assetType = "prp", myFilter = ""):
     if not myFilter:
         print "listing file check for '{}' assets".format(assetType)
     else:
-        print "The following '{}' '{}' reference file are not up to date".format(myFilter,assetType)
+        print "The following '{}' '{}' references files are not up to date".format(myFilter,assetType)
 
     # if assetType == "set":
     #     print "#### Warning: modeling, anim, and render working file are actualy the same file for 'sets': master"
