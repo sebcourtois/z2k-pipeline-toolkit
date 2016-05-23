@@ -269,6 +269,39 @@ def tkMirror_old(*args, **kwargs):
         cmds.undoInfo(closeChunk = True)
 
 # general function
+
+
+
+def Z2K_applyVisLevel(objL="",curLvl="Controls_3",GUI=True,*args, **kwargs):
+    aboard = False
+    if objL in ["",None]:
+        cursel = cmds.ls(os=1)
+    else:
+        cursel = objL
+
+    # get level
+    if GUI:
+        res= cmds.confirmDialog(message="Select the target Display Level:",button=["Controls_0","Controls_1","Controls_2","Controls_3","Cancel"])    
+        if res not in ["Cancel"]:
+            print res
+            curLvl= res
+        else: aboard=True
+
+    if not aboard:
+        if cursel:
+            cursel = getShapeL(cmds.ls(sl=1)  )
+            for i in cursel:
+                multiply_Vis = cmds.createNode("multDoubleLinear")
+                cmds.connectAttr("VisHolder_Main_Ctrl." + curLvl, multiply_Vis + "." + "input2", f=1)
+                cmds.connectAttr("VisHolder_Main_Ctrl." + "Controls", multiply_Vis + "." + "input1", f=1)
+                try:
+                    cmds.connectAttr(multiply_Vis + "." + "output", i + "." + "v", f=1)
+                except Exception,err:
+                    print "    ",Exception,err
+
+    else:
+        print "    aboarded"
+
 def setCamForAnim(camera="", *args, **kwargs):
     """ Description: Set the camera parameters to keep it locked appart the one needed for '2d' pan zoom work.
         Return : [Bool,debugL]
@@ -361,6 +394,27 @@ def collectAttr(InObjList,mode = "all",*args,**kwargs):
         # print outlist
         return outlist
 
+def getShapeL(objL=[],*args, **kwargs):
+    print 'getShapeL()'
+    # return the corresponding shape list
+    objWithNoShapeL = []
+    objNotFoundL = []
+    shapeL=[]
+    for i in objL:
+        if cmds.objExists(i):
+            relL =cmds.listRelatives(i,c=1,s=1,ni=0)
+            if relL:
+                goodPathL= [i+"|" + x for x in relL]
+                shapeL.extend(goodPathL)
+            else:
+                objWithNoShapeL.append(i)
+        else:
+            objNotFoundL.append(i)
+
+    print "objNotFoundL=", objNotFoundL
+    print "objWithNoShapeL=", objWithNoShapeL 
+    return shapeL
+    
 # Z2K base general functions -----------------
 def getBaseModPath(*args, **kwargs):
     """Desription :recupere le path de base des modules
