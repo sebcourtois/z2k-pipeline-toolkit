@@ -6,7 +6,7 @@ import string
 import os
 
 from pytd.util.logutils import logMsg
-
+from datetime import datetime
 
 from dminutes import miscUtils
 reload (miscUtils)
@@ -1544,3 +1544,110 @@ def assetObjectClean( inParent= "|asset|grp_geo", clean = True, GUI = True):
         log.printL("i", txt)
 
     return dict(resultB=log.resultB, logL=log.logL)
+
+
+def releaseDateCompare(assetType = "prp", myFilter = ""):
+    assetDirS = os.environ["ZOMB_ASSET_PATH"]
+    assetDirS = miscUtils.pathJoin(assetDirS,assetType)
+    allAssetL = os.listdir(assetDirS)
+    allAssetL.sort()
+
+    animFileL=[]
+
+    print ""
+    if not myFilter:
+        print "listing file check for '{}' assets".format(assetType)
+    else:
+        print "The following '{}' '{}' references files are not up to date".format(myFilter,assetType)
+
+    # if assetType == "set":
+    #     print "#### Warning: modeling, anim, and render working file are actualy the same file for 'sets': master"
+
+    for each in allAssetL:
+        if not ".prp" in each and each != "prp_devTest_default"and each != "Thumbs.db":
+            refAnimFileS = each+"_animRef.mb"
+            refAnimFilePathS = miscUtils.pathJoin(assetDirS,each,'ref',refAnimFileS)
+            refRenderFileS = each+"_renderRef.mb"
+            refRenderFilePathS = miscUtils.pathJoin(assetDirS,each,'ref',refRenderFileS)
+
+            if assetType == "set":
+                modelingFileS = each+"_master.ma"
+                modelingFilePathS = miscUtils.pathJoin(assetDirS,each,modelingFileS)
+                animFileS = each+"_master.ma"
+                animFilePathS = miscUtils.pathJoin(assetDirS,each,animFileS)
+                renderFileS = each+"_master.ma"
+                renderFilePathS = miscUtils.pathJoin(assetDirS,each,renderFileS)
+            else:
+                modelingFileS = each+"_modeling.ma"
+                modelingFilePathS = miscUtils.pathJoin(assetDirS,each,modelingFileS)
+                animFileS = each+"_anim.ma"
+                animFilePathS = miscUtils.pathJoin(assetDirS,each,animFileS)
+                renderFileS = each+"_render.ma"
+                renderFilePathS = miscUtils.pathJoin(assetDirS,each,renderFileS)
+            
+            dateAnimRefS =   "................"
+            statDateAnimRef = 0
+            if os.path.isfile(refAnimFilePathS):
+                statInfo = os.stat(refAnimFilePathS)
+                statSize = statInfo.st_size
+                if statSize > 75000:
+                    statDateAnimRef = statInfo.st_mtime
+                    dateAnimRefS = datetime.fromtimestamp(int(statDateAnimRef)).strftime(u"%Y-%m-%d %H:%M")
+                    
+            dateRenderRefS = "................"
+            statDateRenderRef = 0    
+            if os.path.isfile(refRenderFilePathS):
+                statInfo = os.stat(refRenderFilePathS)
+                statSize = statInfo.st_size
+                if statSize > 75000:
+                    statDateRenderRef = statInfo.st_mtime
+                    dateRenderRefS = datetime.fromtimestamp(int(statDateRenderRef)).strftime(u"%Y-%m-%d %H:%M")
+
+            dateModelingS = "................"
+            statDateModeling = 0
+            if os.path.isfile(modelingFilePathS):
+                statInfo = os.stat(modelingFilePathS)
+                statSize = statInfo.st_size
+                if statSize > 75000:
+                    statDateModeling = statInfo.st_mtime
+                    dateModelingS = datetime.fromtimestamp(int(statDateModeling)).strftime(u"%Y-%m-%d %H:%M")
+
+            if assetType != "set":
+                dateAnimS = "................"
+                statDateAnim = 0
+                if os.path.isfile(animFilePathS):
+                    statInfo = os.stat(animFilePathS)
+                    statSize = statInfo.st_size
+                    if statSize > 75000:
+                        statDateAnim = statInfo.st_mtime
+                        dateAnimS = datetime.fromtimestamp(int(statDateAnim)).strftime(u"%Y-%m-%d %H:%M")
+                        animFileL.append(each)
+
+                dateRenderS = "................"
+                statDateRender = 0
+                if os.path.isfile(renderFilePathS):
+                    statInfo = os.stat(renderFilePathS)
+                    statSize = statInfo.st_size
+                    if statSize > 75000:
+                        statDateRender = statInfo.st_mtime
+                        dateRenderS = datetime.fromtimestamp(int(statDateRender)).strftime(u"%Y-%m-%d %H:%M")               
+
+
+            if assetType == "set":
+                if not myFilter:
+                    print "{:^48} master: {}   animRef: {}    renderRef: {}".format(each, dateModelingS, dateAnimRefS, dateRenderRefS)
+                elif myFilter == "anim":
+                    if statDateModeling > statDateAnimRef:
+                        print "{:^48} master: {}    animRef: {}".format(each, dateModelingS, dateAnimRefS)
+                elif myFilter == "render":
+                    if statDateModeling > statDateRenderRef:
+                        print "{:^48} master: {}    renderRef: {}".format(each, dateModelingS, dateRenderRefS)
+            else:
+                if not myFilter:
+                    print "{:^48} modeling: {}    anim: {}    animRef: {}    render: {}    renderRef: {}".format(each, dateModelingS, dateAnimS, dateAnimRefS, dateRenderS, dateRenderRefS)
+                elif myFilter == "anim":
+                    if statDateAnim > statDateAnimRef:
+                        print "{:^48} anim: {}    animRef: {}".format(each, dateAnimS, dateAnimRefS)
+                elif myFilter == "render":
+                    if statDateRender > statDateRenderRef:
+                        print "{:^48} render: {}    renderRef: {}".format(each, dateRenderS, dateRenderRefS)
