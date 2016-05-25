@@ -1,11 +1,7 @@
 
 import os
 import os.path as osp
-
 from collections import OrderedDict
-
-from pytd.util.fsutils import pathJoin, jsonWrite
-from pytd.util.sysutils import grouper, argToSet
 
 import maya.api.OpenMaya as om
 import maya.cmds as mc
@@ -13,9 +9,14 @@ import maya.cmds as mc
 from pymel.util.arguments import listForNone
 import pymel.core as pm
 
-from pytaya.util import apiutils as myapi
+from pytd.util.qtutils import setWaitCursor
+from pytd.util.fsutils import pathJoin, jsonWrite
+from pytd.util.sysutils import grouper, argToSet
 
-from davos_maya.tool.general import entityFromScene, assertCurrentSceneMatches
+from pytaya.util import apiutils as myapi
+from pytaya.core import system as myasys
+
+from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
 
 from dminutes import maya_scene_operations as mop
 
@@ -150,7 +151,8 @@ def relevantXfmAttrs(sXfm):
 
     return set(at for at in sAttrSet if not (("." in at) and not mc.objExists(sXfm + "." + at)))
 
-def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None):
+def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None,
+                      addAttrs=None, dryRun=False):
 
     sDiscardAttrSet = argToSet(discardAttrs)
 
@@ -165,20 +167,20 @@ def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None):
     else:
         sOnlyAttrSet = argToSet(attrs)
 
-    outData = OrderedDict()
-    count = len(sNodeList)
-    for i, sNode in enumerate(sNodeList):
+    sAddAttrSet = argToSet(addAttrs)
 
-        print "Processing {}/{} node: {} ...".format(i + 1, count, sNode)
+    outData = OrderedDict()
+    #count = len(sNodeList)
+    for sNode in sNodeList:
 
         sAttrSet = set(listAttrs(sNode))
-        if not sAttrSet:
-            continue
 
         if sOnlyAttrSet:
             sAttrSet &= sOnlyAttrSet
 
         sAttrSet -= sDiscardAttrSet
+        sAttrSet.update(sAddAttrSet)
+
         if not sAttrSet:
             continue
 
@@ -195,7 +197,54 @@ def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None):
 
         outData[sNode] = values
 
-    return jsonWrite(sFilePath, outData)
+    if not dryRun:
+        jsonWrite(sFilePath, outData)
+
+@setWaitCursor
+def exportLayoutInfo(**kwargs):
+
+    bPublish = kwargs.get("publish", False)
+    bDryRun = kwargs.pop("dryRun", False)
+
+    scnInfos = infosFromScene()
+    damShot = scnInfos["dam_entity"]
+    privScnFile = scnInfos["rc_file"]
+
+    sMsg = "Layout infos can only be exported from a layout scene (of course)."
+    assertSceneInfoMatches(scnInfos, "layout_scene", msg=sMsg)
+
+    sPrivFilePath = damShot.getPath("private", "layoutInfo_file")
+
+    sDirPath = os.path.dirname(sPrivFilePath)
+    if (not os.path.exists(sDirPath)) and (not bDryRun):
+        os.makedirs(sDirPath)
+
+    sAllCrvList = mc.ls(mc.ls("*:asset", dag=True, ni=True), et="nurbsCurve", long=True)
+    sCrvXfmList = tuple(s.rsplit("|", 1)[0] for s in sAllCrvList if ":tkrig|" not in s.lower())
+
+    sXfmList = mc.ls(mc.ls("*:grp_geo", dag=True, ni=True), et="transform")
+    sXfmList.extend(mc.ls(sCrvXfmList, et="transform"))
+    if not sXfmList:
+        pm.displayWarning("No layout info to export !")
+        return
+
+    print " Exporting layout info... ".center(100, "-")
+
+    exportScalarAttrs(sPrivFilePath, sXfmList, attrs=relevantXfmAttrs,
+                      addAttrs="worldMatrix", dryRun=bDryRun)
+
+    res = sPrivFilePath
+    if bPublish:
+        sComment = "from {}".format(privScnFile.name)
+
+        pubFile = damShot.getRcFile("public", "layoutInfo_file", weak=True)
+        parentDir = pubFile.parentDir()
+        res = parentDir.publishFile(sPrivFilePath, autoLock=True, autoUnlock=True,
+                                    comment=sComment, dryRun=bDryRun, saveChecksum=True)
+    else:
+        pm.displayInfo("Layout info exported to '{}'".format(os.path.normpath(sPrivFilePath)))
+
+    return res
 
 @withParallelEval
 def exportCaches(**kwargs):
@@ -203,8 +252,11 @@ def exportCaches(**kwargs):
     sProcessLabel = kwargs.pop("processLabel", "Export")
     bDryRun = kwargs.pop("dryRun", False)
 
+    scnInfos = infosFromScene()
+    damShot = scnInfos["dam_entity"]
+
     sMsg = "Caches can only be exported from an animation scene."
-    damShot = assertCurrentSceneMatches("anim_scene", msg=sMsg)[0]
+    assertSceneInfoMatches(scnInfos, "anim_scene", msg=sMsg)
 
     sGeoGrpList, bSelected = _confirmProcessing(sProcessLabel, **kwargs)
     if not sGeoGrpList:
@@ -251,39 +303,31 @@ def exportCaches(**kwargs):
 
     return exportData
 
-def exportLayoutInfo(**kwargs):
+def exportFinalLayoutData(damShot, dryRun=True):
 
-    bPublish = kwargs.get("publish", False)
+    try:
+        layoutScene = None
+        layoutInfoFile = damShot.getRcFile("public", "layoutInfo_file", weak=True)
+        if not layoutInfoFile.exists():
+            layoutScene = damShot.getRcFile("public", "layout_scene", fail=True, dbNode=False)
+            layoutScene = layoutScene.getVersionFile(-1, fail=True, refresh=True)
 
-    sMsg = "Layout data can only be exported from a layout scene."
-    damShot, privScnFile, _ = assertCurrentSceneMatches("layout_scene", msg=sMsg)
+        animScene = damShot.getRcFile("public", "anim_scene", fail=True, dbNode=False)
+        animScene = animScene.assertLatestFile(returnVersion=True)
 
-    sPrivFilePath = damShot.getPath("private", "layoutInfo_file")
+        if layoutScene:
+            print "<{}> layout infos file not found, so let's export it...".format(damShot)
+            myasys.openScene(layoutScene.absPath(), force=True, fail=False)
+            mc.refresh()
+            if not dryRun:
+                exportLayoutInfo(publish=True, dryRun=dryRun)
 
-    sDirPath = os.path.dirname(sPrivFilePath)
-    if not os.path.exists(sDirPath):
-        os.makedirs(sDirPath)
+        myasys.openScene(animScene.absPath(), force=True, fail=False)
+        mc.refresh()
 
-    sXfmList = mc.ls(mc.ls("*:asset", dag=True), et="transform")
-    sXfmList = tuple(_iterNodePrefixedWith(sXfmList, "grp", "geo", "ctrl"))
-    if not sXfmList:
-        pm.displayWarning("Nothing layout info to export !")
-        return
-
-    exportScalarAttrs(sPrivFilePath, sXfmList, attrs=relevantXfmAttrs)
-
-    res = sPrivFilePath
-    if bPublish:
-        sComment = "from {}".format(privScnFile.name)
-
-        pubFile = damShot.getRcFile("public", "layoutInfo_file", weak=True)
-        parentDir = pubFile.parentDir()
-        res = parentDir.publishFile(sPrivFilePath, autoLock=True, autoUnlock=True,
-                                    comment=sComment, dryRun=False, saveChecksum=True)
-
-    #pm.displayInfo("Layout infos exported to '{}'".format(os.path.normpath(sPrivFilePath)))
-
-    return res
+        exportCaches(selected=False, dryRun=dryRun)
+    finally:
+        myasys.newScene(force=True)
 
 def _iterNodePrefixedWith(sNodeList, *prefixes):
     for sNode in sNodeList:
@@ -706,8 +750,8 @@ def _confirmProcessing(sProcessLabel, **kwargs):
                                 button=['OK', 'Cancel'],
                                 icon="question")
         if sRes == "Cancel":
-            pm.displayInfo("Canceled !")
-            return
+            #pm.displayInfo("Canceled !")
+            raise RuntimeWarning("Canceled !")
 
     return sGeoGrpList, bSelected
 
@@ -727,11 +771,12 @@ def importCaches(**kwargs):
         if bRemoveRefs:# and bDryRun:
             oAbcRef.remove()
 
+    scnInfos = infosFromScene()
+    damShot = scnInfos["dam_entity"]
+
     if not bDryRun:
         sMsg = "Caches can only be imported onto a final layout scene."
-        damShot = assertCurrentSceneMatches("finalLayout_scene", msg=sMsg)[0]
-    else:
-        damShot = entityFromScene()
+        assertSceneInfoMatches(scnInfos, "finalLayout_scene", msg=sMsg)
 
     sAbcDirPath = mop.getGeoCacheDir(damShot)
     if not osp.isdir(sAbcDirPath):

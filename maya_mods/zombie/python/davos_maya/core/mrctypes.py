@@ -45,9 +45,13 @@ class MrcFile(DrcFile):
 
         return p
 
-    def mayaOpen(self, checkFile=True, existing="", **kwargs):
+    def mayaOpen(self, **kwargs):
 
-        if checkFile:
+        bCheckFile = kwargs.pop("checkFile", True)
+        sExisting = kwargs.pop("existing", "")
+        bPrompt = kwargs.pop("prompt", False)
+
+        if bCheckFile:
             assert self.isFile(), "File does NOT exists !"
             self.assertIsMayaScene()
 
@@ -56,8 +60,14 @@ class MrcFile(DrcFile):
             if self.versionFromName() is None:
                 sVersSuffix = mkVersionSuffix(self.currentVersion)
 
+            srcFile = self.assertLatestFile(refresh=True, newerFix=False,
+                                            prompt=bPrompt, strict=bPrompt)
+            if srcFile == self:
+                srcFile = None
+
             sSuffix = "".join((sVersSuffix, '-', 'readonly'))
-            privFile, _ = self.copyToPrivateSpace(suffix=sSuffix, existing=existing)
+            privFile, _ = self.copyToPrivateSpace(suffix=sSuffix, existing=sExisting,
+                                                  sourceFile=srcFile)
         else:
             privFile = self
 

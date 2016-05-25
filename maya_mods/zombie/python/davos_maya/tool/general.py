@@ -32,19 +32,6 @@ def entityFromScene(scenePath="", fail=True):
 
     return damEntity
 
-def assertCurrentSceneMatches(sRcName, msg=""):
-
-    sCurScnPath = pm.sceneName()
-    damEntity = entityFromScene(sCurScnPath)
-    privScnFile = damEntity.getLibrary("private").getEntry(sCurScnPath, dbNode=False)
-    pubScnFile = privScnFile.getPublicFile()
-
-    if pubScnFile != damEntity.getResource("public", sRcName, dbNode=False):
-        sMsg = "Current scene is NOT a '{}'.".format(sRcName) if not msg else msg
-        raise AssertionError(sMsg)
-
-    return damEntity, privScnFile, pubScnFile
-
 def infosFromScene(scenePath="", fail=True):
 
     scnInfos = {}
@@ -67,4 +54,9 @@ def infosFromScene(scenePath="", fail=True):
 
     return scnInfos
 
+def assertSceneInfoMatches(scnInfos, sRcName, msg=""):
+
+    if scnInfos.get("resource") != sRcName:
+        sMsg = "Current scene is NOT a '{}'.".format(sRcName) if not msg else msg
+        raise AssertionError(sMsg)
 

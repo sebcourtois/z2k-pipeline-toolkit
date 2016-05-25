@@ -1147,6 +1147,9 @@ def importLayoutVisibilities(layoutData):
 
             sObjAttr = sObj + "." + sAttr
 
+            if not mc.objExists(sObjAttr):
+                pc.displayInfo("No such attribute: {}".format(sObjAttr))
+
             if mc.getAttr(sObjAttr) == v:
                 continue
 

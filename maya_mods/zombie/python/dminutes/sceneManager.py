@@ -974,11 +974,18 @@ class SceneManager():
 
         sStepCode = self.context["step"]["code"].lower()
 
+        if sStepCode not in ("previz 3d", "stereo") and self.isShotCamEdited():
+            self.exportCamAnimFiles(publish=True)
+            self.importShotCamAbcFile()
+            mop.setCamAsPerspView(self.getShotCamera())
+
+    def postPublishCurrentScene(self, publishCtx, **kwargs):
+
+        sStepCode = self.context["step"]["code"].lower()
+
         if sStepCode == "stereo":
             self.exportStereoCamFiles(publish=True)
             return
-
-        bPreviz = (sStepCode == "previz 3d")
 
         # here is incerted the publish of the camera of the scene
         print "exporting the camera of the shot"
@@ -989,11 +996,6 @@ class SceneManager():
             # here is the publish of the infoSet file with the position of the global and local srt of sets assets
             infoSetExpI = infoE.infoSetExp()
             infoSetExpI.export(sceneName=jpZ.getShotName())
-
-        if (not bPreviz) and self.isShotCamEdited():
-            self.exportCamAnimFiles(publish=True)
-            self.importShotCamAbcFile()
-            mop.setCamAsPerspView(self.getShotCamera())
 
     def assertBeforePublish(self):
 
@@ -1027,8 +1029,8 @@ class SceneManager():
                              icon="critical")
             return False
 
-        res = publishCurrentScene(prePublishFunc=self.prePublishCurrentScene)
-#                                  dependencies=False)
+        res = publishCurrentScene(prePublishFunc=self.prePublishCurrentScene,
+                                  postPublishFunc=self.postPublishCurrentScene)
 
         return res
 
