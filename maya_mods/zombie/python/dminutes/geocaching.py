@@ -166,7 +166,10 @@ def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None):
         sOnlyAttrSet = argToSet(attrs)
 
     outData = OrderedDict()
-    for sNode in sNodeList:
+    count = len(sNodeList)
+    for i, sNode in enumerate(sNodeList):
+
+        print "Processing {}/{} node: {} ...".format(i + 1, count, sNode)
 
         sAttrSet = set(listAttrs(sNode))
         if not sAttrSet:
@@ -203,7 +206,7 @@ def exportCaches(**kwargs):
     sMsg = "Caches can only be exported from an animation scene."
     damShot = assertCurrentSceneMatches("anim_scene", msg=sMsg)[0]
 
-    sGeoGrpList = _confirmProcessing(sProcessLabel, **kwargs)
+    sGeoGrpList, bSelected = _confirmProcessing(sProcessLabel, **kwargs)
     if not sGeoGrpList:
         return False
 
@@ -242,25 +245,51 @@ def exportCaches(**kwargs):
         try:
             mc.AbcExport(v=True, j=sJobList)
         finally:
-            p = pathJoin(sAbcDirPath, "abcExport.json")
-            jsonWrite(p, exportData)
+            if not bSelected:
+                p = pathJoin(sAbcDirPath, "abcExport.json")
+                jsonWrite(p, exportData)
 
     return exportData
 
-def exportLayoutData():
+def exportLayoutInfo(**kwargs):
+
+    bPublish = kwargs.get("publish", False)
 
     sMsg = "Layout data can only be exported from a layout scene."
-    damShot = assertCurrentSceneMatches("layout_scene", msg=sMsg)[0]
+    damShot, privScnFile, _ = assertCurrentSceneMatches("layout_scene", msg=sMsg)
 
-    sAbcDirPath = mop.getGeoCacheDir(damShot)
-    sFilePath = pathJoin(sAbcDirPath, damShot.name + "_layoutData.json")
+    sPrivFilePath = damShot.getPath("private", "layoutInfo_file")
 
-    exportScalarAttrs(sFilePath, mc.ls(mc.ls("*:asset", dag=True), et="transform"),
-                      attrs=relevantXfmAttrs)
+    sDirPath = os.path.dirname(sPrivFilePath)
+    if not os.path.exists(sDirPath):
+        os.makedirs(sDirPath)
 
-    pm.displayInfo("Layout data exported to '{}'".format(os.path.normpath(sFilePath)))
+    sXfmList = mc.ls(mc.ls("*:asset", dag=True), et="transform")
+    sXfmList = tuple(_iterNodePrefixedWith(sXfmList, "grp", "geo", "ctrl"))
+    if not sXfmList:
+        pm.displayWarning("Nothing layout info to export !")
+        return
 
-    return sFilePath
+    exportScalarAttrs(sPrivFilePath, sXfmList, attrs=relevantXfmAttrs)
+
+    res = sPrivFilePath
+    if bPublish:
+        sComment = "from {}".format(privScnFile.name)
+
+        pubFile = damShot.getRcFile("public", "layoutInfo_file", weak=True)
+        parentDir = pubFile.parentDir()
+        res = parentDir.publishFile(sPrivFilePath, autoLock=True, autoUnlock=True,
+                                    comment=sComment, dryRun=False, saveChecksum=True)
+
+    #pm.displayInfo("Layout infos exported to '{}'".format(os.path.normpath(sPrivFilePath)))
+
+    return res
+
+def _iterNodePrefixedWith(sNodeList, *prefixes):
+    for sNode in sNodeList:
+        sPrefix = sNode.rsplit("|", 1)[-1].rsplit(":")[-1].split("_", 1)[0]
+        if sPrefix in prefixes:
+            yield sNode
 
 def getTransformMapping(sSrcDagRoot, sTrgtNamespace, consider=None, longName=False):
 
@@ -680,7 +709,7 @@ def _confirmProcessing(sProcessLabel, **kwargs):
             pm.displayInfo("Canceled !")
             return
 
-    return sGeoGrpList
+    return sGeoGrpList, bSelected
 
 def seperatorStr(numLines, width=120, decay=20, reverse=False):
     lines = (((numLines - 1 - i) * (width - ((i + 1) * decay)) * " ").center((width - (i * decay)), "#")
@@ -694,8 +723,8 @@ def importCaches(**kwargs):
     bUseCacheObjset = kwargs.pop("useCacheSet", True)
 
     sepWidth = 120
-    def abort(oAbcRef):
-        if bRemoveRefs and bDryRun:
+    def doneWith(oAbcRef):
+        if bRemoveRefs:# and bDryRun:
             oAbcRef.remove()
 
     if not bDryRun:
@@ -708,10 +737,8 @@ def importCaches(**kwargs):
     if not osp.isdir(sAbcDirPath):
         raise EnvironmentError("No such directory: '{}'".format(sAbcDirPath))
 
-    sNmspcList = tuple(f.rsplit("_cache.abc")[0] for f in os.listdir(sAbcDirPath))
-
     sProcessLabel = kwargs.pop("processLabel", "Import")
-    sGeoGrpList = _confirmProcessing(sProcessLabel, **kwargs)
+    sGeoGrpList, _ = _confirmProcessing(sProcessLabel, **kwargs)
     if not sGeoGrpList:
         return False
 
@@ -753,10 +780,8 @@ def importCaches(**kwargs):
             oAbcRef = pm.PyNode(sAbcNodeList[0]).referenceFile()
             sAbcNmspc = oAbcRef.namespace
 
-        if not (bRemoveRefs and bDryRun):
+        if not (bRemoveRefs):
             oAbcRefList.append(oAbcRef)
-#        else:
-#            mc.refresh()
 
         sCacheObjList = None
         if bUseCacheObjset:
@@ -765,12 +790,12 @@ def importCaches(**kwargs):
             sCacheObjset = mop.getNode(sCacheSetName)
             if not sCacheObjset:
                 pm.displayError("Could not found '{}' !".format(sCacheSetName))
-                abort(oAbcRef);continue
+                doneWith(oAbcRef);continue
 
             sCacheObjList = mc.sets(sCacheObjset, q=True)
             if not sCacheObjList:
                 pm.displayError("'{}' is empty !".format(sCacheSetName))
-                abort(oAbcRef);continue
+                doneWith(oAbcRef);continue
 
         astToAbcXfmItems = getTransformMapping(sAstGeoGrp, sAbcNmspc,
                                                 consider=sCacheObjList)
@@ -784,7 +809,6 @@ def importCaches(**kwargs):
         sRefAbcNode = ""
         sFoundList = mc.ls(sAbcNodeList, type="AlembicNode")
         if sFoundList:
-            #pm.displayInfo("No Alembic Node imported !")
             sRefAbcNode = sFoundList[0]
 
         transferMeshShapes(astToAbcMeshItems, only=sCacheObjList, dryRun=bDryRun)
@@ -794,7 +818,7 @@ def importCaches(**kwargs):
             sDupAbcNode = mc.duplicate(sRefAbcNode, ic=True)[0]
             transferOutConnections(sRefAbcNode, sDupAbcNode)
 
-        abort(oAbcRef)
+        doneWith(oAbcRef)
 
     print r"""
    ______           __            ____                           __     ____                 

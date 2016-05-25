@@ -18,7 +18,7 @@ from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
 
 from dminutes import sceneManagerUI as smui
-from davos_maya.tool.general import entityFromScene
+from davos_maya.tool.general import infosFromScene
 from davos.core.damtypes import DamShot
 
 if inDevMode():
@@ -27,14 +27,6 @@ if inDevMode():
         from davos_maya.tool import reference
     except ImportError:
         pass
-
-#def doCreateFolders(sEntiType, *args):
-#
-#    pm.mel.ScriptEditor()
-#    pm.mel.handleScriptEditorAction("maximizeHistory")
-#
-#    create_dirs_n_files.launch(sEntiType, dryRun=False,
-#                               dialogParent=myaqt.mayaMainWindow())
 
 def doDependencyScan(*args):
     from davos_maya.tool import dependency_scan
@@ -50,11 +42,11 @@ def doSwitchReferences(*args):
 
 def doPublish(*args):
 
-    damEntity = entityFromScene(fail=False)
-    if isinstance(damEntity, DamShot):
+    scnInfos = infosFromScene(fail=False)
+    if isinstance(scnInfos["dam_entity"], DamShot):
         raise TypeError("Shots can only be published from Scene Manager.")
 
-    publishing.publishCurrentScene(entity=damEntity)
+    publishing.publishCurrentScene(sceneInfos=scnInfos)
 
 class DavosSetup(ToolSetup):
 
@@ -70,13 +62,6 @@ class DavosSetup(ToolSetup):
 
             pm.menuItem(label="File Browser", c=file_browser.launch)
             pm.menuItem(divider=True)
-
-#            with pm.subMenuItem(label="Create Folders", to=False):
-#                pm.menuItem(label="Assets...", c=partial(doCreateFolders, "asset"))
-#                pm.menuItem(label="Shots...", c=partial(doCreateFolders, "shot"))
-
-#            pm.menuItem(label="Switch References", c=doSwitchReferences)
-#            pm.menuItem(divider=True)
 
             pm.menuItem(label="Edit Textures...", c=doEditTextures)
             pm.menuItem(label="Check Dependencies...", c=doDependencyScan)

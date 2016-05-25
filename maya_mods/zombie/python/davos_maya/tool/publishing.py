@@ -13,7 +13,7 @@ from pytaya.core import system as myasys
 
 from davos.tools import publish_dependencies
 
-from .general import entityFromScene, projectFromScene
+from .general import infosFromScene, projectFromScene
 from davos_maya.tool import dependency_scan
 from pytd.util.sysutils import toStr, inDevMode, timer
 from pytd.gui.dialogs import confirmDialog
@@ -33,10 +33,15 @@ class PublishContext(object):
         self.prePublishInfos = prePublishInfos
         self.entity = kwargs.get("entity")
 
-def publishSceneDependencies(damEntity, sDependType, depScanResults, prePublishInfos, **kwargs):
+def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishInfos, **kwargs):
 
     bDryRun = kwargs.pop("dryRun", False if not inDevMode() else bDevDryRun)
     sComment = prePublishInfos["comment"]
+
+    damEntity = scnInfos["dam_entity"]
+    sRcName = scnInfos.get("resource", "")
+
+    depConfDct = damEntity.getDependencyConf(sDependType, sRcName)
 
     proj = damEntity.project
 
@@ -74,12 +79,11 @@ def publishSceneDependencies(damEntity, sDependType, depScanResults, prePublishI
         sDependLabel = labelify(sDependType.rsplit("_dep", 1)[0])
         print "\n" + " Publishing {} files ".format(sDependLabel).center(120, '-')
 
-        publishedDependItems = proj.publishDependencies(sDependType,
-                                                        damEntity,
-                                                        sDependPathList,
-                                                        sComment,
-                                                        dryRun=bDryRun,
-                                                        **kwargs)
+        publishedDependItems = publishDependencies(depConfDct,
+                                                   sDependPathList,
+                                                   sComment,
+                                                   dryRun=bDryRun,
+                                                   **kwargs)
 
         sUnchangedList = list(_filterNotPublishedPaths(sDependPathList, publishedDependItems))
 
@@ -89,12 +93,11 @@ def publishSceneDependencies(damEntity, sDependType, depScanResults, prePublishI
 
             print "\n" + " Publishing fellow files (.psd, .tx, etc...) ".center(120, '-')
 
-            publishedFellowItems = proj.publishDependencies(sDependType,
-                                                            damEntity,
-                                                            sFellowPathList,
-                                                            sComment,
-                                                            dryRun=bDryRun,
-                                                            **kwargs)
+            publishedFellowItems = publishDependencies(depConfDct,
+                                                       sFellowPathList,
+                                                       sComment,
+                                                       dryRun=bDryRun,
+                                                       **kwargs)
 
             sUnchangedList.extend(_filterNotPublishedPaths(sFellowPathList, publishedFellowItems))
 
@@ -128,7 +131,7 @@ def publishSceneDependencies(damEntity, sDependType, depScanResults, prePublishI
 
             subprocess.Popen(sCmdArgs)
 
-    linkDependenciesToPublic(damEntity, sDependType, sDependPathList,
+    linkDependenciesToPublic(proj, depConfDct, sDependPathList,
                              publishedDependItems, dependDataDct, dryRun=bDryRun)
 
     total = len(sAllSrcPathList)
@@ -153,7 +156,38 @@ def publishSceneDependencies(damEntity, sDependType, depScanResults, prePublishI
 
     return (not bDryRun)
 
-def linkDependenciesToPublic(damEntity, sDependType, sDepPathList, publishedItems,
+def publishDependencies(depConfDct, sDepPathList, sComment, **kwargs):
+
+    bDryRun = kwargs.get("dryRun", False)
+
+    bChecksum = depConfDct.get("checksum", False)
+    depDir = depConfDct["public_loc"]
+
+    if isinstance(sDepPathList, list):
+        publishItems = sDepPathList[:]
+    else:
+        publishItems = list(sDepPathList)
+
+    if (not bDryRun) and (not depDir.exists()):
+        os.makedirs(depDir.absPath())
+
+    numDep = len(sDepPathList)
+    for i, sDepPath in enumerate(sDepPathList):
+
+        print u"Publishing file {}/{}: '{}'".format(i + 1, numDep, sDepPath)
+
+        pubFile, versionFile = depDir.publishFile(sDepPath, autoLock=True,
+                                                  autoUnlock=True,
+                                                  saveChecksum=bChecksum,
+                                                  comment=sComment,
+                                                  **kwargs)
+        publishItems[i] = (pubFile, versionFile)
+
+    depDir.refresh(children=True)
+
+    return publishItems
+
+def linkDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
                              dependDataDct, **kwargs):
 
     bDryRun = kwargs.pop("dryRun", False if not inDevMode() else bDevDryRun)
@@ -163,9 +197,6 @@ def linkDependenciesToPublic(damEntity, sDependType, sDepPathList, publishedItem
 
     sMsgFmt = "\nRelinking '{}' node: \n    from '{}'\n      to '{}'"
 
-    proj = damEntity.project
-
-    depConfDct = damEntity.getDependencyConf(sDependType)
     sEnvVarName = depConfDct.get("env_var", "")
 
     sLinkedList = []
@@ -239,21 +270,19 @@ def publishCurrentScene(*args, **kwargs):
     bWithDeps = kwargs.pop("dependencies", True)
     prePublishFunc = kwargs.pop("prePublishFunc", None)
     postPublishFunc = kwargs.pop("postPublishFunc", None)
-    damEntity = kwargs.pop("entity", None)
-
-    myasys.assertCurrentSceneReadWithoutDataLoss()
+    scnInfos = kwargs.pop("sceneInfos", None)
 
     sCurScnPath = pm.sceneName()
     if not sCurScnPath:
         raise ValueError("Current scene is untitled.".format(sCurScnPath))
 
-    if not damEntity:
-        damEntity = entityFromScene(sCurScnPath, fail=False)
+    myasys.assertCurrentSceneReadWithoutDataLoss()
 
-    if damEntity:
-        proj = damEntity.project
-    else:
-        proj = projectFromScene(sCurScnPath)
+    if not scnInfos:
+        scnInfos = infosFromScene(sCurScnPath)
+
+    damEntity = scnInfos["dam_entity"]
+    proj = scnInfos["project"]
 
     res = proj.assertEditedVersion(sCurScnPath)
     curPubFile = res["public_file"]
@@ -272,10 +301,10 @@ def publishCurrentScene(*args, **kwargs):
         if sConfirm == 'Cancel':
             raise
 
-    depScanResults = []
+    depScanDct = {}
     if damEntity and bWithDeps:
-        depScanResults = dependency_scan.launch(damEntity, modal=True, okLabel="Publish")
-        if depScanResults is None:
+        depScanDct = dependency_scan.launch(scnInfos, modal=True, okLabel="Publish")
+        if depScanDct is None:
             pm.displayInfo("Canceled !")
             return
 
@@ -298,10 +327,11 @@ def publishCurrentScene(*args, **kwargs):
     if prePublishFunc:
         prePublishFunc(publishCtx)
 
-    if damEntity and depScanResults:
-        if not publishSceneDependencies(damEntity, "texture_dep",
-                                        depScanResults, prePublishInfos):
-            return
+    if damEntity and depScanDct:
+        for sDepType, scanResults in depScanDct.iteritems():
+            if not publishSceneDependencies(scnInfos, sDepType,
+                                            scanResults, prePublishInfos):
+                return
 
     sSavedScnPath = myasys.saveScene(prompt=False, checkError=False)
     if not sSavedScnPath:

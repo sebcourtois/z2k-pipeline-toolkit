@@ -72,6 +72,8 @@ class shot_lib(object):
     template_path = project.template_path
     template_dir = "shot_template"
 
+    localGeoCache_dir = "$ZOMB_MAYA_PROJECT_PATH/cache/alembic/{sequence}/{name}"
+
     resource_tree = {
         "{sequence} -> sequence_dir":
             {
@@ -104,6 +106,7 @@ class shot_lib(object):
                    {
                     "{name}_layout.ma -> layout_scene":None,
                     "{name}_layout.mov -> layout_capture":None,
+                    "{name}_layoutInfo.json -> layoutInfo_file":None,
                    },
                 "{step:04_anim} -> anim_dir":
                    {
@@ -158,16 +161,19 @@ class shot_lib(object):
                   "sg_uploaded_movie":"anim_capture",
                   "sg_path_to_movie":"anim_capture",
                   "sg_tasks":("animation",),
-                  #"sg_status":"rev",
                   },
 
     "finalLayout_scene":{"outcomes":("finalLayout_capture",),
-                  "create_sg_version":True,
-                  "sg_uploaded_movie":"finalLayout_capture",
-                  "sg_path_to_movie":"finalLayout_capture",
-                  "sg_tasks":("final layout",),
-                  #"sg_status":"rev",
-                  },
+                         "create_sg_version":True,
+                         "sg_uploaded_movie":"finalLayout_capture",
+                         "sg_path_to_movie":"finalLayout_capture",
+                         "sg_tasks":("final layout",),
+                         "dependency_types": {
+                             "geoCache_dep":{"public_loc":"finalLayoutCache_dir",
+                                             "source_loc":"|localGeoCache_dir",
+                                             "checksum":True},
+                                            }
+                         },
 
     "animRef_movie":{"create_sg_version":True,
                      "sg_uploaded_movie":True,
@@ -195,10 +201,6 @@ class shot_lib(object):
     "finalLayoutCache_dir":{"default_sync_rules":["online", "dmn_paris",
                                                   "dream_wall", "dmn_angouleme"],
                             },
-    }
-
-    dependency_types = {
-    "finalLayoutCache_dep":{"location":"finalLayoutCache_dir", "checksum":True},
     }
 
 class output_lib(object):
@@ -285,8 +287,9 @@ class asset_lib(object):
     }
 
     dependency_types = {
-    "texture_dep":{"location":"texture_dir", "checksum":True, "env_var":"ZOMB_TEXTURE_PATH"},
-    "geometry_dep":{"location":"geometry_dir", "checksum":True, "env_var":"ZOMB_GEOMETRY_PATH"},
+    "texture_dep":{"public_loc":"texture_dir", "source_loc":"private|texture_dir",
+                   "checksum":True, "env_var":"ZOMB_TEXTURE_PATH"},
+    #"geometry_dep":{"public_loc":"geometry_dir", "checksum":True, "env_var":"ZOMB_GEOMETRY_PATH"},
     }
 
 class camera(object):

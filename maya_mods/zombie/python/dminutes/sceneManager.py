@@ -358,8 +358,9 @@ class SceneManager():
 
     def contextFromSceneInfos(self, sceneInfos):
         """format davos data to match with UI Data to allow detection of current loaded scene"""
+
         davosContext = {}
-        proj = self.context['damProject']
+        #proj = self.context['damProject']
         scnPathData = sceneInfos.get("path_data", {})
         #print "-------------", scnPathData
         if (("resource" not in scnPathData) or ("section" not in scnPathData)
@@ -369,14 +370,11 @@ class SceneManager():
         sSection = scnPathData["section"]
         if sSection == "shot_lib":
 
-            sStepDir = scnPathData.get("step", "")
-            if not sStepDir:
+            sSgStep = scnPathData.get("sg_step")
+            if not sSgStep:
                 return None
 
-            sSgStepDct = proj.getVar("shot_lib", "sg_step_map")
-            if sStepDir in sSgStepDct:
-                davosContext['step'] = sSgStepDct[sStepDir]
-
+            davosContext['step'] = sSgStep
             davosContext['seq'] = scnPathData["sequence"]
             davosContext['shot'] = scnPathData["name"]
 
@@ -987,9 +985,10 @@ class SceneManager():
         camImpExpI = camIE.camImpExp()
         camImpExpI.exportCam(sceneName=jpZ.getShotName())
 
-        # here is the publish of the infoSet file with the position of the global and local srt of sets assets
-        infoSetExpI = infoE.infoSetExp()
-        infoSetExpI.export(sceneName=jpZ.getShotName())
+        if sStepCode in ("previz 3d", "layout"):
+            # here is the publish of the infoSet file with the position of the global and local srt of sets assets
+            infoSetExpI = infoE.infoSetExp()
+            infoSetExpI.export(sceneName=jpZ.getShotName())
 
         if (not bPreviz) and self.isShotCamEdited():
             self.exportCamAnimFiles(publish=True)
@@ -1028,8 +1027,8 @@ class SceneManager():
                              icon="critical")
             return False
 
-        res = publishCurrentScene(prePublishFunc=self.prePublishCurrentScene,
-                                  dependencies=False)
+        res = publishCurrentScene(prePublishFunc=self.prePublishCurrentScene)
+#                                  dependencies=False)
 
         return res
 

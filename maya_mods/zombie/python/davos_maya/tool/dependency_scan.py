@@ -26,7 +26,7 @@ from pytaya.core.general import lsNodes
 from pytaya.core.reference import listReferences
 from pytaya.core.system import iterNodeAttrFiles
 
-from .general import entityFromScene
+from .general import infosFromScene
 
 osp = os.path
 pilimage = PIL.Image
@@ -95,39 +95,47 @@ class DependencyTree(QuickTree):
 
 class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
 
-    def __init__(self, parent=None, scanFunc=None):
+    def __init__(self, scanFunc, parent=None):
         super(DependencyTreeDialog, self).__init__(parent=parent)
 
         self.setAttribute(Qt.WA_DeleteOnClose, True)
         self.setTreeWidget(DependencyTree(self))
         self.resize(900, 600)
 
-        self.scanResults = None
-        self.__scanFunc = scanFunc if scanFunc else scanTextureFiles
+        self.depScanDct = None
+        self.__scanFunc = scanFunc
 
         self.refreshBtn = self.buttonBox.addButton("Refresh", QtGui.QDialogButtonBox.ResetRole)
         self.refreshBtn.clicked.connect(self.refresh)
 
     def refresh(self):
         self.treeWidget.clear()
-        self.setupTreeData(self.__scanFunc(entityFromScene()))
+        self.setupTreeData(self.__scanFunc(infosFromScene()))
 
-    def setupTreeData(self, scanResults, allExpanded=False):
+    def setupTreeData(self, depScanDct, allExpanded=False):
 
-        self.scanResults = scanResults
-        if not scanResults:
+        self.depScanDct = depScanDct
+        if not depScanDct:
             return
+
+        sAllSeveritySet = set()
+        numAllPublishes = 0
+        allScanResults = []
+        for scanResults in depScanDct.itervalues():
+            if not scanResults:
+                continue
+            sAllSeveritySet.update(scanResults[-1]["scan_severities"])
+            numAllPublishes += scanResults[-1]["publish_count"]
+            allScanResults.extend(scanResults)
 
         treeWidget = self.treeWidget
 
         sHeaderList = ["Files", "Summary", "Description"]
         treeWidget.setHeaderLabels(sHeaderList)
 
-        sAllSeveritySet = scanResults[-1]["scan_severities"]
-
         sFileGrpItems = set()
         treeData = []
-        for result in scanResults:
+        for result in allScanResults:
 
             fileNodes = result["file_nodes"]
             sFileNodeNames = tuple(n.name()for n in fileNodes)
@@ -202,7 +210,7 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
                         }
             treeData.insert(0, itemData)
 
-        if scanResults[-1]["publish_count"]:
+        if numAllPublishes:
             p = pathJoin(("info" + 's').upper(), labelify("ReadyToPublish"))
             itemData = {"path": p,
                         #"texts": [sFilename, sNumNodes, sMsg],
@@ -339,20 +347,23 @@ def makeSequenceFilePattern(p):
     return pathReSub(IMG_SEQ_RGX, ".0*.", osp.basename(p))
 
 @setWaitCursor
-def scanTextureFiles(damEntity):
+def scanTextureFiles(scnInfos, depConfDct=None):
 
-    proj = damEntity.project
+    damEntity = scnInfos["dam_entity"]
+    proj = scnInfos["project"]
     sAstName = damEntity.name
-    try:
-        sPrivTexDirPath = damEntity.getPath("private", "texture_dir")
-    except AttributeError as e:
-        pm.displayWarning(e.message)
-        return []
 
-    sPubTexDirPath = damEntity.getPath("public", "texture_dir")
-    if osp.exists(sPubTexDirPath):
-        pubTexDir = proj.entryFromPath(sPubTexDirPath)
-        pubTexDir.loadChildDbNodes()
+    sDepType = "texture_dep"
+
+    if not depConfDct:
+        depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
+
+    pubDepDir = depConfDct["public_loc"]
+    sDepSrcDirPath = depConfDct["source_loc"]
+
+    sPubDepDirPath = pubDepDir.absPath()
+    if pubDepDir.exists():
+        pubDepDir.loadChildDbNodes()
 
     sAllowedTexTypes = proj.getVar("project", "allowed_texture_formats")
 
@@ -371,7 +382,6 @@ def scanTextureFiles(damEntity):
 #        print ""
         scanResults.append(res)
         sAllSeveritySet.update(res["scan_log"].iterkeys())
-
 
     for fileNode in allFileNodes:
 
@@ -426,7 +436,7 @@ def scanTextureFiles(damEntity):
             texFile = None
             bExists = osp.isfile(sTexAbsPath)
 
-            resultDct = {"dependency_type":"texture_dep",
+            resultDct = {"dependency_type":sDepType,
                          "abs_path":sTexAbsPath,
                          "scan_log":scanLogDct,
                          "file_nodes":fileNodeDct[sTexNormPath],
@@ -454,7 +464,7 @@ def scanTextureFiles(damEntity):
 
                     scanLogDct.setdefault("info", []).append(('PublicFiles', sTexAbsPath))
 
-                    if normCase(sTexDirPath) == normCase(sPubTexDirPath):
+                    if normCase(sTexDirPath) == normCase(sPubDepDirPath):
                         privFile = texFile.getPrivateFile(weak=True)
                         sPrivFileList.append(normCase(privFile.absPath()))
 
@@ -496,8 +506,8 @@ def scanTextureFiles(damEntity):
                 sMsg = ("Only accepts: '{}'".format("' '".join(sAllowedTexTypes)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadTextureFormat', sMsg))
 
-            if (not bPublicFile) and (normCase(sTexDirPath) != normCase(sPrivTexDirPath)):
-                sMsg = ("Not in '{}'".format(osp.normpath(sPrivTexDirPath)))
+            if (not bPublicFile) and (normCase(sTexDirPath) != normCase(sDepSrcDirPath)):
+                sMsg = ("Not in '{}'".format(osp.normpath(sDepSrcDirPath)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
 
             sMsg = ""
@@ -557,11 +567,11 @@ def scanTextureFiles(damEntity):
 
                         budScanLogDct.setdefault("info", []).append(('PublicFiles', sFellowPath))
 
-                        if normCase(osp.dirname(sFellowPath)) == normCase(sPubTexDirPath):
+                        if normCase(osp.dirname(sFellowPath)) == normCase(sPubDepDirPath):
                             privBudFile = budFile.getPrivateFile(weak=True)
                             sPrivFileList.append(normCase(privBudFile.absPath()))
 
-                    budResultDct = {"dependency_type":"texture_dep",
+                    budResultDct = {"dependency_type":sDepType,
                                     "abs_path":sFellowPath,
                                     "scan_log":budScanLogDct,
                                     "file_nodes":[],
@@ -621,9 +631,9 @@ def scanTextureFiles(damEntity):
     sAllowedFileTypes = [".tx", ".psd"]
     sAllowedFileTypes.extend(sAllowedTexTypes)
     #looking for unused files in texture direcotry
-    if osp.isdir(sPrivTexDirPath):
+    if osp.isdir(sDepSrcDirPath):
 
-        sTexDirFileList = sorted(iterPaths(sPrivTexDirPath, dirs=False, recursive=False))
+        sTexDirFileList = sorted(iterPaths(sDepSrcDirPath, dirs=False, recursive=False))
 
         for p in sTexDirFileList:
 
@@ -642,7 +652,7 @@ def scanTextureFiles(damEntity):
             else:
                 continue
 
-            resultDct = {"dependency_type":"texture_dep",
+            resultDct = {"dependency_type":sDepType,
                          "abs_path":p,
                          "scan_log":scanLogDct,
                          "file_nodes":[],
@@ -660,89 +670,104 @@ def scanTextureFiles(damEntity):
     return scanResults
 
 @setWaitCursor
-def scanAlembicFiles(damEntity, sSrcAbcDirPath):
+def scanAlembicFiles(scnInfos, depConfDct=None):
 
-    proj = damEntity.project
-    #sAstName = damEntity.name
+    damEntity = scnInfos["dam_entity"]
+    proj = scnInfos["project"]
+    pubLib = damEntity.getLibrary("public")
 
-    library = damEntity.getLibrary()
+    sDepType = "geoCache_dep"
+    if not depConfDct:
+        depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
+    pubDepDir = depConfDct["public_loc"]
+    sDepSrcDirPath = depConfDct["source_loc"]
 
-    sPubTexDirPath = damEntity.getPath("public", "finalLayoutCache_dir")
-    if osp.exists(sPubTexDirPath):
-        pubTexDir = proj.entryFromPath(sPubTexDirPath)
-        pubTexDir.loadChildDbNodes()
+    sPubDepDirPath = pubDepDir.absPath()
+    if pubDepDir.exists():
+        pubDepDir.loadChildDbNodes()
 
     allFileNodes = lsNodes("*", type='AlembicNode', not_rn=True)
     scanResults = []
     fileNodeDct = {}
 
     sAllSeveritySet = set()
-    #sFoundFileList = []
-    publishCount = 0
 
     def addResult(res):
         scanResults.append(res)
         sAllSeveritySet.update(res["scan_log"].iterkeys())
 
-    for fileNode in allFileNodes:
+    def iterDependencyPaths():
 
-        scanLogDct = {}
+        for fileNode in allFileNodes:
 
-        sAbcPath = fileNode.getAttr("abc_File")
-        if not sAbcPath:
-            continue
+            sAbcPath = fileNode.getAttr("abc_File")
+            if not sAbcPath:
+                continue
 
-        sAbcAbsPath = pathResolve(sAbcPath)
-        sAbcNormPath = normCase(sAbcAbsPath)
+            sDepAbsPath = pathResolve(sAbcPath)
+            sDepNormPath = normCase(sDepAbsPath)
 
-        if sAbcNormPath in fileNodeDct:
-            fileNodeDct[sAbcNormPath].append(fileNode)
-            continue
-        else:
-            fileNodeDct[sAbcNormPath] = [fileNode]
+            if sDepNormPath in fileNodeDct:
+                fileNodeDct[sDepNormPath].append(fileNode)
+                continue
+            else:
+                fileNodeDct[sDepNormPath] = [fileNode]
 
-        bPublicFile = False
-        bExists = osp.isfile(sAbcAbsPath)
+            yield sDepAbsPath
 
-        resultDct = {"dependency_type":"finalLayoutCache_dep",
-                     "abs_path":sAbcAbsPath,
-                     "scan_log":scanLogDct,
-                     "file_nodes":fileNodeDct[sAbcNormPath],
-                     "fellow_paths":[],
-                     "publishable":False,
-                     "drc_file":None,
-                     "exists":bExists,
-                     "public_file":None,
-                    }
+    def doScan(sAllDepPathList):
 
-        sAbcDirPath, sAbcFilename = osp.split(sAbcAbsPath)
+        for sDepAbsPath in sAllDepPathList:
 
-        if not bExists:
-            scanLogDct.setdefault("error", []).append(('FileNotFound', sAbcAbsPath))
-            addResult(resultDct); continue
-        else:
-            #sFoundFileList.append(sAbcNormPath)
-            abcFile = proj.entryFromPath(sAbcAbsPath, dbNode=False)
+            sDepNormPath = normCase(sDepAbsPath)
+            scanLogDct = {}
+
+            bPublicFile = False
+            bExists = osp.isfile(sDepAbsPath)
+
+            resultDct = {"dependency_type":sDepType,
+                         "abs_path":sDepAbsPath,
+                         "scan_log":scanLogDct,
+                         "file_nodes":fileNodeDct.get(sDepNormPath, []),
+                         "fellow_paths":[],
+                         "publishable":False,
+                         "drc_file":None,
+                         "exists":bExists,
+                         "public_file":None,
+                        }
+
+            sDepDirPath, sDepFilename = osp.split(sDepAbsPath)
+
+            if not bExists:
+                scanLogDct.setdefault("error", []).append(('FileNotFound', sDepAbsPath))
+                addResult(resultDct); continue
+
+            abcFile = proj.entryFromPath(sDepAbsPath, dbNode=False)
             resultDct["drc_file"] = abcFile
 
             if abcFile and abcFile.isPublic():
                 bPublicFile = True
                 sHighSeverity = "warning"
-                scanLogDct.setdefault("info", []).append(('PublicFiles', sAbcAbsPath))
+                scanLogDct.setdefault("info", []).append(('PublicFiles', sDepAbsPath))
                 resultDct["public_file"] = abcFile
             else:
-                sAbcPubPath = pathJoin(sPubTexDirPath, sAbcFilename)
-                resultDct["public_file"] = library._weakFile(sAbcPubPath, dbNode=False)
+                sDepPubPath = pathJoin(sPubDepDirPath, sDepFilename)
+                resultDct["public_file"] = pubLib._weakFile(sDepPubPath, dbNode=False)
 
-        if (not bPublicFile) and (normCase(sAbcDirPath) != normCase(sSrcAbcDirPath)):
-            sMsg = ("Not in '{}'".format(osp.normpath(sSrcAbcDirPath)))
-            scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
+            if (not bPublicFile) and (normCase(sDepDirPath) != normCase(sDepSrcDirPath)):
+                sMsg = ("Not in '{}'".format(osp.normpath(sDepSrcDirPath)))
+                scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
 
-        _setPublishableState(resultDct)
-        if resultDct["publishable"]:
-            publishCount += 1
+            _setPublishableState(resultDct)
 
-        addResult(resultDct)
+            addResult(resultDct)
+
+    doScan(iterDependencyPaths())
+
+    publishCount = sum(1 for d in scanResults if d["publishable"])
+    if publishCount:
+        sAbcJsonPath = pathJoin(sDepSrcDirPath, "abcExport.json")
+        doScan([sAbcJsonPath])
 
     if scanResults:
         scanResults[-1]["scan_severities"] = sAllSeveritySet
@@ -800,7 +825,8 @@ Wait for the next synchro and retry publishing."""
             sMsg = ""
             sFellowFileList = resultDct["fellow_paths"]
             if sFellowFileList:
-                sExtList = tuple(osp.splitext(p)[-1] for p in sFellowFileList)
+                sExtList = tuple(osp.basename(p).split(pubFile.baseName, 1)[-1]
+                                 for p in sFellowFileList)
                 sMsg = (", ".join(s.upper() for s in sExtList) + " found"
                         if sFellowFileList else "")
             elif inDevMode():
@@ -812,39 +838,66 @@ Wait for the next synchro and retry publishing."""
 
     return bPublishable
 
+def scanAllDependencyTypes(scnInfos):
+
+    proj = scnInfos["project"]
+    sSection = scnInfos["section"]
+    sRcName = scnInfos["resource"]
+
+    depScanDct = {}
+    for sDepType in proj.getDependencyTypes(sSection, sRcName).iterkeys():
+        scanResults = None
+        if sDepType == "texture_dep":
+            scanResults = scanTextureFiles(scnInfos)
+        elif sDepType == "geoCache_dep":
+            scanResults = scanAlembicFiles(scnInfos)
+        else:
+            pm.displayWarning("Dependency type NOT supported yet: '{}'"
+                              .format(sDepType))
+        if scanResults:
+            depScanDct[sDepType] = scanResults
+
+    return depScanDct
+
 dialog = None
 
-def launch(damEntity=None, scanFunc=None, modal=False, okLabel="OK",
+def launch(scnInfos=None, scanFunc=None, modal=False, okLabel="OK",
            expandTree=False, forceDialog=False):
 
     global dialog
 
-    if not damEntity:
-        damEntity = entityFromScene()
+    if not scnInfos:
+        scnInfos = infosFromScene()
+
+    damEntity = scnInfos["dam_entity"]
+    proj = scnInfos["project"]
 
     if scanFunc is None:
-        scanResults = scanTextureFiles(damEntity)
-    else:
-        scanResults = scanFunc()
+        scanFunc = scanAllDependencyTypes
 
-    if not scanResults:
-        return scanResults
+    depScanDct = scanFunc(scnInfos)
+    if not depScanDct:
+        return depScanDct
 
-    if not forceDialog:
-        sScanSeverities = scanResults[-1]["scan_severities"]
-        if not sScanSeverities:
-            return scanResults
+    sAllSeveritySet = set()
+    for scanResults in depScanDct.itervalues():
+        if not scanResults:
+            continue
+        sAllSeveritySet.update(scanResults[-1]["scan_severities"])
 
-    dialog = DependencyTreeDialog(scanFunc=scanFunc)
+    if (not forceDialog) and (not sAllSeveritySet):
+        return depScanDct
 
-    l = ("Dependencies Status", damEntity.name, damEntity.project.name.capitalize())
+    dialog = DependencyTreeDialog(scanFunc)
+
+    l = ("Dependencies Status", damEntity.name, proj.name.capitalize())
     dialog.setWindowTitle(" - ".join(l))
 
     buttonBox = dialog.buttonBox
     okBtn = buttonBox.button(QtGui.QDialogButtonBox.Ok)
 
     err = None
-    if "error" in scanResults[-1]["scan_severities"]:
+    if "error" in sAllSeveritySet:
 
         err = RuntimeError("Please, fix the following errors and retry...")
 
@@ -856,7 +909,7 @@ def launch(damEntity=None, scanFunc=None, modal=False, okLabel="OK",
             okBtn.setText(okLabel)
 
     dialog.show()
-    dialog.setupTreeData(scanResults, allExpanded=expandTree)
+    dialog.setupTreeData(depScanDct, allExpanded=expandTree)
 
     if modal:
         if err:
@@ -873,7 +926,7 @@ def launch(damEntity=None, scanFunc=None, modal=False, okLabel="OK",
 
         dialog.close()
         if dialog.exec_():
-            return dialog.scanResults
+            return dialog.depScanDct
 
     return None
 

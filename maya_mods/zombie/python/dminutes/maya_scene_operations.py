@@ -386,10 +386,10 @@ def do(s_inCommand, s_inTask, sceneManager):
 def setMayaProject(sProjName):
 
     sMayaProjsLoc = osp.dirname(osp.normpath(mc.workspace(q=True, rd=True)))
-    sMyaProjPath = osp.join(sMayaProjsLoc, sProjName)
+    sMayaProjPath = osp.join(sMayaProjsLoc, sProjName)
 
-    if not osp.exists(sMyaProjPath):
-        os.mkdir(sMyaProjPath)
+    if not osp.exists(sMayaProjPath):
+        os.mkdir(sMayaProjPath)
 
     mc.workspace(update=True)
     mc.workspace(sProjName, openWorkspace=True)
@@ -402,7 +402,9 @@ def setMayaProject(sProjName):
         mc.workspace(fileRule=("alembicCache", "cache/alembic"))
         mc.workspace(saveWorkspace=True)
 
-    return sMyaProjPath
+    pmu.putEnv("ZOMB_MAYA_PROJECT_PATH", sMayaProjPath.replace("\\", "/"))
+
+    return sMayaProjPath
 
 def getWipCaptureDir(damShot):
 
@@ -940,22 +942,27 @@ def setupShotScene(sceneManager):
 
     elif sStepName == "final layout":
 
-        if not pc.listReferences(loaded=True, unloaded=True):
+        bNoRefsAtAll = True if not pc.listReferences() else False
+        bNoRefsLoaded = True if not pc.listReferences(loaded=True, unloaded=False) else False
+
+        if bNoRefsAtAll or bNoRefsLoaded:
 
             sAbcDirPath = getGeoCacheDir(damShot)
             if not osp.isdir(sAbcDirPath):
                 raise EnvironmentError("Could not found caches directory: '{}'".format(sAbcDirPath))
 
-#            sNmspcList = tuple(f.rsplit("_cache.abc")[0] for f in os.listdir(sAbcDirPath)
-#                               if f.endswith("_cache.abc"))
+            layoutInfoFile = damShot.getRcFile("public", "layoutInfo_file", fail=True)
+            layoutData = jsonRead(layoutInfoFile.absPath())
 
-            p = osp.join(sAbcDirPath, "abcExport.json")
+        if bNoRefsAtAll:
+
+            p = osp.normpath(osp.join(sAbcDirPath, "abcExport.json"))
             exportData = jsonRead(p)
-            sNmspcList = tuple(getNamespace(j["root"]) for j in exportData["jobs"])
 
+            sNmspcList = tuple(getNamespace(j["root"]) for j in exportData["jobs"])
             assetRefDct = myaref.importAssetRefsFromNamespaces(proj, sNmspcList, "render_ref")
 
-            importLayoutVisibilities(damShot)
+            importLayoutVisibilities(layoutData)
 
             errorItems = tuple((k, v) for k, v in assetRefDct.iteritems() if isinstance(v, basestring))
             if errorItems:
@@ -963,7 +970,7 @@ def setupShotScene(sceneManager):
                 for sNmspc, sMsg in errorItems:
                     pc.displayError("'{}': {}".format(sNmspc, sMsg))
 
-        elif not pc.listReferences(loaded=True, unloaded=False):
+        elif bNoRefsLoaded:
 
             oFileRefList = pc.listReferences(loaded=False, unloaded=True)
             for oFileRef in oFileRefList:
@@ -998,7 +1005,7 @@ def setupShotScene(sceneManager):
                 pc.displayWarning(e.message)
                 pmu.putEnv("MAYA_TESTING_CLEANUP", "")
 
-            importLayoutVisibilities(damShot)
+            importLayoutVisibilities(layoutData)
 
     #rename any other shot camera
     remainingCamera = None
@@ -1126,12 +1133,7 @@ def exportCamAlembic(**kwargs):
 
     return res
 
-def importLayoutVisibilities(damShot):
-
-    sAbcDirPath = getGeoCacheDir(damShot)
-    sFilePath = osp.join(sAbcDirPath, damShot.name + "_layoutData.json")
-
-    layoutData = jsonRead(sFilePath)
+def importLayoutVisibilities(layoutData):
 
     for sObj, values in layoutData.iteritems():
 

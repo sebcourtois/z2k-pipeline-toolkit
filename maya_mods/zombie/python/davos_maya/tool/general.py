@@ -44,3 +44,27 @@ def assertCurrentSceneMatches(sRcName, msg=""):
         raise AssertionError(sMsg)
 
     return damEntity, privScnFile, pubScnFile
+
+def infosFromScene(scenePath="", fail=True):
+
+    scnInfos = {}
+
+    sCurScnPath = scenePath if scenePath else pm.sceneName()
+    if not sCurScnPath:
+        raise ValueError("Current scene is untitled.".format(sCurScnPath))
+
+    proj = DamProject.fromPath(sCurScnPath, fail=True)
+    pathData = {}
+    damEntity = None
+
+    rcFile = proj.entryFromPath(sCurScnPath, fail=fail)
+    if rcFile:
+        pathData = proj.dataFromPath(rcFile)
+        damEntity = proj._entityFromPathData(pathData, fail=fail)
+        scnInfos.update(pathData)
+
+    scnInfos.update(project=proj, rc_file=rcFile, dam_entity=damEntity)
+
+    return scnInfos
+
+
