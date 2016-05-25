@@ -42,7 +42,7 @@ def setArnoldRenderOption(outputFormat, renderMode = ""):
     #get the "cam_" camera, stops if nothing found
     # if the camera has  an "aspectRatio" extra attribute sets the camera according to it
     # make the camera renderable
-    if renderMode == "shading":
+    if renderMode != "shading":
         myCamName = mc.ls('*:cam_shot_default*',type = "camera")
     else:
         myCamName = mc.ls('*:cam_*',type = "camera")
