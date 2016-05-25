@@ -181,7 +181,13 @@ def deleteUnknownNodes(GUI = True):
         
     def unloadMr():
         import maya.cmds as mc
-        mc.unloadPlugin('Mayatomr',force = True)
+        pm.mel.eval("global proc mrRemoveItemsFromCreateLightMenu(){}")
+        try:
+            mc.unloadPlugin('Mayatomr',force = True)
+            #print "mr off loaded"
+        except:
+            #print "failed to off load mr"
+            pass
     
     try:
         mc.evalDeferred(unloadMr)
