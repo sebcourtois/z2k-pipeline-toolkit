@@ -19,7 +19,7 @@
 #                                                              #
 #                 © Jean-Philippe Descoins                     #
 ################################################################
-import os
+import os,re
 import maya.cmds as cmds
 import maya.mel as mel
 import itertools
@@ -272,35 +272,7 @@ def tkMirror_old(*args, **kwargs):
 
 
 
-def Z2K_applyVisLevel(objL="",curLvl="Controls_3",GUI=True,*args, **kwargs):
-    aboard = False
-    if objL in ["",None]:
-        cursel = cmds.ls(os=1)
-    else:
-        cursel = objL
 
-    # get level
-    if GUI:
-        res= cmds.confirmDialog(message="Select the target Display Level:",button=["Controls_0","Controls_1","Controls_2","Controls_3","Cancel"])    
-        if res not in ["Cancel"]:
-            print res
-            curLvl= res
-        else: aboard=True
-
-    if not aboard:
-        if cursel:
-            cursel = getShapeL(cmds.ls(sl=1)  )
-            for i in cursel:
-                multiply_Vis = cmds.createNode("multDoubleLinear")
-                cmds.connectAttr("VisHolder_Main_Ctrl." + curLvl, multiply_Vis + "." + "input2", f=1)
-                cmds.connectAttr("VisHolder_Main_Ctrl." + "Controls", multiply_Vis + "." + "input1", f=1)
-                try:
-                    cmds.connectAttr(multiply_Vis + "." + "output", i + "." + "v", f=1)
-                except Exception,err:
-                    print "    ",Exception,err
-
-    else:
-        print "    aboarded"
 
 def setCamForAnim(camera="", *args, **kwargs):
     """ Description: Set the camera parameters to keep it locked appart the one needed for '2d' pan zoom work.
@@ -1248,6 +1220,65 @@ def spineTweak():
         elif i == 4:
             cmds.skinPercent(skinCl, transformValue=[('Spine_IK_FK3_Ctrl_Def', 1)], normalize=True)
 
+def getParentCstL( obj="", typeFilterL=["parentConstraint"], *args, **kwargs ):
+    print "getParentCst()" 
+    history = cmds.listHistory(obj, pdo=1, il=2)
+    outCstL = []
+
+    # print "history = ", history
+    if history not in [None,"None"]:
+        for node in history:
+            # print "  -> hist= {0}  type= {1}".format( node,cmds.nodeType(node) )
+            if cmds.nodeType(node)in typeFilterL: 
+                outCstL.append(node)
+    print "outCstL=", outCstL
+    return outCstL
+def getParentCst_Obj_infoD(objL="",*args, **kwargs):
+    """ Description: retourn la list [constraint_obj_Name, Driver_obj_N,]
+        Return : [LIST]
+        Dependencies : cmds -  getParentCstL()
+    """
+    print "getParentCst_Obj_infoD()"
+    outDL={}
+    for obj in objL:
+        outDL[obj]= {}
+        allCstL = getParentCstL(obj)
+        # loop in all cst of hist
+        for cst in allCstL:
+            # print "cst=", cst
+            theParentL = []
+            outDL[obj][cst]={}
+
+            # loop in targets
+            for target in cmds.listAttr(cst + '.target[:]'):
+                # print "target=", target
+                # if ".targetParentMatrix" in target:
+                reMatch = re.match ( r"target\[[0-9]\]\.targetParentMatrix",target)
+                if reMatch:
+                    reFound = reMatch.group()
+                    curPMatrixPlugP=curPlugP= cst + "." + target
+                    # print "curPlugP=", curPlugP
+
+                    if cmds.connectionInfo(curPMatrixPlugP, isDestination=True):
+                        theParent = cmds.listConnections(curPMatrixPlugP, d=False, s=True)[0]
+                        # print "parent=",theParent
+                    else:
+                        theParent = None
+                    # add the weight plug to the output dico
+                    curWPlugP= cst + "." + target.replace("targetParentMatrix","targetWeight")
+                    outDL[obj][cst][curWPlugP] = theParent
+                    
+    # prints
+    for obj,dicoCst in outDL.iteritems():
+        print "*OBJ=",obj
+        for cst,dicoPlug in dicoCst.iteritems():
+            for plug,parent in dicoPlug.iteritems():
+                print "    .plug=",plug
+                print "       ->parent=",parent
+           
+    
+    
+    return outDL
 #--------------------- CHECK FUNCTION ------------------------------
 def checkBaseStructure(*args, **kwargs):
         """
@@ -3928,23 +3959,99 @@ def chr_fix_unrollSpineCTR(*args, **kwargs):
 
 
 def chr_add_customRockingMode(*args, **kwargs):
-    print "chr_add_customRockingMode()"
+    print "chr_add_customRockingMode() getParentCst_Obj_infoD()"
 
     childTarget = "TK_IK_Start_Handle_Root"
     parentTarget = "LowerBody"
     attrN = "customRockingMode"
+    attrHolder = "Hips_Main_Ctrl"
+    theCstOriginalParent= None
+    theCstOriginalPlug = None
     defV = 0
     maxV=1
     minV=0
     theCst = ""
 
-    # get the original connected constraint
-
-    # get the connected port
-
+    
+    # check si tout les obj necessaire exist, ne fait rien sinon
+    # canDo =False
+    # for i in []
     # constrain the new parent
+    cmds.parentConstraint(parentTarget,childTarget,mo=1)
+    
+    # get the original connected constraint info
+    curCSTinfoD = getParentCst_Obj_infoD(objL=[childTarget])
+    print curCSTinfoD
+    #------------
+    for obj,dicoCst in curCSTinfoD.iteritems():
+        print "*OBJ=",obj
+        for cst,dicoPlug in dicoCst.iteritems():
+            for plug,parent in dicoPlug.iteritems():
+                if attrHolder in parent:
+                    print "    .plug=",plug
+                    print "       ->parent=",parent
 
+                    theCstOriginalPlug = plug
+                    theCstOriginalParent = parent
+    # -----------------
+    print "theCstOriginalPlug=", theCstOriginalPlug
+    print "theCstOriginalParent=", theCstOriginalParent
     # create new attr
-
+    cmds.addAttr(attrHolder, longName=attrN, attributeType="long", keyable=True, dv=defV, min=minV, max=maxV)
+    
+    # create reverseNode
+    reverseN = cmds.createNode("reverse") 
     # connect
+    cmds.connectAttr(attrHolder+"."+ attrN, reverseN + ".input.inputX",f=1)
+    cmds.connectAttr(reverseN + ".output.outputX", theCstOriginalPlug ,f=1)
 
+def chr_applyVisLevel(objL="",curLvl="Controls_3",GUI=True,*args, **kwargs):
+    """ Description: Tool to help controler's visibility level connections
+        Return : 
+        Dependencies : cmds - 
+    """
+    visHolder = "VisHolder_Main_Ctrl"
+    aboard = False
+    errL = []
+    if cmds.objExists (visHolder):
+        if objL in ["",None]:
+            cursel = cmds.ls(os=1)
+        else:
+            cursel = objL
+
+        # get level
+        if GUI:
+            res= cmds.confirmDialog(message="Select the target Display Level:",button=["Controls_0","Controls_1","Controls_2","Controls_3","Cancel"])    
+            if res not in ["Cancel"]:
+                print res
+                curLvl= res
+            else: aboard=True
+
+        if not aboard:
+            if cursel:
+                cursel = getShapeL(cmds.ls(sl=1)  )
+                for i in cursel:
+                    try:
+                        multiply_Vis = cmds.createNode("multDoubleLinear")
+                        cmds.connectAttr(visHolder+ "." + curLvl, multiply_Vis + "." + "input2", f=1)
+                        cmds.connectAttr(visHolder+ "." + "Controls", multiply_Vis + "." + "input1", f=1)
+                        cmds.connectAttr(multiply_Vis + "." + "output", i + "." + "v", f=1)
+                    except Exception,err:
+                        print "    ",Exception,err
+                        errL.append("  *error on ->{0} : {1}".format(i,err) )
+        
+
+            # result printing
+            if  len(errL):
+               
+                cmds.confirmDialog(message="Error occured: \n CHECK SCRIPT EDITOR",button=["Ok"])    
+
+                print "---------------- ERRORS --------------------------"
+                for k in errL:
+                    print k
+        else:
+            print "    aboarded"
+
+
+    else:
+        print "no {0} in the scene".format(visHolder)
