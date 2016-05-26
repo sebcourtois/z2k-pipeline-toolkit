@@ -19,7 +19,7 @@
 #                                                              #
 #                 © Jean-Philippe Descoins                     #
 ################################################################
-import os
+import os,re
 import maya.cmds as cmds
 import maya.mel as mel
 import itertools
@@ -269,6 +269,11 @@ def tkMirror_old(*args, **kwargs):
         cmds.undoInfo(closeChunk = True)
 
 # general function
+
+
+
+
+
 def setCamForAnim(camera="", *args, **kwargs):
     """ Description: Set the camera parameters to keep it locked appart the one needed for '2d' pan zoom work.
         Return : [Bool,debugL]
@@ -361,6 +366,27 @@ def collectAttr(InObjList,mode = "all",*args,**kwargs):
         # print outlist
         return outlist
 
+def getShapeL(objL=[],*args, **kwargs):
+    print 'getShapeL()'
+    # return the corresponding shape list
+    objWithNoShapeL = []
+    objNotFoundL = []
+    shapeL=[]
+    for i in objL:
+        if cmds.objExists(i):
+            relL =cmds.listRelatives(i,c=1,s=1,ni=0)
+            if relL:
+                goodPathL= [i+"|" + x for x in relL]
+                shapeL.extend(goodPathL)
+            else:
+                objWithNoShapeL.append(i)
+        else:
+            objNotFoundL.append(i)
+
+    print "objNotFoundL=", objNotFoundL
+    print "objWithNoShapeL=", objWithNoShapeL 
+    return shapeL
+    
 # Z2K base general functions -----------------
 def getBaseModPath(*args, **kwargs):
     """Desription :recupere le path de base des modules
@@ -1194,6 +1220,65 @@ def spineTweak():
         elif i == 4:
             cmds.skinPercent(skinCl, transformValue=[('Spine_IK_FK3_Ctrl_Def', 1)], normalize=True)
 
+def getParentCstL( obj="", typeFilterL=["parentConstraint"], *args, **kwargs ):
+    print "getParentCst()" 
+    history = cmds.listHistory(obj, pdo=1, il=2)
+    outCstL = []
+
+    # print "history = ", history
+    if history not in [None,"None"]:
+        for node in history:
+            # print "  -> hist= {0}  type= {1}".format( node,cmds.nodeType(node) )
+            if cmds.nodeType(node)in typeFilterL: 
+                outCstL.append(node)
+    print "outCstL=", outCstL
+    return outCstL
+def getParentCst_Obj_infoD(objL="",*args, **kwargs):
+    """ Description: retourn la list [constraint_obj_Name, Driver_obj_N,]
+        Return : [LIST]
+        Dependencies : cmds -  getParentCstL()
+    """
+    print "getParentCst_Obj_infoD()"
+    outDL={}
+    for obj in objL:
+        outDL[obj]= {}
+        allCstL = getParentCstL(obj)
+        # loop in all cst of hist
+        for cst in allCstL:
+            # print "cst=", cst
+            theParentL = []
+            outDL[obj][cst]={}
+
+            # loop in targets
+            for target in cmds.listAttr(cst + '.target[:]'):
+                # print "target=", target
+                # if ".targetParentMatrix" in target:
+                reMatch = re.match ( r"target\[[0-9]\]\.targetParentMatrix",target)
+                if reMatch:
+                    reFound = reMatch.group()
+                    curPMatrixPlugP=curPlugP= cst + "." + target
+                    # print "curPlugP=", curPlugP
+
+                    if cmds.connectionInfo(curPMatrixPlugP, isDestination=True):
+                        theParent = cmds.listConnections(curPMatrixPlugP, d=False, s=True)[0]
+                        # print "parent=",theParent
+                    else:
+                        theParent = None
+                    # add the weight plug to the output dico
+                    curWPlugP= cst + "." + target.replace("targetParentMatrix","targetWeight")
+                    outDL[obj][cst][curWPlugP] = theParent
+                    
+    # prints
+    for obj,dicoCst in outDL.iteritems():
+        print "*OBJ=",obj
+        for cst,dicoPlug in dicoCst.iteritems():
+            for plug,parent in dicoPlug.iteritems():
+                print "    .plug=",plug
+                print "       ->parent=",parent
+           
+    
+    
+    return outDL
 #--------------------- CHECK FUNCTION ------------------------------
 def checkBaseStructure(*args, **kwargs):
         """
@@ -3404,9 +3489,9 @@ def chr_fix_mirror_parameters(*args, **kwargs):
     print "chr_fix_mirror_parametersAA()"
     debugL = []
     # putain de toonkit de bordel de rig pas identik!!! Left_Cheek Right_Cheek n'est pas toujours oriented pareil ex polo miror doit etre True, sur josefigB doit eter false
-    outTrueL =['Left_Bottom_Teeth', 'Right_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Top_Teeth',  'Right_Shoulder', 'Left_Shoulder', 'Left_Hand_0', 'Left_Thumb_0', 'Left_Thumb_1', 'Left_Thumb_2', 'Left_Meta_Index', 'Left_Index_0', 'Left_Index_1', 'Left_Index_2', 'Left_Pinky_Meta_Bone_Ctrl', 'Right_Middle_1', 'Right_Middle_2', 'Right_Ring_Meta_Bone_Ctrl', 'Right_Ring_0_Bone_Ctrl', 'Right_Ring_1_Bone_Ctrl', 'Right_Ring_2_Bone_Ctrl', 'Right_Foot_FK_0', 'Right_Foot_FK_1', 'Left_Arm_FK_1', 'Left_Arm_FK_0', 'Left_Pinky_0_Bone_Ctrl', 'Left_Pinky_1_Bone_Ctrl', 'Left_Pinky_2_Bone_Ctrl', 'Left_Meta_Middle', 'Left_Middle_0', 'Left_Middle_1', 'Left_Middle_2', 'Left_Ring_Meta_Bone_Ctrl', 'Left_Ring_0_Bone_Ctrl', 'Left_Ring_1_Bone_Ctrl', 'Left_Ring_2_Bone_Ctrl', 'Right_Leg_FK_0', 'Right_Foot_Heel', 'Right_Foot_Reverse_0', 'Right_Foot_Reverse_1', 'Right_Foot_Reverse_2', 'Left_EyeBrow_out_1', 'Left_EyeBrow_in', 'Left_EyeBrow_out', 'Right_Arm_FK_1', 'Right_Arm_FK_0', 'Right_Hand_0', 'Right_Thumb_0', 'Left_nostril', 'Right_nostril', 'Right_Ear_Bone_Ctrl', 'Right_Thumb_1', 'Right_Thumb_2', 'Right_Meta_Index', 'Right_Index_0', 'Right_Index_1', 'Right_Index_2', 'Right_Pinky_Meta_Bone_Ctrl', 'Right_Pinky_0_Bone_Ctrl', 'Right_Pinky_1_Bone_Ctrl', 'Right_Pinky_2_Bone_Ctrl', 'Right_Meta_Middle', 'Right_Middle_0', 'Left_UpperEye_0_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_UpperEye_1_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_UpperEye_3_Ctrl', 'Right_LowerEye_0_Ctrl', 'Right_LowerEye_1_Ctrl', 'Right_LowerEye_2_Ctrl', 'Right_LowerEye_3_Ctrl', 'Right_Leg_FK_1', 'Right_Levator1_0_Ctrl', 'Right_Levator1_1_Ctrl', 'Right_Levator_0_Ctrl', 'Right_Levator_1_Ctrl',  'Right_Zygo_0_Ctrl', 'Right_Zygo_1_Ctrl', 'Left_Foot_FK_0', 'Right_Riso_0_Ctrl', 'Right_Riso_1_Ctrl', 'Left_Zygo_0_Ctrl', 'Left_Zygo_1_Ctrl', 'Left_Levator1_0_Ctrl', 'Left_Levator1_1_Ctrl', 'Left_Levator_0_Ctrl', 'Left_Levator_1_Ctrl', 'Left_Riso_0_Ctrl', 'Left_Riso_1_Ctrl', 'Left_CheekBone', 'Right_CheekBone', 'Right_Tongue_2', 'Right_Tongue_3', 'Right_Tongue_1', 'Left_Foot_FK_1', 'Left_Foot_Heel', 'Left_Foot_Reverse_0', 'Left_Foot_Reverse_1', 'Left_Foot_Reverse_2', 'Left_Leg_FK_1', 'Left_Leg_FK_0', 'Left_UpperEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_UpperEye_3_Ctrl', 'Left_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_LowerEye_2_Ctrl', 'Left_LowerEye_3_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_in_1', 'Right_Brow_ridge_in', 'Right_Brow_ridge_out_1', 'Right_EyeBrow_out_1', 'Right_EyeBrow_in', 'Right_Brow_ridge_in_1', 'Right_EyeBrow_out', 'Right_Brow_ridge_out', 'Left_EyeBrow_Global', 'Left_EyeBrow_in_1']
-    outFalseL = ['Bottom_Teeth_Global', 'Bottom_Teeth', 'Top_Teeth_Global', 'Top_Teeth','Right_Cheek','Left_Cheek', 'Right_Hand_ParamHolder_Main_Ctrl', 'Left_Foot_ParamHolder_Main_Ctrl', 'Right_Foot_ParamHolder_Main_Ctrl', 'Left_Hand_ParamHolder_Main_Ctrl', 'Left_Arm_Root', 'Right_Leg_Extra_0', 'Right_Arm_Extra_6', 'Right_Arm_Round_Root', 'Right_Arm_Root_Tangent', 'Right_Arm_End', 'Right_Arm_End_Tangent', 'Right_Arm_Elbow', 'Right_Arm_Round_0', 'Right_Arm_Round_1', 'Right_Arm_Extra_0', 'Right_Arm_Extra_1', 'Right_Arm_Extra_2', 'Right_Arm_Extra_3', 'Right_Arm_Extra_4', 'Right_Arm_Extra_5', 'Right_Leg_upV', 'Left_Arm_Extra_0', 'Left_Arm_Extra_1', 'Left_Arm_Extra_2', 'Left_Arm_Extra_3', 'Left_Arm_Extra_4', 'Left_Arm_Extra_5', 'Left_Arm_Extra_6', 'Left_Arm_Round_Root', 'Left_Arm_Round_Root_Tangent', 'Left_Arm_Round_Eff', 'Left_Arm_Round_Eff_Tangent', 'Left_Arm_Elbow', 'Left_Arm_Round_0', 'Left_Arm_Round_1', 'Left_Arm_IK', 'Left_Arm_upV', 'Left_Depressor_Handle_1_Control', 'Left_Depressor1_Handle_1_Control', 'Left_MouthCorner', 'Left_LowerLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 'Left_LowerLip_Inter', 'Left_UpperLip_1_Ctrl', 'Left_UpperLip_2_Ctrl', 'Left_UpperLip_Inter', 'Left_Leg_Extra_5', 'Left_Leg_Extra_6', 'Left_Leg_Round_Root', 'Left_Leg_Round_Root_Tangent', 'Left_Leg_Round_Eff', 'Left_Leg_Round_Eff_Tangent', 'Left_Leg_Knee', 'Left_Leg_Round_0', 'Left_Leg_Round_1', 'Left_Pant_Bottom_Global_Main_Ctrl', 'Left_Pant_Ext_Main_Ctrl', 'Left_Pant_Int_Main_Ctrl', 'Left_Pant_Front_Main_Ctrl', 'Left_Pant_Back_Main_Ctrl', 'Right_Leg_IK', 'Left_Brow_ridge_in', 'Left_Brow_ridge_out_1', 'Left_Brow_ridge_in_1', 'Left_Brow_ridge_out', 'Right_Collar_0_1_Bone_Ctrl', 'Right_Collar_0_2_Bone_Ctrl', 'Right_Arm_upV', 'Right_Arm_Root', 'Right_Arm_IK', 'Left_Collar_2_2_Bone_Ctrl', 'Left_Collar_1_0_Bone_Ctrl', 'Left_Collar_1_2_Bone_Ctrl', 'Back_Collar_1_Bone_Ctrl', 'Back_Collar_2_Bone_Ctrl', 'Left_UpperLid_Main_Ctrl', 'Left_Eyelid_Out', 'Left_Eyelid_In', 'Left_Eye_Target_Main_Ctrl', 'Left_Eye', 'Left_Eye_Pupille_Main_Ctrl', 'Right_Eye_Target_Main_Ctrl', 'Right_Eye', 'Right_Eye_Pupille_Main_Ctrl', 'Right_Leg_Root', 'Right_Base_Depressor', 'Right_Base_Levator1', 'Right_Base_Depressor1', 'Right_Base_Levator', 'Right_Depressor1_Handle_1_Control', 'Right_UpperLip_1_Ctrl', 'Right_UpperLip_2_Ctrl', 'Right_UpperLip_Inter', 'Right_MouthCorner', 'Right_LowerLip_1_Ctrl', 'Right_LowerLip_2_Ctrl', 'Right_LowerLip_Inter', 'Right_Depressor_Handle_1_Control', 'Left_Base_Levator', 'Left_Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator1', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Left_Leg_Extra_0', 'Left_Leg_Extra_1', 'Left_Leg_Extra_2', 'Left_Leg_Extra_3', 'Left_Leg_Extra_4', 'Left_Leg_IK', 'Left_Leg_upV', 'Left_Leg_Root', 'Right_Leg_Extra_1', 'Right_Leg_Extra_2', 'Right_Leg_Extra_3', 'Right_Leg_Extra_4', 'Right_Leg_Extra_5', 'Right_Leg_Extra_6', 'Right_Leg_Round_Root', 'Right_Leg_Round_Root_Tangent', 'Right_Leg_Round_End', 'Right_Leg_Round_End_Tangent', 'Right_Leg_Knee', 'Right_Leg_Round_0', 'Right_Leg_Round_1', 'Right_Pant_Bottom_Global_Main_Ctrl', 'Right_Pant_Ext_Main_Ctrl', 'Right_Pant_Int_Main_Ctrl', 'Right_Pant_Front_Main_Ctrl', 'Right_Pant_Back_Main_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Right_LowerLid_Main_Ctrl', 'Right_UpperLid_Main_Ctrl', 'Right_Eyelid_Out', 'Right_Eyelid_In', 'Right_Collar_1_0_Bone_Ctrl', 'Right_Collar_1_2_Bone_Ctrl', 'Right_Collar_2_1_Bone_Ctrl', 'Right_Collar_2_2_Bone_Ctrl', 'Left_Collar_0_1_Bone_Ctrl', 'Left_Collar_0_2_Bone_Ctrl', 'Left_Collar_2_1_Bone_Ctrl', 'Right_Eye_Bulge', 'Left_Ear_Bone_Ctrl', 'Left_Eye_Bulge']
-
+    outTrueL =['Left_Brow_ridge_in', 'Left_Brow_ridge_in_1', 'Left_Brow_ridge_out_1', 'Left_Brow_ridge_out', 'Left_Bottom_Teeth', 'Right_Bottom_Teeth', 'Left_Top_Teeth', 'Right_Top_Teeth',  'Right_Shoulder', 'Left_Shoulder', 'Left_Hand_0', 'Left_Thumb_0', 'Left_Thumb_1', 'Left_Thumb_2', 'Left_Meta_Index', 'Left_Index_0', 'Left_Index_1', 'Left_Index_2', 'Left_Pinky_Meta_Bone_Ctrl', 'Right_Middle_1', 'Right_Middle_2', 'Right_Ring_Meta_Bone_Ctrl', 'Right_Ring_0_Bone_Ctrl', 'Right_Ring_1_Bone_Ctrl', 'Right_Ring_2_Bone_Ctrl', 'Right_Foot_FK_0', 'Right_Foot_FK_1', 'Left_Arm_FK_1', 'Left_Arm_FK_0', 'Left_Pinky_0_Bone_Ctrl', 'Left_Pinky_1_Bone_Ctrl', 'Left_Pinky_2_Bone_Ctrl', 'Left_Meta_Middle', 'Left_Middle_0', 'Left_Middle_1', 'Left_Middle_2', 'Left_Ring_Meta_Bone_Ctrl', 'Left_Ring_0_Bone_Ctrl', 'Left_Ring_1_Bone_Ctrl', 'Left_Ring_2_Bone_Ctrl', 'Right_Leg_FK_0', 'Right_Foot_Heel', 'Right_Foot_Reverse_0', 'Right_Foot_Reverse_1', 'Right_Foot_Reverse_2', 'Left_EyeBrow_out_1', 'Left_EyeBrow_in', 'Left_EyeBrow_out', 'Right_Arm_FK_1', 'Right_Arm_FK_0', 'Right_Hand_0', 'Right_Thumb_0', 'Left_nostril', 'Right_nostril', 'Right_Ear_Bone_Ctrl', 'Right_Thumb_1', 'Right_Thumb_2', 'Right_Meta_Index', 'Right_Index_0', 'Right_Index_1', 'Right_Index_2', 'Right_Pinky_Meta_Bone_Ctrl', 'Right_Pinky_0_Bone_Ctrl', 'Right_Pinky_1_Bone_Ctrl', 'Right_Pinky_2_Bone_Ctrl', 'Right_Meta_Middle', 'Right_Middle_0', 'Left_UpperEye_0_Ctrl', 'Right_UpperEye_0_Ctrl', 'Right_UpperEye_1_Ctrl', 'Right_UpperEye_2_Ctrl', 'Right_UpperEye_3_Ctrl', 'Right_LowerEye_0_Ctrl', 'Right_LowerEye_1_Ctrl', 'Right_LowerEye_2_Ctrl', 'Right_LowerEye_3_Ctrl', 'Right_Leg_FK_1', 'Right_Levator1_0_Ctrl', 'Right_Levator1_1_Ctrl', 'Right_Levator_0_Ctrl', 'Right_Levator_1_Ctrl',  'Right_Zygo_0_Ctrl', 'Right_Zygo_1_Ctrl', 'Left_Foot_FK_0', 'Right_Riso_0_Ctrl', 'Right_Riso_1_Ctrl', 'Left_Zygo_0_Ctrl', 'Left_Zygo_1_Ctrl', 'Left_Levator1_0_Ctrl', 'Left_Levator1_1_Ctrl', 'Left_Levator_0_Ctrl', 'Left_Levator_1_Ctrl', 'Left_Riso_0_Ctrl', 'Left_Riso_1_Ctrl', 'Left_CheekBone', 'Right_CheekBone', 'Right_Tongue_2', 'Right_Tongue_3', 'Right_Tongue_1', 'Left_Foot_FK_1', 'Left_Foot_Heel', 'Left_Foot_Reverse_0', 'Left_Foot_Reverse_1', 'Left_Foot_Reverse_2', 'Left_Leg_FK_1', 'Left_Leg_FK_0', 'Left_UpperEye_1_Ctrl', 'Left_UpperEye_2_Ctrl', 'Left_UpperEye_3_Ctrl', 'Left_LowerEye_0_Ctrl', 'Left_LowerEye_1_Ctrl', 'Left_LowerEye_2_Ctrl', 'Left_LowerEye_3_Ctrl', 'Right_EyeBrow_Global', 'Right_EyeBrow_in_1', 'Right_Brow_ridge_in', 'Right_Brow_ridge_out_1', 'Right_EyeBrow_out_1', 'Right_EyeBrow_in', 'Right_Brow_ridge_in_1', 'Right_EyeBrow_out', 'Right_Brow_ridge_out', 'Left_EyeBrow_Global', 'Left_EyeBrow_in_1']
+    outFalseL = ['Bottom_Teeth_Global', 'Bottom_Teeth', 'Top_Teeth_Global', 'Top_Teeth','Right_Cheek','Left_Cheek', 'Right_Hand_ParamHolder_Main_Ctrl', 'Left_Foot_ParamHolder_Main_Ctrl', 'Right_Foot_ParamHolder_Main_Ctrl', 'Left_Hand_ParamHolder_Main_Ctrl', 'Left_Arm_Root', 'Right_Leg_Extra_0', 'Right_Arm_Extra_6', 'Right_Arm_Round_Root', 'Right_Arm_Root_Tangent', 'Right_Arm_End', 'Right_Arm_End_Tangent', 'Right_Arm_Elbow', 'Right_Arm_Round_0', 'Right_Arm_Round_1', 'Right_Arm_Extra_0', 'Right_Arm_Extra_1', 'Right_Arm_Extra_2', 'Right_Arm_Extra_3', 'Right_Arm_Extra_4', 'Right_Arm_Extra_5', 'Right_Leg_upV', 'Left_Arm_Extra_0', 'Left_Arm_Extra_1', 'Left_Arm_Extra_2', 'Left_Arm_Extra_3', 'Left_Arm_Extra_4', 'Left_Arm_Extra_5', 'Left_Arm_Extra_6', 'Left_Arm_Round_Root', 'Left_Arm_Round_Root_Tangent', 'Left_Arm_Round_Eff', 'Left_Arm_Round_Eff_Tangent', 'Left_Arm_Elbow', 'Left_Arm_Round_0', 'Left_Arm_Round_1', 'Left_Arm_IK', 'Left_Arm_upV', 'Left_Depressor_Handle_1_Control', 'Left_Depressor1_Handle_1_Control', 'Left_MouthCorner', 'Left_LowerLip_1_Ctrl', 'Left_LowerLip_2_Ctrl', 'Left_LowerLip_Inter', 'Left_UpperLip_1_Ctrl', 'Left_UpperLip_2_Ctrl', 'Left_UpperLip_Inter', 'Left_Leg_Extra_5', 'Left_Leg_Extra_6', 'Left_Leg_Round_Root', 'Left_Leg_Round_Root_Tangent', 'Left_Leg_Round_Eff', 'Left_Leg_Round_Eff_Tangent', 'Left_Leg_Knee', 'Left_Leg_Round_0', 'Left_Leg_Round_1', 'Left_Pant_Bottom_Global_Main_Ctrl', 'Left_Pant_Ext_Main_Ctrl', 'Left_Pant_Int_Main_Ctrl', 'Left_Pant_Front_Main_Ctrl', 'Left_Pant_Back_Main_Ctrl', 'Right_Leg_IK',  'Right_Collar_0_1_Bone_Ctrl', 'Right_Collar_0_2_Bone_Ctrl', 'Right_Arm_upV', 'Right_Arm_Root', 'Right_Arm_IK', 'Left_Collar_2_2_Bone_Ctrl', 'Left_Collar_1_0_Bone_Ctrl', 'Left_Collar_1_2_Bone_Ctrl', 'Back_Collar_1_Bone_Ctrl', 'Back_Collar_2_Bone_Ctrl', 'Left_UpperLid_Main_Ctrl', 'Left_Eyelid_Out', 'Left_Eyelid_In', 'Left_Eye_Target_Main_Ctrl', 'Left_Eye', 'Left_Eye_Pupille_Main_Ctrl', 'Right_Eye_Target_Main_Ctrl', 'Right_Eye', 'Right_Eye_Pupille_Main_Ctrl', 'Right_Leg_Root', 'Right_Base_Depressor', 'Right_Base_Levator1', 'Right_Base_Depressor1', 'Right_Base_Levator', 'Right_Depressor1_Handle_1_Control', 'Right_UpperLip_1_Ctrl', 'Right_UpperLip_2_Ctrl', 'Right_UpperLip_Inter', 'Right_MouthCorner', 'Right_LowerLip_1_Ctrl', 'Right_LowerLip_2_Ctrl', 'Right_LowerLip_Inter', 'Right_Depressor_Handle_1_Control', 'Left_Base_Levator', 'Left_Base_Depressor', 'Left_Base_Depressor1', 'Left_Base_Levator1', 'Left_Tongue_2', 'Left_Tongue_3', 'Left_Tongue_1', 'Left_Leg_Extra_0', 'Left_Leg_Extra_1', 'Left_Leg_Extra_2', 'Left_Leg_Extra_3', 'Left_Leg_Extra_4', 'Left_Leg_IK', 'Left_Leg_upV', 'Left_Leg_Root', 'Right_Leg_Extra_1', 'Right_Leg_Extra_2', 'Right_Leg_Extra_3', 'Right_Leg_Extra_4', 'Right_Leg_Extra_5', 'Right_Leg_Extra_6', 'Right_Leg_Round_Root', 'Right_Leg_Round_Root_Tangent', 'Right_Leg_Round_End', 'Right_Leg_Round_End_Tangent', 'Right_Leg_Knee', 'Right_Leg_Round_0', 'Right_Leg_Round_1', 'Right_Pant_Bottom_Global_Main_Ctrl', 'Right_Pant_Ext_Main_Ctrl', 'Right_Pant_Int_Main_Ctrl', 'Right_Pant_Front_Main_Ctrl', 'Right_Pant_Back_Main_Ctrl', 'Left_LowerLid_Main_Ctrl', 'Right_LowerLid_Main_Ctrl', 'Right_UpperLid_Main_Ctrl', 'Right_Eyelid_Out', 'Right_Eyelid_In', 'Right_Collar_1_0_Bone_Ctrl', 'Right_Collar_1_2_Bone_Ctrl', 'Right_Collar_2_1_Bone_Ctrl', 'Right_Collar_2_2_Bone_Ctrl', 'Left_Collar_0_1_Bone_Ctrl', 'Left_Collar_0_2_Bone_Ctrl', 'Left_Collar_2_1_Bone_Ctrl', 'Right_Eye_Bulge', 'Left_Ear_Bone_Ctrl', 'Left_Eye_Bulge']
+    # Sirius  true ok:'Left_Brow_ridge_in', 'Left_Brow_ridge_in_1', 'Left_Brow_ridge_out_1', 'Left_Brow_ridge_out'
     theAttr = "_OSCAR_Attributes.Mirror"
     for i in outTrueL:
         # print  i + theAttr
@@ -3703,7 +3788,7 @@ def armTwistFix (*args, **kwargs):
 
 
 
-# wip or not to do
+# wip or not to do 
 def chr_BS_teeth_clean_BS_and_Attrib_Names(*args, **kwargs):
     print "chr_BS_teeth_clean_BS_and_Attrib_Names()"
 
@@ -3873,3 +3958,100 @@ def chr_fix_unrollSpineCTR(*args, **kwargs):
 
 
 
+def chr_add_customRockingMode(*args, **kwargs):
+    print "chr_add_customRockingMode() getParentCst_Obj_infoD()"
+
+    childTarget = "TK_IK_Start_Handle_Root"
+    parentTarget = "LowerBody"
+    attrN = "customRockingMode"
+    attrHolder = "Hips_Main_Ctrl"
+    theCstOriginalParent= None
+    theCstOriginalPlug = None
+    defV = 0
+    maxV=1
+    minV=0
+    theCst = ""
+
+    
+    # check si tout les obj necessaire exist, ne fait rien sinon
+    # canDo =False
+    # for i in []
+    # constrain the new parent
+    cmds.parentConstraint(parentTarget,childTarget,mo=1)
+    
+    # get the original connected constraint info
+    curCSTinfoD = getParentCst_Obj_infoD(objL=[childTarget])
+    print curCSTinfoD
+    #------------
+    for obj,dicoCst in curCSTinfoD.iteritems():
+        print "*OBJ=",obj
+        for cst,dicoPlug in dicoCst.iteritems():
+            for plug,parent in dicoPlug.iteritems():
+                if attrHolder in parent:
+                    print "    .plug=",plug
+                    print "       ->parent=",parent
+
+                    theCstOriginalPlug = plug
+                    theCstOriginalParent = parent
+    # -----------------
+    print "theCstOriginalPlug=", theCstOriginalPlug
+    print "theCstOriginalParent=", theCstOriginalParent
+    # create new attr
+    cmds.addAttr(attrHolder, longName=attrN, attributeType="long", keyable=True, dv=defV, min=minV, max=maxV)
+    
+    # create reverseNode
+    reverseN = cmds.createNode("reverse") 
+    # connect
+    cmds.connectAttr(attrHolder+"."+ attrN, reverseN + ".input.inputX",f=1)
+    cmds.connectAttr(reverseN + ".output.outputX", theCstOriginalPlug ,f=1)
+
+def chr_applyVisLevel(objL="",curLvl="Controls_3",GUI=True,*args, **kwargs):
+    """ Description: Tool to help controler's visibility level connections
+        Return : 
+        Dependencies : cmds - 
+    """
+    visHolder = "VisHolder_Main_Ctrl"
+    aboard = False
+    errL = []
+    if cmds.objExists (visHolder):
+        if objL in ["",None]:
+            cursel = cmds.ls(os=1)
+        else:
+            cursel = objL
+
+        # get level
+        if GUI:
+            res= cmds.confirmDialog(message="Select the target Display Level:",button=["Controls_0","Controls_1","Controls_2","Controls_3","Cancel"])    
+            if res not in ["Cancel"]:
+                print res
+                curLvl= res
+            else: aboard=True
+
+        if not aboard:
+            if cursel:
+                cursel = getShapeL(cmds.ls(sl=1)  )
+                for i in cursel:
+                    try:
+                        multiply_Vis = cmds.createNode("multDoubleLinear")
+                        cmds.connectAttr(visHolder+ "." + curLvl, multiply_Vis + "." + "input2", f=1)
+                        cmds.connectAttr(visHolder+ "." + "Controls", multiply_Vis + "." + "input1", f=1)
+                        cmds.connectAttr(multiply_Vis + "." + "output", i + "." + "v", f=1)
+                    except Exception,err:
+                        print "    ",Exception,err
+                        errL.append("  *error on ->{0} : {1}".format(i,err) )
+        
+
+            # result printing
+            if  len(errL):
+               
+                cmds.confirmDialog(message="Error occured: \n CHECK SCRIPT EDITOR",button=["Ok"])    
+
+                print "---------------- ERRORS --------------------------"
+                for k in errL:
+                    print k
+        else:
+            print "    aboarded"
+
+
+    else:
+        print "no {0} in the scene".format(visHolder)
