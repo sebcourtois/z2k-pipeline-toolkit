@@ -4055,3 +4055,19 @@ def chr_applyVisLevel(objL="",curLvl="Controls_3",GUI=True,*args, **kwargs):
 
     else:
         print "no {0} in the scene".format(visHolder)
+
+
+def selectSpineFK0(*args, **kwargs):
+    # selectionne un controler qui a parfois des clefs d'animation
+    CTRNAME = "Spine_FK_0"
+    try:
+        cmds.select("*:"+CTRNAME)
+    except Exception,err:
+        try:
+            cmds.select(CTRNAME)
+        except Exception,err:
+            print err
+        
+        print err
+
+
