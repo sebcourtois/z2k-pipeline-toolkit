@@ -69,10 +69,6 @@ def withParallelEval(func):
         return res
     return doIt
 
-def genShotNames(iSeq, *shotNums):
-    for n in shotNums:
-        yield "sq{:04d}_sh{:04d}a".format(iSeq, n)
-
 def getNamespace(sNode):
     return sNode.rsplit("|", 1)[-1].rsplit(":", 1)[0]
 
@@ -205,6 +201,7 @@ def exportLayoutInfo(**kwargs):
 
     bPublish = kwargs.get("publish", False)
     bDryRun = kwargs.pop("dryRun", False)
+    sComment = kwargs.pop("comment", "")
 
     scnInfos = infosFromScene()
     damShot = scnInfos["dam_entity"]
@@ -235,12 +232,13 @@ def exportLayoutInfo(**kwargs):
 
     res = sPrivFilePath
     if bPublish:
-        sComment = "from {}".format(privScnFile.name)
+        if not sComment:
+            sComment = "from {}".format(privScnFile.name)
 
         pubFile = damShot.getRcFile("public", "layoutInfo_file", weak=True)
         parentDir = pubFile.parentDir()
         res = parentDir.publishFile(sPrivFilePath, autoLock=True, autoUnlock=True,
-                                    comment=sComment, dryRun=bDryRun, saveChecksum=True)
+                                    comment=sComment, dryRun=bDryRun, saveChecksum=False)
     else:
         pm.displayInfo("Layout info exported to '{}'".format(os.path.normpath(sPrivFilePath)))
 
@@ -303,7 +301,11 @@ def exportCaches(**kwargs):
 
     return exportData
 
-def exportFinalLayoutData(damShot, dryRun=True):
+def exportFinalLayoutData(sequences=None, shots=None, dryRun=True):
+
+    pass
+
+def exportShotFinalLayoutData(damShot, dryRun=True):
 
     try:
         layoutScene = None

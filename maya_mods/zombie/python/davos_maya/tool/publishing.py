@@ -28,10 +28,9 @@ bDevDryRun = False
 
 class PublishContext(object):
 
-    def __init__(self, proj, prePublishInfos, **kwargs):
-        self.project = proj
+    def __init__(self, scnInfos, prePublishInfos, **kwargs):
         self.prePublishInfos = prePublishInfos
-        self.entity = kwargs.get("entity")
+        self.sceneInfos = scnInfos
 
 def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishInfos, **kwargs):
 
@@ -285,8 +284,9 @@ def publishCurrentScene(*args, **kwargs):
     proj = scnInfos["project"]
 
     res = proj.assertEditedVersion(sCurScnPath)
-    curPubFile = res["public_file"]
-    curPubFile.ensureLocked(autoLock=False)
+    pubScnFile = res["public_file"]
+    pubScnFile.ensureLocked(autoLock=False)
+    scnInfos["public_file"] = pubScnFile
 
     try:
         quickSceneCleanUp(damEntity)
@@ -310,19 +310,18 @@ def publishCurrentScene(*args, **kwargs):
 
     bSgVersion = True
     try:
-        prePublishInfos = curPubFile.beginPublish(sCurScnPath, checkLock=False, **kwargs)
+        prePublishInfos = pubScnFile.beginPublish(sCurScnPath, checkLock=False, **kwargs)
         if prePublishInfos is None:
             return
         sgVersionData = prePublishInfos["sg_version_data"]
+        publishCtx = PublishContext(scnInfos, prePublishInfos)
     except Exception, e:
-        curPubFile._abortPublish(e, None, None)
+        pubScnFile._abortPublish(e, None, None)
         raise
 
 #    sgTask = sgVersionData["sg_task"]
     if not sgVersionData.get("sg_task"):
         bSgVersion = False
-
-    publishCtx = PublishContext(proj, prePublishInfos, entity=damEntity)
 
     if prePublishFunc:
         prePublishFunc(publishCtx)

@@ -31,6 +31,7 @@ import dminutes.maya_scene_operations as mop
 import dminutes.jipeLib_Z2K as jpZ
 import dminutes.camImpExp as camIE
 import dminutes.infoSetExp as infoE
+from dminutes.geocaching import exportLayoutInfo
 #from dminutes.miscUtils import deleteUnknownNodes
 
 reload(jpZ)
@@ -981,10 +982,14 @@ class SceneManager():
 
     def postPublishCurrentScene(self, publishCtx, **kwargs):
 
+        pubFile = publishCtx.sceneInfos["public_file"]
+        v = publishCtx.prePublishInfos["version"]
+        sComment = "from {}".format(pubFile.nameFromVersion(v))
+
         sStepCode = self.context["step"]["code"].lower()
 
         if sStepCode == "stereo":
-            self.exportStereoCamFiles(publish=True)
+            self.exportStereoCamFiles(publish=True, comment=sComment)
             return
 
         # here is incerted the publish of the camera of the scene
@@ -996,6 +1001,9 @@ class SceneManager():
             # here is the publish of the infoSet file with the position of the global and local srt of sets assets
             infoSetExpI = infoE.infoSetExp()
             infoSetExpI.export(sceneName=jpZ.getShotName())
+
+        if sStepCode == "layout":
+            exportLayoutInfo(publish=True, comment=sComment)
 
     def assertBeforePublish(self):
 
@@ -1306,18 +1314,17 @@ class SceneManager():
         mop.do(s_inCmd, self.context['task']['content'], self)
 
     def getDuration(self):
-        shot = self.context['entity']
-        inOutDuration = shot['sg_cut_out'] - shot['sg_cut_in'] + 1
-        duration = shot['sg_cut_duration']
+        return mop.getShotDuration(self.context['entity'])
 
-        if inOutDuration != duration:
-            pc.displayInfo("sg_cut_out - sg_cut_in = {} but sg_cut_duration = {}"
-                           .format(inOutDuration, duration))
+    def setPlaybackTimes(self):
+        start = 101
 
-        if duration < 1:
-            raise ValueError("Invalid shot duration: {}".format(duration))
+        duration = self.getDuration()
 
-        return duration
+        pc.playbackOptions(edit=True, minTime=start)
+        pc.playbackOptions(edit=True, animationStartTime=start)
+        pc.playbackOptions(edit=True, maxTime=start + duration - 1)
+        pc.playbackOptions(edit=True, animationEndTime=start + duration - 1)
 
     def mkShotCamNamespace(self):
         return mop.mkShotCamNamespace(self.context['entity']['code'].lower())
@@ -1397,7 +1404,7 @@ class SceneManager():
 
         oCamAstGrp = pc.PyNode(mop.mkShotCamNamespace(damShot.name) + ":asset")
 
-        mop.init_shot_constants(self)
+        self.setPlaybackTimes()
 
         sPrivAtomPath = damShot.getPath("private", "camera_atom")
         sPrivAbcPath = damShot.getPath("private", "camera_abc")
@@ -1441,7 +1448,7 @@ class SceneManager():
 
             return results
 
-    def exportStereoCamFiles(self, publish=False):
+    def exportStereoCamFiles(self, publish=False, comment=""):
 
         damShot = self.getDamShot()
         sShotCode = damShot.name
@@ -1451,7 +1458,7 @@ class SceneManager():
         sStereoGrp = getObject(sStereoNs + ":grp_stereo", fail=True)
         sAtomFixCam = getObject(sStereoNs + ":atomFix_" + oStereoCam.nodeName(stripNamespace=True), fail=True)
 
-        mop.init_shot_constants(self)
+        self.setPlaybackTimes()
 
         sPrivAtomPath = damShot.getPath("private", "stereoCam_anim")
         sPrivInfoPath = damShot.getPath("private", "stereoCam_info")
@@ -1487,7 +1494,10 @@ class SceneManager():
         if publish:
 
             pubShotLib = damShot.getLibrary("public")
-            sComment = "from {}".format(pc.sceneName().basename())
+            if comment:
+                sComment = comment
+            else:
+                sComment = "from {}".format(pc.sceneName().basename())
             results = []
 
             sPubAtomPath = damShot.getPath("public", "stereoCam_anim")

@@ -467,15 +467,19 @@ def create_previz_scene(sceneManager):
     else:
         print 'previz creation failed to Edit and save !'
 
-def init_shot_constants(sceneManager):
-    start = 101
+def getShotDuration(sgShot):
 
-    duration = sceneManager.getDuration()
+    inOutDuration = sgShot['sg_cut_out'] - sgShot['sg_cut_in'] + 1
+    duration = sgShot['sg_cut_duration']
 
-    pc.playbackOptions(edit=True, minTime=start)
-    pc.playbackOptions(edit=True, animationStartTime=start)
-    pc.playbackOptions(edit=True, maxTime=start + duration - 1)
-    pc.playbackOptions(edit=True, animationEndTime=start + duration - 1)
+    if inOutDuration != duration:
+        pc.displayInfo("sg_cut_out - sg_cut_in = {} but sg_cut_duration = {}"
+                       .format(inOutDuration, duration))
+
+    if duration < 1:
+        raise ValueError("Invalid shot duration: {}".format(duration))
+
+    return duration
 
 def init_scene_base(sceneManager):
     #Set units
@@ -499,7 +503,7 @@ def init_scene_base(sceneManager):
 
     #entity specific initialisation
     if sceneManager.context['entity']['type'] == 'Shot':
-        init_shot_constants(sceneManager)
+        sceneManager.setPlaybackTimes()
 
     importSceneStructure(sceneManager)
 
@@ -943,9 +947,9 @@ def setupShotScene(sceneManager):
     elif sStepName == "final layout":
 
         bNoRefsAtAll = True if not pc.listReferences() else False
-        bNoRefsLoaded = True if not pc.listReferences(loaded=True, unloaded=False) else False
+        bNoLoadedRefs = False#True if not pc.listReferences(loaded=True, unloaded=False) else False
 
-        if bNoRefsAtAll or bNoRefsLoaded:
+        if bNoRefsAtAll or bNoLoadedRefs:
 
             sAbcDirPath = getGeoCacheDir(damShot)
             if not osp.isdir(sAbcDirPath):
@@ -970,7 +974,7 @@ def setupShotScene(sceneManager):
                 for sNmspc, sMsg in errorItems:
                     pc.displayError("'{}': {}".format(sNmspc, sMsg))
 
-        elif bNoRefsLoaded:
+        elif bNoLoadedRefs:
 
             oFileRefList = pc.listReferences(loaded=False, unloaded=True)
             for oFileRef in oFileRefList:
