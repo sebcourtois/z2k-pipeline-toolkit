@@ -59,7 +59,7 @@ def tkMirror(*args, **kwargs):
 
                     
 
-                    }
+                    }  
         upperBrowD = {'Left_Brow_upRidge_01_ctrl':'Right_Brow_upRidge_01_ctrl',
                       'Left_Brow_upRidge_02_ctrl':'Right_Brow_upRidge_02_ctrl',
                       'Left_Brow_upRidge_03_ctrl':'Right_Brow_upRidge_03_ctrl',
