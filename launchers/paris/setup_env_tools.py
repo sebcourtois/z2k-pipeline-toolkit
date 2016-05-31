@@ -18,6 +18,9 @@ ENVS = {
         "DAVOS_SITE":"dmn_paris",
 
         "MAYA_MODULE_PATH":r"\\ZOMBIWALK\Z2K_RnD\maya_mods",
+
+        "XGEN_CONFIG_PATH":r"//ZOMBIWALK/Projects/zomb/tool/z2k-pipeline-toolkit/launchers/paris/xgen",
+        "XGEN_PATH":r"//ZOMBIWALK/Projects/zomb/tool/xgen",
         }
 
 try:
