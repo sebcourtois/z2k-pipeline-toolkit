@@ -1,4 +1,5 @@
 
+import sys
 import os
 import os.path as osp
 from collections import OrderedDict
@@ -244,6 +245,26 @@ def exportLayoutInfo(**kwargs):
 
     return res
 
+ABC_PREVIOUS_FRAME = 0
+ABC_PROGRESS_LINE = ""
+def abcProgress(iCurFrame, iEndFrame):
+
+    global ABC_PREVIOUS_FRAME, ABC_PROGRESS_LINE
+
+    if iCurFrame == ABC_PREVIOUS_FRAME:
+        return
+
+    ABC_PREVIOUS_FRAME = iCurFrame
+    sMsg = "{}/{}".format(iCurFrame, iEndFrame)
+    if iCurFrame == iEndFrame or len(ABC_PROGRESS_LINE) >= 180:
+        sMsg += "\n"
+        ABC_PROGRESS_LINE = ""
+    else:
+        sMsg += " "
+
+    ABC_PROGRESS_LINE += sMsg
+    sys.stdout.write(sMsg)
+
 @withParallelEval
 def exportCaches(**kwargs):
 
@@ -264,15 +285,27 @@ def exportCaches(**kwargs):
     if not osp.exists(sAbcDirPath):
         os.makedirs(sAbcDirPath)
 
-    frameRange = (pm.playbackOptions(q=True, animationStartTime=True),
-                 pm.playbackOptions(q=True, animationEndTime=True))
+    frameRange = (int(pm.playbackOptions(q=True, animationStartTime=True)),
+                 int(pm.playbackOptions(q=True, animationEndTime=True)))
 
-    sJobList = []
+    preRollEndFrame = frameRange[0] - 1
+    preRollRange = (preRollEndFrame - 50, preRollEndFrame)
+
+    sJobCmdList = []
     exportData = OrderedDict(source_scene=pm.sceneName())
-    jobsData = []
+    jobList = []
 
-    sJobOpts = "-noNormals -uvWrite -writeVisibility"
-    sJobFmt = "{options} -frameRange {frameRange[0]} {frameRange[1]} -root {root} -file {file}"
+    sJobOpts = "-dataFormat ogawa -noNormals -uvWrite -writeVisibility"
+
+    sJobParts = [
+    r"-root {root} -file {file}",
+    r"-frameRange {frameRange[0]} {frameRange[1]}",
+    r"-frameRange {preRollRange[0]} {preRollRange[1]} -preRoll",
+    "{options}",
+    r"-pythonPerFrameCallback '_abcProgress(int(\"#FRAME#\"),{frameRange[1]})'",
+    r"-pythonPostJobCallback 'print(\"Exported \'{root}\' >> \'{file}\'\")'"
+    ]
+    sJobFmt = " ".join(sJobParts)
 
     for sGeoGrp in sGeoGrpList:
 
@@ -282,54 +315,31 @@ def exportCaches(**kwargs):
         sNmspc = getNamespace(sGeoGrp)
         sAbcPath = pathJoin(sAbcDirPath, sNmspc + "_cache.abc")
 
-        jobKwargs = dict(options=sJobOpts, frameRange=frameRange, root=sGeoGrp, file=sAbcPath)
+        jobKwargs = dict(root=sGeoGrp, file=sAbcPath, options=sJobOpts,
+                         frameRange=frameRange, preRollRange=preRollRange,
+                         )
         sJobCmd = sJobFmt.format(**jobKwargs)
 
-        sJobList.append(sJobCmd)
-        jobsData.append(jobKwargs)
-        print sJobCmd
+        sJobCmdList.append(sJobCmd)
+        if bDryRun:
+            print "AbcExport: ", sJobCmd
+        jobList.append(jobKwargs)
 
-    exportData["jobs"] = jobsData
+    exportData["jobs"] = jobList
 
     if not bDryRun:
+
+        m = sys.modules["__main__"]
+        m._abcProgress = abcProgress
+
         try:
-            mc.AbcExport(v=True, j=sJobList)
+            mc.AbcExport(v=False, j=sJobCmdList)
         finally:
             if not bSelected:
                 p = pathJoin(sAbcDirPath, "abcExport.json")
                 jsonWrite(p, exportData)
 
     return exportData
-
-def exportFinalLayoutData(sequences=None, shots=None, dryRun=True):
-
-    pass
-
-def exportShotFinalLayoutData(damShot, dryRun=True):
-
-    try:
-        layoutScene = None
-        layoutInfoFile = damShot.getRcFile("public", "layoutInfo_file", weak=True)
-        if not layoutInfoFile.exists():
-            layoutScene = damShot.getRcFile("public", "layout_scene", fail=True, dbNode=False)
-            layoutScene = layoutScene.getVersionFile(-1, fail=True, refresh=True)
-
-        animScene = damShot.getRcFile("public", "anim_scene", fail=True, dbNode=False)
-        animScene = animScene.assertLatestFile(returnVersion=True)
-
-        if layoutScene:
-            print "<{}> layout infos file not found, so let's export it...".format(damShot)
-            myasys.openScene(layoutScene.absPath(), force=True, fail=False)
-            mc.refresh()
-            if not dryRun:
-                exportLayoutInfo(publish=True, dryRun=dryRun)
-
-        myasys.openScene(animScene.absPath(), force=True, fail=False)
-        mc.refresh()
-
-        exportCaches(selected=False, dryRun=dryRun)
-    finally:
-        myasys.newScene(force=True)
 
 def _iterNodePrefixedWith(sNodeList, *prefixes):
     for sNode in sNodeList:
@@ -735,7 +745,7 @@ def _confirmProcessing(sProcessLabel, **kwargs):
     sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, among=sObjList, **kwargs))
     if not sGeoGrpList:
         sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
-        raise RuntimeError(sMsg)
+        raise RuntimeWarning(sMsg)
     elif bPrompt:
         numGeoGrp = len(sGeoGrpList)
         if bSelected:

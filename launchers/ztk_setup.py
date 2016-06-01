@@ -359,10 +359,16 @@ def callCmd(cmdArgs, catchStdout=False, shell=False, inData=None, noCmdWindow=Fa
 
     iCreationFlags = CREATE_NO_WINDOW if noCmdWindow else 0
 
+    startupinfo = subprocess.STARTUPINFO()
+    #startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.dwXCountChars = 200
+    startupinfo.dwYCountChars = 3000
+
     pipe = subprocess.Popen(cmdArgs, shell=shell,
                             stdout=subprocess.PIPE if catchStdout else None,
                             stderr=subprocess.STDOUT if catchStdout else None,
-                            creationflags=iCreationFlags)
+                            creationflags=iCreationFlags,
+                            startupinfo=startupinfo)
     if catchStdout:
         outData, errData = pipe.communicate(inData)
         if errData and errData.strip():
