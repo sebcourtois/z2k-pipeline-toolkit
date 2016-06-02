@@ -1,49 +1,83 @@
 
 import sys
 import os
-#import os.path as osp
-from tempfile import NamedTemporaryFile
+import os.path as osp
 from itertools import izip
-import json
+import shutil
+import time
+from datetime import datetime
+import argparse
+import subprocess
+
+from pytd.util.sysutils import grouper
+from pytd.util.logutils import confirmMessage
+from pytd.util.fsutils import pathJoin, pathSuffixed, jsonWrite
 
 from zomblib import damutils
 from zomblib.mayabatch import MayaBatch
-from pytd.gui.dialogs import confirmDialog
 
-def launch(dryRun=True, dialogParent=None):
+LAUNCH_TIME = None
+
+def launch(shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
+
+    global LAUNCH_TIME
 
     proj = damutils.initProject()
 
-    bOk, sgShots = damutils.shotsFromShotgun(project=proj, dialogParent=dialogParent)
+    bWriteCmd = False
+    bOk = True
+    if not shotNames:
+        bOk, sgShots = damutils.shotsFromShotgun(project=proj, dialogParent=dialogParent)
+        shotNames = tuple(d["code"] for d in sgShots)
+        bWriteCmd = True
+
     if not bOk:
         sys.exit()
 
-    damShotList = list(proj.getShot(d["code"]) for d in sgShots)
+    LAUNCH_TIME = timestamp if timestamp else time.time()
+
+    if bWriteCmd:
+        sCmd = os.environ.get("Z2K_LAUNCHER_CMD")
+        if sCmd:
+            cmdArgs = ["", "--time", str(int(LAUNCH_TIME))]
+
+            if dryRun:
+                cmdArgs.append("--dry")
+
+            cmdArgs.extend(shotNames)
+            sCmd += subprocess.list2cmdline(cmdArgs)
+
+            sBatFilePath = makeOutputPath("re_export.bat", timestamp=LAUNCH_TIME)
+            with open(sBatFilePath, "w") as f:
+                f.writelines(("rem {}\n".format(s) for s in shotNames))
+                f.write(sCmd)
+
+    damShotList = list(proj.getShot(s) for s in shotNames)
+
     export(damShotList, dryRun=dryRun)
 
 def export(damShotList, dryRun=False):
 
     proj = damShotList[0].project
-    myabatch = MayaBatch()
+    mayaBatch = MayaBatch()
 
     sErrorList = []
     animScnList = []
     animShotList = damShotList[:]
     for i, damShot in enumerate(damShotList):
-        animScene = None
+        animScn = None
         try:
-            animScene = damShot.getRcFile("public", "anim_scene",
+            animScn = damShot.getRcFile("public", "anim_scene",
                                           fail=True, dbNode=False)
         except Exception as e:
             sErrorList.append("{} - {}".format(damShot, e.message))
 
-        if animScene:
-            animScnList.append(animScene)
+        if animScn:
+            animScnList.append(animScn)
         else:
             animShotList[i] = None
 
     animShotList = list(o for o in animShotList if o)
-
     if len(animShotList) != len(animScnList):
         raise RuntimeError("number of shots and anim scenes must be the same.")
 
@@ -60,8 +94,8 @@ def export(damShotList, dryRun=False):
         if not latestFile:
             animShotList[i] = None
 
-    animScnList = list(o for o in animScnList if o)
     animShotList = list(o for o in animShotList if o)
+    animScnList = list(o for o in animScnList if o)
     if len(animShotList) != len(animScnList):
         raise RuntimeError("number of shots and anim scenes NOT the same.")
 
@@ -71,7 +105,7 @@ def export(damShotList, dryRun=False):
                                         weak=True, dbNode=False)
         if not layInfoFile.exists():
             try:
-                layoutScene = animShot.getRcFile("public", "layout_scene",
+                layoutScn = animShot.getRcFile("public", "layout_scene",
                                                 fail=True, dbNode=False)
             except Exception as e:
                 sErrorList.append("{} - {}".format(animShot, e.message))
@@ -79,7 +113,7 @@ def export(damShotList, dryRun=False):
 
             print ("{} - layout infos file not found and will be exported first."
                    .format(animShot))
-            layoutScnList.append(layoutScene)
+            layoutScnList.append(layoutScn)
 
     loadDbNodes(proj, layoutScnList)
 
@@ -97,35 +131,47 @@ def export(damShotList, dryRun=False):
         sErrMsg = sSep + sSep.join(sErrorList)
         print sErrMsg
 
-        res = confirmDialog(title="DO YOU WANT TO...",
-                            message="Continue despite these warnings ?",
-                            button=["Yes", "No"],
-                            defaultButton="No",
-                            cancelButton="No",
-                            dismissString="No",
-                            icon="question")
-        if res == "No":
-            raise RuntimeWarning("Canceled !")
+    numAllShots = len(damShotList)
+    if not animShotList:
+        sMsg = "None of the {} selected shots can be exported.".format(numAllShots)
+        confirmMessage("SORRY !", sMsg, ["OK"])
+        return
+
+    numAnimShots = len(animShotList)
+    if numAnimShots != numAllShots:
+        sMsg = ("{}/{} shots cannot be exported.\n\nContinue to export anyway ?\n\n"
+                .format(numAllShots - numAnimShots, numAllShots))
+    else:
+        sMsg = "Export these {} shots ?\n\n".format(numAnimShots)
+
+    for grp in grouper(6, (o.name for o in animShotList)):
+        sMsg += ("\n" + " ".join(s for s in grp if s is not None))
+
+    res = confirmMessage("DO YOU WANT TO...", sMsg, ["Yes", "No"])
+    if res == "No":
+        raise RuntimeWarning("Canceled !")
 
     sCode = "from zomblib import damutils;reload(damutils);damutils.initProject()"
-    jobList = [{"title":"Batch initialization", "py_code":sCode, "fail":True}]
+    jobList = [{"title":"Batch initialization", "py_lines":[sCode], "fail":True}]
 
-    sFunc = "exportLayoutInfo(publish=True,dryRun={})".format(dryRun)
-    jobList.extend(generMayaJobs(layoutScnList, sFunc))
+    sExportFunc = "exportLayoutInfo(publish=True,dryRun={})".format(dryRun)
+    jobList.extend(generMayaJobs(layoutScnList, sExportFunc))
 
-    sFunc = "exportCaches(selected=False,dryRun={})".format(dryRun)
-    jobList.extend(generMayaJobs(animScnList, sFunc))
+    sExportFunc = "exportCaches(selected=False,dryRun={})".format(dryRun)
+    jobList.extend(generMayaJobs(animScnList, sExportFunc))
 
-    with NamedTemporaryFile(suffix=".json", delete=False, prefix="mayajobs_") as fp:
-        json.dump(jobList, fp, indent=2, encoding='utf-8')
+    sJobFilePath = makeOutputPath("maya_batch.json", timestamp=LAUNCH_TIME)
+    jsonWrite(sJobFilePath, jobList)
 
-    myabatch.launch(fp.name)
+    sLogFilePath = makeOutputPath("maya_batch.log", timestamp=LAUNCH_TIME)
+    #sBatFilePath = makeOutputPath("maya_batch.bat", timestamp=LAUNCH_TIME)
+    return mayaBatch.launch(sJobFilePath, logTo=sLogFilePath)
 
 def _assertedLatestVersion(scnFile, refresh=False):
 
     if not scnFile.currentVersion:
-        print ("{} - no version yet.".format(scnFile.name))
-        return None
+        raise AssertionError("{} - no version yet.".format(scnFile.name))
+        #return None
 
     sLockOwner = scnFile.getLockOwner(refresh=refresh)
     if sLockOwner:
@@ -136,9 +182,9 @@ def _assertedLatestVersion(scnFile, refresh=False):
 
     return versFile
 
-def generMayaJobs(scnFileList, sFunc):
+def generMayaJobs(scnFileList, sExportFunc):
 
-    sBaseCode = """
+    sCodeFmt = """
 import maya.cmds as mc
 from pytaya.core import system as myasys
 from dminutes import geocaching
@@ -151,11 +197,33 @@ geocaching.{func}
 """
     for scnFile in scnFileList:
         sPath = scnFile.absPath()
-        sTitle = "{} on '{}'".format(sFunc, scnFile.name)
-        sCode = sBaseCode.format(scene=sPath, func=sFunc)
+        sTitle = "{} on '{}'".format(sExportFunc, scnFile.name)
+        sCode = sCodeFmt.format(scene=sPath, func=sExportFunc)
         _ = compile(sCode, '<string>', 'exec')
-        job = {"title":sTitle, "py_code":sCode}
+        job = {"title":sTitle, "py_lines":sCode.strip().split('\n')}
         yield job
+
+def makeOutputPath(sFileName, timestamp=None, save=True):
+
+    #for sFileName in ("maya_jobs.json", "maya_batch.bat", "maya_batch.log"):
+    sOutDirPath = pathJoin(os.environ["USERPROFILE"], "zombillenium",
+                           "final_layout_exports")
+
+    sFilePath = pathJoin(sOutDirPath, sFileName)
+    if timestamp:
+        sDate = datetime.fromtimestamp(timestamp).strftime("_%Y%m%d-%Hh%M")
+        sFilePath = pathSuffixed(sFilePath, sDate)
+        save = False
+
+    if not osp.isdir(sOutDirPath):
+        os.makedirs(sOutDirPath)
+    elif save and osp.isfile(sFilePath):
+        st = os.stat(sFilePath)
+        if st.st_size:
+            sTimestamp = datetime.fromtimestamp(st.st_mtime).strftime("_%Y%m%d-%Hh%M")
+            shutil.copy2(sFilePath, pathSuffixed(sFilePath, sTimestamp))
+
+    return sFilePath
 
 def loadDbNodes(proj, drcFileList):
     dbNodeList = proj.dbNodesForResources(drcFileList)
@@ -165,8 +233,16 @@ def loadDbNodes(proj, drcFileList):
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dry", action="store_true")
+    parser.add_argument("--time", type=int, default=None)
+
     try:
-        launch()
-    except:
+        ns, shotNames = parser.parse_known_args()
+        launch(shotNames=shotNames, dryRun=ns.dry, timestamp=ns.time)
+    except Exception as e:
         os.environ["PYTHONINSPECT"] = "1"
-        raise
+        if isinstance(e, Warning):
+            print e.message
+        else:
+            raise

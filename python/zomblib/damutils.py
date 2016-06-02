@@ -42,7 +42,6 @@ def shotsFromShotgun(project=None, dialogParent=None):
     treeWdg.defaultRoles = {Qt.CheckStateRole:(0, Qt.Unchecked)}
     treeWdg.createTree(treeDataList)
 
-
     while True:
         bOk = dlg.exec_()
         if bOk:

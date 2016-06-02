@@ -283,6 +283,8 @@ class Z2kToolkit(object):
 
     def runFromCmd(self):
 
+        launcherArgs = [sys.executable] + sys.argv
+        updEnv("Z2K_LAUNCHER_CMD", subprocess.list2cmdline(launcherArgs))
         updEnv("Z2K_LAUNCH_SCRIPT", osp.normpath(sys.argv[0]))
 
         cmdArgs = sys.argv[1:]

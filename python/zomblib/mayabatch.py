@@ -3,16 +3,18 @@ import os
 import os.path as osp
 import subprocess
 import traceback
-from datetime import datetime
+from collections import OrderedDict
 
-from pytd.util.fsutils import jsonRead, pathNorm, pathJoin, pathSuffixed
-import shutil
+from pytd.util.fsutils import jsonRead, pathNorm
 
 def processJobsFromFile(sJobFilePath):
 
     jobList = jsonRead(sJobFilePath)
 
+    numErrors = 0
     numJobs = len(jobList)
+    errorDct = OrderedDict()
+
     for i, job in enumerate(jobList):
 
         sTitle = job["title"]
@@ -21,19 +23,35 @@ def processJobsFromFile(sJobFilePath):
         sSepLine = 120 * "-"
         print "\n", "\n".join((sSepLine, sSepLine, sMsg, "---"))
 
+        lines = job["py_lines"]
+        if not isinstance(lines, list):
+            raise TypeError("'py_lines' value must be a {}, got {}."
+                            .format(list, type(lines)))
         try:
-            exec(job["py_code"], {})
+            exec("\n".join(lines), {})
         except Warning as w:
             print "WARNING: " + w.message
-        except StandardError:
+        except StandardError as e:
             if job.get("fail", False):
                 raise
             lines = [""] + traceback.format_exc().splitlines(True)
             print "!ERROR! ".join(lines)
+            numErrors += 1
+            errorDct[sTitle] = e.message
 
         sMsg = "----- DONE WITH {}/{}: {}".format(i + 1, numJobs, sTitle)
         #sSepLine = max(len(sMsg), 120) * "-"
         print "\n".join(("----", sMsg, sSepLine, sSepLine)), "\n"
+
+    if numErrors:
+        sMsg = " {}/{} JOBS FAILED ".format(numErrors, len(jobList)).center(120, "#")
+        print sMsg
+        w = len(max(errorDct.iterkeys(), key=len))
+        for k, v in errorDct.iteritems():
+            print "- {k:>{w}}: {v}".format(k=k, v=v, w=w)
+        print sMsg
+
+    return numErrors
 
 class MayaBatch(object):
 
@@ -69,32 +87,27 @@ class MayaBatch(object):
             raise EnvironmentError("'mayabatch.exe' NOT found: '{}'"
                                    .format(sBatchAppPath))
 
-        sLogFilePath = pathJoin(os.environ["USERPROFILE"], "zombillenium",
-                                "logs", "final_layout_export.log")
-        sLogDirPath = osp.dirname(sLogFilePath)
-        if not osp.isdir(sLogDirPath):
-            os.makedirs(sLogDirPath)
-        elif osp.isfile(sLogFilePath):
-            st = os.stat(sLogFilePath)
-            if st.st_size:
-                sSufx = datetime.fromtimestamp(st.st_mtime).strftime("_%Y%m%d-%Hh%M")
-                shutil.copy2(sLogFilePath, pathSuffixed(sLogFilePath, sSufx))
-
         self.commandArgs = [osp.normpath(sPython27Path),
                             osp.normpath(sZ2kEnvScript),
                             "launch", "--update", "0", #"--renew", "1",
-                            osp.normpath(sBatchAppPath),
-                            "-log", sLogFilePath]
+                            osp.normpath(sBatchAppPath)]
 
-    def launch(self, sJobFilePath):
+    def launch(self, sJobFilePath, logTo="", writeCmdTo=""):
 
         sJobFilePath = pathNorm(sJobFilePath)
+
+        cmdArgs = self.commandArgs[:]
+        if logTo:
+            cmdArgs.extend(("-log", pathNorm(logTo)))
 
         sPyCmd = "from zomblib import mayabatch;reload(mayabatch);"
         sPyCmd += "mayabatch.processJobsFromFile('{}');".format(sJobFilePath)
         sMelCmd = "python(\"{}\"); file -f -new; quit -f;".format(sPyCmd)
 
-        cmdArgs = self.commandArgs
         cmdArgs.extend(("-prompt", "-command", sMelCmd))
 
-        subprocess.call(cmdArgs)
+        if writeCmdTo:
+            with open(writeCmdTo, "w") as f:
+                f.write(subprocess.list2cmdline(cmdArgs))
+
+        return subprocess.call(cmdArgs)
