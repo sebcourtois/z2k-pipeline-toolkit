@@ -6,15 +6,15 @@ from tempfile import NamedTemporaryFile
 from itertools import izip
 import json
 
-from zomblib import shotutils
+from zomblib import damutils
 from zomblib.mayabatch import MayaBatch
 from pytd.gui.dialogs import confirmDialog
 
 def launch(dryRun=True, dialogParent=None):
 
-    proj = shotutils.initProject()
+    proj = damutils.initProject()
 
-    bOk, sgShots = shotutils.shotsFromShotgun(project=proj, dialogParent=dialogParent)
+    bOk, sgShots = damutils.shotsFromShotgun(project=proj, dialogParent=dialogParent)
     if not bOk:
         sys.exit()
 
@@ -107,7 +107,7 @@ def export(damShotList, dryRun=False):
         if res == "No":
             raise RuntimeWarning("Canceled !")
 
-    sCode = "from zomblib import shotutils;reload(shotutils);shotutils.initProject()"
+    sCode = "from zomblib import damutils;reload(damutils);damutils.initProject()"
     jobList = [{"title":"Batch initialization", "py_code":sCode, "fail":True}]
 
     sFunc = "exportLayoutInfo(publish=True,dryRun={})".format(dryRun)
