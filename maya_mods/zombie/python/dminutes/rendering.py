@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import maya.mel
+import pymel.core as pm
 
 from dminutes import miscUtils
 reload (miscUtils)
@@ -491,11 +492,23 @@ def createAovs(renderMode = "render"):
         #create aovs, type = rgb
         #unUsedAovNameList = [ "dmn_lambert", "dmn_toon", "dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour"  ],"dmn_rimToon_na1_na2"
         if renderMode == "finalLayout":
-            aovNameList = ["dmn_mask08"]
+            #aovNameList = ["dmn_mask08"]
+            if not 'aiAOV_arlequin' in mc.ls( type = "aiAOV"):
+                resultD = createCustomShader(shaderName = "arlequin", gui=True)
+                arlequinNodeO  = myAOVs.addAOV( "arlequin", aovType='rgb')
+                mc.connectAttr(resultD['rootNodeOutputS'], arlequinNodeO.node+'.defaultValue', force =True)
+
+
         else:
             aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon","dmn_mask_transp","dmn_lgtMask01","dmn_lgtMask02"]
             if not 'aiAOV_Z' in mc.ls( type = "aiAOV"):
                 myAOVs.addAOV( "Z", aovType='float')
+                #changeAovFilter(aovName = "Z", filterName = "default")
+            if not 'aiAOV_Z_aa' in mc.ls( type = "aiAOV"):
+                resultD = createCustomShader(shaderName = "zaa", gui=True)
+                zaaNodeO  = myAOVs.addAOV( "Z_aa", aovType='float')
+                mc.connectAttr(resultD['rootNodeOutputS'], zaaNodeO.node+'.defaultValue', force =True)
+
         for eachAovName in aovNameList: 
             if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
                 myAOVs.addAOV( eachAovName, aovType='rgb')
@@ -503,3 +516,54 @@ def createAovs(renderMode = "render"):
         print "#### {:>7}: 'createAovs' has created {} aovs".format("Info",len(aovNameList))
     else:
         print "#### {:>7}: 'createAovs' no 'defaultArnoldRenderOptions' found in the scene cannot create aovs".format("Info")
+
+
+
+def changeAovFilter(aovName = "Z", filterName = "default", gui = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="'changeAovFilter'")
+    aovNode = pm.ls('aiAOV_' + aovName, type='aiAOV' )
+    if aovNode:
+        aovNode = aovNode[0]
+    else :
+        txt= "no '{}'' aovs found".format(aovName)
+        log.printL("e", txt)
+        return dict(resultB=log.resultB, logL=log.logL)
+
+    if filterName != "default":
+        filterNode = pm.createNode('aiAOVFilter', skipSelect=True)
+        filterNode.aiTranslator.set(filterName)
+        filterAttr = filterNode.attr('message')
+
+    else:
+        filterAttr = 'defaultArnoldFilter.message'
+        
+    out = aovNode.attr('outputs')[0]
+    pm.connectAttr(filterAttr, out.filter,force=True)
+    aovs._aovOptionsChangedCallbacks._callbackQueue["aoveditor"][0]()
+
+    return dict(resultB=log.resultB, logL=log.logL)
+
+
+def createCustomShader(shaderName = "arlequin", gui=True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="'createCustomShader'")
+
+    if shaderName == "arlequin":
+        aiUtilityNode = mc.shadingNode("aiUtility", asShader=True, name = "mat_arlequin_aiUtility")
+        mc.setAttr(aiUtilityNode+'.shadeMode', 2)
+        mc.setAttr(aiUtilityNode+'.colorMode', 21)
+        aiAmbientOccNode = mc.shadingNode("aiAmbientOcclusion", asShader=True, name = "mat_arelequin_aiAmbientOcclusion")
+        mc.setAttr(aiAmbientOccNode+'.samples', 2)
+        mc.setAttr(aiAmbientOccNode+'.spread', 0.8)
+        mc.setAttr(aiAmbientOccNode+'.farClip', 10)
+        mc.connectAttr(aiUtilityNode+'.outColor', aiAmbientOccNode+'.white', force =True)
+        rootNodeOutput = aiAmbientOccNode+".outColor"
+    elif shaderName == "zaa":
+        multDivNode = mc.shadingNode("multiplyDivide", asShader=True, name = "mat_zaa_multiplyDivide")
+        mc.setAttr(multDivNode+'.input2Z', -3)
+        mc.setAttr(multDivNode+'.input2Y', 0)
+        mc.setAttr(multDivNode+'.input2X', 0)
+        samplerInfoNode = mc.shadingNode("samplerInfo", asShader=True, name = "mat_zaa_samplerInfo")
+        mc.connectAttr(samplerInfoNode+'.pointCamera.pointCameraZ', multDivNode+'.input1.input1Z', force =True)
+        rootNodeOutput = multDivNode+".output"
+
+    return dict(resultB=log.resultB, logL=log.logL, rootNodeOutputS =rootNodeOutput )
