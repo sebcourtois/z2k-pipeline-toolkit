@@ -497,16 +497,14 @@ def createAovs(renderMode = "render"):
                 resultD = createCustomShader(shaderName = "arlequin", gui=True)
                 arlequinNodeO  = myAOVs.addAOV( "arlequin", aovType='rgb')
                 mc.connectAttr(resultD['rootNodeOutputS'], arlequinNodeO.node+'.defaultValue', force =True)
-
-
         else:
             aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon","dmn_mask_transp","dmn_lgtMask01","dmn_lgtMask02"]
             if not 'aiAOV_Z' in mc.ls( type = "aiAOV"):
                 myAOVs.addAOV( "Z", aovType='float')
                 #changeAovFilter(aovName = "Z", filterName = "default")
-            if not 'aiAOV_Z_aa' in mc.ls( type = "aiAOV"):
-                resultD = createCustomShader(shaderName = "zaa", gui=True)
-                zaaNodeO  = myAOVs.addAOV( "Z_aa", aovType='float')
+            if not 'aiAOV_depth_aa' in mc.ls( type = "aiAOV"):
+                resultD = createCustomShader(shaderName = "depthaa", gui=True)
+                zaaNodeO  = myAOVs.addAOV( "depth_aa", aovType='rgb')
                 mc.connectAttr(resultD['rootNodeOutputS'], zaaNodeO.node+'.defaultValue', force =True)
 
         for eachAovName in aovNameList: 
@@ -557,12 +555,12 @@ def createCustomShader(shaderName = "arlequin", gui=True):
         mc.setAttr(aiAmbientOccNode+'.farClip', 10)
         mc.connectAttr(aiUtilityNode+'.outColor', aiAmbientOccNode+'.white', force =True)
         rootNodeOutput = aiAmbientOccNode+".outColor"
-    elif shaderName == "zaa":
-        multDivNode = mc.shadingNode("multiplyDivide", asShader=True, name = "mat_zaa_multiplyDivide")
-        mc.setAttr(multDivNode+'.input2Z', -3)
+    elif shaderName == "depthaa":
+        multDivNode = mc.shadingNode("multiplyDivide", asShader=True, name = "mat_depthaa_multiplyDivide")
+        mc.setAttr(multDivNode+'.input2Z', 1)
         mc.setAttr(multDivNode+'.input2Y', 0)
         mc.setAttr(multDivNode+'.input2X', 0)
-        samplerInfoNode = mc.shadingNode("samplerInfo", asShader=True, name = "mat_zaa_samplerInfo")
+        samplerInfoNode = mc.shadingNode("samplerInfo", asShader=True, name = "mat_depthaa_samplerInfo")
         mc.connectAttr(samplerInfoNode+'.pointCamera.pointCameraZ', multDivNode+'.input1.input1Z', force =True)
         rootNodeOutput = multDivNode+".output"
 
