@@ -32,6 +32,7 @@ import dminutes.maya_scene_operations as mop
 import dminutes.jipeLib_Z2K as jpZ
 import dminutes.camImpExp as camIE
 import dminutes.infoSetExp as infoE
+from dminutes.geocaching import exportLayoutInfo
 #from dminutes.miscUtils import deleteUnknownNodes
 
 reload(jpZ)
@@ -52,12 +53,14 @@ RC_FOR_STEP = {'Previz 3D':'previz_scene',
                'Stereo':'stereo_scene',
                'Layout':'layout_scene',
                'Animation':'anim_scene',
+               'Final Layout':'finalLayout_scene',
                }
 RC_FOR_TASK = {}#{'previz 3D':'previz_scene', 'layout':'layout_scene'}
 
 REF_FOR_STEP = {'Previz 3D':'previz_ref',
                 'Layout':'anim_ref',
                 'Animation':'anim_ref',
+                'Final Layout':'render_ref',
                 }
 REF_FOR_TASK = {}
 
@@ -65,6 +68,7 @@ MOV_FOR_STEP = {'Previz 3D':('previz_capture',),
                 'Stereo':('right_capture', 'left_capture',),
                 'Layout':('layout_capture',),
                 'Animation':('anim_capture',),
+                'Final Layout':('finalLayout_capture',),
                }
 MOV_FOR_TASK = {}
 
@@ -356,8 +360,9 @@ class SceneManager():
 
     def contextFromSceneInfos(self, sceneInfos):
         """format davos data to match with UI Data to allow detection of current loaded scene"""
+
         davosContext = {}
-        proj = self.context['damProject']
+        #proj = self.context['damProject']
         scnPathData = sceneInfos.get("path_data", {})
         #print "-------------", scnPathData
         if (("resource" not in scnPathData) or ("section" not in scnPathData)
@@ -367,14 +372,11 @@ class SceneManager():
         sSection = scnPathData["section"]
         if sSection == "shot_lib":
 
-            sStepDir = scnPathData.get("step", "")
-            if not sStepDir:
+            sSgStep = scnPathData.get("sg_step")
+            if not sSgStep:
                 return None
 
-            sSgStepDct = proj.getVar("shot_lib", "sg_step_map")
-            if sStepDir in sSgStepDct:
-                davosContext['step'] = sSgStepDct[sStepDir]
-
+            davosContext['step'] = sSgStep
             davosContext['seq'] = scnPathData["sequence"]
             davosContext['shot'] = scnPathData["name"]
 
@@ -974,25 +976,35 @@ class SceneManager():
 
         sStepCode = self.context["step"]["code"].lower()
 
-        if sStepCode == "stereo":
-            self.exportStereoCamFiles(publish=True)
-            return
+        if sStepCode not in ("previz 3d", "stereo") and self.isShotCamEdited():
+            self.exportCamAnimFiles(publish=True)
+            self.importShotCamAbcFile()
+            mop.setCamAsPerspView(self.getShotCamera())
 
-        bPreviz = (sStepCode == "previz 3d")
+    def postPublishCurrentScene(self, publishCtx, **kwargs):
+
+        pubFile = publishCtx.sceneInfos["public_file"]
+        v = publishCtx.prePublishInfos["version"]
+        sComment = "from {}".format(pubFile.nameFromVersion(v))
+
+        sStepCode = self.context["step"]["code"].lower()
+
+        if sStepCode == "stereo":
+            self.exportStereoCamFiles(publish=True, comment=sComment)
+            return
 
         # here is incerted the publish of the camera of the scene
         print "exporting the camera of the shot"
         camImpExpI = camIE.camImpExp()
         camImpExpI.exportCam(sceneName=jpZ.getShotName())
 
-        # here is the publish of the infoSet file with the position of the global and local srt of sets assets
-        infoSetExpI = infoE.infoSetExp()
-        infoSetExpI.export(sceneName=jpZ.getShotName())
+        if sStepCode in ("previz 3d", "layout"):
+            # here is the publish of the infoSet file with the position of the global and local srt of sets assets
+            infoSetExpI = infoE.infoSetExp()
+            infoSetExpI.export(sceneName=jpZ.getShotName())
 
-        if (not bPreviz) and self.isShotCamEdited():
-            self.exportCamAnimFiles(publish=True)
-            self.importShotCamAbcFile()
-            mop.setCamAsPerspView(self.getShotCamera())
+        if sStepCode == "layout":
+            exportLayoutInfo(publish=True, comment=sComment)
 
     def assertBeforePublish(self):
 
@@ -1027,7 +1039,7 @@ class SceneManager():
             return False
 
         res = publishCurrentScene(prePublishFunc=self.prePublishCurrentScene,
-                                  dependencies=False)
+                                  postPublishFunc=self.postPublishCurrentScene)
 
         return res
 
@@ -1200,7 +1212,7 @@ class SceneManager():
                 mrcFile.mayaImportScene()
 
             except Exception, err:
-                errorTxt = "{0}: {1}".format(astData['name'], err)
+                errorTxt = "'{0}' : {1}".format(astData['name'], err)
                 print errorTxt
                 errorL.append(errorTxt)
             else:
@@ -1210,8 +1222,9 @@ class SceneManager():
             mop.reArrangeAssets()
 
         if len(errorL):
-            mc.confirmDialog(title='Error',
-                               message="Could not import:\n{0}".format("\n".join(errorL)),
+            sSep = "\n- "
+            mc.confirmDialog(title='WARNING !',
+                               message="Could not import:\n{}".format(sSep + sSep.join(errorL)),
                                button=['OK'],
                                defaultButton='OK',
                                cancelButton='OK',
@@ -1306,18 +1319,17 @@ class SceneManager():
         mop.do(s_inCmd, self.context['task']['content'], self)
 
     def getDuration(self):
-        shot = self.context['entity']
-        inOutDuration = shot['sg_cut_out'] - shot['sg_cut_in'] + 1
-        duration = shot['sg_cut_duration']
+        return mop.getShotDuration(self.context['entity'])
 
-        if inOutDuration != duration:
-            pc.displayInfo("sg_cut_out - sg_cut_in = {} but sg_cut_duration = {}"
-                           .format(inOutDuration, duration))
+    def setPlaybackTimes(self):
+        start = 101
 
-        if duration < 1:
-            raise ValueError("Invalid shot duration: {}".format(duration))
+        duration = self.getDuration()
 
-        return duration
+        pc.playbackOptions(edit=True, minTime=start)
+        pc.playbackOptions(edit=True, animationStartTime=start)
+        pc.playbackOptions(edit=True, maxTime=start + duration - 1)
+        pc.playbackOptions(edit=True, animationEndTime=start + duration - 1)
 
     def mkShotCamNamespace(self):
         return mop.mkShotCamNamespace(self.context['entity']['code'].lower())
@@ -1397,7 +1409,7 @@ class SceneManager():
 
         oCamAstGrp = pc.PyNode(mop.mkShotCamNamespace(damShot.name) + ":asset")
 
-        mop.init_shot_constants(self)
+        self.setPlaybackTimes()
 
         sPrivAtomPath = damShot.getPath("private", "camera_atom")
         sPrivAbcPath = damShot.getPath("private", "camera_abc")
@@ -1441,7 +1453,7 @@ class SceneManager():
 
             return results
 
-    def exportStereoCamFiles(self, publish=False):
+    def exportStereoCamFiles(self, publish=False, comment=""):
 
         damShot = self.getDamShot()
         sShotCode = damShot.name
@@ -1451,7 +1463,7 @@ class SceneManager():
         sStereoGrp = getObject(sStereoNs + ":grp_stereo", fail=True)
         sAtomFixCam = getObject(sStereoNs + ":atomFix_" + oStereoCam.nodeName(stripNamespace=True), fail=True)
 
-        mop.init_shot_constants(self)
+        self.setPlaybackTimes()
 
         sPrivAtomPath = damShot.getPath("private", "stereoCam_anim")
         sPrivInfoPath = damShot.getPath("private", "stereoCam_info")
@@ -1487,7 +1499,10 @@ class SceneManager():
         if publish:
 
             pubShotLib = damShot.getLibrary("public")
-            sComment = "from {}".format(pc.sceneName().basename())
+            if comment:
+                sComment = comment
+            else:
+                sComment = "from {}".format(pc.sceneName().basename())
             results = []
 
             sPubAtomPath = damShot.getPath("public", "stereoCam_anim")

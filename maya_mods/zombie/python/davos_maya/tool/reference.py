@@ -18,6 +18,7 @@ from pytaya.core.reference import processSelectedReferences
 from pytaya.core.reference import listReferences
 
 from davos_maya.tool.general import entityFromScene, projectFromScene
+from dminutes.shotconformation import removeRefEditByAttr
 
 
 @processSelectedReferences
@@ -36,7 +37,7 @@ def listMayaRcForSelectedRefs(oFileRef, project, **kwargs):
     resultList.append(res)
 
 @withSelectionRestored
-def switchSelectedReferences(dryRun=False, **kwargs):
+def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
 
     scnEntity = entityFromScene()
     proj = scnEntity.project
@@ -73,6 +74,7 @@ def switchSelectedReferences(dryRun=False, **kwargs):
         return
 
     i = 0
+    swicthItems = []
     nonSwitchedRefList = []
     for oFileRef, assetRc in izip(oSelRefList, assetRcList):
 
@@ -80,7 +82,7 @@ def switchSelectedReferences(dryRun=False, **kwargs):
         rcDct = assetRc[1]
 
         i += 1
-        print "Switching {}/{}: '{}' ...".format(i, numRefs, oFileRef.refNode.name())
+        print "Checking {}/{}: '{}' ...".format(i, numRefs, oFileRef.refNode.name())
 
         if not asset:
             sMsg = "Unknown asset: '{}'".format(oFileRef.path)
@@ -96,7 +98,7 @@ def switchSelectedReferences(dryRun=False, **kwargs):
 
         sRcPath = rcDct.get(sChosenRcName)
         if not sRcPath:
-            sMsg = "{} has no such resource: '{}'".format(asset, sChosenRcName)
+            sMsg = "{} has no such resource file: '{}'".format(asset, sChosenRcName)
             nonSwitchedRefList.append((oFileRef, sMsg))
             print sMsg
             continue
@@ -134,9 +136,31 @@ def switchSelectedReferences(dryRun=False, **kwargs):
             print sMsg
             continue
 
-        if not dryRun:
+        swicthItems.append((oFileRef, mrcFile))
+
+    oFileRefList = tuple(r for r, _ in swicthItems)
+    numOkRefs = len(swicthItems)
+    if not dryRun:
+
+        for i, oFileRef in enumerate(oFileRefList):
+            print "Unloading {}/{}: '{}' ...".format(i + 1, numOkRefs, oFileRef.refNode.name())
+            oFileRef.unload()
+
+        if cleanEdits:
+            for i, oFileRef in enumerate(oFileRefList):
+                    print "Cleaning edits on {}/{}: '{}' ...".format(i + 1, numOkRefs, oFileRef.refNode.name())
+                    oFileRef.clean()
+        else:
+            sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution")
+            removeRefEditByAttr(attr=sAttrList, GUI=False)
+
+        mc.refresh()
+
+        for i, (oFileRef, mrcFile) in enumerate(swicthItems):
+            #oFileRef, mrcFile = items
+            print "Switching {}/{}: '{}' ...".format(i + 1, numOkRefs, oFileRef.refNode.name())
             try:
-                oFileRef.replaceWith(mrcFile.envPath())
+                oFileRef.load(mrcFile.envPath())
             except Exception as e:
                 sMsg = toStr(e)
                 nonSwitchedRefList.append((oFileRef, sMsg))
@@ -310,7 +334,7 @@ def _loadAssetRefsToDefaultFile(oFileRef, astLib, logData, dryRun=False, **kwarg
 
     try:
         astFile = damAst.getResource("public", sDefaultRcName,
-                                    dbNode=False, fail=True)
+                                     dbNode=False, fail=True)
     except Exception as e:
         logItems.append((sRefNode, "FAILED: " + toStr(e)))
         logData["failed"] += 1
@@ -331,12 +355,12 @@ def loadAssetRefsToDefaultFile(project=None, dryRun=False, selected=False):
     logData = dict(log=logItems, failed=0, loaded=0)
 
     _, oAstFileRefList = _loadAssetRefsToDefaultFile(astLib, logData,
-                                                      dryRun=dryRun,
-                                                      confirm=True,
-                                                      allIfNoSelection=True,
-                                                      topReference=True,
-                                                      locked=False,
-                                                      selected=selected)
+                                                     dryRun=dryRun,
+                                                     confirm=True,
+                                                     allIfNoSelection=True,
+                                                     topReference=True,
+                                                     locked=False,
+                                                     selected=selected)
     numFailure = logData["failed"]
     numLoaded = logData["loaded"]
 
@@ -359,6 +383,127 @@ def loadAssetRefsToDefaultFile(project=None, dryRun=False, selected=False):
     print sMsg
     displayFunc(sMsgHeader + "More details in Script Editor ----" + (70 * ">"))
 
+
+@processSelectedReferences
+def _loadAssetsAsRenderRef(oFileRef, astLib, logData, dryRun=False, **kwargs):
+
+    oAstFileRefList = kwargs.pop("processResults")
+    def loadRef(p=None):
+        if not dryRun:
+            oFileRef.load(p)
+        logData["loaded"] += 1
+
+    proj = astLib.project
+    logItems = logData["log"]
+
+    oRefNode = oFileRef.refNode
+
+    sDefaultRcName = "render_ref"
+
+    bLoaded = oFileRef.isLoaded()
+    sRefNode = oRefNode.name()
+
+    sRefPath = pathResolve(oFileRef.path)
+
+    pathData = {}
+    try:
+        pathData = proj.dataFromPath(sRefPath, library=astLib)
+    except Exception as e:
+        pm.displayWarning(toStr(e))
+
+    try:
+        damAst = proj._entityFromPathData(pathData, fail=True)
+    except Exception as e:
+        logItems.append((sRefNode, "FAILED: " + toStr(e)))
+        logData["failed"] += 1
+        return
+
+    oAstFileRefList.append(oFileRef)
+
+    sCurRcName = pathData.get("resource", "")
+    if sDefaultRcName in (sCurRcName, ""):
+        sMsg = "loaded as '{}'".format(sDefaultRcName) if sDefaultRcName else "loaded"
+        if not bLoaded:
+            loadRef()
+        else:
+            sMsg = "already " + sMsg
+        logItems.append((sRefNode, sMsg))
+        return
+
+    try:
+        astFile = damAst.getResource("public", sDefaultRcName,
+                                     dbNode=False, fail=True)
+    except Exception as e:
+        logItems.append((sRefNode, "FAILED: " + toStr(e)))
+        logData["failed"] += 1
+        return
+
+    logItems.append((sRefNode, "loaded as '{}'".format(sDefaultRcName)))
+    loadRef(astFile.envPath())
+
+def loadAssetsAsRenderRef(project=None, dryRun=False, selected=False):
+
+    proj = project
+    if not proj:
+        proj = projectFromScene()
+
+    astLib = proj.getLibrary("public", "asset_lib")
+
+    logItems = []
+    logData = dict(log=logItems, failed=0, loaded=0)
+
+    _, oAstFileRefList = _loadAssetsAsRenderRef(astLib, logData,
+                                                dryRun=dryRun,
+                                                confirm=True,
+                                                allIfNoSelection=True,
+                                                topReference=True,
+                                                locked=False,
+                                                selected=selected)
+    numFailure = logData["failed"]
+    numLoaded = logData["loaded"]
+
+    numRefs = len(oAstFileRefList)
+    w = len(max((r for r, _ in logItems), key=len)) if logItems else 0
+    fmt = lambda rn, m: "{0:<{2}}: {1}".format(rn, m, w)
+
+    sSep = "\n- "
+    if numFailure:
+        sMsgHeader = " Failed to load {}/{} asset refs to default. ".format(numFailure, numRefs)
+        displayFunc = pm.displayError
+    else:
+        sMsgHeader = " {}/{} asset refs loaded to default. ".format(numLoaded, numRefs)
+        displayFunc = pm.displayInfo
+
+    sMsgBody = sSep.join(fmt(r, m) for r, m in logItems)
+    sMsgEnd = "".center(100, "-")
+
+    sMsg = '\n' + sMsgHeader.center(100, "-") + sSep + sMsgBody + '\n' + sMsgEnd
+    print sMsg
+    displayFunc(sMsgHeader + "More details in Script Editor ----" + (70 * ">"))
+
+def importAssetRefsFromNamespaces(proj, sNmspcList, sRcName):
+
+    renderRefDct = {}
+    for sNmspc in sNmspcList:
+
+        sAstName = "_".join(sNmspc.split("_")[:3])
+        try:
+            damAst = proj.getAsset(sAstName)
+            mrcFile = damAst.getRcFile("public", sRcName, dbNode=False, fail=True)
+        except Exception as e:
+            renderRefDct[sNmspc] = e.message.strip()
+            continue
+
+        renderRefDct[sNmspc] = mrcFile
+
+    for sNmspc, mrcFile in sorted(renderRefDct.iteritems()):
+
+        if isinstance(mrcFile, basestring):
+            continue
+
+        mrcFile.mayaImportScene(ns=sNmspc)
+
+    return renderRefDct
 
 def listPrevizRefMeshes(project=None):
 

@@ -9,7 +9,7 @@ import maya.utils as mu
 import pymel.core as pm
 
 from . import dependency_scan
-from davos_maya.tool.general import entityFromScene
+from davos_maya.tool.general import infosFromScene
 
 from pytaya.core.rendering import fileNodesFromObjects, fileNodesFromShaders
 from pytd.util.fsutils import pathResolve, normCase
@@ -53,7 +53,7 @@ def fileNodesFromSelection():
     return oFileNodeList
 
 @setWaitCursor
-def scanTexturesToEdit(damEntity):
+def scanTexturesToEdit(scnInfos):
 
     preEditResults = []
     sAllSeveritySet = set()
@@ -64,22 +64,28 @@ def scanTexturesToEdit(damEntity):
         preEditResults.append(res)
         sAllSeveritySet.update(res["scan_log"].iterkeys())
 
+    damEntity = scnInfos["dam_entity"]
+    #proj = scnInfos["project"]
     pubLib = damEntity.getLibrary()
-    pubTexDir = damEntity.getResource("public", "texture_dir", fail=True)
-    sPubTexDirPath = pubTexDir.absPath()
-    pubTexDir.loadChildDbNodes()
+
+    sDepType = "texture_dep"
+    depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
+    pubDepDir = depConfDct["public_loc"]
+    sPrivTexDirPath = depConfDct["source_loc"]
+    bPrivTexDirFound = osp.exists(sPrivTexDirPath)
 
     fileNodeList = fileNodesFromSelection()
     if not fileNodeList:
         return
 
+    sPubTexDirPath = pubDepDir.absPath()
+    if pubDepDir.exists():
+        pubDepDir.loadChildDbNodes()
+
     sSelTexPathSet = set(pathResolve(n.getAttr("fileTextureName"))
                          for n in fileNodeList)
 
-    scanResults = dependency_scan.scanTextureFiles(damEntity)
-
-    sPrivTexDirPath = damEntity.getPath("private", "texture_dir")
-    bPrivTexDirFound = osp.exists(sPrivTexDirPath)
+    scanResults = dependency_scan.scanTextureFiles(scnInfos, depConfDct)
 
 #    sDate = datetime.now().strftime("%Y-%m-%d_%HH%M")
 #    sBkupTexDirName = "texture_edit_backup"
@@ -90,7 +96,7 @@ def scanTexturesToEdit(damEntity):
             l = srcRes["udim_paths"]
             if l:
                 sSelUdimFileSet.update(l)
-                #print srcRes["abs_path"], srcRes["buddy_paths"]
+                #print srcRes["abs_path"], srcRes["fellow_paths"]
 
     for srcRes in scanResults:
 
@@ -114,7 +120,7 @@ def scanTexturesToEdit(damEntity):
             if sPubTexPath not in sSelUdimFileSet:
                 continue
 
-        sPubPathList = [sPubTexPath] + srcRes["buddy_paths"]
+        sPubPathList = [sPubTexPath] + srcRes["fellow_paths"]
         for i, sPubFilePath in enumerate(sPubPathList):
 
             scanLogDct = {}
@@ -130,10 +136,11 @@ def scanTexturesToEdit(damEntity):
                 resultDct = srcRes.copy()
                 resultDct["scan_log"] = scanLogDct
             else:
-                resultDct = {"abs_path":sPubFilePath,
+                resultDct = {"dependency_type":"texture_dep",
+                             "abs_path":sPubFilePath,
                              "scan_log":scanLogDct,
                              "file_nodes":[],
-                             "buddy_paths":[],
+                             "fellow_paths":[],
                              "publishable":False,
                              "drc_file":None,
                              "latest_file":None,
@@ -178,30 +185,32 @@ def scanTexturesToEdit(damEntity):
         preEditResults[-1]["scan_severities"] = sAllSeveritySet
         preEditResults[-1]["publish_count"] = 0
 
-    return preEditResults
+    return {"texture_dep":preEditResults}
 
 def editTextureFiles(dryRun=False):
 
     sCurScnPath = pm.sceneName()
-    damEntity = entityFromScene(sCurScnPath)
+    scnInfos = infosFromScene(sCurScnPath)
 
-    proj = damEntity.project
-    privLib = damEntity.getLibrary("private")
+    damEntity = scnInfos["dam_entity"]
+    proj = scnInfos["project"]
 
-    privScnFile = privLib.getEntry(sCurScnPath)
+    privScnFile = scnInfos["rc_file"]
     pubScnFile = privScnFile.getPublicFile(fail=True)
 
     pubScnFile.assertEditedVersion(privScnFile, outcomes=False, remember=False)
     pubScnFile.ensureLocked()
 
-    preEditResults = dependency_scan.launch(damEntity, scanFunc=scanTexturesToEdit,
+    preEditScanDct = dependency_scan.launch(scnInfos, scanFunc=scanTexturesToEdit,
                                             modal=True,
                                             okLabel="Edit",
                                             expandTree=True,
                                             forceDialog=True)
-    if preEditResults is None:
+    if preEditScanDct is None:
         pm.displayInfo("Canceled !")
         return
+
+    preEditResults = preEditScanDct["texture_dep"]
 
     pubFileItems = tuple((d["public_file"], d.get("latest_file"), d["file_nodes"])
                             for d in preEditResults
