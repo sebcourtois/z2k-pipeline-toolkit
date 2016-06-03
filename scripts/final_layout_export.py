@@ -24,12 +24,14 @@ def launch(shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
 
     proj = damutils.initProject()
 
+    bPrompt = True
     bWriteCmd = False
     bOk = True
     if not shotNames:
         bOk, sgShots = damutils.shotsFromShotgun(project=proj, dialogParent=dialogParent)
         shotNames = tuple(d["code"] for d in sgShots)
         bWriteCmd = True
+        bPrompt = False
 
     if not bOk:
         sys.exit()
@@ -54,9 +56,9 @@ def launch(shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
 
     damShotList = list(proj.getShot(s) for s in shotNames)
 
-    export(damShotList, dryRun=dryRun)
+    export(damShotList, dryRun=dryRun, prompt=bPrompt)
 
-def export(damShotList, dryRun=False):
+def export(damShotList, dryRun=False, prompt=True):
 
     proj = damShotList[0].project
     mayaBatch = MayaBatch()
@@ -141,15 +143,17 @@ def export(damShotList, dryRun=False):
     if numAnimShots != numAllShots:
         sMsg = ("{}/{} shots cannot be exported.\n\nContinue to export anyway ?\n\n"
                 .format(numAllShots - numAnimShots, numAllShots))
+        prompt = True
     else:
         sMsg = "Export these {} shots ?\n\n".format(numAnimShots)
 
     for grp in grouper(6, (o.name for o in animShotList)):
         sMsg += ("\n" + " ".join(s for s in grp if s is not None))
 
-    res = confirmMessage("DO YOU WANT TO...", sMsg, ["Yes", "No"])
-    if res == "No":
-        raise RuntimeWarning("Canceled !")
+    if prompt:
+        res = confirmMessage("DO YOU WANT TO...", sMsg, ["Yes", "No"])
+        if res == "No":
+            raise RuntimeWarning("Canceled !")
 
     sCode = "from zomblib import damutils;reload(damutils);damutils.initProject()"
     jobList = [{"title":"Batch initialization", "py_lines":[sCode], "fail":True}]

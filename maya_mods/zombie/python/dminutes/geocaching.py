@@ -15,7 +15,7 @@ from pytd.util.fsutils import pathJoin, jsonWrite
 from pytd.util.sysutils import grouper, argToSet
 
 from pytaya.util import apiutils as myapi
-from pytaya.core import system as myasys
+#from pytaya.core import system as myasys
 
 from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
 
@@ -286,7 +286,7 @@ def exportCaches(**kwargs):
         os.makedirs(sAbcDirPath)
 
     frameRange = (int(pm.playbackOptions(q=True, animationStartTime=True)),
-                 int(pm.playbackOptions(q=True, animationEndTime=True)))
+                  int(pm.playbackOptions(q=True, animationEndTime=True)))
 
     preRollEndFrame = frameRange[0] - 1
     preRollRange = (preRollEndFrame - 50, preRollEndFrame)
@@ -307,13 +307,21 @@ def exportCaches(**kwargs):
     ]
     sJobFmt = " ".join(sJobParts)
 
+    for sBodyResAttr in mc.ls("*.Body_res", r=True):
+        print "switching", sBodyResAttr, "to High."
+        if not bDryRun:
+            try:
+                mc.setAttr(sBodyResAttr, 1)
+            except Exception as e:
+                pm.displayWarning(e.message)
+
     for sGeoGrp in sGeoGrpList:
 
         if not mc.ls(sGeoGrp, dag=True, type="mesh"):
             continue
 
-        sNmspc = getNamespace(sGeoGrp)
-        sAbcPath = pathJoin(sAbcDirPath, sNmspc + "_cache.abc")
+        sAstNmspc = getNamespace(sGeoGrp)
+        sAbcPath = pathJoin(sAbcDirPath, sAstNmspc + "_cache.abc")
 
         jobKwargs = dict(root=sGeoGrp, file=sAbcPath, options=sJobOpts,
                          frameRange=frameRange, preRollRange=preRollRange,
@@ -745,7 +753,7 @@ def _confirmProcessing(sProcessLabel, **kwargs):
     sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, among=sObjList, **kwargs))
     if not sGeoGrpList:
         sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
-        raise RuntimeWarning(sMsg)
+        raise RuntimeError(sMsg)
     elif bPrompt:
         numGeoGrp = len(sGeoGrpList)
         if bSelected:
@@ -775,7 +783,7 @@ def seperatorStr(numLines, width=120, decay=20, reverse=False):
 def importCaches(**kwargs):
 
     bDryRun = kwargs.pop("dryRun", False)
-    bRemoveRefs = kwargs.pop("removeRefs", False)
+    bRemoveRefs = kwargs.pop("removeRefs", True)
     bUseCacheObjset = kwargs.pop("useCacheSet", True)
 
     sepWidth = 120
