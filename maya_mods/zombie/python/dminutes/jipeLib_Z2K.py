@@ -2215,7 +2215,7 @@ def getTypeInHierarchy(cursel=[], theType="mesh", *args, **kwargs):
         listOut = cmds.listRelatives(cursel, allDescendents=True, path=True, type=theType,)
 
 
-    return listOut
+    return listOut 
 
 
 def chr_delete_BS_active_group (*args, **kwargs):
@@ -3780,16 +3780,7 @@ def chr_add_frontFootTwist_goodCTR(*args, **kwargs):
 
     return [True, debugL]
 
-# to do textureEditorIsolateSelectSet autoDelete dans cleanScene
 
-# to do: fixe scaling on the hands
-
-
-
-# to do : armTwistFix
-def armTwistFix (*args, **kwargs):
-    print "armTwistFix()"
-    # Left_Rounding_Deformer_End_Crv_upV_pathCns_Mult1 #tweak rotation
 
 
 
@@ -4079,3 +4070,13 @@ def selectSpineFK0(*args, **kwargs):
         print err
 
 
+# to do textureEditorIsolateSelectSet autoDelete dans cleanScene
+
+# to do: fixe scaling on the hands
+
+
+
+# to do : armTwistFix
+def armTwistFix (*args, **kwargs):
+    print "armTwistFix()"
+    # Left_Rounding_Deformer_End_Crv_upV_pathCns_Mult1 #tweak rotation
