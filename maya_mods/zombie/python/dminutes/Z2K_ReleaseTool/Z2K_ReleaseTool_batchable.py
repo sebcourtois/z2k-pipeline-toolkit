@@ -43,6 +43,10 @@ from functools import partial
 import dminutes.Z2K_wrapper as Z2K
 reload(Z2K)
 
+from dminutes import miscUtils
+reload (miscUtils)
+
+
 import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
 # import dminutes.Z2K_Batchator.Z2K_Release_Batch_CONFIG as Batch_CONFIG
@@ -129,6 +133,7 @@ class Z2K_ReleaseTool (object):
         print tab,'self.assetCat=',self.assetCat
         print "*self.destinationAssetType ===",self.destinationAssetType
 
+
         # THIS IS FOR NOW ONLY OK FOR THE PREVIZ, IT DOESN'T TEST infoDict["assetType"] but only infoDict["assetCat"]
         if  self.assetCat in ["chr"]:
             print "It' is a CHAR test"
@@ -200,7 +205,7 @@ class Z2K_ReleaseTool (object):
                 print tab, "anim, test not ready"
                 theDebugFile  = DEBUGFILE_ANIM_SET
                 Z2K_check = Z2K_check_ANIM_SET
-
+        miscUtils.deleteUnknownNodes()
         return Z2K_check,theDebugFile
         
     def handleSpecialMasterCase(self, sourceAssetType="", forceType="", *args, **kwargs):
@@ -276,7 +281,7 @@ class Z2K_ReleaseTool (object):
         theComment= "", autoUnlock = False, sgTask="", sgVersionData = None,
         *args, **kwargs):
         print "release_Asset()"
-        
+        miscUtils.deleteUnknownNodes()
         print "***//",destinationAsset, destinationAssetType
         path_public,path_private = Z2K.getPath(proj=self.proj, assetName=destinationAsset, pathType=destinationAssetType)
         path_private_toPublish = Z2K.editFile(proj=self.proj, Path_publish_public=path_public)
@@ -318,6 +323,7 @@ class Z2K_ReleaseTool (object):
                 curSgVers = curVersFile.getSgVersion(create=True)
                 print "curSgVers=", curSgVers
                 # publishing this file to the public
+                miscUtils.deleteUnknownNodes()
                 exportedFileZ2K = Z2K.publishFile(  proj=self.proj, path_private_toPublish=path_private_toPublish, 
                                                     sgTask=sgTask, comment=theComment)
                 

@@ -4,19 +4,22 @@ import os.path as osp
 import re
 import shutil
 from collections import namedtuple
+from collections import OrderedDict
 #from itertools import izip
 
 import pymel.core as pc
+import pymel.util as pmu
 import maya.cmds as mc
 
 from pytd.util.sysutils import toStr, inDevMode
-from davos_maya.tool.reference import loadAssetRefsToDefaultFile, listPrevizRefMeshes
-from dminutes.shotconformation import removeRefEditByAttr
+from pytd.util.fsutils import jsonWrite, pathResolve, jsonRead
+
 from pytaya.util.sysutils import withSelectionRestored
-from collections import OrderedDict
 from pytaya.core.transform import matchTransform
-from pytd.util.fsutils import jsonWrite, pathResolve
+
+from davos_maya.tool import reference as myaref
 from zomblib.editing import makeFilePath, movieToJpegSequence
+from dminutes.shotconformation import removeRefEditByAttr
 
 pc.mel.source("AEimagePlaneTemplate.mel")
 
@@ -25,6 +28,9 @@ CAM_GLOBAL = 'Global_SRT'
 CAM_LOCAL = 'Local_SRT'
 CAM_DOLLY = 'Dolly'
 
+
+def getNamespace(sNode):
+    return sNode.rsplit("|", 1)[-1].rsplit(":", 1)[0]
 
 def undoAtOnce(func):
     def doIt(*args, **kwargs):
@@ -43,23 +49,6 @@ def withoutUndo(func):
             res = func(*args, **kwargs)
         finally:
             mc.undoInfo(stateWithoutFlush=True)
-        return res
-    return doIt
-
-def withParallelEval(func):
-    def doIt(*args, **kwargs):
-        sEvalMode = mc.evaluationManager(q=True, mode=True)[0]
-        if sEvalMode != "parallel":
-            mc.evaluationManager(e=True, mode="parallel")
-            mc.refresh()
-        else:
-            sEvalMode = ""
-
-        try:
-            res = func(*args, **kwargs)
-        finally:
-            if sEvalMode:
-                mc.evaluationManager(e=True, mode=sEvalMode)
         return res
     return doIt
 
@@ -397,10 +386,10 @@ def do(s_inCommand, s_inTask, sceneManager):
 def setMayaProject(sProjName):
 
     sMayaProjsLoc = osp.dirname(osp.normpath(mc.workspace(q=True, rd=True)))
-    sMyaProjPath = osp.join(sMayaProjsLoc, sProjName)
+    sMayaProjPath = osp.join(sMayaProjsLoc, sProjName)
 
-    if not osp.exists(sMyaProjPath):
-        os.mkdir(sMyaProjPath)
+    if not osp.exists(sMayaProjPath):
+        os.mkdir(sMayaProjPath)
 
     mc.workspace(update=True)
     mc.workspace(sProjName, openWorkspace=True)
@@ -413,7 +402,9 @@ def setMayaProject(sProjName):
         mc.workspace(fileRule=("alembicCache", "cache/alembic"))
         mc.workspace(saveWorkspace=True)
 
-    return sMyaProjPath
+    pmu.putEnv("ZOMB_MAYA_PROJECT_PATH", sMayaProjPath.replace("\\", "/"))
+
+    return sMayaProjPath
 
 def getWipCaptureDir(damShot):
 
@@ -423,7 +414,7 @@ def getWipCaptureDir(damShot):
 
     return mc.workspace(expandName=p)
 
-def getAlembicCacheDir(damShot):
+def getGeoCacheDir(damShot):
 
     p = osp.join(mc.workspace(fileRuleEntry="alembicCache"),
                  damShot.sequence,
@@ -461,7 +452,7 @@ def create_previz_scene(sceneManager):
     sceneManager.updateSceneAssets()
 
     init_scene_base(sceneManager)
-    init_previz_scene(sceneManager)
+    setupShotScene(sceneManager)
 
     reArrangeAssets()
 
@@ -476,15 +467,19 @@ def create_previz_scene(sceneManager):
     else:
         print 'previz creation failed to Edit and save !'
 
-def init_shot_constants(sceneManager):
-    start = 101
+def getShotDuration(sgShot):
 
-    duration = sceneManager.getDuration()
+    inOutDuration = sgShot['sg_cut_out'] - sgShot['sg_cut_in'] + 1
+    duration = sgShot['sg_cut_duration']
 
-    pc.playbackOptions(edit=True, minTime=start)
-    pc.playbackOptions(edit=True, animationStartTime=start)
-    pc.playbackOptions(edit=True, maxTime=start + duration - 1)
-    pc.playbackOptions(edit=True, animationEndTime=start + duration - 1)
+    if inOutDuration != duration:
+        pc.displayInfo("sg_cut_out - sg_cut_in = {} but sg_cut_duration = {}"
+                       .format(inOutDuration, duration))
+
+    if duration < 1:
+        raise ValueError("Invalid shot duration: {}".format(duration))
+
+    return duration
 
 def init_scene_base(sceneManager):
     #Set units
@@ -508,7 +503,7 @@ def init_scene_base(sceneManager):
 
     #entity specific initialisation
     if sceneManager.context['entity']['type'] == 'Shot':
-        init_shot_constants(sceneManager)
+        sceneManager.setPlaybackTimes()
 
     importSceneStructure(sceneManager)
 
@@ -723,7 +718,7 @@ def listSmoothableMeshes(project=None, warn=True):
     numMeshes = len(sAllMeshSet)
     numFailure = 0
 
-    sPrevizMeshSet = set(listPrevizRefMeshes(project=project))
+    sPrevizMeshSet = set(myaref.listPrevizRefMeshes(project=project))
     if sPrevizMeshSet:
         sCommonSet = sAllMeshSet & sPrevizMeshSet
         if sCommonSet:
@@ -921,7 +916,7 @@ def setupAnimatic(sceneManager, create=True, checkUpdate=False):
     return oImgPlane, oImgPlaneCam
 
 @withSelectionRestored
-def init_previz_scene(sceneManager):
+def setupShotScene(sceneManager):
 
     # --- Set Viewport 2.0 AO default Value
     pc.setAttr('hardwareRenderingGlobals.ssaoAmount', 0.3)
@@ -931,7 +926,8 @@ def init_previz_scene(sceneManager):
 
     sStepName = sceneManager.context["step"]["code"].lower()
     proj = sceneManager.context["damProject"]
-    sShotCode = sceneManager.context['entity']['code']
+    damShot = sceneManager.getDamShot()
+    sShotCode = damShot.name
 
     if sStepName == "animation":
 
@@ -942,11 +938,78 @@ def init_previz_scene(sceneManager):
 
             oFileRefList = pc.listReferences(loaded=False, unloaded=True)
 
-            loadAssetRefsToDefaultFile(project=proj, selected=False)
+            myaref.loadAssetRefsToDefaultFile(project=proj, selected=False)
 
             for oFileRef in oFileRefList:
                 if not oFileRef.isLoaded():
                     oFileRef.load()
+
+    elif sStepName == "final layout":
+
+        bNoRefsAtAll = True if not pc.listReferences() else False
+        bNoLoadedRefs = False#True if not pc.listReferences(loaded=True, unloaded=False) else False
+
+        if bNoRefsAtAll or bNoLoadedRefs:
+
+            sAbcDirPath = getGeoCacheDir(damShot)
+            if not osp.isdir(sAbcDirPath):
+                raise EnvironmentError("Could not found caches directory: '{}'".format(sAbcDirPath))
+
+            layoutInfoFile = damShot.getRcFile("public", "layoutInfo_file", fail=True)
+            layoutData = jsonRead(layoutInfoFile.absPath())
+
+        if bNoRefsAtAll:
+
+            p = osp.normpath(osp.join(sAbcDirPath, "abcExport.json"))
+            exportData = jsonRead(p)
+
+            sNmspcList = tuple(getNamespace(j["root"]) for j in exportData["jobs"])
+            assetRefDct = myaref.importAssetRefsFromNamespaces(proj, sNmspcList, "render_ref")
+
+            importLayoutVisibilities(layoutData)
+
+            errorItems = tuple((k, v) for k, v in assetRefDct.iteritems() if isinstance(v, basestring))
+            if errorItems:
+                print 120 * "-"
+                for sNmspc, sMsg in errorItems:
+                    pc.displayError("'{}': {}".format(sNmspc, sMsg))
+
+        elif bNoLoadedRefs:
+
+            oFileRefList = pc.listReferences(loaded=False, unloaded=True)
+            for oFileRef in oFileRefList:
+                oFileRef.clean()
+
+            myaref.loadAssetsAsRenderRef(project=proj, selected=False)
+
+            for oFileRef in oFileRefList:
+                if not oFileRef.isLoaded():
+                    oFileRef.load()
+
+            # optimize scene
+            pmu.putEnv("MAYA_TESTING_CLEANUP", "1")
+            sCleanOptList = ['nurbsSrfOption',
+                             'ptConOption',
+                             'pbOption',
+                             'deformerOption',
+                             'unusedSkinInfsOption',
+                             'groupIDnOption',
+                             'animationCurveOption',
+                             'snapshotOption',
+                             'unitConversionOption',
+                             'shaderOption',
+                             'displayLayerOption',
+                             'renderLayerOption',
+                             'setsOption',
+                             'referencedOption',
+                             'brushOption']
+            try:
+                pc.mel.scOpt_performOneCleanup(sCleanOptList)
+            except Exception as e:
+                pc.displayWarning(e.message)
+                pmu.putEnv("MAYA_TESTING_CLEANUP", "")
+
+            importLayoutVisibilities(layoutData)
 
     #rename any other shot camera
     remainingCamera = None
@@ -1024,8 +1087,6 @@ def init_previz_scene(sceneManager):
     reArrangeAssets()
     arrangeViews(oShotCam.getShape(), oAnimaticCam, oStereoCam, stereoDisplay="interlace")
 
-
-
 COMMANDS = {
     'create':{
         'BASE':create_scene_base,
@@ -1033,10 +1094,11 @@ COMMANDS = {
     },
     'init':{
         'BASE':init_scene_base,
-        'previz 3D':init_previz_scene,
-        'stereo':init_previz_scene,
-        'layout':init_previz_scene,
-        'animation':init_previz_scene,
+        'previz 3D':setupShotScene,
+        'stereo':setupShotScene,
+        'layout':setupShotScene,
+        'animation':setupShotScene,
+        'final layout':setupShotScene,
     }
 }
 
@@ -1074,6 +1136,36 @@ def exportCamAlembic(**kwargs):
     print sHeader
 
     return res
+
+def importLayoutVisibilities(layoutData):
+
+    for sObj, values in layoutData.iteritems():
+
+        if not mc.objExists(sObj):
+            continue
+
+        for sAttr, v in values.iteritems():
+
+            if "visibility" not in sAttr.lower():
+                continue
+
+            sObjAttr = sObj + "." + sAttr
+
+            if not mc.objExists(sObjAttr):
+                pc.displayInfo("No such attribute: {}".format(sObjAttr))
+
+            if mc.getAttr(sObjAttr) == v:
+                continue
+
+            try:
+                mc.setAttr(sObjAttr, v)
+            except RuntimeError as e:
+                if "locked or connected" in e.message:
+                    pass
+                else:
+                    raise#pm.displayWarning(e.message.strip())
+
+    pc.displayInfo("Layout visibilities imported.")
 
 def switchShotCamToRef(scnMng, oShotCam):
 
@@ -1274,14 +1366,4 @@ def iterPanelsFromCam(oCamXfm, visible=False):
                 continue
             yield sPanel
 
-def iterGeoGroups(**kwargs):
 
-    if kwargs.get("selected", kwargs.get("sl", False)):
-        sNspcList = set(n.rsplit("|", 1)[-1].rsplit(":", 1)[0] for n in mc.ls(sl=True))
-    else:
-        sNspcList = mc.namespaceInfo(listOnlyNamespaces=True)
-
-    for sNspc in sNspcList:
-        sGeoGrp = sNspc + ":grp_geo"
-        if mc.objExists(sGeoGrp):
-            yield sGeoGrp
