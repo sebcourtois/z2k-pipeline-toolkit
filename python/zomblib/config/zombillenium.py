@@ -359,7 +359,12 @@ class character3d(object):
         },
     }
 
-    resources_settings = asset_lib.resources_settings
+    resources_settings = {
+    "texture_dir":{"per_ext_sync_rules":{".psd":["online", "dmn_paris", "dmn_angouleme"]},
+                   },
+    }
+    resources_settings.update(asset_lib.resources_settings)
+
     dependency_types = asset_lib.dependency_types
 
 class character2d(object):
@@ -398,7 +403,6 @@ class character2d(object):
         "{name}_modeling.ma -> modeling_scene":None,
         "{name}_previz.ma -> previz_scene":None,
         "{name}_render.ma -> render_scene":None,
-        #"{name}_blendShape.ma -> blendShape_scene":None
         },
     }
 
@@ -539,6 +543,10 @@ class set3d(object):
     }
 
     resources_settings = {
+    "texture_dir":{"per_ext_sync_rules":{".jpg":["all_sites"]},
+                   "default_sync_rules":["online", "dmn_paris",
+                                        "dream_wall", "dmn_angouleme"],
+                   },
     "geometry_dir":{"free_to_publish":True,
                     },
     }
