@@ -13,6 +13,27 @@ from pytd.gui.dialogs import QuickTreeDialog
 
 from davos.core.damproject import DamProject
 
+def getShotDuration(sgShot):
+
+    sShotCode = sgShot["code"]
+    inOutDuration = sgShot['sg_cut_out'] - sgShot['sg_cut_in'] + 1
+    duration = sgShot['sg_cut_duration']
+
+    if inOutDuration != duration:
+        print ("<{}> (sg_cut_out - sg_cut_in) = {} but sg_cut_duration = {}"
+               .format(sShotCode, inOutDuration, duration))
+    if duration < 1:
+        raise ValueError("<{}> Invalid shot duration: {}.".format(sShotCode, duration))
+
+    return duration
+
+def playbackTimesFromDuration(duration, start=101):
+    return dict(minTime=start, animationStartTime=start,
+                maxTime=start + duration - 1, animationEndTime=start + duration - 1)
+
+def playbackTimesFromShot(sgShot):
+    return playbackTimesFromDuration(getShotDuration(sgShot))
+
 def shotsFromShotgun(project=None, dialogParent=None):
 
     global dlg

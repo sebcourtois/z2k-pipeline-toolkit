@@ -27,6 +27,7 @@ from davos_maya.tool.publishing import publishCurrentScene
 
 from zomblib import shotgunengine
 from zomblib.editing import playMovie
+from zomblib import damutils
 
 import dminutes.maya_scene_operations as mop
 import dminutes.jipeLib_Z2K as jpZ
@@ -1319,17 +1320,12 @@ class SceneManager():
         mop.do(s_inCmd, self.context['task']['content'], self)
 
     def getDuration(self):
-        return mop.getShotDuration(self.context['entity'])
+        return damutils.getShotDuration(self.context['entity'])
 
     def setPlaybackTimes(self):
-        start = 101
-
         duration = self.getDuration()
-
-        pc.playbackOptions(edit=True, minTime=start)
-        pc.playbackOptions(edit=True, animationStartTime=start)
-        pc.playbackOptions(edit=True, maxTime=start + duration - 1)
-        pc.playbackOptions(edit=True, animationEndTime=start + duration - 1)
+        times = damutils.playbackTimesFromDuration(duration)
+        mc.playbackOptions(edit=True, **times)
 
     def mkShotCamNamespace(self):
         return mop.mkShotCamNamespace(self.context['entity']['code'].lower())

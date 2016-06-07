@@ -467,19 +467,17 @@ def create_previz_scene(sceneManager):
     else:
         print 'previz creation failed to Edit and save !'
 
-def getShotDuration(sgShot):
+def playbackTimesFromScene():
 
-    inOutDuration = sgShot['sg_cut_out'] - sgShot['sg_cut_in'] + 1
-    duration = sgShot['sg_cut_duration']
+    times = dict(minTime=True,
+                animationStartTime=True,
+                maxTime=True,
+                animationEndTime=True)
 
-    if inOutDuration != duration:
-        pc.displayInfo("sg_cut_out - sg_cut_in = {} but sg_cut_duration = {}"
-                       .format(inOutDuration, duration))
+    for k, v in times.items():
+        times[k] = pc.playbackOptions(q=True, **{k:v})
 
-    if duration < 1:
-        raise ValueError("Invalid shot duration: {}".format(duration))
-
-    return duration
+    return times
 
 def init_scene_base(sceneManager):
     #Set units
@@ -789,14 +787,16 @@ def listSmoothableMeshes(project=None, warn=True):
 
 def getAnimaticInfos(sceneManager):
 
+    sStepName = sceneManager.context["step"]["code"].lower()
     damShot = sceneManager.getDamShot()
 
-    sPubMoviePath = damShot.getPath('public', 'animatic_capture')
+    sRcName = "anim_capture" if sStepName == "final layout" else "animatic_capture"
+    sPubMoviePath = damShot.getPath("public", sRcName)
     sLocMoviePath = osp.normpath(osp.join(getWipCaptureDir(damShot),
                                           osp.basename(sPubMoviePath)))
     sAnimaticImgPath = makeFilePath(osp.splitext(sLocMoviePath)[0],
                                     "animatic", "jpg", frame=1)
-    sAudioPath = damShot.getPath('public', 'animatic_sound')
+    sAudioPath = damShot.getPath("public", "animatic_sound")
     sAudioEnvPath = damShot.getLibrary().absToEnvPath(sAudioPath)
 
     File = namedtuple("File", ["path", "found"])
