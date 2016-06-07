@@ -955,9 +955,6 @@ def setupShotScene(sceneManager):
             if not osp.isdir(sAbcDirPath):
                 raise EnvironmentError("Could not found caches directory: '{}'".format(sAbcDirPath))
 
-            layoutInfoFile = damShot.getRcFile("public", "layoutInfo_file", fail=True)
-            layoutData = jsonRead(layoutInfoFile.absPath())
-
         if bNoRefsAtAll:
 
             p = osp.normpath(osp.join(sAbcDirPath, "abcExport.json"))
@@ -965,8 +962,6 @@ def setupShotScene(sceneManager):
 
             sNmspcList = tuple(getNamespace(j["root"]) for j in exportData["jobs"])
             assetRefDct = myaref.importAssetRefsFromNamespaces(proj, sNmspcList, "render_ref")
-
-            importLayoutVisibilities(layoutData)
 
             errorItems = tuple((k, v) for k, v in assetRefDct.iteritems() if isinstance(v, basestring))
             if errorItems:
@@ -1008,8 +1003,6 @@ def setupShotScene(sceneManager):
             except Exception as e:
                 pc.displayWarning(e.message)
                 pmu.putEnv("MAYA_TESTING_CLEANUP", "")
-
-            importLayoutVisibilities(layoutData)
 
     #rename any other shot camera
     remainingCamera = None
@@ -1136,36 +1129,6 @@ def exportCamAlembic(**kwargs):
     print sHeader
 
     return res
-
-def importLayoutVisibilities(layoutData):
-
-    for sObj, values in layoutData.iteritems():
-
-        if not mc.objExists(sObj):
-            continue
-
-        for sAttr, v in values.iteritems():
-
-            if "visibility" not in sAttr.lower():
-                continue
-
-            sObjAttr = sObj + "." + sAttr
-
-            if not mc.objExists(sObjAttr):
-                pc.displayInfo("No such attribute: {}".format(sObjAttr))
-
-            if mc.getAttr(sObjAttr) == v:
-                continue
-
-            try:
-                mc.setAttr(sObjAttr, v)
-            except RuntimeError as e:
-                if "locked or connected" in e.message:
-                    pass
-                else:
-                    raise#pm.displayWarning(e.message.strip())
-
-    pc.displayInfo("Layout visibilities imported.")
 
 def switchShotCamToRef(scnMng, oShotCam):
 
