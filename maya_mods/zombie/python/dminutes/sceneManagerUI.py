@@ -934,7 +934,7 @@ def doPublish(*args):
         sMsg = '"{}" published successfully !\n\n'.format(res[0].name)
         sRes = pc.confirmDialog(title='DO YOU WANT TO...',
                                 message=sMsg + "Continue working on this scene ?",
-                                button=['Yes', 'No'],
+                                button=['Yes, keep it locked.', "No, unlock it."],
                                 defaultButton='No',
                                 cancelButton='No',
                                 dismissString='No',

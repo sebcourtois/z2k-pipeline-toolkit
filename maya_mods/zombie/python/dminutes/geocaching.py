@@ -798,7 +798,7 @@ def transferOutConnections(sSrcNode, sDstNode, useNamespace=True):
             continue
         mc.connectAttr(sDstNode + "." + sSrcAttr, sDstPlug, force=True)
 
-def importLayoutVisibilities(damShot=None, dryRun=False):
+def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
 
     if not damShot:
         damShot = infosFromScene()["dam_entity"]
@@ -809,6 +809,9 @@ def importLayoutVisibilities(damShot=None, dryRun=False):
     print "\n" + " Importing Layout visibilities ".center(120, "-")
 
     for sObj, values in layoutData.iteritems():
+
+        if onNamespaces and (getNamespace(sObj) not in onNamespaces):
+            continue
 
         if not mc.objExists(sObj):
             continue
@@ -884,8 +887,10 @@ def importCaches(**kwargs):
     pm.mel.ScriptEditor()
     pm.mel.handleScriptEditorAction("maximizeHistory")
 
-    if not bSelected:
-        importLayoutVisibilities(damShot, dryRun=bDryRun)
+    sNmspcList = None
+    if bSelected:
+        sNmspcList = tuple(getNamespace(s) for s in sGeoGrpList)
+    importLayoutVisibilities(damShot, onNamespaces=sNmspcList, dryRun=bDryRun)
 
     print  r"""
    ______           __            ____                           __     _____ __             __           __
