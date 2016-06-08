@@ -27,6 +27,10 @@ from dminutes import assetconformation
 import tkRig as tk
 reload (tk)
 
+
+
+
+
 # TK wrap/TWEAK 
 def tkMirror(*args, **kwargs):
     # special case of added controlers
@@ -1718,6 +1722,10 @@ def resetSRT(inObjL=[], *args, **kwargs):
     # print tab,"DONE",toReturnB
     return [toReturnB, debugD]
 
+
+
+
+
 def resetCTR(inObjL=[], userDefined=True, SRT=True, *args, **kwargs):
     """ Description: remet les valeur SRT a (1,1,1) (0,0,0) (0,0,0) et user defined attr to default
         Return : [toReturnB,debugD]
@@ -1753,7 +1761,7 @@ def resetCTR(inObjL=[], userDefined=True, SRT=True, *args, **kwargs):
                             cmds.setAttr(i + "." + attr, dv)
                         else:
                             # cmds.setAttr(i+"."+attr,0)
-                            print "No default value"
+                            print i+ "."+ attr,": No default value"
                     except Exception, err:
                         toReturnB = False
                         debugL.append(err)
@@ -3581,16 +3589,20 @@ def chr_fix_EyebrowUpper_ExtCorner_cst(*args, **kwargs):
                                 print " thePlug=",thePlug,cmds.getAttr(thePlug)
                                 theSource = cmds.listConnections(thePlug,s=1,d=0,p=1)[0]
                                 if "Head_FK" in theSource:
+                                    if not cmds.connectionInfo(thePlug, isDestination=True):
                                         cmds.setAttr(theSource,1)
                                         print "    theSource=",theSource,cmds.getAttr(theSource)
+                                    else:
+                                        print "    thePlug",theSource,"is connected-> skipped"
+
                                     
                                 else:
 
-
-                                    
-                                    cmds.setAttr(theSource,0)
-                                    print "    theSource=",theSource,cmds.getAttr(theSource)
-                                    fixedL.append(i+"."+theSource)
+                                    if not cmds.connectionInfo(thePlug, isDestination=True):
+                                        cmds.setAttr(theSource,0)
+                                        print "    theSource=",theSource,cmds.getAttr(theSource)
+                                    else:
+                                        print "    thePlug",theSource,"is connected-> skipped"
     
     print "notFoundL=", notFoundL
     print "fixedL=", fixedL
