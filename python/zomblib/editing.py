@@ -131,6 +131,10 @@ def ffmpegAppPath():
 def h264ToProres(inSeqList, shotStep='01_previz'):
     """
     There are 4 profiles that exist within Prores: Proxy, LT, SQ and HQ (and then optionally 4444). In ffmpeg these profiles are assigned numbers (0 is Proxy and 3 is HQ)
+    ex:
+    from zomblib import editing
+    reload (editing)
+    editing.h264ToProres(["sq0140"], shotStep='04_anim')
     """
 
     sFfmpegPath = ffmpegAppPath()
@@ -138,7 +142,7 @@ def h264ToProres(inSeqList, shotStep='01_previz'):
     montageDir = "//Zombiwalk/z2k/11_EXCHANGE_MONTAGE"
     sSeqShotDict = OrderedDict()
 
-    if shotStep in ("01_previz", "02_layout"):
+    if shotStep in ("01_previz", "02_layout", "04_anim"):
         profile = 0
         shotExt = shotStep.split("_")[-1]
     else:
