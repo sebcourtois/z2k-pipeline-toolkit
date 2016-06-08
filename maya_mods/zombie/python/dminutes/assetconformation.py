@@ -340,7 +340,7 @@ def setShadingMask(selectFailingNodes = False, gui = True):
     dmnMask04_G = ["chr_steven_","chr_dolores_","chr_ado18aine_"]
     dmnMask04_B = ["chr_sirius_","chr_femme_","chr_ado_","chr_gamine_"]
 
-    dmnMask05_R = []# visages, custom
+    dmnMask05_R = []# visages, gazons, herbes folles custom
     dmnMask05_G = []# yeux, custom
     dmnMask05_B = []# bouches, custom
 
@@ -1651,3 +1651,37 @@ def releaseDateCompare(assetType = "prp", myFilter = ""):
                 elif myFilter == "render":
                     if statDateRender > statDateRenderRef:
                         print "{:^48} render: {}    renderRef: {}".format(each, dateRenderS, dateRenderRefS)
+
+
+
+
+
+
+def rigSetRemove(gui = True, inRoot = "asset"):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="rigSetRemove")
+
+    try:
+        if mc.ls("asset|grp_rig", type = 'transform'):
+            mc.delete("asset|grp_rig")
+            log.printL("i", "rig removed")
+        if mc.ls("set_meshCache", type = 'objectSet'):
+            mc.delete("set_meshCache")
+    except Exception,err:
+        log.printL("e", err)
+
+    #Put all groups in a set for caching
+    groups=[]
+    allTransform = mc.listRelatives("asset|grp_geo", allDescendents = True, fullPath = True, type = "transform")
+    allTransform = mc.ls(allTransform,exactType = "transform", long = True)
+    if allTransform is None: allTransform = []
+    for eachTransform in allTransform:
+        if mc.listRelatives(eachTransform, children = True, shapes = True) is None:
+            groups.append(eachTransform)
+    if groups:
+        mc.sets(groups, name="set_meshCache")
+        txt = "new 'set_meshCache' created, {} groups added : {}".format(len(groups),groups)
+        log.printL("i", txt)
+    else:
+        log.printL("e", "Could not create 'set_meshCache', no group to add could be found")
+
+    return dict(resultB=log.resultB, logL=log.logL)

@@ -627,7 +627,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=6, e=True)
+        self.pBar_upd(step=1, maxValue=7, e=True)
 
         meshCacheObjL = jpZ.getSetContent(inSetL=["set_meshCache"] ) 
         geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes("asset|grp_geo")
@@ -762,6 +762,20 @@ class checkModule(object):
         if not jpZ.checkSRT(inObjL =controlObjL, verbose=True)[0] :
             boolResult = False
         self.pBar_upd(step= 1,)
+
+
+        # 10   remove rig
+        self.printF("asset conformation:   remove rig", st="t")
+        resultD = assetconformation.rigSetRemove(gui = True, inRoot = "asset")
+        # prints -------------------
+
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,) 
 
         # colors
         print "*btn_CleanObjects:",boolResult
