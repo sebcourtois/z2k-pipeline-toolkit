@@ -9,12 +9,13 @@ from datetime import datetime
 import argparse
 import subprocess
 
-from pytd.util.sysutils import grouper
+from pytd.util.sysutils import grouper, inDevMode
 from pytd.util.logutils import confirmMessage
 from pytd.util.fsutils import pathJoin, pathSuffixed, jsonWrite
 
 from zomblib import damutils
 from zomblib.mayabatch import MayaBatch
+from zomblib.damutils import playbackTimesFromShot
 
 LAUNCH_TIME = None
 
@@ -24,6 +25,7 @@ def launch(shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
 
     proj = damutils.initProject()
 
+    sgShots = None
     bPrompt = True
     bWriteCmd = False
     bOk = True
@@ -56,12 +58,13 @@ def launch(shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
 
     damShotList = list(proj.getShot(s) for s in shotNames)
 
-    export(damShotList, dryRun=dryRun, prompt=bPrompt)
+    export(damShotList, dryRun=dryRun, prompt=bPrompt, sgShots=sgShots)
 
-def export(damShotList, dryRun=False, prompt=True):
+def export(damShotList, dryRun=False, prompt=True, sgShots=None):
 
     proj = damShotList[0].project
     mayaBatch = MayaBatch()
+    sgShotDct = {} if sgShots is None else dict((d["code"], d) for d in sgShots)
 
     sErrorList = []
     animScnList = []
@@ -128,6 +131,28 @@ def export(damShotList, dryRun=False, prompt=True):
 
         layoutScnList[i] = latestFile
 
+    if sgShotDct:
+        sNoSgShotList = tuple(sh.name for sh in animShotList if sh.name not in sgShotDct)
+    else:
+        sNoSgShotList = tuple(sh.name for sh in animShotList)
+
+
+    if sNoSgShotList:
+        sgShotList = proj.listAllSgShots(moreFilters=[["code", "in", sNoSgShotList]],
+                                         includeOmitted=inDevMode())
+        sgShotDct.update((d["code"], d) for d in sgShotList)
+
+    print sNoSgShotList, sgShotDct
+
+    numAnimShots = len(animShotList)
+
+    frameRangeList = numAnimShots * [None]
+    for i, damShot in enumerate(animShotList):
+        sgShot = sgShotDct[damShot.name]
+        times = playbackTimesFromShot(sgShot)
+        frameRange = (int(times["animationStartTime"]), int(times["animationEndTime"]))
+        frameRangeList[i] = frameRange
+
     if sErrorList:
         sSep = "\nWARNING: "
         sErrMsg = sSep + sSep.join(sErrorList)
@@ -139,7 +164,6 @@ def export(damShotList, dryRun=False, prompt=True):
         confirmMessage("SORRY !", sMsg, ["OK"])
         return
 
-    numAnimShots = len(animShotList)
     if numAnimShots != numAllShots:
         sMsg = ("{}/{} shots cannot be exported.\n\nContinue to export anyway ?\n\n"
                 .format(numAllShots - numAnimShots, numAllShots))
@@ -158,11 +182,14 @@ def export(damShotList, dryRun=False, prompt=True):
     sCode = "from zomblib import damutils;reload(damutils);damutils.initProject()"
     jobList = [{"title":"Batch initialization", "py_lines":[sCode], "fail":True}]
 
-    sExportFunc = "exportLayoutInfo(publish=True,dryRun={})".format(dryRun)
-    jobList.extend(generMayaJobs(layoutScnList, sExportFunc))
+    sExportFunc = "exportLayoutInfo(publish=True,dryRun={dryRun})"
+    jobArgsList = tuple(dict(scene=f.absPath(), dryRun=dryRun) for f in layoutScnList)
+    jobList.extend(generMayaJobs(sExportFunc, jobArgsList))
 
-    sExportFunc = "exportCaches(selected=False,dryRun={})".format(dryRun)
-    jobList.extend(generMayaJobs(animScnList, sExportFunc))
+    sExportFunc = "exportCaches(selected=False, frameRange={frameRange}, dryRun={dryRun})"
+    jobArgsList = tuple(dict(scene=f.absPath(), dryRun=dryRun, frameRange=fr)
+                        for f, fr in izip(animScnList, frameRangeList))
+    jobList.extend(generMayaJobs(sExportFunc, jobArgsList))
 
     sJobFilePath = makeOutputPath("maya_batch.json", timestamp=LAUNCH_TIME)
     jsonWrite(sJobFilePath, jobList)
@@ -186,7 +213,7 @@ def _assertedLatestVersion(scnFile, refresh=False):
 
     return versFile
 
-def generMayaJobs(scnFileList, sExportFunc):
+def generMayaJobs(sExportFunc, jobArgsList):
 
     sCodeFmt = """
 import maya.cmds as mc
@@ -199,11 +226,14 @@ myasys.openScene('{scene}', force=True, fail=False)
 mc.refresh()
 geocaching.{func}
 """
-    for scnFile in scnFileList:
-        sPath = scnFile.absPath()
-        sTitle = "{} on '{}'".format(sExportFunc, scnFile.name)
-        sCode = sCodeFmt.format(scene=sPath, func=sExportFunc)
+    for args in (d.copy() for d in jobArgsList):
+
+        sAbsPath = args.pop("scene")
+        sExportFunc = sExportFunc.format(**args)
+        sTitle = "{} on '{}'".format(sExportFunc, osp.dirname(sAbsPath))
+        sCode = sCodeFmt.format(func=sExportFunc, scene=sAbsPath)
         _ = compile(sCode, '<string>', 'exec')
+
         job = {"title":sTitle, "py_lines":sCode.strip().split('\n')}
         yield job
 

@@ -11,7 +11,7 @@ from pymel.util.arguments import listForNone
 import pymel.core as pm
 
 from pytd.util.qtutils import setWaitCursor
-from pytd.util.fsutils import pathJoin, jsonWrite
+from pytd.util.fsutils import pathJoin, jsonWrite, jsonRead
 from pytd.util.sysutils import grouper, argToSet
 
 from pytaya.util import apiutils as myapi
@@ -20,8 +20,6 @@ from pytaya.util import apiutils as myapi
 from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
 
 from dminutes import maya_scene_operations as mop
-
-reload(mop)
 
 LOGGING_SETS = []
 UNUSED_TRANSFER_NODES = []
@@ -101,17 +99,6 @@ def listChildMeshes(sXfm, longName=False):
         return []
 
     return mc.ls(res, ni=True)
-
-def transferOutConnections(sSrcNode, sDstNode):
-
-    sConnectList = mc.listConnections(sSrcNode, s=False, d=True, c=True, p=True,
-                                      skipConversionNodes=True)
-    if not sConnectList:
-        return
-
-    sConnectList = tuple((s.split(".", 1)[-1], d) for s, d in grouper(2, sConnectList))
-    for sSrcAttr, sDstPlug in sConnectList:
-        mc.connectAttr(sDstNode + "." + sSrcAttr, sDstPlug, force=True)
 
 def breakConnections(sSide, sNodeAttr):
 
@@ -270,6 +257,9 @@ def exportCaches(**kwargs):
 
     sProcessLabel = kwargs.pop("processLabel", "Export")
     bDryRun = kwargs.pop("dryRun", False)
+    frameRange = kwargs.pop("frameRange", None)
+    if frameRange:
+        frameRange = tuple(int(f) for f in frameRange)
 
     scnInfos = infosFromScene()
     damShot = scnInfos["dam_entity"]
@@ -285,8 +275,19 @@ def exportCaches(**kwargs):
     if not osp.exists(sAbcDirPath):
         os.makedirs(sAbcDirPath)
 
-    frameRange = (int(pm.playbackOptions(q=True, animationStartTime=True)),
-                  int(pm.playbackOptions(q=True, animationEndTime=True)))
+    scnFrmRange = (int(pm.playbackOptions(q=True, animationStartTime=True)),
+                   int(pm.playbackOptions(q=True, animationEndTime=True)))
+
+    if not frameRange:
+        pm.displayWarning("No frame range was given so, retreived from scene: {}"
+                          .format(scnFrmRange))
+        frameRange = scnFrmRange
+    elif frameRange != scnFrmRange:
+        sMsg = "Frame ranges differ:"
+        sMsg += "\n    - shot : {}".format(frameRange)
+        sMsg += "\n    - scene: {}".format(scnFrmRange)
+        sMsg += "\nthe given range will be used."
+        pm.displayWarning(sMsg)
 
     preRollEndFrame = frameRange[0] - 1
     preRollRange = (preRollEndFrame - 50, preRollEndFrame)
@@ -303,7 +304,7 @@ def exportCaches(**kwargs):
     r"-frameRange {preRollRange[0]} {preRollRange[1]} -preRoll",
     "{options}",
     r"-pythonPerFrameCallback '_abcProgress(int(\"#FRAME#\"),{frameRange[1]})'",
-    r"-pythonPostJobCallback 'print(\"Exported \'{root}\' >> \'{file}\'\")'"
+    r"-pythonPostJobCallback 'print(\"Exported \'{root}\' >> \'{file}\'\")'",
     ]
     sJobFmt = " ".join(sJobParts)
 
@@ -318,6 +319,8 @@ def exportCaches(**kwargs):
     for sGeoGrp in sGeoGrpList:
 
         if not mc.ls(sGeoGrp, dag=True, type="mesh"):
+            pm.displayInfo("No meshes found under '{}': No geo cache to export."
+                           .format(sGeoGrp))
             continue
 
         sAstNmspc = getNamespace(sGeoGrp)
@@ -596,12 +599,12 @@ def transferVisibilities(astToAbcXfmMap, dryRun=False):
 
         if bAstViz:
             sHiddenList.append(sAstXfm)
-            sMsg = "hidden: '{}'".format(sAstXfm)
+            sMsg = "HIDDEN: '{}'".format(sAstXfm)
         else:
             sShowedList.append(sAstXfm)
-            sMsg = "showed: '{}'".format(sAstXfm)
+            sMsg = "SHOWED: '{}'".format(sAstXfm)
 
-        pm.displayInfo(sMsg)
+        print sMsg
 
         try:
             if not dryRun:
@@ -780,6 +783,74 @@ def seperatorStr(numLines, width=120, decay=20, reverse=False):
              for i in xrange(numLines))
     return "\n".join(sorted((l.center(width) for l in lines), reverse=reverse))
 
+def transferOutConnections(sSrcNode, sDstNode, useNamespace=True):
+
+    sConnectList = mc.listConnections(sSrcNode, s=False, d=True, c=True, p=True,
+                                      skipConversionNodes=True)
+    if not sConnectList:
+        return
+
+    sSrcNmspc = getNamespace(sSrcNode)
+
+    sConnectList = tuple((s.split(".", 1)[-1], d) for s, d in grouper(2, sConnectList))
+    for sSrcAttr, sDstPlug in sConnectList:
+        if useNamespace and sSrcNmspc == getNamespace(sDstPlug.rsplit('.', 1)[0]):
+            continue
+        mc.connectAttr(sDstNode + "." + sSrcAttr, sDstPlug, force=True)
+
+def importLayoutVisibilities(damShot=None, dryRun=False):
+
+    if not damShot:
+        damShot = infosFromScene()["dam_entity"]
+
+    layoutInfoFile = damShot.getRcFile("public", "layoutInfo_file", fail=True)
+    layoutData = jsonRead(layoutInfoFile.absPath())
+
+    print "\n" + " Importing Layout visibilities ".center(120, "-")
+
+    for sObj, values in layoutData.iteritems():
+
+        if not mc.objExists(sObj):
+            continue
+
+        for sAttr, v in values.iteritems():
+
+            if "visibility" not in sAttr.lower():
+                continue
+
+            sObjAttr = sObj + "." + sAttr
+
+            if not mc.objExists(sObjAttr):
+                pm.displayInfo("No such attribute: {}".format(sObjAttr))
+
+            bObjViz = mc.getAttr(sObjAttr)
+            if bObjViz == v:
+                continue
+
+            try:
+                if not dryRun:
+                    mc.setAttr(sObjAttr, v)
+            except RuntimeError as e:
+                if "locked or connected" in e.message:
+                    pass
+                else:
+                    raise#pm.displayWarning(e.message.strip())
+
+            if sAttr == "visibility":
+                if bObjViz:
+                    sMsg = "HIDDEN: '{}'".format(sObj)
+                else:
+                    sMsg = "SHOWED: '{}'".format(sObj)
+            else:
+                if bObjViz:
+                    sMsg = "ENABLED: '{}'".format(sObjAttr)
+                else:
+                    sMsg = "DISABLED: '{}'".format(sObjAttr)
+
+            print sMsg
+
+    print " Layout visibilities imported ".center(120, "-") + "\n"
+
 def importCaches(**kwargs):
 
     bDryRun = kwargs.pop("dryRun", False)
@@ -803,7 +874,7 @@ def importCaches(**kwargs):
         raise EnvironmentError("No such directory: '{}'".format(sAbcDirPath))
 
     sProcessLabel = kwargs.pop("processLabel", "Import")
-    sGeoGrpList, _ = _confirmProcessing(sProcessLabel, **kwargs)
+    sGeoGrpList, bSelected = _confirmProcessing(sProcessLabel, **kwargs)
     if not sGeoGrpList:
         return False
 
@@ -812,6 +883,9 @@ def importCaches(**kwargs):
 
     pm.mel.ScriptEditor()
     pm.mel.handleScriptEditorAction("maximizeHistory")
+
+    if not bSelected:
+        importLayoutVisibilities(damShot, dryRun=bDryRun)
 
     print  r"""
    ______           __            ____                           __     _____ __             __           __
@@ -863,7 +937,7 @@ def importCaches(**kwargs):
                 doneWith(oAbcRef);continue
 
         astToAbcXfmItems = getTransformMapping(sAstGeoGrp, sAbcNmspc,
-                                                consider=sCacheObjList)
+                                               consider=sCacheObjList)
 
         astToAbcMeshItems = getMeshMapping(astToAbcXfmItems,
                                            consider=sCacheObjList)
