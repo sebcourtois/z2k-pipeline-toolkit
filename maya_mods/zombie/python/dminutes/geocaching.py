@@ -257,6 +257,9 @@ def exportCaches(**kwargs):
 
     sProcessLabel = kwargs.pop("processLabel", "Export")
     bDryRun = kwargs.pop("dryRun", False)
+    frameRange = kwargs.pop("frameRange", None)
+    if frameRange:
+        frameRange = tuple(int(f) for f in frameRange)
 
     scnInfos = infosFromScene()
     damShot = scnInfos["dam_entity"]
@@ -272,8 +275,19 @@ def exportCaches(**kwargs):
     if not osp.exists(sAbcDirPath):
         os.makedirs(sAbcDirPath)
 
-    frameRange = (int(pm.playbackOptions(q=True, animationStartTime=True)),
-                  int(pm.playbackOptions(q=True, animationEndTime=True)))
+    scnFrmRange = (int(pm.playbackOptions(q=True, animationStartTime=True)),
+                   int(pm.playbackOptions(q=True, animationEndTime=True)))
+
+    if not frameRange:
+        pm.displayWarning("No frame range was given so, retreived from scene: {}"
+                          .format(scnFrmRange))
+        frameRange = scnFrmRange
+    elif frameRange != scnFrmRange:
+        sMsg = "Frame ranges differ:"
+        sMsg += "\n    - shot : {}".format(frameRange)
+        sMsg += "\n    - scene: {}".format(scnFrmRange)
+        sMsg += "\nthe given range will be used."
+        pm.displayWarning(sMsg)
 
     preRollEndFrame = frameRange[0] - 1
     preRollRange = (preRollEndFrame - 50, preRollEndFrame)
@@ -290,7 +304,7 @@ def exportCaches(**kwargs):
     r"-frameRange {preRollRange[0]} {preRollRange[1]} -preRoll",
     "{options}",
     r"-pythonPerFrameCallback '_abcProgress(int(\"#FRAME#\"),{frameRange[1]})'",
-    r"-pythonPostJobCallback 'print(\"Exported \'{root}\' >> \'{file}\'\")'"
+    r"-pythonPostJobCallback 'print(\"Exported \'{root}\' >> \'{file}\'\")'",
     ]
     sJobFmt = " ".join(sJobParts)
 
@@ -305,6 +319,8 @@ def exportCaches(**kwargs):
     for sGeoGrp in sGeoGrpList:
 
         if not mc.ls(sGeoGrp, dag=True, type="mesh"):
+            pm.displayInfo("No meshes found under '{}': No geo cache to export."
+                           .format(sGeoGrp))
             continue
 
         sAstNmspc = getNamespace(sGeoGrp)
@@ -782,7 +798,7 @@ def transferOutConnections(sSrcNode, sDstNode, useNamespace=True):
             continue
         mc.connectAttr(sDstNode + "." + sSrcAttr, sDstPlug, force=True)
 
-def importLayoutVisibilities(damShot=None):
+def importLayoutVisibilities(damShot=None, dryRun=False):
 
     if not damShot:
         damShot = infosFromScene()["dam_entity"]
@@ -790,7 +806,7 @@ def importLayoutVisibilities(damShot=None):
     layoutInfoFile = damShot.getRcFile("public", "layoutInfo_file", fail=True)
     layoutData = jsonRead(layoutInfoFile.absPath())
 
-    print " Importing Layout visibilities ".center(120, "-")
+    print "\n" + " Importing Layout visibilities ".center(120, "-")
 
     for sObj, values in layoutData.iteritems():
 
@@ -812,21 +828,28 @@ def importLayoutVisibilities(damShot=None):
                 continue
 
             try:
-                mc.setAttr(sObjAttr, v)
+                if not dryRun:
+                    mc.setAttr(sObjAttr, v)
             except RuntimeError as e:
                 if "locked or connected" in e.message:
                     pass
                 else:
                     raise#pm.displayWarning(e.message.strip())
 
-            if bObjViz:
-                sMsg = "HIDDEN: '{}'".format(sObj)
+            if sAttr == "visibility":
+                if bObjViz:
+                    sMsg = "HIDDEN: '{}'".format(sObj)
+                else:
+                    sMsg = "SHOWED: '{}'".format(sObj)
             else:
-                sMsg = "SHOWED: '{}'".format(sObj)
+                if bObjViz:
+                    sMsg = "ENABLED: '{}'".format(sObjAttr)
+                else:
+                    sMsg = "DISABLED: '{}'".format(sObjAttr)
 
             print sMsg
 
-    print " Layout visibilities imported ".center(120, "-")
+    print " Layout visibilities imported ".center(120, "-") + "\n"
 
 def importCaches(**kwargs):
 
@@ -851,7 +874,7 @@ def importCaches(**kwargs):
         raise EnvironmentError("No such directory: '{}'".format(sAbcDirPath))
 
     sProcessLabel = kwargs.pop("processLabel", "Import")
-    sGeoGrpList, _ = _confirmProcessing(sProcessLabel, **kwargs)
+    sGeoGrpList, bSelected = _confirmProcessing(sProcessLabel, **kwargs)
     if not sGeoGrpList:
         return False
 
@@ -860,6 +883,9 @@ def importCaches(**kwargs):
 
     pm.mel.ScriptEditor()
     pm.mel.handleScriptEditorAction("maximizeHistory")
+
+    if not bSelected:
+        importLayoutVisibilities(damShot, dryRun=bDryRun)
 
     print  r"""
    ______           __            ____                           __     _____ __             __           __
@@ -911,7 +937,7 @@ def importCaches(**kwargs):
                 doneWith(oAbcRef);continue
 
         astToAbcXfmItems = getTransformMapping(sAstGeoGrp, sAbcNmspc,
-                                                consider=sCacheObjList)
+                                               consider=sCacheObjList)
 
         astToAbcMeshItems = getMeshMapping(astToAbcXfmItems,
                                            consider=sCacheObjList)

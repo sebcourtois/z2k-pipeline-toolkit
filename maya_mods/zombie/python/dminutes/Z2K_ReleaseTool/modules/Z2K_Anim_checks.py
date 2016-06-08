@@ -474,9 +474,9 @@ class checkModule(object):
 
 
         # 1 isSkinned (meshCacheObjL)
+        self.printF("isSkinned()", st="t")
         result,outSkinClusterL,noSkinL = jpZ.isSkinned(inObjL= meshCacheObjL,)
         # prints -------------------
-        self.printF("isSkinned()", st="t")
         self.printF(result, st="r")
         self.printF("skinned_object = {0} / {1}".format(len(outSkinClusterL),len(meshCacheObjL) ) )
         for i in noSkinL:
@@ -489,9 +489,9 @@ class checkModule(object):
 
 
         # 2 cleanUnusedInfluence (meshCacheObjL)
+        self.printF("cleanUnusedInfluance()", st="t")
         result,totalSkinClusterL,deletedDict = jpZ.cleanUnusedInfluence(inObjL=meshCacheObjL)
         # prints -------------------
-        self.printF("cleanUnusedInfluance()", st="t")
         self.printF(result, st="r")
         self.printF ( "total cleaned skinCluster: {0}/{1}".format( len(deletedDict), len(totalSkinClusterL) ) )
         for i,j in deletedDict.iteritems():
@@ -504,9 +504,9 @@ class checkModule(object):
 
 
         # 3 setSmoothness (meshCacheObjL)
+        self.printF("setSmoothness()", st="t")
         result,debugD = jpZ.setSmoothness(inObjL=meshCacheObjL, mode=0)
         # prints -------------------
-        self.printF("setSmoothness()", st="t")
         self.printF(result, st="r")
         self.printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(meshCacheObjL) ) )
         for i,j in debugD.iteritems():
@@ -519,9 +519,9 @@ class checkModule(object):
 
 
         # 4 disableShapeOverrides (meshCacheObjL)
+        self.printF("disableShapeOverrides()", st="t")
         result,debugD = jpZ.disableShapeOverrides(inObjL=meshCacheObjL)
         # prints -------------------
-        self.printF("disableShapeOverrides()", st="t")
         self.printF(result, st="r")
         self.printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(meshCacheObjL), ) )
         for i,j in debugD.iteritems():
@@ -534,9 +534,9 @@ class checkModule(object):
 
 
         # 5 checkSRT (meshCacheObjL)
+        self.printF("checkSRT()", st="t")
         result,debugD = jpZ.checkSRT(inObjL = meshCacheObjL, )
         # prints -------------------
-        self.printF("checkSRT()", st="t")
         self.printF(result, st="r")
         self.printF ( " not zero total: {0}/{1}".format( len(debugD.keys()),len(meshCacheObjL), ) )
         for i,j in debugD.iteritems():
@@ -549,10 +549,10 @@ class checkModule(object):
 
 
         # 6 cleanKeys (controlObjL)
+        self.printF("cleanKeys()", st="t")
         result,cleanedL,debugD = jpZ.cleanKeys(inObjL=controlObjL,verbose=True)
         if not result:
             # prints -------------------
-            self.printF("cleanKeys()", st="t")
             self.printF(result, st="r")
             self.printF ( " Cleaned : {0}/{1}".format( len(cleanedL),len(controlObjL), ) )
             self.printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(controlObjL), ) )
@@ -565,9 +565,9 @@ class checkModule(object):
 
 
         # 7 checkKeys (controlObjL)
+        self.printF("checkKeys()", st="t")
         result,debugD = jpZ.checkKeys(inObjL=controlObjL,verbose=True)
         # prints -------------------
-        self.printF("checkKeys()", st="t")
         self.printF(result, st="r")
         self.printF ( " error on: {0}/{1}".format( len(debugD.keys()),len(controlObjL), ) )
         for i,j in debugD.iteritems():
@@ -580,9 +580,9 @@ class checkModule(object):
 
 
         # 8 resetCTR (controlObjL)
+        self.printF("resetCTR()", st="t")
         result,debugD = jpZ.resetCTR(inObjL=controlObjL, userDefined=True, SRT=True)
         # prints -------------------
-        self.printF("resetCTR()", st="t")
         self.printF(result, st="r")
         self.printF ( " Reseted : {0}/{1}".format( len(debugD["resetedL"]),len(controlObjL), ) )
         self.printF ( " error on: {0}/{1}".format( len(debugD["errors"]),len(controlObjL), ) )
@@ -595,6 +595,8 @@ class checkModule(object):
 
 
         # 9 checkSRT (controlObjL)
+        self.printF("checkSRT()", st="t")
+        
         if not jpZ.checkSRT(inObjL =controlObjL, verbose=True)[0] :
             boolResult = False
         self.pBar_upd(step= 1,)

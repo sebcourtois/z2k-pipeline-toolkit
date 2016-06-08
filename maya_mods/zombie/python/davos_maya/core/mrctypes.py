@@ -60,10 +60,13 @@ class MrcFile(DrcFile):
             if self.versionFromName() is None:
                 sVersSuffix = mkVersionSuffix(self.currentVersion)
 
-            srcFile = self.assertLatestFile(refresh=True, newerFix=False,
-                                            prompt=bPrompt, strict=bPrompt)
-            if srcFile == self:
-                srcFile = None
+            srcFile = None
+
+            if not self.isVersionFile():
+                srcFile = self.assertLatestFile(refresh=True, newerFix=False,
+                                                prompt=bPrompt, strict=bPrompt)
+                if srcFile == self:
+                    srcFile = None
 
             sSuffix = "".join((sVersSuffix, '-', 'readonly'))
             privFile, _ = self.copyToPrivateSpace(suffix=sSuffix, existing=sExisting,
