@@ -765,6 +765,15 @@ class Asset_File_Conformer:
                 areaTolF = 0.01 #percentage world area tolerance
                 sourceWorldArea =  mc.polyEvaluate(self.sourceList[i], worldArea= True)
                 targetWorldArea =  mc.polyEvaluate(self.targetList[i], worldArea= True)
+                if sourceWorldArea == 0:
+                    sourceWorldArea = 0.0000000001
+                    txt="'{}' area = 0, assigning a tiny value to avoid 'division by 0' errors".format(self.sourceList[i])
+                    self.log.printL("w", txt)
+                if targetWorldArea == 0:
+                    targetWorldArea = 0.0000000001
+                    txt="'{}' area = 0, assigning a tiny value to avoid 'division by 0' errors".format(self.targetList[i])
+                    self.log.printL("w", txt)
+
                 if not isinstance(sourceWorldArea,float):
                     self.log.printL("e", "Cannot check topoligie, {} is not a valid mesh".format(self.sourceList[i]))
                     if sourceVrtxCnt == targetVrtxCnt:
@@ -1659,6 +1668,7 @@ def releaseDateCompare(assetType = "prp", myFilter = ""):
 
 def rigSetRemove(gui = True, inRoot = "asset"):
     log = miscUtils.LogBuilder(gui=gui, funcName ="rigSetRemove")
+
 
     try:
         if mc.ls("asset|grp_rig", type = 'transform'):
