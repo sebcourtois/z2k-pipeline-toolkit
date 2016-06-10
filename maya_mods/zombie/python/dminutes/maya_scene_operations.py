@@ -305,8 +305,8 @@ def reArrangeAssets():
             if structKey == nsPrefix:
                 #Ok, we can rearrange this !
                 root = getAssetRoot(ns)
-                if root == None:
-                    pc.warning('Can"t find root of asset with namespace {0}'.format(ns))
+                if not root:
+                    #pc.warning("Can't find root of asset with namespace '{0}'".format(ns))
                     continue
                 rootParent = root.getParent()
                 if (not rootParent) or (rootParent.name() != structParent):
@@ -919,7 +919,7 @@ def setupAnimatic(sceneManager, create=True, checkUpdate=False):
 def setupShotScene(sceneManager):
 
     # --- Set Viewport 2.0 AO default Value
-    pc.setAttr('hardwareRenderingGlobals.ssaoAmount', 0.3)
+    pc.setAttr('hardwareRenderingGlobals.ssaoAmount', 0.8)
     pc.setAttr('hardwareRenderingGlobals.ssaoRadius', 8)
     pc.setAttr('hardwareRenderingGlobals.ssaoFilterRadius', 8)
     pc.setAttr('hardwareRenderingGlobals.ssaoSamples', 16)
@@ -936,13 +936,12 @@ def setupShotScene(sceneManager):
             sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution")
             removeRefEditByAttr(attr=sAttrList, GUI=False)
 
-            oFileRefList = pc.listReferences(loaded=False, unloaded=True)
+            oAstRefList = myaref.loadAssetRefsToDefaultFile(project=proj, selected=False)
 
-            myaref.loadAssetRefsToDefaultFile(project=proj, selected=False)
-
-            for oFileRef in oFileRefList:
-                if not oFileRef.isLoaded():
-                    oFileRef.load()
+            for oFileRef in pc.listReferences(loaded=False, unloaded=True):
+                if oFileRef in oAstRefList:
+                    continue
+                oFileRef.load()
 
     elif sStepName == "final layout":
 

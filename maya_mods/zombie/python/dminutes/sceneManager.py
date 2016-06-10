@@ -824,8 +824,10 @@ class SceneManager():
                 mop.arrangeViews(oShotCam, oImgPlaneCam, oStereoCam, singleView=True)
 
             width, height = (1280, 720)
+            bAoEnabled = mc.getAttr('hardwareRenderingGlobals.ssaoEnable')
             if (not quick) and sStep.lower() == "animation":
                 width, height = (1920, 1080)
+                mc.setAttr('hardwareRenderingGlobals.ssaoEnable', True)
 
             iFontMode = mc.displayPref(q=True, fontSettingMode=True)
             iFontSize = mc.displayPref(q=True, smallFontSize=True)
@@ -855,6 +857,7 @@ class SceneManager():
                 restoreHUD(savedHudValues)
                 mc.displayPref(smallFontSize=iFontSize)
                 mc.displayPref(fontSettingMode=iFontMode)
+                mc.setAttr('hardwareRenderingGlobals.ssaoEnable', bAoEnabled)
             except Exception as e:
                 pc.displayError(toStr(e))
 
@@ -1087,7 +1090,7 @@ class SceneManager():
             else:
                 oFileRefDct[sRefNormPath] = [oFileRef]
 
-            pathData = proj.dataFromPath(sRefPath, library=astLib)
+            pathData = proj.dataFromPath(sRefPath, library=astLib, warn=False)
 
             astData = initData.copy()
             astData.update(path=sRefPath, file_refs=oFileRefDct[sRefNormPath])

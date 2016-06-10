@@ -738,6 +738,38 @@ class checkModule(object):
 
         return boolResult
 
+    @jpZ.waiter
+    def btn_ExportGroupStructure(self, controlN="", *args, **kwargs):     
+        boolResult=True
+        # 1    export group structure to animRef.json"        
+        # set progress bar
+        boolResult=True
+        self.pBar_upd(step=1, maxValue=1, e=True)
+        self.printF= self.Z2KprintDeco(jpZ.printF)
+        self.printF("assetconformation: export group structure to animRef.json", st="t")
+        resultD={}
+        resGetGroupListD = miscUtils.getGroupList(gui = self.GUI, inRoot = "asset|grp_geo")
+        if resGetGroupListD['resultB']:    
+            resultD = assetconformation.animRefJson(gui = self.GUI, mode ="write", inputD= {"groupL":resGetGroupListD["groupL"]}, dryRun=False)
+        else:
+            resultD = resGetGroupListD
+
+        # prints -------------------
+        self.printF(resultD['resultB'], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+        
+        # colors
+        print "*btn_ExportGroupStructure:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+        return boolResult
+
+
+
 
     def btn_clearAll(self, *args, **kwargs):
         print "btn_clearAll()"
@@ -766,6 +798,9 @@ class checkModule(object):
             boolResult = False
         print "*2",boolResult
         if not self.btn_CleanObjects(controlN=self.BCleanObjects, ):
+            boolResult = False
+        print "*3",boolResult
+        if not self.btn_ExportGroupStructure(controlN=self.BExportGroupStructure, ):
             boolResult = False
         
         # colors
@@ -858,6 +893,9 @@ class checkModule(object):
 
         self.BCleanObjects = cmds.button("CleanObjects",)
         cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects) )
+
+        self.BExportGroupStructure = cmds.button("Export Group Structure ",)
+        cmds.button(self.BExportGroupStructure,e=1,c= partial( self.btn_ExportGroupStructure,self.BExportGroupStructure) )
         
         self.BValidationPBar = cmds.progressBar(maxValue=3,s=1 )
 

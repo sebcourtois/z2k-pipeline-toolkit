@@ -184,24 +184,21 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode = 'finalLayout', gu
     log = miscUtils.LogBuilder(gui=gui, funcName ="setArnoldRenderOptionShot")
 
          
-    #TEMPORAIRE
-    #mc.workspace(fileRule=["images","images"])
-
-    # mmToIncheFactor = 0.0393700787401575
-    # camApertureInche = 35 * mmToIncheFactor 
     
-    # from davos_maya.tool.general import entityFromScene
-    # from dminutes import maya_scene_operations as mop
-    # damShot = entityFromScene()
-    # oShotCam = mop.getShotCamera(damShot.name)
-
-    #     myCamName = mc.ls('*:cam_*',type = "camera")
-    #     allCam = mc.ls(type = "camera")
-    #     for eachCam in allCam:
-    #         if eachCam != myCamName:
-    #             mc.setAttr (eachCam+".renderable", 0)
-    #         else:
-    #             mc.setAttr (myCamName+".renderable", 1)     
+    from davos_maya.tool.general import entityFromScene
+    from dminutes import maya_scene_operations as mop
+    damShot = entityFromScene()
+    oShotCam = mop.getShotCamera(damShot.name)
+    if oShotCam:
+        #myCamName = mc.ls('*:cam_*',type = "camera")
+        myCamName = oShotCam.name()
+        allCam = mc.ls(type = "camera")
+        for eachCam in allCam:
+            eachCam = eachCam.replace("Shape","")
+            if myCamName not in eachCam:
+                mc.setAttr (eachCam+".renderable", 0)
+            else:
+                mc.setAttr (eachCam+".renderable", 1)     
 
     mc.colorManagementPrefs(e=True, cmEnabled=False)
 
@@ -338,17 +335,15 @@ def getRenderOutput(gui = True):
         else:
             print "#### Warning: you are not working in an 'asset' structure directory, output image name and path cannot not be automaticaly set"
     elif mc.ls("|shot"):
-        print "#### Warning: this tool hass not been tested yet"
-        if  mainFilePathElem[-5] == "shot" or mainFilePathElem[-6] == "shot":
-            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH",mainFilePathElem[-4],mainFilePathElem[-3],mainFilePathElem[-2],"render")
-            outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
-            outputImageName = mainFilePathElem[-3]
-            print "#### Info: Set render path: {}".format( outputFilePath_exp)
-            print "#### Info: Set image name:  {}".format( outputImageName)
-            #mc.workspace(fileRule=["images",outputFilePath_exp])
-            #mc.workspace( saveWorkspace = True)
-            #mc.setAttr("defaultRenderGlobals.imageFilePrefix",outputImageName ,type = "string")
-            #mc.file(save = True)
+        if  mainFilePathElem[-5] == "shot":
+            if mainFilePathElem[-2] =="06_finalLayout":
+                vertionNumber = mainFilePathElem[-1].split("-")[1].split(".")[0]
+                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH",mainFilePathElem[-4],mainFilePathElem[-3],mainFilePathElem[-2],"render-"+vertionNumber)
+                outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
+                outputImageName = mainFilePathElem[-3]
+                print "#### Info: Set render path: {}".format( outputFilePath_exp)
+                print "#### Info: Set image name:  {}".format( outputImageName)
+
         else:
             print "#### Warning: you are not working in an 'shot' structure directory, output image name and path cannot not be automaticaly set"
     else:
@@ -356,7 +351,7 @@ def getRenderOutput(gui = True):
     return outputFilePath_exp, outputImageName
     
     
-def createBatchRender():
+def createBatchRender(arnoldLic = "on"):
     """
     this  script creates a renderbatch.bat file in the private maya working dir, all the variable are set properly
     a 'renderBatch_help.txt' is also created to help on addind render options to the render command
@@ -416,7 +411,7 @@ def createBatchRender():
     
     renderBatch_obj.write("set DAVOS_USER="+davosUser+"\n\n")
 
-    renderBatch_obj.write('set option=-r arnold -lic on -ai:threads 0\n')
+    renderBatch_obj.write('set option=-r arnold -lic '+arnoldLic+' -ai:threads 0\n')
     renderBatch_obj.write('set image=-im '+outputImageName+'\n')
     renderBatch_obj.write('set path=-rd '+os.path.normpath(outputFilePath)+'\n')
     workingFile = os.path.normpath(workingFile)
@@ -490,28 +485,35 @@ def createAovs(renderMode = "render"):
     if mc.ls("defaultArnoldRenderOptions"):
         myAOVs = aovs.AOVInterface()
         #create aovs, type = rgb
-        #unUsedAovNameList = [ "dmn_lambert", "dmn_toon", "dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour"  ],"dmn_rimToon_na1_na2"
+        #unUsedAovDmnNameL = [ "dmn_lambert", "dmn_toon", "dmn_incidence","dmn_shadow_mask", "dmn_occlusion", "dmn_contour"  ],"dmn_rimToon_na1_na2"
         if renderMode == "finalLayout":
-            #aovNameList = ["dmn_mask08"]
-            if not 'aiAOV_arlequin' in mc.ls( type = "aiAOV"):
+            aovDmnNameL = []
+            aovCustomNameL = ["aiAOV_arlequin"]
+        else:
+            aovDmnNameL = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon","dmn_mask_transp","dmn_lgtMask01","dmn_lgtMask02"]
+            aovCustomNameL = []
+
+
+        for each in aovDmnNameL: 
+            if not mc.ls("aiAOV_"+each, type = "aiAOV"):
+                myAOVs.addAOV( each, aovType='rgb')
+
+        for each in aovCustomNameL:
+            if each == "aiAOV_arlequin" and not 'aiAOV_arlequin' in mc.ls( type = "aiAOV"):
                 resultD = createCustomShader(shaderName = "arlequin", gui=True)
                 arlequinNodeO  = myAOVs.addAOV( "arlequin", aovType='rgb')
                 mc.connectAttr(resultD['rootNodeOutputS'], arlequinNodeO.node+'.defaultValue', force =True)
-        else:
-            aovNameList = ["dmn_ambient", "dmn_diffuse","dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon","dmn_mask_transp","dmn_lgtMask01","dmn_lgtMask02"]
-            if not 'aiAOV_Z' in mc.ls( type = "aiAOV"):
-                myAOVs.addAOV( "Z", aovType='float')
-                #changeAovFilter(aovName = "Z", filterName = "default")
-            if not 'aiAOV_depth_aa' in mc.ls( type = "aiAOV"):
+                aovCustomNameL.append("arlequin")
+            elif each == "aiAOV_depth_aa" and not 'aiAOV_depth_aa' in mc.ls( type = "aiAOV"):
                 resultD = createCustomShader(shaderName = "depthaa", gui=True)
                 zaaNodeO  = myAOVs.addAOV( "depth_aa", aovType='rgb')
                 mc.connectAttr(resultD['rootNodeOutputS'], zaaNodeO.node+'.defaultValue', force =True)
+            elif each == "aiAOV_Z" and not 'aiAOV_Z' in mc.ls( type = "aiAOV"):
+                myAOVs.addAOV( "Z", aovType='float')
+                #changeAovFilter(aovName = "Z", filterName = "default")
 
-        for eachAovName in aovNameList: 
-            if not mc.ls("aiAOV_"+eachAovName, type = "aiAOV"):
-                myAOVs.addAOV( eachAovName, aovType='rgb')
         aovs.refreshAliases()
-        print "#### {:>7}: 'createAovs' has created {} aovs".format("Info",len(aovNameList))
+        print "#### {:>7}: 'createAovs' has created {} aovs".format("Info",len(aovDmnNameL)+len(aovCustomNameL))
     else:
         print "#### {:>7}: 'createAovs' no 'defaultArnoldRenderOptions' found in the scene cannot create aovs".format("Info")
 

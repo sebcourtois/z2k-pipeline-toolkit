@@ -290,39 +290,50 @@ def _loadAssetRefsToDefaultFile(oFileRef, astLib, logData, dryRun=False, **kwarg
     if oRefNode.hasAttr(DEFAULT_FILE_ATTR):
         sDefaultRcName = oRefNode.getAttr(DEFAULT_FILE_ATTR)
 
-    if not sDefaultRcName:
-        return
+        # now only "offloaded" tag is considered.
+        if sDefaultRcName != "offloaded":
+            sDefaultRcName = ""
 
     bLoaded = oFileRef.isLoaded()
     sRefNode = oRefNode.name()
-
-    if sDefaultRcName == "offloaded":
-        sMsg = "offloaded"
-        if bLoaded:
-            oFileRef.unload()
-        else:
-            sMsg = "already " + sMsg
-        logItems.append((sRefNode, sMsg))
-        return
 
     sRefPath = pathResolve(oFileRef.path)
 
     pathData = {}
     try:
         pathData = proj.dataFromPath(sRefPath, library=astLib)
-    except Exception as e:
-        pm.displayWarning(toStr(e))
-
-    try:
         damAst = proj._entityFromPathData(pathData, fail=True)
     except Exception as e:
-        logItems.append((sRefNode, "FAILED: " + toStr(e)))
-        logData["failed"] += 1
+        pm.displayWarning(toStr(e))
         return
+
+#    try:
+#        damAst = proj._entityFromPathData(pathData, fail=True)
+#    except Exception as e:
+#        logItems.append((sRefNode, "FAILED: " + toStr(e)))
+#        logData["failed"] += 1
+#        return
 
     oAstFileRefList.append(oFileRef)
 
+    if sDefaultRcName == "offloaded":
+        sMsg = "offloaded"
+        if bLoaded:
+            if not dryRun:
+                oFileRef.unload()
+        else:
+            sMsg = "kept " + sMsg
+        logItems.append((sRefNode, sMsg))
+        return
+
     sCurRcName = pathData.get("resource", "")
+    sAstType = damAst.assetType
+    if sAstType in ("chr", "prp", "vhl") and sCurRcName != "anim_ref":
+        sDefaultRcName = "anim_ref"
+        sMsg = ("a '{}' should be loaded as '{}', not '{}'..."
+                .format(sAstType, sDefaultRcName, sCurRcName))
+        logItems.append((sRefNode, sMsg))
+
     if sDefaultRcName in (sCurRcName, ""):
         sMsg = "loaded as '{}'".format(sDefaultRcName) if sDefaultRcName else "loaded"
         if not bLoaded:
@@ -370,10 +381,10 @@ def loadAssetRefsToDefaultFile(project=None, dryRun=False, selected=False):
 
     sSep = "\n- "
     if numFailure:
-        sMsgHeader = " Failed to load {}/{} asset refs to default. ".format(numFailure, numRefs)
+        sMsgHeader = " Failed to load {}/{} asset refs. ".format(numFailure, numRefs)
         displayFunc = pm.displayError
     else:
-        sMsgHeader = " {}/{} asset refs loaded to default. ".format(numLoaded, numRefs)
+        sMsgHeader = " {}/{} asset refs loaded. ".format(numLoaded, numRefs)
         displayFunc = pm.displayInfo
 
     sMsgBody = sSep.join(fmt(r, m) for r, m in logItems)
@@ -383,6 +394,7 @@ def loadAssetRefsToDefaultFile(project=None, dryRun=False, selected=False):
     print sMsg
     displayFunc(sMsgHeader + "More details in Script Editor ----" + (70 * ">"))
 
+    return oAstFileRefList
 
 @processSelectedReferences
 def _loadAssetsAsRenderRef(oFileRef, astLib, logData, dryRun=False, **kwargs):

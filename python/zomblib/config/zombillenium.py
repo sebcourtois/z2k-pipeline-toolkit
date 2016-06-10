@@ -528,6 +528,7 @@ class set3d(object):
             "{name}_previzRef.mb -> previz_ref":None,
             "{name}_animRef.mb -> anim_ref":None,
             "{name}_renderRef.mb -> render_ref":None,
+            "{name}_animRef.json -> animRef_json":None,
             },
         "review -> review_dir":
             {

@@ -8,6 +8,9 @@ import os
 from pytd.util.logutils import logMsg
 from datetime import datetime
 
+from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
+from pytd.util.fsutils import jsonWrite, jsonRead
+
 from dminutes import miscUtils
 reload (miscUtils)
 
@@ -340,7 +343,7 @@ def setShadingMask(selectFailingNodes = False, gui = True):
     dmnMask04_G = ["chr_steven_","chr_dolores_","chr_ado18aine_"]
     dmnMask04_B = ["chr_sirius_","chr_femme_","chr_ado_","chr_gamine_"]
 
-    dmnMask05_R = []# visages, custom
+    dmnMask05_R = []# visages, gazons, herbes folles custom
     dmnMask05_G = []# yeux, custom
     dmnMask05_B = []# bouches, custom
 
@@ -765,6 +768,15 @@ class Asset_File_Conformer:
                 areaTolF = 0.01 #percentage world area tolerance
                 sourceWorldArea =  mc.polyEvaluate(self.sourceList[i], worldArea= True)
                 targetWorldArea =  mc.polyEvaluate(self.targetList[i], worldArea= True)
+                if sourceWorldArea == 0:
+                    sourceWorldArea = 0.0000000001
+                    txt="'{}' area = 0, assigning a tiny value to avoid 'division by 0' errors".format(self.sourceList[i])
+                    self.log.printL("w", txt)
+                if targetWorldArea == 0:
+                    targetWorldArea = 0.0000000001
+                    txt="'{}' area = 0, assigning a tiny value to avoid 'division by 0' errors".format(self.targetList[i])
+                    self.log.printL("w", txt)
+
                 if not isinstance(sourceWorldArea,float):
                     self.log.printL("e", "Cannot check topoligie, {} is not a valid mesh".format(self.sourceList[i]))
                     if sourceVrtxCnt == targetVrtxCnt:
@@ -1651,3 +1663,99 @@ def releaseDateCompare(assetType = "prp", myFilter = ""):
                 elif myFilter == "render":
                     if statDateRender > statDateRenderRef:
                         print "{:^48} render: {}    renderRef: {}".format(each, dateRenderS, dateRenderRefS)
+
+
+
+
+
+
+def rigSetRemove(gui = True, inRoot = "asset"):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="rigSetRemove")
+
+    try:
+        if mc.ls("asset|grp_rig", type = 'transform'):
+            mc.delete("asset|grp_rig")
+            log.printL("i", "rig removed")
+        if mc.ls("set_meshCache", type = 'objectSet'):
+            mc.delete("set_meshCache")
+    except Exception,err:
+        log.printL("e", err)
+
+
+    resultD = miscUtils.getGroupList(gui = True, inRoot = "asset|grp_geo")
+    groupL = resultD["groupL"]
+    if groupL:
+        mc.sets(groupL, name="set_meshCache")
+        txt = "new 'set_meshCache' created, {} groups added : {}".format(len(groupL),groupL)
+        log.printL("i", txt)
+    else:
+        log.printL("e", "Could not create 'set_meshCache', no group to add could be found")
+
+    return dict(resultB=log.resultB, logL=log.logL)
+
+
+
+
+
+
+def animRefJson(gui = True, mode ="write", inputD = {} ,dryRun=True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="animRefJson")
+
+    scnInfos = infosFromScene()
+    damAst = scnInfos["dam_entity"]
+    privScnFile = scnInfos["rc_file"]
+
+    sPublicFilePath = damAst.getPath("public", "animRef_json")
+    sPrivFilePath = damAst.getPath("private", "animRef_json")
+
+    if mode== "write" or mode== "add":
+        if inputD:
+            if mode== "write":
+                animRefcontentD = inputD
+            else:
+                animRefcontentD = jsonRead(sPublicFilePath)
+                animRefcontentD.update(inputD)
+
+            jsonWrite(sPrivFilePath, animRefcontentD)
+
+            # let's publish
+            sComment = "from animRef v{}".format(privScnFile.versionFromName())
+            pubFile = damAst.getRcFile("public", "animRef_json", weak=True)
+            parentDir = pubFile.parentDir()
+            parentDir.publishFile(sPrivFilePath, autoLock=True, autoUnlock=True, comment=sComment, dryRun=dryRun, saveChecksum=False)
+            txt = "Published new animRef.json: {}".format(sPublicFilePath)
+            log.printL("i", txt)
+        else:
+            txt = "nothing to write, inputD is empty : {}".format(inputD)
+            log.printL("e", txt)
+    elif mode == "read":
+        animRefcontentD = jsonRead(sPublicFilePath)
+
+    return dict(resultB=log.resultB, logL=log.logL, animRefcontentD = animRefcontentD)
+
+
+
+def compareGrpStruct2animRef(gui = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="compareGrpStruct2animRef")
+
+    animRefJsonResD = animRefJson(gui = gui, mode ="read")
+    animRefGroupL = animRefJsonResD["animRefcontentD"]["groupL"]
+
+    getGroupListResD = miscUtils.getGroupList(gui = gui, inRoot = "asset|grp_geo")
+    currentFileGroupL = getGroupListResD["groupL"]
+
+    missingGrpInAnimRefL = list(set(currentFileGroupL)-set(animRefGroupL))
+    missingGrpInCurrentFileL = list(set(animRefGroupL)-set(currentFileGroupL))
+
+    if not missingGrpInAnimRefL and not  missingGrpInCurrentFileL:
+        log.printL("i", "group structure is conform to animRef")
+    else:
+        if missingGrpInAnimRefL :
+            txt = "{} group(s) could not be found in the animRef file: '{}': ".format(len(missingGrpInAnimRefL), missingGrpInAnimRefL)
+            log.printL("e", txt)
+        if missingGrpInCurrentFileL :
+            txt = "{} group(s) could not be found in the current file: '{}': ".format(len(missingGrpInCurrentFileL), missingGrpInCurrentFileL)
+            log.printL("e", txt)
+
+    return dict(resultB=log.resultB, logL=log.logL)
+    
