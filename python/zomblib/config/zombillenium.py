@@ -119,7 +119,8 @@ class shot_lib(object):
                    {
                     "geoCache -> finalLayoutCache_dir":{},
                     "{name}_finalLayout.ma -> finalLayout_scene":None,
-                    "{name}_finalLayout.mov -> finalLayout_capture":None,
+                    "{name}_finalLayout.mov -> finalLayout_movie":None,
+                    "{name}_arlequin.mov -> arlequin_movie":None,
                    },
                 },
             },
@@ -163,17 +164,31 @@ class shot_lib(object):
                   "sg_tasks":("animation",),
                   },
 
-    "finalLayout_scene":{"outcomes":("finalLayout_capture",),
+    "finalLayout_scene":{#"outcomes":("finalLayout_movie", "arlequin_movie"),
                          "create_sg_version":True,
-                         "sg_uploaded_movie":"finalLayout_capture",
-                         "sg_path_to_movie":"finalLayout_capture",
+                         #"sg_uploaded_movie":"finalLayout_movie",
+                         #"sg_path_to_movie":"finalLayout_movie",
                          "sg_tasks":("final layout",),
                          "dependency_types": {
-                             "geoCache_dep":{"public_loc":"finalLayoutCache_dir",
+                            "geoCache_dep":{"public_loc":"finalLayoutCache_dir",
                                              "source_loc":"|localGeoCache_dir",
                                              "checksum":True},
                                             }
                          },
+
+    "finalLayout_movie":{"create_sg_version":True,
+                         "sg_uploaded_movie":True,
+                         "sg_path_to_movie":True,
+                         "sg_tasks":("Final Layout|FL_Art",),
+                         "sg_status":"rev",
+                         },
+
+    "arlequin_movie":{"create_sg_version":True,
+                      "sg_uploaded_movie":True,
+                      "sg_path_to_movie":True,
+                      "sg_tasks":("Final Layout|Anim_MeshCache",),
+                      "sg_status":"rev",
+                      },
 
     "animRef_movie":{"create_sg_version":True,
                      "sg_uploaded_movie":True,

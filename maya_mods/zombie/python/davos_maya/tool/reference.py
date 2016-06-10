@@ -10,7 +10,7 @@ import pymel.core as pm
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 
 from pytd.util.fsutils import pathResolve, normCase
-from pytd.util.sysutils import toStr
+from pytd.util.sysutils import toStr, timer
 #from pytd.gui.dialogs import confirmDialog
 
 from pytaya.util.sysutils import withSelectionRestored
@@ -19,20 +19,21 @@ from pytaya.core.reference import listReferences
 
 from davos_maya.tool.general import entityFromScene, projectFromScene
 from dminutes.shotconformation import removeRefEditByAttr
+from davos.core.drctypes import DrcEntry
 
 
 @processSelectedReferences
-def listMayaRcForSelectedRefs(oFileRef, project, **kwargs):
+def listMayaRcForSelectedRefs(oFileRef, proj, **kwargs):
 
     sRefPath = pathResolve(oFileRef.path)
-    asset = project.entityFromPath(sRefPath, fail=False)
+    astLib = proj.getLibrary("public", "asset_lib")
+    asset = proj.entityFromPath(sRefPath, fail=False, library=astLib)
 
     resultList = kwargs.pop("processResults")
 
     mayaRcDct = dict()
     if asset:
-        mayaRcDct = dict((rc, p if normCase(p) != normCase(sRefPath) else "current")
-                                    for rc, p in asset.iterMayaRcItems(**kwargs))
+        mayaRcDct = dict(asset.iterMayaRcItems(**kwargs))
     res = (asset, mayaRcDct)
     resultList.append(res)
 
@@ -81,6 +82,8 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
         asset = assetRc[0]
         rcDct = assetRc[1]
 
+        sRefPath = pathResolve(oFileRef.path)
+
         i += 1
         print "Checking {}/{}: '{}' ...".format(i, numRefs, oFileRef.refNode.name())
 
@@ -103,7 +106,7 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
             print sMsg
             continue
 
-        if sRcPath == "current":
+        if normCase(sRcPath) == normCase(sRefPath):
             sMsg = "Reference already switched to '{}'".format(sChosenRcName)
             nonSwitchedRefList.append((oFileRef, sMsg))
             print sMsg
@@ -351,7 +354,7 @@ def _loadAssetRefsToDefaultFile(oFileRef, astLib, logData, dryRun=False, **kwarg
         logData["failed"] += 1
         return
 
-    logItems.append((sRefNode, "loaded as '{}'".format(sDefaultRcName)))
+    logItems.append((sRefNode, "switched to '{}'".format(sDefaultRcName)))
     loadRef(astFile.envPath())
 
 def loadAssetRefsToDefaultFile(project=None, dryRun=False, selected=False):
@@ -397,7 +400,8 @@ def loadAssetRefsToDefaultFile(project=None, dryRun=False, selected=False):
     return oAstFileRefList
 
 @processSelectedReferences
-def _loadAssetsAsRenderRef(oFileRef, astLib, logData, dryRun=False, **kwargs):
+def _loadAssetsAsResource(oFileRef, sRcName, astLib, logData,
+                          dryRun=False, checkSyncState=False, **kwargs):
 
     oAstFileRefList = kwargs.pop("processResults")
     def loadRef(p=None):
@@ -409,8 +413,6 @@ def _loadAssetsAsRenderRef(oFileRef, astLib, logData, dryRun=False, **kwargs):
     logItems = logData["log"]
 
     oRefNode = oFileRef.refNode
-
-    sDefaultRcName = "render_ref"
 
     bLoaded = oFileRef.isLoaded()
     sRefNode = oRefNode.name()
@@ -432,9 +434,36 @@ def _loadAssetsAsRenderRef(oFileRef, astLib, logData, dryRun=False, **kwargs):
 
     oAstFileRefList.append(oFileRef)
 
+    try:
+        astFile = damAst.getResource("public", sRcName,
+                                     dbNode=False, fail=True)
+    except Exception as e:
+        logItems.append((sRefNode, toStr(e)))
+        #logData["failed"] += 1
+        return
+
+    if checkSyncState:
+
+        cachedDbNode = astFile.getDbNode(fromDb=False)
+        if cachedDbNode:
+            pass#astFile.refresh(simple=True)
+        else:
+            astFile.getDbNode(fromCache=False)
+
+        if not astFile.currentVersion:
+            logItems.append((sRefNode, "FAILED: " + "No version yet"))
+            logData["failed"] += 1
+            return
+        try:
+            astFile.assertUpToDate(refresh=False)
+        except AssertionError as e:
+            logItems.append((sRefNode, "FAILED: " + toStr(e)))
+            logData["failed"] += 1
+            return
+
     sCurRcName = pathData.get("resource", "")
-    if sDefaultRcName in (sCurRcName, ""):
-        sMsg = "loaded as '{}'".format(sDefaultRcName) if sDefaultRcName else "loaded"
+    if sRcName in (sCurRcName, ""):
+        sMsg = "loaded as '{}'".format(sRcName) if sRcName else "loaded"
         if not bLoaded:
             loadRef()
         else:
@@ -442,35 +471,52 @@ def _loadAssetsAsRenderRef(oFileRef, astLib, logData, dryRun=False, **kwargs):
         logItems.append((sRefNode, sMsg))
         return
 
-    try:
-        astFile = damAst.getResource("public", sDefaultRcName,
-                                     dbNode=False, fail=True)
-    except Exception as e:
-        logItems.append((sRefNode, "FAILED: " + toStr(e)))
-        logData["failed"] += 1
-        return
-
-    logItems.append((sRefNode, "loaded as '{}'".format(sDefaultRcName)))
+    logItems.append((sRefNode, "switched to '{}'".format(sRcName)))
     loadRef(astFile.envPath())
 
-def loadAssetsAsRenderRef(project=None, dryRun=False, selected=False):
 
+def loadAssetsAsResource(sRcName, fail=False, checkSyncState=False,
+                         selected=False, project=None, dryRun=False):
     proj = project
     if not proj:
         proj = projectFromScene()
+
+    bBatchMode = mc.about(batch=True)
 
     astLib = proj.getLibrary("public", "asset_lib")
 
     logItems = []
     logData = dict(log=logItems, failed=0, loaded=0)
 
-    _, oAstFileRefList = _loadAssetsAsRenderRef(astLib, logData,
-                                                dryRun=dryRun,
-                                                confirm=True,
-                                                allIfNoSelection=True,
-                                                topReference=True,
-                                                locked=False,
-                                                selected=selected)
+    if checkSyncState:
+        rcFileList = []
+        sAstList = []
+        sRefPathSet = set(pathResolve(oFileRef.path) for oFileRef in pm.iterReferences())
+        for sRefPath in sRefPathSet:
+            damAst = proj.entityFromPath(sRefPath, fail=False, library=astLib)
+            if not damAst:
+                continue
+            elif damAst.name in sAstList:
+                continue
+            sAstList.append(damAst.name)
+            rcFile = damAst.getRcFile("public", sRcName, dbNode=False, weak=True, fail=False)
+            if rcFile:
+                rcFileList.append(rcFile)
+
+        dbNodeList = proj.dbNodesForResources(rcFileList)
+        for rcFile, dbNode in izip(rcFileList, dbNodeList):
+            if not dbNode:
+                rcFile.getDbNode(fromCache=False)
+
+    _, oAstFileRefList = _loadAssetsAsResource(sRcName, astLib, logData,
+                                               confirm=True,
+                                               allIfNoSelection=True,
+                                               topReference=True,
+                                               locked=False,
+                                               selected=selected,
+                                               logErrorOnly=bBatchMode,
+                                               dryRun=dryRun,
+                                               checkSyncState=checkSyncState,)
     numFailure = logData["failed"]
     numLoaded = logData["loaded"]
 
@@ -480,40 +526,72 @@ def loadAssetsAsRenderRef(project=None, dryRun=False, selected=False):
 
     sSep = "\n- "
     if numFailure:
-        sMsgHeader = " Failed to load {}/{} asset refs to default. ".format(numFailure, numRefs)
+        sMsgHeader = (" Failed to load {}/{} asset refs as '{}'. "
+                      .format(numFailure, numRefs, sRcName))
         displayFunc = pm.displayError
     else:
-        sMsgHeader = " {}/{} asset refs loaded to default. ".format(numLoaded, numRefs)
+        sMsgHeader = (" {}/{} asset refs loaded as '{}'. "
+                      .format(numLoaded, numRefs, sRcName))
         displayFunc = pm.displayInfo
 
     sMsgBody = sSep.join(fmt(r, m) for r, m in logItems)
     sMsgEnd = "".center(100, "-")
 
     sMsg = '\n' + sMsgHeader.center(100, "-") + sSep + sMsgBody + '\n' + sMsgEnd
-    print sMsg
-    displayFunc(sMsgHeader + "More details in Script Editor ----" + (70 * ">"))
+    if fail and numFailure:
+        raise RuntimeError(sMsg)
+
+    if not bBatchMode:
+        print sMsg
+        displayFunc(sMsgHeader + "More details in Script Editor ----" + (70 * ">"))
 
 def importAssetRefsFromNamespaces(proj, sNmspcList, sRcName):
 
+    sScnNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
+
     renderRefDct = {}
     for sNmspc in sNmspcList:
+
+        if sNmspc in sScnNmspcList:
+            renderRefDct[sNmspc] = "Namespace already exists."
+            continue
 
         sAstName = "_".join(sNmspc.split("_")[:3])
         try:
             damAst = proj.getAsset(sAstName)
             mrcFile = damAst.getRcFile("public", sRcName, dbNode=False, fail=True)
         except Exception as e:
-            renderRefDct[sNmspc] = e.message.strip()
+            renderRefDct[sNmspc] = e
             continue
 
         renderRefDct[sNmspc] = mrcFile
 
     for sNmspc, mrcFile in sorted(renderRefDct.iteritems()):
-
-        if isinstance(mrcFile, basestring):
+        if not isinstance(mrcFile, DrcEntry):
             continue
-
         mrcFile.mayaImportScene(ns=sNmspc)
+
+    errorItems = tuple((k, v) for k, v in renderRefDct.iteritems()
+                       if isinstance(v, (basestring, Exception)))
+    if errorItems:
+        print " Import summary ".center(120, "#")
+        numErrors = 0
+        for sNmspc, e in errorItems:
+            sMsg = "'{}': {}".format(sNmspc, toStr(e))
+            if isinstance(e, StandardError):
+                pm.displayError(sMsg)
+                numErrors += 1
+            elif isinstance(e, Warning):
+                pm.displayWarning(sMsg)
+            else:
+                pm.displayInfo(sMsg)
+
+        if numErrors:
+            pm.displayWarning(" Failed to import {}/{} '{}' "
+                              .format(numErrors, len(sNmspcList), sRcName)
+                              .center(120, "#"))
+        else:
+            print 120 * "-"
 
     return renderRefDct
 

@@ -217,6 +217,7 @@ def refreshContextUI():
     sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
     bRcsMatchUp = SCENE_MANAGER.resourcesMatchUp(sceneInfos)
     bPublishable = bRcsMatchUp and SCENE_MANAGER.scenePublishable(sceneInfos)
+    sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
 
     for buttonName in ACTION_BUTTONS:
         _, action, _ = buttonName.rsplit("|", 1)[-1].split('_')
@@ -234,7 +235,6 @@ def refreshContextUI():
 
     pc.control('sm_updateThumb_bt', edit=True, enable=bRcsMatchUp)
 
-    sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
     bEnabled = (sCtxStep not in ("previz 3d", "stereo")) and bPublishable
     pc.control('sm_editCam_bt', edit=True, enable=bEnabled)
 
@@ -931,22 +931,23 @@ def doPublish(*args):
         if not res:
             return
 
+
+        sYes = "Yes, keep it locked."
+        sNo = "No, unlock it."
         sMsg = '"{}" published successfully !\n\n'.format(res[0].name)
         sRes = pc.confirmDialog(title='DO YOU WANT TO...',
                                 message=sMsg + "Continue working on this scene ?",
-                                button=['Yes, keep it locked.', "No, unlock it."],
-                                defaultButton='No',
-                                cancelButton='No',
-                                dismissString='No',
+                                button=[sYes, sNo],
+                                defaultButton=sNo,
+                                cancelButton=sNo,
+                                dismissString=sNo,
                                 icon="question")
-        if sRes == "No":
+        if sRes == sNo:
             return
 
         doSwitchContext(prompt=False)
     else:
         doDetect(args)
-
-
 
 def doCreateFolder(*args):
     """Associated button is hidden (forbidden)"""
