@@ -882,32 +882,7 @@ class checkModule(object):
 
 
         
-        # 14 ----- chr_replace_chr_vis_Exp_System () 
-        self.printF("chr_replace_chr_vis_Exp_System()", st="t")
-        result,info,debugL = jpZ.chr_replace_chr_vis_Exp_System()
-        # prints -------------------
-        self.printF(result, st="r")
-        self.printF("-"+str(info,)+ " expressions replaced")
-        if len(debugL):
-             self.printF("- {0}".format( debugL[0]) )
-        # --------------------------
-        # --------------------------
-        if not result :
-            boolResult = False
-        self.pBar_upd(step= 1,)
-
-
-
-         # 15 ----- chr_reArrangeCtr_displayLevel () 
-        self.printF("chr_reArrangeCtr_displayLevel()", st="t")
-        result,debug = jpZ.chr_reArrangeCtr_displayLevel()
-        # prints -------------------
-        self.printF(result, st="r")
-        # --------------------------
-        # --------------------------
-        if not result :
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        
         
 
         # 16 chr_setVis_Params (chr_setVis_Params)
@@ -1072,6 +1047,36 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
+
+        # 14 ----- chr_replace_chr_vis_Exp_System () 
+        self.printF("chr_replace_chr_vis_Exp_System()", st="t")
+        result,info,debugL = jpZ.chr_replace_chr_vis_Exp_System()
+        # prints -------------------
+        self.printF(result, st="r")
+        self.printF("-"+str(info,)+ " expressions replaced")
+        if len(debugL):
+             self.printF("- {0}".format( debugL[0]) )
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+         # 15 ----- chr_reArrangeCtr_displayLevel () 
+        self.printF("chr_reArrangeCtr_displayLevel()", st="t")
+        result,debug = jpZ.chr_reArrangeCtr_displayLevel()
+        # prints -------------------
+        self.printF(result, st="r")
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # restart from 26 here
 
         # colors
         print "*btn_specialSettings:",boolResult

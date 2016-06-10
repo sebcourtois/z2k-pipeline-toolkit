@@ -869,7 +869,8 @@ def importCaches(**kwargs):
     scnInfos = infosFromScene()
     damShot = scnInfos["dam_entity"]
 
-    if not bDryRun:
+    #if not bDryRun:
+    if  bDryRun:
         sMsg = "Caches can only be imported onto a final layout scene."
         assertSceneInfoMatches(scnInfos, "finalLayout_scene", msg=sMsg)
 
