@@ -150,6 +150,7 @@ def export(damShotList, dryRun=False, prompt=True, sgShots=None):
     for i, damShot in enumerate(animShotList):
         sgShot = sgShotDct[damShot.name]
         times = playbackTimesFromShot(sgShot)
+        #print damShot, sgShot, times
         frameRange = (int(times["animationStartTime"]), int(times["animationEndTime"]))
         frameRangeList[i] = frameRange
 
@@ -231,9 +232,9 @@ geocaching.{func}
         if sLrd:
             sLrd = "lrd='{}'".format(sLrd)
 
-        sExportFunc = sExportFunc.format(**kwargs)
-        sTitle = "{} on '{}'".format(sExportFunc, osp.basename(sAbsPath))
-        sCode = sCodeFmt.format(func=sExportFunc, scene=sAbsPath, lrd=sLrd)
+        sFunc = sExportFunc.format(**kwargs)
+        sTitle = "{} on '{}'".format(sFunc, osp.basename(sAbsPath))
+        sCode = sCodeFmt.format(func=sFunc, scene=sAbsPath, lrd=sLrd)
         _ = compile(sCode, '<string>', 'exec')
 
         job = {"title":sTitle, "py_lines":sCode.strip().split('\n')}
