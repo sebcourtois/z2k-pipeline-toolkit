@@ -266,7 +266,7 @@ def refreshContextUI():
     bListAssets = pc.optionVar.get("Z2K_SM_listAssets", False if sCtxStep == "animation" else True)
     QWIDGETS["relatedAssetsGroup"].setChecked(bListAssets)
     if bListAssets:
-        pc.control('sm_updScene_bt', edit=True, enable=bPublishable and sCtxStep != "final layout")
+        pc.control('sm_updScene_bt', edit=True, enable=bPublishable)
         pc.control('sm_updShotgun_bt', edit=True, enable=bPublishable and
                    (sCtxStep in ("previz 3d", "layout", "final layout")))
         pc.control('sm_selectRefs_bt', edit=True, enable=bRcsMatchUp)
@@ -931,22 +931,23 @@ def doPublish(*args):
         if not res:
             return
 
+
+        sYes = "Yes, keep it locked."
+        sNo = "No, unlock it."
         sMsg = '"{}" published successfully !\n\n'.format(res[0].name)
         sRes = pc.confirmDialog(title='DO YOU WANT TO...',
                                 message=sMsg + "Continue working on this scene ?",
-                                button=['Yes, keep it locked.', "No, unlock it."],
-                                defaultButton='No',
-                                cancelButton='No',
-                                dismissString='No',
+                                button=[sYes, sNo],
+                                defaultButton=sNo,
+                                cancelButton=sNo,
+                                dismissString=sNo,
                                 icon="question")
-        if sRes == "No":
+        if sRes == sNo:
             return
 
         doSwitchContext(prompt=False)
     else:
         doDetect(args)
-
-
 
 def doCreateFolder(*args):
     """Associated button is hidden (forbidden)"""

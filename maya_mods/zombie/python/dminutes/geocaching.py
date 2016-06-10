@@ -38,8 +38,6 @@ def iterGeoGroups(**kwargs):
 
     if bSelected:
         sObjList = mc.ls(sl=True, type="dagNode", o=True)
-
-    if sObjList:
         sNmspcList = set(o.rsplit("|", 1)[-1].rsplit(":", 1)[0] for o in sObjList)
     elif sNmspcList is None:
         sNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
@@ -141,36 +139,21 @@ def _confirmProcessing(sProcessLabel, **kwargs):
 
     bSelected = kwargs.pop("selected", None)
 
-    sObjList = None
-    bPrompt = False
     if bSelected is None:
-        bPrompt = True
-        sSelList = mc.ls(sl=True, type="dagNode", o=True)
-        if sSelList:
-            bSelected = True
-            sObjList = sSelList
-        else:
-            bSelected = False
 
-    sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, among=sObjList, **kwargs))
-    if sGeoGrpList and bPrompt:
-        numGeoGrp = len(sGeoGrpList)
-        if bSelected:
-            sSep = "\n - "
-            sMsg = ("{} caches for {} selected asset{} ?\n"
-                    .format(sProcessLabel, numGeoGrp,
-                            "s" if numGeoGrp > 1 else ""))
-            sMsg += (sSep + sSep.join(sGeoGrpList))
-        else:
-            sMsg = "{} caches for all assets ?".format(sProcessLabel)
+        sMsg = "{} caches on which assets ?".format(sProcessLabel)
 
         sRes = pm.confirmDialog(title='DO YOU WANT TO...',
                                 message=sMsg,
-                                button=['OK', 'Cancel'],
+                                button=['All', 'Selected', 'Cancel'],
                                 icon="question")
         if sRes == "Cancel":
             #pm.displayInfo("Canceled !")
             raise RuntimeWarning("Canceled !")
+        else:
+            bSelected = (sRes != 'All')
+
+    sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
 
     return sGeoGrpList, bSelected
 

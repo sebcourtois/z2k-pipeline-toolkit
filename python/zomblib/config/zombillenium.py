@@ -164,10 +164,10 @@ class shot_lib(object):
                   "sg_tasks":("animation",),
                   },
 
-    "finalLayout_scene":{"outcomes":("finalLayout_movie", "arlequin_movie"),
+    "finalLayout_scene":{#"outcomes":("finalLayout_movie", "arlequin_movie"),
                          "create_sg_version":True,
-                         "sg_uploaded_movie":"finalLayout_movie",
-                         "sg_path_to_movie":"finalLayout_movie",
+                         #"sg_uploaded_movie":"finalLayout_movie",
+                         #"sg_path_to_movie":"finalLayout_movie",
                          "sg_tasks":("final layout",),
                          "dependency_types": {
                             "geoCache_dep":{"public_loc":"finalLayoutCache_dir",
@@ -176,10 +176,17 @@ class shot_lib(object):
                                             }
                          },
 
+    "finalLayout_movie":{"create_sg_version":True,
+                         "sg_uploaded_movie":True,
+                         "sg_path_to_movie":True,
+                         "sg_tasks":("Final Layout|FL_Art",),
+                         "sg_status":"rev",
+                         },
+
     "arlequin_movie":{"create_sg_version":True,
                       "sg_uploaded_movie":True,
                       "sg_path_to_movie":True,
-                      "sg_tasks":("Final Layout|2_Anim_MeshCache",),
+                      "sg_tasks":("Final Layout|Anim_MeshCache",),
                       "sg_status":"rev",
                       },
 

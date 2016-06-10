@@ -61,6 +61,7 @@ RC_FOR_TASK = {}#{'previz 3D':'previz_scene', 'layout':'layout_scene'}
 REF_FOR_STEP = {'Previz 3D':'previz_ref',
                 'Layout':'anim_ref',
                 'Animation':'anim_ref',
+                'Final Layout':'render_ref',
                 }
 REF_FOR_TASK = {}
 
@@ -1237,7 +1238,7 @@ class SceneManager():
         if len(errorL):
             sSep = "\n- "
             mc.confirmDialog(title='WARNING !',
-                               message="Could not import:\n{}".format(sSep + sSep.join(errorL)),
+                               message="Could not load assets:\n{}".format(sSep + sSep.join(errorL)),
                                button=['OK'],
                                defaultButton='OK',
                                cancelButton='OK',
