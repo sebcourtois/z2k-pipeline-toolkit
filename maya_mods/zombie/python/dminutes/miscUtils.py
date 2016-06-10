@@ -216,6 +216,22 @@ def setAttrC(*args, **kwargs):
         return False
 
 
+def getGroupList(gui = True, inRoot = "asset|grp_geo"):
+    log = LogBuilder(gui=gui, funcName ="getGroupList")
+    try:
+        sceneGroupL=[]
+        allTransform = mc.listRelatives(inRoot, allDescendents = True, fullPath = True, type = "transform")
+        allTransform = mc.ls(allTransform,exactType = "transform", long = True)
+        if allTransform is None: allTransform = []
+        for eachTransform in allTransform:
+            if mc.listRelatives(eachTransform, children = True, shapes = True) is None:
+                sceneGroupL.append(eachTransform)
+    except Exception,err:
+        log.printL("e", err)
+
+    return dict(resultB=log.resultB, logL=log.logL, groupL=sceneGroupL)
+
+
 
 
 def removeAllNamespace ( NSexclusionL = [""], limit = 100, verbose = False, emptyOnly=False, *args,**kwargs):
