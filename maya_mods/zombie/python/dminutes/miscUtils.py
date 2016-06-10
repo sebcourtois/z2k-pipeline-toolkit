@@ -216,12 +216,22 @@ def setAttrC(*args, **kwargs):
         return False
 
 
-def getGroupList(gui = True, inRoot = "asset|grp_geo"):
+def getGroupList(gui = True, inRoot = "asset|grp_geo", includeRoot = True):
     log = LogBuilder(gui=gui, funcName ="getGroupList")
-    try:
+
+    if not mc.ls(inRoot):
+        txt = "could not find 'inRoot' : {}".format(inRoot)
+        log.printL("e", txt)
+
+    if includeRoot:
+        sceneGroupL=[inRoot]
+    else:
         sceneGroupL=[]
+
+    try:
         allTransform = mc.listRelatives(inRoot, allDescendents = True, fullPath = True, type = "transform")
         allTransform = mc.ls(allTransform,exactType = "transform", long = True)
+
         if allTransform is None: allTransform = []
         for eachTransform in allTransform:
             if mc.listRelatives(eachTransform, children = True, shapes = True) is None:
@@ -494,3 +504,17 @@ class LogBuilder():
 
 
 
+def mayaBatchExample():
+    from dminutes import assetconformation
+    reload(assetconformation)
+
+    resGetGroupListD = getGroupList(gui = False, inRoot = "asset|grp_geo")
+    if resGetGroupListD['resultB']:   
+        resultD = assetconformation.animRefJson(gui = False, mode ="write", inputD= {"groupL":resGetGroupListD["groupL"]}, dryRun=False)
+    else:
+        resultD = resGetGroupListD
+
+    # prints -------------------
+    print "result: ",resultD['resultB']
+    for each in resultD["logL"]:
+        print each 
