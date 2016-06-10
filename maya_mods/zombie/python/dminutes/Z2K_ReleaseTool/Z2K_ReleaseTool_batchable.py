@@ -77,15 +77,14 @@ import dminutes.Z2K_ReleaseTool.modules.Z2K_Anim_SET_checks as  Z2K_check_ANIM_S
 reload(Z2K_check_ANIM_SET)
 
 # render checks
-import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_checks as  Z2K_check_RENDER
-reload(Z2K_check_RENDER)
+# import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_checks as  Z2K_check_RENDER
+# reload(Z2K_check_RENDER)
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_SET_checks as  Z2K_check_RENDER_SET
 reload(Z2K_check_RENDER_SET)
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_CHAR_checks as  Z2K_check_RENDER_CHAR
 reload(Z2K_check_RENDER_CHAR)
 import dminutes.Z2K_ReleaseTool.modules.Z2K_Render_PROP_checks as  Z2K_check_RENDER_PROP
 reload(Z2K_check_RENDER_PROP)
-
 
 class Z2K_ReleaseTool (object):
     

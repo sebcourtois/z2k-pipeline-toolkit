@@ -627,7 +627,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=6, e=True)
+        self.pBar_upd(step=1, maxValue=7, e=True)
 
         meshCacheObjL = jpZ.getSetContent(inSetL=["set_meshCache"] ) 
         geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes("asset|grp_geo")
@@ -763,11 +763,54 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
+
+        # 10   remove rig
+        self.printF("asset conformation:   remove rig", st="t")
+        resultD = assetconformation.rigSetRemove(gui = True, inRoot = "asset")
+        # prints -------------------
+
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,) 
+
         # colors
         print "*btn_CleanObjects:",boolResult
         self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
 
         return boolResult
+
+
+    @jpZ.waiter
+    def btn_CompareGroupStructure(self, controlN="", *args, **kwargs):     
+        boolResult=True
+        # 1   compare group structure with animRef file"        
+        # set progress bar
+        boolResult=True
+        self.pBar_upd(step=1, maxValue=1, e=True)
+        self.printF= self.Z2KprintDeco(jpZ.printF)
+        self.printF("assetconformation: compare group structure with animRef file", st="t")
+        resultD={}
+        resultD = assetconformation.compareGrpStruct2animRef(gui= self.GUI)
+        # prints -------------------
+        self.printF(resultD['resultB'], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+        
+        # colors
+        print "*btn_CompareGroupStructure:",boolResult
+        self.colorBoolControl(controlL=[controlN], boolL=[boolResult], labelL=[""], )
+        return boolResult
+
+
+
 
 
     def btn_clearAll(self, *args, **kwargs):
@@ -797,6 +840,9 @@ class checkModule(object):
             boolResult = False
         print "*2",boolResult
         if not self.btn_CleanObjects(controlN=self.BCleanObjects, ):
+            boolResult = False
+        print "*3",boolResult
+        if not self.btn_CompareGroupStructure(controlN=self.BCompareGroupStructure, ):
             boolResult = False
         
         # colors
@@ -889,6 +935,9 @@ class checkModule(object):
 
         self.BCleanObjects = cmds.button("CleanObjects",)
         cmds.button(self.BCleanObjects,e=1,c= partial( self.btn_CleanObjects,self.BCleanObjects) )
+
+        self.BCompareGroupStructure = cmds.button("Compare Group Structure",)
+        cmds.button(self.BCompareGroupStructure,e=1,c= partial( self.btn_CompareGroupStructure,self.BCompareGroupStructure) )
         
         self.BValidationPBar = cmds.progressBar(maxValue=3,s=1 )
 
