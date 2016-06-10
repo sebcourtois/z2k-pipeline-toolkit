@@ -217,6 +217,7 @@ def refreshContextUI():
     sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
     bRcsMatchUp = SCENE_MANAGER.resourcesMatchUp(sceneInfos)
     bPublishable = bRcsMatchUp and SCENE_MANAGER.scenePublishable(sceneInfos)
+    sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
 
     for buttonName in ACTION_BUTTONS:
         _, action, _ = buttonName.rsplit("|", 1)[-1].split('_')
@@ -234,7 +235,6 @@ def refreshContextUI():
 
     pc.control('sm_updateThumb_bt', edit=True, enable=bRcsMatchUp)
 
-    sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
     bEnabled = (sCtxStep not in ("previz 3d", "stereo")) and bPublishable
     pc.control('sm_editCam_bt', edit=True, enable=bEnabled)
 
@@ -266,7 +266,7 @@ def refreshContextUI():
     bListAssets = pc.optionVar.get("Z2K_SM_listAssets", False if sCtxStep == "animation" else True)
     QWIDGETS["relatedAssetsGroup"].setChecked(bListAssets)
     if bListAssets:
-        pc.control('sm_updScene_bt', edit=True, enable=bPublishable)
+        pc.control('sm_updScene_bt', edit=True, enable=bPublishable and sCtxStep != "final layout")
         pc.control('sm_updShotgun_bt', edit=True, enable=bPublishable and
                    (sCtxStep in ("previz 3d", "layout", "final layout")))
         pc.control('sm_selectRefs_bt', edit=True, enable=bRcsMatchUp)

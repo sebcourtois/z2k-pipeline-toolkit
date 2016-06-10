@@ -945,36 +945,26 @@ def setupShotScene(sceneManager):
 
     elif sStepName == "final layout":
 
-        bNoRefsAtAll = True if not pc.listReferences() else False
+        #bNoRefsAtAll = True if not pc.listReferences() else False
         bNoLoadedRefs = False#True if not pc.listReferences(loaded=True, unloaded=False) else False
 
-        if bNoRefsAtAll or bNoLoadedRefs:
+        sAbcDirPath = getGeoCacheDir(damShot)
+        if not osp.isdir(sAbcDirPath):
+            raise EnvironmentError("Could not found caches directory: '{}'".format(sAbcDirPath))
 
-            sAbcDirPath = getGeoCacheDir(damShot)
-            if not osp.isdir(sAbcDirPath):
-                raise EnvironmentError("Could not found caches directory: '{}'".format(sAbcDirPath))
+        p = osp.normpath(osp.join(sAbcDirPath, "abcExport.json"))
+        exportInfos = jsonRead(p)
 
-        if bNoRefsAtAll:
+        sNmspcList = tuple(getNamespace(j["root"]) for j in exportInfos["jobs"])
+        myaref.importAssetRefsFromNamespaces(proj, sNmspcList, "render_ref")
 
-            p = osp.normpath(osp.join(sAbcDirPath, "abcExport.json"))
-            exportData = jsonRead(p)
-
-            sNmspcList = tuple(getNamespace(j["root"]) for j in exportData["jobs"])
-            assetRefDct = myaref.importAssetRefsFromNamespaces(proj, sNmspcList, "render_ref")
-
-            errorItems = tuple((k, v) for k, v in assetRefDct.iteritems() if isinstance(v, basestring))
-            if errorItems:
-                print 120 * "-"
-                for sNmspc, sMsg in errorItems:
-                    pc.displayError("'{}': {}".format(sNmspc, sMsg))
-
-        elif bNoLoadedRefs:
+        if bNoLoadedRefs:
 
             oFileRefList = pc.listReferences(loaded=False, unloaded=True)
             for oFileRef in oFileRefList:
                 oFileRef.clean()
 
-            myaref.loadAssetsAsRenderRef(project=proj, selected=False)
+            myaref.loadAssetsAsResource("render_ref", project=proj, selected=False)
 
             for oFileRef in oFileRefList:
                 if not oFileRef.isLoaded():

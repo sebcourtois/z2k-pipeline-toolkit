@@ -142,7 +142,7 @@ def export(damShotList, dryRun=False, prompt=True, sgShots=None):
                                          includeOmitted=inDevMode())
         sgShotDct.update((d["code"], d) for d in sgShotList)
 
-    print sNoSgShotList, sgShotDct
+    #print sNoSgShotList, sgShotDct
 
     numAnimShots = len(animShotList)
 
@@ -165,8 +165,8 @@ def export(damShotList, dryRun=False, prompt=True, sgShots=None):
         return
 
     if numAnimShots != numAllShots:
-        sMsg = ("{}/{} shots cannot be exported.\n\nContinue to export anyway ?\n\n"
-                .format(numAllShots - numAnimShots, numAllShots))
+        sMsg = ("Only {}/{} shots will be exported.\n\nContinue to export anyway ?\n\n"
+                .format(numAnimShots, numAllShots))
         prompt = True
     else:
         sMsg = "Export these {} shots ?\n\n".format(numAnimShots)
@@ -219,19 +219,21 @@ def generMayaJobs(sExportFunc, jobArgsList):
 import maya.cmds as mc
 from pytaya.core import system as myasys
 from dminutes import geocaching
-reload(myasys)
-reload(geocaching)
 
-myasys.openScene('{scene}', force=True, fail=False)
+myasys.openScene('{scene}', force=True, fail=False, {lrd})
 mc.refresh()
 geocaching.{func}
 """
-    for args in (d.copy() for d in jobArgsList):
+    for kwargs in (d.copy() for d in jobArgsList):
 
-        sAbsPath = args.pop("scene")
-        sExportFunc = sExportFunc.format(**args)
-        sTitle = "{} on '{}'".format(sExportFunc, osp.dirname(sAbsPath))
-        sCode = sCodeFmt.format(func=sExportFunc, scene=sAbsPath)
+        sAbsPath = kwargs.pop("scene")
+        sLrd = kwargs.pop("lrd", "")
+        if sLrd:
+            sLrd = "lrd='{}'".format(sLrd)
+
+        sExportFunc = sExportFunc.format(**kwargs)
+        sTitle = "{} on '{}'".format(sExportFunc, osp.basename(sAbsPath))
+        sCode = sCodeFmt.format(func=sExportFunc, scene=sAbsPath, lrd=sLrd)
         _ = compile(sCode, '<string>', 'exec')
 
         job = {"title":sTitle, "py_lines":sCode.strip().split('\n')}

@@ -33,7 +33,7 @@ import dminutes.maya_scene_operations as mop
 import dminutes.jipeLib_Z2K as jpZ
 import dminutes.camImpExp as camIE
 import dminutes.infoSetExp as infoE
-from dminutes.geocaching import exportLayoutInfo
+from dminutes.geocaching import exportLayoutInfo, removeCacheReferences
 #from dminutes.miscUtils import deleteUnknownNodes
 
 reload(jpZ)
@@ -61,7 +61,6 @@ RC_FOR_TASK = {}#{'previz 3D':'previz_scene', 'layout':'layout_scene'}
 REF_FOR_STEP = {'Previz 3D':'previz_ref',
                 'Layout':'anim_ref',
                 'Animation':'anim_ref',
-                'Final Layout':'render_ref',
                 }
 REF_FOR_TASK = {}
 
@@ -69,7 +68,6 @@ MOV_FOR_STEP = {'Previz 3D':('previz_capture',),
                 'Stereo':('right_capture', 'left_capture',),
                 'Layout':('layout_capture',),
                 'Animation':('anim_capture',),
-                'Final Layout':('finalLayout_capture',),
                }
 MOV_FOR_TASK = {}
 
@@ -641,7 +639,10 @@ class SceneManager():
         sceneFile = proj.entryFromPath(sScenePath, space="private")
         v, w = sceneFile.getEditNums()
 
-        sCaptRcName = MOV_FOR_TASK.get(sTask, MOV_FOR_STEP[sStep])[-1]
+        sCaptRcName = MOV_FOR_TASK.get(sTask, MOV_FOR_STEP.get(sStep, [None]))[-1]
+        if not sCaptRcName:
+            pc.displayWarning("No capture defined for '{}|{}'".format(sStep, sTask))
+            return
 
         pubCaptFile = damShot.getRcFile("public", sCaptRcName, weak=True, dbNode=False)
         privCaptFile = pubCaptFile.getEditFile(v, w, weak=True)
@@ -681,6 +682,11 @@ class SceneManager():
         sTask = context['task']['content']
         damShot = self.getDamShot()
 
+        sCaptRcList = MOV_FOR_TASK.get(sTask, MOV_FOR_STEP.get(sStep))
+        if not sCaptRcList:
+            pc.displayWarning("No capture defined for '{}|{}'".format(sStep, sTask))
+            return
+
         oShotCam = self.getShotCamera(fail=True)
 
         sWipCaptDirPath = mop.getWipCaptureDir(damShot)
@@ -696,7 +702,7 @@ class SceneManager():
             oCamRef = None
 
         pubCaptureFiles = []
-        for sCaptRcName in MOV_FOR_TASK.get(sTask, MOV_FOR_STEP[sStep]):
+        for sCaptRcName in sCaptRcList:
             pubCaptFile = damShot.getRcFile("public", sCaptRcName, weak=True, dbNode=False)
             pubCaptureFiles.append((sCaptRcName, pubCaptFile))
 
@@ -979,6 +985,9 @@ class SceneManager():
     def prePublishCurrentScene(self, publishCtx, **kwargs):
 
         sStepCode = self.context["step"]["code"].lower()
+
+        if sStepCode == "final layout":
+            removeCacheReferences()
 
         if sStepCode not in ("previz 3d", "stereo") and self.isShotCamEdited():
             self.exportCamAnimFiles(publish=True)

@@ -15,13 +15,15 @@ def processJobsFromFile(sJobFilePath):
     numJobs = len(jobList)
     errorDct = OrderedDict()
 
+    exec("import maya.cmds as mc")
+
     for i, job in enumerate(jobList):
 
         sTitle = job["title"]
 
-        sMsg = "---- PROCESSING {}/{}: {}".format(i + 1, numJobs, sTitle)
-        sSepLine = 120 * "-"
-        print "\n", "\n".join((sSepLine, sSepLine, sMsg, "---"))
+        sMsg = "#### PROCESSING {}/{} JOB: {}".format(i + 1, numJobs, sTitle)
+        sSepLine = 120 * "#"
+        print "\n", "\n".join((sSepLine, sSepLine, sMsg, "###"))
 
         lines = job["py_lines"]
         if not isinstance(lines, list):
@@ -39,19 +41,22 @@ def processJobsFromFile(sJobFilePath):
             numErrors += 1
             errorDct[sTitle] = e.message
 
-        sMsg = "----- DONE WITH {}/{}: {}".format(i + 1, numJobs, sTitle)
-        #sSepLine = max(len(sMsg), 120) * "-"
-        print "\n".join(("----", sMsg, sSepLine, sSepLine)), "\n"
+        sMsg = "##### DONE WITH {}/{} JOB: {}".format(i + 1, numJobs, sTitle)
+        #sSepLine = max(len(sMsg), 120) * "#"
+        print "\n".join(("####", sMsg, sSepLine, sSepLine)), "\n"
 
     if numErrors:
-        sMsg = " {}/{} JOBS FAILED ".format(numErrors, len(jobList)).center(120, "#")
+        sMsg = " {}/{} JOBS FAILED ".format(numErrors, len(jobList)).center(120, "!")
         print sMsg
         w = len(max(errorDct.iterkeys(), key=len))
         for k, v in errorDct.iteritems():
             print "- {k:>{w}}: {v}".format(k=k, v=v, w=w)
         print sMsg
+        exec("mc.file(new=True, f=True)")
+    else:
+        exec("mc.quit(f=True)")
 
-    return numErrors
+    return True if numErrors else None
 
 class MayaBatch(object):
 
@@ -102,7 +107,7 @@ class MayaBatch(object):
 
         sPyCmd = "from zomblib import mayabatch;reload(mayabatch);"
         sPyCmd += "mayabatch.processJobsFromFile('{}');".format(sJobFilePath)
-        sMelCmd = "python(\"{}\"); file -f -new; quit -f;".format(sPyCmd)
+        sMelCmd = "python(\"{}\");".format(sPyCmd)
 
         cmdArgs.extend(("-prompt", "-command", sMelCmd))
 
