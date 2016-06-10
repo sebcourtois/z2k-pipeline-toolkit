@@ -1716,6 +1716,7 @@ def animRefJson(gui = True, mode ="write", inputD = {} ,dryRun=True):
                 animRefcontentD = jsonRead(sPublicFilePath)
                 animRefcontentD.update(inputD)
 
+            os.makedirs(os.path.dirname(sPrivFilePath))
             jsonWrite(sPrivFilePath, animRefcontentD)
 
             # let's publish
