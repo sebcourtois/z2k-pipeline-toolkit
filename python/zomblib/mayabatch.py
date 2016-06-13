@@ -50,7 +50,7 @@ def processJobsFromFile(sJobFilePath):
         print sMsg
         w = len(max(errorDct.iterkeys(), key=len))
         for k, v in errorDct.iteritems():
-            print "- {k:>{w}}: {v}".format(k=k, v=v, w=w)
+            print "- {k:<{w}}: {v}".format(k=k, v=v, w=w)
         print sMsg
         exec("mc.file(new=True, f=True)")
     else:
