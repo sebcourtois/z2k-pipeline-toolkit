@@ -152,7 +152,7 @@ class checkModule(object):
 
         # 1   remove Camera
         self.printF("shading:   remove Shading Camera", st="t")
-        result,debugS = shading.referenceShadingCamera( remove=True, GUI = False)
+        result,debugS = shading.referenceShadingCamera( remove=True, GUI = self.GUI)
         # prints -------------------
         self.printF(result, st="r")
         self.printF( debugS )
@@ -223,7 +223,7 @@ class checkModule(object):
 
         # 6   delete unused nodes
         self.printF("miscUtils: delete unknown nodes ", st="t")
-        result,details = miscUtils.deleteUnknownNodes(GUI= False)
+        result,details = miscUtils.deleteUnknownNodes(GUI= self.GUI)
         # prints -------------------
         self.printF(result, st="r")
         for each in details:
@@ -236,7 +236,7 @@ class checkModule(object):
 
         # 7   delete color sets
         self.printF("miscUtils: delete all color set ", st="t")
-        result,details = miscUtils.deleteAllColorSet(GUI= False)
+        result,details = miscUtils.deleteAllColorSet(GUI= self.GUI)
         # prints -------------------
         self.printF(result, st="r")
         for each in details:
@@ -249,7 +249,7 @@ class checkModule(object):
         
         # 8   delete history
         self.printF("modeling: delete all geo history ", st="t")
-        result,details = modeling.geoGroupDeleteHistory(GUI = False)
+        result,details = modeling.geoGroupDeleteHistory(GUI = self.GUI)
         # prints -------------------
         self.printF(result, st="r")
         for each in details:
@@ -262,7 +262,7 @@ class checkModule(object):
 
         # 9   create subdiv sets
         self.printF("assetconformation: create subdiv sets ", st="t")
-        resultD = assetconformation.createSubdivSets(GUI = False)
+        resultD = assetconformation.createSubdivSets(GUI = self.GUI)
         # prints -------------------
         self.printF(resultD["returnB"], st="r")
         for each in resultD["logL"]:
@@ -275,7 +275,7 @@ class checkModule(object):
 
         # 10   apply setSubdiv
         self.printF("assetconformation: apply setSubdiv ", st="t")
-        resultD = assetconformation.setSubdiv(GUI = False)
+        resultD = assetconformation.setSubdiv(GUI = self.GUI)
         # prints -------------------
         self.printF(resultD["returnB"], st="r")
         for each in resultD["logL"]:
@@ -288,7 +288,7 @@ class checkModule(object):
 
         # 11   assetGrpClean
         self.printF("assetconformation: clean asset group ", st="t")
-        resultD = assetconformation.assetGrpClean( clean = True, GUI = False)
+        resultD = assetconformation.assetGrpClean( clean = True, GUI = self.GUI)
         # prints -------------------
         self.printF(resultD["returnB"], st="r")
         for each in resultD["logL"]:
@@ -301,7 +301,7 @@ class checkModule(object):
 
         # 12   display layer update
         self.printF("modeling: display layer update", st="t")
-        resultD = modeling.layerUpdate(inParent="asset|grp_geo", GUI = False, displayMode = 2)
+        resultD = modeling.layerUpdate(inParent="asset|grp_geo", GUI = self.GUI, displayMode = 2)
         # prints -------------------
         self.printF(resultD["resultB"], st="r")
         for each in resultD["logL"]:
@@ -315,7 +315,7 @@ class checkModule(object):
 
         # 13   checks shaders naming convention
         self.printF("shading: checks shaders naming convention", st="t")
-        resultD = shading.checkShaderName(shadEngineList = [],  GUI = False, checkOnly = False )
+        resultD = shading.checkShaderName(shadEngineList = [],  GUI = self.GUI, checkOnly = False )
         # prints -------------------
         self.printF(resultD["resultB"], st="r")
         for each in resultD["logL"]:
@@ -328,7 +328,7 @@ class checkModule(object):
 
         # 14   set shading masks"
         self.printF("assetconformation: set shading masks", st="t")
-        resultD = assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
+        resultD = assetconformation.setShadingMask(selectFailingNodes = False, gui = self.GUI)
         # prints -------------------
         self.printF(resultD["resultB"], st="r")
         for each in resultD["logL"]:
@@ -341,7 +341,7 @@ class checkModule(object):
 
         # 15   asset Object Clean"
         self.printF("assetconformation: asset Object Clean", st="t")
-        resultD = assetconformation.assetObjectClean( inParent= "|asset|grp_geo", clean = True, GUI = False)
+        resultD = assetconformation.assetObjectClean( inParent= "|asset|grp_geo", clean = True, GUI = self.GUI)
         # prints -------------------
         self.printF(resultD["resultB"], st="r")
         for each in resultD["logL"]:
@@ -627,7 +627,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=7, e=True)
+        self.pBar_upd(step=1, maxValue=8, e=True)
 
         meshCacheObjL = jpZ.getSetContent(inSetL=["set_meshCache"] ) 
         geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes("asset|grp_geo")
@@ -766,7 +766,7 @@ class checkModule(object):
 
         # 10   remove rig
         self.printF("asset conformation:   remove rig", st="t")
-        resultD = assetconformation.rigSetRemove(gui = True, inRoot = "asset")
+        resultD = assetconformation.rigSetRemove(gui = self.GUI, inRoot = "asset")
         # prints -------------------
 
         self.printF(resultD["resultB"], st="r")
@@ -775,7 +775,25 @@ class checkModule(object):
         # --------------------------
         if not resultD["resultB"]:
             boolResult = False
-        self.pBar_upd(step= 1,) 
+        self.pBar_upd(step= 1,)
+
+
+        # 10   UVSet Count
+        self.printF("asset conformation:   UVSet Count", st="t")
+        resultD = assetconformation.UVSetCount(gui = self.GUI)
+        # prints -------------------
+
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
+
 
         # colors
         print "*btn_CleanObjects:",boolResult

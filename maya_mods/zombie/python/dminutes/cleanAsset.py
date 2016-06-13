@@ -14,6 +14,11 @@ reload (shading)
 
 import maya.utils as mu
 
+allTransform = mc.listRelatives("asset|grp_geo", allDescendents = True, fullPath = True, type = "transform")
+allTransform = mc.ls(allTransform,exactType = "transform", long = True)
+
+
+
 def cleanAsset (GUI = True):
     resultB = True
     logL = []
@@ -146,6 +151,14 @@ def cleanAsset (GUI = True):
                 assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
                 modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = True)
                 miscUtils.deleteUnknownNodes()
+                miscUtils.unlockObject(objectL=allTransform)
+                assetconformation.UVSetCount()
+
+                meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
+                print "#### {:>7}: {} geo and {} instances found in this scene".format("Info", len(meshList), len(instanceList))
+
+
+
 
     elif fileType == "render":
             if GUI == True: 
@@ -166,6 +179,8 @@ def cleanAsset (GUI = True):
                 shading.checkShaderName( GUI = True, inParent = "|asset|grp_geo" )
                 assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
                 modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = True)
+                assetconformation.UVSetCount()
+
 
                 miscUtils.cleanLayout()
                 def r2aFun():
