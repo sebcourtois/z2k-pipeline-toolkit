@@ -723,15 +723,14 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
         #get the input texture connection of the rendering shading node 
         matShadTextInputConnection = mc.listConnections (matShadNode+matTextureInput, source=True, destination=False)
         preShadTextInputConnection = mc.listConnections (preShadNode+preTextureInput, source=True, destination=False)
-        print "preShadTextInputConnection: ",preShadTextInputConnection
-        print "matShadTextInputConnection: ",matShadTextInputConnection
+
         if matShadTextInputConnection:
             matShadTextInputValue = []
             if matShadTextInputConnection:
                 matShadTextInputConnection = matShadTextInputConnection[-1]
             else:
                 matShadTextInputConnection = []
-                
+
             if preShadTextInputConnection:
                 preShadTextInputConnection = preShadTextInputConnection[-1]
             else:
@@ -740,7 +739,6 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
             if mc.nodeType(matShadTextInputConnection) != "file":
                 if mc.nodeType(matShadTextInputConnection) == "projection":
                     if not preShadTextInputConnection or preShadTextInputConnection == matShadTextInputConnection:
-                        print "1"
                         result = mc.duplicate(matShadTextInputConnection, ic = True)[0]
                         mc.connectAttr(result+".outColor", preShadNode+preTextureInput, force =True)
                         projectionTextInputConnection = mc.listConnections (result+".image", source=True, destination=False)
@@ -759,8 +757,7 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
                     continue        
         else:
             matShadTextInputValue = mc.getAttr(matShadNode+matTextureInput)[0]
-            print "matShadNode: ",matShadNode
-            print "matShadTextInputValue: ",matShadTextInputValue
+
 
         #get the input texture connection of the preview shading node
         rgbSumF= mc.getAttr(preShadNode+preTextureInput)[0][0]+mc.getAttr(preShadNode+preTextureInput)[0][1]+mc.getAttr(preShadNode+preTextureInput)[0][2]
