@@ -1716,7 +1716,8 @@ def animRefJson(gui = True, mode ="write", inputD = {} ,dryRun=True):
                 animRefcontentD = jsonRead(sPublicFilePath)
                 animRefcontentD.update(inputD)
 
-            os.makedirs(os.path.dirname(sPrivFilePath))
+            if not os.path.isdir(os.path.dirname(sPrivFilePath)):
+                os.makedirs(os.path.dirname(sPrivFilePath))
             jsonWrite(sPrivFilePath, animRefcontentD)
 
             # let's publish
@@ -1760,3 +1761,25 @@ def compareGrpStruct2animRef(gui = True):
 
     return dict(resultB=log.resultB, logL=log.logL)
     
+
+
+def UVSetCount(gui = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="UVSetCount")
+    multiUVmapObjL=[]
+
+    meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
+
+    for each in meshList:
+        uvMapList = mc.polyUVSet(each, query=True, allUVSets=True )
+        if "uvSet_display" in uvMapList:
+            uvMapList.remove("uvSet_display")
+        if len(uvMapList)>1:
+            multiUVmapObjL.append(each)
+
+    if multiUVmapObjL :
+        txt = "{} meshes has several uv maps, please clean: '{}': ".format(len(multiUVmapObjL), multiUVmapObjL)
+        log.printL("e", txt)
+
+    return dict(resultB=log.resultB, logL=log.logL)
+
+
