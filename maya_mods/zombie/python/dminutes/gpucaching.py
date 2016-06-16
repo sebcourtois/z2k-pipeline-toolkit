@@ -97,7 +97,7 @@ def _batchExport(sOutDirPath, startTime, endTime, bakeCamera):
 def importGpuCache(sBaseName):
 
     damShot = entityFromScene()
-    sAbcDirPath = mop.getGeoCacheDir(damShot).replace("\\", "/")
+    sAbcDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
     sAbcPath = pathJoin(sAbcDirPath, sBaseName + ".abc")
 
     if not osp.isfile(sAbcPath):
@@ -132,11 +132,12 @@ def exportSelected():
 
     sGeoGrpList = tuple(iterGeoGroups(sl=True))
     if not sGeoGrpList:
-        raise RuntimeError("Selected assets has NO 'grp_geo' to export.")
+        sMsg = "No geo groups found{}".format(" from selection.")
+        raise RuntimeError(sMsg)
 
     sShotCam = mop.getShotCamera(damShot.name, fail=True).name()
 
-    sAbcDirPath = mop.getGeoCacheDir(damShot).replace("\\", "/")
+    sAbcDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
     if not osp.exists(sAbcDirPath):
         os.makedirs(sAbcDirPath)
 
@@ -147,7 +148,7 @@ def exportSelected():
     mc.refresh()
     try:
         sFilePath = pm.exportSelected(pathJoin(sAbcDirPath, "export_gpuCache_tmp.mb"),
-                                      type="mayaAscii",
+                                      type="mayaBinary",
                                       preserveReferences=False,
                                       shader=True,
                                       channels=True,

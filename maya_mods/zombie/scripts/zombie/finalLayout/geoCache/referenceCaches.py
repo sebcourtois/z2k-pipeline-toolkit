@@ -3,5 +3,5 @@
 from dminutes import geocaching
 reload(geocaching)
 
-geocaching.importCaches(dryRun=True, removeRefs=False, processLabel="Reference")
+geocaching.importCaches("local", dryRun=True, removeRefs=False, processLabel="Reference")
 

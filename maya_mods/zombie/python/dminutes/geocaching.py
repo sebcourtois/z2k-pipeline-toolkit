@@ -13,7 +13,8 @@ from pymel.util.arguments import listForNone
 import pymel.core as pm
 
 from pytd.util.qtutils import setWaitCursor
-from pytd.util.fsutils import pathJoin, jsonWrite, jsonRead, pathResolve
+from pytd.util.fsutils import pathJoin, jsonWrite, jsonRead, pathResolve, \
+    pathRelativeTo
 from pytd.util.sysutils import grouper, argToSet
 
 from pytaya.util import apiutils as myapi
@@ -39,7 +40,7 @@ def iterGeoGroups(**kwargs):
         bSelected = False
 
     if bSelected:
-        sObjList = mc.ls(sl=True, type="dagNode", o=True)
+        sObjList = mc.ls(sl=True, dag=True, type="shape", ni=True)
         sNmspcList = set(o.rsplit("|", 1)[-1].rsplit(":", 1)[0] for o in sObjList)
     elif sNmspcList is None:
         sNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
@@ -151,19 +152,27 @@ def _confirmProcessing(sProcessLabel, **kwargs):
 
     if bSelected is None:
 
-        sMsg = "{} caches on which assets ?".format(sProcessLabel)
+        bSelected = True
+        sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
+
+        sMsg = "{} caches for which assets ?".format(sProcessLabel)
+
+        sButtonList = ['All', 'Cancel']
+        if sGeoGrpList:
+            sButtonList = ['All', '{} Selected'.format(len(sGeoGrpList)), 'Cancel']
 
         sRes = pm.confirmDialog(title='DO YOU WANT TO...',
                                 message=sMsg,
-                                button=['All', 'Selected', 'Cancel'],
+                                button=sButtonList,
                                 icon="question")
         if sRes == "Cancel":
             #pm.displayInfo("Canceled !")
             raise RuntimeWarning("Canceled !")
-        else:
-            bSelected = (sRes != 'All')
-
-    sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
+        elif sRes == 'All':
+            bSelected = False
+            sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
+    else:
+        sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
 
     return sGeoGrpList, bSelected
 
@@ -307,6 +316,7 @@ def exportCaches(**kwargs):
     if frameRange:
         frameRange = tuple(int(f) for f in frameRange)
     bRaw = kwargs.pop("raw", False)
+    bJsonOnly = kwargs.pop("jsonOnly", False)
 
     scnInfos = infosFromScene()
     damShot = scnInfos["dam_entity"]
@@ -322,9 +332,9 @@ def exportCaches(**kwargs):
         sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
         raise RuntimeError(sMsg)
 
-    sAbcDirPath = mop.getGeoCacheDir(damShot).replace("\\", "/")
-    if not osp.exists(sAbcDirPath):
-        os.makedirs(sAbcDirPath)
+    sCacheDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
+    if not osp.exists(sCacheDirPath):
+        os.makedirs(sCacheDirPath)
 
     scnFrmRange = (int(pm.playbackOptions(q=True, animationStartTime=True)),
                    int(pm.playbackOptions(q=True, animationEndTime=True)))
@@ -343,9 +353,15 @@ def exportCaches(**kwargs):
     preRollEndFrame = frameRange[0] - 1
     preRollRange = (preRollEndFrame - 50, preRollEndFrame)
 
+    sCurScnPath = pm.sceneName()
     sJobCmdList = []
-    exportData = OrderedDict(source_scene=pm.sceneName())
-    jobList = []
+    jobForRootDct = OrderedDict()
+    sJsonPath = pathJoin(sCacheDirPath, "abcExport.json")
+    if bSelected and osp.isfile(sJsonPath):
+        prevExportInfos = jsonRead(sJsonPath)
+        jobForRootDct = OrderedDict((j["root"], j) for j in prevExportInfos["jobs"])
+    else:
+        prevExportInfos = {}
 
     sJobOpts = "-dataFormat ogawa -noNormals -uvWrite -writeVisibility"
 
@@ -376,33 +392,32 @@ def exportCaches(**kwargs):
             continue
 
         sAstNmspc = getNamespace(sGeoGrp)
-        sAbcFilePath = pathJoin(sAbcDirPath, sAstNmspc + "_cache.abc")
+        sAbcFilePath = pathJoin(sCacheDirPath, sAstNmspc + "_cache.abc")
 
-        jobKwargs = dict(root=sGeoGrp, file=sAbcFilePath, options=sJobOpts,
-                         frameRange=frameRange, preRollRange=preRollRange,
-                         )
-        sJobCmd = sJobFmt.format(**jobKwargs)
+        jobInfos = dict(root=sGeoGrp, file=sAbcFilePath, options=sJobOpts,
+                        frameRange=frameRange, preRollRange=preRollRange,)
 
+        sJobCmd = sJobFmt.format(**jobInfos)
         sJobCmdList.append(sJobCmd)
         if bDryRun:
             print "AbcExport: ", sJobCmd
-        jobList.append(jobKwargs)
 
-    exportData["jobs"] = jobList
+        jobInfos["file"] = pathRelativeTo(sAbcFilePath, sCacheDirPath)
+        jobInfos["source_file"] = sCurScnPath
+
+        jobForRootDct[sGeoGrp] = jobInfos
+
+    exportInfos = {"jobs":jobForRootDct.values()}
 
     if not bDryRun:
-
-        m = sys.modules["__main__"]
-        m._abcProgress = abcProgress
-
-        try:
+        if not bJsonOnly:
+            m = sys.modules["__main__"]
+            m._abcProgress = abcProgress
             mc.AbcExport(v=False, j=sJobCmdList)
-        finally:
-            if not bSelected:
-                p = pathJoin(sAbcDirPath, "abcExport.json")
-                jsonWrite(p, exportData)
 
-    return exportData
+        jsonWrite(sJsonPath, exportInfos)
+
+    return exportInfos
 
 def _iterNodePrefixedWith(sNodeList, *prefixes):
     for sNode in sNodeList:
@@ -864,7 +879,7 @@ def cleanImportContext(func):
         return res
     return doIt
 
-def importCaches(**kwargs):
+def importCaches(sSpace, **kwargs):
 
     global LOGGING_SETS, USE_LOGGING_SETS, LAUNCH_TIME
 
@@ -885,11 +900,17 @@ def importCaches(**kwargs):
         sMsg = "Caches can only be imported onto a final layout scene."
         assertSceneInfoMatches(scnInfos, "finalLayout_scene", msg=sMsg)
 
-    sAbcDirPath = mop.getGeoCacheDir(damShot)
-    if not osp.isdir(sAbcDirPath):
-        raise EnvironmentError("Could not found caches directory: '{}'".format(sAbcDirPath))
+    if sSpace == "local":
+        sCacheDirPath = mop.getMayaCacheDir(damShot)
+    elif sSpace in ("public", "private"):
+        sCacheDirPath = damShot.getPath(sSpace, "finalLayoutCache_dir")
+    else:
+        raise ValueError("Invalid space argument: '{}'".format(sSpace))
 
-    exportInfos = jsonRead(pathJoin(sAbcDirPath, "abcExport.json"))
+    if not osp.isdir(sCacheDirPath):
+        raise EnvironmentError("Could not found caches directory: '{}'".format(sCacheDirPath))
+
+    exportInfos = jsonRead(pathJoin(sCacheDirPath, "abcExport.json"))
     exportJobList = exportInfos["jobs"]
 
     sProcessLabel = kwargs.pop("processLabel", "Import")
@@ -904,10 +925,15 @@ def importCaches(**kwargs):
     else:
         exportJobList = tuple(j for j in exportJobList if j["root"] in sGeoGrpList)
 
+    for jobInfos in exportJobList:
+        sFilePath = jobInfos["file"]
+        if not osp.isabs(sFilePath):
+            jobInfos["file"] = pathJoin(sCacheDirPath, sFilePath)
+
 #    if not exportJobList:
 #        return False
 
-    sAbcPathList = list(pathResolve(j["file"]) for j in exportJobList)
+    sAbcPathList = list(j["file"] for j in exportJobList)
     scanFunc = partial(scanCachesToImport, sAbcPathList)
     scanDct = dependency_scan.launch(scnInfos, scanFunc=scanFunc,
                                      modal=True,

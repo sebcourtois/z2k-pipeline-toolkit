@@ -414,7 +414,7 @@ def getWipCaptureDir(damShot):
 
     return mc.workspace(expandName=p)
 
-def getGeoCacheDir(damShot):
+def getMayaCacheDir(damShot):
 
     p = osp.join(mc.workspace(fileRuleEntry="alembicCache"),
                  damShot.sequence,
@@ -947,7 +947,7 @@ def setupShotScene(sceneManager):
         #bNoRefsAtAll = True if not pc.listReferences() else False
         bNoLoadedRefs = False#True if not pc.listReferences(loaded=True, unloaded=False) else False
 
-        sAbcDirPath = getGeoCacheDir(damShot)
+        sAbcDirPath = getMayaCacheDir(damShot)
         if not osp.isdir(sAbcDirPath):
             raise EnvironmentError("Could not found caches directory: '{}'".format(sAbcDirPath))
 
