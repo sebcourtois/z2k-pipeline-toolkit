@@ -762,10 +762,8 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
 
         if mc.referenceQuery(sAstMeshShape, isNodeReferenced=True):
             if (bDeformedMesh or (not bSameVerts)) and (not dryRun):
-                #print "\n", sAstMeshShape, mc.listConnections(sAstMeshShape, s=True, d=False, plugs=True, c=True)
                 sPolyTrans = mc.polyTransfer(sAstMeshShape, ao=sAbcMeshShape,
                                              uv=False, v=True, vc=False, ch=True)[0]
-                #print sAstMeshShape, mc.listConnections(sAstMeshShape, s=True, d=False, plugs=True, c=True)
             if bDeformedMesh and (not dryRun):
                 mc.connectAttr(sAbcOutAttr, sPolyTrans + ".otherPoly", f=True)
         elif not bSameVerts:
@@ -908,6 +906,7 @@ def importCaches(**kwargs):
 
 #    if not exportJobList:
 #        return False
+
     sAbcPathList = list(pathResolve(j["file"]) for j in exportJobList)
     scanFunc = partial(scanCachesToImport, sAbcPathList)
     scanDct = dependency_scan.launch(scnInfos, scanFunc=scanFunc,
