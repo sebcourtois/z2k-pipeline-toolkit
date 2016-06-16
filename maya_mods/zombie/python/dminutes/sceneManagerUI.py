@@ -98,6 +98,10 @@ def launch():
     if isLaunched():
         mc.dockControl(SCENE_MANAGER_DOCK, e=True, visible=True)
     else:
+
+        if mc.evaluationManager(q=True, enabled=True):
+            mc.evaluationManager(mode="off")
+
         kill()
 
         dirname, _ = osp.split(osp.abspath(__file__))
@@ -198,9 +202,8 @@ def initialize():
     sAnn = "Create a PUBLISHABLE capture into private area: '{}'".format(damShot.getPath("private", "entity_dir"))
     pc.control("sm_capture_bt", edit=True, annotation=sAnn)
 
-    if SG_ENGINE.currentUser.get("login").lower() != "mariong":
-        pc.control("sm_increment_chk", edit=True, visible=False)
-
+#    if SG_ENGINE.currentUser.get("login").lower() != "mariong":
+#        pc.control("sm_increment_chk", edit=True, visible=False)
 
 test_toggle = False
 

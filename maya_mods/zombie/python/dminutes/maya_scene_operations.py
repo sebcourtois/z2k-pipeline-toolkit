@@ -581,11 +581,10 @@ def getStereoCam(sShotCode, fail=False):
     else:
         raise RuntimeError("Multiple cameras named '{}'".format(sCamName))
 
-@withSelectionRestored
-def addNode(sNodeType, sNodeName, unique=True):
+def addNode(sNodeType, sNodeName, parent=None, unique=True, skipSelect=True):
     if unique and mc.objExists(sNodeName):
         return sNodeName
-    return mc.createNode(sNodeType, name=sNodeName)
+    return mc.createNode(sNodeType, parent=parent, name=sNodeName, skipSelect=skipSelect)
 
 def getNode(sNodeName):
     return sNodeName if mc.objExists(sNodeName) else None

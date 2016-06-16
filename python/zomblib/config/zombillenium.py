@@ -35,11 +35,8 @@ class project(object):
     shotgun_class = "zomblib.shotgunengine.ShotgunEngine"
     authenticator_class = ".authtypes.DualAuth"
 
-    if DEV_MODE:
-        sPort = os.getenv("DAMAS_DEV_PORT", "8443")
-        damas_server_addr = "https://62.210.104.42:{}/api".format(sPort)
-    else:
-        damas_server_addr = "https://62.210.104.42:8443/api"
+    sPort = os.getenv("DAMAS_DEV_PORT", "8443") if DEV_MODE else "8443"
+    damas_server_addr = "https://62.210.104.42:{}/api".format(sPort)
 
     editable_file_patterns = ("*.ma", "*.mb", "*.nk", "*.py")#, "*.psd"
     allowed_texture_formats = (".tga", ".jpg", ".exr")
