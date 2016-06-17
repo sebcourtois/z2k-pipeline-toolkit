@@ -11,7 +11,7 @@ import pymel.core as pc
 import pymel.util as pmu
 import maya.cmds as mc
 
-from pytd.util.sysutils import toStr, inDevMode
+from pytd.util.sysutils import toStr
 from pytd.util.fsutils import jsonWrite, pathResolve, jsonRead
 
 from pytaya.util.sysutils import withSelectionRestored
@@ -382,29 +382,6 @@ def do(s_inCommand, s_inTask, sceneManager):
 
     cmdCallable(sceneManager)
     #print '{} initialization done ! ({})'.format(s_inTask, sceneManager.context)
-
-def setMayaProject(sProjName):
-
-    sMayaProjsLoc = osp.dirname(osp.normpath(mc.workspace(q=True, rd=True)))
-    sMayaProjPath = osp.join(sMayaProjsLoc, sProjName)
-
-    if not osp.exists(sMayaProjPath):
-        os.mkdir(sMayaProjPath)
-
-    mc.workspace(update=True)
-    mc.workspace(sProjName, openWorkspace=True)
-
-    if not mc.workspace(fileRuleEntry="movie"):
-        mc.workspace(fileRule=("movie", "captures"))
-        mc.workspace(saveWorkspace=True)
-
-    if not mc.workspace(fileRuleEntry="alembicCache"):
-        mc.workspace(fileRule=("alembicCache", "cache/alembic"))
-        mc.workspace(saveWorkspace=True)
-
-    pmu.putEnv("ZOMB_MAYA_PROJECT_PATH", sMayaProjPath.replace("\\", "/"))
-
-    return sMayaProjPath
 
 def getWipCaptureDir(damShot):
 
