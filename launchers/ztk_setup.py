@@ -257,7 +257,7 @@ class Z2kToolkit(object):
 
         return pathJoin(sReleaseLoc, self.baseName)
 
-    def launchCmd(self, cmdArgs):
+    def launchCmd(self, cmdArgs, launch=True):
 
         sAppPath = cmdArgs[0]
         sAppName = osp.basename(sAppPath)
@@ -279,7 +279,8 @@ class Z2kToolkit(object):
         if self.isDev:
             print cmdArgs
 
-        return callCmd(cmdArgs)
+        if launch:
+            return callCmd(cmdArgs)
 
     def runFromCmd(self):
 
@@ -289,11 +290,11 @@ class Z2kToolkit(object):
 
         cmdArgs = sys.argv[1:]
         sCmd = ""
-        sCmdList = ("install", "launch", "release")
+        sCmdList = ("install", "launch", "release", "loadenv")
         launchArgs = []
         if len(sys.argv) > 2:
             sCmd = sys.argv[1]
-            if sCmd == "launch":
+            if sCmd in ("launch","loadenv"):
                 cmdArgs = sys.argv[1:2]
                 c = 2
                 for arg in sys.argv[2:]:
@@ -310,7 +311,7 @@ class Z2kToolkit(object):
         ns = parser.parse_args(cmdArgs if not sCmd else [sCmd])
 
         sCmd = ns.command
-        if sCmd == "launch":
+        if sCmd in ("launch","loadenv"):
             parser.add_argument("--update", "-u", type=int, default=1)
             parser.add_argument("--renew", "-r", type=int, default=0)
             ns = parser.parse_args(cmdArgs, ns)
@@ -338,12 +339,13 @@ class Z2kToolkit(object):
 #                    print launchArgs
                     print relaunchArgs
 
-                    return subprocess.call(relaunchArgs, shell=True)
+                    if sCmd == "launch":
+                        return subprocess.call(relaunchArgs, shell=True)
 
             if ns.renew:
                 self.loadEnvs(self.customEnvs, replace=True)
 
-            return self.launchCmd(launchArgs)
+            return self.launchCmd(launchArgs, launch=(sCmd == "launch"))
 
         if sCmd == "install":
             self.install()
