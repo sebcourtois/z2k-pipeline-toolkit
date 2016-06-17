@@ -11,7 +11,7 @@ import pymel.core as pc
 import pymel.util as pmu
 import maya.cmds as mc
 
-from pytd.util.sysutils import toStr, inDevMode
+from pytd.util.sysutils import toStr
 from pytd.util.fsutils import jsonWrite, pathResolve, jsonRead
 
 from pytaya.util.sysutils import withSelectionRestored
@@ -383,29 +383,6 @@ def do(s_inCommand, s_inTask, sceneManager):
     cmdCallable(sceneManager)
     #print '{} initialization done ! ({})'.format(s_inTask, sceneManager.context)
 
-def setMayaProject(sProjName):
-
-    sMayaProjsLoc = osp.dirname(osp.normpath(mc.workspace(q=True, rd=True)))
-    sMayaProjPath = osp.join(sMayaProjsLoc, sProjName)
-
-    if not osp.exists(sMayaProjPath):
-        os.mkdir(sMayaProjPath)
-
-    mc.workspace(update=True)
-    mc.workspace(sProjName, openWorkspace=True)
-
-    if not mc.workspace(fileRuleEntry="movie"):
-        mc.workspace(fileRule=("movie", "captures"))
-        mc.workspace(saveWorkspace=True)
-
-    if not mc.workspace(fileRuleEntry="alembicCache"):
-        mc.workspace(fileRule=("alembicCache", "cache/alembic"))
-        mc.workspace(saveWorkspace=True)
-
-    pmu.putEnv("ZOMB_MAYA_PROJECT_PATH", sMayaProjPath.replace("\\", "/"))
-
-    return sMayaProjPath
-
 def getWipCaptureDir(damShot):
 
     p = osp.join(mc.workspace(fileRuleEntry="movie"),
@@ -414,7 +391,7 @@ def getWipCaptureDir(damShot):
 
     return mc.workspace(expandName=p)
 
-def getGeoCacheDir(damShot):
+def getMayaCacheDir(damShot):
 
     p = osp.join(mc.workspace(fileRuleEntry="alembicCache"),
                  damShot.sequence,
@@ -581,11 +558,10 @@ def getStereoCam(sShotCode, fail=False):
     else:
         raise RuntimeError("Multiple cameras named '{}'".format(sCamName))
 
-@withSelectionRestored
-def addNode(sNodeType, sNodeName, unique=True):
+def addNode(sNodeType, sNodeName, parent=None, unique=True, skipSelect=True):
     if unique and mc.objExists(sNodeName):
         return sNodeName
-    return mc.createNode(sNodeType, name=sNodeName)
+    return mc.createNode(sNodeType, parent=parent, name=sNodeName, skipSelect=skipSelect)
 
 def getNode(sNodeName):
     return sNodeName if mc.objExists(sNodeName) else None
@@ -948,7 +924,7 @@ def setupShotScene(sceneManager):
         #bNoRefsAtAll = True if not pc.listReferences() else False
         bNoLoadedRefs = False#True if not pc.listReferences(loaded=True, unloaded=False) else False
 
-        sAbcDirPath = getGeoCacheDir(damShot)
+        sAbcDirPath = getMayaCacheDir(damShot)
         if not osp.isdir(sAbcDirPath):
             raise EnvironmentError("Could not found caches directory: '{}'".format(sAbcDirPath))
 

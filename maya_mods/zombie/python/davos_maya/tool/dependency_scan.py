@@ -340,6 +340,9 @@ UDIM_MODE = 3
 UDIM_SEQ_RGX = r"\.1\d{3}\."
 IMG_SEQ_RGX = r"\.0\d+\."
 
+TGA_DEPTH_FOR_MODE = {"BGR;5": 16, "BGR":24, "BGRA":32,
+                      "RGB;5": 16, "RGB":24, "RGBA":32}
+
 def makeUdimFilePattern(p):
     return pathReSub(UDIM_SEQ_RGX, ".1???.", osp.basename(p))
 
@@ -359,7 +362,7 @@ def scanTextureFiles(scnInfos, depConfDct=None):
         depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
 
     pubDepDir = depConfDct["public_loc"]
-    sDepSrcDirPath = depConfDct["source_loc"]
+    sSrcDepDirPath = depConfDct["source_loc"]
 
     sPubDepDirPath = pubDepDir.absPath()
     if pubDepDir.exists():
@@ -506,8 +509,8 @@ def scanTextureFiles(scnInfos, depConfDct=None):
                 sMsg = ("Only accepts: '{}'".format("' '".join(sAllowedTexTypes)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadTextureFormat', sMsg))
 
-            if (not bPublicFile) and (normCase(sTexDirPath) != normCase(sDepSrcDirPath)):
-                sMsg = ("Not in '{}'".format(osp.normpath(sDepSrcDirPath)))
+            if (not bPublicFile) and (normCase(sTexDirPath) != normCase(sSrcDepDirPath)):
+                sMsg = ("Not in '{}'".format(osp.normpath(sSrcDepDirPath)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
 
             sMsg = ""
@@ -592,33 +595,36 @@ def scanTextureFiles(scnInfos, depConfDct=None):
                     sCompress = tileInfo[0]
                     sMode = tileInfo[-1][0]
 
+                    if sMode not in TGA_DEPTH_FOR_MODE:
+                        sMsg = ("Invalid mode: '{}'. Valid modes: {}"
+                                .format(sMode, TGA_DEPTH_FOR_MODE.keys()))
+                        raise ValueError(sMsg)
+
+                    sMsgList = []
                     bRgb24 = (sMode == "BGR")
                     bCompr = (sCompress == "tga_rle")
 
-                    sMsgList = []
+                    if not bRgb24:
+                        sMsg = "Expected 24 bits, got {} bits".format(TGA_DEPTH_FOR_MODE[sMode])
+                        sMsgList.append(sMsg)
+
                     if not bCompr:
                         sMsgList.append("NOT COMPRESSED")
-
-                    if not bRgb24:
-                        depthDct = {"BGR;5": 16, "BGR":24, "BGRA":32,
-                                    "RGB;5": 16, "RGB":24, "RGBA":32}
-                        sMsg = "Expected 24 bits, got {} bits".format(depthDct[sMode])
-                        sMsgList.append(sMsg)
 
                     if sMsgList:
                         sMsg = "\n".join(sMsgList)
                         scanLogDct.setdefault(sHighSeverity, []).append(("BadTargaFormat", sMsg))
+
+                except Exception as e:
+                    scanLogDct.setdefault(sHighSeverity, []).append(("BadTargaFormat", toStr(e)))
                 finally:
                     if tgaImg:
                         tgaImg.close()
-                    else:
-                        sMsg = "Could not read the file"
-                        scanLogDct.setdefault(sHighSeverity, []).append(("BadTargaFormat", sMsg))
 
             resultDctList = [resultDct]
             if foundBudResList:
                 resultDctList.extend(foundBudResList)
-                sFellowFileList = list(brd["abs_path"] for brd in foundBudResList)
+                sFellowFileList = list(d["abs_path"] for d in foundBudResList)
                 resultDct["fellow_paths"] = sFellowFileList
 
             for resDct in resultDctList:
@@ -631,9 +637,9 @@ def scanTextureFiles(scnInfos, depConfDct=None):
     sAllowedFileTypes = [".tx", ".psd"]
     sAllowedFileTypes.extend(sAllowedTexTypes)
     #looking for unused files in texture direcotry
-    if osp.isdir(sDepSrcDirPath):
+    if osp.isdir(sSrcDepDirPath):
 
-        sTexDirFileList = sorted(iterPaths(sDepSrcDirPath, dirs=False, recursive=False))
+        sTexDirFileList = sorted(iterPaths(sSrcDepDirPath, dirs=False, recursive=False))
 
         for p in sTexDirFileList:
 
@@ -680,13 +686,12 @@ def scanAlembicFiles(scnInfos, depConfDct=None):
     if not depConfDct:
         depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
     pubDepDir = depConfDct["public_loc"]
-    sDepSrcDirPath = depConfDct["source_loc"]
+    sSrcDepDirPath = depConfDct["source_loc"]
 
     sPubDepDirPath = pubDepDir.absPath()
     if pubDepDir.exists():
         pubDepDir.loadChildDbNodes()
 
-    allFileNodes = lsNodes("*", type='AlembicNode', not_rn=True)
     scanResults = []
     fileNodeDct = {}
 
@@ -696,7 +701,9 @@ def scanAlembicFiles(scnInfos, depConfDct=None):
         scanResults.append(res)
         sAllSeveritySet.update(res["scan_log"].iterkeys())
 
-    def iterDependencyPaths():
+    def iterAlembicPaths():
+
+        allFileNodes = lsNodes("*", type='AlembicNode', not_rn=True)
 
         for fileNode in allFileNodes:
 
@@ -722,6 +729,7 @@ def scanAlembicFiles(scnInfos, depConfDct=None):
             sDepNormPath = normCase(sDepAbsPath)
             scanLogDct = {}
 
+            sHighSeverity = "error"
             bPublicFile = False
             bExists = osp.isfile(sDepAbsPath)
 
@@ -754,19 +762,18 @@ def scanAlembicFiles(scnInfos, depConfDct=None):
                 sDepPubPath = pathJoin(sPubDepDirPath, sDepFilename)
                 resultDct["public_file"] = pubLib._weakFile(sDepPubPath, dbNode=False)
 
-            if (not bPublicFile) and (normCase(sDepDirPath) != normCase(sDepSrcDirPath)):
-                sMsg = ("Not in '{}'".format(osp.normpath(sDepSrcDirPath)))
+            if (not bPublicFile) and (normCase(sDepDirPath) != normCase(sSrcDepDirPath)):
+                sMsg = ("Not in '{}'".format(osp.normpath(sSrcDepDirPath)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
 
             _setPublishableState(resultDct)
-
             addResult(resultDct)
 
-    doScan(iterDependencyPaths())
+    doScan(iterAlembicPaths())
 
     publishCount = sum(1 for d in scanResults if d["publishable"])
     if publishCount:
-        sAbcJsonPath = pathJoin(sDepSrcDirPath, "abcExport.json")
+        sAbcJsonPath = pathJoin(sSrcDepDirPath, "abcExport.json")
         doScan([sAbcJsonPath])
 
     if scanResults:
@@ -785,12 +792,15 @@ def _setPublishableState(resultDct):
 
     if drcFile:
         if drcFile.isPublic():
-            return
+            return False
         pubFile = drcFile.getPublicFile(weak=True, dbNode=False)
     else:
         pubFile = resultDct.get("public_file")
+        if not pubFile:
+            return False
 
     bPublishable = True
+    sPubFilePath = pubFile.absPath()
 
     dbNode = pubFile.getDbNode(fromDb=False)
     if dbNode:
@@ -804,23 +814,22 @@ def _setPublishableState(resultDct):
             pubFile._assertPublishable(sSrcFilePath, refresh=False)
         except AssertionError as e:
             bPublishable = False
-            sMsg = toStr(e)
+            sErrMsg = toStr(e)
     elif dbNode:
-        sMsg = """File declared in database but does not exist on your server.
+        sErrMsg = """File declared in database but does not exist on your server.
 Wait for the next synchro and retry publishing."""
         bPublishable = False
 
     if not bPublishable:
-        scanLogDct.setdefault("error", []).append(("NotPublishable", sMsg))
+        scanLogDct.setdefault("error", []).append(("NotPublishable", sErrMsg))
     else:
         bModified = True
         if pubFile.exists():
-            sPubFilePath = pubFile.absPath()
             bModified = (not filecmp.cmp(sSrcFilePath, sPubFilePath))
             #bDiffers, sSrcChecksum = pubFile.differsFrom(sPubFilePath)
 
         if not bModified:
-            scanLogDct.setdefault("info", []).append(("Not Modified", "File has not been modified"))
+            scanLogDct.setdefault("info", []).append(("NotModified", "File has not been modified"))
         else:
             sMsg = ""
             sFellowFileList = resultDct["fellow_paths"]

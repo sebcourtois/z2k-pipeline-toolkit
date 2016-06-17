@@ -4,6 +4,7 @@ import os
 import os.path as osp
 from collections import OrderedDict
 from datetime import datetime
+from functools import partial
 
 import maya.api.OpenMaya as om
 import maya.cmds as mc
@@ -12,15 +13,17 @@ from pymel.util.arguments import listForNone
 import pymel.core as pm
 
 from pytd.util.qtutils import setWaitCursor
-from pytd.util.fsutils import pathJoin, jsonWrite, jsonRead
+from pytd.util.fsutils import pathJoin, jsonWrite, jsonRead, pathResolve, \
+    pathRelativeTo
 from pytd.util.sysutils import grouper, argToSet
 
 from pytaya.util import apiutils as myapi
 #from pytaya.core import system as myasys
-from davos_maya.tool import reference as myaref
+from davos_maya.tool import reference as myaref, dependency_scan
 from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
 
 from dminutes import maya_scene_operations as mop
+from pytaya.core.general import lsNodes
 
 LOGGING_SETS = []
 USE_LOGGING_SETS = True
@@ -29,7 +32,7 @@ UNUSED_TRANSFER_NODES = []
 
 def iterGeoGroups(**kwargs):
 
-    bSelected = kwargs.get("selected", False)
+    bSelected = kwargs.get("selected", kwargs.get("sl", False))
     sObjList = kwargs.get("among", None)
     sNmspcList = kwargs.get("namespaces", None)
 
@@ -37,7 +40,7 @@ def iterGeoGroups(**kwargs):
         bSelected = False
 
     if bSelected:
-        sObjList = mc.ls(sl=True, type="dagNode", o=True)
+        sObjList = mc.ls(sl=True, dag=True, type="shape", ni=True)
         sNmspcList = set(o.rsplit("|", 1)[-1].rsplit(":", 1)[0] for o in sObjList)
     elif sNmspcList is None:
         sNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
@@ -93,8 +96,16 @@ def addLoggingSet(sBaseName, members):
 
     sDate = LAUNCH_TIME.strftime("_%Y%m%d_%Hh%M")
 
-    sObjSet = mop.addNode("objectSet", "log_" + sBaseName + sDate, unique=True)
-    mc.sets(members, e=True, include=sObjSet)
+    sCurCnt = mc.container(q=True, current=True)
+    if sCurCnt:
+        mc.container(sCurCnt, e=True, current=False)
+
+    try:
+        sObjSet = mop.addNode("objectSet", "log_" + sBaseName + sDate, unique=True)
+        mc.sets(members, e=True, include=sObjSet)
+    finally:
+        if sCurCnt:
+            mc.container(sCurCnt, e=True, current=True)
 
     if sObjSet not in LOGGING_SETS:
         LOGGING_SETS.append(sObjSet)
@@ -141,19 +152,27 @@ def _confirmProcessing(sProcessLabel, **kwargs):
 
     if bSelected is None:
 
-        sMsg = "{} caches on which assets ?".format(sProcessLabel)
+        bSelected = True
+        sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
+
+        sMsg = "{} caches for which assets ?".format(sProcessLabel)
+
+        sButtonList = ['All', 'Cancel']
+        if sGeoGrpList:
+            sButtonList = ['All', '{} Selected'.format(len(sGeoGrpList)), 'Cancel']
 
         sRes = pm.confirmDialog(title='DO YOU WANT TO...',
                                 message=sMsg,
-                                button=['All', 'Selected', 'Cancel'],
+                                button=sButtonList,
                                 icon="question")
         if sRes == "Cancel":
             #pm.displayInfo("Canceled !")
             raise RuntimeWarning("Canceled !")
-        else:
-            bSelected = (sRes != 'All')
-
-    sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
+        elif sRes == 'All':
+            bSelected = False
+            sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
+    else:
+        sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
 
     return sGeoGrpList, bSelected
 
@@ -296,6 +315,8 @@ def exportCaches(**kwargs):
     frameRange = kwargs.pop("frameRange", None)
     if frameRange:
         frameRange = tuple(int(f) for f in frameRange)
+    bRaw = kwargs.pop("raw", False)
+    bJsonOnly = kwargs.pop("jsonOnly", False)
 
     scnInfos = infosFromScene()
     damShot = scnInfos["dam_entity"]
@@ -303,16 +324,17 @@ def exportCaches(**kwargs):
     sMsg = "Caches can only be exported from an animation scene."
     assertSceneInfoMatches(scnInfos, "anim_scene", msg=sMsg)
 
-    myaref.loadAssetsAsResource("anim_ref", checkSyncState=True, selected=False, fail=True)
+    if not bRaw:
+        myaref.loadAssetsAsResource("anim_ref", checkSyncState=True, selected=False, fail=True)
 
     sGeoGrpList, bSelected = _confirmProcessing(sProcessLabel, **kwargs)
     if not sGeoGrpList:
         sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
         raise RuntimeError(sMsg)
 
-    sAbcDirPath = mop.getGeoCacheDir(damShot).replace("\\", "/")
-    if not osp.exists(sAbcDirPath):
-        os.makedirs(sAbcDirPath)
+    sCacheDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
+    if not osp.exists(sCacheDirPath):
+        os.makedirs(sCacheDirPath)
 
     scnFrmRange = (int(pm.playbackOptions(q=True, animationStartTime=True)),
                    int(pm.playbackOptions(q=True, animationEndTime=True)))
@@ -331,9 +353,15 @@ def exportCaches(**kwargs):
     preRollEndFrame = frameRange[0] - 1
     preRollRange = (preRollEndFrame - 50, preRollEndFrame)
 
+    sCurScnPath = pm.sceneName()
     sJobCmdList = []
-    exportData = OrderedDict(source_scene=pm.sceneName())
-    jobList = []
+    jobForRootDct = OrderedDict()
+    sJsonPath = pathJoin(sCacheDirPath, "abcExport.json")
+    if bSelected and osp.isfile(sJsonPath):
+        prevExportInfos = jsonRead(sJsonPath)
+        jobForRootDct = OrderedDict((j["root"], j) for j in prevExportInfos["jobs"])
+    else:
+        prevExportInfos = {}
 
     sJobOpts = "-dataFormat ogawa -noNormals -uvWrite -writeVisibility"
 
@@ -347,13 +375,14 @@ def exportCaches(**kwargs):
     ]
     sJobFmt = " ".join(sJobParts)
 
-    for sBodyResAttr in mc.ls("*.Body_res", r=True):
-        print "switching", sBodyResAttr, "to High."
-        if not bDryRun:
-            try:
-                mc.setAttr(sBodyResAttr, 1)
-            except Exception as e:
-                pm.displayWarning(e.message)
+    if not bRaw:
+        for sBodyResAttr in mc.ls("*.Body_res", r=True):
+            print "switching", sBodyResAttr, "to High."
+            if not bDryRun:
+                try:
+                    mc.setAttr(sBodyResAttr, 1)
+                except Exception as e:
+                    pm.displayWarning(e.message)
 
     for sGeoGrp in sGeoGrpList:
 
@@ -363,33 +392,32 @@ def exportCaches(**kwargs):
             continue
 
         sAstNmspc = getNamespace(sGeoGrp)
-        sAbcPath = pathJoin(sAbcDirPath, sAstNmspc + "_cache.abc")
+        sAbcFilePath = pathJoin(sCacheDirPath, sAstNmspc + "_cache.abc")
 
-        jobKwargs = dict(root=sGeoGrp, file=sAbcPath, options=sJobOpts,
-                         frameRange=frameRange, preRollRange=preRollRange,
-                         )
-        sJobCmd = sJobFmt.format(**jobKwargs)
+        jobInfos = dict(root=sGeoGrp, file=sAbcFilePath, options=sJobOpts,
+                        frameRange=frameRange, preRollRange=preRollRange,)
 
+        sJobCmd = sJobFmt.format(**jobInfos)
         sJobCmdList.append(sJobCmd)
         if bDryRun:
             print "AbcExport: ", sJobCmd
-        jobList.append(jobKwargs)
 
-    exportData["jobs"] = jobList
+        jobInfos["file"] = pathRelativeTo(sAbcFilePath, sCacheDirPath)
+        jobInfos["source_file"] = sCurScnPath
+
+        jobForRootDct[sGeoGrp] = jobInfos
+
+    exportInfos = {"jobs":jobForRootDct.values()}
 
     if not bDryRun:
-
-        m = sys.modules["__main__"]
-        m._abcProgress = abcProgress
-
-        try:
+        if not bJsonOnly:
+            m = sys.modules["__main__"]
+            m._abcProgress = abcProgress
             mc.AbcExport(v=False, j=sJobCmdList)
-        finally:
-            if not bSelected:
-                p = pathJoin(sAbcDirPath, "abcExport.json")
-                jsonWrite(p, exportData)
 
-    return exportData
+        jsonWrite(sJsonPath, exportInfos)
+
+    return exportInfos
 
 def _iterNodePrefixedWith(sNodeList, *prefixes):
     for sNode in sNodeList:
@@ -696,7 +724,7 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
     sTopoDifferList = []
     sHasHistoryList = []
 
-    sOnlyList = mc.ls(only, long=True, ni=True) if only else only
+    sOnlyList = mc.ls(only, long=True, ni=True) if only else None
 
     for sAstMeshShape, sAbcMeshShape in iterMatchedObjects(astToAbcMeshItems):
 
@@ -707,10 +735,14 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
 
         #print sAstMeshShape, sAbcMeshShape
 
-        if mc.listConnections(sAstMeshShape + ".inMesh", s=True, d=False):
-            sHasHistoryList.append(sAstMeshShape)
-            pm.displayWarning("Mesh with history ignored: '{}'".format(sAstMeshShape))
-            continue
+        sConnecList = mc.listHistory(sAstMeshShape, il=2, pdo=True)
+        if sConnecList:
+            sConnecList = lsNodes(sConnecList, nodeNames=True, not_rn=True)
+            #print sAstMeshShape, sConnecList
+            if sConnecList:
+                sHasHistoryList.append(sAstMeshShape)
+                pm.displayWarning("Mesh with history ignored: '{}'".format(sAstMeshShape))
+                continue
 
         abcMeshStat = mc.polyEvaluate(sAbcMeshShape, v=True, f=True, e=True, t=True)
         astMeshStat = mc.polyEvaluate(sAstMeshShape, v=True, f=True, e=True, t=True)
@@ -836,57 +868,125 @@ def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
 
     print " Layout visibilities imported ".center(120, "-") + "\n"
 
-def importCaches(**kwargs):
+def cleanImportContext(func):
+    def doIt(*args, **kwargs):
+        try:
+            res = func(*args, **kwargs)
+        finally:
+            sCurCntnr = mc.container(q=True, current=True)
+            if sCurCntnr:
+                mc.container(sCurCntnr, e=True, current=False)
+        return res
+    return doIt
+
+def importCaches(sSpace, **kwargs):
 
     global LOGGING_SETS, USE_LOGGING_SETS, LAUNCH_TIME
 
     bDryRun = kwargs.pop("dryRun", False)
     bRemoveRefs = kwargs.pop("removeRefs", True)
     bUseCacheObjset = kwargs.pop("useCacheSet", True)
+    #bForce = kwargs.pop("force", False)
 
     sepWidth = 120
-    def doneWith(oAbcRef, remove=True):
+    def doneWith(oAbcRef, remove=True, container=None):
         if bRemoveRefs and remove:# and bDryRun:
             oAbcRef.remove()
 
     scnInfos = infosFromScene()
     damShot = scnInfos["dam_entity"]
 
-    #if not bDryRun:
-    if  bDryRun:
+    if not bDryRun:
         sMsg = "Caches can only be imported onto a final layout scene."
         assertSceneInfoMatches(scnInfos, "finalLayout_scene", msg=sMsg)
 
-    sAbcDirPath = mop.getGeoCacheDir(damShot)
-    if not osp.isdir(sAbcDirPath):
-        raise EnvironmentError("Could not found caches directory: '{}'".format(sAbcDirPath))
+    if sSpace == "local":
+        sCacheDirPath = mop.getMayaCacheDir(damShot)
+    elif sSpace in ("public", "private"):
+        sCacheDirPath = damShot.getPath(sSpace, "finalLayoutCache_dir")
+    else:
+        raise ValueError("Invalid space argument: '{}'".format(sSpace))
 
-    exportInfos = jsonRead(pathJoin(sAbcDirPath, "abcExport.json"))
+    if not osp.isdir(sCacheDirPath):
+        raise EnvironmentError("Could not found caches directory: '{}'".format(sCacheDirPath))
+
+    exportInfos = jsonRead(pathJoin(sCacheDirPath, "abcExport.json"))
+    exportJobList = exportInfos["jobs"]
 
     sProcessLabel = kwargs.pop("processLabel", "Import")
     bCheckAstExists = False
     sGeoGrpList, bSelected = _confirmProcessing(sProcessLabel, **kwargs)
     if not bSelected:
-        sGeoGrpList = tuple(j["root"] for j in exportInfos["jobs"])
+        sGeoGrpList = tuple(j["root"] for j in exportJobList)
         bCheckAstExists = True
     elif not sGeoGrpList:
         sMsg = "No geo groups found{}".format(" from selection.")
         raise RuntimeError(sMsg)
+    else:
+        exportJobList = tuple(j for j in exportJobList if j["root"] in sGeoGrpList)
 
-    if not sGeoGrpList:
-        return False
+    for jobInfos in exportJobList:
+        sFilePath = jobInfos["file"]
+        if not osp.isabs(sFilePath):
+            jobInfos["file"] = pathJoin(sCacheDirPath, sFilePath)
 
-#    oAbcRefList = []
+#    if not exportJobList:
+#        return False
+
+    sAbcPathList = list(j["file"] for j in exportJobList)
+    scanFunc = partial(scanCachesToImport, sAbcPathList)
+    scanDct = dependency_scan.launch(scnInfos, scanFunc=scanFunc,
+                                     modal=True,
+                                     okLabel=sProcessLabel,
+                                     expandTree=True,
+                                     forceDialog=False)
+    if scanDct is None:
+        pm.displayInfo("Canceled !")
+        return
+
     oFileRefDct = dict(pm.listReferences(namespaces=True, references=True))
     sScnNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
 
     pm.mel.ScriptEditor()
     pm.mel.handleScriptEditorAction("maximizeHistory")
 
+    bRefOnly = (sProcessLabel.lower() == "reference")
+
+    if (not bRefOnly) and (not bDryRun):
+
+        for jobInfos in exportJobList:
+
+            sAstGeoGrp = jobInfos["root"]
+
+            sAstNmspc = getNamespace(sAstGeoGrp)
+            sAbcNmspc = sAstNmspc + "_cache"
+            sScnAbcNodeName = sAbcNmspc + "_AlembicNode"
+
+            sAstMeshList = mc.ls(sAstNmspc + ":*", type="mesh", ni=True)
+            sToDelList = []
+            for sAstMesh in sAstMeshList:
+                sHistList = listForNone(mc.listHistory(sAstMesh, il=2, pdo=True))
+                if not sHistList:
+                    continue
+                sHistList = mc.ls(sHistList, type="polyTransfer")
+                if sHistList:
+                    sToDelList.extend(sHistList)
+
+            if sToDelList:
+                print ("delete {} 'polyTransfer' nodes on '{}'"
+                       .format(len(sToDelList), sAstNmspc))
+                mc.delete(sToDelList)
+
+            sScnAbcNode = mop.getNode(sScnAbcNodeName)
+            if sScnAbcNode:
+                mc.delete(sScnAbcNode)
+
     sNmspcList = None
     if bSelected:
         sNmspcList = tuple(getNamespace(s) for s in sGeoGrpList)
     importLayoutVisibilities(damShot, onNamespaces=sNmspcList, dryRun=bDryRun)
+
+    mc.refresh()
 
     print  r"""
    ______           __            ____                           __     _____ __             __           __
@@ -897,24 +997,27 @@ def importCaches(**kwargs):
                                            /_/                                                                                                                                                                               
 """.rstrip()
 
-    for sAstGeoGrp in sGeoGrpList:
+    for jobInfos in exportJobList:
 
-        sAstNmspc = sAstGeoGrp.rsplit("|", 1)[-1].rsplit(":", 1)[0]
+        sAstGeoGrp = jobInfos["root"]
+        sAbcFilePath = jobInfos["file"]
+
+        sAstNmspc = getNamespace(sAstGeoGrp)
         sAbcNmspc = sAstNmspc + "_cache"
-        sAbcPath = pathJoin(sAbcDirPath, sAbcNmspc + ".abc")
+        sScnAbcNodeName = sAbcNmspc + "_AlembicNode"
 
         print ("\n" + (" " + sAstNmspc + " ").center(sepWidth, "-"))
 
-        if not osp.isfile(sAbcPath):
-            pm.displayWarning("No such alembic file: '{}'".format(sAbcPath))
+        if not osp.isfile(sAbcFilePath):
+            pm.displayWarning("No such alembic file: '{}'".format(sAbcFilePath))
             continue
 
         oAbcRef = None
         bRemRef = True
         if sAbcNmspc in oFileRefDct:
             oAbcRef = oFileRefDct[sAbcNmspc]
-            if osp.normcase((oAbcRef.path)) == osp.normcase(sAbcPath):
-                print "Reloading cache reference: '{}'".format(sAbcPath)
+            if osp.normcase((oAbcRef.path)) == osp.normcase(sAbcFilePath):
+                print "Reloading cache reference: '{}'".format(sAbcFilePath)
                 oAbcRef.load()
                 sAbcNodeList = mc.ls(sAbcNmspc + ":*")
                 bRemRef = False
@@ -922,17 +1025,14 @@ def importCaches(**kwargs):
                 oAbcRef = None
 
         if not oAbcRef:
-            print "Importing cache file: '{}'".format(sAbcPath)
-            sAbcNodeList = mc.file(sAbcPath, type="Alembic", r=True, ns=sAbcNmspc,
+            print "Importing cache file: '{}'".format(sAbcFilePath)
+            sAbcNodeList = mc.file(sAbcFilePath, type="Alembic", r=True, ns=sAbcNmspc,
                                    rnn=True, mergeNamespacesOnClash=False, gl=True)
 
             oAbcRef = pm.PyNode(sAbcNodeList[0]).referenceFile()
             sAbcNmspc = oAbcRef.namespace
 
-#        if not bRemoveRefs:
-#            oAbcRefList.append(oAbcRef)
-
-        if sProcessLabel.lower() == "reference":
+        if bRefOnly:
             doneWith(oAbcRef, bRemRef);continue
 
         if bCheckAstExists and sAstNmspc not in sScnNmspcList:
@@ -961,18 +1061,30 @@ def importCaches(**kwargs):
 
         transferXfmAttrs(astToAbcXfmItems, only=sCacheObjList, dryRun=bDryRun,
                          discardAttrs="visibility")
+        try:
+            transferMeshShapes(astToAbcMeshItems, only=sCacheObjList, dryRun=bDryRun)
+        finally:
+            if sAstNmspc in oFileRefDct:
+                for sNodeName in lsNodes(sAstNmspc + ":*", not_rn=True, nodeNames=True):
+                    mc.rename(sNodeName, sNodeName.rsplit(":", 1)[-1])
 
-        sRefAbcNode = ""
-        sFoundList = mc.ls(sAbcNodeList, type="AlembicNode")
-        if sFoundList:
-            sRefAbcNode = sFoundList[0]
-
-        transferMeshShapes(astToAbcMeshItems, only=sCacheObjList, dryRun=bDryRun)
         transferVisibilities(astToAbcXfmItems, dryRun=bDryRun)
 
-        if sRefAbcNode and (not bDryRun):
-            sDupAbcNode = mc.duplicate(sRefAbcNode, ic=True)[0]
-            transferOutConnections(sRefAbcNode, sDupAbcNode)
+        if not bDryRun:
+            sFoundList = mc.ls(sAbcNodeList, type="AlembicNode")
+            if sFoundList:
+                sRefAbcNode = sFoundList[0]
+                sScnAbcNode = mc.duplicate(sRefAbcNode, ic=True)[0]
+                transferOutConnections(sRefAbcNode, sScnAbcNode)
+            else:
+                sScnAbcNode = mc.createNode("AlembicNode", n=sScnAbcNodeName)
+                mc.setAttr(sScnAbcNode + ".abc_File", sAbcFilePath, type="string")
+                sAstGrp = sAstGeoGrp.replace(":grp_geo", ":asset")
+                sParentList = mc.listRelatives(sAstGrp, parent=True, path=True)
+                sParent = sParentList[0] if sParentList else None
+                sAbcHook = mop.addNode("transform", "hook_" + sAbcNmspc,
+                                       parent=sParent, unique=True)
+                mc.connectAttr(sScnAbcNode + ".transOp[0]", sAbcHook + ".translateX", f=True)
 
         doneWith(oAbcRef, bRemRef)
 
@@ -987,32 +1099,8 @@ def importCaches(**kwargs):
 
     mc.refresh()
 
-#    bKeepRefIfLog = False
-#    sRefNodeSet = set()
     if LOGGING_SETS:
         addLoggingSet("CACHE_IMPORT", LOGGING_SETS)
-        #oObjSet = pm.sets(LOGGING_SETS, n="log_CACHE_IMPORT")
-
-#        if bRemoveRefs and bKeepRefIfLog:
-#            sRefNodeSet = set(pm.referenceQuery(oObj, referenceNode=True, topReference=True)
-#                              for oObj in oObjSet.flattened() if oObj.isReferenced())
-
-#    if bRemoveRefs:
-#        if bKeepRefIfLog:
-#            for i, oAbcRef in enumerate(oAbcRefList):
-#                if oAbcRef.refNode.name() not in sRefNodeSet:
-#                    oAbcRef.remove()
-#                    oAbcRefList[i] = None
-#
-#            if oAbcRefList:
-#                print ("\nReferences kept because some of their objects appear in set: '{}'"
-#                       .format(oObjSet.name()))
-#                for oAbcRef in oAbcRefList:
-#                    if oAbcRef:
-#                        print "    - '{}': '{}'".format(oAbcRef.refNode, oAbcRef)
-#        else:
-#            for oAbcRef in oAbcRefList:
-#                oAbcRef.remove()
 
     return True
 
@@ -1026,3 +1114,83 @@ def removeCacheReferences():
         if oFileRef.path.basename().lower().endswith("_cache.abc"):
             print "removing cache", repr(oFileRef)
             oFileRef.remove()
+
+
+OLDER_FILE_MSG = """
+current file: {} - {}
+public file  : {} - {}
+""".strip()
+
+@setWaitCursor
+def scanCachesToImport(sSrcFilePathList, scnInfos=None, depConfDct=None):
+
+    if not scnInfos:
+        scnInfos = infosFromScene()
+
+    damEntity = scnInfos["dam_entity"]
+#    proj = scnInfos["project"]
+#    pubLib = damEntity.getLibrary("public")
+
+    sDepType = "geoCache_dep"
+    if not depConfDct:
+        depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
+    pubDepDir = depConfDct["public_loc"]
+
+#    sPubDepDirPath = pubDepDir.absPath()
+#    if pubDepDir.exists():
+#        pubDepDir.loadChildDbNodes(noVersions=True)
+
+    scanResults = []
+
+    sAllSeveritySet = set()
+
+    def addResult(res):
+        scanResults.append(res)
+        sAllSeveritySet.update(res["scan_log"].iterkeys())
+
+    for sSrcFilePath in sSrcFilePathList:
+
+        scanLogDct = {}
+
+        bExists = osp.isfile(sSrcFilePath)
+
+        resultDct = {"dependency_type":sDepType,
+                     "abs_path":sSrcFilePath,
+                     "scan_log":scanLogDct,
+                     "file_nodes":[],
+                     "fellow_paths":[],
+                     "publishable":False,
+                     "drc_file":None,
+                     "exists":bExists,
+                     "public_file":None,
+                    }
+
+        _, sDepFilename = osp.split(sSrcFilePath)
+
+        if not bExists:
+            scanLogDct.setdefault("warning", []).append(('FileNotFound', sSrcFilePath))
+            addResult(resultDct); continue
+
+        pubFile = pubDepDir.getChildFile(sDepFilename, weak=True, dbNode=False)
+        sPubFilePath = pubFile.absPath()
+        if pubFile.exists():
+
+            srcFileTime = datetime.fromtimestamp(osp.getmtime(sSrcFilePath))
+            pubFileTime = datetime.fromtimestamp(osp.getmtime(sPubFilePath))
+
+            if srcFileTime < pubFileTime:
+                #sMsg = """File is older than its public file: \n    '{}'"""
+                sMsg = OLDER_FILE_MSG.format(srcFileTime.strftime("%Y-%m-%d %H:%M"),
+                                             osp.dirname(osp.normpath(sSrcFilePath)),
+                                             pubFileTime.strftime("%Y-%m-%d %H:%M"),
+                                             osp.dirname(osp.normpath(sPubFilePath)))
+
+                scanLogDct.setdefault("warning", []).append(("OlderLocalFile", sMsg))
+
+        addResult(resultDct)
+
+    if scanResults:
+        scanResults[-1]["scan_severities"] = sAllSeveritySet
+        scanResults[-1]["publish_count"] = 0
+
+    return {sDepType:scanResults}

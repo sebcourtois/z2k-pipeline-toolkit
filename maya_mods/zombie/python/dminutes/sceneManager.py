@@ -275,27 +275,6 @@ class SceneManager():
         if not self.context['damProject']:
             raise RuntimeError("Cannot initialize project '{0}'".format(self.projectname))
 
-        mop.setMayaProject(self.projectname)
-
-    #FROM DAVOS !!!!
-    def collapseVariables(self, s_inPath, encapsulation="${0}"):
-        """Format a path with environment variables visible (for asset referencing for instance)"""
-        variables = {}
-        for key, lib in self.context['damProject'].loadedLibraries.iteritems():
-            variable = lib.getVar('public_path').lstrip("$")
-            if not variable in variables:
-                print "variable=", variable
-                variables[variable] = os.environ[variable]
-
-        for key, path in variables.iteritems():
-            alternatePath = path.replace("\\", "/")
-            if path in s_inPath:
-                return s_inPath.replace(path, encapsulation.format(key))
-            elif alternatePath in s_inPath:
-                return s_inPath.replace(alternatePath, encapsulation.format(key))
-
-        return s_inPath
-
     def getTasks(self, b_inMyTasks=False):
         proj = self.context['damProject']
         userOrNone = proj._shotgundb.currentUser if b_inMyTasks else None
@@ -1198,7 +1177,6 @@ class SceneManager():
         if sgEntity["type"].lower() != "shot":
             raise NotImplementedError("Only applies to shots.")
 
-        # WIP CORRECTION collapseVariables (ERROR)
         assetDataList = self.listRelatedAssets()
         errorL = []
         sCurRefTag = refFromTask(self.context["task"], fail=True)

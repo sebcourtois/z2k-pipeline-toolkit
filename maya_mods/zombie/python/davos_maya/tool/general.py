@@ -1,8 +1,11 @@
 
 
 import os
+import os.path as osp
 
+import maya.cmds as mc
 import pymel.core as pm
+import pymel.util as pmu
 
 from davos.core.damproject import DamProject
 
@@ -59,4 +62,27 @@ def assertSceneInfoMatches(scnInfos, sRcName, msg=""):
     if scnInfos.get("resource") != sRcName:
         sMsg = "Current scene is NOT a '{}'.".format(sRcName) if not msg else msg
         raise AssertionError(sMsg)
+
+def setMayaProject(sProjName, sEnvVar):
+
+    sMayaProjsLoc = osp.dirname(osp.normpath(mc.workspace(q=True, rd=True)))
+    sMayaProjPath = osp.join(sMayaProjsLoc, sProjName)
+
+    if not osp.exists(sMayaProjPath):
+        os.mkdir(sMayaProjPath)
+
+    mc.workspace(update=True)
+    mc.workspace(sProjName, openWorkspace=True)
+
+    if not mc.workspace(fileRuleEntry="movie"):
+        mc.workspace(fileRule=("movie", "captures"))
+        mc.workspace(saveWorkspace=True)
+
+    if not mc.workspace(fileRuleEntry="alembicCache"):
+        mc.workspace(fileRule=("alembicCache", "cache/alembic"))
+        mc.workspace(saveWorkspace=True)
+
+    pmu.putEnv(sEnvVar, sMayaProjPath.replace("\\", "/"))
+
+    return sMayaProjPath
 
