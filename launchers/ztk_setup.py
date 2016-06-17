@@ -329,7 +329,7 @@ class Z2kToolkit(object):
                     if raw_input("\nPress enter to continue...") == "raise": raise
 
                 #print "bBeenUpdated", bBeenUpdated
-                if bBeenUpdated:
+                if bBeenUpdated and sCmd == "launch":
                     sMsg = """
 #===============================================================================
 # Tools updated so let's relaunch...
