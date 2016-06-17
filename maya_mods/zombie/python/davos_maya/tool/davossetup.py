@@ -18,7 +18,7 @@ from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
 
 from dminutes import sceneManagerUI as smui
-from davos_maya.tool.general import infosFromScene
+from davos_maya.tool.general import infosFromScene, setMayaProject
 from davos.core.damtypes import DamShot
 
 if inDevMode():
@@ -101,6 +101,8 @@ class DavosSetup(ToolSetup):
 
         pm.colorManagementPrefs(e=True, cmEnabled=False)
         pm.polyOptions(newPolymesh=True, smoothDrawType=0)
+
+        setMayaProject("zombillenium", "ZOMB_MAYA_PROJECT_PATH")
 
         if not pm.about(batch=True):
             if not pm.stackTrace(q=True, state=True):

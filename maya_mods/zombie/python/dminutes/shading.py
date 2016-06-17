@@ -722,16 +722,42 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
 
         #get the input texture connection of the rendering shading node 
         matShadTextInputConnection = mc.listConnections (matShadNode+matTextureInput, source=True, destination=False)
+        preShadTextInputConnection = mc.listConnections (preShadNode+preTextureInput, source=True, destination=False)
+
         if matShadTextInputConnection:
             matShadTextInputValue = []
-            matShadTextInputConnection = matShadTextInputConnection[-1]
+            if matShadTextInputConnection:
+                matShadTextInputConnection = matShadTextInputConnection[-1]
+            else:
+                matShadTextInputConnection = []
+
+            if preShadTextInputConnection:
+                preShadTextInputConnection = preShadTextInputConnection[-1]
+            else:
+                preShadTextInputConnection = []
+
             if mc.nodeType(matShadTextInputConnection) != "file":
-                wrongShadEngine.append((shadingEngine,"The preview texture file node could not be found automaticaly :"))
-                continue        
+                if mc.nodeType(matShadTextInputConnection) == "projection":
+                    if not preShadTextInputConnection or preShadTextInputConnection == matShadTextInputConnection:
+                        result = mc.duplicate(matShadTextInputConnection, ic = True)[0]
+                        mc.connectAttr(result+".outColor", preShadNode+preTextureInput, force =True)
+                        projectionTextInputConnection = mc.listConnections (result+".image", source=True, destination=False)
+                        result2 = mc.duplicate(projectionTextInputConnection, ic = True)[0]
+                        mc.connectAttr(result2+".outColor", result+".image", force =True)
+                        checkShaderName(shadEngineList = [shadingEngine],  GUI = gui, checkOnly = False , inParent = "")
+                        continue
+                elif mc.nodeType(matShadTextInputConnection) == "layeredTexture":
+                    if not preShadTextInputConnection or preShadTextInputConnection == matShadTextInputConnection:
+                        result = mc.duplicate(matShadTextInputConnection, upstreamNodes = True)[0]
+                        mc.connectAttr(result+".outColor", preShadNode+preTextureInput, force =True)
+                        checkShaderName(shadEngineList = [shadingEngine],  GUI = gui, checkOnly = False , inParent = "")
+                        continue
+                else:
+                    wrongShadEngine.append((shadingEngine,"The preview texture file node could not be found automaticaly :"))
+                    continue        
         else:
             matShadTextInputValue = mc.getAttr(matShadNode+matTextureInput)[0]
-            print "matShadNode: ",matShadNode
-            print "matShadTextInputValue: ",matShadTextInputValue
+
 
         #get the input texture connection of the preview shading node
         rgbSumF= mc.getAttr(preShadNode+preTextureInput)[0][0]+mc.getAttr(preShadNode+preTextureInput)[0][1]+mc.getAttr(preShadNode+preTextureInput)[0][2]
@@ -744,16 +770,18 @@ def conformPreviewShadingTree ( shadEngineList = [], verbose = True, selectWrong
                     result = mc.duplicate(preShadTextInputConnection, upstreamNodes = True)[0]
                     mc.connectAttr(result+".outColor", preShadNode+preTextureInput, force =True)
                     if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: texture file node duplicated".format("Info", shadingEngine)
-                    checkShaderName(shadEngineList = shadingEngine,  GUI = gui, checkOnly = False , inParent = "")
+                    checkShaderName(shadEngineList = [shadingEngine],  GUI = gui, checkOnly = False , inParent = "")
                     continue
                 else:
                     if verbose == True: print "#### {:>7}: {:^28} Preview shader ok".format("Info", shadingEngine)
                     continue
+
+
         elif matShadTextInputConnection:
             result = mc.duplicate(matShadTextInputConnection, upstreamNodes = True)[0]
             mc.connectAttr(result+".outColor", preShadNode+preTextureInput, force =True)
             if verbose == True: print "#### {:>7}: {:^28} Preview shader processed: texture file node duplicated".format("Info", shadingEngine)
-            checkShaderName(shadEngineList = shadingEngine,  GUI = gui, checkOnly = False , inParent = "")
+            checkShaderName(shadEngineList = [shadingEngine],  GUI = gui, checkOnly = False , inParent = "")
             #if the color is black or white replace it with the color from the render shader
         elif rgbSumF == 0 or rgbSumF ==3:
             try: 
@@ -874,60 +902,14 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
 
 
 
-def makeTxForArnold(inputFilePathName = "", outputFilePathName = "", updateOnly = False):
+
+
+def makeTx(inputFilePathName = "", updateOnly = False):
     """
     from a given image, this script generates an mipmap arnold tx file
         inputFilePathName: the image path name to convert
-        outputFilePathName: the .tx image path name, if = "" the script will just replace the inputFilePathName extention to ".tx"
         updateOnly: when True and a .tx already exists, last modificaton date of inputFilePathName and outputFilePathName are compared to evaluate if the .tx needs to be generated again
     """
-
-    if not isinstance(inputFilePathName,basestring):
-        print "#### {:>7}: 'inputFilePathName' is not a string".format("Error")
-        return
-
-    if not isinstance(outputFilePathName,basestring):
-        print "#### {:>7}: 'outputFilePathName' is not a string".format("Error")
-        return
-
-    inputFilePathName_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(inputFilePathName)))
-    outputFilePathName_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePathName)))
-
-    
-    if inputFilePathName == "" :
-        print "#### {:>7}: no 'inputFilePathName' given".format("Error")
-        return
-    elif not os.path.isfile(inputFilePathName_exp):
-        print "#### {:>7}: Missing file : {} given".format("Error", inputFilePathName_exp)
-        return
-
-    if outputFilePathName == "" :
-        outputFilePathName = inputFilePathName.replace(inputFilePathName.split(".")[-1],"tx")
-        outputFilePathName_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePathName)))
-    elif not os.path.isdir(os.path.split(outputFilePathName)[0]):
-        print "#### {:>7}: Missing directory : {} given".format("Error", os.path.split(outputFilePathName))
-        return
-    elif not outputFilePathName.split(".")[-1] == "tx":
-        print "#### {:>7}: 'outputFilePathName'must be a '.tx' file: {}".format("Error", outputFilePathName)
-        return
-
-    if os.path.isfile(outputFilePathName_exp) and updateOnly == True:
-        inStatInfo = os.stat(inputFilePathName_exp)
-        outStatInfo = os.stat(outputFilePathName_exp)
-        if inStatInfo.st_mtime <= outStatInfo.st_ctime:
-            print "#### {:>7}: {}  -->  is up to date".format("Info", outputFilePathName)
-            return
-        else:
-            try :
-                os.remove(outputFilePathName_exp)
-            except:
-                raise ValueError("#### Error: file is locked by your os, someone is accessing it: "+outputFilePathName_exp)
-    elif os.path.isfile(outputFilePathName_exp):
-        try :
-            os.remove(outputFilePathName_exp)
-        except:
-            raise ValueError("#### Error: file is locked by your os, someone is accessing it: "+outputFilePathName_exp)
-
     renderDesc = os.environ["MAYA_RENDER_DESC_PATH"].split(";")
     mtoaPath = ""
     for each in renderDesc:
@@ -939,33 +921,68 @@ def makeTxForArnold(inputFilePathName = "", outputFilePathName = "", updateOnly 
         print "#### {:>7}: 'could not find a valid solidangle path in 'MAYA_RENDER_DESC_PATH'".format("Error")
         return
     maketxCommand = mtoaPath+"/bin/maketx.exe"
-    subprocess.call([maketxCommand, "-u","--oiio", inputFilePathName_exp])   
 
-    image = om.MImage()
-    image.readFromFile(inputFilePathName_exp)
-    util = om.MScriptUtil()
-    widthUtil = om.MScriptUtil()
-    heightUtil = om.MScriptUtil()
-    widthPtr = widthUtil.asUintPtr()
-    heightPtr = heightUtil.asUintPtr()
-    image.getSize(widthPtr, heightPtr)
-    width = util.getUint(widthPtr)
-    height = util.getUint(heightPtr)
+    inputFilePathName_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(inputFilePathName)))
+    outputFilePathName = inputFilePathName.replace(inputFilePathName.split(".")[-1],"tx")
+    outputFilePathName_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePathName)))
 
-    statinfo = os.stat(inputFilePathName_exp)
-    imageSize = string.ljust(str(statinfo.st_size/1024)+" Kb",10," ")
-    textureWidth = string.ljust(str(width),5," ")
-    textureHeight = string.ljust(str(height),5," ")
-    
-    statinfo_lowRes = os.stat(outputFilePathName_exp)
-    fastJpgImageSize = string.ljust(str(statinfo_lowRes.st_size/1024)+" Kb",10," ")
-    textureWidthTx = string.ljust(str(width),5," ")
-    textureHeightTx = string.ljust(str(height),5," ")
 
-    sz=str(max(len(inputFilePathName),len(outputFilePathName)))
-    print "#### {:>7}: generate arnold '.tx' mipmap texture file".format("Info")
-    print ("#### {:>7}: {:<"+sz+"}  -->  width: {}  height: {}  size: {}").format("Info", inputFilePathName, textureWidth, textureHeight, imageSize)
-    print ("#### {:>7}: {:<"+sz+"}  -->  width: {}  height: {}  size: {}").format("Info", outputFilePathName, textureWidthTx, textureHeightTx, fastJpgImageSize)
+    def createTx(inputFilePathName, inputFilePathName_exp, outputFilePathName, outputFilePathName_exp, removeOutputFirst = False, *args):
+        if removeOutputFirst:
+            try :
+                os.remove(outputFilePathName_exp)
+            except:
+                raise ValueError("#### Error: file is locked by your os, someone is accessing it: "+outputFilePathName_exp)
+
+        subprocess.call([maketxCommand, "-u","--oiio", inputFilePathName_exp])   
+
+        image = om.MImage()
+        image.readFromFile(inputFilePathName_exp)
+        util = om.MScriptUtil()
+        widthUtil = om.MScriptUtil()
+        heightUtil = om.MScriptUtil()
+        widthPtr = widthUtil.asUintPtr()
+        heightPtr = heightUtil.asUintPtr()
+        image.getSize(widthPtr, heightPtr)
+        width = util.getUint(widthPtr)
+        height = util.getUint(heightPtr)
+
+        statinfo = os.stat(inputFilePathName_exp)
+        imageSize = string.ljust(str(statinfo.st_size/1024)+" Kb",10," ")
+        textureWidth = string.ljust(str(width),5," ")
+        textureHeight = string.ljust(str(height),5," ")
+        
+        statinfo_lowRes = os.stat(outputFilePathName_exp)
+        fastJpgImageSize = string.ljust(str(statinfo_lowRes.st_size/1024)+" Kb",10," ")
+        textureWidthTx = string.ljust(str(width),5," ")
+        textureHeightTx = string.ljust(str(height),5," ")
+
+        sz=str(max(len(inputFilePathName),len(outputFilePathName)))
+        print "#### {:>7}: generate arnold '.tx' mipmap texture file".format("Info")
+        print ("#### {:>7}: {:<"+sz+"}  -->  width: {}  height: {}  size: {}").format("Info", inputFilePathName, textureWidth, textureHeight, imageSize)
+        print ("#### {:>7}: {:<"+sz+"}  -->  width: {}  height: {}  size: {}").format("Info", outputFilePathName, textureWidthTx, textureHeightTx, fastJpgImageSize)
+
+
+    if os.path.isfile(outputFilePathName_exp):
+        if updateOnly:
+            inStatInfo = os.stat(inputFilePathName_exp)
+            outStatInfo = os.stat(outputFilePathName_exp)
+            inModifTime = inStatInfo.st_mtime
+            outCreationTime = outStatInfo.st_ctime
+
+            if inModifTime <= outCreationTime:
+                print "#### {:>7}: {}  -->  is up to date".format("Info", outputFilePathName)
+            else:
+                createTx(inputFilePathName, inputFilePathName_exp, outputFilePathName, outputFilePathName_exp, removeOutputFirst = True)
+        else:
+            createTx(inputFilePathName, inputFilePathName_exp, outputFilePathName, outputFilePathName_exp, removeOutputFirst = True)
+    else:
+        createTx(inputFilePathName, inputFilePathName_exp, outputFilePathName, outputFilePathName_exp, removeOutputFirst = False)
+
+
+
+
+
 
 
 def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=False):    
@@ -1051,7 +1068,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
             print "#### {:>7}: '{}' skipping '.tx' creation, texture is in the public directory: '{}'".format("Info",eachFileNode,mapFilePath)
             continue
 
-        makeTxForArnold(inputFilePathName = tgaFilePathExpand, outputFilePathName = "", updateOnly = updateOnly)
+        makeTx(inputFilePathName = tgaFilePathExpand, updateOnly = updateOnly)
 
         if ".1001." in os.path.split(tgaFilePathExpand)[-1]:
             udimNb = 1002
@@ -1059,7 +1076,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
                 udimMapFilePath = tgaFilePathExpand.replace(".1001.","."+str(udimNb)+".")
                 udimMapFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(udimMapFilePath)))
                 if os.path.isfile(udimMapFilePath_exp) == True:
-                    makeTxForArnold(inputFilePathName = udimMapFilePath, outputFilePathName = "", updateOnly = updateOnly)
+                    makeTx(inputFilePathName = udimMapFilePath, updateOnly = updateOnly)
                 udimNb=udimNb+1
 
     if wrongFileNodeList: 

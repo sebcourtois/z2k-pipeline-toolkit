@@ -518,7 +518,7 @@ def meshShapeNameConform(fixShapeName = True, myTransMesh = [], forceInfoOff = F
         myShape = cmds.listRelatives (each, children = True, fullPath = True, type = "shape")
         if len(myShape)!= 1:
             print "#### error:'meshShapeNameConform' no or multiple shapes found for :"+each
-            break
+            continue
         myShape = myShape[0]
         myShapeCorrectName = each+"|"+each.split("|")[-1]+"Shape"
         if myShape != myShapeCorrectName and fixShapeName == True:

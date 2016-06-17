@@ -499,7 +499,33 @@ class LogBuilder():
         self.logL.append(self.formMsg)
     
 
+def unlockObject(objectL= [], attrL=["translateX","translateY","translateZ","rotateX","rotateY","rotateZ","scaleX","scaleY","scaleZ"], gui = True):
+    log = LogBuilder(gui=gui, funcName ="unlockObject")
 
+    if not objectL:
+        objectL = mc.ls(selection =True)
+    lockedObjL = []
+    lockedAttrL = []
+
+    if objectL is None: objectL = []
+    for eachObj in objectL:
+        for eachAttr in attrL:
+            if mc.getAttr(eachObj+"."+eachAttr, lock =True):
+                if eachObj not in lockedObjL:
+                    lockedObjL.append(eachObj)
+                setAttrC (eachObj+"."+eachAttr, l=False)
+                lockedAttrL.append(eachAttr)
+
+    if lockedObjL:
+        txt = "{} attributes unlocked on {} objects: {}".format( len(lockedAttrL),len(lockedObjL), lockedObjL)
+        log.printL("i", txt)
+    else:
+        txt = "Nothing to unlock".format()
+        log.printL("i", txt)
+             
+
+    return dict(resultB=log.resultB, logL=log.logL)
+    
         
 
 
@@ -518,3 +544,6 @@ def mayaBatchExample():
     print "result: ",resultD['resultB']
     for each in resultD["logL"]:
         print each 
+
+
+
