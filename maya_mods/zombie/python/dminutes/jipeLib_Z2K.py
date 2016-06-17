@@ -1147,9 +1147,9 @@ def z2k_Select_Dyn_CTR( objL = [], mode="select", *args, **kwargs):
             for i in allCtrL:
                 custAttrL = cmds.listAttr(i,ud=1)
                 if custAttrL:
-                    testL = [ x.upper() for x in custAttrL ]
-                    # print "testL    =", testL
-                    # print "dynAttrL =", dynAttrL 
+                    testL = [ x.upper() for x in custAttrL]
+                    print "    testL    =", testL
+                    # print "    dynAttrL =", dynAttrL 
                     if ( set(dynAttrL).issubset( set( testL)  ) ) or ( set(dynShortAttrL).issubset( set( testL)  ) ) :
                         outSelL.append(i)
         
@@ -4086,9 +4086,42 @@ def selectSpineFK0(*args, **kwargs):
         print err
 
 
+def chr_HeadTex_switchHD(*args, **kwargs):
+    print "chr_HeadTex_switchHD()"
+
+    #setAttr -type "string" pre_head_file.fileTextureName "$ZOMB_TEXTURE_PATH/chr/chr_barman_default/texture/tex_head_colHD.jpg";
+    attrPL = ["pre_head_file","pre_torso_file","pre_poloHead_file1"]
+    thdstr = "HD.jpg"
+    tldstr = ".jpg"
+    currentRez = "None"
+    BazRealTextPath = os.environ.get("ZOMB_TEXTURE_PATH")
+    print "BazRealTextPath=", BazRealTextPath
+    
+
+    for attrP in attrPL:
+        print attrP
+        if cmds.objExists(attrP+".fileTextureName"):
+            print "yes"
+            oldVal = cmds.getAttr(attrP+ ".fileTextureName")
+            print "oldVal",oldVal
+            if thdstr in oldVal[-6:]:
+                cmds.setAttr(attrP + ".fileTextureName",oldVal.replace(thdstr,tldstr),type="string",)
+                currentRez = "Low Rez"
+            elif tldstr in oldVal[-6:]:
+                cmds.setAttr(attrP + ".fileTextureName",oldVal.replace(tldstr,thdstr),type="string",)
+                currentRez = "HD"
+
+            break
+
+    cmds.headsUpMessage( "TEXTURE SWITCHED TO {0}".format(currentRez),time=0.5, )
+
+
+
+
 # to do textureEditorIsolateSelectSet autoDelete dans cleanScene
 
 # to do: fixe scaling on the hands
+
 
 
 
@@ -4096,3 +4129,4 @@ def selectSpineFK0(*args, **kwargs):
 def armTwistFix (*args, **kwargs):
     print "armTwistFix()"
     # Left_Rounding_Deformer_End_Crv_upV_pathCns_Mult1 #tweak rotation
+
