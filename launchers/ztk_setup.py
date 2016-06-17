@@ -259,6 +259,9 @@ class Z2kToolkit(object):
 
     def launchCmd(self, cmdArgs, launch=True):
 
+        if (not launch) and not cmdArgs:
+            return
+
         sAppPath = cmdArgs[0]
         sAppName = osp.basename(sAppPath)
 
