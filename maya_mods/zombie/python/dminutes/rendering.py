@@ -336,13 +336,12 @@ def getRenderOutput(gui = True):
             print "#### Warning: you are not working in an 'asset' structure directory, output image name and path cannot not be automaticaly set"
     elif mc.ls("|shot"):
         if  mainFilePathElem[-5] == "shot":
-            if mainFilePathElem[-2] =="06_finalLayout":
-                vertionNumber = mainFilePathElem[-1].split("-")[1].split(".")[0]
-                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH",mainFilePathElem[-4],mainFilePathElem[-3],mainFilePathElem[-2],"render-"+vertionNumber)
-                outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
-                outputImageName = mainFilePathElem[-3]
-                print "#### Info: Set render path: {}".format( outputFilePath_exp)
-                print "#### Info: Set image name:  {}".format( outputImageName)
+            vertionNumber = mainFilePathElem[-1].split("-")[1].split(".")[0]
+            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH",mainFilePathElem[-4],mainFilePathElem[-3],mainFilePathElem[-2],"render-"+vertionNumber)
+            outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
+            outputImageName = mainFilePathElem[-3]
+            print "#### Info: Set render path: {}".format( outputFilePath_exp)
+            print "#### Info: Set image name:  {}".format( outputImageName)
 
         else:
             print "#### Warning: you are not working in an 'shot' structure directory, output image name and path cannot not be automaticaly set"
