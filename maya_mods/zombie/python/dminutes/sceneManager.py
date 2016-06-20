@@ -3,6 +3,7 @@
 #------------------------------------------------------------------
 
 import os
+import os.path as osp
 import re
 import stat
 from collections import OrderedDict
@@ -13,7 +14,6 @@ import pymel.core as pc
 import maya.cmds as mc
 import maya.mel
 
-#import tkMayaCore as tkc
 from pytd.util.fsutils import pathResolve, normCase, pathSuffixed
 from pytd.util.logutils import logMsg
 from pytd.util.sysutils import toStr
@@ -40,8 +40,6 @@ reload(jpZ)
 reload(camIE)
 reload(infoE)
 
-osp = os.path
-
 # get zomb project
 PROJECTNAME = os.environ.get("DAVOS_INIT_PROJECT")
 
@@ -54,13 +52,15 @@ RC_FOR_STEP = {'Previz 3D':'previz_scene',
                'Stereo':'stereo_scene',
                'Layout':'layout_scene',
                'Animation':'anim_scene',
+               'CharFX':'charFx_scene',
                'Final Layout':'finalLayout_scene',
                }
-RC_FOR_TASK = {}#{'previz 3D':'previz_scene', 'layout':'layout_scene'}
+RC_FOR_TASK = {}
 
 REF_FOR_STEP = {'Previz 3D':'previz_ref',
                 'Layout':'anim_ref',
                 'Animation':'anim_ref',
+                'CharFX':'anim_ref',
                 'Final Layout':'render_ref',
                 }
 REF_FOR_TASK = {}
@@ -69,11 +69,11 @@ MOV_FOR_STEP = {'Previz 3D':('previz_capture',),
                 'Stereo':('right_capture', 'left_capture',),
                 'Layout':('layout_capture',),
                 'Animation':('anim_capture',),
+                'CharFX':('charFx_capture',),
                }
 MOV_FOR_TASK = {}
 
-
-LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
+DAVOS_LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
 
 MAX_INCR = 50
 
@@ -289,7 +289,7 @@ class SceneManager():
 
         #print 'getPath ' + str(d_inEntity)
         #print d_inEntity
-        lib = LIBS[d_inEntity['type']]
+        lib = DAVOS_LIBS[d_inEntity['type']]
         if lib == "asset_lib":
             lib = d_inEntity['name'].split("_")[0]
 
@@ -811,7 +811,7 @@ class SceneManager():
 
             width, height = (1280, 720)
             bAoEnabled = mc.getAttr('hardwareRenderingGlobals.ssaoEnable')
-            if (not quick) and sStep.lower() == "animation":
+            if (not quick) and sStep.lower() in ("animation", "charfx"):
                 width, height = (1920, 1080)
                 mc.setAttr('hardwareRenderingGlobals.ssaoEnable', True)
 
@@ -986,18 +986,20 @@ class SceneManager():
             self.exportStereoCamFiles(publish=True, comment=sComment)
             return
 
-        # here is incerted the publish of the camera of the scene
-        print "exporting the camera of the shot"
-        camImpExpI = camIE.camImpExp()
-        camImpExpI.exportCam(sceneName=jpZ.getShotName())
-
         if sStepCode in ("previz 3d", "layout"):
+
+            if sStepCode == "layout":
+                exportLayoutInfo(publish=True, comment=sComment)
+
             # here is the publish of the infoSet file with the position of the global and local srt of sets assets
             infoSetExpI = infoE.infoSetExp()
             infoSetExpI.export(sceneName=jpZ.getShotName())
 
-        if sStepCode == "layout":
-            exportLayoutInfo(publish=True, comment=sComment)
+        if sStepCode not in ("charfx",):
+            # here is incerted the publish of the camera of the scene
+            print "exporting the camera of the shot"
+            camImpExpI = camIE.camImpExp()
+            camImpExpI.exportCam(sceneName=jpZ.getShotName())
 
     def assertBeforePublish(self):
 

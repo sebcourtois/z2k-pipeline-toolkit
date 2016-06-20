@@ -885,10 +885,7 @@ class checkModule(object):
         
         
 
-        # 16 chr_setVis_Params (chr_setVis_Params)
-        if not jpZ.chr_setVis_Params()[0] :
-            boolResult = False
-        self.pBar_upd(step= 1,)
+        
 
 
         # je ne veux plus importer les lights dans les refs de persos a cause de crash lors de rendu arnold
@@ -1076,6 +1073,12 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
+        # 16 chr_setVis_Params (chr_setVis_Params)
+        if not jpZ.chr_setVis_Params()[0] : 
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+        
         # restart from 26 here
 
         # colors

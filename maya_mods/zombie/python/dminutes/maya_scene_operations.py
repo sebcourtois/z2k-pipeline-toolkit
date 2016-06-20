@@ -20,6 +20,7 @@ from pytaya.core.transform import matchTransform
 from davos_maya.tool import reference as myaref
 from zomblib.editing import makeFilePath, movieToJpegSequence
 from dminutes.shotconformation import removeRefEditByAttr
+from dminutes.miscUtils import deleteUnknownNodes
 
 pc.mel.source("AEimagePlaneTemplate.mel")
 
@@ -49,6 +50,24 @@ def withoutUndo(func):
             res = func(*args, **kwargs)
         finally:
             mc.undoInfo(stateWithoutFlush=True)
+        return res
+    return doIt
+
+def withErrorDialog(func):
+    def doIt(*args, **kwargs):
+        try:
+            res = func(*args, **kwargs)
+        except Warning:
+            raise
+        except Exception as e:
+            pc.confirmDialog(title='SORRY !',
+                             message=e.message,
+                             button=["OK"],
+                             defaultButton="OK",
+                             cancelButton="OK",
+                             dismissString="OK",
+                             icon="critical")
+            raise
         return res
     return doIt
 
@@ -891,6 +910,43 @@ def setupAnimatic(sceneManager, create=True, checkUpdate=False):
 
     return oImgPlane, oImgPlaneCam
 
+
+def initShotSceneFrom(damShot, sCurScnName, sSrcScnName, **kwargs):
+
+    curPubScn = damShot.getResource("public", sCurScnName, dbNode=False, fail=True)
+    srcPubScn = damShot.getResource("public", sSrcScnName, dbNode=False, fail=True)
+
+    curPubScnVers = curPubScn.assertLatestFile(refresh=True, returnVersion=True)
+    if curPubScnVers:
+        raise AssertionError("{} - '{}' already started (v{}).".format(sCurScnName)
+                             .format(damShot, curPubScn.currentVersion))
+
+    sLockOwner = srcPubScn.getLockOwner(refresh=True)
+    if sLockOwner:
+        raise AssertionError("{} - '{}' locked by '{}'".format(damShot, sSrcScnName, sLockOwner))
+
+    srcPubScnVers = srcPubScn.assertLatestFile(refresh=False, returnVersion=True)
+    if not srcPubScnVers:
+        raise AssertionError("{} - No '{}' version found".format(damShot, sSrcScnName))
+
+    if mc.objExists("|shot"):
+        mc.delete("|shot")
+
+    mc.file(srcPubScnVers.absPath(), i=True, mergeNamespacesOnClash=False,
+            preserveReferences=True, **kwargs)
+    try:
+        deleteUnknownNodes()
+    except Exception as e:
+        pc.displayInfo(e)
+    pc.refresh()
+
+def assertTaskIsFinal(damShot, sTask, step="", sgEntity=None):
+    sgTask = damShot.getSgTask(sTask, step, sgEntity=sgEntity, fail=True)
+    if sgTask["sg_status_list"] != "fin":
+        raise AssertionError("Status of the {} task is not final yet."
+                             .format("|".join(s for s in (step, sTask) if s)))
+
+@withErrorDialog
 @withSelectionRestored
 def setupShotScene(sceneManager):
 
@@ -904,8 +960,13 @@ def setupShotScene(sceneManager):
     proj = sceneManager.context["damProject"]
     damShot = sceneManager.getDamShot()
     sShotCode = damShot.name
+    sgEntity = sceneManager.context['entity']
 
     if sStepName == "animation":
+
+        if not pc.listReferences():
+            assertTaskIsFinal(damShot, "layout", sgEntity=sgEntity)
+            initShotSceneFrom(damShot, "anim_scene", "layout_scene", lrd="none")
 
         if not pc.listReferences(loaded=True, unloaded=False):
 
@@ -918,6 +979,12 @@ def setupShotScene(sceneManager):
                 if oFileRef in oAstRefList:
                     continue
                 oFileRef.load()
+
+    elif sStepName == "charfx":
+
+        if not pc.listReferences():
+            assertTaskIsFinal(damShot, "animation", sgEntity=sgEntity)
+            initShotSceneFrom(damShot, "charFx_scene", "anim_scene")
 
     elif sStepName == "final layout":
 
@@ -1056,6 +1123,7 @@ COMMANDS = {
         'stereo':setupShotScene,
         'layout':setupShotScene,
         'animation':setupShotScene,
+        'charfx':setupShotScene,
         'final layout':setupShotScene,
     }
 }
