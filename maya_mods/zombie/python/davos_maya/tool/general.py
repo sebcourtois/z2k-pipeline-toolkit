@@ -65,6 +65,12 @@ def assertSceneInfoMatches(scnInfos, sRcName, msg=""):
 
 def setMayaProject(sProjName, sEnvVar):
 
+    if not sProjName:
+        raise ValueError("Invalid project name: '{}'".format(sProjName))
+
+    if not sEnvVar:
+        raise ValueError("Invalid env. variable: '{}'".format(sEnvVar))
+
     sMayaProjsLoc = osp.dirname(osp.normpath(mc.workspace(q=True, rd=True)))
     sMayaProjPath = osp.join(sMayaProjsLoc, sProjName)
 

@@ -102,7 +102,10 @@ class DavosSetup(ToolSetup):
         pm.colorManagementPrefs(e=True, cmEnabled=False)
         pm.polyOptions(newPolymesh=True, smoothDrawType=0)
 
-        setMayaProject("zombillenium", "ZOMB_MAYA_PROJECT_PATH")
+        try:
+            setMayaProject(pmu.getEnv("DAVOS_INIT_PROJECT"), "ZOMB_MAYA_PROJECT_PATH")
+        except ValueError as e:
+            pm.displayError(e.message)
 
         if not pm.about(batch=True):
             if not pm.stackTrace(q=True, state=True):

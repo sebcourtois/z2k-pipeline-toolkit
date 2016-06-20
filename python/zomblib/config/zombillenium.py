@@ -112,6 +112,12 @@ class shot_lib(object):
                     "{name}_anim.mov -> anim_capture":None,
                     "{name}_ref.mov -> animRef_movie":None,
                    },
+                "{step:05_charFx} -> charFx_dir":
+                   {
+                    "geoCache -> charFxCache_dir":{},
+                    "{name}_charFx.ma -> charFx_scene":None,
+                    "{name}_charFx.mov -> charFx_capture":None,
+                   },
                 "{step:06_finalLayout} -> finalLayout_dir":
                    {
                     "geoCache -> finalLayoutCache_dir":{},
@@ -127,6 +133,7 @@ class shot_lib(object):
                    "01_stereo":"Stereo",
                    "02_layout":"Layout",
                    "04_anim":"Animation",
+                   "05_charFx":"CharFX",
                    "06_finalLayout":"Final Layout",
                    }
 
@@ -160,6 +167,13 @@ class shot_lib(object):
                   "sg_path_to_movie":"anim_capture",
                   "sg_tasks":("animation",),
                   },
+
+    "charFx_scene":{"outcomes":("charFx_capture",),
+                    "create_sg_version":True,
+                    "sg_uploaded_movie":"charFx_capture",
+                    "sg_path_to_movie":"charFx_capture",
+                    "sg_tasks":("charfx",),
+                    },
 
     "finalLayout_scene":{#"outcomes":("finalLayout_movie", "arlequin_movie"),
                          "create_sg_version":True,

@@ -202,8 +202,7 @@ def initialize():
     sAnn = "Create a PUBLISHABLE capture into private area: '{}'".format(damShot.getPath("private", "entity_dir"))
     pc.control("sm_capture_bt", edit=True, annotation=sAnn)
 
-#    if SG_ENGINE.currentUser.get("login").lower() != "mariong":
-#        pc.control("sm_increment_chk", edit=True, visible=False)
+    pc.control("sm_increment_chk", edit=True, visible=False)
 
 test_toggle = False
 
@@ -266,7 +265,8 @@ def refreshContextUI():
     pc.checkBox('sm_blocking_chk', edit=True, value=pc.playbackOptions(q=True, blockingAnim=True))
     pc.checkBox('sm_updAllViews_chk', edit=True, value=(pc.playbackOptions(q=True, view=True) == "all"))
 
-    bListAssets = pc.optionVar.get("Z2K_SM_listAssets", False if sCtxStep == "animation" else True)
+    bListAssets = pc.optionVar.get("Z2K_SM_listAssets",
+                                   False if sCtxStep in ("animation", "charfx") else True)
     QWIDGETS["relatedAssetsGroup"].setChecked(bListAssets)
     if bListAssets:
         pc.control('sm_updScene_bt', edit=True, enable=bPublishable)
