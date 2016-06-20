@@ -119,7 +119,12 @@ def setArnoldRenderOption(outputFormat, renderMode = ""):
     mc.setAttr("defaultArnoldRenderOptions.threads_autodetect",0)
     mc.setAttr("defaultArnoldRenderOptions.threads",-1)
 
-
+    mainFilePath = mc.file(q=True, list = True)[0]
+    mainFilePathElem = mainFilePath.split("/")
+    if mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "shot":
+        fileRadical = os.path.basename(mainFilePath).split("-")[0]
+        imageNameS = fileRadical.replace("_"+fileRadical.split("_")[-1],"")
+        mc.setAttr("defaultRenderGlobals.imageFilePrefix", imageNameS,type = "string")
 
     createAovs(renderMode=renderMode)
 
@@ -240,6 +245,14 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode = 'finalLayout', gu
     elif  outputFormat == "jpg":
         miscUtils.setAttrC("defaultArnoldDriver.aiTranslator","jpeg", type = "string")
         mc.setAttr("defaultArnoldDriver.mergeAOVs",0)
+
+
+    mainFilePath = mc.file(q=True, list = True)[0]
+    mainFilePathElem = mainFilePath.split("/")
+    if mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "shot":
+        fileRadical = os.path.basename(mainFilePath).split("-")[0]
+        imageNameS = fileRadical.replace("_"+fileRadical.split("_")[-1],"")
+        mc.setAttr("defaultRenderGlobals.imageFilePrefix", imageNameS,type = "string")
 
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIDiffuseSamples",0)
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples",3)
