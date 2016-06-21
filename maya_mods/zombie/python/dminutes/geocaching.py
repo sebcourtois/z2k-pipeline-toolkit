@@ -248,7 +248,7 @@ def exportLayoutInfo(**kwargs):
 
     scnInfos = infosFromScene()
     damShot = scnInfos["dam_entity"]
-    privScnFile = scnInfos["rc_file"]
+    privScnFile = scnInfos["rc_entry"]
 
     sMsg = "Layout infos can only be exported from a layout scene (of course)."
     assertSceneInfoMatches(scnInfos, "layout_scene", msg=sMsg)

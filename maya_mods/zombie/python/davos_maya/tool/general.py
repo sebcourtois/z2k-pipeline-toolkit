@@ -44,16 +44,13 @@ def infosFromScene(scenePath="", fail=True):
         raise ValueError("Current scene is untitled.".format(sCurScnPath))
 
     proj = DamProject.fromPath(sCurScnPath, fail=True)
-    pathData = {}
-    damEntity = None
-
+    ctxData = {}
     rcFile = proj.entryFromPath(sCurScnPath, fail=fail)
     if rcFile:
-        pathData = proj.dataFromPath(rcFile)
-        damEntity = proj._entityFromPathData(pathData, fail=fail)
-        scnInfos.update(pathData)
+        ctxData = proj.contextFromPath(rcFile)
+        scnInfos.update(ctxData)
 
-    scnInfos.update(project=proj, rc_file=rcFile, dam_entity=damEntity)
+    scnInfos.update(project=proj)
 
     return scnInfos
 

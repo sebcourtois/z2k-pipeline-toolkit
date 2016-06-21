@@ -195,7 +195,7 @@ def editTextureFiles(dryRun=False):
     damEntity = scnInfos["dam_entity"]
     proj = scnInfos["project"]
 
-    privScnFile = scnInfos["rc_file"]
+    privScnFile = scnInfos["rc_entry"]
     pubScnFile = privScnFile.getPublicFile(fail=True)
 
     pubScnFile.assertEditedVersion(privScnFile, outcomes=False, remember=False)
