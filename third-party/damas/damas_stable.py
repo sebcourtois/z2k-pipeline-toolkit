@@ -46,7 +46,7 @@ class http_connection(object) :
         '''
         headers = {'content-type': 'application/json'}
         headers.update(self.headers)
-        r = requests.post(self.serverURL, data=json.dumps(keys), headers=headers, verify=False)
+        r = requests.post(self.serverURL + "/create/", data=json.dumps(keys), headers=headers, verify=False)
         if r.status_code == 201:
             return json.loads(r.text)
         return None
@@ -57,9 +57,9 @@ class http_connection(object) :
         @param {String} id_ the internal node index to search
         @returns {Hash} node or false on failure
         '''
-        if isinstance(id_, (tuple, list, set)):
-            id_ = ",".join(id_)
-        r = requests.get(self.serverURL + '/' + id_, headers=self.headers, verify=False)
+        headers = {'content-type': 'application/json'}
+        headers.update(self.headers)
+        r = requests.post(self.serverURL + "/read/", data=json.dumps(id_), headers=headers, verify=False)
         if r.status_code == 200:
             return json.loads(r.text)
         return None
@@ -77,7 +77,7 @@ class http_connection(object) :
             id_ = ",".join(id_)
         headers = {'content-type': 'application/json'}
         headers.update(self.headers)
-        r = requests.put(self.serverURL + '/' + id_, data=json.dumps(keys), headers=headers, verify=False)
+        r = requests.put(self.serverURL + '/update/' + id_, data=json.dumps(keys), headers=headers, verify=False)
         if r.status_code == 200:
             return json.loads(r.text)
         return None
@@ -90,7 +90,7 @@ class http_connection(object) :
         '''
         if isinstance(id_, (tuple, list, set)):
             id_ = ",".join(id_)
-        r = requests.delete(self.serverURL + '/' + id_, headers=self.headers, verify=False)
+        r = requests.delete(self.serverURL + '/delete/' + id_, headers=self.headers, verify=False)
         return r.status_code == 200
 
     def search(self, query) :
@@ -100,6 +100,18 @@ class http_connection(object) :
         @returns {Array} array of element indexes or None if no element found
         '''
         r = requests.get(self.serverURL + '/search/' + query, headers=self.headers, verify=False)
+        if r.status_code == 200:
+            return json.loads(r.text)
+        return None
+
+    def search_one(self, query) :
+        '''
+        Find nodes wearing the specified key(s) and return the first
+                occurence found
+        @param {String} query string
+        @returns {Array} array of element indexes or None if no element found
+        '''
+        r = requests.get(self.serverURL + '/search_one/' + query, headers=self.headers, verify=False)
         if r.status_code == 200:
             return json.loads(r.text)
         return None
@@ -157,7 +169,8 @@ class http_connection(object) :
             return json.loads(r.text)
         return None
 
-    def link(self, target, sources, keys) :
+    """ commented until proper implementation
+    def link( self, target, sources, keys ) :
         '''
         Create a node edge from sources to target wearing the specified keys
         @param {Hash} keys of the new node
@@ -170,6 +183,7 @@ class http_connection(object) :
         if r.status_code == 200:
             return json.loads(r.text)
         return None
+    """
 
 
     # USERS AUTHENTICATION METHODS
