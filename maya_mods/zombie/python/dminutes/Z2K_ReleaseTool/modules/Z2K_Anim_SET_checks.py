@@ -743,7 +743,6 @@ class checkModule(object):
         boolResult=True
         # 1    export group structure to animRef.json"        
         # set progress bar
-        boolResult=True
         self.pBar_upd(step=1, maxValue=1, e=True)
         self.printF= self.Z2KprintDeco(jpZ.printF)
         self.printF("assetconformation: export group structure to animRef.json", st="t")
@@ -753,7 +752,6 @@ class checkModule(object):
             resultD = assetconformation.animRefJson(gui = self.GUI, mode ="write", inputD= {"groupL":resGetGroupListD["groupL"]}, dryRun=False)
         else:
             resultD = resGetGroupListD
-
         # prints -------------------
         self.printF(resultD['resultB'], st="r")
         for each in resultD["logL"]:

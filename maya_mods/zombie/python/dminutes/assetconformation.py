@@ -1703,7 +1703,7 @@ def animRefJson(gui = True, mode ="write", inputD = {} ,dryRun=True):
 
     scnInfos = infosFromScene()
     damAst = scnInfos["dam_entity"]
-    privScnFile = scnInfos["rc_file"]
+    privScnFile = scnInfos["rc_entry"]
 
     sPublicFilePath = damAst.getPath("public", "animRef_json")
     sPrivFilePath = damAst.getPath("private", "animRef_json")
