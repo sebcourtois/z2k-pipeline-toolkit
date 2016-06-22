@@ -4090,7 +4090,7 @@ def chr_HeadTex_switchHD(*args, **kwargs):
     print "chr_HeadTex_switchHD()"
 
     #setAttr -type "string" pre_head_file.fileTextureName "$ZOMB_TEXTURE_PATH/chr/chr_barman_default/texture/tex_head_colHD.jpg";
-    attrPL = ["pre_head_file","pre_torso_file","pre_poloHead_file1"]
+    attrPL = ["pre_head_file","pre_head_file1","pre_torso_file","pre_poloHead_file1"]
     thdstr = "HD.jpg"
     tldstr = ".jpg"
     currentRez = "None"
@@ -4116,6 +4116,42 @@ def chr_HeadTex_switchHD(*args, **kwargs):
     cmds.headsUpMessage( "TEXTURE SWITCHED TO {0}".format(currentRez),time=0.5, )
 
 
+
+def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
+    print ("jipe_IKFK_switch_fixFuckingToonKit()")
+    # switch IK/FK , TOONKIT FUCKING SHIT FIXED
+    SelfModelName = cmds.ls(sl=1)[0].split(":",1)[0]
+    inIKBone0 = SelfModelName + ":Left_ARM_IK_Bone_0_REF"
+    inIKBone1 = SelfModelName + ":Left_ARM_IK_Bone_1_REF"
+    inIKBone0Scale = SelfModelName + ":Left_Arm_IK.Bone0_Scale"
+    inIKBone1Scale = SelfModelName + ":Left_Arm_IK.Bone1_Scale"
+    inIKEff = SelfModelName + ":TK_Left_ARM_IK_Effector"
+
+    inIKControl = SelfModelName + ":Left_Arm_IK"
+    inUpV = SelfModelName + ":Left_Arm_upV"
+    inFKBone0 = SelfModelName + ":Left_Arm_FK_0"
+    inFKBone1 = SelfModelName + ":Left_Arm_FK_1"
+
+    inFKEff = SelfModelName + ":TK_Left_FK_Effector_Main_Ctrl"
+    inBlendParam = SelfModelName + ":Left_Hand_ParamHolder_Main_Ctrl.IkFk"
+    inChilds = [SelfModelName + ":Left_Hand_0", SelfModelName + ":Left_Arm_Elbow"]
+    inAutoKey = True
+
+    inFkControl = SelfModelName + ":Left_Hand_0"
+    tk.toggleIKFK(inIKBone0,inIKBone1,inIKBone0Scale,inIKBone1Scale,inIKEff,inIKControl,inUpV,inFKBone0,inFKBone1,inFKEff,inBlendParam,inChilds,inAutoKey)
+
+    # get the base mode
+    baseMode = cmds.getAttr(inBlendParam)
+    print "baseMode=",baseMode
+
+    if baseMode <0.5:
+        # remach ik sur FK et reset FK
+        matchByXformMatrix([inFkControl,inIKControl,])
+        resetCTR([inFkControl])
+    elif baseMode >0.5:
+        # remach ik sur FK et reset FK
+        matchByXformMatrix([inIKControl,inFkControl,])
+        resetCTR([inIKControl])
 
 
 # to do textureEditorIsolateSelectSet autoDelete dans cleanScene
