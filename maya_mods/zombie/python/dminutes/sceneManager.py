@@ -331,9 +331,9 @@ class SceneManager():
                 infos["priv_file"] = privFile
                 infos["pub_file"] = privFile.getPublicFile()
 
-                pathData = proj.dataFromPath(privFile)
+                pathData = proj.contextFromPath(privFile)
                 infos["path_data"] = pathData
-                infos["dam_entity"] = proj._entityFromPathData(pathData, fail=False)
+                infos["dam_entity"] = proj._entityFromContext(pathData, fail=False)
 
         return infos
 
@@ -459,7 +459,7 @@ class SceneManager():
             entry = proj.entryFromPath(curScenePath)
             if entry is not None:
                 self.context['sceneEntry'] = entry
-                self.context['sceneData'] = proj.dataFromPath(curScenePath)
+                self.context['sceneData'] = proj.contextFromPath(curScenePath)
 
         return self.contextIsMatching()
 
@@ -1081,7 +1081,7 @@ class SceneManager():
             else:
                 oFileRefDct[sRefNormPath] = [oFileRef]
 
-            pathData = proj.dataFromPath(sRefPath, library=astLib, warn=False)
+            pathData = proj.contextFromPath(sRefPath, library=astLib, warn=False)
 
             astData = initData.copy()
             astData.update(path=sRefPath, file_refs=oFileRefDct[sRefNormPath])

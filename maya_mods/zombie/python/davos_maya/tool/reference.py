@@ -302,16 +302,16 @@ def _loadAssetRefsToDefaultFile(oFileRef, astLib, logData, dryRun=False, **kwarg
 
     sRefPath = pathResolve(oFileRef.path)
 
-    pathData = {}
+    ctxData = {}
     try:
-        pathData = proj.dataFromPath(sRefPath, library=astLib)
-        damAst = proj._entityFromPathData(pathData, fail=True)
+        ctxData = proj.contextFromPath(sRefPath, library=astLib)
+        damAst = proj._entityFromContext(ctxData, fail=True)
     except Exception as e:
         pm.displayWarning(toStr(e))
         return
 
 #    try:
-#        damAst = proj._entityFromPathData(pathData, fail=True)
+#        damAst = proj._entityFromContext(ctxData, fail=True)
 #    except Exception as e:
 #        logItems.append((sRefNode, "FAILED: " + toStr(e)))
 #        logData["failed"] += 1
@@ -329,7 +329,7 @@ def _loadAssetRefsToDefaultFile(oFileRef, astLib, logData, dryRun=False, **kwarg
         logItems.append((sRefNode, sMsg))
         return
 
-    sCurRcName = pathData.get("resource", "")
+    sCurRcName = ctxData.get("resource", "")
     sAstType = damAst.assetType
     if sAstType in ("chr", "prp", "vhl") and sCurRcName != "anim_ref":
         sDefaultRcName = "anim_ref"
@@ -419,14 +419,14 @@ def _loadAssetsAsResource(oFileRef, sRcName, astLib, logData,
 
     sRefPath = pathResolve(oFileRef.path)
 
-    pathData = {}
+    ctxData = {}
     try:
-        pathData = proj.dataFromPath(sRefPath, library=astLib)
+        ctxData = proj.contextFromPath(sRefPath, library=astLib)
     except Exception as e:
         pm.displayWarning(toStr(e))
 
     try:
-        damAst = proj._entityFromPathData(pathData, fail=True)
+        damAst = proj._entityFromContext(ctxData, fail=True)
     except Exception as e:
         logItems.append((sRefNode, "FAILED: " + toStr(e)))
         logData["failed"] += 1
@@ -461,7 +461,7 @@ def _loadAssetsAsResource(oFileRef, sRcName, astLib, logData,
             logData["failed"] += 1
             return
 
-    sCurRcName = pathData.get("resource", "")
+    sCurRcName = ctxData.get("resource", "")
     if sRcName in (sCurRcName, ""):
         sMsg = "loaded as '{}'".format(sRcName) if sRcName else "loaded"
         if not bLoaded:
@@ -610,16 +610,16 @@ def listPrevizRefMeshes(project=None):
 
         sRefPath = pathResolve(oFileRef.path)
 
-        pathData = None
+        ctxData = None
         try:
-            pathData = proj.dataFromPath(sRefPath, library=astLib)
+            ctxData = proj.contextFromPath(sRefPath, library=astLib)
         except Exception as e:
             pm.displayWarning(toStr(e))
 
-        if not pathData:
+        if not ctxData:
             continue
 
-        sCurRcName = pathData.get("resource", "")
+        sCurRcName = ctxData.get("resource", "")
         if not sCurRcName.startswith("previz"):
             continue
 

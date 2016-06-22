@@ -86,8 +86,8 @@ class DavosSetup(ToolSetup):
 
                 try:
                     pm.loadPlugin(sPlugin)
-                except Exception, msg:
-                    pm.displayWarning(msg)
+                except Exception, e:
+                    pm.displayWarning(e.message)
                     continue
 
                 pm.pluginInfo(sPlugin, e=True, autoload=True)
@@ -104,7 +104,7 @@ class DavosSetup(ToolSetup):
 
         try:
             setMayaProject(pmu.getEnv("DAVOS_INIT_PROJECT"), "ZOMB_MAYA_PROJECT_PATH")
-        except ValueError as e:
+        except Exception as e:
             pm.displayError(e.message)
 
         if not pm.about(batch=True):

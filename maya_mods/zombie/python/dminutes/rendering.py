@@ -119,7 +119,12 @@ def setArnoldRenderOption(outputFormat, renderMode = ""):
     mc.setAttr("defaultArnoldRenderOptions.threads_autodetect",0)
     mc.setAttr("defaultArnoldRenderOptions.threads",-1)
 
-
+    mainFilePath = mc.file(q=True, list = True)[0]
+    mainFilePathElem = mainFilePath.split("/")
+    if mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "shot":
+        fileRadical = os.path.basename(mainFilePath).split("-")[0]
+        imageNameS = fileRadical.replace("_"+fileRadical.split("_")[-1],"")
+        mc.setAttr("defaultRenderGlobals.imageFilePrefix", imageNameS,type = "string")
 
     createAovs(renderMode=renderMode)
 
@@ -241,6 +246,14 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode = 'finalLayout', gu
         miscUtils.setAttrC("defaultArnoldDriver.aiTranslator","jpeg", type = "string")
         mc.setAttr("defaultArnoldDriver.mergeAOVs",0)
 
+
+    mainFilePath = mc.file(q=True, list = True)[0]
+    mainFilePathElem = mainFilePath.split("/")
+    if mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "shot":
+        fileRadical = os.path.basename(mainFilePath).split("-")[0]
+        imageNameS = fileRadical.replace("_"+fileRadical.split("_")[-1],"")
+        mc.setAttr("defaultRenderGlobals.imageFilePrefix", imageNameS,type = "string")
+
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIDiffuseSamples",0)
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples",3)
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIRefractionSamples",0)
@@ -336,13 +349,12 @@ def getRenderOutput(gui = True):
             print "#### Warning: you are not working in an 'asset' structure directory, output image name and path cannot not be automaticaly set"
     elif mc.ls("|shot"):
         if  mainFilePathElem[-5] == "shot":
-            if mainFilePathElem[-2] =="06_finalLayout":
-                vertionNumber = mainFilePathElem[-1].split("-")[1].split(".")[0]
-                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH",mainFilePathElem[-4],mainFilePathElem[-3],mainFilePathElem[-2],"render-"+vertionNumber)
-                outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
-                outputImageName = mainFilePathElem[-3]
-                print "#### Info: Set render path: {}".format( outputFilePath_exp)
-                print "#### Info: Set image name:  {}".format( outputImageName)
+            vertionNumber = mainFilePathElem[-1].split("-")[1].split(".")[0]
+            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH",mainFilePathElem[-4],mainFilePathElem[-3],mainFilePathElem[-2],"render-"+vertionNumber)
+            outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
+            outputImageName = mainFilePathElem[-3]
+            print "#### Info: Set render path: {}".format( outputFilePath_exp)
+            print "#### Info: Set image name:  {}".format( outputImageName)
 
         else:
             print "#### Warning: you are not working in an 'shot' structure directory, output image name and path cannot not be automaticaly set"
