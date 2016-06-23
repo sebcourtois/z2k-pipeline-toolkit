@@ -71,6 +71,17 @@ def withParallelEval(func):
         return res
     return doIt
 
+def autoKeyDisabled(func):
+    def doIt(*args, **kwargs):
+        bState = mc.autoKeyframe(q=True, state=True)
+        mc.autoKeyframe(e=True, state=False)
+        try:
+            res = func(*args, **kwargs)
+        finally:
+            mc.autoKeyframe(e=True, state=bState)
+        return res
+    return doIt
+
 def getNamespace(sNode):
     return sNode.rsplit("|", 1)[-1].rsplit(":", 1)[0]
 
@@ -693,15 +704,8 @@ def transferVisibilities(astToAbcXfmMap, dryRun=False):
 
         print sMsg
 
-        try:
-            if not dryRun:
-                mc.setAttr(sAstVizAttr, bAbcViz)
-        except RuntimeError as e:
-            sMsg = e.message.strip()
-            if "locked or connected" in sMsg:
-                pm.displayWarning(sMsg)
-            else:
-                raise
+        mc.copyAttr(sAbcXfm, sAstXfm, values=True, inConnections=True,
+                    keepSourceConnections=True, attribute=sAttr)
 
     if sHiddenList:
         sNmspc = getNamespace(sHiddenList[0])
@@ -879,6 +883,7 @@ def cleanImportContext(func):
         return res
     return doIt
 
+@autoKeyDisabled
 def importCaches(sSpace, **kwargs):
 
     global LOGGING_SETS, USE_LOGGING_SETS, LAUNCH_TIME
@@ -936,10 +941,8 @@ def importCaches(sSpace, **kwargs):
     sAbcPathList = list(j["file"] for j in exportJobList)
     scanFunc = partial(scanCachesToImport, sAbcPathList)
     scanDct = dependency_scan.launch(scnInfos, scanFunc=scanFunc,
-                                     modal=True,
-                                     okLabel=sProcessLabel,
-                                     expandTree=True,
-                                     forceDialog=False)
+                                     modal=True, okLabel=sProcessLabel,
+                                     expandTree=True, forceDialog=False)
     if scanDct is None:
         pm.displayInfo("Canceled !")
         return
