@@ -159,6 +159,7 @@ def setArnoldRenderOption(outputFormat, renderMode = ""):
         mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",1)
         mc.setAttr("defaultArnoldRenderOptions.motion_frames",0.25)
     elif renderMode == 'finalLayout':
+        mc.setAttr("defaultArnoldRenderOptions.ignoreBump",1)
         mc.setAttr("defaultArnoldRenderOptions.AASamples",2)
         mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable",1)
         mc.setAttr("defaultArnoldRenderOptions.motion_frames",0.25)

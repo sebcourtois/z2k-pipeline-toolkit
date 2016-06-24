@@ -286,7 +286,7 @@ def createSetMeshCache(inParent= "|asset|grp_geo", GUI = True):
     existingGeoL.extend(instanceList)
 
     if not existingGeoL:
-        logMessage = "#### {:>7}: 'createSetMeshCache' geometries could be foud under '{}'".format( inParent)
+        logMessage = "#### {:>7}: 'createSetMeshCache' geometries could be foud under '{}'".format("Info", inParent)
         if GUI == True: raise ValueError(logMessage)
         logL.append(logMessage)
         returnB = False
@@ -1558,19 +1558,22 @@ def assetObjectClean( inParent= "|asset|grp_geo", clean = True, GUI = True):
     return dict(resultB=log.resultB, logL=log.logL)
 
 
-def releaseDateCompare(assetType = "prp", myFilter = ""):
+def releaseDateCompare(assetType = "prp", myFilter = "", compareWith="workingfile"):
     assetDirS = os.environ["ZOMB_ASSET_PATH"]
     assetDirS = miscUtils.pathJoin(assetDirS,assetType)
     allAssetL = os.listdir(assetDirS)
     allAssetL.sort()
 
     animFileL=[]
+    outDatedFileL = []
 
     print ""
     if not myFilter:
         print "listing file check for '{}' assets".format(assetType)
+    elif compareWith=="workingfile":
+        print "The following '{}' '{}' references files are not up to date, a newer working file has been published since the last release".format(myFilter,assetType)
     else:
-        print "The following '{}' '{}' references files are not up to date".format(myFilter,assetType)
+        print "The following '{}' '{}' references files are not up to date compared to the other reference file".format(myFilter,assetType)
 
     # if assetType == "set":
     #     print "#### Warning: modeling, anim, and render working file are actualy the same file for 'sets': master"
@@ -1644,25 +1647,55 @@ def releaseDateCompare(assetType = "prp", myFilter = ""):
                         statDateRender = statInfo.st_mtime
                         dateRenderS = datetime.fromtimestamp(int(statDateRender)).strftime(u"%Y-%m-%d %H:%M")               
 
-
-            if assetType == "set":
-                if not myFilter:
-                    print "{:^48} master: {}   animRef: {}    renderRef: {}".format(each, dateModelingS, dateAnimRefS, dateRenderRefS)
-                elif myFilter == "anim":
-                    if statDateModeling > statDateAnimRef:
-                        print "{:^48} master: {}    animRef: {}".format(each, dateModelingS, dateAnimRefS)
-                elif myFilter == "render":
-                    if statDateModeling > statDateRenderRef:
-                        print "{:^48} master: {}    renderRef: {}".format(each, dateModelingS, dateRenderRefS)
+            if compareWith=="workingfile":
+                if assetType == "set":
+                    if not myFilter:
+                        print "{:^48} master: {}   animRef: {}    renderRef: {}".format(each, dateModelingS, dateAnimRefS, dateRenderRefS)
+                    elif myFilter == "anim":
+                        if statDateModeling > statDateAnimRef:
+                            print "{:^48} master: {}    animRef: {}".format(each, dateModelingS, dateAnimRefS)
+                            outDatedFileL.append(each)
+                    elif myFilter == "render":
+                        if statDateModeling > statDateRenderRef:
+                            print "{:^48} master: {}    renderRef: {}".format(each, dateModelingS, dateRenderRefS)
+                            outDatedFileL.append(each)
+                else:
+                    if not myFilter:
+                        print "{:^48} modeling: {}    anim: {}    animRef: {}    render: {}    renderRef: {}".format(each, dateModelingS, dateAnimS, dateAnimRefS, dateRenderS, dateRenderRefS)
+                    elif myFilter == "anim":
+                        if statDateAnim > statDateAnimRef:
+                            print "{:^48} anim: {}    animRef: {}".format(each, dateAnimS, dateAnimRefS)
+                            outDatedFileL.append(each)
+                    elif myFilter == "render":
+                        if statDateRender > statDateRenderRef:
+                            print "{:^48} render: {}    renderRef: {}".format(each, dateRenderS, dateRenderRefS)
+                            outDatedFileL.append(each)
             else:
-                if not myFilter:
-                    print "{:^48} modeling: {}    anim: {}    animRef: {}    render: {}    renderRef: {}".format(each, dateModelingS, dateAnimS, dateAnimRefS, dateRenderS, dateRenderRefS)
-                elif myFilter == "anim":
-                    if statDateAnim > statDateAnimRef:
-                        print "{:^48} anim: {}    animRef: {}".format(each, dateAnimS, dateAnimRefS)
-                elif myFilter == "render":
-                    if statDateRender > statDateRenderRef:
-                        print "{:^48} render: {}    renderRef: {}".format(each, dateRenderS, dateRenderRefS)
+                if assetType == "set":
+                    if not myFilter:
+                        print "{:^48} master: {}   animRef: {}    renderRef: {}".format(each, dateModelingS, dateAnimRefS, dateRenderRefS)
+                    elif myFilter == "anim":
+                        if statDateRenderRef > statDateAnimRef:
+                            print "{:^48} renderRef: {}    animRef: {}".format(each, dateModelingS, dateAnimRefS)
+                            outDatedFileL.append(each)
+                    elif myFilter == "render":
+                        if statDateAnimRef > statDateRenderRef:
+                            print "{:^48} animRef: {}    renderRef: {}".format(each, dateModelingS, dateRenderRefS)
+                            outDatedFileL.append(each)
+                else:
+                    if not myFilter:
+                        print "{:^48} modeling: {}    anim: {}    animRef: {}    render: {}    renderRef: {}".format(each, dateModelingS, dateAnimS, dateAnimRefS, dateRenderS, dateRenderRefS)
+                    elif myFilter == "anim":
+                        if statDateRenderRef > statDateAnimRef:
+                            print "{:^48} renderRef: {}    animRef: {}".format(each, dateAnimS, dateAnimRefS)
+                            outDatedFileL.append(each)
+                    elif myFilter == "render":
+                        if statDateAnimRef > statDateRenderRef:
+                            print "{:^48} animRef: {}    renderRef: {}".format(each, dateRenderS, dateRenderRefS)
+                            outDatedFileL.append(each)
+    if outDatedFileL:
+        print "#### {:>7}:  {} files are ,not up to date: {}".format("Info",len(outDatedFileL), outDatedFileL)
+
 
 
 
@@ -1783,3 +1816,36 @@ def UVSetCount(gui = True):
     return dict(resultB=log.resultB, logL=log.logL)
 
 
+
+def lookForBumpNodes(gui = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="lookForBumpNodes")
+
+    bumpTypeL = ["aiBump3d","bump3d","bump2d","aiBump2d"]
+    bumpNodeL = mc.ls(type=bumpTypeL)
+
+    if bumpNodeL :
+        txt = "{} bump nodes found in this scene, please replace with displacement nodes: '{}': ".format(len(bumpNodeL), bumpNodeL)
+        log.printL("e", txt)
+    else: 
+        bumpNodeL = []
+    return dict(resultB=log.resultB, logL=log.logL, bumpNodeL=bumpNodeL)
+
+
+
+def dmnToon2aiSurface(gui = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="dmnToon2aiSurface")
+    wrongShaderL =[]
+
+    shadingEngineL = mc.ls(type="shadingEngine")
+    if "initialParticleSE" in shadingEngineL: shadingEngineL.remove("initialParticleSE")
+    if "initialShadingGroup" in shadingEngineL:shadingEngineL.remove("initialShadingGroup")
+    for eachSE in shadingEngineL:
+        aiInputNodeS = mc.listConnections (eachSE+".aiSurfaceShader", source=True, destination=False)
+        aiInputNodeTypeS = mc.nodeType(aiInputNodeS)
+        if aiInputNodeTypeS != "dmnToon":
+            wrongShaderL.append(eachSE) 
+    if wrongShaderL :
+        txt = "{} shaders are not valid, please make sure a 'dmn_toon' is plug to the 'aiSurface' on the folloing shading engines: '{}': ".format(len(wrongShaderL), wrongShaderL)
+        log.printL("e", txt)
+
+    return dict(resultB=log.resultB, logL=log.logL, wrongShaderL=wrongShaderL)
