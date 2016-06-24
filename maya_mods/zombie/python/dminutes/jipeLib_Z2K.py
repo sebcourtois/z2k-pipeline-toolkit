@@ -4090,15 +4090,17 @@ def chr_HeadTex_switchHD(*args, **kwargs):
     print "chr_HeadTex_switchHD()"
 
     #setAttr -type "string" pre_head_file.fileTextureName "$ZOMB_TEXTURE_PATH/chr/chr_barman_default/texture/tex_head_colHD.jpg";
-    attrPL = ["pre_head_file","pre_head_file1","pre_torso_file","pre_poloHead_file1"]
+    attrPL = ["pre_head_file","pre_head_file1","pre_torso_file","pre_poloHead_file1", "pre_torso_file"]
     thdstr = "HD.jpg"
     tldstr = ".jpg"
     currentRez = "None"
     BazRealTextPath = os.environ.get("ZOMB_TEXTURE_PATH")
+    curAsset = cmds.ls(sl=1)[0].split(":")[0]
     print "BazRealTextPath=", BazRealTextPath
     
 
     for attrP in attrPL:
+        attrP = curAsset + ":" + attrP
         print attrP
         if cmds.objExists(attrP+".fileTextureName"):
             print "yes"
@@ -4111,7 +4113,7 @@ def chr_HeadTex_switchHD(*args, **kwargs):
                 cmds.setAttr(attrP + ".fileTextureName",oldVal.replace(tldstr,thdstr),type="string",)
                 currentRez = "HD"
 
-            break
+            
 
     cmds.headsUpMessage( "TEXTURE SWITCHED TO {0}".format(currentRez),time=0.5, )
 
