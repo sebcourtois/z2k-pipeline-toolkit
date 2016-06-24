@@ -1783,3 +1783,34 @@ def UVSetCount(gui = True):
     return dict(resultB=log.resultB, logL=log.logL)
 
 
+def lookForBumpNodes(gui = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="lookForBumpNodes")
+
+    bumpTypeL = ["aiBump3d","bump3d","bump2d","aiBump2d"]
+    bumpNodeL = mc.ls(type=bumpTypeL)
+
+    if bumpNodeL :
+        txt = "{} bump nodes found in this scene, please replace with displacement nodes: '{}': ".format(len(bumpNodeL), bumpNodeL)
+        log.printL("e", txt)
+    else: 
+        bumpNodeL = []
+    return dict(resultB=log.resultB, logL=log.logL, bumpNodeL=bumpNodeL)
+
+
+def dmnToon2aiSurface(gui = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="dmnToon2aiSurface")
+    wrongShaderL =[]
+
+    shadingEngineL = mc.ls(type="shadingEngine")
+    if "initialParticleSE" in shadingEngineL: shadingEngineL.remove("initialParticleSE")
+    if "initialShadingGroup" in shadingEngineL:shadingEngineL.remove("initialShadingGroup")
+    for eachSE in shadingEngineL:
+        aiInputNodeS = mc.listConnections (eachSE+".aiSurfaceShader", source=True, destination=False)
+        aiInputNodeTypeS = mc.nodeType(aiInputNodeS)
+        if aiInputNodeTypeS != "dmnToon":
+            wrongShaderL.append(eachSE) 
+    if wrongShaderL :
+        txt = "{} shaders are not valid, please make sure a 'dmn_toon' is plug to the 'aiSurface' on the folloing shading engines: '{}': ".format(len(wrongShaderL), wrongShaderL)
+        log.printL("e", txt)
+
+    return dict(resultB=log.resultB, logL=log.logL, wrongShaderL=wrongShaderL)

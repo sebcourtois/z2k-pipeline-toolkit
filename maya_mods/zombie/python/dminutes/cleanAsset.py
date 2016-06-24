@@ -153,6 +153,8 @@ def cleanAsset (GUI = True):
                 miscUtils.deleteUnknownNodes()
                 miscUtils.unlockObject(objectL=allTransform)
                 assetconformation.UVSetCount()
+                assetconformation.lookForBumpNodes()
+                assetconformation.dmnToon2aiSurface()
 
                 meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
                 print "#### {:>7}: {} geo and {} instances found in this scene".format("Info", len(meshList), len(instanceList))
@@ -180,6 +182,8 @@ def cleanAsset (GUI = True):
                 assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
                 modeling.freezeResetTransforms(inParent = "|asset|grp_geo", inConform = True)
                 assetconformation.UVSetCount()
+                assetconformation.lookForBumpNodes()
+                assetconformation.dmnToon2aiSurface()
 
 
                 miscUtils.cleanLayout()
