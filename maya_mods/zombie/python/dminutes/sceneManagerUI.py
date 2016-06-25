@@ -19,7 +19,11 @@ from zomblib import rvutils
 
 import dminutes.maya_scene_operations as mop
 from dminutes import sceneManager
+
 from pytaya.util.sysutils import withSelectionRestored
+from davos_maya.tool.general import okValue
+from davos_maya.tool import reference as myaref
+
 
 osp = os.path
 pc = pymel.core
@@ -456,8 +460,44 @@ def connectCallbacks():
     pc.button('sm_selectRefs_bt', edit=True, c=doSelectRefs)
     pc.button('sm_updScene_bt', edit=True, c=doUpdateScene)
     pc.button('sm_updShotgun_bt', edit=True, c=doUpdateShotgun)
+    sMsg = "Which assets do you want to lock to current version ?"
+    pc.button('sm_lockVersions_bt', edit=True, c=partial(setAssetVersionsLocked, True, sMsg))
+    sMsg = "Which assets do you want to switch to latest version ?"
+    pc.button('sm_unlockVersions_bt', edit=True, c=partial(setAssetVersionsLocked, False, sMsg))
 
     pc.button('sm_pouet_bt', edit=True, c=doPouet)
+
+
+def iterSelectedAssets():
+    sceneInfoWdg = QWIDGETS["sm_sceneInfo_lb"]
+    for item in sceneInfoWdg.selectedItems():
+        yield item.data(32)
+
+def setAssetVersionsLocked(bLock, sConfirmMsg, *args):
+
+    sAstList = tuple(d["name"] for d in iterSelectedAssets())
+
+    sButtonList = ['All', 'Cancel']
+    if sAstList:
+        sButtonList.insert(0, '{} Selected'.format(len(sAstList)))
+
+    sRes = pc.confirmDialog(title='QUESTION ?',
+                            message=sConfirmMsg,
+                            button=sButtonList,
+                            icon="question")
+    if sRes == "Cancel":
+        pc.displayInfo("Canceled !")
+        return
+    elif sRes == 'All':
+        sAstList = None
+
+
+    if bLock:
+        myaref.lockAssetRefsToCurrentVersion(assets=sAstList, dryRun=False)
+    else:
+        myaref.switchAssetRefsToHeadFile(assets=sAstList, dryRun=False)
+
+    doRefreshSceneInfo()
 
 def doPlayLatestCapture(*args):
     bSend = pc.checkBox('sm_sendToRv_chk', query=True, value=True)
@@ -709,10 +749,11 @@ def doSelectRefs(*args):
     count = 0
     for item in sceneInfoWdg.selectedItems():
 
-        for oFileRef in item.data(32):
+        oFileRefList = item.data(32)["file_refs"]
+        for oFileRef in oFileRefList:
 
-            if not oFileRef.isLoaded():
-                continue
+#            if not oFileRef.isLoaded():
+#                continue
 
             sRefNode = oFileRef.refNode.name()
             sNodeList = mc.referenceQuery(sRefNode, nodes=True, dagPath=True)
@@ -762,13 +803,13 @@ def doRefreshSceneInfo(*args):
 
     sRcNameList = set()
     for astData in assetDataList:
-        sAstRcDct = astData["maya_refs"]
+        sAstRcDct = astData["maya_rcs"]
         if sAstRcDct:
             sRcNameList.update(sAstRcDct.iterkeys())
     sRcNameList = sorted(sRcNameList)
 
     headerData.extend((s.upper() for s in sRcNameList))
-    headerData.append([])
+    headerData.append({})
 
     numColumns = len(headerData) - 1
 
@@ -776,27 +817,33 @@ def doRefreshSceneInfo(*args):
     rowDataList = [headerData]
     for astData in assetDataList:
 
-        oFileRefList = astData["file_refs"]
-
         sAstName = astData["name"]
-        rowData = [ str(astData["occurences"]),
-                    sAstName,
-                    astData["resource"],
-                    astData["sg_info"],
-                    ]
+        v = astData.get("version", -1)
 
-        sAstRcDct = astData["maya_refs"]
+        rowData = [str(astData["occurences"]),
+                   sAstName,
+                   astData["resource"] + (" v{:03d}".format(v) if v > -1 else ""),
+                   astData["sg_link"],
+                   ]
+
+        sCurRcName = astData["resource"]
+        sAstRcDct = astData["maya_rcs"]
         if sAstRcDct:
             for sRcName in sRcNameList:
                 rcDct = sAstRcDct.get(sRcName)
                 sRcInfo = ""
                 if rcDct:
                     sRcInfo = rcDct["status"]
+
+                if (sRcName == sCurRcName and v > -1 and
+                    sRcInfo == okValue and "version" in rcDct):
+                    sRcInfo += " v{:03d}".format(rcDct["version"])
+
                 rowData.append(sRcInfo)
         else:
             rowData.extend(len(sRcNameList) * ("",))
 
-        rowData = rowData[:numColumns] + [oFileRefList]
+        rowData = rowData[:numColumns] + [astData]
         if sAstName:
             rowDataList.append(rowData)
         else:
@@ -812,7 +859,8 @@ def doRefreshSceneInfo(*args):
     itemList = []
     for rowData in rowDataList:
 
-        oFileRefList = rowData[-1]
+        astData = rowData[-1]
+        oFileRefList = astData.get("file_refs", [])
         sAstName = rowData[1]
         c = numColumns
         if not sAstName:
@@ -826,7 +874,7 @@ def doRefreshSceneInfo(*args):
 
         sceneInfoWdg.addItem(sLine)
         item = sceneInfoWdg.item(sceneInfoWdg.count() - 1)
-        item.setData(32, oFileRefList)
+        item.setData(32, astData)
 
         itemList.append(item)
 
@@ -934,10 +982,9 @@ def doPublish(*args):
         if not res:
             return
 
-
         sYes = "Yes, keep it locked."
         sNo = "No, unlock it."
-        sMsg = '"{}" published successfully !\n\n'.format(res[0].name)
+        sMsg = '"{}" published successfully !\n\n'.format(res["private_file"].name)
         sRes = pc.confirmDialog(title='DO YOU WANT TO...',
                                 message=sMsg + "Continue working on this scene ?",
                                 button=[sYes, sNo],

@@ -1446,10 +1446,36 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="2,1,0">
+           <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="1,1,1,1,0">
             <property name="margin">
              <number>2</number>
             </property>
+            <item>
+             <widget class="QPushButton" name="sm_lockVersions_bt">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>26</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Lock To Current Version</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="sm_unlockVersions_bt">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>26</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Switch To Latest Version</string>
+              </property>
+             </widget>
+            </item>
             <item>
              <widget class="QPushButton" name="sm_updScene_bt">
               <property name="sizePolicy">
@@ -1465,7 +1491,7 @@
                </size>
               </property>
               <property name="text">
-               <string>Load Assets From Shotgun</string>
+               <string>Load From Shotgun</string>
               </property>
              </widget>
             </item>
@@ -1487,7 +1513,7 @@
                </size>
               </property>
               <property name="text">
-               <string>Update Assets In Shotgun</string>
+               <string>Update In Shotgun</string>
               </property>
              </widget>
             </item>

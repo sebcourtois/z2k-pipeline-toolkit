@@ -17,7 +17,9 @@ from pytaya.util.sysutils import withSelectionRestored
 from pytaya.core.reference import processSelectedReferences
 from pytaya.core.reference import listReferences
 
-from davos_maya.tool.general import entityFromScene, projectFromScene
+from davos_maya.tool.general import entityFromScene, projectFromScene, noneValue
+from davos_maya.tool.general import infosFromScene, listRelatedAssets
+
 from dminutes.shotconformation import removeRefEditByAttr
 from davos.core.drctypes import DrcEntry
 
@@ -428,41 +430,51 @@ def _loadAssetsAsResource(oFileRef, sRcName, astLib, logData,
     try:
         damAst = proj._entityFromContext(ctxData, fail=True)
     except Exception as e:
-        logItems.append((sRefNode, "FAILED: " + toStr(e)))
-        logData["failed"] += 1
-        return
-
-    oAstFileRefList.append(oFileRef)
-
-    try:
-        astFile = damAst.getResource("public", sRcName,
-                                     dbNode=False, fail=True)
-    except Exception as e:
-        logItems.append((sRefNode, toStr(e)))
+        logItems.append((sRefNode, "WARNING: " + toStr(e)))
         #logData["failed"] += 1
         return
 
-    if checkSyncState:
+    oAstFileRefList.append(oFileRef)
+    curRcFile = ctxData["rc_entry"]
 
-        cachedDbNode = astFile.getDbNode(fromDb=False)
-        if cachedDbNode:
-            pass#astFile.refresh(simple=True)
-        else:
-            astFile.getDbNode(fromCache=False)
-
-        if not astFile.currentVersion:
-            logItems.append((sRefNode, "FAILED: " + "No version yet"))
-            logData["failed"] += 1
-            return
-        try:
-            astFile.assertUpToDate(refresh=False)
-        except AssertionError as e:
-            logItems.append((sRefNode, "FAILED: " + toStr(e)))
-            logData["failed"] += 1
-            return
+    try:
+        rcFile = damAst.getResource("public", sRcName,
+                                     dbNode=False, fail=True)
+    except Exception as e:
+        logItems.append((sRefNode, "WARNING: " + toStr(e)))
+        #logData["failed"] += 1
+        return
 
     sCurRcName = ctxData.get("resource", "")
-    if sRcName in (sCurRcName, ""):
+    bSameRc = (sRcName == sCurRcName)
+    sSeverity = "error"
+
+    if checkSyncState:
+
+        if bSameRc and curRcFile.isVersionFile():
+            sSeverity = "warning"
+
+        cachedDbNode = rcFile.getDbNode(fromDb=False)
+        if cachedDbNode:
+            pass#rcFile.refresh(simple=True)
+        else:
+            rcFile.getDbNode(fromCache=False)
+
+        if not rcFile.currentVersion:
+            logItems.append((sRefNode, "{}: " + "No version yet".format(sSeverity.upper())))
+            if sSeverity == "error":
+                logData["failed"] += 1
+            return
+
+        try:
+            rcFile.assertUpToDate(refresh=False)
+        except AssertionError as e:
+            logItems.append((sRefNode, "{}: ".format(sSeverity.upper()) + toStr(e)))
+            if sSeverity == "error":
+                logData["failed"] += 1
+            return
+
+    if bSameRc:
         sMsg = "loaded as '{}'".format(sRcName) if sRcName else "loaded"
         if not bLoaded:
             loadRef()
@@ -472,7 +484,7 @@ def _loadAssetsAsResource(oFileRef, sRcName, astLib, logData,
         return
 
     logItems.append((sRefNode, "switched to '{}'".format(sRcName)))
-    loadRef(astFile.envPath())
+    loadRef(rcFile.envPath())
 
 
 def loadAssetsAsResource(sRcName, fail=False, checkSyncState=False,
@@ -630,6 +642,93 @@ def listPrevizRefMeshes(project=None):
                 sAllMeshList.extend(sMeshList)
 
     return sAllMeshList
+
+
+def lockAssetRefsToCurrentVersion(scnInfos=None, assets=None, dryRun=False):
+
+    if scnInfos is None:
+        scnInfos = infosFromScene()
+
+    damShot = scnInfos["dam_entity"]
+
+    sAstKeyList = tuple(s.lower() for s in assets if s) if assets else None
+
+    relatedAssetList = listRelatedAssets(damShot)
+    for relAstData in relatedAssetList:
+
+        sAstName = relAstData["name"]
+        if not sAstName:
+            continue
+
+        if sAstKeyList and sAstName.lower() not in sAstKeyList:
+            continue
+
+        sRcName = relAstData["resource"]
+        if sRcName == noneValue:
+            continue
+
+        v = relAstData.get("version", -1)
+        if v > -1:
+            print "'{}' - already locked to '{}'{}".format(sAstName, sRcName,
+                                                           " v{:03d}".format(v))
+            continue
+
+        versFile = relAstData["version_file"]
+        if not versFile:
+            print "'{}' - No version file to switch to.".format(sAstName)
+            continue
+
+        sRefPath = versFile.envPath()
+        for oFileRef in relAstData["file_refs"]:
+
+            cmdFlags = dict()
+            if not oFileRef.isLoaded():
+                cmdFlags = dict(lrd="none")
+
+            if not dryRun:
+                oFileRef.replaceWith(sRefPath, **cmdFlags)
+
+
+def switchAssetRefsToHeadFile(scnInfos=None, assets=None, dryRun=False):
+
+    if scnInfos is None:
+        scnInfos = infosFromScene()
+
+    damShot = scnInfos["dam_entity"]
+
+    sAstKeyList = tuple(s.lower() for s in assets if s) if assets else None
+
+    relatedAssetList = listRelatedAssets(damShot)
+    for relAstData in relatedAssetList:
+
+        sAstName = relAstData["name"]
+        if not sAstName:
+            continue
+
+        if sAstKeyList and sAstName.lower() not in sAstKeyList:
+            continue
+
+        versFile = relAstData.get("rc_entry")
+        if not versFile:
+            continue
+
+        if not versFile.isVersionFile():
+            continue
+
+        try:
+            headFile = versFile.getHeadFile(fail=True, dbNode=False)
+        except Exception as e:
+            pm.displayWarning(e.message)
+
+        sRefPath = headFile.envPath()
+        for oFileRef in relAstData["file_refs"]:
+
+            cmdFlags = dict()
+            if not oFileRef.isLoaded():
+                cmdFlags = dict(lrd="none")
+
+            if not dryRun:
+                oFileRef.replaceWith(sRefPath, **cmdFlags)
 
 def selectRefsWithDefaultAssetFile(assetFile="NoInput"):
 

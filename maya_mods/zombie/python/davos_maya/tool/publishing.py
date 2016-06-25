@@ -9,18 +9,18 @@ import pymel.util as pmu
 #import maya.cmds as mc
 
 #from pytd.util.logutils import logMsg
-from pytaya.core import system as myasys
-
-from davos.tools import publish_dependencies
-
-from .general import infosFromScene, projectFromScene
-from davos_maya.tool import dependency_scan
 from pytd.util.sysutils import toStr, inDevMode, timer
 from pytd.gui.dialogs import confirmDialog
 from pytd.util.fsutils import normCase
-from davos.core.damtypes import DamAsset
-from pytaya.core import cleaning
 from pytd.util.strutils import labelify
+from pytaya.core import system as myasys
+from pytaya.core import cleaning
+
+from davos.core.damtypes import DamAsset
+from davos.tools import publish_dependencies
+from davos_maya.tool.general import infosFromScene, projectFromScene
+from davos_maya.tool.general import listRelatedAssets
+from davos_maya.tool import dependency_scan
 
 osp = os.path
 
@@ -30,6 +30,7 @@ class PublishContext(object):
 
     def __init__(self, scnInfos, prePublishInfos, **kwargs):
         self.prePublishInfos = prePublishInfos
+        self.postPublishInfos = None
         self.sceneInfos = scnInfos
 
 def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishInfos, **kwargs):
@@ -342,7 +343,10 @@ def publishCurrentScene(*args, **kwargs):
                                     #sgTask=sgTask,
                                     withSgVersion=bSgVersion,
                                     sgVersionData=sgVersionData,
+                                    returnDict=True,
                                     **kwargs)
+
+    publishCtx.postPublishInfos = res
 
     if postPublishFunc:
         postPublishFunc(publishCtx)
@@ -381,3 +385,60 @@ def linkSceneDependencies(sCurScnPath, depScanResults, sDependencyType):
     data = {"link_type":"dependency", "dependency_type":sDependencyType}
 
     return proj.linkResourceFiles(scnFile, depFileList, data)
+
+def linkAssetVersionsInShotgun(sgVersion, scnInfos, dryRun=False):
+
+    def iterSgVersionNames(relAstList):
+        for relAstData in relAstList:
+            versFile = relAstData.get("version_file")
+            if versFile:
+                yield versFile.sgVersionName()
+
+#    sgShot = sgVersion["entity"]
+    damShot = scnInfos["dam_entity"]
+    proj = damShot.project
+
+    relatedAssetList = listRelatedAssets(damShot)
+    if not relatedAssetList:
+        return
+
+    sSgVersList = tuple(iterSgVersionNames(relatedAssetList))
+    sgVersList = []
+    sgVersDct = {}
+    if sSgVersList:
+        filters = [["code", "in", sSgVersList]]
+        sgVersList = proj._shotgundb.sg.find("Version", filters, ["code"])
+        sgVersDct = dict((d2["code"].lower(), d2) for d2 in sgVersList)
+
+#    shotConnList = []
+    lockedSgVersList = []
+    for relAstData in relatedAssetList:
+
+        rcFile = relAstData.get("rc_entry")
+        if not rcFile:
+            continue
+
+        versFile = relAstData["version_file"]
+        if not versFile:
+            continue
+
+        sgVers = None
+        if rcFile == versFile:
+            sSgVers = rcFile.sgVersionName()
+            sgVers = sgVersDct.get(sSgVers.lower())
+            if sgVers:
+                lockedSgVersList.append(sgVers)
+
+#        astShotConn = relAstData.get("sg_asset_shot_conn")
+#        if astShotConn:
+#            astShotConn["sg_locked_to_version"] = sgVers
+#            shotConnList.append(astShotConn)
+
+    if not dryRun:
+        proj.updateSgEntity(sgVersion, sg_locked_asset_versions=lockedSgVersList,
+                            sg_related_asset_versions=sgVersList)
+
+#        proj.updateSgEntity(sgShot, sg_locked_asset_versions=lockedSgVersList)
+#        for astShotConn in shotConnList:
+#            proj.updateSgEntity(astShotConn, sg_locked_to_version=astShotConn.get("sg_locked_to_version"))
+

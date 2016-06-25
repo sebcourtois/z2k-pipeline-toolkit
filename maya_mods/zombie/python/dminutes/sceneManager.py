@@ -16,14 +16,18 @@ import maya.mel
 
 from pytd.util.fsutils import pathResolve, normCase, pathSuffixed
 from pytd.util.logutils import logMsg
-from pytd.util.sysutils import toStr
+from pytd.util.sysutils import toStr, inDevMode
 from pytd.util.strutils import padded
 from pytaya.core.general import copyAttrs, getObject
 from pytaya.core import system as myasys
 
 from davos.core import damproject
-from davos.core.damtypes import DamShot, DamAsset
+from davos.core.damtypes import DamShot
 from davos_maya.tool.publishing import publishCurrentScene
+from davos_maya.tool.publishing import linkAssetVersionsInShotgun
+from davos_maya.tool.general import okValue, noneValue
+from davos_maya.tool.general import listRelatedAssets
+
 
 from zomblib import shotgunengine
 from zomblib.editing import playMovie
@@ -42,10 +46,6 @@ reload(infoE)
 
 # get zomb project
 PROJECTNAME = os.environ.get("DAVOS_INIT_PROJECT")
-
-okValue = 'OK'
-noneValue = 'MISSING'
-notFoundvalue = 'NOT FOUND'
 
 #FROM DAVOS !!!!
 RC_FOR_STEP = {'Previz 3D':'previz_scene',
@@ -976,9 +976,19 @@ class SceneManager():
 
     def postPublishCurrentScene(self, publishCtx, **kwargs):
 
-        pubFile = publishCtx.sceneInfos["public_file"]
-        v = publishCtx.prePublishInfos["version"]
-        sComment = "from {}".format(pubFile.nameFromVersion(v))
+        print publishCtx.sceneInfos.get("sg_step").center(100, "-")
+
+        versFile = publishCtx.postPublishInfos["version_file"]
+        sComment = "from {}".format(versFile.name)
+
+        sgVersion = publishCtx.postPublishInfos.get("sg_version")
+        if sgVersion:
+            try:
+                linkAssetVersionsInShotgun(sgVersion, publishCtx.sceneInfos)
+            except Exception as e:
+                if inDevMode():
+                    raise
+                pc.displayWarning(e.message)
 
         sStepCode = self.context["step"]["code"].lower()
 
@@ -1043,134 +1053,8 @@ class SceneManager():
         content = self.context['damProject']._shotgundb.getShotAssets(self.context['entity']['code'])
         return content if content is not None else []
 
-    def getFileTagFromPath(self, in_sPath):
-        """Detect the filetag (resource) from an asset path, when we don't have the shotgun info, right now it'll just say 'NONE'"""
-        return notFoundvalue
-
     def listRelatedAssets(self):
-        """Compare Shotgun shot<=>assets linking and scene content"""
-        logMsg(log='all')
-
-        astShotConnList = self.getShotgunContent()
-        assetShotConnDct = dict((d['asset']['name'].lower(), d) for d in astShotConnList)
-
-        assetDataList = []
-
-        proj = self.context['damProject']
-        astLib = proj.getLibrary("public", "asset_lib")
-
-        initData = {'name':'',
-                    'sg_info':noneValue,
-                    'sg_asset_shot_conn':None,
-                    'resource':noneValue,
-                    'path':"",
-                    'maya_refs':{},
-                    'file_refs':[],
-                    'occurences':0 }
-
-        sFoundAstList = []
-        oFileRefDct = {}
-        for oFileRef in pc.iterReferences():
-
-            sRefPath = pathResolve(oFileRef.path)
-
-            sRefNormPath = normCase(sRefPath)
-            if sRefNormPath in oFileRefDct:
-                oFileRefDct[sRefNormPath].append(oFileRef)
-                continue
-            else:
-                oFileRefDct[sRefNormPath] = [oFileRef]
-
-            pathData = proj.contextFromPath(sRefPath, library=astLib, warn=False)
-
-            astData = initData.copy()
-            astData.update(path=sRefPath, file_refs=oFileRefDct[sRefNormPath])
-
-            if not pathData:
-                assetDataList.append(astData)
-                continue
-
-            astData.update(pathData)
-
-            sAstKey = astData["name"].lower()
-            if sAstKey in assetShotConnDct:
-                astData.update(sg_info=okValue, sg_asset_shot_conn=assetShotConnDct[sAstKey])
-                sFoundAstList.append(sAstKey)
-
-            assetDataList.append(astData)
-
-        for sAstKey, astShotConn in assetShotConnDct.iteritems():
-            if sAstKey not in sFoundAstList:
-                astData = initData.copy()
-                astData.update(name=astShotConn['asset']['name'], sg_info=okValue,
-                               sg_asset_shot_conn=astShotConn)
-                assetDataList.append(astData)
-
-        allMyaFileDct = {}
-        allMyaFileList = []
-        for astData in assetDataList:
-
-            sAstName = astData['name']
-            if not sAstName:
-                continue
-
-            damAst = DamAsset(proj, name=sAstName)
-            drcLib = damAst.getLibrary()
-
-            entryFromPath = lambda p: proj.entryFromPath(p, library=drcLib, dbNode=False)
-            mayaRcIter = damAst.iterMayaRcItems(filter="*_ref")
-            mayaFileItems = tuple((n, entryFromPath(p)) for n, p in mayaRcIter)
-
-            allMyaFileDct[sAstName] = mayaFileItems
-            allMyaFileList.extend(f for _, f in mayaFileItems if f)
-
-        dbNodeList = proj.dbNodesForResources(allMyaFileList)
-        for mrcFile, dbNode in izip(allMyaFileList, dbNodeList):
-            if not dbNode:
-                mrcFile.getDbNode(fromCache=False)
-
-        for astData in assetDataList:
-
-            sAstName = astData['name']
-            if not sAstName:
-                continue
-
-            mayaFileItems = allMyaFileDct[sAstName]
-
-            astRcDct = {}
-            for sRcName, mrcFile in mayaFileItems:
-
-                rcDct = {"drc_file":mrcFile, "status":okValue}
-                astRcDct[sRcName] = rcDct
-
-                if not mrcFile:
-                    sMsg = noneValue
-                    rcDct["status"] = sMsg
-                    continue
-
-#                cachedDbNode = mrcFile.getDbNode(fromDb=False)
-#                if cachedDbNode:
-#                    mrcFile.refresh(simple=True)
-#                else:
-#                    mrcFile.getDbNode(fromCache=False)
-
-                if not mrcFile.currentVersion:
-                    sMsg = "NO VERSION"
-                    rcDct["status"] = sMsg
-                    continue
-
-                try:
-                    mrcFile.assertUpToDate(refresh=False)
-                except AssertionError as e:
-                    pc.displayWarning(e.message)
-                    sMsg = "OUT OF SYNC"
-                    rcDct["status"] = sMsg
-                    continue
-
-            astData["maya_refs"] = astRcDct
-            astData["occurences"] = len(astData["file_refs"])
-
-        return assetDataList
+        return listRelatedAssets(self.getDamShot())
 
     def updateSceneAssets(self):
         """Updates scene Assets from shotgun shot<=>assets linking"""
@@ -1185,7 +1069,7 @@ class SceneManager():
 
         count = 0
         for astData in assetDataList:
-            # print '**          astData["sg_info"] ' + str(astData['sg_info'])
+            # print '**          astData["sg_link"] ' + str(astData['sg_link'])
             # print '**          astData["scn_info"] ' + str(astData['scn_info'])
             # print '**          astData["path"]' + str(astData['path'])
 
@@ -1194,7 +1078,7 @@ class SceneManager():
 
             try:
                 # get_File_By_DAVOS methodes
-                rcData = astData["maya_refs"].get(sCurRefTag)
+                rcData = astData["maya_rcs"].get(sCurRefTag)
                 if not rcData:
                     continue
 
@@ -1259,13 +1143,13 @@ class SceneManager():
         scnSgAstList = sg.find("Asset", filters, ["code", "parents", "sg_sous_type"])
 
         addSgAstList = (sgAst for sgAst in scnSgAstList
-                        if assetDataDct[sgAst["code"]]["sg_info"] == noneValue)
+                        if assetDataDct[sgAst["code"]]["sg_link"] == noneValue)
 
         addSgAstDct = dict((d["parents"][0]["name"], d)
                                 for d in addSgAstList if  d["parents"])
 
         remSgAstList = tuple(d["sg_asset_shot_conn"]["asset"] for d in assetDataList
-                             if d["sg_info"] == okValue and d["resource"] == noneValue)
+                             if d["sg_link"] == okValue and d["resource"] == noneValue)
 
         sMsgList = []
         for remSgAst in remSgAstList:

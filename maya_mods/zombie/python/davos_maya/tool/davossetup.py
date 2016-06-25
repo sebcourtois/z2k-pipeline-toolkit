@@ -44,9 +44,9 @@ def doPublish(*args):
 
     scnInfos = infosFromScene(fail=False)
     if isinstance(scnInfos["dam_entity"], DamShot):
-        raise TypeError("Shots can only be published from Scene Manager.")
+        raise TypeError("Shots can ONLY be published from Scene Manager.")
 
-    publishing.publishCurrentScene(sceneInfos=scnInfos)
+    return publishing.publishCurrentScene(sceneInfos=scnInfos)
 
 class DavosSetup(ToolSetup):
 

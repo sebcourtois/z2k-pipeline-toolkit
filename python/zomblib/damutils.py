@@ -1,6 +1,7 @@
 
 import sys
 import os
+from collections import OrderedDict
 
 from PySide import QtGui
 from PySide.QtGui import QTreeWidgetItemIterator
@@ -48,7 +49,6 @@ def shotsFromShotgun(project=None, dialogParent=None):
 
     treeDataList = []
     for sgShot in sgShotList:
-
         sEntiTreePath = pathJoin(sgShot["sg_sequence"]["name"], sgShot["code"])
         roleData = {Qt.UserRole:(0, sgShot)}
         treeDataList.append({"path":sEntiTreePath, "flags":None, "roles":roleData})
@@ -74,6 +74,24 @@ def shotsFromShotgun(project=None, dialogParent=None):
                 return bOk, sgShotList
         else:
             return bOk, tuple()
+
+def exportAssetTypePerShotCsv(proj):
+
+    filters = [["asset.Asset.code", "starts_with", "fxp_"], ]
+    astShotConnList = proj._shotgundb.sg.find("AssetShotConnection", filters, ["shot.Shot.code", "asset.Asset.code"])
+
+    fxpPerShots = OrderedDict()
+    for sgConn in astShotConnList:
+        #pprint(sgConn)
+        fxpPerShots.setdefault(sgConn["shot.Shot.code"], []).append(sgConn["asset.Asset.code"])
+
+    import csv
+
+    with open(r"C:\Users\sebcourtois\Downloads\fxpPerShots.csv", "wb") as csvFile:
+        writer = csv.writer(csvFile, delimiter="|")
+        for k, v in fxpPerShots.iteritems():
+            print k, v
+            writer.writerow((k, "\r\n".join(v)))
 
 def initProject(sProjName=""):
 

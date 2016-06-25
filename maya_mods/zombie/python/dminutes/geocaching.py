@@ -13,8 +13,7 @@ from pymel.util.arguments import listForNone
 import pymel.core as pm
 
 from pytd.util.qtutils import setWaitCursor
-from pytd.util.fsutils import pathJoin, jsonWrite, jsonRead, pathResolve, \
-    pathRelativeTo
+from pytd.util.fsutils import pathJoin, jsonWrite, jsonRead, pathRelativeTo
 from pytd.util.sysutils import grouper, argToSet
 
 from pytaya.util import apiutils as myapi
@@ -170,7 +169,7 @@ def _confirmProcessing(sProcessLabel, **kwargs):
 
         sButtonList = ['All', 'Cancel']
         if sGeoGrpList:
-            sButtonList = ['All', '{} Selected'.format(len(sGeoGrpList)), 'Cancel']
+            sButtonList.insert(0, '{} Selected'.format(len(sGeoGrpList)))
 
         sRes = pm.confirmDialog(title='DO YOU WANT TO...',
                                 message=sMsg,
