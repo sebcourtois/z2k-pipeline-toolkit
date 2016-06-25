@@ -627,7 +627,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=8, e=True)
+        self.pBar_upd(step=1, maxValue=10, e=True)
 
         meshCacheObjL = jpZ.getSetContent(inSetL=["set_meshCache"] ) 
         geoTransformList,instanceTransformL = miscUtils.getAllTransfomMeshes("asset|grp_geo")
@@ -790,6 +790,37 @@ class checkModule(object):
         if not resultD["resultB"]:
             boolResult = False
         self.pBar_upd(step= 1,)
+
+
+        # 11   lookFor bump Nodes
+        self.printF("asset conformation:   lookFor bump Nodes", st="t")
+        resultD = assetconformation.lookForBumpNodes(gui = self.GUI)
+        # prints -------------------
+
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+        # 12   dmnToon to aiSurface
+        self.printF("asset conformation:   dmnToon to aiSurface", st="t")
+        resultD = assetconformation.dmnToon2aiSurface(gui = self.GUI)
+        # prints -------------------
+
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
+
 
 
 
