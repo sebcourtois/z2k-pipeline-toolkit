@@ -20,6 +20,7 @@ from pytaya.util import apiutils as myapi
 #from pytaya.core import system as myasys
 from davos_maya.tool import reference as myaref, dependency_scan
 from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
+from davos_maya.tool.general import iterGeoGroups
 
 from dminutes import maya_scene_operations as mop
 from pytaya.core.general import lsNodes
@@ -28,30 +29,6 @@ LOGGING_SETS = []
 USE_LOGGING_SETS = True
 LAUNCH_TIME = None
 UNUSED_TRANSFER_NODES = []
-
-def iterGeoGroups(**kwargs):
-
-    bSelected = kwargs.get("selected", kwargs.get("sl", False))
-    sObjList = kwargs.get("among", None)
-    sNmspcList = kwargs.get("namespaces", None)
-
-    if sObjList:
-        bSelected = False
-
-    if bSelected:
-        sObjList = mc.ls(sl=True, dag=True, type="shape", ni=True)
-        sNmspcList = set(o.rsplit("|", 1)[-1].rsplit(":", 1)[0] for o in sObjList)
-    elif sNmspcList is None:
-        sNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
-
-    for sNmspc in sNmspcList:
-
-        if sNmspc.endswith("_cache"):
-            continue
-
-        sGeoGrp = sNmspc + ":grp_geo"
-        if mc.objExists(sGeoGrp):
-            yield sGeoGrp
 
 def withParallelEval(func):
     def doIt(*args, **kwargs):

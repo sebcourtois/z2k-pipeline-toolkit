@@ -111,6 +111,15 @@ class shot_lib(object):
                     "{name}_anim.ma -> anim_scene":None,
                     "{name}_anim.mov -> anim_capture":None,
                     "{name}_ref.mov -> animRef_movie":None,
+
+                    "{name}_animSplitA.ma -> animSplitA_scene":None,
+                    "{name}_animSplitA.mov -> animSplitA_capture":None,
+
+                    "{name}_animSplitB.ma -> animSplitB_scene":None,
+                    "{name}_animSplitB.mov -> animSplitB_capture":None,
+
+                    "{name}_animSplitC.ma -> animSplitC_scene":None,
+                    "{name}_animSplitC.mov -> animSplitC_capture":None,
                    },
                 "{step:05_charFx} -> charFx_dir":
                    {
@@ -137,7 +146,7 @@ class shot_lib(object):
                    "06_finalLayout":"Final Layout",
                    }
 
-    resources_settings = {
+    resource_settings = {
     "previz_scene":{"outcomes":("previz_capture",),
                     "create_sg_version":True,
                     "sg_uploaded_movie":"previz_capture",
@@ -167,6 +176,24 @@ class shot_lib(object):
                   "sg_path_to_movie":"anim_capture",
                   "sg_tasks":("animation",),
                   },
+    "animSplitA_scene":{"outcomes":("animSplitA_capture",),
+                        "create_sg_version":True,
+                        "sg_uploaded_movie":"animSplitA_capture",
+                        "sg_path_to_movie":"animSplitA_capture",
+                        "sg_tasks":("animation",),
+                        },
+    "animSplitB_scene":{"outcomes":("animSplitB_capture",),
+                        "create_sg_version":True,
+                        "sg_uploaded_movie":"animSplitB_capture",
+                        "sg_path_to_movie":"animSplitB_capture",
+                        "sg_tasks":("animation",),
+                        },
+    "animSplitC_scene":{"outcomes":("animSplitC_capture",),
+                        "create_sg_version":True,
+                        "sg_uploaded_movie":"animSplitC_capture",
+                        "sg_path_to_movie":"animSplitC_capture",
+                        "sg_tasks":("animation",),
+                        },
 
     "charFx_scene":{"outcomes":("charFx_capture",),
                     "create_sg_version":True,
@@ -175,10 +202,7 @@ class shot_lib(object):
                     "sg_tasks":("charfx",),
                     },
 
-    "finalLayout_scene":{#"outcomes":("finalLayout_movie", "arlequin_movie"),
-                         "create_sg_version":True,
-                         #"sg_uploaded_movie":"finalLayout_movie",
-                         #"sg_path_to_movie":"finalLayout_movie",
+    "finalLayout_scene":{"create_sg_version":True,
                          "sg_tasks":("final layout",),
                          "dependency_types": {
                             "geoCache_dep":{"public_loc":"finalLayoutCache_dir",
@@ -213,20 +237,14 @@ class shot_lib(object):
                         "sg_status":"rev",
                         },
 
-    "data_dir":{"default_sync_rules":["all_sites"],
-                },
-    "previz_dir":{"default_sync_rules":["all_sites"],
-                  },
-    "layout_dir":{"default_sync_rules":["all_sites"],
-                  },
-    "anim_dir":{"default_sync_rules":["online", "dmn_paris",
-                                      "dream_wall", "pipangai"],
-                },
-    "finalLayout_dir":{"default_sync_rules":["all_sites"],
-                       },
+    "data_dir":{"default_sync_rules":["all_sites"], },
+    "previz_dir":{"default_sync_rules":["all_sites"], },
+    "layout_dir":{"default_sync_rules":["all_sites"], },
+    "anim_dir":{"default_sync_rules":["all_sites"], },
+    "finalLayout_dir":{"default_sync_rules":["all_sites"], },
     "finalLayoutCache_dir":{"default_sync_rules":["online", "dmn_paris",
-                                                  "dream_wall", "dmn_angouleme"],
-                            },
+                                                  "dream_wall", "dmn_angouleme"], },
+    "charFx_dir":{"default_sync_rules":["all_sites"], },
     }
 
 class output_lib(object):
@@ -275,7 +293,7 @@ class asset_lib(object):
 
     entity_dir = "{assetType}/{name}"
 
-    resources_settings = {
+    resource_settings = {
     "modeling_scene":{"create_sg_version":True,
                       "sg_steps":("Model HD", "Surfacing"),
                       },
@@ -385,11 +403,12 @@ class character3d(object):
         },
     }
 
-    resources_settings = {
-    "texture_dir":{"per_ext_sync_rules":{".psd":["online", "dmn_paris", "dmn_angouleme"]},
+    resource_settings = {
+    "texture_dir":{"per_ext_sync_rules":{".jpg":["all_sites"],
+                                         ".psd":["online", "dmn_paris", "dmn_angouleme"]},
                    },
     }
-    resources_settings.update(asset_lib.resources_settings)
+    resource_settings.update(asset_lib.resource_settings)
 
     dependency_types = asset_lib.dependency_types
 
@@ -432,7 +451,7 @@ class character2d(object):
         },
     }
 
-    resources_settings = asset_lib.resources_settings
+    resource_settings = asset_lib.resource_settings
     dependency_types = asset_lib.dependency_types
 
 class prop3d(object):
@@ -474,7 +493,13 @@ class prop3d(object):
         },
     }
 
-    resources_settings = asset_lib.resources_settings
+    resource_settings = {
+    "texture_dir":{"per_ext_sync_rules":{".jpg":["all_sites"],
+                                         ".psd":["online", "dmn_paris", "dream_wall"]},
+                   },
+    }
+    resource_settings.update(asset_lib.resource_settings)
+
     dependency_types = asset_lib.dependency_types
 
 class vehicle3d(prop3d):
@@ -518,7 +543,7 @@ class fx_previz(object):
         },
     }
 
-    resources_settings = asset_lib.resources_settings
+    resource_settings = asset_lib.resource_settings
     dependency_types = asset_lib.dependency_types
 
 class crowd_previz(fx_previz):
@@ -569,15 +594,16 @@ class set3d(object):
         },
     }
 
-    resources_settings = {
-    "texture_dir":{"per_ext_sync_rules":{".jpg":["all_sites"]},
+    resource_settings = {
+    "texture_dir":{"per_ext_sync_rules":{".jpg":["all_sites"],
+                                         ".psd":["online", "dmn_paris", "dream_wall"]},
                    "default_sync_rules":["online", "dmn_paris",
-                                        "dream_wall", "dmn_angouleme"],
+                                         "dream_wall", "dmn_angouleme"],
                    },
     "geometry_dir":{"free_to_publish":True,
                     },
     }
-    resources_settings.update(asset_lib.resources_settings)
+    resource_settings.update(asset_lib.resource_settings)
 
     dependency_types = asset_lib.dependency_types
 

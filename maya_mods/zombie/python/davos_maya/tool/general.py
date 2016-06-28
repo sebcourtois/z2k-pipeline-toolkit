@@ -240,3 +240,27 @@ def listRelatedAssets(damShot):
         astData["occurences"] = len(astData["file_refs"])
 
     return assetDataList
+
+def iterGeoGroups(**kwargs):
+
+    bSelected = kwargs.get("selected", kwargs.get("sl", False))
+    sObjList = kwargs.get("among", None)
+    sNmspcList = kwargs.get("namespaces", None)
+
+    if sObjList:
+        bSelected = False
+
+    if bSelected:
+        sObjList = mc.ls(sl=True, dag=True, type="shape", ni=True)
+        sNmspcList = set(o.rsplit("|", 1)[-1].rsplit(":", 1)[0] for o in sObjList)
+    elif sNmspcList is None:
+        sNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
+
+    for sNmspc in sNmspcList:
+
+        if sNmspc.endswith("_cache"):
+            continue
+
+        sGeoGrp = sNmspc + ":grp_geo"
+        if mc.objExists(sGeoGrp):
+            yield sGeoGrp

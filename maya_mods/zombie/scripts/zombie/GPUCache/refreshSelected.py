@@ -1,4 +1,4 @@
 
 from dminutes import gpucaching
 reload(gpucaching)
-gpucaching.refreshSelected()
+gpucaching.refreshGpuNodes(selected=True)

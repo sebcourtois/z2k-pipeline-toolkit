@@ -13,133 +13,34 @@ from pytaya.core import modeling
 from pytaya.core import rendering
 from pytaya.util.sysutils import withSelectionRestored
 
-from davos_maya.tool.general import entityFromScene
+from davos_maya.tool.general import infosFromScene, iterGeoGroups
+
 from dminutes import maya_scene_operations as mop
-from dminutes.geocaching import iterGeoGroups
 
 reload(modeling)
 reload(rendering)
 reload(mop)
 
 
-def hideXfm(sShapePath):
-    return mc.setAttr(mc.listRelatives(sShapePath, parent=True, path=True)[0] + ".visibility", False)
-
-def isMeshVisible(sMeshPath):
-
-    if not mc.getAttr(sMeshPath + ".visibility"):
-        return False
-
-    return mc.getAttr(mc.listRelatives(sMeshPath, parent=True, path=True)[0] + ".visibility")
-
-def iterMeshesToExport(sGeoGrp):
-
-    for sMeshPath in mc.ls(sGeoGrp, dag=True, type="mesh", ni=True):
-
-        sMeshName = sMeshPath.rsplit("|", 1)[-1].rsplit(":", 1)[-1].lower()
-
-        if sMeshName.startswith("geo_outline"):
-            hideXfm(sMeshPath)
-            continue
-
-        if not isMeshVisible(sMeshPath):
-            continue
-
-        if sMeshName.startswith("geo_"):
-            yield sMeshPath
-            continue
-
-        hideXfm(sMeshPath)
-
-def _batchExport(sOutDirPath, startTime, endTime, bakeCamera):
-
-    if (not inDevMode()) and (not mc.about(batch=True)):
-        raise RuntimeError("Must be called in batch mode.")
-
-    if mc.evaluationManager(q=True, mode=True) != "parallel":
-        mc.evaluationManager(e=True, mode="parallel")
-
-    mc.undoInfo(state=False)
-
-    sGeoGrpList = mc.ls("*:grp_geo")
-    if not sGeoGrpList:
-        return
-
-    for sGeoGrp in sGeoGrpList:
-
-            mc.setAttr(sGeoGrp + ".smoothLevel1", 0)
-            if mc.getAttr(sGeoGrp + ".smoothLevel2") > 1:
-                mc.setAttr(sGeoGrp + ".smoothLevel2", 1)
-
-            sGeoMeshList = list(iterMeshesToExport(sGeoGrp))
-
-            modeling.bakeDiffuseToVertexColor(meshes=sGeoMeshList, ambient=0.0, camera=bakeCamera)
-            modeling.disableVertexColorDisplay(meshes=sGeoMeshList)
-            oShaderList = rendering.shadersFromObjects(sGeoMeshList, connectedTo="surfaceShader")
-            rendering.duplicateShadersPerObject(oShaderList)
-            oShaderList = rendering.shadersFromObjects(sGeoMeshList, connectedTo="surfaceShader")
-            rendering.averageVertexColorsToMaterial(oShaderList)
-            mc.select(cl=True)
-
-    try:
-        sMelCmd = r'int $frame = frame;print ("frame: "+$frame+"\n");'
-        sExprNode = mc.expression(s=sMelCmd, ae=True, uc="all")
-
-        mc.gpuCache(sGeoGrpList, startTime=startTime, endTime=endTime,
-                    optimize=True, optimizationThreshold=40000,
-                    writeMaterials=True, dataFormat="ogawa",
-                    #showStats=True, showFailed=True, showGlobalStats=True,
-                    filePrefix="gpu_", clashOption="nodeName", directory=sOutDirPath)
-    finally:
-        mc.delete(sExprNode)
-
 @withSelectionRestored
-def importGpuCache(sBaseName):
+def exportFromAssets(selected=False, namespaces=None, outputDir=""):
 
-    damShot = entityFromScene()
-    sAbcDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
-    sAbcPath = pathJoin(sAbcDirPath, sBaseName + ".abc")
+    scnInfos = infosFromScene()
+    damShot = scnInfos["dam_entity"]
 
-    if not osp.isfile(sAbcPath):
-        pm.displayInfo("No GPU cache file: '{}'.".format(sAbcPath))
-        return
-
-    statinfo = os.stat(sAbcPath)
-
-    sGpuGrp = "|shot|grp_gpuCache"
-    if not mc.objExists(sGpuGrp):
-        mc.createNode("transform", n="grp_gpuCache", parent="shot")
-
-    sGpuShape = mc.createNode("gpuCache", n=sBaseName + "Shape")
-    mc.addAttr(sGpuShape, ln="cacheFileMtime", at="long", dv=0)
-    mc.addAttr(sGpuShape, ln="cacheFileSize", at="long", dv=0)
-
-    sGpuXfm = mc.listRelatives(sGpuShape, parent=True, path=True)[0]
-    mc.rename(sGpuXfm, sBaseName)
-    mc.parent(sGpuXfm, sGpuGrp)
-
-    mc.setAttr(sGpuShape + ".cacheFileName", sAbcPath, type="string")
-    mc.setAttr(sGpuShape + ".cacheGeomPath", "|", type="string")
-    mc.setAttr(sGpuShape + ".cacheFileMtime", long(statinfo.st_mtime))
-    mc.setAttr(sGpuShape + ".cacheFileSize", statinfo.st_size)
-
-    return sGpuXfm, sGpuShape
-
-@withSelectionRestored
-def exportSelected():
-
-    damShot = entityFromScene()
-
-    sGeoGrpList = tuple(iterGeoGroups(sl=True))
+    sGeoGrpList = tuple(iterGeoGroups(sl=selected, namespaces=namespaces))
     if not sGeoGrpList:
         sMsg = "No geo groups found{}".format(" from selection.")
         raise RuntimeError(sMsg)
 
     sShotCam = mop.getShotCamera(damShot.name, fail=True).name()
 
-    sAbcDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
-    if not osp.exists(sAbcDirPath):
-        os.makedirs(sAbcDirPath)
+    if outputDir:
+        sOutDirPath = outputDir
+    else:
+        sOutDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
+        if not osp.exists(sOutDirPath):
+            os.makedirs(sOutDirPath)
 
     sSelList = list(s.replace(":grp_geo", ":asset") for s in sGeoGrpList)
     mc.select(sSelList + [sShotCam], r=True)
@@ -147,7 +48,7 @@ def exportSelected():
     mc.currentTime(101)
     mc.refresh()
     try:
-        sFilePath = pm.exportSelected(pathJoin(sAbcDirPath, "export_gpuCache_tmp.mb"),
+        sFilePath = pm.exportSelected(pathJoin(sOutDirPath, "export_gpuCache_tmp.mb"),
                                       type="mayaBinary",
                                       preserveReferences=False,
                                       shader=True,
@@ -170,10 +71,10 @@ def exportSelected():
 #                 pm.playbackOptions(q=True, maxTime=True))
 
     sPyCmd = "from dminutes import gpucaching;reload(gpucaching);"
-    sPyCmd += "gpucaching._batchExport('{}',{},{},'{}');".format(sAbcDirPath,
-                                                                 timeRange[0],
-                                                                 timeRange[1],
-                                                                 sShotCam)
+    sPyCmd += "gpucaching._doExportGpuCaches('{}',{},{},'{}');".format(sOutDirPath,
+                                                                    timeRange[0],
+                                                                    timeRange[1],
+                                                                    sShotCam)
     sMelCmd = "python(\"{}\"); quit -f;".format(sPyCmd)
 
     sCmdArgs = [sPython27Path,
@@ -197,8 +98,42 @@ def exportSelected():
 
     pm.displayInfo("GPU caches are being exported from another maya process...")
 
+@withSelectionRestored
+def importGpuCache(sAbcPath):
+
+    if not osp.isfile(sAbcPath):
+        pm.displayInfo("No GPU cache file: '{}'.".format(sAbcPath))
+        return
+
+    statinfo = os.stat(sAbcPath)
+    sNodeName, _ = osp.splitext(osp.basename(sAbcPath))
+
+    sGpuGrp = "|shot|grp_gpuCache"
+    if not mc.objExists(sGpuGrp):
+        mc.createNode("transform", n="grp_gpuCache", parent="|shot", skipSelect=True)
+
+    sGpuShape = mc.createNode("gpuCache", n=sNodeName + "Shape", skipSelect=True)
+    mc.addAttr(sGpuShape, ln="cacheFileMtime", at="long", dv=0)
+    mc.addAttr(sGpuShape, ln="cacheFileSize", at="long", dv=0)
+
+    sGpuXfm = mc.listRelatives(sGpuShape, parent=True, path=True)[0]
+    mc.rename(sGpuXfm, sNodeName)
+    mc.parent(sGpuXfm, sGpuGrp)
+
+    mc.setAttr(sGpuShape + ".cacheFileName", sAbcPath, type="string")
+    mc.setAttr(sGpuShape + ".cacheGeomPath", "|", type="string")
+    mc.setAttr(sGpuShape + ".cacheFileMtime", long(statinfo.st_mtime))
+    mc.setAttr(sGpuShape + ".cacheFileSize", statinfo.st_size)
+
+    return sGpuXfm, sGpuShape
+
 @mop.withoutUndo
 def toggleSelected():
+
+    scnInfos = infosFromScene()
+    damShot = scnInfos["dam_entity"]
+
+    sAbcDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
 
     sToSelList = []
 
@@ -207,14 +142,15 @@ def toggleSelected():
     for sGeoGrp in iterGeoGroups(sl=True):
 
         sGpuXfm = "gpu_" + sGeoGrp.replace(":", "_")
-        sNspc = sGeoGrp.rsplit("|", 1)[-1].rsplit(":", 1)[0]
+        sNmspc = sGeoGrp.rsplit("|", 1)[-1].rsplit(":", 1)[0]
 
-        sAstGrp = sNspc + ":asset"
+        sAstGrp = sNmspc + ":asset"
         if not mc.getAttr(sAstGrp + ".visibility"):
             continue
 
         if not mc.objExists(sGpuXfm):
-            if not importGpuCache(sGpuXfm):
+            sAbcPath = pathJoin(sAbcDirPath, sGpuXfm + ".abc")
+            if not importGpuCache(sAbcPath):
                 continue
 
         mc.setAttr(sAstGrp + ".visibility", False)
@@ -249,13 +185,18 @@ def toggleSelected():
     if sToSelList:
         mc.select(sToSelList, r=True)
 
-def setAllCacheVisible(bShow):
+def setAllCachesVisible(bShow):
+
+    scnInfos = infosFromScene()
+    damShot = scnInfos["dam_entity"]
+
+    sAbcDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
 
     sToSelList = []
 
     for sGeoGrp in tuple(iterGeoGroups()):
 
-        print sGeoGrp
+        #print sGeoGrp
 
         sGpuXfm = "gpu_" + sGeoGrp.replace(":", "_")
         sNspc = sGeoGrp.rsplit("|", 1)[-1].rsplit(":", 1)[0]
@@ -264,7 +205,8 @@ def setAllCacheVisible(bShow):
 
         bGpuXfmFound = mc.objExists(sGpuXfm)
         if bShow and not bGpuXfmFound:
-            if not importGpuCache(sGpuXfm):
+            sAbcPath = pathJoin(sAbcDirPath, sGpuXfm + ".abc")
+            if not importGpuCache(sAbcPath):
                 continue
 
         mc.setAttr(sAstGrp + ".visibility", not bShow)
@@ -281,7 +223,27 @@ def setAllCacheVisible(bShow):
 #    if sToSelList:
 #        mc.select(sToSelList, r=True)
 
-def _refreshOne(sGpuNode):
+    return
+
+def refreshGpuNodes(**kwargs):
+
+    bSelected = kwargs.pop("selected", kwargs.pop("sl", False))
+
+    sGpuCacheList = mc.ls(sl=bSelected, dag=True, type="gpuCache")
+    if not sGpuCacheList:
+        sMsg = "No GPU Cache found in selection.\n\nRefresh all GPU Caches ?"
+        sConfirm = pm.confirmDialog(title='DO YOU WANT TO...',
+                                    message=sMsg,
+                                    button=['OK', 'Cancel'],
+                                    icon="question")
+        if sConfirm == 'OK':
+            sGpuCacheList = mc.ls(type="gpuCache")
+
+    if sGpuCacheList:
+        for sGpuShape in sGpuCacheList:
+            _refreshOne(sGpuShape)
+
+def _refreshOne(sGpuNode, force=False):
 
     if mc.objectType(sGpuNode, isType="transform"):
         sGpuShape = mc.listRelatives(sGpuNode, c=True, type="gpuCache", path=True)[0]
@@ -300,12 +262,13 @@ def _refreshOne(sGpuNode):
         pm.displayWarning(toStr(e))
         return
 
-    t = mc.getAttr(sGpuShape + ".cacheFileMtime")
-    s = mc.getAttr(sGpuShape + ".cacheFileSize")
+    if not force:
+        t = mc.getAttr(sGpuShape + ".cacheFileMtime")
+        s = mc.getAttr(sGpuShape + ".cacheFileSize")
 
-    if (s == statinfo.st_size) and (t == long(statinfo.st_mtime)):
-        pm.displayInfo("'{}' already up-to-date: No refresh needed.".format(sGpuShape))
-        return
+        if (s == statinfo.st_size) and (t == long(statinfo.st_mtime)):
+            pm.displayInfo("'{}' already up-to-date: No refresh needed.".format(sGpuShape))
+            return
 
     pm.displayInfo("Refreshing '{}'...".format(sGpuShape))
 
@@ -315,19 +278,79 @@ def _refreshOne(sGpuNode):
 
     return True
 
-def refreshSelected():
+def _doExportGpuCaches(sOutDirPath, startTime, endTime, sCamForBaking):
 
-    sGpuCacheList = mc.ls(sl=True, dag=True, type="gpuCache")
-    if not sGpuCacheList:
-        sMsg = "No GPU Cache found in selection.\n\nRefresh all GPU Caches ?"
-        sConfirm = pm.confirmDialog(title='DO YOU WANT TO...',
-                                    message=sMsg,
-                                    button=['OK', 'Cancel'],
-                                    icon="question")
-        if sConfirm == 'OK':
-            sGpuCacheList = mc.ls(type="gpuCache")
+    if mc.about(batch=True):
+        if mc.evaluationManager(q=True, mode=True) != "parallel":
+            mc.evaluationManager(e=True, mode="parallel")
+        mc.undoInfo(state=False)
 
-    if sGpuCacheList:
-        for sGpuShape in sGpuCacheList:
-            _refreshOne(sGpuShape)
+    sGeoGrpList = mc.ls("*:grp_geo")
+    if not sGeoGrpList:
+        return
 
+    for sGeoGrp in sGeoGrpList:
+
+        sGeoMeshList = list(iterMeshesToExport(sGeoGrp))
+        if not sGeoMeshList:
+            continue
+
+        sObjAttr = sGeoGrp + ".smoothLevel1"
+        if mc.objExists(sObjAttr):
+            mc.setAttr(sObjAttr, 0)
+
+        sObjAttr = sGeoGrp + ".smoothLevel2"
+        if mc.objExists(sObjAttr):
+            if mc.getAttr(sObjAttr) > 1:
+                mc.setAttr(sObjAttr, 1)
+
+        modeling.bakeDiffuseToVertexColor(meshes=sGeoMeshList, ambient=0.0, camera=sCamForBaking)
+        modeling.disableVertexColorDisplay(meshes=sGeoMeshList)
+
+        oShaderList = rendering.shadersFromObjects(sGeoMeshList, connectedTo="surfaceShader")
+        rendering.duplicateShadersPerObject(oShaderList)
+
+        oShaderList = rendering.shadersFromObjects(sGeoMeshList, connectedTo="surfaceShader")
+        rendering.averageVertexColorsToMaterial(oShaderList)
+        mc.select(cl=True)
+
+    try:
+        sMelCmd = r'int $frame = frame;print ("frame: "+$frame+"\n");'
+        sExprNode = mc.expression(s=sMelCmd, ae=True, uc="all")
+
+        mc.gpuCache(sGeoGrpList, startTime=startTime, endTime=endTime,
+                    optimize=True, optimizationThreshold=40000,
+                    writeMaterials=True, dataFormat="ogawa",
+                    #showStats=True, showFailed=True, showGlobalStats=True,
+                    filePrefix="gpu_", clashOption="nodeName", directory=sOutDirPath)
+    finally:
+        mc.delete(sExprNode)
+
+def iterMeshesToExport(sGeoGrp):
+
+    for sMeshPath in mc.ls(sGeoGrp, dag=True, type="mesh", ni=True):
+
+        sMeshName = sMeshPath.rsplit("|", 1)[-1].rsplit(":", 1)[-1].lower()
+
+        if sMeshName.startswith("geo_outline"):
+            hideXfm(sMeshPath)
+            continue
+
+        if not isMeshVisible(sMeshPath):
+            continue
+
+        if sMeshName.startswith("geo_"):
+            yield sMeshPath
+            continue
+
+        hideXfm(sMeshPath)
+
+def hideXfm(sShapePath):
+    return mc.setAttr(mc.listRelatives(sShapePath, parent=True, path=True)[0] + ".visibility", False)
+
+def isMeshVisible(sMeshPath):
+
+    if not mc.getAttr(sMeshPath + ".visibility"):
+        return False
+
+    return mc.getAttr(mc.listRelatives(sMeshPath, parent=True, path=True)[0] + ".visibility")
