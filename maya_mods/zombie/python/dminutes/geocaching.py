@@ -813,16 +813,16 @@ def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
         if onNamespaces and (sObjNmspc not in onNamespaces):
             continue
 
-        bIsGrp = sObjName.lower().startswith("grp_")
+        bWarn = (sObjNmspc.lower().startswith("set_")) and sObjName.lower().startswith("grp_")
 
         sFoundList = mc.ls(sObjPath)
         if not sFoundList:
-            if bIsGrp:
+            if bWarn:
                 sMsg = "Object not found: '{}'".format(sObjPath)
                 pm.displayWarning(sMsg)
             continue
         elif len(sFoundList) > 1:
-            if bIsGrp:
+            if bWarn:
                 sSep = "\n - "
                 sMsg = "Multiple objects named '{}':".format(sObjPath) + sSep
                 sMsg += sSep.join(sFoundList)
