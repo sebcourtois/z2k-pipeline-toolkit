@@ -61,6 +61,10 @@ def autoKeyDisabled(func):
 def getNamespace(sNode):
     return sNode.rsplit("|", 1)[-1].rsplit(":", 1)[0]
 
+def splitNamespace(sNode):
+    res = sNode.rsplit("|", 1)[-1].rsplit(":", 1)
+    return ("", res[0]) if len(res) == 1 else res
+
 def iterConnectedAttrs(sNode, **kwargs):
 
     bSrc = kwargs.pop("source", kwargs.pop("s", True))
@@ -802,21 +806,27 @@ def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
 
     print "\n" + " Importing Layout visibilities ".center(120, "-")
 
-    for sObj, values in layoutData.iteritems():
+    for sObjPath, values in layoutData.iteritems():
 
-        if onNamespaces and (getNamespace(sObj) not in onNamespaces):
+        sObjNmspc, sObjName = splitNamespace(sObjPath)
+
+        if onNamespaces and (sObjNmspc not in onNamespaces):
             continue
 
-        sFoundList = mc.ls(sObj)
+        bIsGrp = sObjName.lower().startswith("grp_")
+
+        sFoundList = mc.ls(sObjPath)
         if not sFoundList:
-            sMsg = "Object not found: '{}'".format(sObj)
-            pm.displayWarning(sMsg)
+            if bIsGrp:
+                sMsg = "Object not found: '{}'".format(sObjPath)
+                pm.displayWarning(sMsg)
             continue
         elif len(sFoundList) > 1:
-            sSep = "\n - "
-            sMsg = "Multiple objects named '{}':".format(sObj) + sSep
-            sMsg += sSep.join(sFoundList)
-            pm.displayWarning(sMsg)
+            if bIsGrp:
+                sSep = "\n - "
+                sMsg = "Multiple objects named '{}':".format(sObjPath) + sSep
+                sMsg += sSep.join(sFoundList)
+                pm.displayWarning(sMsg)
             continue
 
         for sAttr, v in values.iteritems():
@@ -824,7 +834,7 @@ def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
             if "visibility" not in sAttr.lower():
                 continue
 
-            sObjAttr = sObj + "." + sAttr
+            sObjAttr = sObjPath + "." + sAttr
 
             if not mc.objExists(sObjAttr):
                 pm.displayWarning("No such attribute: {}".format(sObjAttr))
@@ -844,9 +854,9 @@ def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
 
             if sAttr == "visibility":
                 if bObjViz:
-                    sMsg = "LAYOUT HIDE: '{}'".format(sObj)
+                    sMsg = "LAYOUT HIDE: '{}'".format(sObjPath)
                 else:
-                    sMsg = "LAYOUT SHOW: '{}'".format(sObj)
+                    sMsg = "LAYOUT SHOW: '{}'".format(sObjPath)
             else:
                 if bObjViz:
                     sMsg = "LAYOUT HIDE: '{}'".format(sObjAttr)
