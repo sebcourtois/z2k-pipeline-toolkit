@@ -807,7 +807,16 @@ def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
         if onNamespaces and (getNamespace(sObj) not in onNamespaces):
             continue
 
-        if not mc.objExists(sObj):
+        sFoundList = mc.ls(sObj)
+        if not sFoundList:
+            sMsg = "Object not found: '{}'".format(sObj)
+            pm.displayWarning(sMsg)
+            continue
+        elif len(sFoundList) > 1:
+            sSep = "\n - "
+            sMsg = "Multiple objects named '{}':".format(sObj) + sSep
+            sMsg += sSep.join(sFoundList)
+            pm.displayWarning(sMsg)
             continue
 
         for sAttr, v in values.iteritems():
@@ -818,7 +827,7 @@ def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
             sObjAttr = sObj + "." + sAttr
 
             if not mc.objExists(sObjAttr):
-                pm.displayInfo("No such attribute: {}".format(sObjAttr))
+                pm.displayWarning("No such attribute: {}".format(sObjAttr))
 
             bObjViz = mc.getAttr(sObjAttr)
             if bObjViz == v:
