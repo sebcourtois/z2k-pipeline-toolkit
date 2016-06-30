@@ -3716,12 +3716,15 @@ def chr_fix_EyebrowUpper_Cst_average(*args, **kwargs):
                 canDo=False
         if canDo:
             for obj in theList:
+
+                print "obj=", obj
                 cstL = getTypeInHierarchy(cursel=obj, theType="constraint")
                 print "*cstL=",cstL
-                if len(cstL):
-                    for j in cstL:
-                        if cmds.objExists(j+"."+ theAttr):
-                            cmds.setAttr(j+"."+ theAttr,theVal)
+                if cstL:
+                    if len(cstL):
+                        for j in cstL:
+                            if cmds.objExists(j+"."+ theAttr):
+                                cmds.setAttr(j+"."+ theAttr,theVal)
 
     return [toReturnB,debugL]
 
@@ -4126,12 +4129,15 @@ def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
     print "curNS=", curNS 
     print "curobj=", curobj
 
+    inverseFactor =1
     # switch the side
     if "Right_" in curobj:
         side = "Right_"
+        inverseFactor = -1
         print "it's Right"
     elif "Left_" in curobj:
         side = "Left_"
+        inverseFactor = 1
         print "it's Left"
 
 
