@@ -10,19 +10,18 @@ import pymel.core as pm
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 
 from pytd.util.fsutils import pathResolve, normCase
-from pytd.util.sysutils import toStr, timer
+from pytd.util.sysutils import toStr
 #from pytd.gui.dialogs import confirmDialog
 
 from pytaya.util.sysutils import withSelectionRestored
 from pytaya.core.reference import processSelectedReferences
 from pytaya.core.reference import listReferences
 
-from davos_maya.tool.general import entityFromScene, projectFromScene, noneValue
-from davos_maya.tool.general import infosFromScene, listRelatedAssets
+from davos_maya.tool.general import entityFromScene, projectFromScene
+#from davos_maya.tool.general import infosFromScene, listRelatedAssets
 
 from dminutes.shotconformation import removeRefEditByAttr
 from davos.core.drctypes import DrcEntry
-
 
 @processSelectedReferences
 def listMayaRcForSelectedRefs(oFileRef, proj, **kwargs):
@@ -643,35 +642,30 @@ def listPrevizRefMeshes(project=None):
 
     return sAllMeshList
 
+def lockAssetRefsToRelatedVersion(relatedAssetList, dryRun=False):
 
-def lockAssetRefsToCurrentVersion(scnInfos=None, assets=None, dryRun=False):
-
-    if scnInfos is None:
-        scnInfos = infosFromScene()
-
-    damShot = scnInfos["dam_entity"]
-
-    sAstKeyList = tuple(s.lower() for s in assets if s) if assets else None
-
-    relatedAssetList = listRelatedAssets(damShot)
     for relAstData in relatedAssetList:
 
-        sAstName = relAstData["name"]
-        if not sAstName:
-            continue
+#        sAstName = relAstData["name"]
+#        if not sAstName:
+#            continue
+#
+#        sRcName = relAstData["resource"]
+#        if sRcName == noneValue:
+#            continue
+#
+#        rcFile = relAstData.get("rc_entry")
+#        if not rcFile:
+#            continue
 
-        if sAstKeyList and sAstName.lower() not in sAstKeyList:
-            continue
+#        if rcFile.isVersionFile():
+#            print "'{}' - already locked to '{}'".format(sAstName, rcFile.name)
+#            continue
 
-        sRcName = relAstData["resource"]
-        if sRcName == noneValue:
+        damAst = relAstData.get("dam_entity")
+        if not damAst:
             continue
-
-        v = relAstData.get("version", -1)
-        if v > -1:
-            print "'{}' - already locked to '{}'{}".format(sAstName, sRcName,
-                                                           " v{:03d}".format(v))
-            continue
+        sAstName = damAst.name
 
         versFile = relAstData["version_file"]
         if not versFile:
@@ -688,35 +682,24 @@ def lockAssetRefsToCurrentVersion(scnInfos=None, assets=None, dryRun=False):
             if not dryRun:
                 oFileRef.replaceWith(sRefPath, **cmdFlags)
 
+def switchAssetRefsToHeadFile(relatedAssetList, dryRun=False):
 
-def switchAssetRefsToHeadFile(scnInfos=None, assets=None, dryRun=False):
-
-    if scnInfos is None:
-        scnInfos = infosFromScene()
-
-    damShot = scnInfos["dam_entity"]
-
-    sAstKeyList = tuple(s.lower() for s in assets if s) if assets else None
-
-    relatedAssetList = listRelatedAssets(damShot)
     for relAstData in relatedAssetList:
 
-        sAstName = relAstData["name"]
-        if not sAstName:
+        damAst = relAstData.get("dam_entity")
+        if not damAst:
+            continue
+        #sAstName = damAst.name
+
+        rcFile = relAstData.get("rc_entry")
+        if not rcFile:
             continue
 
-        if sAstKeyList and sAstName.lower() not in sAstKeyList:
-            continue
-
-        versFile = relAstData.get("rc_entry")
-        if not versFile:
-            continue
-
-        if not versFile.isVersionFile():
+        if not rcFile.isVersionFile():
             continue
 
         try:
-            headFile = versFile.getHeadFile(fail=True, dbNode=False)
+            headFile = rcFile.getHeadFile(fail=True, dbNode=False)
         except Exception as e:
             pm.displayWarning(e.message)
 

@@ -3,6 +3,7 @@
 import os
 import os.path as osp
 from itertools import izip
+from collections import OrderedDict
 
 import maya.cmds as mc
 import pymel.core as pm
@@ -10,7 +11,7 @@ import pymel.util as pmu
 
 from pytd.util.fsutils import pathResolve, normCase
 from davos.core.damproject import DamProject
-from collections import OrderedDict
+from pytd.util.qtutils import setWaitCursor
 
 okValue = 'OK'
 noneValue = 'MISSING'
@@ -95,8 +96,10 @@ def setMayaProject(sProjName, sEnvVar):
 
     return sMayaProjPath
 
-def listRelatedAssets(damShot):
+def listRelatedAssets(damShot, assetNames=None):
     """Compare Shotgun shot<=>assets linking and scene content"""
+
+    sAstKeyList = tuple(s.lower() for s in assetNames if s) if assetNames else None
 
     proj = damShot.project
     astLib = proj.getLibrary("public", "asset_lib")
@@ -136,6 +139,9 @@ def listRelatedAssets(damShot):
         #print sorted(astData.iteritems(), key=lambda x:x[0])
 
         sAstKey = astData["name"].lower()
+        if sAstKey and sAstKeyList and (sAstKey not in sAstKeyList):
+            continue
+
         if sAstKey in assetShotConnDct:
             astData.update(sg_link=okValue, sg_asset_shot_conn=assetShotConnDct[sAstKey])
             sSgAstList.append(sAstKey)
@@ -143,6 +149,10 @@ def listRelatedAssets(damShot):
         assetDataList.append(astData)
 
     for sAstKey, astShotConn in assetShotConnDct.iteritems():
+
+        if sAstKey and sAstKeyList and (sAstKey not in sAstKeyList):
+            continue
+
         if sAstKey not in sSgAstList:
             astData = initData.copy()
             astData.update(name=astShotConn['asset']['name'], sg_link=okValue,
@@ -240,6 +250,104 @@ def listRelatedAssets(damShot):
         astData["occurences"] = len(astData["file_refs"])
 
     return assetDataList
+
+@setWaitCursor
+def getSgRelatedVersionsHistory(scnInfos=None, logInfo=True, limit=0, relatedAssets=None):
+
+    if scnInfos is None:
+        scnInfos = infosFromScene()
+
+    damShot = scnInfos["dam_entity"]
+    proj = scnInfos["project"]
+    sScnRcName = scnInfos["resource"]
+    sgShot = damShot.getSgInfo()
+
+    sAstKeyList = []
+    relAstList = relatedAssets
+    if relAstList is None:
+        relAstList = listRelatedAssets(damShot)
+    if relAstList:
+        sAstKeyList = tuple(d["name"].lower() for d in relAstList if d["name"])
+
+    sSgVersList = tuple(rc.sgVersionName() for rc in (d.get("version_file") for d in relAstList) if rc)
+
+    sgInitVers = {"code":"current scene", "sg_related_asset_versions":sSgVersList,
+                  "description":"", "created_at":None, "sg_task.Task.sg_status_list":""}
+
+    sgShotVersList = [sgInitVers]
+
+    fields = sgInitVers.keys()
+    sgShotVersList += damShot.findSgVersions(resourceName=sScnRcName, sgEntity=sgShot,
+                                             moreFields=fields, limit=limit)
+    for sgShotVers in sgShotVersList:
+
+        sShotVers = sgShotVers["code"]
+
+        if logInfo:
+            print "\n", sShotVers.center(100, "-"), sgShotVers["created_at"]
+
+        sgRelVersList = sgShotVers["sg_related_asset_versions"]
+        if sgRelVersList:
+            if isinstance(sgRelVersList[0], basestring):
+                filters = [["code", "in", tuple(s for s in sgRelVersList)]]
+            else:
+                filters = [["id", "in", tuple(d["id"] for d in sgRelVersList)]]
+            if sAstKeyList:
+                filters.append(["entity.Asset.code", "in", sAstKeyList])
+
+            sgRelVersList = proj.findSgVersions(moreFilters=filters,
+                                                moreFields=["entity",
+                                                            "description",
+                                                            "created_at"])
+
+            if logInfo:
+                print "from 'sg_related_asset_versions'"
+                for i, sgRelVers in enumerate(sgRelVersList):
+                    print i + 1, sgRelVers["code"]
+        else:
+            count = 0
+            sgRelVersList = []
+            for relAstData in relAstList:
+
+                damAst = relAstData.get("dam_entity")
+                if not damAst:
+                    continue
+
+                if "sg_versions" not in relAstData:
+
+                    sRcName = relAstData["resource"]
+
+                    sgAst = None
+                    astShotConn = relAstData['sg_asset_shot_conn']
+                    if astShotConn:
+                        sgAst = astShotConn["asset"]
+
+                    #print damAst, "get assets versions".center(120, "#"), sgAst
+                    sgVersList = damAst.findSgVersions(sRcName, sgEntity=sgAst,
+                                                       moreFields=["entity",
+                                                                   "description",
+                                                                   "created_at"],
+                                                       limit=75)
+                    relAstData["sg_versions"] = sgVersList
+                else:
+                    sgVersList = relAstData["sg_versions"]
+
+                count += 1
+
+                sgVersIter = (d for d in sgVersList if d["created_at"] <= sgShotVers["created_at"])
+                sgVersList = sorted(sgVersIter, key=lambda d:d["created_at"], reverse=True)
+                if sgVersList:
+                    sgRelVers = sgVersList[0]
+                    sgRelVersList.append(sgRelVers)
+                    if logInfo:
+                        print count, sgRelVers["code"]
+                else:
+                    if logInfo:
+                        print count, "None"
+
+        sgShotVers["sg_related_asset_versions"] = sgRelVersList
+
+    return sgShotVersList
 
 def iterGeoGroups(**kwargs):
 
