@@ -1237,7 +1237,7 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
                 'defaultShaderList1','ikSystem','sequenceManager1','defaultColorMgtGlobals','defaultViewColorManager','lightLinker1','layerManager','defaultResolution',
                 'initialMaterialInfo','renderGlobalsList1','dof1','hardwareRenderGlobals','defaultRenderLayer','defaultRenderUtilityList1']
 
-    doNotDelete = ["set_control","set_meshCache","set_subdiv_0", "set_subdiv_1","set_subdiv_2","set_subdiv_3","set_subdiv_init","par_subdiv","defaultArnoldRenderOptions","defaultArnoldFilter","defaultArnoldDriver","defaultArnoldDisplayDriver"]
+    doNotDelete = ["set_control","set_meshCache","set_subdiv_0", "set_subdiv_1","set_subdiv_2","set_subdiv_3","set_subdiv_4","set_subdiv_5","set_subdiv_6","set_subdiv_7","set_subdiv_8","set_subdiv_init","par_subdiv","defaultArnoldRenderOptions","defaultArnoldFilter","defaultArnoldDriver","defaultArnoldDisplayDriver"]
     doNotDelete =  mc.ls(doNotDelete)
 
     if keepRenderLayers == True:
