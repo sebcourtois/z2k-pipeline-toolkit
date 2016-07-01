@@ -1459,7 +1459,7 @@
                </size>
               </property>
               <property name="text">
-               <string>Lock To Current Version</string>
+               <string>Lock To Version...</string>
               </property>
              </widget>
             </item>
@@ -1472,7 +1472,7 @@
                </size>
               </property>
               <property name="text">
-               <string>Switch To Latest Version</string>
+               <string>Switch To Latest File</string>
               </property>
              </widget>
             </item>

@@ -4,7 +4,7 @@ import re
 from itertools import groupby
 
 from PySide import QtGui
-from PySide.QtCore import Qt, QSize
+from PySide.QtCore import Qt
 
 import PIL.Image
 import filecmp
@@ -63,14 +63,6 @@ class DependencyTreeItem(QuickTreeItem):
                     if brush:
                         self.setBackground(c, brush)
 
-class ItemDelegate(QtGui.QStyledItemDelegate):
-
-    def __init__(self, parent=None):
-        super(ItemDelegate, self).__init__(parent)
-
-    def sizeHint(self, option, index):
-        return QtGui.QStyledItemDelegate.sizeHint(self, option, index) + QSize(4, 4)
-
 class DependencyTree(QuickTree):
 
     def __init__(self, parent):
@@ -83,7 +75,8 @@ class DependencyTree(QuickTree):
         QT_STYLE = QtGui.QStyleFactory.create("Plastique")
         self.setStyle(QT_STYLE)
         self.setAlternatingRowColors(True)
-        self.setItemDelegate(ItemDelegate(self))
+
+        self.itemDelegate().setItemMarginSize(4, 4)
 
     def _onItemClicked(self, item):
         userData = item.data(0, Qt.UserRole)
