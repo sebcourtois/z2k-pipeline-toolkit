@@ -4124,72 +4124,99 @@ def chr_HeadTex_switchHD(*args, **kwargs):
 
 def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
     print ("jipe_IKFK_switch_fixFuckingToonKit()")
+    curNS =""
+    curobj = ""
+    cursel=[]
+    cursel = cmds.ls(sl=1)
+    if len(cursel):
+        if ":" in cursel[0]:
+            curNS,curobj = cursel[0].split(":",1)
+            curNS = curNS+":"
+            print "curNS=", curNS 
+            print "curobj=", curobj
+        else: 
+            curNS = ""
+            curobj = cursel[0]
 
-    curNS,curobj = cmds.ls(sl=1)[0].split(":",1)
-    print "curNS=", curNS 
-    print "curobj=", curobj
+        toReselectCtr = curobj
 
-    inverseFactor =1
-    # switch the side
-    if "Right_" in curobj:
-        side = "Right_"
-        inverseFactor = -1
-        print "it's Right"
-    elif "Left_" in curobj:
-        side = "Left_"
-        inverseFactor = 1
-        print "it's Left"
+        # switch the side
+        if "Right_" in curobj:
+            side = "Right_"
+            print "it's Right"
+        elif "Left_" in curobj:
+            side = "Left_"
+            print "it's Left"
 
+        else:
+            cmds.confirmDialog(icon="information",message="Bad Selection,\rPlease select a controler of the Arm to Switch",button="OK",ma="center")
 
-    # switch IK/FK , TOONKIT FUCKING SHIT FIXED
-    inIKBone0 = curNS + ":" + side + "ARM_IK_Bone_0_REF"
-    inIKBone1 = curNS + ":" + side + "ARM_IK_Bone_1_REF"
-    inIKBone0Scale = curNS + ":" + side + "Arm_IK.Bone0_Scale"
-    inIKBone1Scale = curNS + ":" + side + "Arm_IK.Bone1_Scale"
-    inIKEff = curNS + ":" + "TK_" + side + "ARM_IK_Effector"
+        # switch IK/FK , TOONKIT FUCKING SHIT FIXED
+        inIKBone0 = curNS + side + "ARM_IK_Bone_0_REF"
+        inIKBone1 = curNS + side + "ARM_IK_Bone_1_REF"
+        inIKBone0Scale = curNS + side + "Arm_IK.Bone0_Scale"
+        inIKBone1Scale = curNS + side + "Arm_IK.Bone1_Scale"
+        inIKEff = curNS + "TK_" + side + "ARM_IK_Effector"
 
-    inIKControl = curNS + ":" + side + "Arm_IK"
-    inUpV = curNS + ":" + side + "Arm_upV"
-    inFKBone0 = curNS + ":" + side + "Arm_FK_0"
-    inFKBone1 = curNS + ":" + side + "Arm_FK_1"
+        inIKControl = curNS + side + "Arm_IK"
+        inUpV = curNS + side + "Arm_upV"
+        inFKBone0 = curNS + side + "Arm_FK_0"
+        inFKBone1 = curNS + side + "Arm_FK_1"
 
-    inFKEff = curNS + ":" +"TK_" + side + "FK_Effector_Main_Ctrl"
-    inBlendParam = curNS + ":" + side + "Hand_ParamHolder_Main_Ctrl.IkFk"
-    inChilds = [curNS + ":" + side + "Hand_0", curNS + ":" + side + "Arm_Elbow"]
-    inAutoKey = True
+        inFKEff = curNS +"TK_" + side + "FK_Effector_Main_Ctrl"
+        inBlendParam = curNS + side + "Hand_ParamHolder_Main_Ctrl.IkFk"
+        inChilds = [curNS + side + "Hand_0", curNS + side + "Arm_Elbow"]
+        inAutoKey = True
 
-    inFkControl = curNS + ":" + side + "Hand_0"
-    
-    # get the base mode
-    baseMode = cmds.getAttr(inBlendParam)
-    print "inBlendParam=", inBlendParam
-    print "baseMode=",baseMode
-    
-    # get upV coord
-    McoorOld = cmds.xform(inUpV, matrix=True, q=True, worldSpace=True)
-
-    # switching
-    print "switching"
-    tk.toggleIKFK(inIKBone0,inIKBone1,inIKBone0Scale,inIKBone1Scale,inIKEff,inIKControl,inUpV,inFKBone0,inFKBone1,inFKEff,inBlendParam,inChilds,inAutoKey)
-
-    # match ctrs
-    if baseMode <0.5:
-        print "IK mode"
-        # remach ik sur FK et reset FK
-        print "MATCH FK ON IK"
-        # matchByXformMatrix([inFkControl, inIKControl,])
-        # resetCTR([inFkControl])
+        inFkControl = curNS + side + "Hand_0"
         
-    elif baseMode >0.5:
-        print "FK mode"
-        print "MATCH IK ON FK"
-        # remach ik sur FK et reset FK
-        matchByXformMatrix([inFkControl, inIKControl,])
-        resetCTR([inFkControl])
+        # get the base mode
+        baseMode = cmds.getAttr(inBlendParam)
+        print "inBlendParam=", inBlendParam
+        print "baseMode=",baseMode
+        
+        # get upV coord
+        McoorOld = cmds.xform(inUpV, matrix=True, q=True, worldSpace=True)
 
-    # set upV coord
-    cmds.xform(inUpV, m=McoorOld, worldSpace=True)
+        # print objL
+        for i in (inIKBone0,inIKBone1,inIKBone0Scale,inIKBone1Scale,inIKEff,inIKControl,inUpV,inFKBone0,inFKBone1,inFKEff,inBlendParam,inChilds,inAutoKey):
+            print i
 
+        # switching
+        print "switching"
+        tk.toggleIKFK(inIKBone0,inIKBone1,inIKBone0Scale,inIKBone1Scale,inIKEff,inIKControl,inUpV,inFKBone0,inFKBone1,inFKEff,inBlendParam,inChilds,inAutoKey)
+
+        # match ctrs
+        if baseMode <0.5:
+            print "IK mode"
+            print "MATCH FK ON IK"
+            toReselectCtr = inFkControl
+            # remach ik sur FK et reset FK
+            # matchByXformMatrix([inFkControl, inIKControl,])
+            # resetCTR([inFkControl])
+
+        elif baseMode >0.5:
+            print "FK mode"
+            print "MATCH IK ON FK"
+            toReselectCtr = inIKControl
+            # remach ik sur FK et reset FK
+            matchByXformMatrix([inFkControl, inIKControl,])
+            # handle leur puting de 180 sur Y entre FK et IK d'un cote du rig et pas de l autre
+            if "Right_" in curobj:
+                cmds.rotate(-180,inIKControl , rotateY=True,os=1,relative=1)
+
+            resetCTR([inFkControl])
+
+        # set upV coord
+        cmds.xform(inUpV, m=McoorOld, worldSpace=True)
+
+
+        # select the good hand control
+        cmds.select (toReselectCtr)
+
+
+    else:
+            cmds.confirmDialog(icon="information",message="Nothing selected,\rPlease select a controler of the Arm to Switch",button="OK",ma="center")
 # to do textureEditorIsolateSelectSet autoDelete dans cleanScene
 
 # to do: fixe scaling on the hands
