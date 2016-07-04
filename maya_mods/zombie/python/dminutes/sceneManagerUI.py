@@ -2,30 +2,37 @@
 # UI handling for /UI/sceneManagerUIB.ui QT designer file (z2k-pipeline-toolkit\maya_mods\zombie\python\dminutes\UI\sceneManagerUIB.ui)
 #------------------------------------------------------------------
 
-import os
+#import os
+import os.path as osp
 import subprocess
 from functools import partial
 from collections import OrderedDict
 
+from PySide.QtCore import Qt
+
 import maya.cmds as mc
 import pymel.core
 
-from pytd.util.fsutils import pathResolve
-from pytd.util.sysutils import inDevMode, toStr, getCaller
+from pytd.gui.itemviews.utils import toDisplayText
+from pytd.util.fsutils import pathResolve, pathJoin
+from pytd.util.sysutils import inDevMode, toStr, fromUtf8
 from pytd.util.logutils import logMsg
 from pytd.util.qtutils import setWaitCursor
+from pytd.gui.dialogs import QuickTreeDialog
+
+from pytaya.util.sysutils import withSelectionRestored
+from pytaya.util.qtutils import mayaMainWindow
+
+from davos_maya.tool.general import okValue
+from davos_maya.tool.general import getSgRelatedVersionsHistory, listRelatedAssets
+from davos_maya.tool import reference as myaref
 
 from zomblib import rvutils
 
-import dminutes.maya_scene_operations as mop
+from dminutes import maya_scene_operations as mop
 from dminutes import sceneManager
 
-from pytaya.util.sysutils import withSelectionRestored
-from davos_maya.tool.general import okValue
-from davos_maya.tool import reference as myaref
-
-
-osp = os.path
+reload(myaref)
 pc = pymel.core
 
 
@@ -460,9 +467,9 @@ def connectCallbacks():
     pc.button('sm_selectRefs_bt', edit=True, c=doSelectRefs)
     pc.button('sm_updScene_bt', edit=True, c=doUpdateScene)
     pc.button('sm_updShotgun_bt', edit=True, c=doUpdateShotgun)
-    sMsg = "Which assets do you want to lock to current version ?"
+    sMsg = "Which assets do you want to lock to a version ?"
     pc.button('sm_lockVersions_bt', edit=True, c=partial(setAssetVersionsLocked, True, sMsg))
-    sMsg = "Which assets do you want to switch to latest version ?"
+    sMsg = "Which assets do you want to switch to latest file ?"
     pc.button('sm_unlockVersions_bt', edit=True, c=partial(setAssetVersionsLocked, False, sMsg))
 
     pc.button('sm_pouet_bt', edit=True, c=doPouet)
@@ -474,6 +481,10 @@ def iterSelectedAssets():
         yield item.data(32)
 
 def setAssetVersionsLocked(bLock, sConfirmMsg, *args):
+
+    damShot = SCENE_MANAGER.getDamShot()
+#    proj = damShot.project
+#    astLib = proj.getLibrary("public", "asset_lib")
 
     sAstList = tuple(d["name"] for d in iterSelectedAssets())
 
@@ -491,13 +502,75 @@ def setAssetVersionsLocked(bLock, sConfirmMsg, *args):
     elif sRes == 'All':
         sAstList = None
 
+    relAstList = listRelatedAssets(damShot, assetNames=sAstList)
 
     if bLock:
-        myaref.lockAssetRefsToCurrentVersion(assets=sAstList, dryRun=False)
+        sgShotVersList = getSgRelatedVersionsHistory(logInfo=False, limit=25,
+                                                     relatedAssets=relAstList)
+        sgShotVers = chooseSgShotVersion(sgShotVersList)
+        if not sgShotVers:
+            return
+
+        sVersPathDct = dict((d["entity"]["name"].lower(), pathResolve(d["sg_source_file"]))
+                            for d in sgShotVers["sg_related_asset_versions"])
+
+        count = 0
+        for relAst in relAstList:
+            damAst = relAst.get("dam_entity")
+            if not damAst:
+                continue
+            p = sVersPathDct.get(damAst.name.lower())
+            relAst["version_file"] = relAst["library"].getEntry(p, dbNode=False)
+            count += 1
+
+        print (" Switching {} asset refs to versions from {} "
+               .format(count, sgShotVers["code"]).center(120, "-"))
+
+        myaref.lockAssetRefsToRelatedVersion(relAstList, dryRun=False)
     else:
-        myaref.switchAssetRefsToHeadFile(assets=sAstList, dryRun=False)
+        myaref.switchAssetRefsToHeadFile(relAstList, dryRun=False)
 
     doRefreshSceneInfo()
+
+def chooseSgShotVersion(sgShotVersList):
+
+    treeDataList = []
+    for sgShotVers in sgShotVersList:
+        sShotVersPath = pathJoin(sgShotVers["code"])
+        roleData = {Qt.UserRole:(0, sgShotVers)}
+        sComment = fromUtf8(sgShotVers["description"])
+        sTextList = [sgShotVers["code"], sComment,
+                     sgShotVers["sg_task.Task.sg_status_list"],
+                     toDisplayText(sgShotVers["created_at"])]
+        treeDataList.append({"path":sShotVersPath,
+                             "texts":sTextList,
+                             "flags":None, "roles":roleData})
+
+        sgRelVersList = sgShotVers["sg_related_asset_versions"]
+        for sgRelVers in sorted(sgRelVersList, key=lambda d:d["code"]):
+            sAstVersPath = pathJoin(sShotVersPath, sgRelVers["code"])
+            roleData = {Qt.UserRole:(0, sgRelVers)}
+            #sSplitList = sgRelVers["code"].split("_")
+            sComment = fromUtf8(sgRelVers["description"])
+            sTextList = [sgRelVers["code"], sComment, "", toDisplayText(sgRelVers["created_at"])]
+            treeDataList.append({"path":sAstVersPath,
+                                 "texts":sTextList,
+                                 "flags":Qt.NoItemFlags, "roles":roleData})
+
+    dlg = QuickTreeDialog(mayaMainWindow())
+    dlg.resize(600, 500)
+    treeWdg = dlg.treeWidget
+    treeWdg.itemDelegate().setItemMarginSize(2, 2)
+    treeWdg.setHeaderLabels(("Versions From", "Comment", "Status", "Date"))
+    treeWdg.createTree(treeDataList)
+
+    bOk = dlg.exec_()
+    if bOk:
+        selItems = treeWdg.selectedItems()
+        if selItems:
+            return selItems[0].data(0, Qt.UserRole)
+
+    return None
 
 def doPlayLatestCapture(*args):
     bSend = pc.checkBox('sm_sendToRv_chk', query=True, value=True)
@@ -865,7 +938,7 @@ def doRefreshSceneInfo(*args):
         c = numColumns
         if not sAstName:
             p = pathResolve(oFileRefList[0].path).replace("/", "\\")
-            sInfo = "UNKNOWN ASSET: " + p
+            sInfo = "NOT AN ASSET: " + p
             rowData = [rowData[0], sInfo, oFileRefList]
             c = len(rowData) - 1
 
