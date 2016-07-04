@@ -1,0 +1,409 @@
+#! C:/Program Files/Nuke10.0v1/nuke-10.0.1.dll -nx
+version 10.0 v1
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="0" y="0" w="1920" h="1052" screen="0">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1249" stretch="1"/>
+            <splitter orientation="2">
+                <split size="586"/>
+                <dock id="" activePageId="Viewer.1">
+                    <page id="Viewer.1"/>
+                </dock>
+                <split size="412"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                </dock>
+            </splitter>
+            <split size="615"/>
+            <dock id="" activePageId="Properties.1">
+                <page id="Properties.1"/>
+            </dock>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name C:/Users/abeermond/DEVSPACE/git/z2k-pipeline-toolkit/nuke/template/finalLayoutTemplate.nk
+ frame 101
+ first_frame 101
+ last_frame 441
+ lock_range true
+ format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ onScriptLoad nkFinalLayout.compileLayerQuickTime()
+ addUserKnob {20 User}
+ addUserKnob {1 argv0}
+ argv0 "\[argv 0]"
+ addUserKnob {1 argv1}
+ argv1 "\[argv 1]"
+}
+Read {
+ inputs 0
+ format "1920 1038 0 0 1920 1038 1 "
+ first 101
+ last 441
+ origfirst 101
+ origlast 441
+ origset true
+ version 1
+ name in_beauty
+ selected true
+ xpos 89
+ ypos -272
+}
+set N3dd4800 [stack 0]
+Viewer {
+ frame_range 101-441
+ name Viewer1
+ xpos 330
+ ypos 115
+}
+Read {
+ inputs 0
+ format "1920 1038 0 0 1920 1038 1 "
+ first 101
+ last 441
+ origfirst 101
+ origlast 441
+ origset true
+ version 7
+ name in_arlequin
+ xpos -30
+ ypos -272
+}
+Reformat {
+ format "1920 1080 0 0 1920 1080 1 HD_1080"
+ black_outside true
+ pbb true
+ name Reformat1
+ xpos -30
+ ypos -180
+}
+Text2 {
+ font_size_toolbar 100
+ font_width_toolbar 100
+ font_height_toolbar 100
+ cliptype none
+ message "final layout"
+ old_message {{102 105 110 97 108 32 108 97 121 111 117 116}
+   }
+ box {1790.099976 1052.374939 1919.900024 1080.024963}
+ transforms {{0 2}
+   }
+ cursor_position 3
+ global_font_scale 0.25
+ scale {1 1}
+ cursor_initialised true
+ autofit_bbox false
+ initial_cursor_position {{417 250.5}
+   }
+ group_animations {{0} imported: 0 selected: items: "root transform/"}
+ animation_layers {{1 11 1024 778 0 0 1 1 0 0 0 0}
+   }
+ name Text_finalLayout
+ xpos -30
+ ypos -142
+}
+Text2 {
+ font_size_toolbar 100
+ font_width_toolbar 100
+ font_height_toolbar 100
+ cliptype none
+ message "\[metadata input/frame]"
+ old_expression_markers {{0 -1}
+   }
+ box {1.549999237 0.7000000477 46.45000076 20.90000033}
+ transforms {{0 2}
+   }
+ global_font_scale 0.25
+ scale {1 1}
+ cursor_initialised true
+ autofit_bbox false
+ initial_cursor_position {{-1 25.5}
+   }
+ group_animations {{0} imported: 0 selected: items: "root transform/"}
+ animation_layers {{1 11 1024 778 0 0 1 1 0 0 0 0}
+   }
+ name Text_cFrame
+ xpos -30
+ ypos -116
+}
+Text2 {
+ font_size_toolbar 100
+ font_width_toolbar 100
+ font_height_toolbar 100
+ cliptype none
+ message "\[lindex \[split \[metadata input/filename] /] 5]\n\n\n"
+ old_message {{10 10 10}
+   }
+ old_expression_markers {{0 -1}
+   }
+ box {3.237498284 1055.400024 131.9624987 1079.400024}
+ transforms {{0 2}
+   }
+ cursor_position 46
+ global_font_scale 0.25
+ scale {1 1}
+ cursor_initialised true
+ autofit_bbox false
+ initial_cursor_position {{-1 25.5}
+   }
+ group_animations {{0} imported: 0 selected: items: "root transform/"}
+ animation_layers {{1 11 1024 778 0 0 1 1 0 0 0 0}
+   }
+ name Text_user
+ xpos -30
+ ypos -90
+}
+Text2 {
+ font_size_toolbar 100
+ font_width_toolbar 100
+ font_height_toolbar 100
+ cliptype none
+ message "\[lindex \[split \[metadata input/filename] /] 9]\n\n\n"
+ old_message {{10 10 10}
+   }
+ old_expression_markers {{0 -1}
+   }
+ box {755.6187744 1056 966.9812622 1080}
+ transforms {{0 2}
+   }
+ cursor_position 46
+ global_font_scale 0.25
+ scale {1 1}
+ cursor_initialised true
+ autofit_bbox false
+ initial_cursor_position {{-1 25.5}
+   }
+ group_animations {{0} imported: 0 selected: items: "root transform/"}
+ animation_layers {{1 11 1024 778 0 0 1 1 0 0 0 0}
+   }
+ name Text_shotName
+ xpos -30
+ ypos -67
+}
+Text2 {
+ font_size_toolbar 100
+ font_width_toolbar 100
+ font_height_toolbar 100
+ cliptype none
+ message "\[lindex \[split \[metadata input/filename] /] 11]\n\n\n\n"
+ old_message {{114 101 110 100 101 114 45 118 48 48 51 10 10 10 10}
+   }
+ old_expression_markers {{0 10}
+   }
+ box {996.3187256 1056 1207.681274 1080}
+ transforms {{0 2}
+   }
+ global_font_scale 0.25
+ scale {1 1}
+ cursor_initialised true
+ autofit_bbox false
+ initial_cursor_position {{-1 25.5}
+   }
+ group_animations {{0} imported: 0 selected: items: "root transform/"}
+ animation_layers {{1 11 1024 778 0 0 1 1 0 0 0 0}
+   }
+ name Text_shotName1
+ xpos -30
+ ypos -41
+}
+Write {
+ colorspace rec709
+ file_type mov
+ meta_codec avc1
+ meta_encoder mov32
+ mov32_codec avc1
+ mov32_quality High
+ mov32_settings 0000000000000000000000000000019a7365616e0000000100000001000000000000018676696465000000010000000e00000000000000227370746c0000000100000000000000006176633100000000001800000300000000207470726c000000010000000000000000000003000018000000000001000000246472617400000001000000000000000000000000000000530000010000000100000000156d70736f00000001000000000000000000000000186d66726100000001000000000000000000000000000000187073667200000001000000000000000000000000000000156266726100000001000000000000000001000000166d70657300000001000000000000000000000000002868617264000000010000000000000000000000000000000000000000000000000000000000000016656e647300000001000000000000000000000000001663666c67000000010000000000000000004400000018636d66720000000100000000000000006170706c00000014636c75740000000100000000000000000000001c766572730000000100000000000000000003001c00010000
+ mov32_advanced 1
+ mov32_pixel_format {{0} "default (YCbCr  8-bit 422 (2vuy))" "RGBA  8-bit" "YCbCr  8-bit 422 (2vuy)"}
+ mov64_codec ap4h
+ mov64_bitrate 20000
+ mov64_bitrate_tolerance 40000000
+ mov64_quality_min 2
+ mov64_quality_max 31
+ mov64_gop_size 12
+ mov64_b_frames 0
+ checkHashOnRead false
+ version 11
+ in_colorspace linear
+ out_colorspace linear
+ name out_arlequin
+ xpos -30
+ ypos -15
+}
+push $N3dd4800
+Reformat {
+ format "1920 1080 0 0 1920 1080 1 HD_1080"
+ black_outside true
+ pbb true
+ name Reformat2
+ xpos 89
+ ypos -181
+}
+Text2 {
+ font_size_toolbar 100
+ font_width_toolbar 100
+ font_height_toolbar 100
+ cliptype none
+ message "final layout"
+ old_message {{102 105 110 97 108 32 108 97 121 111 117 116}
+   }
+ box {1790.099976 1052.374939 1919.900024 1080.024963}
+ transforms {{0 2}
+   }
+ cursor_position 3
+ global_font_scale 0.25
+ scale {1 1}
+ cursor_initialised true
+ autofit_bbox false
+ initial_cursor_position {{417 250.5}
+   }
+ group_animations {{0} imported: 0 selected: items: "root transform/"}
+ animation_layers {{1 11 1024 778 0 0 1 1 0 0 0 0}
+   }
+ name Text_finalLayout1
+ xpos 89
+ ypos -143
+}
+Text2 {
+ font_size_toolbar 100
+ font_width_toolbar 100
+ font_height_toolbar 100
+ cliptype none
+ message "\[metadata input/frame]"
+ old_expression_markers {{0 -1}
+   }
+ box {1.549999237 0.7000000477 46.45000076 20.90000033}
+ transforms {{0 2}
+   }
+ global_font_scale 0.25
+ scale {1 1}
+ cursor_initialised true
+ autofit_bbox false
+ initial_cursor_position {{-1 25.5}
+   }
+ group_animations {{0} imported: 0 selected: items: "root transform/"}
+ animation_layers {{1 11 1024 778 0 0 1 1 0 0 0 0}
+   }
+ name Text_cFrame1
+ xpos 89
+ ypos -117
+}
+Text2 {
+ font_size_toolbar 100
+ font_width_toolbar 100
+ font_height_toolbar 100
+ cliptype none
+ message "\[lindex \[split \[metadata input/filename] /] 5]\n\n\n"
+ old_message {{10 10 10}
+   }
+ old_expression_markers {{0 -1}
+   }
+ box {3.237498284 1055.400024 131.9624987 1079.400024}
+ transforms {{0 2}
+   }
+ cursor_position 46
+ global_font_scale 0.25
+ scale {1 1}
+ cursor_initialised true
+ autofit_bbox false
+ initial_cursor_position {{-1 25.5}
+   }
+ group_animations {{0} imported: 0 selected: items: "root transform/"}
+ animation_layers {{1 11 1024 778 0 0 1 1 0 0 0 0}
+   }
+ name Text_user1
+ xpos 89
+ ypos -88
+}
+Text2 {
+ font_size_toolbar 100
+ font_width_toolbar 100
+ font_height_toolbar 100
+ cliptype none
+ message "\[lindex \[split \[metadata input/filename] /] 9]\n\n\n"
+ old_message {{10 10 10}
+   }
+ old_expression_markers {{0 -1}
+   }
+ box {755.6187744 1056 966.9812622 1080}
+ transforms {{0 2}
+   }
+ cursor_position 46
+ global_font_scale 0.25
+ scale {1 1}
+ cursor_initialised true
+ autofit_bbox false
+ initial_cursor_position {{-1 25.5}
+   }
+ group_animations {{0} imported: 0 selected: items: "root transform/"}
+ animation_layers {{1 11 1024 778 0 0 1 1 0 0 0 0}
+   }
+ name Text_shotName2
+ xpos 89
+ ypos -62
+}
+Text2 {
+ font_size_toolbar 100
+ font_width_toolbar 100
+ font_height_toolbar 100
+ cliptype none
+ message "\[lindex \[split \[metadata input/filename] /] 11]\n\n\n\n"
+ old_message {{114 101 110 100 101 114 45 118 48 48 51 10 10 10 10}
+   }
+ old_expression_markers {{0 10}
+   }
+ box {996.3187256 1056 1207.681274 1080}
+ transforms {{0 2}
+   }
+ global_font_scale 0.25
+ scale {1 1}
+ cursor_initialised true
+ autofit_bbox false
+ initial_cursor_position {{-1 25.5}
+   }
+ group_animations {{0} imported: 0 selected: items: "root transform/"}
+ animation_layers {{1 11 1024 778 0 0 1 1 0 0 0 0}
+   }
+ name Text_shotName3
+ xpos 89
+ ypos -32
+}
+Write {
+ colorspace rec709
+ file_type mov
+ meta_codec avc1
+ meta_encoder mov32
+ mov32_codec avc1
+ mov32_quality High
+ mov32_settings 0000000000000000000000000000019a7365616e0000000100000001000000000000018676696465000000010000000e00000000000000227370746c0000000100000000000000006176633100000000001800000300000000207470726c000000010000000000000000000003000018000000000001000000246472617400000001000000000000000000000000000000530000010000000100000000156d70736f00000001000000000000000000000000186d66726100000001000000000000000000000000000000187073667200000001000000000000000000000000000000156266726100000001000000000000000001000000166d70657300000001000000000000000000000000002868617264000000010000000000000000000000000000000000000000000000000000000000000016656e647300000001000000000000000000000000001663666c67000000010000000000000000004400000018636d66720000000100000000000000006170706c00000014636c75740000000100000000000000000000001c766572730000000100000000000000000003001c00010000
+ mov32_advanced 1
+ mov32_pixel_format {{0} "default (YCbCr  8-bit 422 (2vuy))" "RGBA  8-bit" "YCbCr  8-bit 422 (2vuy)"}
+ mov64_codec ap4h
+ mov64_bitrate 20000
+ mov64_bitrate_tolerance 40000000
+ mov64_quality_min 2
+ mov64_quality_max 31
+ mov64_gop_size 12
+ mov64_b_frames 0
+ first 101
+ last 105
+ checkHashOnRead false
+ version 16
+ in_colorspace linear
+ out_colorspace linear
+ name out_beauty
+ xpos 89
+ ypos -6
+}
