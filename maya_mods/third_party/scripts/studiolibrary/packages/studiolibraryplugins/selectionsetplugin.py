@@ -1,44 +1,29 @@
-# Embedded file name: C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/third_party/scripts/studiolibrary/packages\studiolibraryplugins\selectionsetplugin.py
-"""
-Released subject to the BSD License
-Please visit http://www.voidspace.org.uk/python/license.shtml
-
-Contact: kurt.rathjen@gmail.com
-Comments, suggestions and bug reports are welcome.
-Copyright (c) 2015, Kurt Rathjen, All rights reserved.
-
-It is a very non-restrictive license but it comes with the usual disclaimer.
-This is free software: test it, break it, just don't blame me if it eats your
-data! Of course if it does, let me know and I'll fix the problem so that it
-doesn't happen to anyone else.
-
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-   # * Redistributions of source code must retain the above copyright
-   #   notice, this list of conditions and the following disclaimer.
-   # * Redistributions in binary form must reproduce the above copyright
-   # notice, this list of conditions and the following disclaimer in the
-   # documentation and/or other materials provided with the distribution.
-   # * Neither the name of Kurt Rathjen nor the
-   # names of its contributors may be used to endorse or promote products
-   # derived from this software without specific prior written permission.
+# Copyright 2016 by Kurt Rathjen. All Rights Reserved.
 #
-# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN ''AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL KURT RATHJEN BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-"""
+# Permission to use, modify, and distribute this software and its
+# documentation for any purpose and without fee is hereby granted,
+# provided that the above copyright notice appear in all copies and that
+# both that copyright notice and this permission notice appear in
+# supporting documentation, and that the name of Kurt Rathjen
+# not be used in advertising or publicity pertaining to distribution
+# of the software without specific, written prior permission.
+# KURT RATHJEN DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# KURT RATHJEN BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+# IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+# OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 import os
 import mutils
-import mayabaseplugin
+
 from PySide import QtGui
+
+import studiolibrary
+import studiolibraryplugins
+
+from studiolibraryplugins import mayabaseplugin
+
 
 class PluginError(Exception):
     """Base class for exceptions in this module."""
@@ -47,18 +32,55 @@ class PluginError(Exception):
 
 class Plugin(mayabaseplugin.Plugin):
 
+    @staticmethod
+    def settings():
+        """
+        :rtype: studiolibrary.Settings
+        """
+        return studiolibrary.Settings.instance("Plugin", "Selection Set")
+
     def __init__(self, library):
         """
         :type library: studiolibrary.Library
         """
         mayabaseplugin.Plugin.__init__(self, library)
-        self.setName('Selection Set')
-        self.setIconPath(self.dirname() + '/resource/images/set.png')
-        self.setExtension('set')
-        self.setRecord(Record)
-        self.setInfoWidget(SelectionSetInfoWidget)
-        self.setCreateWidget(SelectionSetCreateWidget)
-        self.setPreviewWidget(SelectionSetPreviewWidget)
+
+        iconPath = studiolibraryplugins.resource().get("icons", "selectionSet.png")
+
+        self.setName("Selection Set")
+        self.setIconPath(iconPath)
+        self.setExtension("set")
+
+    def record(self, path=None):
+        """
+        :type path: str or None
+        :rtype: Record
+        """
+        return Record(path=path, plugin=self)
+
+    def infoWidget(self, parent, record):
+        """
+        :type parent: QtGui.QWidget
+        :type record: Record
+        :rtype: SelectionSetInfoWidget
+        """
+        return SelectionSetInfoWidget(parent=parent, record=record)
+
+    def createWidget(self, parent):
+        """
+        :type parent: QtGui.QWidget
+        :rtype: SelectionSetCreateWidget
+        """
+        record = self.record()
+        return SelectionSetCreateWidget(parent=parent, record=record)
+
+    def previewWidget(self, parent, record):
+        """
+        :type parent: QtGui.QWidget
+        :type record: Record
+        :rtype: SelectionSetPreviewWidget
+        """
+        return SelectionSetPreviewWidget(parent=parent, record=record)
 
 
 class Record(mayabaseplugin.Record):
@@ -68,11 +90,27 @@ class Record(mayabaseplugin.Record):
         :rtype: None
         """
         mayabaseplugin.Record.__init__(self, *args, **kwargs)
-        self.setTransferBasename('set.json')
+        self.setTransferBasename("set.json")
         self.setTransferClass(mutils.SelectionSet)
-        self.setTransferBasename('set.list')
+
+        self.setTransferBasename("set.list")
         if not os.path.exists(self.transferPath()):
-            self.setTransferBasename('set.json')
+            self.setTransferBasename("set.json")
+
+    def previewWidget(self, parent=None):
+        """
+        Support for Studio Library 2.0
+
+        :type parent: QtGui.QWidget
+        :rtype: PosePreviewWidget
+        """
+        return SelectionSetPreviewWidget(parent=parent, record=self)
+
+    def settings(self):
+        """
+        :rtype: studiolibrary.Settings
+        """
+        return Plugin.settings()
 
     def doubleClicked(self):
         """
@@ -85,14 +123,9 @@ class Record(mayabaseplugin.Record):
         :rtype: None
         """
         namespaces = self.namespaces()
-        try:
-            self.load(namespaces=namespaces)
-        except Exception as msg:
-            if self.libraryWidget():
-                self.libraryWidget().setError(msg)
-            raise
+        self.load(namespaces=namespaces)
 
-    def load(self, namespaces = None):
+    def load(self, namespaces=None):
         """
         :type namespaces: list[str] | None
         """
@@ -133,8 +166,3 @@ class SelectionSetCreateWidget(mayabaseplugin.CreateWidget):
         :type record: Record
         """
         mayabaseplugin.CreateWidget.__init__(self, *args, **kwargs)
-
-
-if __name__ == '__main__':
-    import studiolibrary
-    studiolibrary.main()

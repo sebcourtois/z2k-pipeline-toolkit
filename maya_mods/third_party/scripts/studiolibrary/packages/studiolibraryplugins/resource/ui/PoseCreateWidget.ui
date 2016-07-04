@@ -73,7 +73,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap>../images/poseIcon.png</pixmap>
+        <pixmap>../icons/pose.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -106,66 +106,23 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QLabel" name="label_3">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>0</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QFrame" name="frame_9">
+      <widget class="QFrame" name="modelPanelFrame">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="maximumSize">
+       <property name="minimumSize">
         <size>
-         <width>16777215</width>
-         <height>16777215</height>
+         <width>150</width>
+         <height>150</height>
         </size>
        </property>
-       <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
-       </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_13">
-        <property name="spacing">
-         <number>0</number>
-        </property>
-        <property name="margin">
-         <number>0</number>
-        </property>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QFrame" name="frame_10">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
        <property name="maximumSize">
         <size>
-         <width>16777215</width>
-         <height>16777215</height>
+         <width>150</width>
+         <height>150</height>
         </size>
        </property>
        <property name="frameShape">
@@ -214,7 +171,7 @@ background-color: rgb(254, 255, 230, 200);</string>
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../images/thumbnail.png</normaloff>../images/thumbnail.png</iconset>
+            <normaloff>../icons/thumbnail.png</normaloff>../icons/thumbnail.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -396,10 +353,10 @@ background-color: rgb(254, 255, 230, 200);
    <item>
     <widget class="QFrame" name="previewButtons">
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Plain</enum>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_6">
       <property name="spacing">
@@ -476,7 +433,7 @@ background-color: rgb(254, 255, 230, 200);
         </property>
         <property name="icon">
          <iconset>
-          <normaloff>../images/selectionSet2.png</normaloff>../images/selectionSet2.png</iconset>
+          <normaloff>../icons/selectionSet2.png</normaloff>../icons/selectionSet2.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -511,10 +468,10 @@ background-color: rgb(254, 255, 230, 200);
       </sizepolicy>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Plain</enum>
      </property>
     </widget>
    </item>

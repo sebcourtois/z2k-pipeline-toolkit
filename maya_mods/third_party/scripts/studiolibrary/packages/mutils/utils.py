@@ -1,74 +1,68 @@
-# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.8.6/build27/studiolibrary/packages/mutils\utils.py
-"""
-# Released subject to the BSD License
-# Please visit http://www.voidspace.org.uk/python/license.shtml
-#
-# Copyright (c) 2014, Kurt Rathjen
-# All rights reserved.
-# Comments, suggestions and bug reports are welcome.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-   # * Redistributions of source code must retain the above copyright
-   #   notice, this list of conditions and the following disclaimer.
-   # * Redistributions in binary form must reproduce the above copyright
-   # notice, this list of conditions and the following disclaimer in the
-   # documentation and/or other materials provided with the distribution.
-   # * Neither the name of Kurt Rathjen nor the
-   # names of its contributors may be used to endorse or promote products
-   # derived from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN ''AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL KURT RATHJEN BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-"""
-import mutils
+# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.13.0/build27/studiolibrary/packages/mutils\utils.py
 import platform
+import mutils
 try:
     import maya.mel
     import maya.cmds
-except Exception as e:
+except Exception:
     import traceback
     traceback.print_exc()
 
-class SelectionError(Exception):
-
-    def __init__(self, message):
-        Exception.__init__(self, message)
-
-
-class ObjectsError(Exception):
-
-    def __init__(self, message):
-        Exception.__init__(self, message)
+class MayaUtilsError(Exception):
+    """Base class for exceptions in this module."""
+    pass
 
 
-class NoObjectFoundError(Exception):
-
-    def __init__(self, message):
-        Exception.__init__(self, message)
+class ObjectsError(MayaUtilsError):
+    pass
 
 
-class MoreThanOneObjectFoundError(Exception):
+class SelectionError(MayaUtilsError):
+    pass
 
-    def __init__(self, message):
-        Exception.__init__(self, message)
+
+class NoMatchFoundError(MayaUtilsError):
+    pass
+
+
+class NoObjectFoundError(MayaUtilsError):
+    pass
+
+
+class MoreThanOneObjectFoundError(MayaUtilsError):
+    pass
+
+
+class ModelPanelNotInFocusError(MayaUtilsError):
+    pass
 
 
 def system():
-    """
-    :rtype: str
-    :return: a
-    """
     return platform.system().lower()
+
+
+def isMac():
+    return system().startswith('mac') or system().startswith('os') or system().startswith('darwin')
+
+
+def isWindows():
+    return system().lower().startswith('win')
+
+
+def isLinux():
+    return system().lower().startswith('lin')
+
+
+def isMaya():
+    """
+    :rtype: bool
+    """
+    try:
+        import maya.cmds
+        maya.cmds.about(batch=True)
+        return True
+    except ImportError:
+        return False
 
 
 def ls(*args, **kwargs):
@@ -81,10 +75,11 @@ def ls(*args, **kwargs):
 def listAttr(node, **kwargs):
     """
     :type node: mutils.Node
-    :type kwargs: {}
-    :rtype: list[Attribute]
+    :type kwargs: dict
+    :rtype: list[mutils.Attribute]
     """
-    return [ mutils.Attribute(node.name(), attr) for attr in maya.cmds.listAttr(node.name(), **kwargs) or [] ]
+    attrs = maya.cmds.listAttr(node.name(), **kwargs)
+    return [ mutils.Attribute(node.name(), attr) for attr in attrs or [] ]
 
 
 def currentRange():
@@ -137,12 +132,24 @@ def connectedAttrs(objects):
     return result
 
 
+def currentModelPanel():
+    """
+    :rtype: str
+    """
+    currentPanel = maya.cmds.getPanel(withFocus=True)
+    currentPanelType = maya.cmds.getPanel(typeOf=currentPanel)
+    if currentPanelType not in ('modelPanel',):
+        msg = 'Cannot find model panel with focus. Please select a model panel.'
+        raise ModelPanelNotInFocusError(msg)
+    return currentPanel
+
+
 def bakeConnected(objects, time, sampleBy = 1):
     """
     """
     bakeAttrs = connectedAttrs(objects)
     if bakeAttrs:
-        maya.cmds.bakeResults(bakeAttrs, simulation=True, time=time, sampleBy=sampleBy, disableImplicitControl=True, preserveOutsideKeys=False, sparseAnimCurveBake=False, removeBakedAttributeFromLayer=False, bakeOnOverrideLayer=False, minimizeRotation=True, controlPoints=False, shape=False)
+        maya.cmds.bakeResults(bakeAttrs, time=time, shape=False, simulation=True, sampleBy=sampleBy, controlPoints=False, minimizeRotation=True, bakeOnOverrideLayer=False, preserveOutsideKeys=False, sparseAnimCurveBake=False, disableImplicitControl=True, removeBakedAttributeFromLayer=False)
     else:
         print 'cannot find connection to bake!'
 
@@ -163,7 +170,7 @@ def animationRange(objects = None):
 
 def disconnectAll(name):
     """
-    :type name:
+    :type name: str
     """
     for destination in maya.cmds.listConnections(name, plugs=True, source=False) or []:
         source, = maya.cmds.listConnections(destination, plugs=True)
@@ -172,7 +179,8 @@ def disconnectAll(name):
 
 def getSelectedObjects():
     """
-    :rtype: list[str] @raise mutils.SelectionError:
+    :rtype: list[str]
+    :raise mutils.SelectionError:
     """
     selection = maya.cmds.ls(selection=True)
     if not selection:
@@ -274,82 +282,9 @@ def getDurationFromNodes(nodes):
         return 0
 
 
-def isMaya():
-    """
-    :rtype: bool
-    """
-    try:
-        import maya.cmds
-        maya.cmds.about(batch=True)
-        return True
-    except ImportError:
-        return False
-
-
-def isMac():
-    return system().startswith('mac') or system().startswith('os') or system().startswith('darwin')
-
-
-def isWindows():
-    return system().startswith('win')
-
-
-def isLinux():
-    return system().startswith('lin')
-
-
-def isMaya2011():
-    """
-    :rtype: bool
-    """
-    if '2011' in maya.cmds.about(version=True).replace(' ', ''):
-        return True
-    return False
-
-
-def isMaya2012():
-    """
-    :rtype: bool
-    """
-    if '2012' in maya.cmds.about(version=True).replace(' ', ''):
-        return True
-    return False
-
-
-def isMaya2013():
-    """
-    :rtype: bool
-    """
-    if '2013' in maya.cmds.about(version=True).replace(' ', ''):
-        return True
-    return False
-
-
-def isMaya2014():
-    """
-    :rtype: bool
-    """
-    if '2014' in maya.cmds.about(version=True).replace(' ', ''):
-        return True
-    return False
-
-
-def isMaya2015():
-    """
-    :rtype: bool
-    """
-    if '2015' in maya.cmds.about(version=True).replace(' ', ''):
-        return True
-    return False
-
-
 class ScriptJob(object):
     """
-    try:
-        self._scriptJob = mutils.ScriptJob(e=['SelectionChanged', self.selectionChanged])
-    except:
-        import traceback
-        traceback.print_exc()
+    self._scriptJob = mutils.ScriptJob(e=['SelectionChanged', self.selectionChanged])
     """
 
     def __init__(self, *args, **kwargs):

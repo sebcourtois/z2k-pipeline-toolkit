@@ -399,6 +399,87 @@ def getShapeL(objL=[],*args, **kwargs):
     print "objWithNoShapeL=", objWithNoShapeL 
     return shapeL
     
+def CreateNullMatched( InObjL = [], mode="normal", name="Rig", size=1, zerogroup=True, *args):
+    ''' Description : Create aligned Null to each obj of the list parented to an individual zeroGroup
+            Return : [List] the list of created Objects
+            Dependencies : cmds - GetSel() - matchByXformMatrix() -UnikName()
+    '''
+
+    if len(InObjL) > 0 :
+        cursel = InObjL
+    else :
+        cursel = GetSel(mode="normal", order="os")
+    list_out = []
+    num=0
+    for obj in cursel:
+        num+=1
+        unikName =UnikName ( name )
+        print "unikName=", unikName
+        if mode in["normal"]:
+            ObjChoice = cmds.spaceLocator( n=unikName ) [0]
+            print "ObjChoice=", ObjChoice
+            cmds.setAttr(ObjChoice + ".localScaleX", size)
+            cmds.setAttr(ObjChoice + ".localScaleY", size)
+            cmds.setAttr(ObjChoice + ".localScaleZ", size)
+        if mode in ["joint"]:
+            cmds.select(cl=True)
+            ObjChoice =  cmds.joint(n=unikName )
+            cmds.setAttr(ObjChoice + ".radius", size)
+            # cmds.parent(ObjChoice,w=True)
+        try:
+            
+            if zerogroup in [True]:
+                curGP = cmds.group(ObjChoice, name=(str(ObjChoice) + "_zero"))
+                matchByXformMatrix([obj, curGP], scale=False)
+            else:
+                matchByXformMatrix([obj, ObjChoice], scale=False)
+            # print  "*++++ ", ObjChoice
+            list_out.append(ObjChoice)
+                # list_out.append(curGP)
+        except Exception, err:
+            print "Erreur dans CreateNullMatched() : curObj = %s" % obj
+            print Exception, err
+    print "CreateNullMatched(): list_out","\n    ", list_out
+    cmds.select(list_out)
+    return list_out
+
+def UnikName(name, suffix="_0#", incr=0, digit=3, *args, **kwargs):
+    # return a unique new Name if the object allready exist in maya
+    incrInt= incr
+
+    nameOut = name + str(incrInt).zfill(digit)
+    if cmds.objExists(nameOut):
+        # print nameOut,incr,"exists"
+        UnikName( name=name, incr= incrInt+1, digit=digit)
+    else:
+        print "UnikName:",nameOut," ok"
+        return nameOut
+
+def GetSel(mode="normal",order="sl", *args):
+    ''' Description : get selection List
+                    mode : -"normal" = shortest name path
+                           -"fullpath" = fullpath name
+                    order : -"sl" = basical aleatoire order
+                            -"os" = ordererd by selection time
+        Return : [List] : selectionList
+        Dependencies : cmds - 
+    ''' 
+    # recuperation de la selection
+    # Use : None
+    objlist=[]
+    if order in ["os"]:
+        if mode in ["normal"]:
+            objlist = cmds.ls( fl=True,os=True)
+        if mode in ["fullpath"]:
+            objlist = cmds.ls( fl=True, l=True, os=True)
+        # print objlist
+    if order in ["sl"]:
+        if mode in ["normal"]:
+            objlist = cmds.ls( fl=True,sl=True)
+        if mode in ["fullpath"]:
+            objlist = cmds.ls( fl=True, l=True, sl=True)
+        # print objlist
+    return objlist
 # Z2K base general functions -----------------
 def getBaseModPath(*args, **kwargs):
     """Desription :recupere le path de base des modules

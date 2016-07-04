@@ -1,0 +1,917 @@
+//windows GUI
+////////////////////////////////  V0.1 ////////////////////////////////////
+// 	=> Managing undo
+//	=> tracePrint applicable on function desired
+
+global int $debug = false;
+global string $version = "V0.1";
+
+{
+$path = `internalVar -ubd`;
+global string $version;
+print ("NP_curveLocalScale.mel " + $version);
+
+string $nameWindow = "Crv_WIN";
+
+if (`window -ex $nameWindow`) deleteUI $nameWindow;
+
+window -tb 1 -width 374 -height 110 -t "curve local scale tool" -s 1 $nameWindow;
+
+	columnLayout -adj 1 columnLayout;
+
+		rowLayout -numberOfColumns 4 -adj 2 rowLayout1;
+		symbolButton -w 30 -h 30 -image "autoTangent.png" -c "keyTangent -itt auto -ott auto";
+		floatSliderButtonGrp -label "Scale:" -cal 1 left -buttonLabel "Reset" -buttonCommand "reset;floatSliderButtonGrp -e -v 1 scaleSlider;" -cw 1 30 -adj 3
+		-field 1 -minValue -1.0 -maxValue 1.0 -s 0.01 -value 1  -dc "start;undoInfo -swf 0;" -cc changeSlider scaleSlider;
+		setParent..;
+
+		rowLayout -numberOfColumns 4 -adj 2 rowLayout2;
+			  text -align "left" -fn "boldLabelFont" -l "                                                -1" minExtr;
+			  text -align "center" -fn "boldLabelFont" "0";
+			  text -align "right" -fn "boldLabelFont" -l "1   " maxExtr;
+			  intField -w 35 -v 1 -min 1 -cc "editGUI" scaleExtreme;
+		 setParent..;   
+		
+		separator -hr 1 -style "single" sep1;
+
+		rowLayout -numberOfColumns 2 -adj 1 -cal 2 "right" rowLayout0;
+			columnLayout -adj 1 columnLayout1;
+			    radioCollection radioCo;
+			    radioButton -cc "editGUI" -al "left" -label "Start key pivot" -onc "changePivot(\"start\")" start;
+			    radioButton -cc "editGUI" -al "left" -label "End key pivot" -onc "changePivot(\"end\")" end;
+			    radioButton -cc "editGUI" -al "left" -label "both keys pivot" -onc "changePivot(\"both\")" both;
+			setParent..;
+			
+			checkBox -label "curveFollow" -onc curveFollowON -ofc curveFollowOFF curveFollowCB;
+		setParent..;
+
+
+	setParent..;
+
+	showWindow $nameWindow;
+
+	radioButton -e -sl start;
+	//keep windows pref after closing
+	windowPref -exists Crv_WIN;
+	//Query the window preference size and position.
+	windowPref -query -topLeftCorner Crv_WIN;
+	windowPref -query -widthHeight Crv_WIN;
+
+	//On branche une callback sur la selection de la courbe
+	int $job = 0;
+	$job = `scriptJob -parent $nameWindow -e "SelectionChanged" "updateSelection" -protected`;
+	tracePrint ("task number of selectionChanged: " + $job + "\n");
+
+	//On branche une callback sur les Undo et sur les Redo
+	int $undoJob = `scriptJob -parent $nameWindow -e "Undo" "catchUndo" -protected`;
+	int $redoJob = `scriptJob -parent $nameWindow -e "Redo" "catchRedo" -protected`;
+	resetStacks();
+}
+
+global string $undoStack[];
+global string $redoStack[];
+
+global proc resetStacks()
+{
+	global string $undoStack[];
+	global string $redoStack[];
+	
+	clear($undoStack);
+	clear($redoStack);
+	tracePrint ("clearStack! size $undoStack= " + size($undoStack) + "\nclearStack! size $redoStack= " + size($redoStack) + "\n");
+	$undoStack[0] = "start_1_0"; //pivot_scale_curveFollow
+}
+
+global proc catchUndo () 
+{
+	global string $undoStack[];
+	global int $curveFollow;
+	global string $pivotEnCours;
+	
+	int $undoGere = true;
+	
+	//Lorsqu'on catch le undo, l'info a deja ete enleve de la pile de Undo et placee dans la file de redo d'ou le -rn
+	string $info = `undoInfo -q -rn`;
+	print ("POUR INFO UNDO: " + $info + "\n");
+	int $matchScale = gmatch ($info, "*changeSlider*");
+	int $matchStart = gmatch ($info, "*start*");
+	int $matchReset = gmatch ($info, "*reset*");
+	int $matchFollowON = gmatch ($info, "*curveFollowON*");
+	int $matchFollowOFF = gmatch ($info, "*curveFollowOFF*");
+	int $matchPivot = gmatch ($info, "*changePivot*");
+	
+	//In UndoStack, last value is current state, and the value before is the one that need to be set
+	//Check the stack
+	if ( size($undoStack) < 2)//we can not do anything
+		return;
+		
+	string $forRedo = $undoStack[size($undoStack) - 1];
+	
+	string $toSet =  $undoStack[size($undoStack) - 2];
+	string $array[] = stringToStringArray ($toSet, "_");
+		
+	if ($matchScale || $matchStart)
+	{
+		tracePrint ("catchUndo changeSlider: valeur scale: "+ $array[1]+"\n");
+		string $cmd = "floatSliderButtonGrp -e -v " +  $array[1] + " scaleSlider";
+		//update the $initScaleValue
+		calculCoef($array[1]);
+		eval ($cmd);
+	}
+	else if ($matchReset )
+	{
+		tracePrint ("catchUndo reset\n");
+		floatSliderButtonGrp -e -v 1 scaleSlider;
+	}
+	else if ($matchFollowON)
+	{
+		tracePrint ("catchUndo curveFollowON\n");
+		checkBox -e -v 0 curveFollowCB;
+		$curveFollow = false;
+	}
+	else if ($matchFollowOFF)
+	{
+		tracePrint ("catchUndo curveFollowOFF\n");
+		checkBox -e -v 1 curveFollowCB;
+		$curveFollow = true;
+	}
+	else if ($matchPivot )
+	{
+		tracePrint ( "CATCH UNDO PIVOT STACK: " + $array[0] + "\n");
+		//radioCollection -e -sl $array[0] radioCo; +> ne pas utiliser car relance la fonction
+		$pivotEnCours = $array[0];
+		switch ($array[0])
+		{
+			case "start":
+				radioButton -e -sl start;
+				checkBox -e -en 1 curveFollowCB;
+				break;
+			case "end":
+				radioButton -e -sl end;
+				checkBox -e -en 1 curveFollowCB;
+				break;
+			case "both":
+			default:
+				radioButton -e -sl both;
+				checkBox -e -en 0 curveFollowCB;
+				break;
+		}
+	}
+	else
+	{
+		$undoGere = false;
+		tracePrint ("catchUndo non gere! " + $info + "\n");
+	}
+	
+	if ($undoGere)
+	{
+		global int $redoON = true;
+
+		//this element of the stack is transfered to the redoStack
+		if (size($undoStack) > 1)
+		{
+			print ("UNDOSTACK size avant: " + size($undoStack));
+			stringArrayRemoveAtIndex (size($undoStack)-1, $undoStack);
+			print ("  et size apres: " + size($undoStack) + "\n");
+			updateRedoStack($forRedo);
+		}
+	}
+}
+
+
+global int $redoON = false;
+global proc catchRedo ()
+{
+	global int $redoON;
+	global string $redoStack[];
+
+	//Lorsqu'on catch le redo, l'info a deja ete enleve de la pile de Redo et placee dans la file de undo d'ou le -un
+	string $info = `undoInfo -q -un`;
+	print ("POUR INFO catchRedo: " + $info + "\n");
+	
+	if (size ($redoStack) < 1)
+		return;
+	
+	global string $redoStack[];
+	global int $curveFollow;
+	global string $pivotEnCours;
+	
+	int $redoGere = true;
+	
+	int $matchScale = gmatch ($info, "*changeSlider*");
+	int $matchStart = gmatch ($info, "*start*");
+	int $matchReset = gmatch ($info, "*reset*");
+	int $matchFollowON = gmatch ($info, "*curveFollowON*");
+	int $matchFollowOFF = gmatch ($info, "*curveFollowOFF*");
+	int $matchPivot = gmatch ($info, "*changePivot*");
+		
+	string $toSet =  $redoStack[size($redoStack) - 1];
+	string $array[] = stringToStringArray ($toSet, "_");
+		
+	if ($matchScale || $matchStart)
+	{
+		tracePrint ("catchRedo changeSlider: valeur scale: "+ $array[1]+"\n");
+		string $cmd = "floatSliderButtonGrp -e -v " +  $array[1] + " scaleSlider";
+		eval ($cmd);
+		calculCoef($array[1]);
+	}
+	else if ($matchReset )
+	{
+		tracePrint ("catchRedo reset\n");
+		floatSliderButtonGrp -e -v 1 scaleSlider;
+	}
+	else if ($matchFollowON)
+	{
+		tracePrint ("catchRedo curveFollowON\n");
+		checkBox -e -v 0 curveFollowCB;
+		$curveFollow = false;
+	}
+	else if ($matchFollowOFF)
+	{
+		tracePrint ("catchRedo curveFollowOFF\n");
+		checkBox -e -v 1 curveFollowCB;
+		$curveFollow = true;
+	}
+	else if ($matchPivot )
+	{
+		tracePrint ( "CATCH REDO PIVOT STACK: " + $array[0] + "\n");
+		//radioCollection -e -sl $array[0] radioCo; +> ne pas utiliser car relance la fonction
+		$pivotEnCours = $array[0];
+		switch ($array[0])
+		{
+			case "start":
+				radioButton -e -sl start;
+				checkBox -e -en 1 curveFollowCB;
+				break;
+			case "end":
+				radioButton -e -sl end;
+				checkBox -e -en 1 curveFollowCB;
+				break;
+			case "both":
+			default:
+				radioButton -e -sl both;
+				checkBox -e -en 0 curveFollowCB;
+				break;
+		}
+	}
+	else
+	{
+		$redoGere = false;
+		tracePrint ("catchRedo non gere! " + $info + "\n");
+	}
+	
+	if ($redoGere)
+	{
+		//this element of the stack is transfered to the undoStack
+		if (size($redoStack) >= 1)
+		{
+			print ("REDOSTACK size avant: " + size($redoStack));
+			stringArrayRemoveAtIndex (size($redoStack)-1, $redoStack);
+			print ("  et size apres: " + size($redoStack) + "\n");
+			updateUndoStack($toSet);
+		}
+	}
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//							curveFollowChange
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Remise en forme des elements d'entree lors d'un changement de selection
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+global int $curveFollow = false;
+global proc curveFollowON()
+{
+	global int $curveFollow;
+	
+	$curveFollow = true;
+	tracePrint ("curveFollow:" +  $curveFollow + "\n");
+	changeCurveFollow();	
+}
+
+global proc curveFollowOFF()
+{
+	global int $curveFollow;
+	
+	$curveFollow = false;
+	tracePrint ("curveFollow:" +  $curveFollow + "\n");
+	
+	changeCurveFollow();
+}
+
+global proc changeCurveFollow()
+{
+	global string $pivotEnCours;
+	global string $undoStack[];
+	global int $curveFollow;
+	
+	float $coef;
+	float $firstIndex;
+	float $firstValue;
+	float $lastIndex;
+	float $lastValue;
+	
+	if ($curveFollow)
+		$coef = 1;
+	else
+		$coef = -1;
+		
+	float $scalValue =`floatSliderButtonGrp -q -v scaleSlider`;
+	
+	//Mise a jour de la stack des undo
+	updateUndoStack("");
+	
+	//On applique le curveFollow pour chaque curve
+	string $curveName[]=`keyframe -q -sl -n`;
+	string $curve;
+	for ($curve in $curveName)
+	{	
+		tracePrint ($curve + "\n");
+				
+		$keyValue=(`keyframe -q -sl -vc $curve`);
+		$keyIndex=(`keyframe -q -sl -tc $curve`);
+		
+		
+		$firstIndex = $keyIndex[0];
+		$lastIndex = $keyIndex[size($keyIndex)-1];
+		$firstValue = $keyValue[0];
+		$lastValue = $keyValue[size($keyIndex)-1];
+	
+		//applyCurveFollow ($curve, $pivotEnCours, $keyIndex, $keyValue);
+		switch ($pivotEnCours)
+		{
+			case "start":
+				//On calcul le delta qu'il faudra appliquer
+				float $yInitial = (($lastValue - $firstValue)/$scalValue) + $firstValue;
+				float $delta = ($lastValue - $yInitial) * $coef;
+			  
+				tracePrint (" $yInitial = " +  $yInitial + " delta = " + $delta + "\n");
+			
+				//On applique un delta a tous les indexs superieurs au dernier index selectionne					
+				float $keyAllIndex[] =(`keyframe -q -tc $curve`);
+				float $ind;
+				for ($ind in $keyAllIndex)
+				{
+					if ($ind > $lastIndex )
+					{
+						string $offsetCMD = "keyframe -relative -t \"" + $ind + ":\" -vc "+$delta+" "+$curve;
+						tracePrint ("Commande curveFollow Start Pivot: " + $offsetCMD + "\n");
+						eval $offsetCMD;
+						break;
+					}
+				}
+				break;
+			case "end":
+				//On calcul le delta qu'il faudra appliquer
+				float $yInitial = (($firstValue - $lastValue) /$scalValue) + $lastValue;
+				float $delta = ($firstValue - $yInitial) * $coef;
+				tracePrint (" $yInitial = " +  $yInitial + " delta = " + $delta + "\n");
+			
+				//On applique un delta a tous les indexs inferieurs au premier index selectionne
+				float $keyAllIndex[] =(`keyframe -q -tc $curve`);
+				float $ind;
+				float $lindex;
+				int $found = false;
+				for ($ind in $keyAllIndex)
+				{
+					if ($ind == $firstIndex)
+						break; // => au cas ou la premiere cle selectionnee serait aussi la premiere cle de la courbe
+					else if ($ind < $firstIndex )
+					{
+						$lindex = $ind;
+						$found = true;
+					}
+				}
+				if ($found == true)
+				{
+					string $offsetCMD = "keyframe -relative -t \":" + $lindex + "\" -vc "+$delta+" "+$curve;
+					tracePrint ("Commande curveFollow End Pivot: " + $offsetCMD + "\n");
+					eval $offsetCMD;
+					break;
+				}
+				break;
+			case "both":
+			default:
+				break;
+		}
+	}
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//							updateSelection
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Remise en forme des elements d'entree lors d'un changement de selection
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+global proc updateSelection()
+{
+	//On repositionne le slider a 1
+	floatSliderButtonGrp -e -v 1 scaleSlider;
+	//Reset of the scale stack
+	resetStacks();
+	//selectionTest;
+	calculCoef (1);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//							TracePrint
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Organise la gestion des traces => positionner la variable $debug a true pour utiliser les traces
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+global proc tracePrint (string $trace)
+{
+	global int $debug;
+	if ($debug)
+		print ($trace);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//							changePivot
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Gere les modifications des toggles determinant les pivots
+//		Entree: string correspondant au pivot choisi ( start,  end, et both)
+//		Renvoie 1  si le pivot est modifie, 0 dans le cas contraire
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+global string $pivotEnCours = "start";
+
+global proc int changePivot( string $newPivotStr )
+{
+	int $retour = false;
+	global string $pivotEnCours;
+	
+	if ($pivotEnCours != $newPivotStr) 
+	{
+		$retour = true;
+		tracePrint ("changePivot: oldPivot: " + $pivotEnCours + " newPivot: " + $newPivotStr + "\n");
+		
+		float $scale = `floatSliderButtonGrp -q -v scaleSlider`;
+		applyScale ($pivotEnCours, $newPivotStr, $scale);
+		
+		$pivotEnCours = $newPivotStr;
+	}
+	
+	updateUndoStack("");
+	return $retour;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//							changeSlider
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////		Sortie: void
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+global proc changeSlider()
+{
+	start;
+	undoInfo -swf 1;
+	  
+	//UPDATE the stack
+	updateUndoStack("");
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//							updateUndoStack
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////		Sortie: void
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+global proc updateUndoStack(string $toAdd)
+{
+	global string $undoStack[];
+	global string $redoStack[];
+	
+	tracePrint ("##########################################################################\n size($undoStack BEFORE ADD: " + size($undoStack) + "\n");
+	float $scale =`floatSliderButtonGrp -q -v scaleSlider`;
+	//We add the scale to the undo stack => the maximum is determined by the Maya's parameters	
+	int $sizeMax = `undoInfo -q -l`;
+	if (size($undoStack) == $sizeMax) 
+	{
+		//The scale at 0 position is lost
+		string $newStack[];
+		int $k;
+		for ($k = 0;$k<size($undoStack)-1; $k++)
+			$newStack[$k] = $undoStack[$k+1];
+		$undoStack = $newStack;
+		
+		tracePrint ( "Max UndoStack size reached!");
+	}
+	if (strcmp($toAdd, "") == 0)
+	{
+		//build the sentence to add	
+		string $pivot = `radioCollection -q -sl radioCo`;
+		int $follow = `checkBox -q -value curveFollowCB`;
+		$undoStack [ size($undoStack)] = $pivot + "_" + $scale + "_" + $follow;
+		
+		//it means user had modify the interface => clean the redoStack
+		clear($redoStack);
+	}
+	else
+	{
+		//add the given sentence
+		$undoStack [ size($undoStack)] = $toAdd;
+	}
+	int $k;
+	string $stack = "";
+	for ($k = 0; $k < (size($undoStack)-1); $k++)
+		$stack = $stack + $undoStack[$k] + " | ";
+	tracePrint ( "$sizeMax ="  + $sizeMax + "size $undoStack!: " + size($undoStack) + "\n " + $stack + "\n");
+	
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//							updateRedoStack
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////		Sortie: void
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+global proc updateRedoStack(string $stack)
+{
+	global string $redoStack[];
+	tracePrint ("##########################################################################\n size($redoStack BEFORE ADD: " + size($redoStack) + "\n");
+	float $scale =`floatSliderButtonGrp -q -v scaleSlider`;
+	//We add the scale to the undo stack => the maximum is determined by the Maya's parameters	
+	int $sizeMax = `undoInfo -q -l`;
+	if (size($redoStack) == $sizeMax) 
+	{
+		//The scale at 0 position is lost
+		string $newStack[];
+		int $k;
+		for ($k = 0;$k<size($redoStack)-1; $k++)
+			$newStack[$k] = $redoStack[$k+1];
+		$redoStack = $newStack;
+		
+		tracePrint ( "Max redoStack size reached!");
+	}
+	
+	$redoStack [ size($redoStack)] = $stack;
+
+	string $reDo = "";
+	string $pile;
+	for ($reDo in $redoStack)
+		$pile = $pile + $reDo + " | ";
+	tracePrint ( "$sizeMax ="  + $sizeMax + "size $redoStack!: " + size($redoStack) + "\n " + $pile + "\n");
+	
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//							appyScale
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Applique le scale sur le newPivot, et effectue un reset sur le old pivot si il est positionne
+//		Entree:	string oldPivot ( ou 0 si il n y a pas eu de modifications du pivot)
+//					string newPivot => pivot sur lequel le scale va etre applique
+//					float  sclae => scale a appliquer
+//		Sortie: void
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+global proc applyScale ( string $oldPivot, string $newPivot, float $scale )
+{
+	int $resetON = false;
+	float $resetCoef = 0;
+	float $scaleCoef = 0;
+	global int $curveFollow;
+	//On teste si on est dans le cas d un changement de pivot
+	if ( $oldPivot != 0)
+	{
+		//On teste le scale initial => inutile de faire un reset si le scale est a 1
+		if ($scale != 1)
+			$resetON = true;			
+	}
+	tracePrint ( "applyScale: reset = " + $resetON + "\n");
+	
+	//Determination des coefficient de scale a appliquer
+	if ($resetON)
+		$resetCoef = calculCoef (1);
+	$scaleCoef = calculCoef ($scale);
+	
+	//Pour chaque courbe de la selection => les index ne changent pas car la selection est fixe
+	string $curveName[]=`keyframe -q -sl -n`;
+	
+	float $keyIndex[];
+
+	string $curve;
+	for ($curve in $curveName)
+	{
+		tracePrint ($curve + "\n");
+				
+		$keyValue=(`keyframe -q -sl -vc $curve`);
+		$keyIndex=(`keyframe -q -sl -tc $curve`);
+		// Traces
+		float $index;
+		tracePrint ("appyScale => Index:\t");
+		for ($index in $keyIndex)
+			tracePrint ($index + "\t\t");
+		tracePrint ("\n");
+		
+		float $val;
+		tracePrint ("appyScale => value:\t");
+		for ($val in $keyValue)
+			tracePrint ($val + "\t\t");
+		tracePrint ("\n");
+		
+		//No treatment if ther is only one key selected on the curve
+		if ( size($keyIndex) <= 1 )
+		{
+			tracePrint ("applyScale => curve " + $curve + " only one key selected! no treatment necessary...\n");
+			continue;
+		}	
+		
+		//determination des indexs de pivot
+		int $oldPivotIndex = 0;
+		int $oldAffineON = false;
+		if ($oldPivot != 0)
+		{
+			switch ($oldPivot) 
+			{
+				case "end":
+					$oldPivotIndex = size ($keyIndex) - 1;
+					break;
+				case "both":
+					//Il faudra alors determiner la droite qui passe entre les 2 pivots => fonction affine y=Ax+B					
+					$oldAffineON = true;
+					break;
+				case "start":
+				default:
+					$oldPivotIndex = 0;						
+					break;
+			
+			}
+		}
+		int $newPivotIndex = 0;
+		int $newAffineON = false;
+		if ($newPivot != 0)
+		{
+			switch ($newPivot) 
+			{
+				case "end":
+					$newPivotIndex = size ($keyIndex) - 1;
+					break;
+				case "both":
+					//Il faudra alors determiner la droite qui passe entre les 2 pivots => fonction affine y=Ax+B					
+					$newAffineON = true;
+					break;
+				case "start":
+				default:
+					$newPivotIndex = 0;						
+					break;
+			
+			}
+		}
+		
+		//Resolution de la fonction affine
+		float $A;
+		float $B;
+		if ($oldAffineON)
+		{	
+			//Solve the affine function y=Ax+B passing by the 2 pivots
+			$A = ( $keyValue[size($keyValue)-1] - $keyValue[0]) / ($keyIndex [size($keyIndex) -1] - $keyIndex[0]);
+			$B = $keyValue[0] - $A*($keyIndex[0]);
+
+		}
+		//Traitement du  reset sur oldPivot 
+		string $scaleKeyCMD="";
+		string $resetKeyCMD = "";
+		
+		if ( $resetON )
+		{
+			//Traitement different si on a 2 pivots (both)
+			if ($oldAffineON)
+			{				
+				// apply reset on each key 
+				for ($i=0; $i<size ($keyIndex); $i++)
+				{
+					$resetKeyCMD = "scaleKey -t "+ $keyIndex[$i]+" -vs "+$resetCoef+" -vp "+ ($A * $keyIndex[$i] + $B) +" "+$curve;
+					tracePrint ("appyScale => oldAffineON, $resetKeyCMD: " + $resetKeyCMD + " \n resetCoef " + $resetCoef + "\n");
+					eval $resetKeyCMD;
+				}				
+			}
+			else //reset on all the keys at the same time
+			{
+				for ($i=0; $i<size ($keyIndex); $i++)
+				$scaleKeyCMD = $scaleKeyCMD+"-t "+ $keyIndex[$i]+" ";
+        		
+				$resetKeyCMD = "scaleKey "+$scaleKeyCMD+"-vs "+$resetCoef+" -vp "+$keyValue[$oldPivotIndex]+" "+$curve;
+				tracePrint ("appyScale => oldAffineOFF, $resetKeyCMD: " + $resetKeyCMD  + " \n resetCoef " + $resetCoef +  " oldPivotIndex: " + $oldPivotIndex + "\n");
+				eval $resetKeyCMD;
+			}
+			
+			//application of curveFollow
+			if ($curveFollow)
+				applyCurveFollow ($curve, $oldPivot, $keyIndex, $keyValue);
+			
+			//aftere reset, re positionning the  $keyValue in order to have the new reseted values
+			$keyValue=(`keyframe -q -sl -vc $curve`);
+			// Traces
+			float $index;
+			tracePrint ("appyScale => Apres Reset \n Index:\t");
+			for ($index in $keyIndex)
+				tracePrint ($index + "\t");
+			tracePrint ("\n");
+		
+			float $val;
+			tracePrint ("appyScale => value:\t");
+			for ($val in $keyValue)
+				tracePrint ($val + "\t");
+			tracePrint ("\n");
+		}
+		
+		//Apply the scale on newPivot
+		//different treatment if 2 pivots (both)
+		if ($newAffineON)
+		{
+			//Solve the affine function y=Ax+B passing by 2 reseted pivots
+			$A = ( $keyValue[size($keyValue)-1] - $keyValue[0]) / ($keyIndex [size($keyIndex) -1] - $keyIndex[0]);
+			$B = $keyValue[0] - $A*($keyIndex[0]);	
+		
+			// apply scale on each key
+			for ($i=0; $i<size ($keyIndex); $i++)
+			{
+				$scaleKeyCMD = "scaleKey -t "+ $keyIndex[$i]+" -vs "+$scaleCoef+" -vp "+ ($A * $keyIndex[$i] + $B) +" "+$curve;
+				tracePrint ("appyScale => newAffineON, $scaleKeyCMD: " + $scaleKeyCMD +  " \n scaleCoef " + $scaleCoef + "\n");
+				eval $scaleKeyCMD;
+			}	
+		}
+		else //apply scale on all the keys at the same time
+		{	
+			$scaleKeyCMD="";
+			for ($i=0; $i<size ($keyIndex); $i++)
+				$scaleKeyCMD = $scaleKeyCMD+"-t "+ $keyIndex[$i]+" ";
+         		
+			$scaleKeyCMD = "scaleKey "+$scaleKeyCMD+"-vs "+$scaleCoef+" -vp "+$keyValue[$newPivotIndex]+" "+$curve;
+			tracePrint ("appyScale => newAffineOFF, $scaleKeyCMD: " + $scaleKeyCMD +  " \n scaleCoef " + $scaleCoef  +  " newPivotIndex: " + $newPivotIndex + "\n");
+			eval $scaleKeyCMD;
+		}
+		
+		//Gestion du follow Curve
+		if ($curveFollow)
+			applyCurveFollow ($curve, $newPivot, $keyIndex, $keyValue);
+			
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//							applyCurveFollow
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Gestion du follow Curve
+//		Entree:	string $curve : nom de la curve
+//			string $pivot => pivot sur lequel le curveFollow est applique
+//			float  firstIndex => le premier index selectionne
+//			float  firstValue => la premiere value selectionnee
+//			float  lastIndex => le dernier index selectionne
+//			float  lastValue => la derniere value selectionnee
+//		Sortie: void
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+global proc applyCurveFollow (string $curve, string $pivot, float $keyIndex[], float $keyValue[])
+{
+	global int $curveFollow;
+	float $coef;
+	float $firstIndex;
+	float $firstValue;
+	float $lastIndex;
+	float $lastValue;
+	
+	if ($curveFollow)
+		$coef = 1;
+	else
+		$coef = -1;
+		
+	$firstIndex = $keyIndex[0];
+	$lastIndex = $keyIndex[size($keyIndex)-1];
+	$firstValue = $keyValue[0];
+	$lastValue = $keyValue[size($keyIndex)-1];
+			
+	tracePrint ("applyCurveFollow: $firstIndex = " + $firstIndex + " $firstValue = " + $firstValue + "\n$lastIndex = " + $lastIndex + " $lastValue = " + $lastValue + "\n");	
+	switch ($pivot)
+	{
+		case "start":
+			//On calcul le delta qu'il faudra appliquer
+			float $newLastValue[] = `keyframe -t $lastIndex -q -vc $curve` ;
+			float $delta = ($newLastValue[0] - $lastValue) * $coef;
+			
+			tracePrint (" OldLastValue = " +  $lastValue + " $newLastValue = " + $newLastValue[0] + " delta = " + $delta + "\n");
+			
+			//On applique un delta a tous les indexs superieurs au dernier index selectionne					
+			float $keyAllIndex[] =(`keyframe -q -tc $curve`);
+			float $ind;
+			for ($ind in $keyAllIndex)
+			{
+				if ($ind > $lastIndex )
+				{
+					string $offsetCMD = "keyframe -relative -t \"" + $ind + ":\" -vc "+$delta+" "+$curve;
+					tracePrint ("Commande curveFollow Start Pivot: " + $offsetCMD + "\n");
+					eval $offsetCMD;
+					break;
+				}
+			}
+			break;
+		case "end":
+			//On calcul le delta qu'il faudra appliquer
+			float $newFirstValue[] = `keyframe -t $firstIndex -q -vc $curve` ;
+			float $delta = ($newFirstValue[0] - $firstValue) * $coef;
+			tracePrint (" OldFirstValue = " +  $firstValue + " $newFirstValue = " + $newFirstValue[0] + " delta = " + $delta + "\n");
+			
+			//On applique un delta a tous les indexs inferieurs au premier index selectionne
+			float $keyAllIndex[] =(`keyframe -q -tc $curve`);
+			float $ind;
+			float $lindex;
+			int $found = false;
+			for ($ind in $keyAllIndex)
+			{
+				if ($ind == $firstIndex)
+					break; // => au cas ou la premiere cle selectionnee serait aussi la premiere cle de la courbe
+				else if ($ind < $firstIndex )
+				{
+					$lindex = $ind;
+					$found = true;
+				}
+			}
+			if ($found == true)
+			{
+				string $offsetCMD = "keyframe -relative -t \":" + $lindex + "\" -vc "+$delta+" "+$curve;
+				tracePrint ("Commande curveFollow End Pivot: " + $offsetCMD + "\n");
+				eval $offsetCMD;
+				break;
+			}
+			break;
+		case "both":
+		default:
+			break;
+	}
+}
+
+//Selection test
+// global proc selectionTest()
+// {
+// string $select[]= `ls -sl`;
+// string $keyAttr[]=`keyframe -q -sl -n`;
+// $path = `internalVar -ubd`;
+// 
+// 	if ((size ($select)==0)||(size ($keyAttr)==0)){
+// 	print "!!...::You must first select keys and then push the update button::...!!\n";
+// 	}
+// 	else{
+// 	print ("!!...::Push the update button each time you want to change your key selection::...!!\n");
+// 	} 
+// }
+
+//reset
+global proc reset()
+{	
+	float $scalValue =`floatSliderButtonGrp -q -v scaleSlider`;
+	if ($scalValue == 1)
+		return; //only one action even if the user click on it several times
+	
+	string $radioButton = `radioCollection -q -sl radioCo`;
+	tracePrint ("Reset => applyScale \n");
+	applyScale (0, $radioButton, 1);
+	
+	//on update la scale
+	updateUndoStack("");
+}
+
+global proc start()
+{		
+	float $scalValue =`floatSliderButtonGrp -q -v scaleSlider`;
+	string $radioButton = `radioCollection -q -sl radioCo`;
+	
+	applyScale (0, $radioButton, $scalValue);
+}
+
+//Scale coef Calcul
+global proc float calculCoef(float $scalValue)
+{
+	float $retour = 0;
+	global float $initScaleValue=1;
+	float $approxiZero = 0.0001;
+	
+	if ($scalValue == 0)
+	{
+		$retour =  $approxiZero/$initScaleValue;
+		$initScaleValue = $approxiZero;
+	}
+	else
+	{
+		$retour = $scalValue/$initScaleValue;
+		$initScaleValue = $scalValue;
+	}
+	return $retour;
+}
+
+global proc GRAPH_Curve_Scale()
+{}
+
+//Dynamic GUI added by Nicolas
+global proc editGUI()
+{
+	global string $pivotEnCours;
+	//pkoi $extrem et tout  et tout??? pkoi faire ca la???
+	int $extrem = `intField -q -v scaleExtreme`;
+	floatSliderButtonGrp -e -minValue (-$extrem) -maxValue ($extrem) scaleSlider;
+	text -e -align "left" -fn "boldLabelFont" -l ("                                                -"+$extrem) minExtr;
+	text -e -align "right" -fn "boldLabelFont" -l ($extrem+"   ") maxExtr;
+
+	switch ($pivotEnCours)
+	{
+		case "start":
+			checkBox -e -en 1 curveFollowCB;
+			break;
+		case "end":
+			checkBox -e -en 1 curveFollowCB;
+			break;
+		case "both":
+			checkBox -e -en 0 curveFollowCB;
+			default:
+			break;
+	}
+}
+

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>160</width>
-    <height>490</height>
+    <height>521</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -79,7 +79,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap>../images/mirrortable2.png</pixmap>
+        <pixmap>../icons/mirrortable2.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -211,7 +211,7 @@ background-color: rgb(254, 255, 230, 0);</string>
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../images/camera.png</normaloff>../images/camera.png</iconset>
+            <normaloff>../icons/thumbnail.png</normaloff>../icons/thumbnail.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -1155,7 +1155,7 @@ background-color: rgb(254, 255, 230, 0);</string>
         </property>
         <property name="icon">
          <iconset>
-          <normaloff>../images/selectionSet2.png</normaloff>../images/selectionSet2.png</iconset>
+          <normaloff>../icons/selectionSet2.png</normaloff>../icons/selectionSet2.png</iconset>
         </property>
         <property name="iconSize">
          <size>

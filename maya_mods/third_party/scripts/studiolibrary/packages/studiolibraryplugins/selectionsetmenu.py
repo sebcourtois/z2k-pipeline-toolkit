@@ -1,106 +1,142 @@
-# Embedded file name: C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/third_party/scripts/studiolibrary/packages\studiolibraryplugins\selectionsetmenu.py
-"""
-Released subject to the BSD License
-Please visit http://www.voidspace.org.uk/python/license.shtml
-
-Contact: kurt.rathjen@gmail.com
-Comments, suggestions and bug reports are welcome.
-Copyright (c) 2015, Kurt Rathjen, All rights reserved.
-
-It is a very non-restrictive license but it comes with the usual disclaimer.
-This is free software: test it, break it, just don't blame me if it eats your
-data! Of course if it does, let me know and I'll fix the problem so that it
-doesn't happen to anyone else.
-
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-   # * Redistributions of source code must retain the above copyright
-   #   notice, this list of conditions and the following disclaimer.
-   # * Redistributions in binary form must reproduce the above copyright
-   # notice, this list of conditions and the following disclaimer in the
-   # documentation and/or other materials provided with the distribution.
-   # * Neither the name of Kurt Rathjen nor the
-   # names of its contributors may be used to endorse or promote products
-   # derived from this software without specific prior written permission.
+# Copyright 2016 by Kurt Rathjen. All Rights Reserved.
 #
-# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN ''AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL KURT RATHJEN BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-"""
+# Permission to use, modify, and distribute this software and its
+# documentation for any purpose and without fee is hereby granted,
+# provided that the above copyright notice appear in all copies and that
+# both that copyright notice and this permission notice appear in
+# supporting documentation, and that the name of Kurt Rathjen
+# not be used in advertising or publicity pertaining to distribution
+# of the software without specific, written prior permission.
+# KURT RATHJEN DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# KURT RATHJEN BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+# IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+# OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 import os
-import sys
 import logging
-import studiolibrary
 from functools import partial
+
 from PySide import QtGui
-__all__ = ['SelectionSetMenu']
+
+import studiolibrary
+import studiolibraryplugins
+
+from studiolibraryplugins import selectionsetplugin
+
+
+__all__ = ["SelectionSetMenu"]
+
 logger = logging.getLogger(__name__)
+
+
+def selectContentAction(record, parent=None):
+    """
+    :param record: mayabaseplugin.Record
+    :param parent: QtGui.QMenu
+    """
+    icon = studiolibraryplugins.resource().icon("arrow")
+    action = QtGui.QAction(icon, "Select content", parent)
+    action.triggered.connect(record.selectContent)
+    return action
+
+
+def show(path, **kwargs):
+    """
+    :type path: str
+    :rtype: QtGui.QAction
+    """
+    menu = SelectionSetMenu.fromPath(path, **kwargs)
+    position = QtGui.QCursor().pos()
+    action = menu.exec_(position)
+    return action
+
 
 class SelectionSetMenu(QtGui.QMenu):
 
-    def __init__(self, name, parent, records, **kwargs):
+    @classmethod
+    def fromPath(cls, path, **kwargs):
         """
-        :type name: str
-        :type records: list[studiolibrary.Record]
+        :type path: str
+        :type kwargs: dict
+        :rtype: QtGui.QAction
+        """
+        record = studiolibrary.BasePath(path)
+        return cls(record, enableSelectContent=False, **kwargs)
+
+    def __init__(
+            self,
+            record,
+            parent=None,
+            namespaces=None,
+            enableSelectContent=True,
+    ):
+        """
+        :type record: mayabaseplugin.Record
+        :type parent: QtGui.QMenu
         :type namespaces: list[str]
+        :type enableSelectContent: bool
         """
-        QtGui.QMenu.__init__(self, name, parent)
-        self._kwargs = kwargs
-        self._records = records
+        QtGui.QMenu.__init__(self, "Selection Sets", parent)
+
+        icon = studiolibraryplugins.resource().icon("selectionSet")
+        self.setIcon(icon)
+
+        self._record = record
+        self._namespaces = namespaces
+        self._enableSelectContent = enableSelectContent
         self.reload()
 
-    def records(self):
+    def record(self):
+        """
+        :rtype: mayabaseplugin.Record
+        """
+        return self._record
+
+    def namespaces(self):
+        """
+        :rtype: list[str]
+        """
+        return self._namespaces
+
+    def selectContent(self):
+        """
+        :rtype: None
+        """
+        self.record().selectContent(namespaces=self.namespaces())
+
+    def selectionSets(self):
         """
         :rtype: list[studiolibrary.Record]
         """
-        return self._records
+        paths = studiolibrary.findPaths(self.record().path(), ".set")
+        records = []
+
+        for path in paths:
+            record = selectionsetplugin.Record(path)
+            records.append(record)
+
+        return records
 
     def reload(self):
         """
         :rtype: None
         """
         self.clear()
-        for record in self.records():
-            dirname = os.path.basename(record.dirname())
-            basename = record.name().replace(record.extension(), '')
-            nicename = dirname + ': ' + basename
-            action = studiolibrary.Action(nicename, self)
-            trigger = partial(record.load, **self._kwargs)
-            action.setCallback(trigger)
+
+        if self._enableSelectContent:
+            action = selectContentAction(record=self.record(), parent=self)
             self.addAction(action)
+            self.addSeparator()
 
+        for selectionSet in self.selectionSets():
 
-class MainWindow(QtGui.QMainWindow):
+            dirname = os.path.basename(selectionSet.dirname())
+            basename = selectionSet.name().replace(selectionSet.extension(),"")
+            nicename = dirname + ": " + basename
 
-    def __init__(self):
-        super(MainWindow, self).__init__()
-        library = studiolibrary.Library.default()
-        menubar = self.menuBar()
-        path = 'C:/Users/Hovel/Dropbox/libraries/animation/Malcolm/default.pose'
-        records = library.findRecords(path, '.set', direction=studiolibrary.Direction.Up)
-        menu = SelectionSetMenu('Selection Sets', parent=menubar, records=records)
-        menu.setStyleSheet(library.styleSheet())
-        menubar.addMenu(menu)
-        self.statusBar()
-        self.setGeometry(300, 300, 250, 150)
-        self.setWindowTitle('Menubar')
-        self.show()
-
-
-def main():
-    logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(funcName)s: %(message)s', filemode='w')
-    app = QtGui.QApplication(sys.argv)
-    window = MainWindow()
-    sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()
+            action = QtGui.QAction(nicename, self)
+            callback = partial(selectionSet.load, namespaces=self.namespaces())
+            action.triggered.connect(callback)
+            self.addAction(action)

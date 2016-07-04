@@ -1,57 +1,41 @@
-# Embedded file name: C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/third_party/scripts/studiolibrary/packages\studiolibraryplugins\mayabaseplugin.py
-"""
-Released subject to the BSD License
-Please visit http://www.voidspace.org.uk/python/license.shtml
-
-Contact: kurt.rathjen@gmail.com
-Comments, suggestions and bug reports are welcome.
-Copyright (c) 2015, Kurt Rathjen, All rights reserved.
-
-It is a very non-restrictive license but it comes with the usual disclaimer.
-This is free software: test it, break it, just don't blame me if it eats your
-data! Of course if it does, let me know and I'll fix the problem so that it
-doesn't happen to anyone else.
-
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-   # * Redistributions of source code must retain the above copyright
-   #   notice, this list of conditions and the following disclaimer.
-   # * Redistributions in binary form must reproduce the above copyright
-   # notice, this list of conditions and the following disclaimer in the
-   # documentation and/or other materials provided with the distribution.
-   # * Neither the name of Kurt Rathjen nor the
-   # names of its contributors may be used to endorse or promote products
-   # derived from this software without specific prior written permission.
+# Copyright 2016 by Kurt Rathjen. All Rights Reserved.
 #
-# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN ''AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL KURT RATHJEN BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-"""
+# Permission to use, modify, and distribute this software and its
+# documentation for any purpose and without fee is hereby granted,
+# provided that the above copyright notice appear in all copies and that
+# both that copyright notice and this permission notice appear in
+# supporting documentation, and that the name of Kurt Rathjen
+# not be used in advertising or publicity pertaining to distribution
+# of the software without specific, written prior permission.
+# KURT RATHJEN DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# KURT RATHJEN BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+# IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+# OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 import os
 import shutil
-import mutils
 import logging
 import traceback
-import studiolibrary
-import selectionsetmenu
-from functools import partial
+
 from PySide import QtGui
 from PySide import QtCore
+
+import studioqt
+import studiolibrary
+
 try:
+    import mutils
     import maya.cmds
-except ImportError as msg:
+except ImportError, msg:
     print msg
 
-__all__ = ['Plugin', 'PreviewWidget', 'CreateWidget']
+
+__all__ = ["Plugin", "PreviewWidget", "CreateWidget"]
+
 logger = logging.getLogger(__name__)
+
 
 class PluginError(Exception):
     """Base class for exceptions in this module."""
@@ -64,34 +48,35 @@ class ValidateError(PluginError):
 
 
 class NamespaceOption:
-    FromFile = 'pose'
-    FromCustom = 'custom'
-    FromSelection = 'selection'
+    FromFile = "pose"
+    FromCustom = "custom"
+    FromSelection = "selection"
 
 
 class Plugin(studiolibrary.Plugin):
 
-    def __init__(self, library):
+    @staticmethod
+    def settings():
         """
-        :type library: studiolibrary.Library
+        :rtype: studiolibrary.Settings
         """
-        studiolibrary.Plugin.__init__(self, library)
+        return studiolibrary.Settings.instance("Plugin", "MayaBase")
 
     @staticmethod
-    def tempIconPath(clean = False):
+    def tempIconPath(clean=False):
         """
         :rtype: str
         """
-        tempDir = studiolibrary.TempDir('icon', clean=clean)
-        return tempDir.path() + '/thumbnail.jpg'
+        tempDir = studiolibrary.TempDir("icon", clean=clean)
+        return tempDir.path() + "/thumbnail.jpg"
 
     @staticmethod
-    def tempIconSequencePath(clean = False):
+    def tempIconSequencePath(clean=False):
         """
         :rtype: str
         """
-        tempDir = studiolibrary.TempDir('sequence', clean=clean)
-        return tempDir.path() + '/thumbnail.jpg'
+        tempDir = studiolibrary.TempDir("sequence", clean=clean)
+        return tempDir.path() + "/thumbnail.jpg"
 
     @staticmethod
     def createTempIcon():
@@ -102,7 +87,7 @@ class Plugin(studiolibrary.Plugin):
         return mutils.snapshot(path=path)
 
     @staticmethod
-    def createTempIconSequence(startFrame = None, endFrame = None, step = 1):
+    def createTempIconSequence(startFrame=None, endFrame=None, step=1):
         """
         :type startFrame: int
         :type endFrame: int
@@ -110,79 +95,42 @@ class Plugin(studiolibrary.Plugin):
         :rtype: str
         """
         path = Plugin.tempIconSequencePath(clean=True)
-        sequencePath = mutils.snapshot(path=path, start=startFrame, end=endFrame, step=step)
+
+        sequencePath = mutils.snapshot(
+            path=path,
+            start=startFrame,
+            end=endFrame,
+            step=step,
+        )
+
         iconPath = Plugin.tempIconPath()
         shutil.copyfile(sequencePath, iconPath)
-        return (iconPath, sequencePath)
+        return iconPath, sequencePath
 
     @staticmethod
     def selectionModifiers():
         """
         :rtype: dict[bool]
         """
-        result = {'add': False,
-         'deselect': False}
+        result = {"add": False, "deselect": False}
         modifiers = QtGui.QApplication.keyboardModifiers()
+
         if modifiers == QtCore.Qt.ShiftModifier:
-            result['deselect'] = True
+            result["deselect"] = True
         elif modifiers == QtCore.Qt.ControlModifier:
-            result['add'] = True
+            result["add"] = True
+
         return result
-
-    def namespaces(self, record):
-        """
-        :rtype: list[str]
-        """
-        return record.namespaces()
-
-    def customNamespaces(self):
-        """
-        :rtype: list[str]
-        """
-        return self.settings().get('customNamespaces', '')
-
-    def setCustomNamespaces(self, namespaces):
-        """
-        :type namespaces: str | list[str]
-        """
-        if isinstance(namespaces, basestring):
-            namespaces = studiolibrary.stringToList(namespaces)
-        logger.debug('Setting namespace %s' % namespaces)
-        self.settings().set('customNamespaces', namespaces)
-        self.settings().save()
-
-    def setNamespaceOption(self, namespaceOption):
-        """
-        :type namespaceOption: str | NamespaceOption
-        """
-        logger.debug('Setting namespace option %s' % namespaceOption)
-        self.settings().set('namespaceOption', namespaceOption)
-        self.settings().save()
-
-    def namespaceOption(self):
-        """
-        :rtype: NamespaceOption
-        """
-        return self.settings().get('namespaceOption', NamespaceOption.FromSelection)
-
-    @mutils.unifyUndo
-    def selectContent(self, records = None, namespaces = None):
-        """
-        :type records: list[studiolibrary.Record]
-        """
-        records = records or self.libraryWidget().selectedRecords()
-        options = Plugin.selectionModifiers()
-        for record in records:
-            record.selectContent(namespaces=namespaces, **options)
 
     def setLoggerLevel(self, level):
         """
         :type level: int
         :rtype: None
         """
-        logger_ = logging.getLogger('mutils')
+        logger_ = logging.getLogger("mutils")
         logger_.setLevel(level)
-        logger_ = logging.getLogger('studiolibraryplugins')
+
+        logger_ = logging.getLogger("studiolibraryplugins")
         logger_.setLevel(level)
 
     def recordContextMenu(self, menu, records):
@@ -191,122 +139,153 @@ class Plugin(studiolibrary.Plugin):
         :type records: list[Record]
         :rtype: None
         """
+        import selectionsetmenu
+
         if records:
+
             record = records[-1]
-            self.addSelectContentsAction(menu, records)
+
+            action = selectionsetmenu.selectContentAction(record, parent=menu)
+            menu.addAction(action)
             menu.addSeparator()
-            path = record.path()
-            icon = studiolibrary.icon(self.dirname() + '/resource/images/set.png')
-            namespaces = record.namespaces()
-            subMenu = self.selectionSetsMenu(menu, path=path, namespaces=namespaces)
-            subMenu.setIcon(icon)
-            subMenu.setTitle('Selection Sets')
+
+            subMenu = record.selectionSetsMenu(parent=menu, enableSelectContent=False)
             menu.addMenu(subMenu)
             menu.addSeparator()
-
-    def addSelectContentsAction(self, menu, records = None):
-        """
-        :type menu: QtGui.QMenu
-        :type records: list[studiolibrary.Record]
-        :rtype: None
-        """
-        if records:
-            action = self.selectContentsAction(menu, records)
-            menu.addAction(action)
-
-    def selectContentsAction(self, menu, records = None):
-        """
-        :type menu: QtGui.QMenu
-        :type records: list[Record]
-        """
-        icon = studiolibrary.icon(self.dirname() + '/resource/images/arrow.png')
-        action = studiolibrary.Action(icon, 'Select content', menu)
-        trigger = partial(self.selectContent, records)
-        action.setCallback(trigger)
-        return action
-
-    def selectionSetsMenu(self, parent, path, namespaces = None, includeSelectContents = False):
-        """
-        :type parent: QtGui.QMenu
-        :type path: str
-        :type namespaces: list[str]
-        :type includeSelectContents: bool
-        :rtype: selectionsetmenu.SelectionSetMenu
-        """
-        selectionSets = self.library().findRecords(path, '.set', direction=studiolibrary.Direction.Up)
-        menu = selectionsetmenu.SelectionSetMenu('Selection Sets', parent, records=selectionSets, namespaces=namespaces)
-        if includeSelectContents:
-            actions = menu.actions()
-            action = self.selectContentsAction(menu)
-            if actions:
-                firstAction = actions[0]
-                menu.insertAction(firstAction, action)
-                menu.insertSeparator(firstAction)
-            else:
-                menu.addAction(action)
-        return menu
 
 
 class Record(studiolibrary.Record):
 
     def __init__(self, *args, **kwargs):
         """
-        :type args: list[]
-        :type kwargs: dict[]
+        :type args: list
+        :type kwargs: dict
         """
         studiolibrary.Record.__init__(self, *args, **kwargs)
+
+        self._namespaces = []
+        self._customNamespaces = ""
+        self._namespaceOption = NamespaceOption.FromSelection
+
         self._transferClass = None
         self._transferObject = None
         self._transferBasename = None
-        return
 
     def prettyPrint(self):
         """
         :rtype: None
         """
-        print '------ %s ------' % self.name()
+        print("------ %s ------" % self.name())
         import json
         print json.dumps(self.transferObject().data(), indent=2)
-        print '----------------\n'
+        print("----------------\n")
+
+    def contextMenu(self, menu, records):
+        """
+        Support for Studio Library 2.0
+
+        :type menu: QtGui.QMenu
+        :type records: list[Record]
+        :rtype: None
+        """
+        import selectionsetmenu
+
+        if records:
+
+            record = records[-1]
+
+            action = selectionsetmenu.selectContentAction(record, parent=menu)
+            menu.addAction(action)
+            menu.addSeparator()
+
+            subMenu = record.selectionSetsMenu(parent=menu, enableSelectContent=False)
+            menu.addMenu(subMenu)
+            menu.addSeparator()
 
     @staticmethod
     def createTempSnapshot():
         """
-         Convenience method
-        
+        Convenience method.
+
         :rtype: str
         """
         return Plugin.createTempSnapshot()
 
     @staticmethod
-    def createTempImageSequence(startFrame, endFrame, step = 1):
+    def createTempImageSequence(startFrame, endFrame, step=1):
         """
-        Convenience method
-        
+        Convenience method.
+
         :type startFrame: int
         :type endFrame: int
         :type step: int
         :rtype: str
         """
-        return Plugin.createTempImageSequence(startFrame=startFrame, endFrame=endFrame, step=step)
+        imageSequence = Plugin.createTempImageSequence(
+                startFrame=startFrame,
+                endFrame=endFrame,
+                step=step
+        )
+        return imageSequence
+
+    def showErrorDialog(self, message, title="Record Error"):
+        """
+        :type title: str
+        :type message: str
+        :rtype: int
+        """
+        return QtGui.QMessageBox.critical(None, title, str(message))
+
+    def showSelectionSetsMenu(self, **kwargs):
+        """
+        :rtype: QtGui.QAction
+        """
+        menu = self.selectionSetsMenu(**kwargs)
+        position = QtGui.QCursor().pos()
+        action = menu.exec_(position)
+        return action
+
+    def selectionSetsMenu(self, parent=None, enableSelectContent=True):
+        """
+        :type parent: QtGui.QWidget
+        :type enableSelectContent: bool
+        :rtype: QtGui.QMenu
+        """
+        import selectionsetmenu
+
+        namespaces = self.namespaces()
+
+        menu = selectionsetmenu.SelectionSetMenu(
+                record=self,
+                parent=parent,
+                namespaces=namespaces,
+                enableSelectContent=enableSelectContent,
+        )
+        return menu
 
     def mirrorTables(self):
         """
         :rtype: str
         """
-        return studiolibrary.findPaths(self.path(), '.mirror', direction=studiolibrary.Direction.Up)
+        return studiolibrary.findPaths(self.path(), ".mirror", direction=studiolibrary.Direction.Up)
 
-    def selectContent(self, namespaces = None, **options):
+    def selectContent(self, namespaces=None, **kwargs):
         """
         :type namespaces: list[str]
         """
+        namespaces = namespaces or self.namespaces()
+        kwargs = kwargs or Plugin.selectionModifiers()
+
+        msg = "Select content: Record.selectContent(namespacea={0}, kwargs={1})"
+        msg = msg.format(namespaces, kwargs)
+        logger.debug(msg)
+
         try:
-            namespaces = namespaces or self.namespaces()
-            options = options or Plugin.selectionModifiers()
-            self.transferObject().select(namespaces=namespaces, **options)
-        except Exception as msg:
-            if self.libraryWidget():
-                self.libraryWidget().setError(msg)
+            self.transferObject().select(namespaces=namespaces, **kwargs)
+        except Exception, msg:
+            title = "Error while selecting content"
+            QtGui.QMessageBox.critical(None, title, str(msg))
+            raise
 
     def setTransferClass(self, classname):
         """
@@ -325,7 +304,7 @@ class Record(studiolibrary.Record):
         :rtype: str
         """
         if self.transferBasename():
-            return '/'.join([self.path(), self.transferBasename()])
+            return "/".join([self.path(), self.transferBasename()])
         else:
             return self.path()
 
@@ -351,19 +330,60 @@ class Record(studiolibrary.Record):
                 self._transferObject = self.transferClass().fromPath(path)
         return self._transferObject
 
+    def settings(self):
+        """
+        :rtype: studiolibrary.Settings
+        """
+        return Plugin.settings()
+
     def namespaces(self):
         """
         :rtype: list[str]
         """
-        namespaceOption = self.plugin().namespaceOption()
+        namespaces = []
+        namespaceOption = self.namespaceOption()
+
+        # When creating a new record we can only get the namespaces from
+        # selection because the file (transferObject) doesn't exist yet.
         if not self.transferObject():
-            return self.namespaceFromSelection()
-        if namespaceOption == NamespaceOption.FromFile:
-            return self.namespaceFromFile()
-        if namespaceOption == NamespaceOption.FromCustom:
-            return self.namespaceFromCustom()
-        if namespaceOption == NamespaceOption.FromSelection:
-            return self.namespaceFromSelection()
+            namespaces = self.namespaceFromSelection()
+
+        # If the file (transferObject) exists then we can use the namespace
+        # option to determined which namespaces to return.
+        elif namespaceOption == NamespaceOption.FromFile:
+            namespaces = self.namespaceFromFile()
+
+        elif namespaceOption == NamespaceOption.FromCustom:
+            namespaces = self.namespaceFromCustom()
+
+        elif namespaceOption == NamespaceOption.FromSelection:
+            namespaces = self.namespaceFromSelection()
+
+        return namespaces
+
+    def setNamespaceOption(self, namespaceOption):
+        """
+        :type namespaceOption: NamespaceOption
+        :rtype: None
+        """
+        self.settings().set("namespaceOption", namespaceOption)
+
+    def namespaceOption(self):
+        """
+        :rtype: NamespaceOption
+        """
+        namespaceOption = self.settings().get(
+                "namespaceOption",
+                NamespaceOption.FromSelection
+        )
+        return namespaceOption
+
+    def setCustomNamespaces(self, namespaces):
+        """
+        :type namespaces: list[str]
+        :rtype: None
+        """
+        self.settings().set("namespaces", namespaces)
 
     def namespaceFromFile(self):
         """
@@ -375,14 +395,14 @@ class Record(studiolibrary.Record):
         """
         :rtype: list[str]
         """
-        return self.plugin().customNamespaces()
+        return self.settings().get("namespaces", "")
 
     @staticmethod
     def namespaceFromSelection():
         """
         :rtype: list[str]
         """
-        return mutils.getNamespaceFromSelection() or ['']
+        return mutils.getNamespaceFromSelection() or [""]
 
     def objectCount(self):
         """
@@ -399,80 +419,132 @@ class Record(studiolibrary.Record):
         """
         self.load()
 
-    def load(self, objects = None, namespaces = None, **kwargs):
+    def load(self, objects=None, namespaces=None, **kwargs):
         """
         :type namespaces: list[str]
         :type objects: list[str]
         :rtype: None
         """
-        logger.debug('Loading: %s' % self.transferPath())
-        self.transferObject().load(objects=objects, namespaces=namespaces, **kwargs)
-        logger.debug('Loaded: %s' % self.transferPath())
+        logger.debug("Loading: %s" % self.transferPath())
 
-    def save(self, objects, path = None, iconPath = None, force = False, **kwargs):
+        self.transferObject().load(objects=objects, namespaces=namespaces, **kwargs)
+
+        logger.debug("Loaded: %s" % self.transferPath())
+
+    def save(self, objects, path=None, iconPath=None, **kwargs):
         """
         :type path: path
-        :type objects: list[]
+        :type objects: list
         :type iconPath: str
         :raise ValidateError:
         """
-        logger.info('Saving: {0}'.format(path))
+        logger.info("Saving: {0}".format(path))
+
         contents = list()
-        tempDir = studiolibrary.TempDir('Transfer', clean=True)
-        transferPath = tempDir.path() + '/' + self.transferBasename()
+        tempDir = studiolibrary.TempDir("Transfer", clean=True)
+
+        transferPath = tempDir.path() + "/" + self.transferBasename()
         t = self.transferClass().fromObjects(objects)
         t.save(transferPath, **kwargs)
+
         if iconPath:
             contents.append(iconPath)
+
         contents.append(transferPath)
-        studiolibrary.Record.save(self, path=path, contents=contents, force=force)
-        logger.info('Saved: {0}'.format(path))
+        studiolibrary.Record.save(self, path=path, contents=contents)
+
+        logger.info("Saved: {0}".format(path))
 
 
 class BaseWidget(QtGui.QWidget):
 
-    def __init__(self, record, libraryWidget = None):
+    stateChanged = QtCore.Signal(object)
+
+    def __init__(self, record, parent=None):
         """
         :type record: Record
-        :type libraryWidget: studiolibrary.LibraryWidget
+        :type parent: studiolibrary.LibraryWidget
         """
-        QtGui.QWidget.__init__(self, None)
-        studiolibrary.loadUi(self)
+        QtGui.QWidget.__init__(self, parent)
+        self.setObjectName("studioLibraryPluginsWidget")
+
+        studioqt.loadUi(self)
+
+        self._record = None
+        self._iconPath = ""
         self._scriptJob = None
-        self._record = record
-        self._iconPath = ''
-        self._libraryWidget = libraryWidget
+
+        self.setRecord(record)
         self.loadSettings()
-        if studiolibrary.isPySide():
-            self.layout().setContentsMargins(0, 0, 0, 0)
-        if hasattr(self.ui, 'title'):
-            self.ui.title.setText(self.record().plugin().name())
-        if hasattr(self.ui, 'name'):
-            self.ui.name.setText(self.record().name())
-        if hasattr(self.ui, 'owner'):
-            self.ui.owner.setText(str(self.record().owner()))
-        if hasattr(self.ui, 'comment'):
-            if isinstance(self.ui.comment, QtGui.QLabel):
-                self.ui.comment.setText(self.record().description())
-            else:
-                self.ui.comment.setPlainText(self.record().description())
-        if hasattr(self.ui, 'contains'):
-            self.updateContains()
-        if hasattr(self.ui, 'snapshotButton'):
-            path = self.record().iconPath()
-            if os.path.exists(path):
-                self.setIconPath(self.record().iconPath())
-        ctime = self.record().ctime()
-        if hasattr(self.ui, 'created') and ctime:
-            self.ui.created.setText(studiolibrary.timeAgo(str(ctime)))
+
         try:
             self.selectionChanged()
-            self._scriptJob = mutils.ScriptJob(e=['SelectionChanged', self.selectionChanged])
-        except NameError:
-            import traceback
-            traceback.print_exc()
+            self.enableScriptJob()
+        except NameError, msg:
+            logger.exception(msg)
 
-        return
+    def enableScriptJob(self):
+        """
+        :rtype: None
+        """
+        if not self._scriptJob:
+            event = ['SelectionChanged', self.selectionChanged]
+            self._scriptJob = mutils.ScriptJob(event=event)
+
+    def setRecord(self, record):
+        """
+        :type record: Record
+        """
+        self._record = record
+
+        if hasattr(self.ui, 'name'):
+            self.ui.name.setText(record.name())
+
+        if hasattr(self.ui, 'owner'):
+            self.ui.owner.setText(str(record.owner()))
+
+        if hasattr(self.ui, 'comment'):
+            if isinstance(self.ui.comment, QtGui.QLabel):
+                self.ui.comment.setText(record.description())
+            else:
+                self.ui.comment.setPlainText(record.description())
+
+        if hasattr(self.ui, "contains"):
+            self.updateContains()
+
+        if hasattr(self.ui, 'snapshotButton'):
+            path = record.iconPath()
+            if os.path.exists(path):
+                self.setIconPath(record.iconPath())
+
+        ctime = record.ctime()
+        if hasattr(self.ui, 'created') and ctime:
+            self.ui.created.setText(studiolibrary.timeAgo(str(ctime)))
+
+    def record(self):
+        """
+        :rtype: Record
+        """
+        return self._record
+
+    def setState(self, state):
+        """
+        :type state: dict
+        :rtype: None
+        """
+        self.stateChanged.emit(self)
+
+    def updateState(self):
+        """
+        :rtype: None
+        """
+        self.stateChanged.emit(self)
+
+    def state(self):
+        """
+        :rtype: dict
+        """
+        return {}
 
     def iconPath(self):
         """
@@ -495,54 +567,26 @@ class BaseWidget(QtGui.QWidget):
         """
         self.ui.snapshotButton.setIcon(icon)
         self.ui.snapshotButton.setIconSize(QtCore.QSize(200, 200))
-        self.ui.snapshotButton.setText('')
-
-    def record(self):
-        """
-        :rtype: Record
-        """
-        return self._record
-
-    def plugin(self):
-        """
-        :rtype: Plugin
-        """
-        return self.record().plugin()
+        self.ui.snapshotButton.setText("")
 
     def settings(self):
         """
         :rtype: studiolibrary.Settings
         """
-        return self.plugin().settings()
+        return self.record().settings()
 
     def libraryWidget(self):
         """
         :rtype: studiolibrary.LibraryWidget
         """
-        return self._libraryWidget
+        return self.record().plugin().libraryWidget()
 
     def showSelectionSetsMenu(self):
         """
         :rtype: None
         """
-        folder = self.libraryWidget().selectedFolder()
-        if folder:
-            path = folder.path()
-            self._showSelectionSetsMenu(path)
-        else:
-            logger.debug('No folder selected! Cannot show the selection sets menu because there is no folder selected!')
-
-    def _showSelectionSetsMenu(self, path, includeSelectContents = True):
-        """
-        :type path: str
-        :type includeSelectContents: bool
-        :rtype: None
-        """
-        position = QtGui.QCursor().pos()
-        position = self.mapTo(self, position)
-        namespaces = self.record().namespaces()
-        menu = self.plugin().selectionSetsMenu(self, path=path, namespaces=namespaces, includeSelectContents=includeSelectContents)
-        menu.exec_(position)
+        record = self.record()
+        record.showSelectionSetsMenu()
 
     def selectionChanged(self):
         """
@@ -599,11 +643,10 @@ class BaseWidget(QtGui.QWidget):
         """
         :rtype: None
         """
-        if not hasattr(self.ui, 'contains'):
-            return
-        count = self.objectCount()
-        plural = 's' if count > 1 else ''
-        self.ui.contains.setText(str(count) + ' Object' + plural)
+        if hasattr(self.ui, "contains"):
+            count = self.objectCount()
+            plural = "s" if count > 1 else ""
+            self.ui.contains.setText(str(count) + " Object" + plural)
 
 
 class InfoWidget(BaseWidget):
@@ -613,8 +656,6 @@ class InfoWidget(BaseWidget):
         :type parent: QtGui.QWidget
         """
         BaseWidget.__init__(self, *args, **kwargs)
-        self.setFixedWidth(190)
-        self.setFixedHeight(80)
 
     def objectCount(self):
         """
@@ -632,39 +673,76 @@ class PreviewWidget(BaseWidget):
         :type parent: QtGui.QWidget
         """
         BaseWidget.__init__(self, *args, **kwargs)
-        self.connect(self.ui.acceptButton, QtCore.SIGNAL('clicked()'), self.accept)
-        self.connect(self.ui.selectionSetButton, QtCore.SIGNAL('clicked()'), self.showSelectionSetsMenu)
-        self.connect(self.ui.useFileNamespace, QtCore.SIGNAL('clicked()'), self.stateChanged)
-        self.connect(self.ui.useCustomNamespace, QtCore.SIGNAL('clicked()'), self.setFromCustomNamespace)
-        self.connect(self.ui.useSelectionNamespace, QtCore.SIGNAL('clicked()'), self.stateChanged)
-        self.connect(self.ui.namespaceEdit, QtCore.SIGNAL('textEdited (const QString&)'), self.stateChanged)
-        self.ui.selectionSetButton.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.ui.selectionSetButton.customContextMenuRequested.connect(self.showSelectionSetsMenu)
+
+        self.setupConnections()
+
+    def setupConnections(self):
+        """
+        :rtype: None
+        """
+        self.ui.acceptButton.clicked.connect(self.accept)
+        self.ui.selectionSetButton.clicked.connect(self.showSelectionSetsMenu)
+
+        self.ui.useFileNamespace.clicked.connect(self.updateState)
+        self.ui.useCustomNamespace.clicked.connect(self.setFromCustomNamespace)
+        self.ui.useSelectionNamespace.clicked.connect(self.updateState)
+        self.ui.namespaceEdit.textEdited[str].connect(self.updateState)
 
     def objectCount(self):
         """
         :rtype: int
         """
+        objectCount = 0
+
         if self.record().exists():
-            return self.record().objectCount()
-        return 0
+            objectCount = self.record().objectCount()
 
-    def stateChanged(self, state = None):
-        """
-        :type state: bool
-        """
-        logger.debug('Preview widget has changed state')
-        self.updateNamespaceEdit()
-        self.saveSettings()
+        return objectCount
 
-    def loadSettings(self):
+    def updateState(self):
         """
         :rtype: None
         """
-        namespaces = self.record().namespaces()
+        logger.debug("Updating widget state")
+
+        self.updateNamespaceEdit()
+        self.saveSettings()
+
+        BaseWidget.updateState(self)
+
+    def namespaces(self):
+        """
+        :rtype: list[str]
+        """
+        namespaces = str(self.ui.namespaceEdit.text())
+        namespaces = studiolibrary.stringToList(namespaces)
+        return namespaces
+
+    def setNamespaces(self, namespaces):
+        """
+        :type namespaces: list
+        :rtype: None
+        """
         namespaces = studiolibrary.listToString(namespaces)
         self.ui.namespaceEdit.setText(namespaces)
-        namespaceOption = self.plugin().namespaceOption()
+
+    def namespaceOption(self):
+        """
+        :rtype: NamespaceOption
+        """
+        if self.ui.useFileNamespace.isChecked():
+            namespaceOption = NamespaceOption.FromFile
+        elif self.ui.useCustomNamespace.isChecked():
+            namespaceOption = NamespaceOption.FromCustom
+        else:
+            namespaceOption = NamespaceOption.FromSelection
+
+        return namespaceOption
+
+    def setNamespaceOption(self, namespaceOption):
+        """
+        :type namespaceOption: NamespaceOption
+        """
         if namespaceOption == NamespaceOption.FromFile:
             self.ui.useFileNamespace.setChecked(True)
         elif namespaceOption == NamespaceOption.FromCustom:
@@ -672,55 +750,78 @@ class PreviewWidget(BaseWidget):
         else:
             self.ui.useSelectionNamespace.setChecked(True)
 
+    def setState(self, state):
+        """
+        :type state: dict
+        """
+        namespaces = state.get("namespaces", "")
+        self.setNamespaces(namespaces)
+
+        namespaceOption = state.get("namespaceOption", "")
+        self.setNamespaceOption(namespaceOption)
+
+        super(PreviewWidget, self).setState(state)
+
+    def state(self):
+        """
+        :rtype: dict
+        """
+        state = super(PreviewWidget, self).state()
+
+        state["namespaces"] = self.namespaces()
+        state["namespaceOption"] = self.namespaceOption()
+
+        return state
+
+    def loadSettings(self):
+        """
+        :rtype: None
+        """
+        settings = self.settings()
+        self.setState(settings.data())
+
     def saveSettings(self):
         """
         :rtype: None
         """
-        if self.ui.useFileNamespace.isChecked():
-            self.plugin().setNamespaceOption(NamespaceOption.FromFile)
-        elif self.ui.useCustomNamespace.isChecked():
-            self.plugin().setNamespaceOption(NamespaceOption.FromCustom)
-        else:
-            self.plugin().setNamespaceOption(NamespaceOption.FromSelection)
-        namespaces = self.namespaces()
-        self.plugin().setCustomNamespaces(namespaces)
-
-    def namespaces(self):
-        """
-        :rtype: list[str]
-        """
-        return studiolibrary.stringToList(str(self.ui.namespaceEdit.text()))
+        settings = self.settings()
+        settings.data().update(self.state())
+        settings.save()
 
     def selectionChanged(self):
         """
         :rtype: None
         """
-        logger.debug('Updating namespace edit')
         self.updateNamespaceEdit()
 
     def updateNamespaceEdit(self):
         """
         :rtype: None
         """
+        logger.debug('Updating namespace edit')
+
         namespaces = None
+
         if self.ui.useSelectionNamespace.isChecked():
             namespaces = mutils.getNamespaceFromSelection()
         elif self.ui.useFileNamespace.isChecked():
             namespaces = self.record().transferObject().namespaces()
+
         if not self.ui.useCustomNamespace.isChecked():
             self.ui.namespaceEdit.setEnabled(False)
-            self.ui.namespaceEdit.setText(studiolibrary.listToString(namespaces))
+            self.setNamespaces(namespaces)
         else:
             self.ui.namespaceEdit.setEnabled(True)
-        return
 
-    def setFromCustomNamespace(self, value = None):
+    def setFromCustomNamespace(self, value=True):
         """
-        :type value:
+        :type value: bool
+        :rtype: None
         """
-        self.stateChanged(value)
-        if self.ui.useCustomNamespace.isChecked():
-            self.ui.namespaceEdit.setFocus()
+        self.ui.useCustomNamespace.setChecked(value)
+        self.ui.namespaceEdit.setEnabled(value)
+        self.ui.namespaceEdit.setFocus()
+        self.updateState()
 
     def accept(self):
         """
@@ -728,9 +829,9 @@ class PreviewWidget(BaseWidget):
         """
         try:
             self.record().load()
-        except Exception as msg:
-            if self.libraryWidget():
-                self.libraryWidget().setError(msg)
+        except Exception, msg:
+            title = "Error while loading"
+            QtGui.QMessageBox.critical(None, title, str(msg))
             raise
 
 
@@ -741,14 +842,18 @@ class CreateWidget(BaseWidget):
         :type parent: QtGui.QWidget
         """
         BaseWidget.__init__(self, *args, **kwargs)
-        self._iconPath = ''
+
+        self._iconPath = ""
         self._focusWidget = None
-        self.connect(self.ui.acceptButton, QtCore.SIGNAL('clicked()'), self.accept)
-        self.connect(self.ui.snapshotButton, QtCore.SIGNAL('clicked()'), self.snapshot)
-        self.connect(self.ui.selectionSetButton, QtCore.SIGNAL('clicked()'), self.showSelectionSetsMenu)
-        self.ui.selectionSetButton.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.ui.selectionSetButton.customContextMenuRequested.connect(self.showSelectionSetsMenu)
-        return
+
+        self.ui.acceptButton.clicked.connect(self.accept)
+        self.ui.snapshotButton.clicked.connect(self.snapshot)
+        self.ui.selectionSetButton.clicked.connect(self.showSelectionSetsMenu)
+
+        # import mutils.modelpanelwidget
+        # self._modelPanel = mutils.modelpanelwidget.ModelPanelWidget(self.ui.modelPanelFrame)
+        # self.ui.modelPanelFrame.layout().insertWidget(0, self._modelPanel)
+        # self.ui.snapshotButton.hide()
 
     def objectCount(self):
         """
@@ -757,10 +862,45 @@ class CreateWidget(BaseWidget):
         selection = []
         try:
             selection = maya.cmds.ls(selection=True) or []
-        except NameError as e:
+        except NameError, e:
             traceback.print_exc()
 
         return len(selection)
+
+    def dirname(self):
+        """
+        :rtype: str or None
+        """
+        dirname = self.record().dirname()
+
+        if not dirname:
+            dirname = self.selectedFolderPath()
+
+        return dirname
+
+    def selectedFolderPath(self):
+        """
+        :rtype: str or None
+        """
+        dirname = None
+        folder = self.libraryWidget().selectedFolder()
+
+        if folder:
+            dirname = folder.path()
+
+        return dirname
+
+    def showSelectionSetsMenu(self):
+        """
+        :rtype: None
+        """
+        import selectionsetmenu
+
+        dirname = self.dirname()
+        menu = selectionsetmenu.SelectionSetMenu.fromPath(dirname)
+        position = QtGui.QCursor().pos()
+
+        menu.exec_(position)
 
     def selectionChanged(self):
         """
@@ -781,19 +921,24 @@ class CreateWidget(BaseWidget):
         try:
             path = Plugin.createTempIcon()
             self.setIconPath(path)
-        except Exception as msg:
-            self.libraryWidget().setError(msg)
+        except Exception, msg:
+            title = "Error while taking snapshot"
+            QtGui.QMessageBox.critical(None, title, str(msg))
             raise
 
     def snapshotQuestion(self):
         """
         :rtype: int
         """
-        title = 'Create a snapshot icon'
-        message = 'Would you like to create a snapshot icon?'
-        result = QtGui.QMessageBox.question(self, title, str(message), QtGui.QMessageBox.Yes | QtGui.QMessageBox.Ignore | QtGui.QMessageBox.Cancel)
+        title = "Create a snapshot icon"
+        message = "Would you like to create a snapshot icon?"
+        options = QtGui.QMessageBox.Yes | QtGui.QMessageBox.Ignore | QtGui.QMessageBox.Cancel
+
+        result = QtGui.QMessageBox.question(None, title, str(message), options)
+
         if result == QtGui.QMessageBox.Yes:
             self.snapshot()
+
         return result
 
     def accept(self):
@@ -803,22 +948,35 @@ class CreateWidget(BaseWidget):
         try:
             name = self.nameText()
             objects = maya.cmds.ls(selection=True) or []
-            folder = self.libraryWidget().selectedFolder()
-            if not folder:
-                raise ValidateError('No folder selected. Please select a destination folder.')
+            dirname = self.dirname()
+
+            if not dirname:
+                raise ValidateError("No folder selected. Please select a destination folder.")
+
             if not name:
-                raise ValidateError('No name specified. Please set a name before saving.')
+                raise ValidateError("No name specified. Please set a name before saving.")
+
             if not objects:
-                raise ValidateError('No objects selected. Please select at least one object.')
+                raise ValidateError("No objects selected. Please select at least one object.")
+
             if not os.path.exists(self.iconPath()):
                 result = self.snapshotQuestion()
                 if result == QtGui.QMessageBox.Cancel:
                     return
-            path = folder.path() + '/' + name
+
+            path = dirname + "/" + name
             description = str(self.ui.comment.toPlainText())
-            self.save(objects=objects, path=path, iconPath=self.iconPath(), description=description)
-        except Exception as msg:
-            self.libraryWidget().setError(msg)
+
+            self.save(
+                path=path,
+                objects=objects,
+                iconPath=self.iconPath(),
+                description=description,
+            )
+
+        except Exception, msg:
+            title = "Error while saving"
+            QtGui.QMessageBox.critical(None, title, str(msg))
             raise
 
     def save(self, objects, path, iconPath, description):
@@ -832,8 +990,3 @@ class CreateWidget(BaseWidget):
         r = self.record()
         r.setDescription(description)
         r.save(objects=objects, path=path, iconPath=iconPath)
-
-
-if __name__ == '__main__':
-    import studiolibrary
-    studiolibrary.main()

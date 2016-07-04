@@ -1,53 +1,43 @@
-# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.8.6/build27/studiolibrary\core\utils.py
-"""
-Released subject to the BSD License
-Please visit http://www.voidspace.org.uk/python/license.shtml
-
-Contact: kurt.rathjen@gmail.com
-Comments, suggestions and bug reports are welcome.
-Copyright (c) 2015, Kurt Rathjen, All rights reserved.
-
-It is a very non-restrictive license but it comes with the usual disclaimer.
-This is free software: test it, break it, just don't blame me if it eats your
-data! Of course if it does, let me know and I'll fix the problem so that it
-doesn't happen to anyone else.
-
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-   # * Redistributions of source code must retain the above copyright
-   #   notice, this list of conditions and the following disclaimer.
-   # * Redistributions in binary form must reproduce the above copyright
-   # notice, this list of conditions and the following disclaimer in the
-   # documentation and/or other materials provided with the distribution.
-   # * Neither the name of Kurt Rathjen nor the
-   # names of its contributors may be used to endorse or promote products
-   # derived from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN ''AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL KURT RATHJEN BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-"""
+# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.13.0/build27/studiolibrary\core\utils.py
 import re
 import os
-import sys
-import time
-import logging
 import platform
 import subprocess
+__all__ = ['user',
+ 'walk',
+ 'isMaya',
+ 'isMac',
+ 'isLinux',
+ 'isWindows',
+ 'timeAgo',
+ 'listPaths',
+ 'splitPath',
+ 'findPaths',
+ 'Direction',
+ 'SortOption',
+ 'downloadUrl',
+ 'stringToList',
+ 'listToString',
+ 'openLocation',
+ 'validatePath',
+ 'validateString',
+ 'generateUniquePath',
+ 'generateUniqueName']
 RE_VALIDATE_PATH = re.compile('^[\\\\.:/\\sA-Za-z0-9_-]*$')
 RE_VALIDATE_STRING = re.compile('^[\\sA-Za-z0-9_-]+$')
 
-class ValidateError(Exception):
-    """
-    """
+class StudioLibraryError(Exception):
+    """Base exception for any studio library errors."""
+    pass
+
+
+class ValidatePathError(StudioLibraryError):
+    """Raised when a path has invalid characters."""
+    pass
+
+
+class ValidateStringError(StudioLibraryError):
+    """Raised when a string has invalid characters."""
     pass
 
 
@@ -62,66 +52,19 @@ class SortOption:
     Modified = 'modified'
 
 
+def user():
+    """
+    :rtype: str
+    """
+    import getpass
+    return getpass.getuser().lower()
+
+
 def system():
     """
     :rtype: str
     """
     return platform.system().lower()
-
-
-def addSysPath(path):
-    """
-    :type path: str
-    """
-    if os.path.exists(path) and path not in sys.path:
-        print "Adding '%s' to the sys.path" % path
-        sys.path.append(path)
-
-
-def validatePath(path):
-    """
-    :type path: str
-    :raise ValidateError
-    """
-    if not RE_VALIDATE_PATH.match(path):
-        raise ValidateError('Invalid characters in path "%s"! Please only use letters, numbers and forward slashes.' % path)
-
-
-def validateString(text):
-    """
-    :type text: str
-    :raise ValidateError
-    """
-    if not RE_VALIDATE_STRING.match(text):
-        raise ValidateError('Invalid string "%s"! Please only use letters and numbers' % text)
-
-
-def generateUniqueName(name, names, attempts = 1000):
-    """
-    :type name: str
-    :type names: list[str]
-    :type attempts: int
-    :rtype: str
-    """
-    for i in range(1, attempts):
-        result = name + str(i)
-        if result not in names:
-            return result
-
-    raise Exception("Cannot generate unique name '%s'" % name)
-
-
-def openLocation(path):
-    """
-    :type path: str
-    :rtype: None
-    """
-    if isLinux():
-        os.system('konqueror "%s"&' % path)
-    elif isWindows():
-        os.startfile('%s' % path)
-    elif isMac():
-        subprocess.call(['open', '-R', path])
 
 
 def isMaya():
@@ -157,12 +100,76 @@ def isLinux():
     return system().startswith('lin')
 
 
-def user():
+def validatePath(path):
     """
+    :type path: str
+    :raise ValidatePathError
+    """
+    if not RE_VALIDATE_PATH.match(path):
+        msg = 'Invalid characters in path "{0}"! Please only use letters, numbers and forward slashes.'
+        msg = msg.format(path)
+        raise ValidatePathError(msg)
+
+
+def validateString(text):
+    """
+    :type text: str
+    :raise ValidateStringError
+    """
+    if not RE_VALIDATE_STRING.match(text):
+        msg = 'Invalid string "{0}"! Please only use letters and numbers'
+        msg = msg.format(str(text))
+        raise ValidateStringError(msg)
+
+
+def generateUniqueName(name, names, attempts = 1000):
+    """
+    :type name: str
+    :type names: list[str]
+    :type attempts: int
     :rtype: str
     """
-    import getpass
-    return getpass.getuser().lower()
+    for i in range(1, attempts):
+        result = name + str(i)
+        if result not in names:
+            return result
+
+    msg = "Cannot generate unique name for '{name}'"
+    msg = msg.format(name=name)
+    raise StudioLibraryError(msg)
+
+
+def generateUniquePath(path, attempts = 100):
+    """
+    :type path:  str
+    :type attempts: int
+    :rtype: str
+    """
+    attempt = 1
+    dirname, name, extension = splitPath(path)
+    path_ = '{dirname}/{name} ({number}){extension}'
+    while os.path.exists(path):
+        attempt += 1
+        path = path_.format(name=name, number=attempt, dirname=dirname, extension=extension)
+        if attempt >= attempts:
+            msg = 'Cannot generate unique name for path {path}'
+            msg = msg.format(path=path)
+            raise ValueError(msg)
+
+    return path
+
+
+def openLocation(path):
+    """
+    :type path: str
+    :rtype: None
+    """
+    if isLinux():
+        os.system('konqueror "%s"&' % path)
+    elif isWindows():
+        os.startfile('%s' % path)
+    elif isMac():
+        subprocess.call(['open', '-R', path])
 
 
 def copyPath(srcPath, dstPath):
@@ -215,24 +222,23 @@ def stringToList(data):
     return eval(data)
 
 
-def walk(path, separator = '/', direction = Direction.Down):
+def walk(path, depth = 3):
     """
     :type path: str
-    :type separator: str
-    :type direction: Direction
+    :type depth: int
+    :rtype: list[str]
     """
-    if os.path.isfile(path):
-        path = os.path.dirname(path)
-    if not path.endswith(separator):
-        path += separator
-    folders = path.split(separator)
-    for i, folder in enumerate(folders):
-        if direction == Direction.Up:
-            result = separator.join(folders[:i * -1])
-        elif direction == Direction.Down:
-            result = separator.join(folders[:i - 1])
-        if result and os.path.exists(result):
-            yield result
+    path = path.rstrip(os.path.sep)
+    raise os.path.isdir(path) or AssertionError
+    num_sep = path.count(os.path.sep)
+    for root, dirs, files in os.walk(path):
+        files.extend(dirs)
+        for filename in files:
+            yield (root + '/' + filename).replace('\\', '/')
+
+        num_sep_this = root.count(os.path.sep)
+        if num_sep + depth <= num_sep_this:
+            del dirs[:]
 
 
 def listPaths(path):
@@ -251,18 +257,38 @@ def listPaths(path):
 def findPaths(dirname, search, direction = Direction.Up):
     """
     :type dirname: str
-    :type extension: str
+    :type search: str
     :type direction: Direction
-    :rtype: dict[str]
+    :rtype: list[str]
     """
     results = []
-    for path in walk(dirname, direction=direction):
+    for path in _findPaths(dirname, direction=direction):
         for filename in os.listdir(path):
             if search is None or search in filename:
                 value = path + '/' + filename
                 results.append(value)
 
     return results
+
+
+def _findPaths(path, separator = '/', direction = Direction.Down):
+    """
+    :type path: str
+    :type separator: str
+    :type direction: Direction
+    """
+    if os.path.isfile(path):
+        path = os.path.dirname(path)
+    if not path.endswith(separator):
+        path += separator
+    folders = path.split(separator)
+    for i, folder in enumerate(folders):
+        if direction == Direction.Up:
+            result = separator.join(folders[:i * -1])
+        elif direction == Direction.Down:
+            result = separator.join(folders[:i - 1])
+        if result and os.path.exists(result):
+            yield result
 
 
 def downloadUrl(url, destination = None):
