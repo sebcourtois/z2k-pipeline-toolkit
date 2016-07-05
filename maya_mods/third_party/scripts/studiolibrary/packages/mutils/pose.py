@@ -1,33 +1,5 @@
-# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.8.6/build27/studiolibrary/packages/mutils\pose.py
+# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.13.0/build27/studiolibrary/packages/mutils\pose.py
 """
-# Released subject to the BSD License
-# Please visit http://www.voidspace.org.uk/python/license.shtml
-#
-# Copyright (c) 2014, Kurt Rathjen
-# All rights reserved.
-# Comments, suggestions and bug reports are welcome.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-   # * Redistributions of source code must retain the above copyright
-   #   notice, this list of conditions and the following disclaimer.
-   # * Redistributions in binary form must reproduce the above copyright
-   # notice, this list of conditions and the following disclaimer in the
-   # documentation and/or other materials provided with the distribution.
-   # * Neither the name of Kurt Rathjen nor the
-   # objects of its contributors may be used to endorse or promote products
-   # derived from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN  ''AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL KURT RATHJEN BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # pose.py
 import pose
@@ -69,7 +41,7 @@ import mutils
 import logging
 try:
     import maya.cmds
-except ImportError:
+except Exception:
     import traceback
     traceback.print_exc()
 
@@ -118,14 +90,14 @@ class Pose(mutils.SelectionSet):
     def attrs(self, name):
         """
         :type name: str
-        :rtype: dict[]
+        :rtype: dict
         """
         return self.object(name).get('attrs', {})
 
     def attr(self, name, attr):
         """
         :type name: str
-        :rtype: dict[]
+        :rtype: dict
         """
         return self.attrs(name).get(attr, {})
 
@@ -150,14 +122,13 @@ class Pose(mutils.SelectionSet):
         :type clearSelection: bool
         """
         logger.debug("Open Load '%s'" % self.path())
-        if self._isLoading:
-            return
-        self._isLoading = True
-        maya.cmds.undoInfo(openChunk=True)
-        self._selection = maya.cmds.ls(selection=True) or []
-        self._autoKeyFrame = maya.cmds.autoKeyframe(query=True, state=True)
-        maya.cmds.autoKeyframe(edit=True, state=False)
-        maya.cmds.select(clear=clearSelection)
+        if not self._isLoading:
+            self._isLoading = True
+            maya.cmds.undoInfo(openChunk=True)
+            self._selection = maya.cmds.ls(selection=True) or []
+            self._autoKeyFrame = maya.cmds.autoKeyframe(query=True, state=True)
+            maya.cmds.autoKeyframe(edit=True, state=False)
+            maya.cmds.select(clear=clearSelection)
 
     def afterLoad(self):
         """
@@ -176,7 +147,7 @@ class Pose(mutils.SelectionSet):
             return
 
     @mutils.timing
-    def load(self, objects = None, namespaces = None, attrs = None, blend = 100, key = False, refresh = False, ignoreConnected = False, onlyConnected = False, cache = True, mirrorTable = None, mirror = False, clearSelection = False, batchMode = False):
+    def load(self, objects = None, namespaces = None, attrs = None, blend = 100, key = False, cache = True, mirror = False, refresh = False, batchMode = False, mirrorTable = None, onlyConnected = False, clearSelection = False, ignoreConnected = False):
         """
         :type objects: list[str]
         :type namespaces: list[str]
@@ -191,7 +162,7 @@ class Pose(mutils.SelectionSet):
             mirror = False
         if batchMode:
             key = False
-        self.updateCache(objects=objects, namespaces=namespaces, dstAttrs=attrs, ignoreConnected=ignoreConnected, onlyConnected=onlyConnected, cache=cache, mirrorTable=mirrorTable)
+        self.updateCache(objects=objects, namespaces=namespaces, cache=cache, dstAttrs=attrs, mirrorTable=mirrorTable, onlyConnected=onlyConnected, ignoreConnected=ignoreConnected)
         self.beforeLoad(clearSelection=clearSelection)
         try:
             self.loadCache(blend=blend, key=key, mirror=mirror)
@@ -217,7 +188,10 @@ class Pose(mutils.SelectionSet):
             usingNamespaces = not objects and namespaces
             if mirrorTable:
                 self.setMirrorTable(mirrorTable)
-            mutils.matchObjects(srcObjects, dstObjects=dstObjects, dstNamespaces=namespaces, callback=self.cacheNode, dstAttrs=dstAttrs, ignoreConnected=ignoreConnected, onlyConnected=onlyConnected, usingNamespaces=usingNamespaces)
+            matches = mutils.matchNames(srcObjects, dstObjects=dstObjects, dstNamespaces=namespaces)
+            for srcNode, dstNode in matches:
+                self.cacheNode(srcNode, dstNode, dstAttrs=dstAttrs, onlyConnected=onlyConnected, ignoreConnected=ignoreConnected, usingNamespaces=usingNamespaces)
+
         if not self.cache():
             raise mutils.NoMatchFoundError('No objects match when loading data')
 

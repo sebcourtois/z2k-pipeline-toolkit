@@ -257,7 +257,7 @@ def getSgRelatedVersionsHistory(scnInfos=None, logInfo=True, limit=0, relatedAss
     if scnInfos is None:
         scnInfos = infosFromScene()
 
-    damShot = scnInfos["dam_entity"]
+    damShot = scnInfos.get("dam_entity")
     proj = scnInfos["project"]
     sScnRcName = scnInfos["resource"]
     sgShot = damShot.getSgInfo()

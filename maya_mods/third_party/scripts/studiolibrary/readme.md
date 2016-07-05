@@ -1,7 +1,8 @@
 ## STUDIO LIBRARY
 
 Studio Library is a free python script for managing
-poses and animation in Maya. Comments, suggestions
+poses and animation in Maya.
+Comments, suggestions
 and bug reports are welcome.
 
 * www.studiolibrary.com
@@ -17,11 +18,18 @@ alt="Studio Library" width="240" height="180" border="10" /></a>
 1. Download and unzip the *studiolibrary.zip* file
 
 #### OSX
-2. Use SHIFT+G in the finder and copy the *studiolibrary* folder to the following location:
+2. Use SHIFT+G in the finder and copy the *studiolibrary* folder to
+
 *~/Library/Preferences/Autodesk/maya/scripts*
 
+#### Linux
+2. Open the file manager and copy the *studiolibrary* folder to
+
+*~/maya/scripts*
+
 #### Windows
-2. Open the file explorer and copy the *studiolibrary* folder to the following location:
+2. Open the file explorer and copy the *studiolibrary* folder to
+
 *C:/Users/USERNAME/Documents/maya/scripts*
 
 
@@ -37,5 +45,6 @@ studiolibrary.main()
 
 ## HAVING ISSUES?
 
-Please send an email with the traceback (error message) and a detailed step by step process of how you got the error.
+Please send an email with the error message and a detailed step by step process of how you got the error.
 
+Comments, suggestions and bug reports are welcome. Contact

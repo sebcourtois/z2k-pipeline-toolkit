@@ -73,7 +73,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap>../images/animation.png</pixmap>
+        <pixmap>../icons/animation.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -168,7 +168,7 @@ background-color: rgb(254, 255, 230, 200);</string>
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../images/camera.png</normaloff>../images/camera.png</iconset>
+            <normaloff>../icons/thumbnail.png</normaloff>../icons/thumbnail.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -617,10 +617,10 @@ background-color: rgb(254, 255, 230, 200);
    <item>
     <widget class="QFrame" name="previewButtons">
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Plain</enum>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_6">
       <property name="spacing">
@@ -697,7 +697,7 @@ background-color: rgb(254, 255, 230, 200);
         </property>
         <property name="icon">
          <iconset>
-          <normaloff>../images/selectionSet2.png</normaloff>../images/selectionSet2.png</iconset>
+          <normaloff>../icons/selectionSet2.png</normaloff>../icons/selectionSet2.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -732,10 +732,10 @@ background-color: rgb(254, 255, 230, 200);
       </sizepolicy>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Plain</enum>
      </property>
     </widget>
    </item>

@@ -11,15 +11,18 @@ and bug reports are welcome.
 ##HOW TO INSTALL?
 
 1. Download and unzip the *studiolibrary.zip*
-2. Place the unzipped *studiolibrary* folder in your Maya scripts directory
 
 
 ####OSX
-Use SHIFT+G in the finder and copy the *studiolibrary* folder to the following location:
+2. Use SHIFT+G in the finder and copy the *studiolibrary* folder to
 ~/Library/Preferences/Autodesk/maya/scripts
 
+####Linux
+2. Open the file manager and copy the *studiolibrary* folder to
+~/maya/scripts
+
 ####Windows
-Open the file explorer and copy the *studiolibrary* folder to the following location:
+2. Open the file explorer and copy the *studiolibrary* folder to
 C:/Users/USERNAME/Documents/maya/scripts
 
 
@@ -33,5 +36,6 @@ studiolibrary.main()
 
 ##HAVING ISSUES?
 
-Please send an email with the traceback (error message) and a detailed step by step process of how you got the error.
+Please send an email with the error message and a detailed step by step process of how you got the error.
 
+Comments, suggestions and bug reports are welcome. Contact

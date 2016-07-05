@@ -1,43 +1,8 @@
-# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.8.6/build27/studiolibrary\gui\settingsdialog.py
-"""
-Released subject to the BSD License
-Please visit http://www.voidspace.org.uk/python/license.shtml
-
-Contact: kurt.rathjen@gmail.com
-Comments, suggestions and bug reports are welcome.
-Copyright (c) 2015, Kurt Rathjen, All rights reserved.
-
-It is a very non-restrictive license but it comes with the usual disclaimer.
-This is free software: test it, break it, just don't blame me if it eats your
-data! Of course if it does, let me know and I'll fix the problem so that it
-doesn't happen to anyone else.
-
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-   # * Redistributions of source code must retain the above copyright
-   #   notice, this list of conditions and the following disclaimer.
-   # * Redistributions in binary form must reproduce the above copyright
-   # notice, this list of conditions and the following disclaimer in the
-   # documentation and/or other materials provided with the distribution.
-   # * Neither the name of Kurt Rathjen nor the
-   # names of its contributors may be used to endorse or promote products
-   # derived from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN ''AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL KURT RATHJEN BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-"""
-import studiolibrary
+# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.13.0/build27/studiolibrary\gui\settingsdialog.py
 from PySide import QtGui
 from PySide import QtCore
+import studioqt
+import studiolibrary
 __all__ = ['SettingsDialog']
 
 class SettingsDialogSignal(QtCore.QObject):
@@ -64,7 +29,7 @@ class SettingsDialog(QtGui.QDialog):
         :type library: studiolibrary.Library
         """
         QtGui.QDialog.__init__(self, parent)
-        studiolibrary.loadUi(self)
+        studioqt.loadUi(self)
         self.setWindowTitle('Studio Library - %s' % studiolibrary.version())
         self.ui.saveButton.clicked.connect(self.save)
         self.ui.cancelButton.clicked.connect(self.close)
@@ -76,9 +41,11 @@ class SettingsDialog(QtGui.QDialog):
         self.ui.theme4Button.clicked.connect(self.setTheme4)
         self.ui.theme5Button.clicked.connect(self.setTheme5)
         self.ui.theme6Button.clicked.connect(self.setTheme6)
+        self.ui.theme7Button.clicked.connect(self.setTheme7)
         self.ui.background1Button.clicked.connect(self.setBackground1)
         self.ui.background2Button.clicked.connect(self.setBackground2)
         self.ui.background3Button.clicked.connect(self.setBackground3)
+        self.ui.background4Button.clicked.connect(self.setBackground4)
         self._library = library
         self.updateStyleSheet()
         self.center()
@@ -140,13 +107,13 @@ class SettingsDialog(QtGui.QDialog):
 
     def color(self):
         """
-        :rtype: studiolibrary.Color
+        :rtype: studioqt.Color
         """
-        return self.library().color()
+        return self.library().accentColor()
 
     def backgroundColor(self):
         """
-        :rtype: studiolibrary.Color
+        :rtype: studioqt.Color
         """
         return self.library().backgroundColor()
 
@@ -185,69 +152,81 @@ class SettingsDialog(QtGui.QDialog):
     def setTheme1(self):
         """
         """
-        c = studiolibrary.Color(0, 175, 255)
+        c = studioqt.Color(0, 175, 255)
         self.setColor(c)
 
     def setTheme2(self):
         """
         """
-        c = studiolibrary.Color(150, 75, 240)
+        c = studioqt.Color(150, 75, 240)
         self.setColor(c)
 
     def setTheme3(self):
         """
         """
-        c = studiolibrary.Color(240, 100, 150)
+        c = studioqt.Color(240, 100, 150)
         self.setColor(c)
 
     def setTheme4(self):
         """
         """
-        c = studiolibrary.Color(240, 75, 50)
+        c = studioqt.Color(240, 75, 50)
         self.setColor(c)
 
     def setTheme5(self):
         """
         """
-        c = studiolibrary.Color(250, 155, 20)
+        c = studioqt.Color(250, 155, 20)
         self.setColor(c)
 
     def setTheme6(self):
         """
         """
-        c = studiolibrary.Color(120, 200, 0)
+        c = studioqt.Color(255, 210, 20)
+        self.setColor(c)
+
+    def setTheme7(self):
+        """
+        """
+        c = studioqt.Color(120, 200, 0)
         self.setColor(c)
 
     def setBackground1(self):
         """
         """
-        c = studiolibrary.Color(80, 80, 80)
+        c = studioqt.Color(80, 80, 80)
         self.setBackgroundColor(c)
 
     def setBackground2(self):
         """
         """
-        c = studiolibrary.Color(65, 65, 65)
+        c = studioqt.Color(65, 65, 65)
         self.setBackgroundColor(c)
 
     def setBackground3(self):
         """
         """
-        c = studiolibrary.Color(50, 50, 50)
+        c = studioqt.Color(50, 50, 52)
+        self.setBackgroundColor(c)
+
+    def setBackground4(self):
+        """
+        """
+        c = studioqt.Color(40, 40, 50)
         self.setBackgroundColor(c)
 
     def setColor(self, color):
         """
-        :type color: studiolibrary.Color
+        :type color: studioqt.Color
         :rtype: None
         """
-        self.library().setColor(color)
+        self.library().setAccentColor(color)
         self.updateStyleSheet()
         self.onColorChanged.emit(self)
 
     def setBackgroundColor(self, color):
         """
-        :type color: studiolibrary.Color
+        :type color: studioqt.Color
         :rtype: None
         """
         self.library().setBackgroundColor(color)

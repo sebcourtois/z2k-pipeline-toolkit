@@ -345,7 +345,7 @@ def makeSequenceFilePattern(p):
 @setWaitCursor
 def scanTextureFiles(scnInfos, depConfDct=None):
 
-    damEntity = scnInfos["dam_entity"]
+    damEntity = scnInfos.get("dam_entity")
     proj = scnInfos["project"]
     sAstName = damEntity.name
 
@@ -671,7 +671,7 @@ def scanTextureFiles(scnInfos, depConfDct=None):
 @setWaitCursor
 def scanAlembicFiles(scnInfos, depConfDct=None):
 
-    damEntity = scnInfos["dam_entity"]
+    damEntity = scnInfos.get("dam_entity")
     proj = scnInfos["project"]
     pubLib = damEntity.getLibrary("public")
 
@@ -871,7 +871,7 @@ def launch(scnInfos=None, scanFunc=None, modal=False, okLabel="OK",
     if not scnInfos:
         scnInfos = infosFromScene()
 
-    damEntity = scnInfos["dam_entity"]
+    damEntity = scnInfos.get("dam_entity")
     proj = scnInfos["project"]
 
     if scanFunc is None:

@@ -1,63 +1,45 @@
-# Embedded file name: C:\jipe_Local\z2k-pipeline-toolkit\maya_mods\third_party\scripts\studiolibrary\api\record.py
-"""
-Released subject to the BSD License
-Please visit http://www.voidspace.org.uk/python/license.shtml
-
-Contact: kurt.rathjen@gmail.com
-Comments, suggestions and bug reports are welcome.
-Copyright (c) 2015, Kurt Rathjen, All rights reserved.
-
-It is a very non-restrictive license but it comes with the usual disclaimer.
-This is free software: test it, break it, just don't blame me if it eats your
-data! Of course if it does, let me know and I'll fix the problem so that it
-doesn't happen to anyone else.
-
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-   # * Redistributions of source code must retain the above copyright
-   #   notice, this list of conditions and the following disclaimer.
-   # * Redistributions in binary form must reproduce the above copyright
-   # notice, this list of conditions and the following disclaimer in the
-   # documentation and/or other materials provided with the distribution.
-   # * Neither the name of Kurt Rathjen nor the
-   # names of its contributors may be used to endorse or promote products
-   # derived from this software without specific prior written permission.
+# Copyright 2016 by Kurt Rathjen. All Rights Reserved.
 #
-# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN ''AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL KURT RATHJEN BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-"""
+# Permission to use, modify, and distribute this software and its
+# documentation for any purpose and without fee is hereby granted,
+# provided that the above copyright notice appear in all copies and that
+# both that copyright notice and this permission notice appear in
+# supporting documentation, and that the name of Kurt Rathjen
+# not be used in advertising or publicity pertaining to distribution
+# of the software without specific, written prior permission.
+# KURT RATHJEN DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# KURT RATHJEN BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+# IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+# OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 import os
 import shutil
 import logging
-import studiolibrary
-import studiolibrary.gui.recordswidgetitem as recordswidgetitem
+
 from PySide import QtGui
 from PySide import QtCore
-__all__ = ['Record']
+
+import studioqt
+import studiolibrary
+
+
+__all__ = ["Record"]
+
 logger = logging.getLogger(__name__)
+
 
 class RecordError(Exception):
     """"""
-    pass
 
 
 class RecordSaveError(RecordError):
     """"""
-    pass
 
 
 class RecordLoadError(RecordError):
     """"""
-    pass
 
 
 class RecordSignal(QtCore.QObject):
@@ -69,8 +51,10 @@ class RecordSignal(QtCore.QObject):
     onDeleting = QtCore.Signal(object)
 
 
-class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
-    META_PATH = '<PATH>/.studioLibrary/record.dict'
+class Record(studiolibrary.BasePath, studioqt.ListWidgetItem):
+
+    META_PATH = "{path}/.studioLibrary/record.dict"
+
     signal = RecordSignal()
     onSaved = signal.onSaved
     onSaving = signal.onSaving
@@ -78,22 +62,102 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
     onDeleted = signal.onDeleted
     onDeleting = signal.onDeleting
 
-    def __init__(self, path = None, plugin = None, recordsWidget = None, library = None):
-        """
-        :type recordsWidget: recordswidget.RecordsWidget
-        """
-        self._plugin = plugin
-        self._library = library
-        self.setPlugin(plugin)
-        recordswidgetitem.RecordsWidgetItem.__init__(self, recordsWidget)
-        studiolibrary.MasterPath.__init__(self, path)
-
     @classmethod
     def fromPath(cls, path, **kwargs):
         """
+        :type path: str
         :rtype: Record
         """
         return cls(path, **kwargs)
+
+    def __init__(
+        self,
+        path=None,
+        plugin=None,
+        library=None,
+    ):
+        """
+        :type path: str or None
+        :type plugin: studiolibrary.Plugin or None
+        :type library: studiolibrary.Library or None
+        """
+        self._plugin = plugin
+        self._library = library
+        self._metaFile = None
+        self._orderIndex = -1
+        self._searchText = None
+        self._pluginPixmap = None
+
+        self.setPlugin(plugin)
+
+        studioqt.ListWidgetItem.__init__(self)
+        studiolibrary.BasePath.__init__(self, path)
+
+    def delete(self):
+        """
+        :rtype: None
+        """
+        raise Exception("Deleting files is not supported!")
+
+    def metaPath(self):
+        """
+        :rtype: str
+        """
+        path = self.META_PATH
+        return self.resolvePath(path)
+
+    def metaFile(self):
+        """
+        :rtype: metafile.MetaFile
+        """
+        path = self.metaPath()
+
+        if self._metaFile:
+            if self._metaFile.path() != path:
+                self._metaFile.setPath(path)
+        else:
+            self._metaFile = studiolibrary.MetaFile(path, read=True)
+
+        return self._metaFile
+
+    def setOrderIndex(self, orderIndex):
+        """
+        :type orderIndex: int
+        """
+        self._orderIndex = orderIndex
+
+    def orderIndex(self):
+        """
+        :rtype:
+        """
+        return self._orderIndex
+
+    def searchText(self):
+        """
+        :rtype: str
+        """
+        if not self._searchText:
+            self._searchText = str(self.path())
+        return self._searchText
+
+    def url(self):
+        """
+        Used by Studio Library 2.0
+
+        :rtype: str
+        """
+        url = QtCore.QUrl()
+        url.setPath(self.path())
+        return url
+
+    def infoWidget(self, parent=None):
+        """
+        Used by Studio Library 2.0
+
+        :rtype: str
+        """
+        if self.plugin():
+            return self.plugin().infoWidget(parent=parent, record=self)
 
     def library(self):
         """
@@ -129,16 +193,17 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         """
         pass
 
-    def rename(self, name, force = True):
+    def rename(self, name, extension=None, force=True):
         """
         :type name: str
         :type force: bool
+        :type extension: bool or None
         :rtype: None
         """
-        extension = self.extension()
+        extension = extension or self.extension()
         if name and extension not in name:
             name += extension
-        studiolibrary.MasterPath.rename(self, name, force=force)
+        studiolibrary.BasePath.rename(self, name, force=force)
 
     def setPath(self, path):
         """
@@ -147,90 +212,44 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         """
         if not path:
             raise RecordError('Cannot set empty record path.')
+
         text = os.path.basename(path)
-        iconPath = path + '/thumbnail.jpg'
+        iconPath = path + "/thumbnail.jpg"
+
         self.setText(text)
         self.setIconPath(iconPath)
+
         dirname, basename, extension = studiolibrary.splitPath(path)
-        if not extension:
+
+        if extension:
+            if self.plugin():
+                if extension != self.plugin().extension():
+                    path += self.plugin().extension()
+        else:
             if self.plugin():
                 path += self.plugin().extension()
             else:
                 raise RecordSaveError('No extension found!')
-        studiolibrary.MasterPath.setPath(self, path)
+
+        studiolibrary.BasePath.setPath(self, path)
 
     def setPlugin(self, plugin):
         """
-        :type : studiolibrary.Plugin
+        :type plugin: studiolibrary.Plugin
         """
         self._plugin = plugin
 
     def plugin(self):
         """
-        :rtype : studiolibrary.Plugin
+        :rtype: studiolibrary.Plugin
         """
         return self._plugin
-
-    def mousePressEvent(self, event):
-        """
-        :type event: QtCore.QEvent
-        :rtype: None
-        """
-        if self.plugin() and self.plugin().infoWindow():
-            self.plugin().hideInfoWidget()
-        return recordswidgetitem.RecordsWidgetItem.mousePressEvent(self, event)
-
-    def mouseMoveEvent(self, event):
-        """
-        :type event: QtCore.QEvent
-        :rtype: None
-        """
-        if self.plugin() and self.plugin().infoWindow():
-            self.plugin().infoWindow().move(event.globalX() + 15, event.globalY() + 20)
-
-    def mouseEnterEvent(self, event):
-        """
-        :type event: QtCore.QEvent
-        :rtype: None
-        """
-        if self.plugin() and self.plugin().infoWindow():
-            self.plugin().showInfoWidget(self, wait=1500)
-
-    def mouseLeaveEvent(self, event):
-        """
-        :type event: QtCore.QEvent
-        :rtype: None
-        """
-        if self.plugin() and self.plugin().infoWindow():
-            self.plugin().hideInfoWidget()
-
-    def keyPressEvent(self, event):
-        """
-        :type event: QtCore.QEvent
-        :rtype: None
-        """
-        if self.plugin() and self.plugin().infoWindow():
-            self.plugin().hideInfoWidget()
-
-    def keyReleaseEvent(self, event):
-        """
-        :type event: QtCore.QEvent
-        :rtype: None
-        """
-        if self.plugin() and self.plugin().infoWindow():
-            self.plugin().hideInfoWidget()
-
-    def errors(self):
-        """
-        :rtype: str
-        """
-        return self.metaFile().errors()
 
     def description(self):
         """
         :rtype: str
         """
-        return self.metaFile().description()
+        return self.metaFile().get('description', "")
 
     def setDescription(self, text):
         """
@@ -248,7 +267,7 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         """
         :rtype: str
         """
-        return self.metaFile().get('owner', '')
+        return self.metaFile().get('owner', "")
 
     def mtime(self):
         """
@@ -262,29 +281,15 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         """
         return self.metaFile().ctime()
 
-    def delete(self):
-        """
-        The default delete behaviour is to retire and create a version
-        of the record. The record/path never gets deleted from the file
-        system.
-        
-        :rtype: None
-        """
-        logger.debug('Record Deleting: {0}'.format(self.path()))
-        Record.onDeleting.emit(self)
-        studiolibrary.MasterPath.delete(self)
-        Record.onDeleted.emit(self)
-        logger.debug('Record Deleted: {0}'.format(self.path()))
-
-    def moveContents(self, contents, destination = None):
+    def moveContents(self, contents):
         """
         :type contents: list[str]
         """
-        if not destination:
-            destination = self.path()
+        path = self.path()
+
         for src in contents or []:
             basename = os.path.basename(src)
-            dst = destination + '/' + basename
+            dst = path + "/" + basename
             logger.info('Moving Content: {0} => {1}'.format(src, dst))
             shutil.move(src, dst)
 
@@ -295,79 +300,81 @@ class Record(studiolibrary.MasterPath, recordswidgetitem.RecordsWidgetItem):
         logger.debug('Loading "{0}"'.format(self.name()))
         Record.onLoaded.emit(self)
 
-    def save(self, path = None, contents = None, force = False):
+    def save(self, path=None, contents=None):
         """
+        :type path: str
         :type contents: list[str]
-        :type force: bool
+        :rtype: None
         """
         path = path or self.path()
         contents = contents or []
+
         logger.debug('Record Saving: {0}'.format(path))
         Record.onSaving.emit(self)
+
         self.setPath(path)
+
         if os.path.exists(self.path()):
-            if force:
-                self.delete()
-            elif self.library():
-                result = self.showRetireDialog()
-                if result != QtGui.QMessageBox.Yes:
-                    logger.debug('Dialog Canceled')
-                    return
-            else:
-                raise RecordSaveError('Record already exists!')
+            raise RecordSaveError("Record already exists!")
+
         self.metaFile().save()
         self.moveContents(contents)
+
         Record.onSaved.emit(self)
         logger.debug('Record Saved: {0}'.format(self.path()))
 
-    def showRetireDialog(self, parent = None):
-        """
-        :type parent: QtGui.QWidget
-        """
-        parent = parent or self.recordsWidget()
-        message = 'The chosen name "{0}" already exists!\n Would you like to create a new version?'.format(self.name())
-        result = QtGui.QMessageBox.question(parent, 'Retire Record?', message, QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel)
-        if result == QtGui.QMessageBox.Yes:
-            self.delete()
-        return result
-
-    def showRenameDialog(self, parent = None):
+    def showRenameDialog(self, parent=None):
         """
         :type parent: QtGui.QWidget
         """
         parent = parent or self.library()
-        name, accepted = QtGui.QInputDialog.getText(parent, 'Rename', 'New Name', QtGui.QLineEdit.Normal, self.name())
+        name, accepted = QtGui.QInputDialog.getText(
+            parent,
+            "Rename",
+            "New Name",
+            QtGui.QLineEdit.Normal,
+            self.name()
+        )
+
         if accepted:
             self.rename(str(name))
+
         return accepted
 
-    def pluginIconRect(self):
+    def pluginIconRect(self, option):
         """
         :rtype: QtGui.QRect
         """
-        padding = 1
-        r = self.iconRect()
-        return QtCore.QRect(r.x() + padding, r.y() + padding, 13, 13)
+        padding = 2 * self.dpi()
+        r = self.iconRect(option)
+
+        x = r.x() + padding
+        y = r.y() + padding
+        rect = QtCore.QRect(x, y, 13 * self.dpi(), 13 * self.dpi())
+
+        return rect
 
     def paintPluginIcon(self, painter, option):
         """
         :type painter: QtGui.QPainter
         :type option:
         """
-        rect = self.pluginIconRect()
-        isListView = self.recordsWidget().isListView()
-        if not isListView:
-            pixmap = self.plugin().pixmap()
-            if isinstance(pixmap, QtGui.QPixmap):
-                painter.setOpacity(0.5)
-                painter.drawPixmap(rect, pixmap)
+        rect = self.pluginIconRect(option)
 
-    def paint(self, painter, option):
+        if not self._pluginPixmap:
+            if self.plugin():
+                self._pluginPixmap = self.plugin().pixmap()
+
+        if self._pluginPixmap:
+            painter.setOpacity(0.5)
+            painter.drawPixmap(rect, self._pluginPixmap)
+
+    def paint(self, painter, option, index):
         """
         :type painter: QtGui.QPainter
         :type option:
         """
-        recordswidgetitem.RecordsWidgetItem.paint(self, painter, option)
+        studioqt.ListWidgetItem.paint(self, painter, option, index)
         painter.save()
         try:
             self.paintPluginIcon(painter, option)

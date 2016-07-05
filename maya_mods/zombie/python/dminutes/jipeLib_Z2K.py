@@ -399,6 +399,87 @@ def getShapeL(objL=[],*args, **kwargs):
     print "objWithNoShapeL=", objWithNoShapeL 
     return shapeL
     
+def CreateNullMatched( InObjL = [], mode="normal", name="Rig", size=1, zerogroup=True, *args):
+    ''' Description : Create aligned Null to each obj of the list parented to an individual zeroGroup
+            Return : [List] the list of created Objects
+            Dependencies : cmds - GetSel() - matchByXformMatrix() -UnikName()
+    '''
+
+    if len(InObjL) > 0 :
+        cursel = InObjL
+    else :
+        cursel = GetSel(mode="normal", order="os")
+    list_out = []
+    num=0
+    for obj in cursel:
+        num+=1
+        unikName =UnikName ( name )
+        print "unikName=", unikName
+        if mode in["normal"]:
+            ObjChoice = cmds.spaceLocator( n=unikName ) [0]
+            print "ObjChoice=", ObjChoice
+            cmds.setAttr(ObjChoice + ".localScaleX", size)
+            cmds.setAttr(ObjChoice + ".localScaleY", size)
+            cmds.setAttr(ObjChoice + ".localScaleZ", size)
+        if mode in ["joint"]:
+            cmds.select(cl=True)
+            ObjChoice =  cmds.joint(n=unikName )
+            cmds.setAttr(ObjChoice + ".radius", size)
+            # cmds.parent(ObjChoice,w=True)
+        try:
+            
+            if zerogroup in [True]:
+                curGP = cmds.group(ObjChoice, name=(str(ObjChoice) + "_zero"))
+                matchByXformMatrix([obj, curGP], scale=False)
+            else:
+                matchByXformMatrix([obj, ObjChoice], scale=False)
+            # print  "*++++ ", ObjChoice
+            list_out.append(ObjChoice)
+                # list_out.append(curGP)
+        except Exception, err:
+            print "Erreur dans CreateNullMatched() : curObj = %s" % obj
+            print Exception, err
+    print "CreateNullMatched(): list_out","\n    ", list_out
+    cmds.select(list_out)
+    return list_out
+
+def UnikName(name, suffix="_0#", incr=0, digit=3, *args, **kwargs):
+    # return a unique new Name if the object allready exist in maya
+    incrInt= incr
+
+    nameOut = name + str(incrInt).zfill(digit)
+    if cmds.objExists(nameOut):
+        # print nameOut,incr,"exists"
+        UnikName( name=name, incr= incrInt+1, digit=digit)
+    else:
+        print "UnikName:",nameOut," ok"
+        return nameOut
+
+def GetSel(mode="normal",order="sl", *args):
+    ''' Description : get selection List
+                    mode : -"normal" = shortest name path
+                           -"fullpath" = fullpath name
+                    order : -"sl" = basical aleatoire order
+                            -"os" = ordererd by selection time
+        Return : [List] : selectionList
+        Dependencies : cmds - 
+    ''' 
+    # recuperation de la selection
+    # Use : None
+    objlist=[]
+    if order in ["os"]:
+        if mode in ["normal"]:
+            objlist = cmds.ls( fl=True,os=True)
+        if mode in ["fullpath"]:
+            objlist = cmds.ls( fl=True, l=True, os=True)
+        # print objlist
+    if order in ["sl"]:
+        if mode in ["normal"]:
+            objlist = cmds.ls( fl=True,sl=True)
+        if mode in ["fullpath"]:
+            objlist = cmds.ls( fl=True, l=True, sl=True)
+        # print objlist
+    return objlist
 # Z2K base general functions -----------------
 def getBaseModPath(*args, **kwargs):
     """Desription :recupere le path de base des modules
@@ -4090,106 +4171,159 @@ def selectSpineFK0(*args, **kwargs):
 
 
 def chr_HeadTex_switchHD(*args, **kwargs):
+    """ Description: Switch les textures de l'asset courant entre ce qui est disponible en HD et LD.Return currentRez
+        Return : String
+        Dependencies : cmds - os
+    """
+    
     print "chr_HeadTex_switchHD()"
 
     #setAttr -type "string" pre_head_file.fileTextureName "$ZOMB_TEXTURE_PATH/chr/chr_barman_default/texture/tex_head_colHD.jpg";
-    attrPL = ["pre_head_file","pre_head_file1","pre_torso_file","pre_poloHead_file1", "pre_torso_file"]
+   
     thdstr = "HD.jpg"
     tldstr = ".jpg"
     currentRez = "None"
+    allFileL = [x for x in cmds.ls(type="file") if tldstr in cmds.getAttr(x+ ".fileTextureName") ]
+    print "allFileL=", allFileL
     BazRealTextPath = os.environ.get("ZOMB_TEXTURE_PATH")
-    curAsset = cmds.ls(sl=1)[0].split(":")[0]
+    BazRealTextPathKey = "$ZOMB_TEXTURE_PATH"
     print "BazRealTextPath=", BazRealTextPath
-    
+    if len(cmds.ls(sl=1)):
+        if ":" in cmds.ls(sl=1)[0]:
+            curAsset = cmds.ls(sl=1)[0].split(":")[0] + ":"
+        else:
+            curAsset = ""
+        
 
-    for attrP in attrPL:
-        attrP = curAsset + ":" + attrP
-        print attrP
-        if cmds.objExists(attrP+".fileTextureName"):
-            print "yes"
-            oldVal = cmds.getAttr(attrP+ ".fileTextureName")
-            print "oldVal",oldVal
-            if thdstr in oldVal[-6:]:
-                cmds.setAttr(attrP + ".fileTextureName",oldVal.replace(thdstr,tldstr),type="string",)
-                currentRez = "Low Rez"
-            elif tldstr in oldVal[-6:]:
-                cmds.setAttr(attrP + ".fileTextureName",oldVal.replace(tldstr,thdstr),type="string",)
-                currentRez = "HD"
+        for curFile in allFileL:
 
+            if curAsset in curFile:
+                print "curFile=", curFile
+                if cmds.objExists(curFile+".fileTextureName"):
+                    # print "yes"
+                    oldVal = cmds.getAttr(curFile+ ".fileTextureName")
+                    print "    oldVal",oldVal
+                    realOldPath = os.path.normpath( oldVal.replace(BazRealTextPathKey,BazRealTextPath) )
+                    # print "realOldPath",realOldPath
+                    
+                    if thdstr in oldVal[-6:]:
+                        if os.path.exists( realOldPath.replace(thdstr,tldstr)):
+                            cmds.setAttr(curFile + ".fileTextureName",oldVal.replace(thdstr,tldstr),type="string",)
+                            currentRez = "Low Rez"
+                    elif tldstr in oldVal[-6:]:
+                        if os.path.exists( realOldPath.replace(tldstr,thdstr)):
+                            cmds.setAttr(curFile + ".fileTextureName",oldVal.replace(tldstr,thdstr),type="string",)
+                            currentRez = "HD"
+                        else:
+                            print "    Sorry no HD texture is disponible for this obj: "+curFile
+                else:
+                    print    "    ",curFile,"doesn't exists !" 
+
+        
             
+                
 
-    cmds.headsUpMessage( "TEXTURE SWITCHED TO {0}".format(currentRez),time=0.5, )
-
+        cmds.headsUpMessage( "{0} TEXTURE SWITCHED TO {1}".format(curAsset,currentRez),time=0.5, )
+    else:
+        cmds.headsUpMessage( "Please select an asset controler to switch textures!",time=0.5, )
+    return currentRez
 
 
 def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
     print ("jipe_IKFK_switch_fixFuckingToonKit()")
+    curNS =""
+    curobj = ""
+    cursel=[]
+    cursel = cmds.ls(sl=1)
+    if len(cursel):
+        if ":" in cursel[0]:
+            curNS,curobj = cursel[0].split(":",1)
+            curNS = curNS+":"
+            print "curNS=", curNS 
+            print "curobj=", curobj
+        else: 
+            curNS = ""
+            curobj = cursel[0]
 
-    curNS,curobj = cmds.ls(sl=1)[0].split(":",1)
-    print "curNS=", curNS 
-    print "curobj=", curobj
+        toReselectCtr = curobj
 
-    inverseFactor =1
-    # switch the side
-    if "Right_" in curobj:
-        side = "Right_"
-        inverseFactor = -1
-        print "it's Right"
-    elif "Left_" in curobj:
-        side = "Left_"
-        inverseFactor = 1
-        print "it's Left"
+        # switch the side
+        if "Right_" in curobj:
+            side = "Right_"
+            print "it's Right"
+        elif "Left_" in curobj:
+            side = "Left_"
+            print "it's Left"
 
+        else:
+            cmds.confirmDialog(icon="information",message="Bad Selection,\rPlease select a controler of the Arm to Switch",button="OK",ma="center")
 
-    # switch IK/FK , TOONKIT FUCKING SHIT FIXED
-    inIKBone0 = curNS + ":" + side + "ARM_IK_Bone_0_REF"
-    inIKBone1 = curNS + ":" + side + "ARM_IK_Bone_1_REF"
-    inIKBone0Scale = curNS + ":" + side + "Arm_IK.Bone0_Scale"
-    inIKBone1Scale = curNS + ":" + side + "Arm_IK.Bone1_Scale"
-    inIKEff = curNS + ":" + "TK_" + side + "ARM_IK_Effector"
+        # switch IK/FK , TOONKIT FUCKING SHIT FIXED
+        inIKBone0 = curNS + side + "ARM_IK_Bone_0_REF"
+        inIKBone1 = curNS + side + "ARM_IK_Bone_1_REF"
+        inIKBone0Scale = curNS + side + "Arm_IK.Bone0_Scale"
+        inIKBone1Scale = curNS + side + "Arm_IK.Bone1_Scale"
+        inIKEff = curNS + "TK_" + side + "ARM_IK_Effector"
 
-    inIKControl = curNS + ":" + side + "Arm_IK"
-    inUpV = curNS + ":" + side + "Arm_upV"
-    inFKBone0 = curNS + ":" + side + "Arm_FK_0"
-    inFKBone1 = curNS + ":" + side + "Arm_FK_1"
+        inIKControl = curNS + side + "Arm_IK"
+        inUpV = curNS + side + "Arm_upV"
+        inFKBone0 = curNS + side + "Arm_FK_0"
+        inFKBone1 = curNS + side + "Arm_FK_1"
 
-    inFKEff = curNS + ":" +"TK_" + side + "FK_Effector_Main_Ctrl"
-    inBlendParam = curNS + ":" + side + "Hand_ParamHolder_Main_Ctrl.IkFk"
-    inChilds = [curNS + ":" + side + "Hand_0", curNS + ":" + side + "Arm_Elbow"]
-    inAutoKey = True
+        inFKEff = curNS +"TK_" + side + "FK_Effector_Main_Ctrl"
+        inBlendParam = curNS + side + "Hand_ParamHolder_Main_Ctrl.IkFk"
+        inChilds = [curNS + side + "Hand_0", curNS + side + "Arm_Elbow"]
+        inAutoKey = True
 
-    inFkControl = curNS + ":" + side + "Hand_0"
-    
-    # get the base mode
-    baseMode = cmds.getAttr(inBlendParam)
-    print "inBlendParam=", inBlendParam
-    print "baseMode=",baseMode
-    
-    # get upV coord
-    McoorOld = cmds.xform(inUpV, matrix=True, q=True, worldSpace=True)
-
-    # switching
-    print "switching"
-    tk.toggleIKFK(inIKBone0,inIKBone1,inIKBone0Scale,inIKBone1Scale,inIKEff,inIKControl,inUpV,inFKBone0,inFKBone1,inFKEff,inBlendParam,inChilds,inAutoKey)
-
-    # match ctrs
-    if baseMode <0.5:
-        print "IK mode"
-        # remach ik sur FK et reset FK
-        print "MATCH FK ON IK"
-        # matchByXformMatrix([inFkControl, inIKControl,])
-        # resetCTR([inFkControl])
+        inFkControl = curNS + side + "Hand_0"
         
-    elif baseMode >0.5:
-        print "FK mode"
-        print "MATCH IK ON FK"
-        # remach ik sur FK et reset FK
-        matchByXformMatrix([inFkControl, inIKControl,])
-        resetCTR([inFkControl])
+        # get the base mode
+        baseMode = cmds.getAttr(inBlendParam)
+        print "inBlendParam=", inBlendParam
+        print "baseMode=",baseMode
+        
+        # get upV coord
+        McoorOld = cmds.xform(inUpV, matrix=True, q=True, worldSpace=True)
 
-    # set upV coord
-    cmds.xform(inUpV, m=McoorOld, worldSpace=True)
+        # print objL
+        for i in (inIKBone0,inIKBone1,inIKBone0Scale,inIKBone1Scale,inIKEff,inIKControl,inUpV,inFKBone0,inFKBone1,inFKEff,inBlendParam,inChilds,inAutoKey):
+            print i
 
+        # switching
+        print "switching"
+        tk.toggleIKFK(inIKBone0,inIKBone1,inIKBone0Scale,inIKBone1Scale,inIKEff,inIKControl,inUpV,inFKBone0,inFKBone1,inFKEff,inBlendParam,inChilds,inAutoKey)
+
+        # match ctrs
+        if baseMode <0.5:
+            print "IK mode"
+            print "MATCH FK ON IK"
+            toReselectCtr = inFkControl
+            # remach ik sur FK et reset FK
+            # matchByXformMatrix([inFkControl, inIKControl,])
+            # resetCTR([inFkControl])
+
+        elif baseMode >0.5:
+            print "FK mode"
+            print "MATCH IK ON FK"
+            toReselectCtr = inIKControl
+            # remach ik sur FK et reset FK
+            matchByXformMatrix([inFkControl, inIKControl,])
+            # handle leur puting de 180 sur Y entre FK et IK d'un cote du rig et pas de l autre
+            if "Right_" in curobj:
+                cmds.rotate(-180,inIKControl , rotateY=True,os=1,relative=1)
+
+            resetCTR([inFkControl])
+
+        # set upV coord
+        cmds.xform(inUpV, m=McoorOld, worldSpace=True)
+
+
+        # select the good hand control
+        cmds.select (toReselectCtr)
+
+
+    else:
+            cmds.confirmDialog(icon="information",message="Nothing selected,\rPlease select a controler of the Arm to Switch",button="OK",ma="center")
 # to do textureEditorIsolateSelectSet autoDelete dans cleanScene
 
 # to do: fixe scaling on the hands

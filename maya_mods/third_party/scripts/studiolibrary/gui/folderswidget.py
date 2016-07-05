@@ -1,46 +1,9 @@
-# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.8.6/build27/studiolibrary\gui\folderswidget.py
-"""
-Released subject to the BSD License
-Please visit http://www.voidspace.org.uk/python/license.shtml
-
-Contact: kurt.rathjen@gmail.com
-Comments, suggestions and bug reports are welcome.
-Copyright (c) 2014, Kurt Rathjen, All rights reserved.
-
-It is a very non-restrictive license but it comes with the usual disclaimer.
-This is free software: test it, break it, just don't blame me if it eats your
-data! Of course if it does, let me know and I'll fix the problem so that it
-doesn't happen to anyone else.
-
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-   # * Redistributions of source code must retain the above copyright
-   #   notice, this list of conditions and the following disclaimer.
-   # * Redistributions in binary form must reproduce the above copyright
-   # notice, this list of conditions and the following disclaimer in the
-   # documentation and/or other materials provided with the distribution.
-   # * Neither the name of Kurt Rathjen nor the
-   # names of its contributors may be used to endorse or promote products
-   # derived from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN ''AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL KURT RATHJEN BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-"""
+# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.13.0/build27/studiolibrary\gui\folderswidget.py
 import os
 import logging
-import studiolibrary
-import studiolibrary.gui
 from PySide import QtGui
 from PySide import QtCore
+import studiolibrary
 __all__ = ['FoldersWidget']
 logger = logging.getLogger(__name__)
 
@@ -70,7 +33,7 @@ class FolderCache():
 
     def cache(self):
         """
-        :rtype: dict[]
+        :rtype: dict
         """
         return self._cache
 
@@ -86,34 +49,22 @@ class FolderCache():
         return studiolibrary.Folder(path)
 
 
-class FoldersWidgetSignal(QtCore.QObject):
-    """"""
-    onOrderChanged = QtCore.Signal()
-    onDropped = QtCore.Signal(object)
-    onDropping = QtCore.Signal(object)
-    onClicked = QtCore.Signal(object)
-    onDoubleClicked = QtCore.Signal(object)
-    onShowContextMenu = QtCore.Signal(object)
-    onSelectionChanged = QtCore.Signal(object, object)
-
-
 class FoldersWidget(QtGui.QTreeView):
     CACHE_ENABLED = True
     SELECT_CHILDREN_ENABLED = False
+    onDropped = QtCore.Signal(object)
+    onDropping = QtCore.Signal(object)
+    onClicked = QtCore.Signal(object)
+    onOrderChanged = QtCore.Signal()
+    onDoubleClicked = QtCore.Signal(object)
+    onShowContextMenu = QtCore.Signal(object)
+    onSelectionChanged = QtCore.Signal(object, object)
 
     def __init__(self, parent):
         """
         :type parent: studiolibrary.LibraryWidget
         """
         QtGui.QTreeView.__init__(self, parent)
-        self.signal = FoldersWidgetSignal()
-        self.onDropped = self.signal.onDropped
-        self.onDropping = self.signal.onDropping
-        self.onClicked = self.signal.onClicked
-        self.onOrderChanged = self.signal.onOrderChanged
-        self.onDoubleClicked = self.signal.onDoubleClicked
-        self.onShowContextMenu = self.signal.onShowContextMenu
-        self.onSelectionChanged = self.signal.onSelectionChanged
         self._filter = []
         self._isLocked = False
         self._signalsEnabled = True
@@ -123,6 +74,7 @@ class FoldersWidget(QtGui.QTreeView):
         self._sourceModel = FileSystemModel(self)
         proxyModel = SortFilterProxyModel(self)
         proxyModel.setSourceModel(self._sourceModel)
+        proxyModel.sort(0)
         self.setIndentation(7)
         self.setMinimumWidth(35)
         self.setAcceptDrops(True)
@@ -133,7 +85,21 @@ class FoldersWidget(QtGui.QTreeView):
         self.setSelectionMode(QtGui.QTreeWidget.ExtendedSelection)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
-        self.connect(self.selectionModel(), QtCore.SIGNAL('selectionChanged (const QItemSelection&,const QItemSelection&)'), self.selectionChangedX)
+        self.connect(self.selectionModel(), QtCore.SIGNAL('selectionChanged (const QItemSelection&,const QItemSelection&)'), self._selectionChanged)
+
+    def reload(self):
+        """
+        Force the root path and state to be reloaded.
+        
+        :rtype: None
+        """
+        path = self.rootPath()
+        state = self.currentState()
+        ignoreFilter = self.ignoreFilter()
+        self.setRootPath('')
+        self.setRootPath(path)
+        self.restoreState(state)
+        self.setIgnoreFilter(ignoreFilter)
 
     def setCacheEnabled(self, value):
         """
@@ -235,7 +201,7 @@ class FoldersWidget(QtGui.QTreeView):
 
         self.selectFoldersFromPaths(paths)
 
-    def selectionChangedX(self, selected, deselected):
+    def _selectionChanged(self, selected, deselected):
         """
         :type selected: list[studiolibrary.Folder]
         :type deselected: list[studiolibrary.Folder]
@@ -246,7 +212,7 @@ class FoldersWidget(QtGui.QTreeView):
 
     def currentState(self):
         """
-        :rtype: None
+        :rtype: dict
         """
         state = []
         for folder in self.selectedFolders():
@@ -256,15 +222,35 @@ class FoldersWidget(QtGui.QTreeView):
 
     def restoreState(self, state):
         """
-        :rtype state: list[]
+        :rtype state: list
         """
         self.selectFoldersFromPaths(state)
 
-    def setRootPath(self, path):
+    def setFolderOrderIndex(self, path, orderIndex):
+        """
+        :type path:
+        :type: position:
+        :rtype: None
+        """
+        folder = self.folderFromPath(path)
+        folder.setOrderIndex(orderIndex)
+
+    def setIgnoreFilter(self, ignoreFilter):
+        """
+        :type ignoreFilter: list[str]
+        """
+        self.model().sourceModel().setIgnoreFilter(ignoreFilter)
+
+    def ignoreFilter(self):
+        return self.model().sourceModel().ignoreFilter()
+
+    def setRootPath(self, path, ignoreFilter = None):
         """
         :type path: str
+        :type ignoreFilter: str
         """
         self.model().sourceModel().setRootPath(path)
+        self.model().sourceModel().setIgnoreFilter(ignoreFilter)
         index = self.indexFromPath(path)
         self.setRootIndex(index)
 
@@ -323,6 +309,25 @@ class FoldersWidget(QtGui.QTreeView):
         index = self.indexFromPath(path)
         self.selectionModel().select(index, mode)
 
+    def showCreateDialog(self, parent = None):
+        """
+        :rtype: None
+        """
+        dialog = studiolibrary.NewFolderDialog(parent)
+        dialog.exec_()
+        if dialog.text():
+            folders = self.selectedFolders()
+            if len(folders) == 1:
+                folder = folders[-1]
+                path = folder.path() + '/' + dialog.text()
+            else:
+                path = self.rootPath() + '/' + dialog.text()
+            folder = self.folderFromPath(path)
+            folder.save()
+            self.reload()
+            self.clearSelection()
+            self.selectFolder(folder)
+
     def showRenameDialog(self, parent = None):
         """
         :rtype: None
@@ -332,18 +337,8 @@ class FoldersWidget(QtGui.QTreeView):
             name, accept = QtGui.QInputDialog.getText(parent, 'Rename Folder', 'New Name', QtGui.QLineEdit.Normal, folder.name())
             if accept:
                 folder.rename(str(name))
+                self.reload()
                 self.selectFolder(folder)
-
-    def showDeleteDialog(self, parent = None):
-        """
-        :rtype: None
-        """
-        folders = self.selectedFolders()
-        message = "Are you sure you want to delete the selected folders '%s'" % [ f.name() for f in folders ]
-        result = QtGui.QMessageBox.question(parent, 'Deleted Selected Folders', str(message), QtGui.QMessageBox.Yes | QtGui.QMessageBox.No | QtGui.QMessageBox.Cancel)
-        if result == QtGui.QMessageBox.Yes:
-            for folder in folders:
-                folder.delete()
 
     def selectedFolder(self):
         """
@@ -386,7 +381,7 @@ class FoldersWidget(QtGui.QTreeView):
         :rtype: None
         """
         mimeData = event.mimeData()
-        if hasattr(mimeData, 'records') and not self.isLocked():
+        if mimeData.hasUrls() and not self.isLocked():
             event.accept()
         else:
             event.ignore()
@@ -441,6 +436,7 @@ class FoldersWidget(QtGui.QTreeView):
             self.contextMenu(menu)
         action = menu.exec_(QtGui.QCursor.pos())
         menu.close()
+        return action
 
     def lockedMenu(self, menu):
         """
@@ -462,8 +458,9 @@ class FoldersWidget(QtGui.QTreeView):
         separator = QtGui.QAction('Separator1', menu)
         separator.setSeparator(True)
         menu.addAction(separator)
+        icon = studiolibrary.resource().icon('settings14')
         settingsMenu = QtGui.QMenu(self)
-        settingsMenu.setIcon(studiolibrary.icon('settings14'))
+        settingsMenu.setIcon(icon)
         settingsMenu.setTitle('Settings')
         action = QtGui.QAction('Refresh', settingsMenu)
         action.triggered.connect(self.clearCache)
@@ -474,12 +471,12 @@ class FoldersWidget(QtGui.QTreeView):
         action = QtGui.QAction('Show icon', settingsMenu)
         action.setCheckable(True)
         action.setChecked(self.isFolderIconVisible())
-        action.connect(action, QtCore.SIGNAL('triggered(bool)'), lambda v, self = self: self.setFolderIconVisible(v))
+        action.triggered[bool].connect(self.setFolderIconVisible)
         settingsMenu.addAction(action)
         action = QtGui.QAction('Show bold', settingsMenu)
         action.setCheckable(True)
         action.setChecked(self.isFolderBold())
-        action.connect(action, QtCore.SIGNAL('triggered(bool)'), lambda v, self = self: self.setFolderBold(v))
+        action.triggered[bool].connect(self.setFolderBold)
         settingsMenu.addAction(action)
         separator = QtGui.QAction('Separator2', settingsMenu)
         separator.setSeparator(True)
@@ -497,23 +494,6 @@ class FoldersWidget(QtGui.QTreeView):
         action.triggered.connect(self.resetFolderSettings)
         settingsMenu.addAction(action)
         menu.addMenu(settingsMenu)
-
-    def createFolder(self, parent = None):
-        """
-        :rtype: None
-        """
-        dialog = studiolibrary.gui.NewFolderDialog(parent)
-        dialog.exec_()
-        if dialog.text():
-            folders = self.selectedFolders()
-            if len(folders) == 1:
-                folder = folders[-1]
-                path = folder.path() + '/' + dialog.text()
-            else:
-                path = self.rootPath() + '/' + dialog.text()
-            folder = self.folderFromPath(path)
-            folder.save()
-            self.selectFolder(folder)
 
     def folderAt(self, pos):
         """
@@ -601,17 +581,16 @@ class FileSystemModel(QtGui.QFileSystemModel):
 
     def __init__(self, foldersWidget):
         """
-        :param foldersWidget: FoldersWidget
-        :return:
+        :type foldersWidget: FoldersWidget
         """
         QtGui.QFileSystemModel.__init__(self, foldersWidget)
-        self._invalid = ['.']
+        self._ignoreFilter = []
         self._foldersWidget = foldersWidget
-        self.setFilter(QtCore.QDir.NoDot | QtCore.QDir.AllDirs | QtCore.QDir.NoDotAndDotDot)
+        self.setFilter(QtCore.QDir.AllDirs)
 
     def foldersWidget(self):
         """
-        :rtype:
+        :rtype: FoldersWidget
         """
         return self._foldersWidget
 
@@ -622,20 +601,33 @@ class FileSystemModel(QtGui.QFileSystemModel):
         """
         return 1
 
+    def ignoreFilter(self):
+        """
+        :rtype: list or None
+        """
+        return self._ignoreFilter
+
+    def setIgnoreFilter(self, ignoreFilter):
+        """
+        :type ignoreFilter: list or None
+        """
+        self._ignoreFilter = ignoreFilter or []
+
     def isPathValid(self, path):
         """
         :type path: str
-        :return:
+        :rtype: bool
         """
         if os.path.isdir(path):
-            valid = [ item for item in self._invalid if item in path ]
+            path = path.lower()
+            valid = [ item for item in self._ignoreFilter if path.endswith(item) ]
             if not valid:
                 return True
         return False
 
     def hasChildren(self, index):
         """
-        :param index: QtCore.QModelIndex
+        :type index: QtCore.QModelIndex
         :rtype: bool
         """
         path = str(self.filePath(index))
@@ -650,7 +642,7 @@ class FileSystemModel(QtGui.QFileSystemModel):
         """
         :type index: QtCore.QModelIndex
         :type role:
-        :rtype:
+        :rtype: QtGui.QVariant
         """
         if role == QtCore.Qt.DecorationRole:
             if index.column() == 0:
@@ -675,13 +667,40 @@ class FileSystemModel(QtGui.QFileSystemModel):
 
 class SortFilterProxyModel(QtGui.QSortFilterProxyModel):
 
-    def __init__(self, parent):
+    def __init__(self, folderWidget):
         """
-        :type parent:
-        :rtype:
+        :type folderWidget: FoldersWidget
         """
-        self._parent = parent
-        QtGui.QSortFilterProxyModel.__init__(self, parent)
+        self._folderWidget = folderWidget
+        QtGui.QSortFilterProxyModel.__init__(self, folderWidget)
+
+    def folderWidget(self):
+        """
+        :rtype: FoldersWidget
+        """
+        return self._folderWidget
+
+    def lessThan(self, leftIndex, rightIndex):
+        """
+        :type leftIndex: QtGui.QModelIndex
+        :type rightIndex: QtGui.QModelIndex
+        :rtype: bool
+        """
+        path1 = str(self.sourceModel().filePath(leftIndex))
+        path2 = str(self.sourceModel().filePath(rightIndex))
+        folder1 = self.folderWidget().folderFromPath(path1)
+        folder2 = self.folderWidget().folderFromPath(path2)
+        orderIndex1 = folder1.orderIndex()
+        orderIndex2 = folder2.orderIndex()
+        if orderIndex1 >= 0 and orderIndex2 >= 0:
+            if orderIndex1 < orderIndex2:
+                return True
+            else:
+                return False
+        else:
+            if orderIndex1 >= 0:
+                return True
+            return False
 
     def filterAcceptsRow(self, sourceRow, sourceParent):
         """
@@ -691,6 +710,4 @@ class SortFilterProxyModel(QtGui.QSortFilterProxyModel):
         """
         index = self.sourceModel().index(sourceRow, 0, sourceParent)
         path = str(self.sourceModel().filePath(index))
-        if '.' in path:
-            return False
-        return True
+        return self.sourceModel().isPathValid(path)

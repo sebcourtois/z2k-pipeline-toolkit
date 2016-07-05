@@ -1,42 +1,24 @@
-# Embedded file name: C:/jipe_Local/z2k-pipeline-toolkit/maya_mods/third_party/scripts/studiolibrary/packages\studiolibraryplugins\lockplugin.py
-"""
-Released subject to the BSD License
-Please visit http://www.voidspace.org.uk/python/license.shtml
-
-Contact: kurt.rathjen@gmail.com
-Comments, suggestions and bug reports are welcome.
-Copyright (c) 2014, Kurt Rathjen, All rights reserved.
-
-It is a very non-restrictive license but it comes with the usual disclaimer.
-This is free software: test it, break it, just don't blame me if it eats your
-data! Of course if it does, let me know and I'll fix the problem so that it
-doesn't happen to anyone else.
-
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-   # * Redistributions of source code must retain the above copyright
-   #   notice, this list of conditions and the following disclaimer.
-   # * Redistributions in binary form must reproduce the above copyright
-   # notice, this list of conditions and the following disclaimer in the
-   # documentation and/or other materials provided with the distribution.
-   # * Neither the name of Kurt Rathjen nor the
-   # names of its contributors may be used to endorse or promote products
-   # derived from this software without specific prior written permission.
+# Copyright 2016 by Kurt Rathjen. All Rights Reserved.
 #
-# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN ''AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL KURT RATHJEN BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-"""
+# Permission to use, modify, and distribute this software and its
+# documentation for any purpose and without fee is hereby granted,
+# provided that the above copyright notice appear in all copies and that
+# both that copyright notice and this permission notice appear in
+# supporting documentation, and that the name of Kurt Rathjen
+# not be used in advertising or publicity pertaining to distribution
+# of the software without specific, written prior permission.
+# KURT RATHJEN DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# KURT RATHJEN BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+# IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+# OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 import re
+
 import studiolibrary
+import studiolibraryplugins
+
 
 class Plugin(studiolibrary.Plugin):
 
@@ -45,20 +27,37 @@ class Plugin(studiolibrary.Plugin):
         :type args:
         """
         studiolibrary.Plugin.__init__(self, *args, **kwargs)
-        self.setName('lock')
-        self.setIconPath(self.dirname() + '/resource/images/lock.png')
-        self._superusers = []
-        self._lockFolder = re.compile('')
-        self._unlockFolder = re.compile('')
 
-    def load(self):
+        iconPath = studiolibraryplugins.resource().get("icons", "lock.png")
+
+        self.setName("lock")  # Must set a name for the plugin
+        self.setIconPath(iconPath)
+
+    def newAction(self, parent=None):
         """
+        Overriding this method so that it doesn't show in the "+" new menu.
         """
-        if self.libraryWidget():
-            self._superusers = self.libraryWidget().kwargs().get('superusers', [])
-            self._lockFolder = re.compile(self.libraryWidget().kwargs().get('lockFolder', ''))
-            self._unlockFolder = re.compile(self.libraryWidget().kwargs().get('unlockFolder', ''))
-            self.updateLock()
+        pass
+
+    def superusers(self):
+        """
+        Return a list of the superusers by name.
+
+        :rtype: list[str]
+        """
+        return self.library().kwargs().get("superusers", [])
+
+    def reLockedFolders(self):
+        """
+        Return a regex for the locked folders.
+        """
+        return re.compile(self.library().kwargs().get("lockFolder", ""))
+
+    def reUnlockedFolders(self):
+        """
+        Return a regex for the unlocked folders.
+        """
+        return re.compile(self.library().kwargs().get("unlockFolder", ""))
 
     def folderSelectionChanged(self, itemSelection1, itemSelection2):
         """
@@ -67,38 +66,58 @@ class Plugin(studiolibrary.Plugin):
         """
         self.updateLock()
 
-    def updateLock(self):
+    def updateLock(self):    
         """
         :rtype: None
         """
-        if studiolibrary.user() in self._superusers or []:
+        superusers = self.superusers()
+        reLockedFolders = self.reLockedFolders()
+        reUnlockedFolders = self.reUnlockedFolders()
+
+        if studiolibrary.user() in superusers or []:
             self.libraryWidget().setLocked(False)
             return
-        if self._lockFolder.match('') and self._unlockFolder.match(''):
-            if self._superusers:
+
+        if reLockedFolders.match("") and reUnlockedFolders.match(""):
+            if superusers:  # Lock if only the superusers arg is used
                 self.libraryWidget().setLocked(True)
-            else:
+            else:  # Unlock if no keyword arguments are used
                 self.libraryWidget().setLocked(False)
             return
+
         folders = self.libraryWidget().selectedFolders()
-        if not self._lockFolder.match(''):
+
+        # Lock the selected folders that match the self._lockFolder regx
+        if not reLockedFolders.match(""):
             for folder in folders or []:
-                if self._lockFolder.search(folder.path()):
+                if reLockedFolders.search(folder.path()):
                     self.libraryWidget().setLocked(True)
                     return
-
             self.libraryWidget().setLocked(False)
-        if not self._unlockFolder.match(''):
+
+        # Unlock the selected folders that match the self._unlockFolder regx
+        if not reUnlockedFolders.match(""):
             for folder in folders or []:
-                if self._unlockFolder.search(folder.path()):
+                if reUnlockedFolders.search(folder.path()):
                     self.libraryWidget().setLocked(False)
                     return
-
             self.libraryWidget().setLocked(True)
 
 
-if __name__ == '__main__':
-    import studiolibrary
-    superusers = ['kurt.rathjen']
-    plugins = ['examplePlugin']
+def example():
+
+    plugins = ["examplePlugin"]
+    superusers = ["kurt.rathjen"]
+
+    # Lock all folders unless you're a superuser.
     studiolibrary.main(superusers=superusers, plugins=plugins, add=True)
+
+    # This command will lock only folders that contain the word "Approved" in their path.
+    # studiolibrary.main(name=name, root=root, superusers=superusers, lockFolder="Approved")
+
+    # This command will lock all folders except folders that contain the words "Users" or "Shared" in their path.
+    # studiolibrary.main(name=name, root=root, superusers=superusers, unlockFolder="Users|Shared")
+
+
+if __name__ == "__main__":
+    example()

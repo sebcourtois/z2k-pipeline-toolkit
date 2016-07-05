@@ -43,7 +43,8 @@ def doSwitchReferences(*args):
 def doPublish(*args):
 
     scnInfos = infosFromScene(fail=False)
-    if isinstance(scnInfos["dam_entity"], DamShot):
+    damEntity = scnInfos.get("dam_entity")
+    if isinstance(damEntity, DamShot):
         raise TypeError("Shots can ONLY be published from Scene Manager.")
 
     return publishing.publishCurrentScene(sceneInfos=scnInfos)
@@ -78,6 +79,7 @@ class DavosSetup(ToolSetup):
                        "AbcImport.mll",
                        "atomImportExport.mll",
                        "matrixNodes.mll" if (pmv.current() > pmv.v2013) else "decomposeMatrix.mll",
+                       "mtoa.mll",
                        )
 
         for sPlugin in sPluginList:

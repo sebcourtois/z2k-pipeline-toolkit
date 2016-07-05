@@ -1,41 +1,10 @@
-# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.8.6/build27/studiolibrary/packages/mutils\animation.py
-"""
-# Released subject to the BSD License
-# Please visit http://www.voidspace.org.uk/python/license.shtml
-#
-# Copyright (c) 2014, Kurt Rathjen
-# All rights reserved.
-# Comments, suggestions and bug reports are welcome.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-   # * Redistributions of source code must retain the above copyright
-   #   notice, this list of conditions and the following disclaimer.
-   # * Redistributions in binary form must reproduce the above copyright
-   # notice, this list of conditions and the following disclaimer in the
-   # documentation and/or other materials provided with the distribution.
-   # * Neither the name of Kurt Rathjen nor the
-   # names of its contributors may be used to endorse or promote products
-   # derived from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY KURT RATHJEN ''AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL KURT RATHJEN BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-"""
+# Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.13.0/build27/studiolibrary/packages/mutils\animation.py
 import os
-import mutils
 import logging
+import mutils
 try:
     import maya.cmds
-except Exception as e:
+except ImportError:
     import traceback
     traceback.print_exc()
 
@@ -50,9 +19,6 @@ class PasteOption:
     Replace = 'replace'
     ReplaceAll = 'replace all'
     ReplaceCompletely = 'replaceCompletely'
-
-    def __init__(self):
-        pass
 
 
 class AnimationTransferError(Exception):
@@ -116,7 +82,7 @@ class Animation(mutils.Pose):
     def fromPath(cls, path):
         """
         :type path: str
-        :return: hello
+        :rtype: Animation
         """
         t = cls()
         t._path = path
@@ -153,9 +119,8 @@ class Animation(mutils.Pose):
         if not os.path.exists(path):
             return
         else:
-            f = open(path)
-            lines = f.readlines()
-            f.close()
+            with open(path, 'r') as f:
+                lines = f.readlines()
             curve = None
             srcObjects = {}
             for i, line in enumerate(lines):
@@ -164,17 +129,20 @@ class Animation(mutils.Pose):
                 elif curve and '.fullname' in line:
                     try:
                         name, attr = line.split('"')[5].split('.')
-                    except IndexError as msg:
+                    except IndexError:
                         name, attr = lines[i + 1].split('"')[1].split('.')
 
                     srcObjects.setdefault(name, {})
                     srcObjects[name][attr] = curve
                     curve = None
 
-            matches = mutils.matchObjects(srcObjects=srcObjects.keys(), dstObjects=self.objects().keys())
+            matches = mutils.matchNames(srcObjects=srcObjects.keys(), dstObjects=self.objects().keys())
             for srcNode, dstNode in matches:
                 for attr in srcObjects[srcNode.name()]:
-                    self.setAttrCurve(dstNode.name(), attr, srcObjects[srcNode.name()][attr])
+                    srcName = srcNode.name()
+                    dstName = dstNode.name()
+                    curve = srcObjects[srcName][attr]
+                    self.setAttrCurve(name=dstName, attr=attr, curve=curve)
 
             return
 
@@ -227,12 +195,12 @@ class Animation(mutils.Pose):
     @mutils.restoreSelection
     def open(self):
         """
-        The reason we use importing and not referencing is because we need to modify
-        the imported animation curves and modifying referenced animation curves is
-        only supported in Maya 2014+
+        The reason we use importing and not referencing is because we
+        need to modify the imported animation curves and modifying
+        referenced animation curves is only supported in Maya 2014+
         """
         self.close()
-        nodes = maya.cmds.file(self.mayaPath(), namespace=Animation.IMPORT_NAMESPACE, i=True, groupLocator=True, returnNewNodes=True)
+        nodes = maya.cmds.file(self.mayaPath(), i=True, groupLocator=True, returnNewNodes=True, namespace=Animation.IMPORT_NAMESPACE)
         return nodes
 
     def close(self):
@@ -249,22 +217,20 @@ class Animation(mutils.Pose):
 
     def cleanMayaFile(self, path):
         """
-        Clean up all commands in the exported maya file that are not createNode.
+        Clean up all commands in the exported maya file that are
+        not createNode.
         """
-        f = open(path, 'r')
-        lines = f.readlines()
-        f.close()
         results = []
-        for line in lines:
-            if not line.startswith('select -ne'):
-                results.append(line)
-            else:
-                results.append('// End')
-                break
+        with open(path, 'r') as f:
+            for line in f.readlines():
+                if not line.startswith('select -ne'):
+                    results.append(line)
+                else:
+                    results.append('// End')
+                    break
 
-        f = open(path, 'w')
-        f.writelines(results)
-        f.close()
+        with open(path, 'w') as f:
+            f.writelines(results)
 
     def srcTime(self, source, curves):
         """
@@ -287,9 +253,9 @@ class Animation(mutils.Pose):
 
     def dstTime(self, source, start):
         """
-        @param start:
-        @param source:
-        @return:
+        :type source: str
+        :type start: int
+        :rtype: (int, int)
         """
         srcStartTime, srcEndTime = source
         duration = srcEndTime - srcStartTime
@@ -402,7 +368,7 @@ class Animation(mutils.Pose):
 
     @mutils.timing
     @mutils.showWaitCursor
-    def load(self, objects = None, namespaces = None, startFrame = None, sourceTime = None, attrs = None, currentTime = None, option = None, connect = False, mirrorTable = None):
+    def load(self, objects = None, namespaces = None, attrs = None, startFrame = None, sourceTime = None, option = None, connect = False, mirrorTable = None, currentTime = None):
         """
         :type objects: list[str]
         :type namespaces: list[str]
@@ -431,7 +397,7 @@ class Animation(mutils.Pose):
                 self.setMirrorTable(mirrorTable)
             maya.cmds.flushUndo()
             maya.cmds.undoInfo(openChunk=True)
-            matches = mutils.matchObjects(srcObjects=srcObjects, dstObjects=objects, dstNamespaces=namespaces)
+            matches = list(mutils.matchNames(srcObjects=srcObjects, dstObjects=objects, dstNamespaces=namespaces))
             if not matches:
                 raise mutils.NoMatchFoundError('No objects match when loading data')
             if option != PasteOption.ReplaceCompletely:

@@ -1735,7 +1735,7 @@ def animRefJson(gui = True, mode ="write", inputD = {} ,dryRun=True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="animRefJson")
 
     scnInfos = infosFromScene()
-    damAst = scnInfos["dam_entity"]
+    damAst = scnInfos.get("dam_entity")
     privScnFile = scnInfos["rc_entry"]
 
     sPublicFilePath = damAst.getPath("public", "animRef_json")
