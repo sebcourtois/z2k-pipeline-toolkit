@@ -45,8 +45,8 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False , inPare
     wrongShadEngine = []
     checkedItem = []
 
-    permitted_preview_shader_type = ["lambert","surfaceShader"]
-    permitted_render_shader_type = ["aiStandard", "dmnToon"]
+    permitted_preview_shader_type = ["lambert","surfaceShader","layeredShader" ]
+    permitted_render_shader_type = [ "dmnToon"]
 
     if shadEngineList:
         shadEngineListTemp = shadEngineList
