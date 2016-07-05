@@ -26,7 +26,7 @@ reload(mop)
 def exportFromAssets(selected=False, namespaces=None, outputDir=""):
 
     scnInfos = infosFromScene()
-    damShot = scnInfos["dam_entity"]
+    damShot = scnInfos.get("dam_entity")
 
     sGeoGrpList = tuple(iterGeoGroups(sl=selected, namespaces=namespaces))
     if not sGeoGrpList:
@@ -131,7 +131,7 @@ def importGpuCache(sAbcPath):
 def toggleSelected():
 
     scnInfos = infosFromScene()
-    damShot = scnInfos["dam_entity"]
+    damShot = scnInfos.get("dam_entity")
 
     sAbcDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
 
@@ -188,7 +188,7 @@ def toggleSelected():
 def setAllCachesVisible(bShow):
 
     scnInfos = infosFromScene()
-    damShot = scnInfos["dam_entity"]
+    damShot = scnInfos.get("dam_entity")
 
     sAbcDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
 

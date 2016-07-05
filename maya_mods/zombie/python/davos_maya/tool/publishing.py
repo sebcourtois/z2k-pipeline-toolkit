@@ -38,7 +38,7 @@ def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishIn
     bDryRun = kwargs.pop("dryRun", False if not inDevMode() else bDevDryRun)
     sComment = prePublishInfos["comment"]
 
-    damEntity = scnInfos["dam_entity"]
+    damEntity = scnInfos.get("dam_entity")
     sRcName = scnInfos.get("resource", "")
 
     depConfDct = damEntity.getDependencyConf(sDependType, sRcName)
@@ -281,7 +281,7 @@ def publishCurrentScene(*args, **kwargs):
     if not scnInfos:
         scnInfos = infosFromScene(sCurScnPath)
 
-    damEntity = scnInfos["dam_entity"]
+    damEntity = scnInfos.get("dam_entity")
     proj = scnInfos["project"]
 
     res = proj.assertEditedVersion(sCurScnPath)
@@ -395,7 +395,7 @@ def linkAssetVersionsInShotgun(sgVersion, scnInfos, dryRun=False):
                 yield versFile.sgVersionName()
 
 #    sgShot = sgVersion["entity"]
-    damShot = scnInfos["dam_entity"]
+    damShot = scnInfos.get("dam_entity")
     proj = damShot.project
 
     relatedAssetList = listRelatedAssets(damShot)
