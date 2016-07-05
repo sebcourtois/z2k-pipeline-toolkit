@@ -1849,3 +1849,43 @@ def dmnToon2aiSurface(gui = True):
         log.printL("e", txt)
 
     return dict(resultB=log.resultB, logL=log.logL, wrongShaderL=wrongShaderL)
+
+
+def deleteUVs(meshL=[], doNotDeleteL=["map1","uvSet_display"],inParent = "asset|grp_geo", gui = True):
+    #pour effacer tous les uvs
+    log = miscUtils.LogBuilder(gui=gui, funcName ="deleteUVs")
+    cleanedMeshL = []
+
+    if not meshL and inParent:
+        meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = inParent)
+        meshL = list(meshList)
+        meshL.extend(instanceList)
+
+    txt = "About to clean UVS on: '{}': ".format(meshL)
+    log.printL("i", txt)
+
+    txt = "Following UVs will not be deleted: '{}': ".format(doNotDeleteL)
+    log.printL("i", txt)
+
+
+    for meshS in meshL:
+        sUvSetList = mc.polyUVSet(meshS,q=1,auv=1)
+        sDeletedUvList = []
+        for each in reversed(sUvSetList):
+            if each not in doNotDeleteL:
+                mc.polyUVSet(meshS,d=1, uvSet=each)
+                sDeletedUvList.append(each)
+                if meshS not in cleanedMeshL:
+                    cleanedMeshL.append(meshS)    
+        
+        for i in pm.getAttr(meshS+".uvSet", mi=True):
+            if i >= len(mc.polyUVSet(meshS,q=1,auv=1)):
+                mc.removeMultiInstance(meshS+".uvSet[{}]".format(i))
+        if sDeletedUvList:
+            txt = "{} Uvs deleted on {} : '{}': ".format(len(sDeletedUvList),meshS ,sDeletedUvList)
+            log.printL("i", txt)
+
+    txt = "{} meshes have been UV cleaned: '{}': ".format(len(cleanedMeshL), cleanedMeshL)
+    log.printL("i", txt)
+
+    return dict(resultB=log.resultB, logL=log.logL)
