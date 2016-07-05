@@ -64,7 +64,7 @@ def scanTexturesToEdit(scnInfos):
         preEditResults.append(res)
         sAllSeveritySet.update(res["scan_log"].iterkeys())
 
-    damEntity = scnInfos["dam_entity"]
+    damEntity = scnInfos.get("dam_entity")
     #proj = scnInfos["project"]
     pubLib = damEntity.getLibrary()
 
@@ -192,7 +192,7 @@ def editTextureFiles(dryRun=False):
     sCurScnPath = pm.sceneName()
     scnInfos = infosFromScene(sCurScnPath)
 
-    damEntity = scnInfos["dam_entity"]
+    damEntity = scnInfos.get("dam_entity")
     proj = scnInfos["project"]
 
     privScnFile = scnInfos["rc_entry"]

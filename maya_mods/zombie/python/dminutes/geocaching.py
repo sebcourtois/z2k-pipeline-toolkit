@@ -238,7 +238,7 @@ def exportLayoutInfo(**kwargs):
     sComment = kwargs.pop("comment", "")
 
     scnInfos = infosFromScene()
-    damShot = scnInfos["dam_entity"]
+    damShot = scnInfos.get("dam_entity")
     privScnFile = scnInfos["rc_entry"]
 
     sMsg = "Layout infos can only be exported from a layout scene (of course)."
@@ -310,7 +310,7 @@ def exportCaches(**kwargs):
     bJsonOnly = kwargs.pop("jsonOnly", False)
 
     scnInfos = infosFromScene()
-    damShot = scnInfos["dam_entity"]
+    damShot = scnInfos.get("dam_entity")
 
     sMsg = "Caches can only be exported from an animation scene."
     assertSceneInfoMatches(scnInfos, "anim_scene", msg=sMsg)
@@ -799,7 +799,7 @@ def transferOutConnections(sSrcNode, sDstNode, useNamespace=True):
 def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
 
     if not damShot:
-        damShot = infosFromScene()["dam_entity"]
+        damShot = infosFromScene().get("dam_entity")
 
     layoutInfoFile = damShot.getRcFile("public", "layoutInfo_file", fail=True)
     layoutData = jsonRead(layoutInfoFile.absPath())
@@ -894,7 +894,7 @@ def importCaches(sSpace, **kwargs):
             oAbcRef.remove()
 
     scnInfos = infosFromScene()
-    damShot = scnInfos["dam_entity"]
+    damShot = scnInfos.get("dam_entity")
 
     if not bDryRun:
         sMsg = "Caches can only be imported onto a final layout scene."
@@ -1125,7 +1125,7 @@ def scanCachesToImport(sSrcFilePathList, scnInfos=None, depConfDct=None):
     if not scnInfos:
         scnInfos = infosFromScene()
 
-    damEntity = scnInfos["dam_entity"]
+    damEntity = scnInfos.get("dam_entity")
 #    proj = scnInfos["project"]
 #    pubLib = damEntity.getLibrary("public")
 
