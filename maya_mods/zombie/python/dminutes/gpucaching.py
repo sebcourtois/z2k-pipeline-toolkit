@@ -150,7 +150,7 @@ def toggleSelected():
                 pm.displayInfo("No such file: '{}'.".format(sAbcPath))
                 continue
 
-        sGpuXfm, _ = importGpuCache(sAbcPath)
+            sGpuXfm, _ = importGpuCache(sAbcPath)
 
         mc.setAttr(sAstGrp + ".visibility", False)
         mc.setAttr(sGpuXfm + ".visibility", True)
@@ -209,7 +209,7 @@ def setAllCachesVisible(bShow):
                 pm.displayInfo("No such file: '{}'.".format(sAbcPath))
                 continue
 
-        sGpuXfm, _ = importGpuCache(sAbcPath)
+            sGpuXfm, _ = importGpuCache(sAbcPath)
 
         mc.setAttr(sAstGrp + ".visibility", not bShow)
         if bGpuXfmFound:
