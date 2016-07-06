@@ -14,3 +14,5 @@ MAYA_RENDER_DESC_PATH+:= .
 + MAYAVERSION:2016 PLATFORM:win64 third_party any ./third_party
 PYTHONPATH+:=python
 plug-ins: plug-ins/2016_win
+
++ openVdb any ./openVdbForMaya
