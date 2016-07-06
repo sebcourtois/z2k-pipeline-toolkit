@@ -8,6 +8,9 @@ import re
 import shutil
 import maya.mel
 
+from dminutes import rendering
+reload (rendering)
+
 
 def layerOverrideFLCustomShader(dmnToonList=[], dmnInput = "dmnMask08", layerName = "lay_finalLayout_00",gui= True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="layerOverrideFLCustomShader")
@@ -166,3 +169,86 @@ def layerOverrideToonWeightOff(dmnToonList=[], layerName = "lay_finalLayout_00",
         log.printL("i", "Toon weight overrided to 0 for layer '{}' on '{}'' dmntoon noded(s): '{}'".format(layerName, len(overidedDmnToonL), overidedDmnToonL))
 
 
+def createNukeBatch(gui=True):
+    """
+    this  script creates a renderbatch.bat file in the private maya working dir, all the variable are set properly
+    a 'renderBatch_help.txt' is also created to help on addind render options to the render command
+
+    """
+    log = miscUtils.LogBuilder(gui=gui, funcName ="createNukeBatch")
+    try:
+        davosUser = os.environ["DAVOS_USER"]
+    except:
+        raise ValueError("#### Error: DAVOS_USER environement variable is not defined, please log to davos")
+
+
+    workingFile = mc.file(q=True, list = True)[0]
+    workingDir = os.path.dirname(workingFile)
+    renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","nukeBatch_help.txt"))
+    renderBatchHelp_trg = miscUtils.normPath(os.path.join(workingDir,"nukeBatch_help.txt"))
+    renderBatch_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","nukeBatch.bat"))
+    renderBatch_trg = miscUtils.normPath(os.path.join(workingDir,"nukeBatch.bat"))
+
+    # userprofile =  os.path.normpath(os.path.join(os.environ["USERPROFILE"]))
+    # setupEnvToolsNetwork = setupEnvTools.replace(userprofile,'%USERPROFILE%')
+    # renderDesc = os.environ["MAYA_RENDER_DESC_PATH"]
+    # mayaPlugInPath = os.environ["MAYA_PLUG_IN_PATH"]
+    # arnoldPluginPath = os.environ["ARNOLD_PLUGIN_PATH"]
+
+
+    outputFilePath, outputImageName = rendering.getRenderOutput()
+    print "outputFilePath: ", outputFilePath
+    print "outputImageName: ", outputImageName
+    imageNameS=mc.getAttr("defaultRenderGlobals.imageFilePrefix")
+    imageformatS=mc.getAttr("defaultArnoldDriver.aiTranslator")
+
+    extensionPadding=mc.getAttr("defaultRenderGlobals.extensionPadding")
+    animation=mc.getAttr("defaultRenderGlobals.animation")
+    putFrameBeforeExt=mc.getAttr("defaultRenderGlobals.putFrameBeforeExt")
+    if extensionPadding!= 4 or not animation or not putFrameBeforeExt:
+        txt= "your image padding format is not conform to '____.####.jpeg'".format()
+        log.printL("e", txt)
+
+
+        mainFilePathS = cmds.file(q=True, list = True)[0]
+    try:
+        versionNumber = os.path.basename(mainFilePathS).split("-")[1]
+        versionNumber = versionNumber.split(".")[0]
+    except:
+        versionNumber = "v000"
+    imageDir = os.path.dirname(mainFilePathS)+"/render-"+versionNumber
+
+
+    argva="//ZOMBIWALK/Projects/private/alexandreb/zomb/shot/sq0300/sq0300_sh0040a/06_finalLayout/render-v003/lay_finalLayout_00/arlequin/sq0300_sh0040a.0101.jpeg"
+    argvb="//ZOMBIWALK/Projects/private/alexandreb/zomb/shot/sq0300/sq0300_sh0040a/06_finalLayout/render-v003/lay_finalLayout_00/beauty/sq0300_sh0040a.0101.jpeg"
+
+    zombToolsPath = os.environ["ZOMB_TOOL_PATH"]
+
+    renderCmd = os.path.normpath(os.path.join(os.environ["MAYA_LOCATION"],"bin","Render.exe"))
+    renderCmd = '"{}"'.format(renderCmd)
+    if os.path.isfile(renderBatch_trg):
+        if os.path.isfile(renderBatch_trg+".bak"): os.remove(renderBatch_trg+".bak")
+        print "#### Info: old nukeBatch.bat backuped: {}.bak".format(os.path.normpath(renderBatch_trg))
+        os.rename(renderBatch_trg, renderBatch_trg+".bak")
+    if not os.path.isfile(renderBatchHelp_trg):
+        shutil.copyfile(renderBatchHelp_src, renderBatchHelp_trg)
+        print "#### Info: nukeBatch_help.txt created: {}".format(os.path.normpath(renderBatchHelp_trg))
+
+    shutil.copyfile(renderBatch_src, renderBatch_trg)
+
+    nukePath= r"\\Zombiwalk\z2k\06_PARTAGE\royalRenderShare\nuke\Nuke10.0.exe"
+    nukePathLoc= r"C:\Program Files\Nuke10.0v1\Nuke10.0.exe"
+    nukeScript = r"C:\Users\abeermond\DEVSPACE\git\z2k-pipeline-toolkit\nuke\template\finalLayoutTemplate.nk"
+    renderBatch_obj = open(renderBatch_trg, "w")
+    renderBatch_obj.write("rem set nuke="+nukePath+"\n")
+    renderBatch_obj.write("set nuke="+nukePathLoc+"\n")
+    renderBatch_obj.write("set nkscript="+nukeScript+"\n")
+    renderBatch_obj.write("set argva="+argva+"\n")
+    renderBatch_obj.write("set argvb="+argvb+"\n")
+
+    finalCommand = r'%nuke% %nkscript% %argva% %argvb%'
+    renderBatch_obj.write(finalCommand+"\n")
+    renderBatch_obj.write("\n")
+    renderBatch_obj.write("pause\n")
+    renderBatch_obj.close()
+    print "#### Info: nukeBatch.bat created: {}".format(os.path.normpath(renderBatch_trg))
