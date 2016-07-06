@@ -151,10 +151,10 @@ class checkModule(object):
         self.pBar_upd(step=1, maxValue=16, e=True)
 
         # steps
-
         # 1   remove Camera
         self.printF("shading:   remove Shading Camera", st="t")
-        #result,debugS = shading.referenceShadingCamera( remove=True, GUI = False)
+
+        result,debugS = shading.referenceShadingCamera( remove=True, GUI = False)
         # prints -------------------
         self.printF(result, st="r")
         self.printF( debugS )
@@ -194,7 +194,8 @@ class checkModule(object):
         # --------------------------
         if not resultD["resultB"]:
             boolResult = False
-        self.pBar_upd(step= 1,)  
+        self.pBar_upd(step= 1,)
+ 
 
 
         # 4   delete aovs
