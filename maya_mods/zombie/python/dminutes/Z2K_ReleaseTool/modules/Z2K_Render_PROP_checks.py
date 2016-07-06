@@ -112,6 +112,7 @@ class checkModule(object):
             self.BcheckStructure=""
             self.BCleanScene=""
             self.BCleanObjects=""
+            self.BCompareMeshTopo=""
             self.BDebugBoardF=""
             self.BDebugBoard = ""
             self.BCleanAll=""
@@ -126,7 +127,7 @@ class checkModule(object):
         # print scene NAME
         infoDict = jpZ.infosFromMayaScene()
         self.printF("ASSET_NAME: {0}  -Version: {1}    - Categorie: {2}".format( infoDict["assetName"],infoDict["version"], infoDict["assetCat"] ) , st="t")
-        self.printF("running Z2K_render_SET_check", st="t")
+        self.printF("running Z2K_render_PROP_check", st="t")
 
 
     # decorators ---------------------------
@@ -153,7 +154,7 @@ class checkModule(object):
 
         # 1   remove Camera
         self.printF("shading:   remove Shading Camera", st="t")
-        result,debugS = shading.referenceShadingCamera( remove=True, GUI = False)
+        #result,debugS = shading.referenceShadingCamera( remove=True, GUI = False)
         # prints -------------------
         self.printF(result, st="r")
         self.printF( debugS )

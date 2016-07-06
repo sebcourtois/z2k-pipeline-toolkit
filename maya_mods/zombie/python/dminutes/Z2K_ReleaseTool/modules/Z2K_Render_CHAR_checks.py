@@ -112,6 +112,7 @@ class checkModule(object):
             self.BcheckStructure=""
             self.BCleanScene=""
             self.BCleanObjects=""
+            self.BCompareMeshTopo=""
             self.BDebugBoardF=""
             self.BDebugBoard = ""
             self.BCleanAll=""
