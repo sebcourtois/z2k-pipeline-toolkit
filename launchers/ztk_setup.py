@@ -175,7 +175,9 @@ class Z2kToolkit(object):
             sAction = "Creating"
             os.makedirs(sDistroPath)
 
-        print "\n{} toolkit release:\n'{}' -> '{}'".format(sAction, self.rootPath, sDistroPath)
+        sNoArch = "" if archive else " (no archive)"
+        print ("\n{} toolkit release{}:\n'{}' -> '{}'"
+               .format(sAction, sNoArch, self.rootPath, sDistroPath))
         res = raw_input("Continue ? (yes/no)")
         if res == "no":
             return False
