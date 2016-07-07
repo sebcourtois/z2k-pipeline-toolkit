@@ -112,6 +112,7 @@ class checkModule(object):
             self.BcheckStructure=""
             self.BCleanScene=""
             self.BCleanObjects=""
+            self.BCompareMeshTopo=""
             self.BDebugBoardF=""
             self.BDebugBoard = ""
             self.BCleanAll=""
@@ -126,7 +127,7 @@ class checkModule(object):
         # print scene NAME
         infoDict = jpZ.infosFromMayaScene()
         self.printF("ASSET_NAME: {0}  -Version: {1}    - Categorie: {2}".format( infoDict["assetName"],infoDict["version"], infoDict["assetCat"] ) , st="t")
-        self.printF("running Z2K_render_SET_check", st="t")
+        self.printF("running Z2K_render_PROP_check", st="t")
 
 
     # decorators ---------------------------
@@ -147,10 +148,9 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=16, e=True)
+        self.pBar_upd(step=1, maxValue=14, e=True)
 
         # steps
-
         # 1   remove Camera
         self.printF("shading:   remove Shading Camera", st="t")
         result,debugS = shading.referenceShadingCamera( remove=True, GUI = False)
@@ -193,7 +193,8 @@ class checkModule(object):
         # --------------------------
         if not resultD["resultB"]:
             boolResult = False
-        self.pBar_upd(step= 1,)  
+        self.pBar_upd(step= 1,)
+ 
 
 
         # 4   delete aovs
@@ -351,33 +352,6 @@ class checkModule(object):
         #     boolResult = False
         # self.pBar_upd(step= 1,)
 
-
-        # 11   lookFor bump Nodes
-        self.printF("asset conformation:   lookFor bump Nodes", st="t")
-        resultD = assetconformation.lookForBumpNodes(gui = self.GUI)
-        # prints -------------------
-
-        self.printF(resultD["resultB"], st="r")
-        for each in resultD["logL"]:
-            self.printF( each )
-        # --------------------------
-        if not resultD["resultB"]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
-
-
-        # 12   dmnToon to aiSurface
-        self.printF("asset conformation:   dmnToon to aiSurface", st="t")
-        resultD = assetconformation.dmnToon2aiSurface(gui = self.GUI)
-        # prints -------------------
-
-        self.printF(resultD["resultB"], st="r")
-        for each in resultD["logL"]:
-            self.printF( each )
-        # --------------------------
-        if not resultD["resultB"]:
-            boolResult = False
-        self.pBar_upd(step= 1,)
 
 
         # colors
