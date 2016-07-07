@@ -1521,7 +1521,7 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig", "grp_geo"],
 
         return toReturnB, debugD
 
-def Apply_Delete_setSubdiv (applySetSub=True, toDelete=["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"], *args, **kwargs):
+def Apply_Delete_setSubdiv (applySetSub=True, toDelete=["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_4", "set_subdiv_5", "set_subdiv_6", "set_subdiv_7", "set_subdiv_8", "set_subdiv_init"], *args, **kwargs):
     """ Description: apply setSubdiv() if present and delete it
         Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
         Dependencies : cmds - assetconformation.setSubdiv()
@@ -4171,36 +4171,62 @@ def selectSpineFK0(*args, **kwargs):
 
 
 def chr_HeadTex_switchHD(*args, **kwargs):
+    """ Description: Switch les textures de l'asset courant entre ce qui est disponible en HD et LD.Return currentRez
+        Return : String
+        Dependencies : cmds - os
+    """
+    
     print "chr_HeadTex_switchHD()"
 
     #setAttr -type "string" pre_head_file.fileTextureName "$ZOMB_TEXTURE_PATH/chr/chr_barman_default/texture/tex_head_colHD.jpg";
-    attrPL = ["pre_head_file","pre_head_file1","pre_torso_file","pre_poloHead_file1", "pre_torso_file"]
+   
     thdstr = "HD.jpg"
     tldstr = ".jpg"
     currentRez = "None"
+    allFileL = [x for x in cmds.ls(type="file") if tldstr in cmds.getAttr(x+ ".fileTextureName") ]
+    print "allFileL=", allFileL
     BazRealTextPath = os.environ.get("ZOMB_TEXTURE_PATH")
-    curAsset = cmds.ls(sl=1)[0].split(":")[0]
+    BazRealTextPathKey = "$ZOMB_TEXTURE_PATH"
     print "BazRealTextPath=", BazRealTextPath
-    
+    if len(cmds.ls(sl=1)):
+        if ":" in cmds.ls(sl=1)[0]:
+            curAsset = cmds.ls(sl=1)[0].split(":")[0] + ":"
+        else:
+            curAsset = ""
+        
 
-    for attrP in attrPL:
-        attrP = curAsset + ":" + attrP
-        print attrP
-        if cmds.objExists(attrP+".fileTextureName"):
-            print "yes"
-            oldVal = cmds.getAttr(attrP+ ".fileTextureName")
-            print "oldVal",oldVal
-            if thdstr in oldVal[-6:]:
-                cmds.setAttr(attrP + ".fileTextureName",oldVal.replace(thdstr,tldstr),type="string",)
-                currentRez = "Low Rez"
-            elif tldstr in oldVal[-6:]:
-                cmds.setAttr(attrP + ".fileTextureName",oldVal.replace(tldstr,thdstr),type="string",)
-                currentRez = "HD"
+        for curFile in allFileL:
 
+            if curAsset in curFile:
+                print "curFile=", curFile
+                if cmds.objExists(curFile+".fileTextureName"):
+                    # print "yes"
+                    oldVal = cmds.getAttr(curFile+ ".fileTextureName")
+                    print "    oldVal",oldVal
+                    realOldPath = os.path.normpath( oldVal.replace(BazRealTextPathKey,BazRealTextPath) )
+                    # print "realOldPath",realOldPath
+                    
+                    if thdstr in oldVal[-6:]:
+                        if os.path.exists( realOldPath.replace(thdstr,tldstr)):
+                            cmds.setAttr(curFile + ".fileTextureName",oldVal.replace(thdstr,tldstr),type="string",)
+                            currentRez = "Low Rez"
+                    elif tldstr in oldVal[-6:]:
+                        if os.path.exists( realOldPath.replace(tldstr,thdstr)):
+                            cmds.setAttr(curFile + ".fileTextureName",oldVal.replace(tldstr,thdstr),type="string",)
+                            currentRez = "HD"
+                        else:
+                            print "    Sorry no HD texture is disponible for this obj: "+curFile
+                else:
+                    print    "    ",curFile,"doesn't exists !" 
+
+        
             
+                
 
-    cmds.headsUpMessage( "TEXTURE SWITCHED TO {0}".format(currentRez),time=0.5, )
-
+        cmds.headsUpMessage( "{0} TEXTURE SWITCHED TO {1}".format(curAsset,currentRez),time=0.5, )
+    else:
+        cmds.headsUpMessage( "Please select an asset controler to switch textures!",time=0.5, )
+    return currentRez
 
 
 def IKFK_switch_fixFuckingToonKit(*args, **kwargs):

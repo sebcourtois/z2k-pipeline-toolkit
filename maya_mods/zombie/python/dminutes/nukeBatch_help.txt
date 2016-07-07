@@ -1,0 +1,73 @@
+Options available when launching in Nuke (or NukeX) mode:
+---------------------------------------------------------
+
+Usage: ./Nuke (--nukex) <switches> <script> <argv>
+
+<script>:
+  name of a .nk script to create, edit, or execute
+  "-" means stdin
+
+<argv>:
+  [argv n] expressions to provide changing arguments to the script.
+
+<switches>:
+
+  -a                      formats default to anamorphic
+  -b                      start in background (fork)
+  -c size                 limit cache memory usage. Size is in bytes, or append k, M, G or T
+  --cont                  attempt to render subsequent frames in the range after an error;
+                           if not specified, the application will stop on the first error.
+  -d                      set X display name
+  -f                      render at full size (turns off proxy; use -p to force render at proxy)
+  -F range                Frame numbers to execute the script at.
+                           A range can be one of:
+                           'A'        single frame number A
+                           'A-B'      all frames from A through B
+                           'A-BxC'    every C'th frame from A to last one less or equal to B
+  --gpu ARG               enables GPU usage when in terminal mode with an optional gpu index argument, defaults to 0 if none given. Will override preferences when in interactive mode
+  --multigpu              enables multi-GPU acceleration when in terminal mode. Will override preferences when in interactive mode. It will only work on identical GPUs
+  --gpulist               print the selectable gpus and their index
+  -h                      print this help and exit
+  -i                      with -x or -t use interactive, not render, license
+  -l                      apply linear transfer to the file read in
+  -m n                    set threads to n
+  -n                      don't run postagestamps; don't open windows
+  -p                      turn on proxy mode (use -f to force full size)
+  -P                      measure performance metrics and show in DAG
+  --Pf filename           set filename to write performance profile to after render. This will turn on measurement of performance metrics
+  --pause                 initial viewers in script specified on command line should be paused
+  --priority p            run the application with a different priority, choose from:
+                             high (only available to super user on Linux/OS X)
+                             medium
+                             low
+  -s n                    sets the minimum stack size for each thread in bytes; this defaults
+                           to 16777216 (16MB) the smallest allowed value is 1048576 (1MB)
+  --sro                   force the application to obey the render order of Write nodes such that Reads can use
+                           files created by earlier Write nodes
+  -t                      terminal only (no gui); if <script> is a .py file it will be executed
+  --tg                    terminal mode,  but instantiates a QApplication instead of a QCoreApplication so PySide/PyQt Widgets can be created. Needs an X session
+  -V level                Print more stuff, choose level from:
+                             0 (not verbose)
+                             1 (output nuke script load and save)
+                             2 (output loading plugins, python, tcl, nuke scripts, progress and buffer report)
+  -v                      nukev (rest of command line is image files to view)
+  --view v                only execute these views (comma-separated list: e.g. 'left,right')
+  --version               print version information and exit
+  -x                      execute the script (rather than edit it)
+  -X nodes                only execute these nodes (comma-separated list)
+  --remap r               For terminal mode, sets path remappings from a comma separated list. The remappings will be read as pairs,
+                           where the first path in each pair will map to the second path in each pair
+                                e.g. -remap "X:/path,B:/,Y:/,Z:/foo"
+                                The path X:/path/file.nk will be mapped to B:/file.nk
+                                The path Y:/bar/something.nk will be mapped to Z:/foo/bar/something.nk
+                           This option will cause an error if there are not an equal number of 'map froms' and 'map to' entries in the list
+  --crashhandling enabled Specify 1 or 0 for whether the crash handler should be started or not. By default it only starts in GUI mode.
+                           This can also be controlled by using the environment variable NUKE_CRASH_HANDLING
+  --nocrashprompt         Disable the crash prompt, so crashes are automatically submitted in GUI mode. This is the standard behavior in terminal mode.
+                           This can also be controlled by using the NUKE_NO_CRASH_PROMPT environment variable.
+  --                      end switches, allowing script to start with a dash or be just - to read from stdin
+
+C:\Program Files\Nuke10.0v1>
+
+
+

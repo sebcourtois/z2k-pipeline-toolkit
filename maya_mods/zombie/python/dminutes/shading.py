@@ -45,8 +45,8 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False , inPare
     wrongShadEngine = []
     checkedItem = []
 
-    permitted_preview_shader_type = ["lambert","surfaceShader"]
-    permitted_render_shader_type = ["aiStandard", "dmnToon"]
+    permitted_preview_shader_type = ["lambert","surfaceShader","layeredShader" ]
+    permitted_render_shader_type = [ "dmnToon"]
 
     if shadEngineList:
         shadEngineListTemp = shadEngineList
@@ -1199,13 +1199,14 @@ def createShadingGroup():
     processedInstL=[]
     for each in selection:
         meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = each)
-        for eachInst in instanceList:
-            instParentL = mc.listRelatives(mc.listRelatives(eachInst, allDescendents = True, fullPath = True, type = "mesh"), allParents = True, fullPath = True, type = "transform")
-            if instParentL[0] not in processedInstL:
-                processedInstL.extend(instParentL)
-                transformMeshList.append(instParentL[0])
-        for eachMesh in meshList:
-            transformMeshList.append(eachMesh)
+        transformMeshList = list(meshList+instanceList)
+        # for eachInst in instanceList:
+        #     instParentL = mc.listRelatives(mc.listRelatives(eachInst, allDescendents = True, fullPath = True, type = "mesh"), allParents = True, fullPath = True, type = "transform")
+        #     if instParentL[0] not in processedInstL:
+        #         processedInstL.extend(instParentL)
+        #         transformMeshList.append(instParentL[0])
+        # for eachMesh in meshList:
+        #     transformMeshList.append(eachMesh)
 
     if not transformMeshList:
         print "#### {:>7}: nothing selected, please select at leas a geometrie and run again the script".format("Info")
@@ -1222,7 +1223,7 @@ def createShadingGroup():
 
     for each in transformMeshList:
         print "each: ", each
-        myName = each.split("|")[-1].lstrip("geo_")
+        myName = each.split("|")[-1].replace("geo_","")
         mynameSplit = myName.split("_")
         if len(mynameSplit)==2:
             myName = mynameSplit[0]+mynameSplit[1].capitalize()

@@ -79,6 +79,7 @@ class DavosSetup(ToolSetup):
                        "AbcImport.mll",
                        "atomImportExport.mll",
                        "matrixNodes.mll" if (pmv.current() > pmv.v2013) else "decomposeMatrix.mll",
+                       "mtoa.mll",
                        )
 
         for sPlugin in sPluginList:
