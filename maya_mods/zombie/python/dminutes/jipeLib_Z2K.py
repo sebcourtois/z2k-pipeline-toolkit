@@ -4306,8 +4306,33 @@ def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
             print "FK mode"
             print "MATCH IK ON FK"
             toReselectCtr = inIKControl
+
+
+            # wiiiiiippp store pose - find deltaMat - re apply pose
+            oldIKMat = cmds.xform(inIKControl, matrix=True, q=True, worldSpace=False)
+            oldFKMat = cmds.xform(inFkControl, matrix=True, q=True, worldSpace=False)
+            resetSRT(inObjL=[inIKControl,inFkControl])
+
+            refIKinvMat = cmds.getAttr(inIKControl + ".worldInverseMatrix")
+            refFKMat = cmds.xform(inFkControl, matrix=True, q=True, worldSpace=True)
+            outL = []
+            for i,j in zip(refFKMat,refIKinvMat):
+                outL.append(i*j)
+            deltaFKIKMat = outL
+            print "deltaFKIKMat=", deltaFKIKMat
+            # re set original vals
+            cmds.xform(inIKControl, matrix=oldIKMat)
+            cmds.xform(inFkControl, matrix=oldFKMat)
+
             # remach ik sur FK et reset FK
             matchByXformMatrix([inFkControl, inIKControl,])
+            newIKMat = cmds.xform(inIKControl, matrix=True, q=True, worldSpace=True)
+            finalFK_mat = []
+            for i,j in zip(newIKMat,deltaFKIKMat):
+                finalFK_mat.append(i*j)
+
+
+            cmds.xform(inFkControl, matrix=finalFK_mat)
             # handle leur puting de 180 sur Y entre FK et IK d'un cote du rig et pas de l autre
             if "Right_" in curobj:
                 cmds.rotate(-180,inIKControl , rotateY=True,os=1,relative=1)
