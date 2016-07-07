@@ -8,16 +8,16 @@ import argparse
 from shutil import make_archive, ignore_patterns
 from datetime import datetime
 
+BASE_NAME = "z2k-pipeline-toolkit"
 
 class Z2kToolkit(object):
 
     def __init__(self, customEnvs=None):
 
-        sBaseName = "z2k-pipeline-toolkit"
         sCurDirPath = normPath(osp.dirname(osp.abspath(__file__)))
 
-        sRoot, sTail = sCurDirPath.split(sBaseName)
-        sDirName = sBaseName + sTail.split("/", 1)[0]
+        sRoot, sTail = sCurDirPath.split(BASE_NAME)
+        sDirName = BASE_NAME + sTail.split("/", 1)[0]
 
         sRootPath = pathJoin(sRoot, sDirName)
         if not osp.isdir(sRootPath):
@@ -25,8 +25,7 @@ class Z2kToolkit(object):
 
         self.isDev = osp.isdir(pathJoin(sRootPath, ".git"))
         self.rootPath = sRootPath
-        #self.dirName = sDirName
-        self.baseName = sBaseName
+        self.dirName = sDirName
         self.pythonPath = pathJoin(sRootPath, "python")
         self.thirdPartyPath = pathJoin(sRootPath, "third-party")
 
@@ -132,7 +131,7 @@ class Z2kToolkit(object):
             print "Tools update from development environment !"
             sReleasePath = self.rootPath
 
-        sInstallPath = pathJoin(os.environ["USERPROFILE"], "zombillenium", self.baseName)
+        sInstallPath = pathJoin(os.environ["USERPROFILE"], "zombillenium", BASE_NAME)
 
         if sReleasePath == sInstallPath:
             print "Source == Destination !"
@@ -190,7 +189,7 @@ class Z2kToolkit(object):
 
             if archive:
                 sDate = datetime.now().strftime("%Y%m%d-%H%M")
-                sZipPath = pathJoin(sDistroPath + "_backups", self.baseName + "_" + sDate)
+                sZipPath = pathJoin(sDistroPath + "_backups", BASE_NAME + "_" + sDate)
 
                 cleanUpPyc(sDistroPath)
 
@@ -255,7 +254,7 @@ class Z2kToolkit(object):
         if not osp.isdir(sReleaseLoc):
             raise EnvironmentError("No such Release location: '{}'".format(sReleaseLoc))
 
-        return pathJoin(sReleaseLoc, self.baseName)
+        return pathJoin(sReleaseLoc, BASE_NAME)
 
     def launchCmd(self, cmdArgs, launch=True):
 
@@ -292,12 +291,12 @@ class Z2kToolkit(object):
         updEnv("Z2K_LAUNCH_SCRIPT", osp.normpath(sys.argv[0]))
 
         cmdArgs = sys.argv[1:]
-        sCmd = ""
-        sCmdList = ("install", "launch", "release", "loadenv")
+        sAction = ""
+        sActionList = ("install", "launch", "release", "loadenv")
         launchArgs = []
         if len(sys.argv) > 2:
-            sCmd = sys.argv[1]
-            if sCmd in ("launch","loadenv"):
+            sAction = sys.argv[1]
+            if sAction in ("launch", "loadenv"):
                 cmdArgs = sys.argv[1:2]
                 c = 2
                 for arg in sys.argv[2:]:
@@ -309,12 +308,18 @@ class Z2kToolkit(object):
                 launchArgs = sys.argv[c:]
 
         parser = argparse.ArgumentParser()
-        parser.add_argument("command", choices=sCmdList)
+        parser.add_argument("command", choices=sActionList)
 
-        ns = parser.parse_args(cmdArgs if not sCmd else [sCmd])
+        ns = parser.parse_args(cmdArgs if not sAction else [sAction])
 
-        sCmd = ns.command
-        if sCmd in ("launch","loadenv"):
+        sAction = ns.command
+
+        if self.dirName.endswith("_master"):
+            if sAction != "release":
+                raise EnvironmentError("Only 'release' action is allowed from '{}'"
+                                       .format(self.rootPath))
+
+        if sAction in ("launch", "loadenv"):
             parser.add_argument("--update", "-u", type=int, default=1)
             parser.add_argument("--renew", "-r", type=int, default=0)
             ns = parser.parse_args(cmdArgs, ns)
@@ -324,12 +329,12 @@ class Z2kToolkit(object):
                 try:
                     if (not self.isDev):
                         bBeenUpdated = self.install()
-                except Exception, err:
+                except Exception as err:
                     print ("\n\n!!!!!!! Failed updating toolkit: {}".format(err))
                     if raw_input("\nPress enter to continue...") == "raise": raise
 
                 #print "bBeenUpdated", bBeenUpdated
-                if bBeenUpdated and sCmd == "launch":
+                if bBeenUpdated and sAction == "launch":
                     sMsg = """
 #===============================================================================
 # Tools updated so let's relaunch...
@@ -342,18 +347,18 @@ class Z2kToolkit(object):
 #                    print launchArgs
                     print relaunchArgs
 
-                    if sCmd == "launch":
+                    if sAction == "launch":
                         return subprocess.call(relaunchArgs, shell=True)
 
             if ns.renew:
                 self.loadEnvs(self.customEnvs, replace=True)
 
-            return self.launchCmd(launchArgs, launch=(sCmd == "launch"))
+            return self.launchCmd(launchArgs, launch=(sAction == "launch"))
 
-        if sCmd == "install":
+        if sAction == "install":
             self.install()
 
-        elif sCmd == "release":
+        elif sAction == "release":
             parser.add_argument("--archive", "-a", type=int, default=1)
             parser.add_argument("--location", "-l", type=str, default="")
             ns = parser.parse_args(cmdArgs, ns)
