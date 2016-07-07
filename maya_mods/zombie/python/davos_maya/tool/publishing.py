@@ -388,11 +388,11 @@ def linkSceneDependencies(sCurScnPath, depScanResults, sDependencyType):
 
 def linkAssetVersionsInShotgun(sgVersion, scnInfos, dryRun=False):
 
-    def iterSgVersionNames(relAstList):
+    def iterVersionEnvPaths(relAstList):
         for relAstData in relAstList:
             versFile = relAstData.get("version_file")
             if versFile:
-                yield versFile.sgVersionName()
+                yield versFile.envPath()
 
 #    sgShot = sgVersion["entity"]
     damShot = scnInfos.get("dam_entity")
@@ -402,13 +402,13 @@ def linkAssetVersionsInShotgun(sgVersion, scnInfos, dryRun=False):
     if not relatedAssetList:
         return
 
-    sSgVersList = tuple(iterSgVersionNames(relatedAssetList))
+    sVersPathList = tuple(iterVersionEnvPaths(relatedAssetList))
     sgVersList = []
     sgVersDct = {}
-    if sSgVersList:
-        filters = [["code", "in", sSgVersList]]
-        sgVersList = proj._shotgundb.sg.find("Version", filters, ["code"])
-        sgVersDct = dict((d2["code"].lower(), d2) for d2 in sgVersList)
+    if sVersPathList:
+        filters = [["sg_source_file", "in", sVersPathList]]
+        sgVersList = proj.findSgVersions(moreFilters=filters)
+        sgVersDct = dict((osp.normcase(d["sg_source_file"]), d) for d in sgVersList)
 
 #    shotConnList = []
     lockedSgVersList = []
@@ -424,8 +424,7 @@ def linkAssetVersionsInShotgun(sgVersion, scnInfos, dryRun=False):
 
         sgVers = None
         if rcFile == versFile:
-            sSgVers = rcFile.sgVersionName()
-            sgVers = sgVersDct.get(sSgVers.lower())
+            sgVers = sgVersDct.get(osp.normcase(rcFile.envPath()))
             if sgVers:
                 lockedSgVersList.append(sgVers)
 
@@ -435,10 +434,14 @@ def linkAssetVersionsInShotgun(sgVersion, scnInfos, dryRun=False):
 #            shotConnList.append(astShotConn)
 
     if not dryRun:
-        proj.updateSgEntity(sgVersion, sg_locked_asset_versions=lockedSgVersList,
-                            sg_related_asset_versions=sgVersList)
-
+        sgVersion = proj.updateSgEntity(sgVersion, sg_locked_asset_versions=lockedSgVersList,
+                                        sg_related_asset_versions=sgVersList)
 #        proj.updateSgEntity(sgShot, sg_locked_asset_versions=lockedSgVersList)
 #        for astShotConn in shotConnList:
 #            proj.updateSgEntity(astShotConn, sg_locked_to_version=astShotConn.get("sg_locked_to_version"))
+    else:
+        sgVersion.update(sg_locked_asset_versions=lockedSgVersList,
+                         sg_related_asset_versions=sgVersList)
+    return sgVersion
+
 

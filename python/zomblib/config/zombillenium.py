@@ -134,6 +134,17 @@ class shot_lib(object):
                     "{name}_finalLayout.mov -> finalLayout_movie":None,
                     "{name}_arlequin.mov -> arlequin_movie":None,
                    },
+                "{step:07_fx3d} -> fx3d_dir":
+                   {
+                    "geoCache -> fx3dCache_dir":{},
+                    "{name}_fx3d.ma -> fx3d_scene":None,
+                    "{name}_fx3d.mov -> fx3d_movie":None,
+                   },
+                "{step:08_render} -> rendering_dir":
+                   {
+                    "{name}_render.ma -> rendering_scene":None,
+                    "{name}_render.mov -> rendering_movie":None,
+                   },
                 },
             },
         }
@@ -144,6 +155,9 @@ class shot_lib(object):
                    "04_anim":"Animation",
                    "05_charFx":"CharFX",
                    "06_finalLayout":"Final Layout",
+                   "07_fx3d":"Fx3D",
+                   "08_render":"Rendering",
+                   "10_compo":"Compositing",
                    }
 
     resource_settings = {
@@ -211,6 +225,14 @@ class shot_lib(object):
                                             }
                          },
 
+    "fx3d_scene":{"create_sg_version":True,
+                  "sg_tasks":("Fx3D|fx3D",),
+                  },
+
+    "rendering_scene":{"create_sg_version":True,
+                       "sg_tasks":("Rendering|rendering",),
+                       },
+
     "finalLayout_movie":{"create_sg_version":True,
                          "sg_uploaded_movie":True,
                          "sg_path_to_movie":True,
@@ -224,6 +246,20 @@ class shot_lib(object):
                       "sg_tasks":("Final Layout|Anim_MeshCache",),
                       "sg_status":"rev",
                       },
+
+    "fx3d_movie":{"create_sg_version":True,
+                 "sg_uploaded_movie":True,
+                 "sg_path_to_movie":True,
+                 "sg_tasks":("Fx3D|fx3d",),
+                 "sg_status":"rev",
+                 },
+
+    "rendering_movie":{"create_sg_version":True,
+                       "sg_uploaded_movie":True,
+                       "sg_path_to_movie":True,
+                       "sg_tasks":("Rendering|rendering",),
+                       "sg_status":"rev",
+                       },
 
     "animRef_movie":{"create_sg_version":True,
                      "sg_uploaded_movie":True,
@@ -241,10 +277,19 @@ class shot_lib(object):
     "previz_dir":{"default_sync_rules":["all_sites"], },
     "layout_dir":{"default_sync_rules":["all_sites"], },
     "anim_dir":{"default_sync_rules":["all_sites"], },
+
     "finalLayout_dir":{"default_sync_rules":["all_sites"], },
     "finalLayoutCache_dir":{"default_sync_rules":["online", "dmn_paris",
                                                   "dream_wall", "dmn_angouleme"], },
+
     "charFx_dir":{"default_sync_rules":["all_sites"], },
+    "charFxCache_dir":{"default_sync_rules":["all_sites"], "free_to_publish":True, },
+
+    "fx3d_dir":{"default_sync_rules":["all_sites"], },
+    "fx3dCache_dir":{"default_sync_rules":["online", "dmn_paris",
+                                           "dream_wall", "dmn_angouleme"], },
+
+    "rendering_dir":{"default_sync_rules":["all_sites"], },
     }
 
 class output_lib(object):

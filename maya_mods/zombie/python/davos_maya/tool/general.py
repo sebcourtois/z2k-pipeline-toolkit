@@ -4,6 +4,7 @@ import os
 import os.path as osp
 from itertools import izip
 from collections import OrderedDict
+from pprint import pprint
 
 import maya.cmds as mc
 import pymel.core as pm
@@ -269,16 +270,17 @@ def getSgRelatedVersionsHistory(scnInfos=None, logInfo=True, limit=0, relatedAss
     if relAstList:
         sAstKeyList = tuple(d["name"].lower() for d in relAstList if d["name"])
 
-    sSgVersList = tuple(rc.sgVersionName() for rc in (d.get("version_file") for d in relAstList) if rc)
+    sVersPathList = tuple(vf.envPath() for vf in (d.get("version_file") for d in relAstList) if vf)
+#    pprint(sVersPathList)
 
-    sgInitVers = {"code":"current scene", "sg_related_asset_versions":sSgVersList,
+    sVersFieldList = ("entity", "description", "created_at")
+
+    sgInitVers = {"code":"current scene", "sg_related_asset_versions":sVersPathList,
                   "description":"", "created_at":None, "sg_task.Task.sg_status_list":""}
 
     sgShotVersList = [sgInitVers]
-
-    fields = sgInitVers.keys()
     sgShotVersList += damShot.findSgVersions(resourceName=sScnRcName, sgEntity=sgShot,
-                                             moreFields=fields, limit=limit)
+                                             moreFields=sgInitVers.keys(), limit=limit)
     for sgShotVers in sgShotVersList:
 
         sShotVers = sgShotVers["code"]
@@ -289,17 +291,14 @@ def getSgRelatedVersionsHistory(scnInfos=None, logInfo=True, limit=0, relatedAss
         sgRelVersList = sgShotVers["sg_related_asset_versions"]
         if sgRelVersList:
             if isinstance(sgRelVersList[0], basestring):
-                filters = [["code", "in", tuple(s for s in sgRelVersList)]]
+                filters = [["sg_source_file", "in", tuple(s for s in sgRelVersList)]]
             else:
                 filters = [["id", "in", tuple(d["id"] for d in sgRelVersList)]]
             if sAstKeyList:
                 filters.append(["entity.Asset.code", "in", sAstKeyList])
 
             sgRelVersList = proj.findSgVersions(moreFilters=filters,
-                                                moreFields=["entity",
-                                                            "description",
-                                                            "created_at"])
-
+                                                     moreFields=sVersFieldList)
             if logInfo:
                 print "from 'sg_related_asset_versions'"
                 for i, sgRelVers in enumerate(sgRelVersList):
@@ -323,27 +322,24 @@ def getSgRelatedVersionsHistory(scnInfos=None, logInfo=True, limit=0, relatedAss
                         sgAst = astShotConn["asset"]
 
                     #print damAst, "get assets versions".center(120, "#"), sgAst
-                    sgVersList = damAst.findSgVersions(sRcName, sgEntity=sgAst,
-                                                       moreFields=["entity",
-                                                                   "description",
-                                                                   "created_at"],
-                                                       limit=75)
-                    relAstData["sg_versions"] = sgVersList
+                    sgAstVersList = damAst.findSgVersions(resourceName=sRcName,
+                                                          sgEntity=sgAst,
+                                                          moreFields=sVersFieldList,
+                                                          limit=75)
+                    relAstData["sg_versions"] = sgAstVersList
                 else:
-                    sgVersList = relAstData["sg_versions"]
+                    sgAstVersList = relAstData["sg_versions"]
 
                 count += 1
 
-                sgVersIter = (d for d in sgVersList if d["created_at"] <= sgShotVers["created_at"])
-                sgVersList = sorted(sgVersIter, key=lambda d:d["created_at"], reverse=True)
-                if sgVersList:
-                    sgRelVers = sgVersList[0]
-                    sgRelVersList.append(sgRelVers)
-                    if logInfo:
-                        print count, sgRelVers["code"]
-                else:
-                    if logInfo:
-                        print count, "None"
+                sgAstVersList.sort(key=lambda d:d["created_at"], reverse=True)
+                for sgRelVers in sgAstVersList:
+                    if sgRelVers["created_at"] <= sgShotVers["created_at"]:
+                        break
+
+                sgRelVersList.append(sgRelVers)
+                if logInfo:
+                    print count, sgRelVers["code"]
 
         sgShotVers["sg_related_asset_versions"] = sgRelVersList
 
