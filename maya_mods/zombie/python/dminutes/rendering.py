@@ -246,6 +246,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 0)
     elif  outputFormat == "jpg":
         miscUtils.setAttrC("defaultArnoldDriver.aiTranslator", "jpeg", type="string")
+        miscUtils.setAttrC("defaultArnoldDisplayDriver.aiTranslator", "jpeg", type="string")
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 0)
 
 
