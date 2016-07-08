@@ -186,7 +186,6 @@ class Z2kToolkit(object):
             print sOutput
 
             if archive is None:
-
                 print ("\n{} toolkit release:\n'{}' -> '{}'\n"
                        .format(sAction, self.rootPath, sDistroPath))
                 sChoiceList = ("yes", "no", "cancel")
