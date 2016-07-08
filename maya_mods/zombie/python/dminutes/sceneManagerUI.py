@@ -7,6 +7,7 @@ import os.path as osp
 import subprocess
 from functools import partial
 from collections import OrderedDict
+from pprint import pprint
 
 from PySide.QtCore import Qt
 
@@ -513,6 +514,7 @@ def setAssetVersionsLocked(bLock, sConfirmMsg, *args):
 
         sVersPathDct = dict((d["entity"]["name"].lower(), pathResolve(d["sg_source_file"]))
                             for d in sgShotVers["sg_related_asset_versions"])
+        #pprint(sVersPathDct)
 
         count = 0
         for relAst in relAstList:
