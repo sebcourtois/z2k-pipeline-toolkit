@@ -194,7 +194,7 @@ class Z2kToolkit(object):
                     res = raw_input("Archive current release ? ({})".format('/'.join(sChoiceList)))
                     if res == "cancel":
                         return False
-                archive = True if "yes" else False
+                archive = True if res == "yes" else False
             else:
                 sNoArchive = "" if archive else " (without archive)"
                 print ("\n{} toolkit release{}:\n'{}' -> '{}'\n"
