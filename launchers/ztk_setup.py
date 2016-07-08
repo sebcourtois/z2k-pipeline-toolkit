@@ -175,30 +175,34 @@ class Z2kToolkit(object):
             sAction = "Creating"
             os.makedirs(sDistroPath)
 
-        if archive is None:
-            print ("\n{} toolkit release:\n'{}' -> '{}'\n"
-                   .format(sAction, self.rootPath, sDistroPath))
-            sChoiceList = ("yes", "no", "cancel")
-            res = ""
-            while res not in sChoiceList:
-                res = raw_input("Archive current release ? ({})".format('/'.join(sChoiceList)))
-                if res == "cancel":
-                    return False
-            archive = True if "yes" else False
-        else:
-            sNoArchive = "" if archive else " (without archive)"
-            print ("\n{} toolkit release{}:\n'{}' -> '{}'\n"
-                   .format(sAction, sNoArchive, self.rootPath, sDistroPath))
-            res = raw_input("Continue ? (yes/no)")
-            if res != "yes":
-                return False
-
         if bUpdating:
             sOutput = self.makeCopy(self.rootPath, sDistroPath,
                                     dryRun=True, summary=False)
             if not sOutput.strip():
                 print "\nNo changes !"
                 return True
+
+            print '\n', " changes ".center(120, "-")
+            print sOutput
+
+            if archive is None:
+
+                print ("\n{} toolkit release:\n'{}' -> '{}'\n"
+                       .format(sAction, self.rootPath, sDistroPath))
+                sChoiceList = ("yes", "no", "cancel")
+                res = ""
+                while res not in sChoiceList:
+                    res = raw_input("Archive current release ? ({})".format('/'.join(sChoiceList)))
+                    if res == "cancel":
+                        return False
+                archive = True if "yes" else False
+            else:
+                sNoArchive = "" if archive else " (without archive)"
+                print ("\n{} toolkit release{}:\n'{}' -> '{}'\n"
+                       .format(sAction, sNoArchive, self.rootPath, sDistroPath))
+                res = raw_input("Continue ? (yes/no)")
+                if res != "yes":
+                    return False
 
             if archive:
                 sDate = datetime.now().strftime("%Y%m%d-%H%M")
