@@ -105,11 +105,11 @@ def addLoggingSet(sBaseName, members):
 
 def listChildMeshes(sXfm, longName=False):
 
-    res = mc.listRelatives(sXfm, c=True, type="mesh", path=not longName, fullPath=longName)
-    if not res:
+    sChildList = mc.listRelatives(sXfm, c=True, type="mesh", path=True)
+    if not sChildList:
         return []
 
-    return mc.ls(res, ni=True)
+    return mc.ls(sChildList, ni=True, long=longName)
 
 def breakConnections(sSide, sNodeAttr):
 
@@ -468,7 +468,6 @@ def getTransformMapping(sSrcDagRoot, sTrgtNamespace, consider=None, longName=Fal
     sNoMatchList = []
     sMultiMatchList = []
     sLockedList = []
-    #mappingItems = sSrcDagList[:]
 
     for i, sSrcDagPath in enumerate(mappingItems):
 
@@ -501,19 +500,22 @@ def getTransformMapping(sSrcDagRoot, sTrgtNamespace, consider=None, longName=Fal
             if mc.objExists(sTrgtDagPath) and mc.objectType(sTrgtDagPath, isType="transform"):
                 found = sTrgtDagPath
         else:
-            sFoundList = mc.ls(sTrgtDagPath, exactType="transform")
+            sFoundList = mc.ls(sTrgtDagPath, exactType="transform", long=longName)
             if sFoundList:
                 if len(sFoundList) == 1:
                     found = sFoundList[0]
                 else:
                     if canLog(sSrcDagPath):
-                        pm.displayWarning("Multiple objects named '{}'".format(sTrgtDagPath))
+                        sSep = "\n - "
+                        sMsg = "Multiple objects named '{}':".format(sTrgtDagPath) + sSep
+                        sMsg += sSep.join(sFoundList)
+                        pm.displayWarning(sMsg)
                         sMultiMatchList.append(sSrcDagPath)
                     found = sFoundList
 
         if not found:
             if canLog(sSrcDagPath):
-                pm.displayWarning("Missing object: '{}'".format(sTrgtDagPath))
+                pm.displayWarning("Transform NOT found: '{}'".format(sTrgtDagPath))
                 sNoMatchList.append(sSrcDagPath)
 
         mappingItems[i] = (sSrcDagPath, found)
@@ -677,10 +679,10 @@ def transferVisibilities(astToAbcXfmMap, dryRun=False):
 
         if bAstViz:
             sHiddenList.append(sAstXfm)
-            sMsg = "CACHE HIDE: '{}'".format(sAstXfm)
+            sMsg = "CACHE HIDES: '{}'".format(sAstXfm)
         else:
             sShowedList.append(sAstXfm)
-            sMsg = "CACHE SHOW: '{}'".format(sAstXfm)
+            sMsg = "CACHE SHOWS: '{}'".format(sAstXfm)
 
         print sMsg
 
@@ -854,14 +856,14 @@ def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
 
             if sAttr == "visibility":
                 if bObjViz:
-                    sMsg = "LAYOUT HIDE: '{}'".format(sObjPath)
+                    sMsg = "LAYOUT HIDES: '{}'".format(sObjPath)
                 else:
-                    sMsg = "LAYOUT SHOW: '{}'".format(sObjPath)
+                    sMsg = "LAYOUT SHOWS: '{}'".format(sObjPath)
             else:
                 if bObjViz:
-                    sMsg = "LAYOUT HIDE: '{}'".format(sObjAttr)
+                    sMsg = "LAYOUT HIDES: '{}'".format(sObjAttr)
                 else:
-                    sMsg = "LAYOUT SHOW: '{}'".format(sObjAttr)
+                    sMsg = "LAYOUT SHOWS: '{}'".format(sObjAttr)
 
             print sMsg
 
@@ -1051,10 +1053,10 @@ def importCaches(sSpace, **kwargs):
                 pm.displayError("'{}' is empty !".format(sCacheSetName))
                 doneWith(oAbcRef, bRemRef);continue
 
-        astToAbcXfmItems = getTransformMapping(sAstGeoGrp, sAbcNmspc, longName=False,
+        astToAbcXfmItems = getTransformMapping(sAstGeoGrp, sAbcNmspc, longName=True,
                                                consider=sCacheObjList)
 
-        astToAbcMeshItems = getMeshMapping(astToAbcXfmItems, longName=False,
+        astToAbcMeshItems = getMeshMapping(astToAbcXfmItems, longName=True,
                                            consider=sCacheObjList)
 
         transferXfmAttrs(astToAbcXfmItems, only=sCacheObjList, dryRun=bDryRun,
