@@ -5,8 +5,6 @@ import nuke
 
 
 
-firstFrameFileNameL = [r"//ZOMBIWALK/Projects/private/alexandreb/zomb/shot/sq0300/sq0300_sh0040a/06_finalLayout/render-v003/lay_finalLayout_00/arlequin/sq0300_sh0040a.0101.jpeg", r"//ZOMBIWALK/Projects/private/alexandreb/zomb/shot/sq0300/sq0300_sh0040a/06_finalLayout/render-v003/lay_finalLayout_00/beauty/sq0300_sh0040a.0101.jpeg"]
-
 
 def compileLayerQuickTime(renderDirS="", passNameL= ["lay_finalLayout_00"], aovNameL= ["beauty", "arlequin"], gui= False):
     log = nkU.LogBuilder(gui=gui, funcName ="'compileLayerQuickTime'")
@@ -14,6 +12,8 @@ def compileLayerQuickTime(renderDirS="", passNameL= ["lay_finalLayout_00"], aovN
     outBoundL = []
     fFrameRangeD = {}
     outD = {}
+    smallestFFrameI= 99999999
+    bigestLFrameI=0
 
     if not renderDirS:
         renderDirS = nuke.root()["argv0"].getValue()
@@ -44,7 +44,13 @@ def compileLayerQuickTime(renderDirS="", passNameL= ["lay_finalLayout_00"], aovN
             fFrameS = imageSeq[0].split(".")[-2]
             lFrameS = imageSeq[-1].split(".")[-2]
             fFrameRangeD[nkU.pathJoin(imageDirS,imageSeq[0])] = [int(fFrameS), int(lFrameS)]
+            if int(fFrameS)<smallestFFrameI:
+                smallestFFrameI= int(fFrameS)
+            if int(lFrameS)>bigestLFrameI:
+                bigestLFrameI= int(lFrameS)
 
+    nuke.root()["first_frame"].setValue(smallestFFrameI)
+    nuke.root()["last_frame"].setValue(bigestLFrameI)
 
     for firstFrameS, rangeL in fFrameRangeD.items():
         firstFrameS = nkU.normPath(firstFrameS)
@@ -61,7 +67,8 @@ def compileLayerQuickTime(renderDirS="", passNameL= ["lay_finalLayout_00"], aovN
                     log.printL("e", txt)
                     raise ValueError(txt)
 
-            movFileName = nkU.pathJoin(os.environ["ZOMB_SHOT_LOC"],fileO.seq,fileO.shot,fileO.dep,fileO.depSub,fileO.shot+"_"+fileO.layerName+".mov")
+
+            movFileName = nkU.pathJoin(os.environ["ZOMB_ROOT_PATH"],"private",fileO.user,"zomb","shot",fileO.seq,fileO.shot,fileO.dep,fileO.depSub,fileO.shot+"_"+fileO.layerName+".mov")
             txt = "output movie: '{}'".format(movFileName)
             log.printL("i", txt)
             txt = "sound file: '{}'".format(wavFileName)
@@ -86,6 +93,9 @@ def compileLayerQuickTime(renderDirS="", passNameL= ["lay_finalLayout_00"], aovN
             outNode["file"].setValue(movFileName)
             outNode["mov64_audiofile"].setValue(wavFileName)
             outNode["mov32_audiofile"].setValue(wavFileName)
+            outNode["use_limit"].setValue(True)
+            outNode["first"].setValue(rangeL[0])
+            outNode["last"].setValue(rangeL[1])
 
             
             outNodeL.append(outNode)

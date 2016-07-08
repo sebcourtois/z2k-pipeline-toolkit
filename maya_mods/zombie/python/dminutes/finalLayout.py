@@ -203,18 +203,22 @@ def createNukeBatch(gui=True):
 
     shutil.copyfile(renderBatch_src, renderBatch_trg)
     if os.environ["davos_site"] == "dmn_paris":
+        licenceLocation=r"WS-041@4101"
         nukePath= r"\\Zombiwalk\z2k\06_PARTAGE\royalRenderShare\nuke\Nuke10.0.exe"
         nukePathLoc= r"rem C:\Program Files\Nuke10.0v1\Nuke10.0.exe"
     elif os.environ["davos_site"] == "dmn_paris":
+        licenceLocation=r"???????"
         nukePath= r"rem merci de copier nuke sur le serveur et de donner le chemin a Alex"
         nukePathLoc= r"C:\Program Files\Nuke10.0v1\Nuke10.0.exe"
     else:
+        licenceLocation=r"???????"
         nukePath= r"rem merci de copier nuke sur le serveur et de donner le chemin a Alex"
         nukePathLoc= r"C:\Program Files\Nuke10.0v1\Nuke10.0.exe"
 
 
     nukeScript = miscUtils.normPath(zombToolsPath + r"\z2k-pipeline-toolkit\nuke\template\finalLayoutTemplate.nk")
     renderBatch_obj = open(renderBatch_trg, "w")
+    renderBatch_obj.write("set foundry_LICENSE="+licenceLocation+"\n")
     renderBatch_obj.write("set nuke="+nukePath+"\n")
     renderBatch_obj.write("rem set nuke="+nukePathLoc+"\n")
     renderBatch_obj.write("set nkscript="+nukeScript+"\n")
