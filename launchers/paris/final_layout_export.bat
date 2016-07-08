@@ -1,1 +1,1 @@
-"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch "C:\Python27\python.exe" "%~dp0\..\..\scripts\final_layout_export.py" %*
+"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch "C:\Python27\python.exe" "%~dp0\..\..\scripts\final_layout_export.py" anim_scene %*

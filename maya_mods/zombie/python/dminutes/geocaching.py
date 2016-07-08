@@ -17,13 +17,13 @@ from pytd.util.fsutils import pathJoin, jsonWrite, jsonRead, pathRelativeTo
 from pytd.util.sysutils import grouper, argToSet
 
 from pytaya.util import apiutils as myapi
+from pytaya.core.general import lsNodes
 #from pytaya.core import system as myasys
 from davos_maya.tool import reference as myaref, dependency_scan
 from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
 from davos_maya.tool.general import iterGeoGroups
 
 from dminutes import maya_scene_operations as mop
-from pytaya.core.general import lsNodes
 
 LOGGING_SETS = []
 USE_LOGGING_SETS = True
@@ -312,8 +312,8 @@ def exportCaches(**kwargs):
     scnInfos = infosFromScene()
     damShot = scnInfos.get("dam_entity")
 
-    sMsg = "Caches can only be exported from an animation scene."
-    assertSceneInfoMatches(scnInfos, "anim_scene", msg=sMsg)
+#    sMsg = "Caches can only be exported from an animation scene."
+#    assertSceneInfoMatches(scnInfos, "anim_scene", msg=sMsg)
 
     if not bRaw:
         myaref.loadAssetsAsResource("anim_ref", checkSyncState=True, selected=False, fail=True)
@@ -723,7 +723,9 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
 
         sConnecList = mc.listHistory(sAstMeshShape, il=2, pdo=True)
         if sConnecList:
-            sConnecList = lsNodes(sConnecList, nodeNames=True, not_rn=True)
+            sNotTypeList = ("displayLayer", "renderLayer", "renderLayerManager", "displayLayerManager")
+            sConnecList = lsNodes(sConnecList, nodeNames=True, not_rn=True, not_type=sNotTypeList)
+            #sConnecList = tuple(n for n in sConnecList if mc.nodeType(n) not in sNotTypeList)
             #print sAstMeshShape, sConnecList
             if sConnecList:
                 sHasHistoryList.append(sAstMeshShape)
