@@ -283,7 +283,7 @@ class shot_lib(object):
                                                   "dream_wall", "dmn_angouleme"], },
 
     "charFx_dir":{"default_sync_rules":["all_sites"], },
-    "charFxCache_dir":{"default_sync_rules":["all_sites"], "free_to_publish":True, },
+    "charFxCache_dir":{"free_to_publish":True, },
 
     "fx3d_dir":{"default_sync_rules":["all_sites"], },
     "fx3dCache_dir":{"default_sync_rules":["online", "dmn_paris",
