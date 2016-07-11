@@ -1851,7 +1851,7 @@ def dmnToon2aiSurface(gui = True):
     return dict(resultB=log.resultB, logL=log.logL, wrongShaderL=wrongShaderL)
 
 
-def deleteUVs(meshL=[], doNotDeleteL=["map1","uvSet_display"],inParent = "asset|grp_geo", gui = True):
+def deleteUVs(meshL=[], doNotDeleteL=["map1","uvSet_display","uv_preview"], inParent = "asset|grp_geo", gui = True):
     #pour effacer tous les uvs
     log = miscUtils.LogBuilder(gui=gui, funcName ="deleteUVs")
     cleanedMeshL = []

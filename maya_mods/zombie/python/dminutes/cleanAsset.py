@@ -155,7 +155,7 @@ def cleanAsset (GUI = True):
                 assetconformation.UVSetCount()
                 assetconformation.lookForBumpNodes()
                 assetconformation.dmnToon2aiSurface()
-                assetconformation.deleteUVs(meshL=[], doNotDeleteL=["map1","uvSet_display"],inParent = "asset|grp_geo", gui = True)
+                assetconformation.deleteUVs(meshL=[],inParent = "asset|grp_geo", gui = True)
 
                 meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
                 print "#### {:>7}: {} geo and {} instances found in this scene".format("Info", len(meshList), len(instanceList))
@@ -185,7 +185,7 @@ def cleanAsset (GUI = True):
                 assetconformation.UVSetCount()
                 assetconformation.lookForBumpNodes()
                 assetconformation.dmnToon2aiSurface()
-                assetconformation.deleteUVs(meshL=[], doNotDeleteL=["map1","uvSet_display"],inParent = "asset|grp_geo", gui = True)
+                #◘assetconformation.deleteUVs(meshL=[],inParent = "asset|grp_geo", gui = True)
 
 
                 miscUtils.cleanLayout()
