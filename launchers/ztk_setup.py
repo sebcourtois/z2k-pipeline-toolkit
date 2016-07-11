@@ -160,7 +160,7 @@ class Z2kToolkit(object):
 
         return bBeenUpdated
 
-    def release(self, location="", archive=True):
+    def release(self, location="", archive=None):
 
         if not self.isDev:
             raise EnvironmentError("Sorry, you are not in DEV mode !")
@@ -175,19 +175,33 @@ class Z2kToolkit(object):
             sAction = "Creating"
             os.makedirs(sDistroPath)
 
-        sNoArch = "" if archive else " (no archive)"
-        print ("\n{} toolkit release{}:\n'{}' -> '{}'"
-               .format(sAction, sNoArch, self.rootPath, sDistroPath))
-        res = raw_input("Continue ? (yes/no)")
-        if res == "no":
-            return False
-
         if bUpdating:
             sOutput = self.makeCopy(self.rootPath, sDistroPath,
                                     dryRun=True, summary=False)
             if not sOutput.strip():
                 print "\nNo changes !"
                 return True
+
+            print '\n', " changes ".center(120, "-")
+            print sOutput
+
+            if archive is None:
+                print ("\n{} toolkit release:\n'{}' -> '{}'\n"
+                       .format(sAction, self.rootPath, sDistroPath))
+                sChoiceList = ("yes", "no", "cancel")
+                res = ""
+                while res not in sChoiceList:
+                    res = raw_input("Archive current release ? ({})".format('/'.join(sChoiceList)))
+                    if res == "cancel":
+                        return False
+                archive = True if res == "yes" else False
+            else:
+                sNoArchive = "" if archive else " (without archive)"
+                print ("\n{} toolkit release{}:\n'{}' -> '{}'\n"
+                       .format(sAction, sNoArchive, self.rootPath, sDistroPath))
+                res = raw_input("Continue ? (yes/no)")
+                if res != "yes":
+                    return False
 
             if archive:
                 sDate = datetime.now().strftime("%Y%m%d-%H%M")
@@ -361,7 +375,7 @@ class Z2kToolkit(object):
             self.install()
 
         elif sAction == "release":
-            parser.add_argument("--archive", "-a", type=int, default=1)
+            parser.add_argument("--archive", "-a", type=int, default=None)
             parser.add_argument("--location", "-l", type=str, default="")
             ns = parser.parse_args(cmdArgs, ns)
 
