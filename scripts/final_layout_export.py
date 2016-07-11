@@ -286,7 +286,7 @@ if __name__ == "__main__":
 
     try:
         ns = parser.parse_args()
-        launch(ns.resource, shotNames=ns.shots, dryRun=True, timestamp=ns.time)
+        launch(ns.resource, shotNames=ns.shots, dryRun=ns.dry, timestamp=ns.time)
     except Exception as e:
         os.environ["PYTHONINSPECT"] = "1"
         if isinstance(e, Warning):
