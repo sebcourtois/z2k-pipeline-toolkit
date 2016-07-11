@@ -912,7 +912,8 @@ def importCaches(sSpace, **kwargs):
         raise ValueError("Invalid space argument: '{}'".format(sSpace))
 
     if not osp.isdir(sCacheDirPath):
-        raise EnvironmentError("Could not found caches directory: '{}'".format(sCacheDirPath))
+        raise EnvironmentError("Could not found {} caches directory: '{}'"
+                               .format(sSpace, sCacheDirPath))
 
     exportInfos = jsonRead(pathJoin(sCacheDirPath, "abcExport.json"))
     exportJobList = exportInfos["jobs"]
