@@ -907,7 +907,7 @@ def importCaches(sSpace, **kwargs):
     if sSpace == "local":
         sCacheDirPath = mop.getMayaCacheDir(damShot)
     elif sSpace in ("public", "private"):
-        sCacheDirPath = damShot.getPath(sSpace, "finalLayoutCache_dir")
+        sCacheDirPath = damShot.getPath(sSpace, "finalLayout_cache_dir")
     else:
         raise ValueError("Invalid space argument: '{}'".format(sSpace))
 

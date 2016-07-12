@@ -954,7 +954,7 @@ def loadRenderRefsFromCaches(damShot, sSpace):
     if sSpace == "local":
         sCacheDirPath = getMayaCacheDir(damShot)
     elif sSpace in ("public", "private"):
-        sCacheDirPath = damShot.getPath(sSpace, "finalLayoutCache_dir")
+        sCacheDirPath = damShot.getPath(sSpace, "finalLayout_cache_dir")
     else:
         raise ValueError("Invalid space argument: '{}'".format(sSpace))
 
@@ -1051,6 +1051,12 @@ def setupShotScene(sceneManager):
                 pc.displayWarning(e.message)
                 pmu.putEnv("MAYA_TESTING_CLEANUP", "")
 
+    elif sStepName == "fx3d":
+
+        if not pc.listReferences():
+            assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity)
+            initShotSceneFrom(damShot, "fx3d_scene", "finalLayout_scene")
+
     #rename any other shot camera
     remainingCamera = None
 
@@ -1140,6 +1146,7 @@ COMMANDS = {
         'animation':setupShotScene,
         'charfx':setupShotScene,
         'final layout':setupShotScene,
+        'fx3D':setupShotScene,
     }
 }
 
