@@ -185,7 +185,7 @@ def cleanAsset (GUI = True):
                 assetconformation.UVSetCount()
                 assetconformation.lookForBumpNodes()
                 assetconformation.dmnToon2aiSurface()
-                #◘assetconformation.deleteUVs(meshL=[],inParent = "asset|grp_geo", gui = True)
+                #assetconformation.deleteUVs(meshL=[],inParent = "asset|grp_geo", gui = True)
 
 
                 miscUtils.cleanLayout()
@@ -231,4 +231,6 @@ def hardClean(GUI =True):
             assetconformation.createSubdivSets()
             assetconformation.setSubdiv()
             shading.checkShaderName( GUI = True )
-            assetconformation.setShadingMask(selectFailingNodes = False, gui = False)
+            assetconformation.setShadingMask(selectFailingNodes=False, gui=False)
+
+
