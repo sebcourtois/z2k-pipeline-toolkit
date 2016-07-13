@@ -137,9 +137,8 @@ class shot_lib(object):
                    },
                 "{step:07_fx3d} -> fx3d_dir":
                    {
-                    "geometry -> fx3d_geometry_dir":{},
+                    "cache -> fx3d_cache_dir":{},
                     "texture -> fx3d_texture_dir":{},
-                    "volumetric -> fx3d_volumetric_dir":{},
                     "{name}_fx3d.ma -> fx3d_scene":None,
                     "{name}_fx3d.mov -> fx3d_capture":None,
                    },
@@ -296,11 +295,6 @@ class shot_lib(object):
                   "sg_uploaded_movie":"fx3d_capture",
                   "sg_path_to_movie":"fx3d_capture",
                   "sg_tasks":("Fx3D|fx3D",),
-                         "dependency_types": {
-                                "geoCache_dep":{"public_loc":"fx3d_geometry_dir",
-                                                "source_loc":"private|fx3d_geometry_dir",
-                                                "checksum":True},
-                                                }
                   },
     "fx3d_movie":{"create_sg_version":True,
                  "sg_uploaded_movie":True,
@@ -309,12 +303,10 @@ class shot_lib(object):
                  "sg_status":"rev",
                  },
     "fx3d_dir":{"default_sync_rules":["all_sites"], },
-    "fx3d_geometry_dir":{"free_to_publish":False,
-                         "default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
+    "fx3d_cache_dir":{"free_to_publish":True,
+                      "default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
     "fx3d_texture_dir":{"free_to_publish":True,
                         "default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
-    "fx3d_volumetric_dir":{"free_to_publish":False,
-                           "default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
 
     #===========================================================================
     # RENDERING RESOURCES
