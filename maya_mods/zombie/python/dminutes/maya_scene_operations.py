@@ -919,8 +919,8 @@ def initShotSceneFrom(damShot, sCurScnName, sSrcScnName, **kwargs):
 
     curPubScnVers = curPubScn.assertLatestFile(refresh=True, returnVersion=True)
     if curPubScnVers:
-        raise AssertionError("{} - '{}' already started (v{}).".format(sCurScnName)
-                             .format(damShot, curPubScn.currentVersion))
+        raise AssertionError("{} - '{}' already started (v{})."
+                             .format(damShot, sCurScnName, curPubScn.currentVersion))
 
     sLockOwner = srcPubScn.getLockOwner(refresh=True)
     if sLockOwner:
