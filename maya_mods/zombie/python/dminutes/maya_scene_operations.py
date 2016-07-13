@@ -1054,7 +1054,19 @@ def setupShotScene(sceneManager):
     elif sStepName == "fx3d":
 
         if not pc.listReferences():
-            assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity)
+            try:
+                assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity)
+            except AssertionError as e:
+                res = pc.confirmDialog(title='WARNING !',
+                                       message=e.message,
+                                       button=['Continue', 'Abort'],
+                                       defaultButton='Abort',
+                                       cancelButton='Abort',
+                                       dismissString='Abort',
+                                       icon="warning")
+                if res == "Abort":
+                    raise RuntimeWarning("Canceled !")
+
             initShotSceneFrom(damShot, "fx3d_scene", "finalLayout_scene")
 
     #rename any other shot camera
