@@ -146,6 +146,7 @@ class shot_lib(object):
                    {
                     "{name}_render.ma -> rendering_scene":None,
                     "{name}_render.mov -> rendering_movie":None,
+                    "{name}_precomp.nk -> rendering_precomp":None,
                    },
                 },
             },
@@ -290,6 +291,8 @@ class shot_lib(object):
     # FX3D RESOURCES
     #===========================================================================
 
+    "fx3d_dir":{"default_sync_rules":["all_sites"], },
+
     "fx3d_scene":{"outcomes":("fx3d_capture",),
                   "create_sg_version":True,
                   "sg_uploaded_movie":"fx3d_capture",
@@ -302,7 +305,6 @@ class shot_lib(object):
                  "sg_tasks":("Fx3D|fx3d",),
                  "sg_status":"rev",
                  },
-    "fx3d_dir":{"default_sync_rules":["all_sites"], },
     "fx3d_cache_dir":{"free_to_publish":True,
                       "default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
     "fx3d_texture_dir":{"free_to_publish":True,
@@ -311,6 +313,8 @@ class shot_lib(object):
     #===========================================================================
     # RENDERING RESOURCES
     #===========================================================================
+
+    "rendering_dir":{"default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
 
     "rendering_scene":{"create_sg_version":True,
                        "sg_tasks":("Rendering|rendering",),
@@ -321,7 +325,6 @@ class shot_lib(object):
                        "sg_tasks":("Rendering|rendering",),
                        "sg_status":"rev",
                        },
-    "rendering_dir":{"default_sync_rules":["all_sites"], },
     }
 
 class output_lib(object):
@@ -333,6 +336,12 @@ class output_lib(object):
     public_path_envars = ('ZOMB_OUTPUT_PATH',)
     private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
+    resource_tree = {
+        "{sequence} -> sequence_dir":
+            {
+            "{name} -> entity_dir":{}
+             }
+        }
 
 class misc_lib(object):
 
