@@ -274,7 +274,7 @@ def loadDbNodes(proj, drcFileList):
     dbNodeList = proj.dbNodesForResources(drcFileList)
     for scnFile, dbNode in izip(drcFileList, dbNodeList):
         if not dbNode:
-            scnFile.getDbNode(fromCache=False)
+            scnFile.loadDbNode(fromCache=False)
 
 if __name__ == "__main__":
 

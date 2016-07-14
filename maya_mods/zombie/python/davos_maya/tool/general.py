@@ -188,7 +188,7 @@ def listRelatedAssets(damShot, assetNames=None):
     dbNodeList = proj.dbNodesForResources(allMyaFileList)
     for mrcFile, dbNode in izip(allMyaFileList, dbNodeList):
         if not dbNode:
-            mrcFile.getDbNode(fromCache=False)
+            mrcFile.loadDbNode(fromCache=False)
 
     for astData in assetDataList:
 

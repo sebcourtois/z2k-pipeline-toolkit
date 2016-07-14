@@ -795,11 +795,11 @@ def _setPublishableState(resultDct):
     bPublishable = True
     sPubFilePath = pubFile.absPath()
 
-    dbNode = pubFile.getDbNode(fromDb=False)
+    dbNode = pubFile.loadDbNode(fromDb=False)
     if dbNode:
         pubFile.refresh(simple=True)
     else:
-        dbNode = pubFile.getDbNode(fromCache=False)
+        dbNode = pubFile.loadDbNode(fromCache=False)
 
     sSrcFilePath = resultDct["abs_path"]
     if pubFile.exists():

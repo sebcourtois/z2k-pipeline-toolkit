@@ -120,11 +120,11 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
             print sMsg
             continue
 
-        cachedDbNode = mrcFile.getDbNode(fromDb=False)
+        cachedDbNode = mrcFile.loadDbNode(fromDb=False)
         if cachedDbNode:
             mrcFile.refresh(simple=True)
         else:
-            mrcFile.getDbNode(fromCache=False)
+            mrcFile.loadDbNode(fromCache=False)
 
         if not mrcFile.currentVersion:
             sMsg = "No version created yet: '{}'".format(sRcPath)
@@ -453,11 +453,11 @@ def _loadAssetsAsResource(oFileRef, sRcName, astLib, logData,
         if bSameRc and curRcFile.isVersionFile():
             sSeverity = "warning"
 
-        cachedDbNode = rcFile.getDbNode(fromDb=False)
+        cachedDbNode = rcFile.loadDbNode(fromDb=False)
         if cachedDbNode:
             pass#rcFile.refresh(simple=True)
         else:
-            rcFile.getDbNode(fromCache=False)
+            rcFile.loadDbNode(fromCache=False)
 
         if not rcFile.currentVersion:
             logItems.append((sRefNode, "{}: " + "No version yet".format(sSeverity.upper())))
@@ -517,7 +517,7 @@ def loadAssetsAsResource(sRcName, fail=False, checkSyncState=False,
         dbNodeList = proj.dbNodesForResources(rcFileList)
         for rcFile, dbNode in izip(rcFileList, dbNodeList):
             if not dbNode:
-                rcFile.getDbNode(fromCache=False)
+                rcFile.loadDbNode(fromCache=False)
 
     _, oAstFileRefList = _loadAssetsAsResource(sRcName, astLib, logData,
                                                confirm=True,
