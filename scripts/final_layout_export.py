@@ -19,7 +19,7 @@ from zomblib.damutils import playbackTimesFromShot
 
 LAUNCH_TIME = None
 
-def launch(shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
+def launch(sSrcRcName, shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
 
     global LAUNCH_TIME
 
@@ -42,25 +42,33 @@ def launch(shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
 
     if bWriteCmd:
         sCmd = os.environ.get("Z2K_LAUNCHER_CMD")
-        if sCmd:
-            cmdArgs = ["", "--time", str(int(LAUNCH_TIME))]
+        cmdArgs = sCmd.split()
+        print cmdArgs
+        if cmdArgs:
 
-            if dryRun:
+            if dryRun and ("--dry" not in cmdArgs):
                 cmdArgs.append("--dry")
 
-            cmdArgs.extend(shotNames)
-            sCmd += subprocess.list2cmdline(cmdArgs)
+            if "--time" not in cmdArgs:
+                cmdArgs += ["--time", str(int(LAUNCH_TIME))]
 
-            sBatFilePath = makeOutputPath("re_export.bat", timestamp=LAUNCH_TIME)
+            if shotNames and ("--shots" not in cmdArgs):
+                cmdArgs += ["--shots"]
+                print shotNames
+                cmdArgs.extend(shotNames)
+
+            sCmd = subprocess.list2cmdline(cmdArgs)
+            print sCmd
+
+            sBatFilePath = makeOutputPath(sSrcRcName, "re_export.bat", timestamp=LAUNCH_TIME)
             with open(sBatFilePath, "w") as f:
-                f.writelines(("rem {}\n".format(s) for s in shotNames))
+                f.writelines(("REM {}\n".format(s) for s in shotNames))
                 f.write(sCmd)
 
     damShotList = list(proj.getShot(s) for s in shotNames)
+    export(damShotList, sSrcRcName, dryRun=dryRun, prompt=bPrompt, sgShots=sgShots)
 
-    export(damShotList, dryRun=dryRun, prompt=bPrompt, sgShots=sgShots)
-
-def export(damShotList, dryRun=False, prompt=True, sgShots=None):
+def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
 
     proj = damShotList[0].project
     mayaBatch = MayaBatch()
@@ -72,7 +80,7 @@ def export(damShotList, dryRun=False, prompt=True, sgShots=None):
     for i, damShot in enumerate(damShotList):
         animScn = None
         try:
-            animScn = damShot.getRcFile("public", "anim_scene",
+            animScn = damShot.getRcFile("public", sSrcRcName,
                                           fail=True, dbNode=False)
         except Exception as e:
             sErrorList.append("{} - {}".format(damShot, e.message))
@@ -192,11 +200,11 @@ def export(damShotList, dryRun=False, prompt=True, sgShots=None):
                         for f, fr in izip(animScnList, frameRangeList))
     jobList.extend(generMayaJobs(sExportFunc, jobArgsList))
 
-    sJobFilePath = makeOutputPath("maya_batch.json", timestamp=LAUNCH_TIME)
+    sJobFilePath = makeOutputPath(sSrcRcName, "maya_batch.json", timestamp=LAUNCH_TIME)
     jsonWrite(sJobFilePath, jobList)
 
-    sLogFilePath = makeOutputPath("maya_batch.log", timestamp=LAUNCH_TIME)
-    #sBatFilePath = makeOutputPath("maya_batch.bat", timestamp=LAUNCH_TIME)
+    sLogFilePath = makeOutputPath(sSrcRcName, "maya_batch.log", timestamp=LAUNCH_TIME)
+    #sBatFilePath = makeOutputPath(sSrcRcName, "maya_batch.bat", timestamp=LAUNCH_TIME)
     return mayaBatch.launch(sJobFilePath, logTo=sLogFilePath)
 
 def _assertedLatestVersion(scnFile, refresh=False):
@@ -240,11 +248,11 @@ geocaching.{func}
         job = {"title":sTitle, "py_lines":sCode.strip().split('\n')}
         yield job
 
-def makeOutputPath(sFileName, timestamp=None, save=True):
+def makeOutputPath(sSrcRcName, sFileName, timestamp=None, save=True):
 
     #for sFileName in ("maya_jobs.json", "maya_batch.bat", "maya_batch.log"):
     sOutDirPath = pathJoin(os.environ["USERPROFILE"], "zombillenium",
-                           "final_layout_exports")
+                           "abc_exports", sSrcRcName)
 
     sFilePath = pathJoin(sOutDirPath, sFileName)
     if timestamp:
@@ -266,17 +274,19 @@ def loadDbNodes(proj, drcFileList):
     dbNodeList = proj.dbNodesForResources(drcFileList)
     for scnFile, dbNode in izip(drcFileList, dbNodeList):
         if not dbNode:
-            scnFile.getDbNode(fromCache=False)
+            scnFile.loadDbNode(fromCache=False)
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("resource")
     parser.add_argument("--dry", action="store_true")
     parser.add_argument("--time", type=int, default=None)
+    parser.add_argument("--shots", nargs="*", default=None)
 
     try:
-        ns, shotNames = parser.parse_known_args()
-        launch(shotNames=shotNames, dryRun=ns.dry, timestamp=ns.time)
+        ns = parser.parse_args()
+        launch(ns.resource, shotNames=ns.shots, dryRun=ns.dry, timestamp=ns.time)
     except Exception as e:
         os.environ["PYTHONINSPECT"] = "1"
         if isinstance(e, Warning):

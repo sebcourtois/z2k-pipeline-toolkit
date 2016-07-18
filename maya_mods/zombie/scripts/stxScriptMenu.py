@@ -292,7 +292,7 @@ def install(*args):
     for uiScriptMenu in CREATED_MENUS:
         #Create the 'Rebuild This Menu' menu item
         pm.menuItem(divider=True, parent=uiScriptMenu)
-        pm.menuItem(parent=uiScriptMenu, label="Rebuild", command=install)
+        pm.menuItem(parent=uiScriptMenu, label="Rebuild Menu", command=install)
 
 def buildMenu(sMenuDirPath, oMenuConf):
 

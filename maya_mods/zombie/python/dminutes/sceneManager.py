@@ -54,6 +54,7 @@ RC_FOR_STEP = {'Previz 3D':'previz_scene',
                'Animation':'anim_scene',
                'CharFX':'charFx_scene',
                'Final Layout':'finalLayout_scene',
+               'Fx3D':'fx3d_scene',
                }
 RC_FOR_TASK = {}
 
@@ -70,6 +71,7 @@ MOV_FOR_STEP = {'Previz 3D':('previz_capture',),
                 'Layout':('layout_capture',),
                 'Animation':('anim_capture',),
                 'CharFX':('charFx_capture',),
+                'Fx3D':('fx3d_capture',),
                }
 MOV_FOR_TASK = {}
 

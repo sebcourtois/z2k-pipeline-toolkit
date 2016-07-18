@@ -126,11 +126,11 @@ def scanTexturesToEdit(scnInfos):
             scanLogDct = {}
             pubFile = pubLib.getEntry(sPubFilePath, dbNode=False)
 
-            cachedDbNode = pubFile.getDbNode(fromDb=False)
+            cachedDbNode = pubFile.loadDbNode(fromDb=False)
             if cachedDbNode:
                 pubFile.refresh(simple=True)
             else:
-                pubFile.getDbNode(fromCache=False)
+                pubFile.loadDbNode(fromCache=False)
 
             if i == 0:
                 resultDct = srcRes.copy()

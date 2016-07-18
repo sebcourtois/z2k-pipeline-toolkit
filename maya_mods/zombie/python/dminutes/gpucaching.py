@@ -101,23 +101,19 @@ def exportFromAssets(selected=False, namespaces=None, outputDir=""):
 @withSelectionRestored
 def importGpuCache(sAbcPath):
 
-    if not osp.isfile(sAbcPath):
-        pm.displayInfo("No GPU cache file: '{}'.".format(sAbcPath))
-        return
-
     statinfo = os.stat(sAbcPath)
-    sNodeName, _ = osp.splitext(osp.basename(sAbcPath))
+    sBaseName, _ = osp.splitext(osp.basename(sAbcPath))
 
     sGpuGrp = "|shot|grp_gpuCache"
     if not mc.objExists(sGpuGrp):
         mc.createNode("transform", n="grp_gpuCache", parent="|shot", skipSelect=True)
 
-    sGpuShape = mc.createNode("gpuCache", n=sNodeName + "Shape", skipSelect=True)
+    sGpuShape = mc.createNode("gpuCache", n=sBaseName + "Shape", skipSelect=True)
     mc.addAttr(sGpuShape, ln="cacheFileMtime", at="long", dv=0)
     mc.addAttr(sGpuShape, ln="cacheFileSize", at="long", dv=0)
 
     sGpuXfm = mc.listRelatives(sGpuShape, parent=True, path=True)[0]
-    mc.rename(sGpuXfm, sNodeName)
+    sGpuXfm = mc.rename(sGpuXfm, sBaseName)
     mc.parent(sGpuXfm, sGpuGrp)
 
     mc.setAttr(sGpuShape + ".cacheFileName", sAbcPath, type="string")
@@ -150,8 +146,11 @@ def toggleSelected():
 
         if not mc.objExists(sGpuXfm):
             sAbcPath = pathJoin(sAbcDirPath, sGpuXfm + ".abc")
-            if not importGpuCache(sAbcPath):
+            if not osp.isfile(sAbcPath):
+                pm.displayInfo("No such file: '{}'.".format(sAbcPath))
                 continue
+
+            sGpuXfm, _ = importGpuCache(sAbcPath)
 
         mc.setAttr(sAstGrp + ".visibility", False)
         mc.setAttr(sGpuXfm + ".visibility", True)
@@ -206,8 +205,11 @@ def setAllCachesVisible(bShow):
         bGpuXfmFound = mc.objExists(sGpuXfm)
         if bShow and not bGpuXfmFound:
             sAbcPath = pathJoin(sAbcDirPath, sGpuXfm + ".abc")
-            if not importGpuCache(sAbcPath):
+            if not osp.isfile(sAbcPath):
+                pm.displayInfo("No such file: '{}'.".format(sAbcPath))
                 continue
+
+            sGpuXfm, _ = importGpuCache(sAbcPath)
 
         mc.setAttr(sAstGrp + ".visibility", not bShow)
         if bGpuXfmFound:

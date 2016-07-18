@@ -17,7 +17,14 @@ from pytaya.util.toolsetup import ToolSetup
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
 
-from dminutes import sceneManagerUI as smui
+try:
+    from dminutes import sceneManagerUI
+except ImportError as e:
+    pm.warning(e.message)
+    smui = None
+else:
+    smui = sceneManagerUI
+
 from davos_maya.tool.general import infosFromScene, setMayaProject
 from davos.core.damtypes import DamShot
 
@@ -79,6 +86,7 @@ class DavosSetup(ToolSetup):
                        "AbcImport.mll",
                        "atomImportExport.mll",
                        "matrixNodes.mll" if (pmv.current() > pmv.v2013) else "decomposeMatrix.mll",
+                       "mtoa.mll",
                        )
 
         for sPlugin in sPluginList:
@@ -116,10 +124,11 @@ class DavosSetup(ToolSetup):
     def beforeReloading(self, *args):
         file_browser.kill()
 
-        try:
-            smui.kill()
-        except Exception as e:
-            pm.displayInfo("Could not kill 'sceneManagerUI': {}".format(toStr(e)))
+        if smui:
+            try:
+                smui.kill()
+            except Exception as e:
+                pm.displayInfo("Could not kill 'sceneManagerUI': {}".format(toStr(e)))
 
         ToolSetup.beforeReloading(self, *args)
 
@@ -130,8 +139,9 @@ class DavosSetup(ToolSetup):
     def onSceneOpened(self, *args):
         ToolSetup.onSceneOpened(self, *args)
 
-        if smui.isLaunched() and smui.isVisible():
-            smui.doDetect()
+        if smui:
+            if smui.isLaunched() and smui.isVisible():
+                smui.doDetect()
 
 #    def onSceneSaved(self):
 #        ToolSetup.onSceneSaved(self)

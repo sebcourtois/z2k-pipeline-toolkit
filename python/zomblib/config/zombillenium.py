@@ -8,6 +8,7 @@ from os.path import join
 s = os.getenv("DEV_MODE_ENV", "0")
 DEV_MODE = eval(s) if s else False
 
+all_expect_pipangai_sites = ["online", "dmn_paris", "dream_wall", "dmn_angouleme"]
 
 class project(object):
 
@@ -123,16 +124,29 @@ class shot_lib(object):
                    },
                 "{step:05_charFx} -> charFx_dir":
                    {
-                    "geoCache -> charFxCache_dir":{},
+                    "geoCache -> charFx_cache_dir":{},
                     "{name}_charFx.ma -> charFx_scene":None,
                     "{name}_charFx.mov -> charFx_capture":None,
                    },
                 "{step:06_finalLayout} -> finalLayout_dir":
                    {
-                    "geoCache -> finalLayoutCache_dir":{},
+                    "geoCache -> finalLayout_cache_dir":{},
                     "{name}_finalLayout.ma -> finalLayout_scene":None,
                     "{name}_finalLayout.mov -> finalLayout_movie":None,
                     "{name}_arlequin.mov -> arlequin_movie":None,
+                   },
+                "{step:07_fx3d} -> fx3d_dir":
+                   {
+                    "cache -> fx3d_cache_dir":{},
+                    "texture -> fx3d_texture_dir":{},
+                    "{name}_fx3d.ma -> fx3d_scene":None,
+                    "{name}_fx3d.mov -> fx3d_capture":None,
+                   },
+                "{step:08_render} -> rendering_dir":
+                   {
+                    "{name}_render.ma -> rendering_scene":None,
+                    "{name}_render.mov -> rendering_movie":None,
+                    "{name}_precomp.nk -> rendering_precomp":None,
                    },
                 },
             },
@@ -144,9 +158,24 @@ class shot_lib(object):
                    "04_anim":"Animation",
                    "05_charFx":"CharFX",
                    "06_finalLayout":"Final Layout",
+                   "07_fx3d":"Fx3D",
+                   "08_render":"Rendering",
+                   "10_compo":"Compositing",
                    }
 
     resource_settings = {
+
+    "animatic_capture":{"create_sg_version":True,
+                        "sg_tasks":("animatic",),
+                        "sg_status":"rev",
+                        },
+
+    "data_dir":{"default_sync_rules":["all_sites"], },
+
+    #===========================================================================
+    # PREVIZ RESOURCES
+    #===========================================================================
+
     "previz_scene":{"outcomes":("previz_capture",),
                     "create_sg_version":True,
                     "sg_uploaded_movie":"previz_capture",
@@ -154,6 +183,12 @@ class shot_lib(object):
                     "sg_tasks":("previz 3D",),
                     "sg_status":"rev",
                     },
+    "previz_dir":{"default_sync_rules":["all_sites"], },
+
+    #===========================================================================
+    # STEREO RESOURCES
+    #===========================================================================
+
     "stereo_scene":{"outcomes":("right_capture", "left_capture"),
                     "create_sg_version":True,
                     "sg_uploaded_movie":"right_capture",
@@ -162,6 +197,10 @@ class shot_lib(object):
                     "sg_status":"rev",
                     },
 
+    #===========================================================================
+    # LAYOUT RESOURCES
+    #===========================================================================
+
     "layout_scene":{"outcomes":("layout_capture",),
                     "create_sg_version":True,
                     "sg_uploaded_movie":"layout_capture",
@@ -169,31 +208,47 @@ class shot_lib(object):
                     "sg_tasks":("layout",),
                     "sg_status":"rev",
                     },
+    "layout_dir":{"default_sync_rules":["all_sites"], },
+
+    #===========================================================================
+    # ANIMATION RESOURCES
+    #===========================================================================
 
     "anim_scene":{"outcomes":("anim_capture",),
                   "create_sg_version":True,
                   "sg_uploaded_movie":"anim_capture",
                   "sg_path_to_movie":"anim_capture",
-                  "sg_tasks":("animation",),
+                  "sg_tasks":("Animation|animation",),
                   },
     "animSplitA_scene":{"outcomes":("animSplitA_capture",),
                         "create_sg_version":True,
                         "sg_uploaded_movie":"animSplitA_capture",
                         "sg_path_to_movie":"animSplitA_capture",
-                        "sg_tasks":("animation",),
+                        "sg_tasks":("Animation|animation",),
                         },
     "animSplitB_scene":{"outcomes":("animSplitB_capture",),
                         "create_sg_version":True,
                         "sg_uploaded_movie":"animSplitB_capture",
                         "sg_path_to_movie":"animSplitB_capture",
-                        "sg_tasks":("animation",),
+                        "sg_tasks":("Animation|animation",),
                         },
     "animSplitC_scene":{"outcomes":("animSplitC_capture",),
                         "create_sg_version":True,
                         "sg_uploaded_movie":"animSplitC_capture",
                         "sg_path_to_movie":"animSplitC_capture",
-                        "sg_tasks":("animation",),
+                        "sg_tasks":("Animation|animation",),
                         },
+    "animRef_movie":{"create_sg_version":True,
+                     "sg_uploaded_movie":True,
+                     "sg_path_to_movie":True,
+                     "sg_tasks":("Animation|reference",),
+                     "sg_status":"rev",
+                    },
+    "anim_dir":{"default_sync_rules":["dmn_paris", "online", "dream_wall", "pipangai"], },
+
+    #===========================================================================
+    # CHARFX RESOURCES
+    #===========================================================================
 
     "charFx_scene":{"outcomes":("charFx_capture",),
                     "create_sg_version":True,
@@ -201,50 +256,75 @@ class shot_lib(object):
                     "sg_path_to_movie":"charFx_capture",
                     "sg_tasks":("charfx",),
                     },
+    "charFx_dir":{"default_sync_rules":["all_sites"], },
+    "charFx_cache_dir":{"free_to_publish":True, },
+
+    #===========================================================================
+    # FINAL LAYOUT RESOURCES
+    #===========================================================================
 
     "finalLayout_scene":{"create_sg_version":True,
                          "sg_tasks":("final layout",),
                          "dependency_types": {
-                            "geoCache_dep":{"public_loc":"finalLayoutCache_dir",
-                                             "source_loc":"|localGeoCache_dir",
-                                             "checksum":True},
-                                            }
+                                "geoCache_dep":{"public_loc":"finalLayout_cache_dir",
+                                                "source_loc":"|localGeoCache_dir",
+                                                "checksum":True},
+                                                }
                          },
-
     "finalLayout_movie":{"create_sg_version":True,
                          "sg_uploaded_movie":True,
                          "sg_path_to_movie":True,
                          "sg_tasks":("Final Layout|FL_Art",),
                          "sg_status":"rev",
                          },
-
     "arlequin_movie":{"create_sg_version":True,
                       "sg_uploaded_movie":True,
                       "sg_path_to_movie":True,
                       "sg_tasks":("Final Layout|Anim_MeshCache",),
                       "sg_status":"rev",
                       },
-
-    "animRef_movie":{"create_sg_version":True,
-                     "sg_uploaded_movie":True,
-                     "sg_path_to_movie":True,
-                     "sg_tasks":("Animation|reference",),
-                     "sg_status":"rev",
-                    },
-
-    "animatic_capture":{"create_sg_version":True,
-                        "sg_tasks":("animatic",),
-                        "sg_status":"rev",
-                        },
-
-    "data_dir":{"default_sync_rules":["all_sites"], },
-    "previz_dir":{"default_sync_rules":["all_sites"], },
-    "layout_dir":{"default_sync_rules":["all_sites"], },
-    "anim_dir":{"default_sync_rules":["all_sites"], },
     "finalLayout_dir":{"default_sync_rules":["all_sites"], },
-    "finalLayoutCache_dir":{"default_sync_rules":["online", "dmn_paris",
+    "finalLayout_cache_dir":{"default_sync_rules":["online", "dmn_paris",
                                                   "dream_wall", "dmn_angouleme"], },
-    "charFx_dir":{"default_sync_rules":["all_sites"], },
+
+    #===========================================================================
+    # FX3D RESOURCES
+    #===========================================================================
+
+    "fx3d_dir":{"default_sync_rules":["all_sites"], },
+
+    "fx3d_scene":{"outcomes":("fx3d_capture",),
+                  "create_sg_version":True,
+                  "sg_uploaded_movie":"fx3d_capture",
+                  "sg_path_to_movie":"fx3d_capture",
+                  "sg_tasks":("Fx3D|fx3D",),
+                  },
+    "fx3d_movie":{"create_sg_version":True,
+                 "sg_uploaded_movie":True,
+                 "sg_path_to_movie":True,
+                 "sg_tasks":("Fx3D|fx3d",),
+                 "sg_status":"rev",
+                 },
+    "fx3d_cache_dir":{"free_to_publish":True,
+                      "default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
+    "fx3d_texture_dir":{"free_to_publish":True,
+                        "default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
+
+    #===========================================================================
+    # RENDERING RESOURCES
+    #===========================================================================
+
+    "rendering_dir":{"default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
+
+    "rendering_scene":{"create_sg_version":True,
+                       "sg_tasks":("Rendering|rendering",),
+                       },
+    "rendering_movie":{"create_sg_version":True,
+                       "sg_uploaded_movie":True,
+                       "sg_path_to_movie":True,
+                       "sg_tasks":("Rendering|rendering",),
+                       "sg_status":"rev",
+                       },
     }
 
 class output_lib(object):
@@ -256,6 +336,12 @@ class output_lib(object):
     public_path_envars = ('ZOMB_OUTPUT_PATH',)
     private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
+    resource_tree = {
+        "{sequence} -> sequence_dir":
+            {
+            "{name} -> entity_dir":{}
+             }
+        }
 
 class misc_lib(object):
 

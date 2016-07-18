@@ -1556,7 +1556,7 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig", "grp_geo"],
 
         return toReturnB, debugD
 
-def Apply_Delete_setSubdiv (applySetSub=True, toDelete=["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"], *args, **kwargs):
+def Apply_Delete_setSubdiv (applySetSub=True, toDelete=["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_4", "set_subdiv_5", "set_subdiv_6", "set_subdiv_7", "set_subdiv_8", "set_subdiv_init"], *args, **kwargs):
     """ Description: apply setSubdiv() if present and delete it
         Return : [BOOL,LIST,INTEGER,FLOAT,DICT,STRING]
         Dependencies : cmds - assetconformation.setSubdiv()

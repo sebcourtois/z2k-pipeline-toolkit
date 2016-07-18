@@ -45,8 +45,8 @@ def checkShaderName(shadEngineList = [],  GUI = True, checkOnly = False , inPare
     wrongShadEngine = []
     checkedItem = []
 
-    permitted_preview_shader_type = ["lambert","surfaceShader"]
-    permitted_render_shader_type = ["aiStandard", "dmnToon"]
+    permitted_preview_shader_type = ["lambert","surfaceShader","layeredShader" ]
+    permitted_render_shader_type = [ "dmnToon"]
 
     if shadEngineList:
         shadEngineListTemp = shadEngineList
@@ -226,7 +226,6 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
     """
     toReturn =True
     debugS =""
-
     if mc.ls("|asset"):        
         mainFilePath = mc.file(q=True, list = True)[0]
         mainFilePathElem = mainFilePath.split("/")
@@ -251,7 +250,6 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
         else:
             print debugS
             return toReturn, debugS
-
 
     zombie_asset_dir =  os.environ["ZOMB_ASSET_PATH"]
     shading_cam_filename =  os.path.join("$ZOMB_ASSET_PATH", "cam",cameraName,cameraName+fileType)
@@ -290,13 +288,15 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
 
 
     else:
+
         if "cam_shading_" in  str(mc.file(query=True, list=True, reference = True)):
             mc.currentTime(1)
             removedCameraI = 0
-            for eachPanel in mc.getPanel(type="modelPanel"):
-                if "cam_shading_" in  str(mc.modelPanel(eachPanel, q=True, camera=True)):
-                    mc.modelPanel(eachPanel, edit=True, camera='persp')
-                    mc.refresh()
+            if GUI == True:
+                for eachPanel in mc.getPanel(type="modelPanel"):
+                    if "cam_shading_" in  str(mc.modelPanel(eachPanel, q=True, camera=True)):
+                        mc.modelPanel(eachPanel, edit=True, camera='persp')
+                        mc.refresh()
             for each in  mc.file(query=True, list=True, reference = True):
                 if "cam_shading_" in each:
                     mc.file(each, removeReference = True)
@@ -311,7 +311,7 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
             mc.setAttr ("|asset.rotateX", 0)
             mc.setAttr ("|asset.rotateY", 0)
             mc.setAttr ("|asset.rotateZ", 0)
-            debugS = "#### {:>7}: {} camera removed".format("Info", removedCameraI ) 
+            debugS = "#### {:>7}: {} camera removed".format("Info", removedCameraI )
 
         else:
             print "#### info 'referenceShadingCamera': no 'cam_shading_*' to remove"
@@ -320,6 +320,7 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
             mc.delete(mc.listConnections('defaultArnoldRenderOptions.background',connections = False))
         except:
             pass
+
     return toReturn, debugS
 
 
@@ -1199,13 +1200,14 @@ def createShadingGroup():
     processedInstL=[]
     for each in selection:
         meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = each)
-        for eachInst in instanceList:
-            instParentL = mc.listRelatives(mc.listRelatives(eachInst, allDescendents = True, fullPath = True, type = "mesh"), allParents = True, fullPath = True, type = "transform")
-            if instParentL[0] not in processedInstL:
-                processedInstL.extend(instParentL)
-                transformMeshList.append(instParentL[0])
-        for eachMesh in meshList:
-            transformMeshList.append(eachMesh)
+        transformMeshList = list(meshList+instanceList)
+        # for eachInst in instanceList:
+        #     instParentL = mc.listRelatives(mc.listRelatives(eachInst, allDescendents = True, fullPath = True, type = "mesh"), allParents = True, fullPath = True, type = "transform")
+        #     if instParentL[0] not in processedInstL:
+        #         processedInstL.extend(instParentL)
+        #         transformMeshList.append(instParentL[0])
+        # for eachMesh in meshList:
+        #     transformMeshList.append(eachMesh)
 
     if not transformMeshList:
         print "#### {:>7}: nothing selected, please select at leas a geometrie and run again the script".format("Info")
@@ -1222,7 +1224,7 @@ def createShadingGroup():
 
     for each in transformMeshList:
         print "each: ", each
-        myName = each.split("|")[-1].lstrip("geo_")
+        myName = each.split("|")[-1].replace("geo_","")
         mynameSplit = myName.split("_")
         if len(mynameSplit)==2:
             myName = mynameSplit[0]+mynameSplit[1].capitalize()

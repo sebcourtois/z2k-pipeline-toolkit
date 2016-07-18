@@ -8,6 +8,9 @@ import re
 import shutil
 import maya.mel
 
+from dminutes import rendering
+reload (rendering)
+
 
 def layerOverrideFLCustomShader(dmnToonList=[], dmnInput = "dmnMask08", layerName = "lay_finalLayout_00",gui= True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="layerOverrideFLCustomShader")
@@ -166,3 +169,64 @@ def layerOverrideToonWeightOff(dmnToonList=[], layerName = "lay_finalLayout_00",
         log.printL("i", "Toon weight overrided to 0 for layer '{}' on '{}'' dmntoon noded(s): '{}'".format(layerName, len(overidedDmnToonL), overidedDmnToonL))
 
 
+def createNukeBatch(gui=True):
+    """
+    this  script creates a renderbatch.bat file in the private maya working dir, all the variable are set properly
+    a 'renderBatch_help.txt' is also created to help on addind render options to the render command
+
+    """
+    log = miscUtils.LogBuilder(gui=gui, funcName ="createNukeBatch")
+
+    zombToolsPath = os.environ["ZOMB_TOOL_PATH"]
+    workingFile = mc.file(q=True, list = True)[0]
+    workingDir = os.path.dirname(workingFile)
+    renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","nukeBatch_help.txt"))
+    renderBatchHelp_trg = miscUtils.normPath(os.path.join(workingDir,"nukeBatch_help.txt"))
+    renderBatch_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","nukeBatch.bat"))
+    renderBatch_trg = miscUtils.normPath(os.path.join(workingDir,"nukeBatch.bat"))
+
+    try:
+        versionNumber = os.path.basename(workingFile).split("-")[1]
+        versionNumber = versionNumber.split(".")[0]
+    except:
+        versionNumber = "v000"
+    renderDir = os.path.dirname(workingFile)+"/render-"+versionNumber
+
+
+    if os.path.isfile(renderBatch_trg):
+        if os.path.isfile(renderBatch_trg+".bak"): os.remove(renderBatch_trg+".bak")
+        print "#### Info: old nukeBatch.bat backuped: {}.bak".format(os.path.normpath(renderBatch_trg))
+        os.rename(renderBatch_trg, renderBatch_trg+".bak")
+    if not os.path.isfile(renderBatchHelp_trg):
+        shutil.copyfile(renderBatchHelp_src, renderBatchHelp_trg)
+        print "#### Info: nukeBatch_help.txt created: {}".format(os.path.normpath(renderBatchHelp_trg))
+
+    shutil.copyfile(renderBatch_src, renderBatch_trg)
+    if os.environ["davos_site"] == "dmn_paris":
+        licenceLocation=r"WS-041@4101"
+        nukePath= r"\\Zombiwalk\z2k\06_PARTAGE\royalRenderShare\nuke\Nuke10.0.exe"
+        nukePathLoc= r"rem C:\Program Files\Nuke10.0v1\Nuke10.0.exe"
+    elif os.environ["davos_site"] == "dmn_paris":
+        licenceLocation=r"???????"
+        nukePath= r"rem merci de copier nuke sur le serveur et de donner le chemin a Alex"
+        nukePathLoc= r"C:\Program Files\Nuke10.0v1\Nuke10.0.exe"
+    else:
+        licenceLocation=r"???????"
+        nukePath= r"rem merci de copier nuke sur le serveur et de donner le chemin a Alex"
+        nukePathLoc= r"C:\Program Files\Nuke10.0v1\Nuke10.0.exe"
+
+
+    nukeScript = miscUtils.normPath(zombToolsPath + r"\z2k-pipeline-toolkit\nuke\template\finalLayoutTemplate.nk")
+    renderBatch_obj = open(renderBatch_trg, "w")
+    renderBatch_obj.write("set foundry_LICENSE="+licenceLocation+"\n")
+    renderBatch_obj.write("set nuke="+nukePath+"\n")
+    renderBatch_obj.write("rem set nuke="+nukePathLoc+"\n")
+    renderBatch_obj.write("set nkscript="+nukeScript+"\n")
+    renderBatch_obj.write("set argv0="+renderDir+"\n")
+
+    finalCommand = r'%nuke% -x %nkscript% %argva% %argv0%'
+    renderBatch_obj.write(finalCommand+"\n")
+    renderBatch_obj.write("\n")
+    renderBatch_obj.write("pause\n")
+    renderBatch_obj.close()
+    print "#### Info: nukeBatch.bat created: {}".format(os.path.normpath(renderBatch_trg))
