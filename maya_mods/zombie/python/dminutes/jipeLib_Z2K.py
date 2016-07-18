@@ -283,7 +283,42 @@ def tkMirror_old(*args, **kwargs):
 # general function
 
 
-
+def clean_CFX_cachePath(*args, **kwargs):
+    """ Description: Clean les path des meshCache de cfx, converti les local path en general variable d'environement path
+        Return : 
+        Dependencies : cmds - 
+    """
+    
+    print "clean_CFX_cachePath()"
+    # Clean CFX cache file path
+    theSplit = "/zomb/shot/"
+    theReplace = "$ZOMB_SHOT_PATH/"
+    allCacheL= cmds.ls(type="cacheFile")
+    failL= []
+    if len(allCacheL):
+        for i in allCacheL:
+            print "caheFile=", i
+            oldValS = cmds.getAttr (i + ".cachePath",)
+            if theReplace[:-1] not in oldValS:
+                newVal = theReplace + oldValS.split(theSplit,1)[-1]
+                print "   ->",newVal
+                try:
+                    cmds.setAttr (i + ".cachePath", str(newVal) ,type="string")
+                except Exception,err:
+                    failL.append(i)
+                    print "    Err=",Exception,err
+            else:
+                print "  -> ALLREADY GOOD"
+    else:
+        cmds.confirmDialog(message="No meshCache nodes found in the scene!",icon="information",button="OK")
+    
+    if len(failL):
+        print "  ->FAILED!"
+        print "      *failL=",failL
+        cmds.confirmDialog(message="CFX meshCacheNodes: Cleaning Errors on\r    {0}".format(failL),icon="information",button="OK")
+    else:  
+        print "  ->DONE ! "
+        cmds.confirmDialog(message="CFX meshCacheNodes: CLEANED!",icon="information",button="OK")
 
 
 def setCamForAnim(camera="", *args, **kwargs):
