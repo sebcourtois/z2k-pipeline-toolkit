@@ -122,6 +122,7 @@ class DavosSetup(ToolSetup):
                 pm.mel.handleScriptEditorAction("showStackTrace")
 
     def beforeReloading(self, *args):
+
         file_browser.kill()
 
         if smui:

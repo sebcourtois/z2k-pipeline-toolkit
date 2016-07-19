@@ -10,6 +10,7 @@ from davos.gui.assetbrowserwindow import AssetBrowserWindow
 from pytaya.util.qtutils import getWindow
 
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
+from davos.core.utils import loadPrefs
 
 MAIN_WIN = None
 
@@ -41,8 +42,10 @@ def launch(argv):
         MAIN_WIN.showNormal()
         MAIN_WIN.raise_()
     else:
-        MAIN_WIN = MayaAssetBrowserWindow()
 
+        loadPrefs()
+
+        MAIN_WIN = MayaAssetBrowserWindow()
         MAIN_WIN.show(dockable=False)
 
         sProject = os.environ.get("DAVOS_INIT_PROJECT")
