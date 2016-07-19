@@ -3,4 +3,4 @@ reload (tkc)
 import tkRig as tk
 reload (tk)
 
-tkc.showSynopTiK_jipeTWEAK()
+tkc.showSynopTiK_jipeTWEAK(customPath="")
