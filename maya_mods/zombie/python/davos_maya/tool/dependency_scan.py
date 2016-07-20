@@ -354,8 +354,8 @@ def scanTextureFiles(scnInfos, depConfDct=None):
     if not depConfDct:
         depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
 
-    pubDepDir = depConfDct["public_loc"]
-    sSrcDepDirPath = depConfDct["source_loc"]
+    pubDepDir = depConfDct["dep_public_loc"]
+    sSrcDepDirPath = depConfDct["dep_source_loc"]
 
     sPubDepDirPath = pubDepDir.absPath()
     if pubDepDir.exists():
@@ -678,8 +678,8 @@ def scanAlembicFiles(scnInfos, depConfDct=None):
     sDepType = "geoCache_dep"
     if not depConfDct:
         depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
-    pubDepDir = depConfDct["public_loc"]
-    sSrcDepDirPath = depConfDct["source_loc"]
+    pubDepDir = depConfDct["dep_public_loc"]
+    sSrcDepDirPath = depConfDct["dep_source_loc"]
 
     sPubDepDirPath = pubDepDir.absPath()
     if pubDepDir.exists():

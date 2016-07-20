@@ -70,7 +70,7 @@ class shot_lib(object):
     template_path = project.template_path
     template_dir = "shot_template"
 
-    localGeoCache_dir = "$ZOMB_MAYA_PROJECT_PATH/cache/alembic/{sequence}/{name}"
+    mayaProj_alembic_dir = "$ZOMB_MAYA_PROJECT_PATH/cache/alembic/{sequence}/{name}"
 
     resource_tree = {
         "{sequence} -> sequence_dir":
@@ -137,7 +137,8 @@ class shot_lib(object):
                    },
                 "{step:07_fx3d} -> fx3d_dir":
                    {
-                    "cache -> fx3d_cache_dir":{},
+                    "geoCache -> fx3d_geoCache_dir":{},
+                    "fxCache -> fx3d_fxCache_dir":{},
                     "texture -> fx3d_texture_dir":{},
                     "{name}_fx3d.ma -> fx3d_scene":None,
                     "{name}_fx3d.mov -> fx3d_capture":None,
@@ -265,11 +266,12 @@ class shot_lib(object):
 
     "finalLayout_scene":{"create_sg_version":True,
                          "sg_tasks":("final layout",),
-                         "dependency_types": {
-                                "geoCache_dep":{"public_loc":"finalLayout_cache_dir",
-                                                "source_loc":"|localGeoCache_dir",
-                                                "checksum":True},
-                                                }
+                         "dependency_types":
+                            {"geoCache_dep":
+                                {"dep_public_loc":"finalLayout_cache_dir",
+                                 "dep_source_loc":"|mayaProj_alembic_dir",
+                                 "checksum":False},
+                            }
                          },
     "finalLayout_movie":{"create_sg_version":True,
                          "sg_uploaded_movie":True,
@@ -298,14 +300,23 @@ class shot_lib(object):
                   "sg_uploaded_movie":"fx3d_capture",
                   "sg_path_to_movie":"fx3d_capture",
                   "sg_tasks":("Fx3D|fx3D",),
+                  "dependency_types":
+                        {"geoCache_dep":
+                            {"dep_public_loc":"fx3d_geoCache_dir",
+                             "dep_source_loc":"|mayaProj_alembic_dir",
+                             "checksum":False},
+                        }
                   },
-    "fx3d_movie":{"create_sg_version":True,
-                 "sg_uploaded_movie":True,
-                 "sg_path_to_movie":True,
-                 "sg_tasks":("Fx3D|fx3d",),
-                 "sg_status":"rev",
-                 },
-    "fx3d_cache_dir":{"free_to_publish":True,
+#    "fx3d_movie":{"create_sg_version":True,
+#                 "sg_uploaded_movie":True,
+#                 "sg_path_to_movie":True,
+#                 "sg_tasks":("Fx3D|fx3d",),
+#                 "sg_status":"rev",
+#                 },
+
+    "fx3d_geoCache_dir":{"free_to_publish":False,
+                      "default_sync_rules":["no_sync"], },
+    "fx3d_fxCache_dir":{"free_to_publish":True,
                       "default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
     "fx3d_texture_dir":{"free_to_publish":True,
                         "default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
@@ -417,9 +428,10 @@ class asset_lib(object):
     }
 
     dependency_types = {
-    "texture_dep":{"public_loc":"texture_dir", "source_loc":"private|texture_dir",
+    "texture_dep":{"dep_public_loc":"texture_dir",
+                   "dep_source_loc":"private|texture_dir",
                    "checksum":True, "env_var":"ZOMB_TEXTURE_PATH"},
-    #"geometry_dep":{"public_loc":"geometry_dir", "checksum":True, "env_var":"ZOMB_GEOMETRY_PATH"},
+    #"geometry_dep":{"dep_public_loc":"geometry_dir", "checksum":True, "env_var":"ZOMB_GEOMETRY_PATH"},
     }
 
 class camera(object):

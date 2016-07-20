@@ -71,6 +71,18 @@ def withErrorDialog(func):
         return res
     return doIt
 
+def promptToContinue(exception):
+
+    res = pc.confirmDialog(title='WARNING !',
+                           message=exception.message,
+                           button=['Continue', 'Abort'],
+                           defaultButton='Abort',
+                           cancelButton='Abort',
+                           dismissString='Abort',
+                           icon="warning")
+    if res == "Abort":
+        raise RuntimeWarning("Aborted !")
+
 STEREO_INFOS = {}
 def recStereoInfos(frame, **kwargs):
     global STEREO_INFOS
@@ -919,8 +931,9 @@ def initShotSceneFrom(damShot, sCurScnName, sSrcScnName, **kwargs):
 
     curPubScnVers = curPubScn.assertLatestFile(refresh=True, returnVersion=True)
     if curPubScnVers:
-        raise AssertionError("{} - '{}' already started (v{})."
+        err = AssertionError("{} - '{}' already started (v{})."
                              .format(damShot, sCurScnName, curPubScn.currentVersion))
+        promptToContinue(err)
 
     sLockOwner = srcPubScn.getLockOwner(refresh=True)
     if sLockOwner:
@@ -941,11 +954,18 @@ def initShotSceneFrom(damShot, sCurScnName, sSrcScnName, **kwargs):
         pc.displayInfo(e)
     pc.refresh()
 
-def assertTaskIsFinal(damShot, sTask, step="", sgEntity=None):
+def assertTaskIsFinal(damShot, sTask, step="", sgEntity=None, critical=True):
+
     sgTask = damShot.getSgTask(sTask, step, sgEntity=sgEntity, fail=True)
-    if sgTask["sg_status_list"] != "fin":
-        raise AssertionError("Status of the {} task is not final yet."
-                             .format("|".join(s for s in (step, sTask) if s)))
+    if sgTask["sg_status_list"] == "fin":
+        return True
+
+    err = AssertionError("Status of the {} task is not final yet."
+                         .format("|".join(s for s in (step, sTask) if s)))
+    if critical:
+        raise err
+
+    promptToContinue(err)
 
 def loadRenderRefsFromCaches(damShot, sSpace):
 
@@ -1054,19 +1074,7 @@ def setupShotScene(sceneManager):
     elif sStepName == "fx3d":
 
         if not pc.listReferences():
-            try:
-                assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity)
-            except AssertionError as e:
-                res = pc.confirmDialog(title='WARNING !',
-                                       message=e.message,
-                                       button=['Continue', 'Abort'],
-                                       defaultButton='Abort',
-                                       cancelButton='Abort',
-                                       dismissString='Abort',
-                                       icon="warning")
-                if res == "Abort":
-                    raise RuntimeWarning("Canceled !")
-
+            assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
             initShotSceneFrom(damShot, "fx3d_scene", "finalLayout_scene")
 
     #rename any other shot camera

@@ -70,8 +70,8 @@ def scanTexturesToEdit(scnInfos):
 
     sDepType = "texture_dep"
     depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
-    pubDepDir = depConfDct["public_loc"]
-    sPrivTexDirPath = depConfDct["source_loc"]
+    pubDepDir = depConfDct["dep_public_loc"]
+    sPrivTexDirPath = depConfDct["dep_source_loc"]
     bPrivTexDirFound = osp.exists(sPrivTexDirPath)
 
     fileNodeList = fileNodesFromSelection()
