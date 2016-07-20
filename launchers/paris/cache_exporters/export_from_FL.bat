@@ -1,1 +1,1 @@
-"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch "C:\Python27\python.exe" "%~dp0\..\..\scripts\abc_exporter.py" finalLayout_scene %*
+"C:\Python27\python.exe" "%~dp0\..\setup_env_tools.py" launch "C:\Python27\python.exe" "%~dp0\..\..\..\scripts\abc_exporter.py" finalLayout_scene %*
