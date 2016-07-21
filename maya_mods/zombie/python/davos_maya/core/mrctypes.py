@@ -34,11 +34,11 @@ class MrcFile(DrcFile):
         if openFile and privFile:
             if not privFile.mayaOpen(checkFile=False):
                 self.restoreLockState()
-            else:
-                v, w = privFile.getEditNums()
-                if w == 0:
-                    w1File = self.getEditFile(v, 1, weak=True)
-                    mc.file(rename=w1File.absPath())
+#            else:
+#                v, w = privFile.getEditNums()
+#                if w == 0:
+#                    w1File = self.getEditFile(v, 1, weak=True)
+#                    mc.file(rename=w1File.absPath())
 
         return privFile
 
