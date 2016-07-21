@@ -1,5 +1,6 @@
 
-
+import os.path as osp
+import traceback
 #from functools import partial
 
 import pymel.core as pm
@@ -10,12 +11,13 @@ from pytd.util.sysutils import inDevMode
 from pytd.util.sysutils import toStr
 
 from pytaya.util.toolsetup import ToolSetup
-#from pytaya.util import qtutils as myaqt
-#from pytd.util.sysutils import toStr
 
-#from davos.tools import create_dirs_n_files
+from davos.core.damproject import DamProject
+from davos.core.damtypes import DamShot
+
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
+from davos_maya.tool.general import infosFromScene, setMayaProject
 
 try:
     from dminutes import sceneManagerUI
@@ -24,9 +26,6 @@ except ImportError as e:
     smui = None
 else:
     smui = sceneManagerUI
-
-from davos_maya.tool.general import infosFromScene, setMayaProject
-from davos.core.damtypes import DamShot
 
 if inDevMode():
     try:
@@ -63,6 +62,20 @@ class DavosSetup(ToolSetup):
 
     def __init__(self):
         super(DavosSetup, self).__init__()
+
+        pubLibsItems = sPrivLibPathList = []
+        try:
+            proj = DamProject("zombillenium", empty=True)
+            allLibList = tuple(proj.iterLibraries(dbNode=False, weak=True, remember=False))
+            pubLibsItems = tuple((lib.fullName, lib.dbPath(), lib.envPath())
+                                 for lib in allLibList if lib.space == "public")
+            sPrivLibPathList = tuple(lib.dbPath() for lib in allLibList
+                                                    if lib.space == "private")
+        except:
+            traceback.print_exc()
+
+        self.publicLibrariesItems = pubLibsItems
+        self.privateLibraryPaths = sPrivLibPathList
 
     def populateMenu(self):
 
@@ -143,6 +156,32 @@ class DavosSetup(ToolSetup):
         if smui:
             if smui.isLaunched() and smui.isVisible():
                 smui.doDetect()
+
+    def onPreCreateReferenceCheck(self, mFileObj, clientData=None):
+        """updates reference path to comply with the davos library's env. variable from where the reference belongs."""
+
+        try:
+            sRefRawPath = osp.normpath(mFileObj.rawFullName()).replace("\\", "/")
+
+            for sPrivLibPath in self.privateLibraryPaths:
+                if sPrivLibPath in sRefRawPath:
+                    return True
+
+            for sLibName, sPubLibPath, sLibEnv in self.publicLibrariesItems:
+                if sPubLibPath in sRefRawPath:
+                    sRefEnvPath = sRefRawPath.split(sPubLibPath, 1)[-1]
+                    sRefEnvPath = osp.join(sLibEnv, sRefEnvPath).replace("\\", "/")
+                    if osp.isfile(osp.expanduser(osp.expandvars(sRefEnvPath))):
+                        #print "\n","ref from '{}': {} ...\n    ...conformed to {}".format(sLibName,sRefRawPath, sRefEnvPath)
+                        print "reference conformed to {}".format(sRefEnvPath)
+                        mFileObj.setRawFullName(sRefEnvPath)
+                        break
+
+        except Exception as e:
+            pm.displayError(e.message)
+            traceback.print_exc()
+
+        return True
 
 #    def onSceneSaved(self):
 #        ToolSetup.onSceneSaved(self)

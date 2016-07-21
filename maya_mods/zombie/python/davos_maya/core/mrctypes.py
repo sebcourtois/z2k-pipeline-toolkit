@@ -1,7 +1,6 @@
 
 import os.path as osp
 
-import maya.cmds as mc
 import pymel.core as pm
 import pymel.versions as pmv
 
