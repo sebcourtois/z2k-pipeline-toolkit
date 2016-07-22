@@ -713,6 +713,32 @@ def switchAssetRefsToHeadFile(relatedAssetList, dryRun=False):
             if not dryRun:
                 oFileRef.replaceWith(sRefPath, **cmdFlags)
 
+def conformAssetRefsToEnvPath(relatedAssetList, dryRun=False):
+
+    for relAstData in relatedAssetList:
+
+        damAst = relAstData.get("dam_entity")
+        if not damAst:
+            continue
+        #sAstName = damAst.name
+
+        rcFile = relAstData.get("rc_entry")
+        if not rcFile:
+            continue
+
+        sEnvPath = rcFile.envPath()
+        for oFileRef in relAstData["file_refs"]:
+
+            if normCase(oFileRef.unresolvedPath()) == normCase(sEnvPath):
+                continue
+
+            cmdFlags = dict()
+            if not oFileRef.isLoaded():
+                cmdFlags = dict(lrd="none")
+
+            if not dryRun:
+                oFileRef.replaceWith(sEnvPath, **cmdFlags)
+
 def selectRefsWithDefaultAssetFile(assetFile="NoInput"):
 
     oRefNodeDct = {}
