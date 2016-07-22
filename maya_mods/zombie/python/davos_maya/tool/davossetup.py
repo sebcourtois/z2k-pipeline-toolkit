@@ -1,5 +1,7 @@
 
+import os
 import os.path as osp
+import re
 import traceback
 #from functools import partial
 
@@ -63,19 +65,8 @@ class DavosSetup(ToolSetup):
     def __init__(self):
         super(DavosSetup, self).__init__()
 
-        pubLibsItems = sPrivLibPathList = []
-        try:
-            proj = DamProject("zombillenium", empty=True)
-            allLibList = tuple(proj.iterLibraries(dbNode=False, weak=True, remember=False))
-            pubLibsItems = tuple((lib.fullName, lib.dbPath(), lib.envPath())
-                                 for lib in allLibList if lib.space == "public")
-            sPrivLibPathList = tuple(lib.dbPath() for lib in allLibList
-                                                    if lib.space == "private")
-        except:
-            traceback.print_exc()
-
-        self.publicLibrariesItems = pubLibsItems
-        self.privateLibraryPaths = sPrivLibPathList
+        self.publicLibrariesItems = []
+        self.privateLibraryPaths = []
 
     def populateMenu(self):
 
@@ -119,6 +110,26 @@ class DavosSetup(ToolSetup):
     def afterBuildingMenu(self):
         ToolSetup.afterBuildingMenu(self)
 
+        bBatchMode = pm.about(batch=True)
+
+        if not bBatchMode:
+            pubLibsItems = sPrivLibPathList = []
+            try:
+                proj = DamProject(os.environ["DAVOS_INIT_PROJECT"])
+                if proj:
+                    #proj.loadEnviron()
+                    allLibList = tuple(proj.iterLibraries(dbNode=False, weak=True, remember=False))
+
+                    pubLibsItems = tuple((lib.fullName, lib.dbPath(), lib.envPath())
+                                         for lib in allLibList if lib.space == "public")
+                    sPrivLibPathList = tuple(lib.dbPath() for lib in allLibList
+                                                            if lib.space == "private")
+            except:
+                traceback.print_exc()
+            else:
+                self.publicLibrariesItems = pubLibsItems
+                self.privateLibraryPaths = sPrivLibPathList
+
         pmu.putEnv("DAVOS_FILE_CHECK", "1")
 
         pm.colorManagementPrefs(e=True, cmEnabled=False)
@@ -129,7 +140,7 @@ class DavosSetup(ToolSetup):
         except Exception as e:
             pm.displayError(e.message)
 
-        if not pm.about(batch=True):
+        if not bBatchMode:
             if not pm.stackTrace(q=True, state=True):
                 pm.mel.ScriptEditor()
                 pm.mel.handleScriptEditorAction("showStackTrace")
@@ -152,7 +163,6 @@ class DavosSetup(ToolSetup):
 
     def onSceneOpened(self, *args):
         ToolSetup.onSceneOpened(self, *args)
-
         if smui:
             if smui.isLaunched() and smui.isVisible():
                 smui.doDetect()
@@ -160,23 +170,27 @@ class DavosSetup(ToolSetup):
     def onPreCreateReferenceCheck(self, mFileObj, clientData=None):
         """updates reference path to comply with the davos library's env. variable from where the reference belongs."""
 
+        flags = 0
+        if os.name == "nt":
+            flags |= re.IGNORECASE
+
         try:
             sRefRawPath = osp.normpath(mFileObj.rawFullName()).replace("\\", "/")
 
             for sPrivLibPath in self.privateLibraryPaths:
-                if sPrivLibPath in sRefRawPath:
+                if osp.normcase(sPrivLibPath) in osp.normcase(sRefRawPath):
                     return True
 
-            for sLibName, sPubLibPath, sLibEnv in self.publicLibrariesItems:
-                if sPubLibPath in sRefRawPath:
-                    sRefEnvPath = sRefRawPath.split(sPubLibPath, 1)[-1]
+            for _, sPubLibPath, sLibEnv in self.publicLibrariesItems:
+                if osp.normcase(sPubLibPath) in osp.normcase(sRefRawPath):
+                    #print re.split(sPubLibPath, sRefRawPath, 1, flags=flags)
+                    sRefEnvPath = re.split(re.escape(sPubLibPath), sRefRawPath, 1, flags=flags)[-1]
                     sRefEnvPath = osp.join(sLibEnv, sRefEnvPath).replace("\\", "/")
                     if osp.isfile(osp.expanduser(osp.expandvars(sRefEnvPath))):
                         #print "\n","ref from '{}': {} ...\n    ...conformed to {}".format(sLibName,sRefRawPath, sRefEnvPath)
                         print "reference conformed to {}".format(sRefEnvPath)
                         mFileObj.setRawFullName(sRefEnvPath)
                         break
-
         except Exception as e:
             pm.displayError(e.message)
             traceback.print_exc()
