@@ -353,8 +353,12 @@ class Z2kToolkit(object):
 
         if self.dirName.endswith("_master"):
             if sAction != "release":
-                raise EnvironmentError("Only 'release' action is allowed from '{}'"
-                                       .format(self.rootPath))
+                raise EnvironmentError("You can't {} from location: '{}'. Only 'release' action allowed."
+                                       .format(sAction, self.rootPath))
+        elif osp.normcase(self.rootPath) == osp.normcase(self.releasePath()):
+            if sAction != "install":
+                raise EnvironmentError("You can't {} from location: '{}'. Only 'install' action allowed."
+                                       .format(sAction, self.rootPath))
 
         if sAction in ("launch", "loadenv"):
             parser.add_argument("--update", "-u", type=int, default=1)
