@@ -1077,6 +1077,12 @@ def setupShotScene(sceneManager):
             assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
             initShotSceneFrom(damShot, "fx3d_scene", "finalLayout_scene")
 
+    elif sStepName == "rendering":
+
+        if not pc.listReferences():
+            assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
+            initShotSceneFrom(damShot, "rendering_scene", "finalLayout_scene")
+
     #rename any other shot camera
     remainingCamera = None
 
@@ -1167,6 +1173,7 @@ COMMANDS = {
         'charfx':setupShotScene,
         'final layout':setupShotScene,
         'fx3D':setupShotScene,
+        'rendering':setupShotScene,
     }
 }
 

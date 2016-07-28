@@ -55,6 +55,7 @@ RC_FOR_STEP = {'Previz 3D':'previz_scene',
                'CharFX':'charFx_scene',
                'Final Layout':'finalLayout_scene',
                'Fx3D':'fx3d_scene',
+               'Rendering':'rendering_scene',
                }
 RC_FOR_TASK = {}
 
@@ -63,6 +64,7 @@ REF_FOR_STEP = {'Previz 3D':'previz_ref',
                 'Animation':'anim_ref',
                 'CharFX':'anim_ref',
                 'Final Layout':'render_ref',
+                'Rendering':'render_ref',
                 }
 REF_FOR_TASK = {}
 
@@ -1007,7 +1009,7 @@ class SceneManager():
             infoSetExpI = infoE.infoSetExp()
             infoSetExpI.export(sceneName=jpZ.getShotName())
 
-        if sStepCode not in ("charfx",):
+        if sStepCode not in ("charfx", "fx3d", "rendering"):
             # here is incerted the publish of the camera of the scene
             print "exporting the camera of the shot"
             camImpExpI = camIE.camImpExp()
