@@ -173,7 +173,7 @@ def h264ToProres(inSeqList, shotStep='01_previz'):
 
             tmpBatFile.write("\n")
 
-            if  not osp.isdir(outDir):
+            if not osp.isdir(outDir):
                 #print "#### {:>7}: Create directory: '{}'".format("Info",outDir )
                 os.makedirs(outDir)
 

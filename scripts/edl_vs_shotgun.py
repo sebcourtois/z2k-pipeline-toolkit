@@ -26,9 +26,9 @@ def launch():
         raise RuntimeError("Please, drag and drop an EDL file on me.")
 
     proj = DamProject(os.environ.get("DAVOS_INIT_PROJECT"))
-    sg = proj._shotgundb.sg
+    shotgundb = proj._shotgundb
 
-    statusNameDct = dict((d["code"], d["name"]) for d in  sg.find("Status", [], ["code", "name"]))
+    statusNameDct = dict((d["code"], d["name"]) for d in  shotgundb.sg.find("Status", [], ["code", "name"]))
 
     sSeqList = []
     edlShotDct = OrderedDict()
@@ -61,7 +61,7 @@ def launch():
 
     filters = [["entity.Shot.code", "in", sgShotDct.keys()], ["content", "is", "previz 3D"]]
     fields = ["entity.Shot.code", "sg_status_list"]#, "content"]
-    sgPrevizTaskDct = dict((d.pop("entity.Shot.code"), d) for d in sg.find("Task", filters, fields))
+    sgPrevizTaskDct = dict((d.pop("entity.Shot.code"), d) for d in shotgundb.find("Task", filters, fields))
 
     sAllShotList = sorted(set(edlShotDct.iterkeys()) | set(sgShotDct.iterkeys()))
 

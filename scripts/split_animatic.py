@@ -61,7 +61,7 @@ def updatePathsToMovie(dryRun=True):
     shotgundb = proj._shotgundb
 
     filters = [
-        ["project", "is", {"type":"Project", "id":shotgundb._getProjectId()}],
+        ["project", "is", shotgundb.getProjectInfo()],
         ["entity.Shot.id", "is_not", None],
         ["sg_source_file", "is_not", None],
     ]
