@@ -1,7 +1,11 @@
+
+import os
+import re
+
 import maya.cmds as mc
 
 from dminutes import miscUtils
-reload (miscUtils)
+reload(miscUtils)
 
 
 

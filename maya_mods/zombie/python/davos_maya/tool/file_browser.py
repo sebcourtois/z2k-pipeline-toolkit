@@ -10,24 +10,24 @@ from davos.gui.assetbrowserwindow import AssetBrowserWindow
 from pytaya.util.qtutils import getWindow
 
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
+from davos.core.utils import loadPrefs
 
-mainWin = None
+MAIN_WIN = None
 
 class MayaAssetBrowserWindow(MayaQWidgetDockableMixin, AssetBrowserWindow):
 
     def __init__(self, parent=None):
         super(MayaAssetBrowserWindow, self).__init__(parent=parent)
 
-
 def kill():
 
-    global mainWin
+    global MAIN_WIN
 
-    if mainWin:
+    if MAIN_WIN:
 
-        mainWin.setAttribute(Qt.WA_DeleteOnClose, True)
-        mainWin.close()
-        mainWin = None
+        MAIN_WIN.setAttribute(Qt.WA_DeleteOnClose, True)
+        MAIN_WIN.close()
+        MAIN_WIN = None
 
         return True
 
@@ -35,19 +35,22 @@ def kill():
 
 def launch(argv):
 
-    global mainWin
+    global MAIN_WIN
 
-    mainWin = getWindow("AssetBrowserWin")
-    if mainWin:
-        mainWin.showNormal()
-        #mainWin.raise_()
+    MAIN_WIN = getWindow("AssetBrowserWin")
+    if MAIN_WIN:
+        MAIN_WIN.showNormal()
+        MAIN_WIN.raise_()
     else:
-        mainWin = MayaAssetBrowserWindow()
-        mainWin.show(dockable=False)
+
+        loadPrefs()
+
+        MAIN_WIN = MayaAssetBrowserWindow()
+        MAIN_WIN.show(dockable=False)
 
         sProject = os.environ.get("DAVOS_INIT_PROJECT")
         if sProject:
-            mainWin.setProject(sProject)
+            MAIN_WIN.setProject(sProject)
 
 if __name__ == "__main__":
     launch(sys.argv)

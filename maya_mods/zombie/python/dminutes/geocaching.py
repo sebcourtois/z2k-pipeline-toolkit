@@ -312,10 +312,8 @@ def exportCaches(**kwargs):
     scnInfos = infosFromScene()
     damShot = scnInfos.get("dam_entity")
 
-#    sMsg = "Caches can only be exported from an animation scene."
-#    assertSceneInfoMatches(scnInfos, "anim_scene", msg=sMsg)
-
-    if not bRaw:
+    sScnRcName = scnInfos.get("resource")
+    if (not bRaw) and sScnRcName in ("anim_scene", "charFx_scene"):
         myaref.loadAssetsAsResource("anim_ref", checkSyncState=True, selected=False, fail=True)
 
     sGeoGrpList, bSelected = _confirmProcessing(sProcessLabel, **kwargs)
@@ -366,7 +364,7 @@ def exportCaches(**kwargs):
     ]
     sJobFmt = " ".join(sJobParts)
 
-    if not bRaw:
+    if (not bRaw) and sScnRcName in ("anim_scene", "charFx_scene"):
         for sBodyResAttr in mc.ls("*.Body_res", r=True):
             print "switching", sBodyResAttr, "to High."
             if not bDryRun:
@@ -900,19 +898,20 @@ def importCaches(sSpace, **kwargs):
     scnInfos = infosFromScene()
     damShot = scnInfos.get("dam_entity")
 
-    if not bDryRun:
-        sMsg = "Caches can only be imported onto a final layout scene."
-        assertSceneInfoMatches(scnInfos, "finalLayout_scene", msg=sMsg)
+#    if not bDryRun:
+#        sMsg = "Caches can only be imported onto a final layout scene."
+#        assertSceneInfoMatches(scnInfos, "finalLayout_scene", msg=sMsg)
 
     if sSpace == "local":
         sCacheDirPath = mop.getMayaCacheDir(damShot)
     elif sSpace in ("public", "private"):
-        sCacheDirPath = damShot.getPath(sSpace, "finalLayoutCache_dir")
+        sCacheDirPath = damShot.getPath(sSpace, "finalLayout_cache_dir")
     else:
         raise ValueError("Invalid space argument: '{}'".format(sSpace))
 
     if not osp.isdir(sCacheDirPath):
-        raise EnvironmentError("Could not found caches directory: '{}'".format(sCacheDirPath))
+        raise EnvironmentError("Could not found {} caches directory: '{}'"
+                               .format(sSpace, sCacheDirPath))
 
     exportInfos = jsonRead(pathJoin(sCacheDirPath, "abcExport.json"))
     exportJobList = exportInfos["jobs"]
@@ -1136,7 +1135,7 @@ def scanCachesToImport(sSrcFilePathList, scnInfos=None, depConfDct=None):
     sDepType = "geoCache_dep"
     if not depConfDct:
         depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
-    pubDepDir = depConfDct["public_loc"]
+    pubDepDir = depConfDct["dep_public_loc"]
 
 #    sPubDepDirPath = pubDepDir.absPath()
 #    if pubDepDir.exists():

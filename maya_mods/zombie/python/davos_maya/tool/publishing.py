@@ -161,7 +161,7 @@ def publishDependencies(depConfDct, sDepPathList, sComment, **kwargs):
     bDryRun = kwargs.get("dryRun", False)
 
     bChecksum = depConfDct.get("checksum", False)
-    depDir = depConfDct["public_loc"]
+    depDir = depConfDct["dep_public_loc"]
 
     if isinstance(sDepPathList, list):
         publishItems = sDepPathList[:]

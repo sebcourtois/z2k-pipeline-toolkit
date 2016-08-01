@@ -1,5 +1,8 @@
 
-
+import os
+import os.path as osp
+import re
+import traceback
 #from functools import partial
 
 import pymel.core as pm
@@ -10,16 +13,21 @@ from pytd.util.sysutils import inDevMode
 from pytd.util.sysutils import toStr
 
 from pytaya.util.toolsetup import ToolSetup
-#from pytaya.util import qtutils as myaqt
-#from pytd.util.sysutils import toStr
 
-#from davos.tools import create_dirs_n_files
+from davos.core.damproject import DamProject
+from davos.core.damtypes import DamShot
+
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
-
-from dminutes import sceneManagerUI as smui
 from davos_maya.tool.general import infosFromScene, setMayaProject
-from davos.core.damtypes import DamShot
+
+try:
+    from dminutes import sceneManagerUI
+except ImportError as e:
+    pm.warning(e.message)
+    smui = None
+else:
+    smui = sceneManagerUI
 
 if inDevMode():
     try:
@@ -56,6 +64,9 @@ class DavosSetup(ToolSetup):
 
     def __init__(self):
         super(DavosSetup, self).__init__()
+
+        self.publicLibrariesItems = []
+        self.privateLibraryPaths = []
 
     def populateMenu(self):
 
@@ -99,6 +110,26 @@ class DavosSetup(ToolSetup):
     def afterBuildingMenu(self):
         ToolSetup.afterBuildingMenu(self)
 
+        bBatchMode = pm.about(batch=True)
+
+        if not bBatchMode:
+            pubLibsItems = sPrivLibPathList = []
+            try:
+                proj = DamProject(os.environ["DAVOS_INIT_PROJECT"])
+                if proj:
+                    #proj.loadEnviron()
+                    allLibList = tuple(proj.iterLibraries(dbNode=False, weak=True, remember=False))
+
+                    pubLibsItems = tuple((lib.fullName, lib.dbPath(), lib.envPath())
+                                         for lib in allLibList if lib.space == "public")
+                    sPrivLibPathList = tuple(lib.dbPath() for lib in allLibList
+                                                            if lib.space == "private")
+            except:
+                traceback.print_exc()
+            else:
+                self.publicLibrariesItems = pubLibsItems
+                self.privateLibraryPaths = sPrivLibPathList
+
         pmu.putEnv("DAVOS_FILE_CHECK", "1")
 
         pm.colorManagementPrefs(e=True, cmEnabled=False)
@@ -109,18 +140,20 @@ class DavosSetup(ToolSetup):
         except Exception as e:
             pm.displayError(e.message)
 
-        if not pm.about(batch=True):
+        if not bBatchMode:
             if not pm.stackTrace(q=True, state=True):
                 pm.mel.ScriptEditor()
                 pm.mel.handleScriptEditorAction("showStackTrace")
 
     def beforeReloading(self, *args):
+
         file_browser.kill()
 
-        try:
-            smui.kill()
-        except Exception as e:
-            pm.displayInfo("Could not kill 'sceneManagerUI': {}".format(toStr(e)))
+        if smui:
+            try:
+                smui.kill()
+            except Exception as e:
+                pm.displayInfo("Could not kill 'sceneManagerUI': {}".format(toStr(e)))
 
         ToolSetup.beforeReloading(self, *args)
 
@@ -130,9 +163,39 @@ class DavosSetup(ToolSetup):
 
     def onSceneOpened(self, *args):
         ToolSetup.onSceneOpened(self, *args)
+        if smui:
+            if smui.isLaunched() and smui.isVisible():
+                smui.doDetect()
 
-        if smui.isLaunched() and smui.isVisible():
-            smui.doDetect()
+    def onPreCreateReferenceCheck(self, mFileObj, clientData=None):
+        """updates reference path to comply with the davos library's env. variable from where the reference belongs."""
+
+        flags = 0
+        if os.name == "nt":
+            flags |= re.IGNORECASE
+
+        try:
+            sRefRawPath = osp.normpath(mFileObj.rawFullName()).replace("\\", "/")
+
+            for sPrivLibPath in self.privateLibraryPaths:
+                if osp.normcase(sPrivLibPath) in osp.normcase(sRefRawPath):
+                    return True
+
+            for _, sPubLibPath, sLibEnv in self.publicLibrariesItems:
+                if osp.normcase(sPubLibPath) in osp.normcase(sRefRawPath):
+                    #print re.split(sPubLibPath, sRefRawPath, 1, flags=flags)
+                    sRefEnvPath = re.split(re.escape(sPubLibPath), sRefRawPath, 1, flags=flags)[-1]
+                    sRefEnvPath = osp.join(sLibEnv, sRefEnvPath).replace("\\", "/")
+                    if osp.isfile(osp.expanduser(osp.expandvars(sRefEnvPath))):
+                        #print "\n","ref from '{}': {} ...\n    ...conformed to {}".format(sLibName,sRefRawPath, sRefEnvPath)
+                        print "reference conformed to {}".format(sRefEnvPath)
+                        mFileObj.setRawFullName(sRefEnvPath)
+                        break
+        except Exception as e:
+            pm.displayError(e.message)
+            traceback.print_exc()
+
+        return True
 
 #    def onSceneSaved(self):
 #        ToolSetup.onSceneSaved(self)

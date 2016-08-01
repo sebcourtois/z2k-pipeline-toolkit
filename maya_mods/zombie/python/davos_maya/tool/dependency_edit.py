@@ -70,8 +70,8 @@ def scanTexturesToEdit(scnInfos):
 
     sDepType = "texture_dep"
     depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
-    pubDepDir = depConfDct["public_loc"]
-    sPrivTexDirPath = depConfDct["source_loc"]
+    pubDepDir = depConfDct["dep_public_loc"]
+    sPrivTexDirPath = depConfDct["dep_source_loc"]
     bPrivTexDirFound = osp.exists(sPrivTexDirPath)
 
     fileNodeList = fileNodesFromSelection()
@@ -126,11 +126,11 @@ def scanTexturesToEdit(scnInfos):
             scanLogDct = {}
             pubFile = pubLib.getEntry(sPubFilePath, dbNode=False)
 
-            cachedDbNode = pubFile.getDbNode(fromDb=False)
+            cachedDbNode = pubFile.loadDbNode(fromDb=False)
             if cachedDbNode:
                 pubFile.refresh(simple=True)
             else:
-                pubFile.getDbNode(fromCache=False)
+                pubFile.loadDbNode(fromCache=False)
 
             if i == 0:
                 resultDct = srcRes.copy()

@@ -506,7 +506,7 @@ def setAssetVersionsLocked(bLock, sConfirmMsg, *args):
     relAstList = listRelatedAssets(damShot, assetNames=sAstList)
 
     if bLock:
-        sgShotVersList = getSgRelatedVersionsHistory(logInfo=False, limit=25,
+        sgShotVersList = getSgRelatedVersionsHistory(logInfo=False, limit=10,
                                                      relatedAssets=relAstList)
         sgShotVers = chooseSgShotVersion(sgShotVersList)
         if not sgShotVers:

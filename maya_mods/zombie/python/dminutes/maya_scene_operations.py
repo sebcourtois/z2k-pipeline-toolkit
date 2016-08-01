@@ -71,6 +71,18 @@ def withErrorDialog(func):
         return res
     return doIt
 
+def promptToContinue(exception):
+
+    res = pc.confirmDialog(title='WARNING !',
+                           message=exception.message,
+                           button=['Continue', 'Abort'],
+                           defaultButton='Abort',
+                           cancelButton='Abort',
+                           dismissString='Abort',
+                           icon="warning")
+    if res == "Abort":
+        raise RuntimeWarning("Aborted !")
+
 STEREO_INFOS = {}
 def recStereoInfos(frame, **kwargs):
     global STEREO_INFOS
@@ -797,9 +809,9 @@ def getAnimaticInfos(sceneManager):
     File = namedtuple("File", ["path", "found"])
 
     infos = {"public_movie":sPubMoviePath,
-            "local_movie":sLocMoviePath,
-            "first_image":sAnimaticImgPath,
-            "public_audio":sAudioEnvPath,
+             "local_movie":sLocMoviePath,
+             "first_image":sAnimaticImgPath,
+             "public_audio":sAudioEnvPath,
             }
 
     found = lambda p: osp.isfile(pathResolve(p))
@@ -810,6 +822,7 @@ def getAnimaticInfos(sceneManager):
         bNewerMovie = osp.getmtime(infos["public_movie"].path) > osp.getmtime(infos["local_movie"].path)
 
     infos["newer_movie"] = bNewerMovie
+    infos["frameOffset"] = (-99 if sRcName == "animatic_capture" else -100)
 
     return infos
 
@@ -886,7 +899,7 @@ def setupAnimatic(sceneManager, create=True, checkUpdate=False):
                 sErrorList.append(toStr(e))
         try:
             #offset +1 because ffmpeg duplicates the first frame during movie conversion to jpegs.
-            oImgPlane.setAttr("frameOffset", (-100 + 1))
+            oImgPlane.setAttr("frameOffset", infos["frameOffset"])
             pc.mel.AEimagePlaneViewUpdateCallback(oImgPlane.name())
         except Exception as e:
             pc.displayWarning(toStr(e))
@@ -918,8 +931,9 @@ def initShotSceneFrom(damShot, sCurScnName, sSrcScnName, **kwargs):
 
     curPubScnVers = curPubScn.assertLatestFile(refresh=True, returnVersion=True)
     if curPubScnVers:
-        raise AssertionError("{} - '{}' already started (v{}).".format(sCurScnName)
-                             .format(damShot, curPubScn.currentVersion))
+        err = AssertionError("{} - '{}' already started (v{})."
+                             .format(damShot, sCurScnName, curPubScn.currentVersion))
+        promptToContinue(err)
 
     sLockOwner = srcPubScn.getLockOwner(refresh=True)
     if sLockOwner:
@@ -940,11 +954,39 @@ def initShotSceneFrom(damShot, sCurScnName, sSrcScnName, **kwargs):
         pc.displayInfo(e)
     pc.refresh()
 
-def assertTaskIsFinal(damShot, sTask, step="", sgEntity=None):
+def assertTaskIsFinal(damShot, sTask, step="", sgEntity=None, critical=True):
+
     sgTask = damShot.getSgTask(sTask, step, sgEntity=sgEntity, fail=True)
-    if sgTask["sg_status_list"] != "fin":
-        raise AssertionError("Status of the {} task is not final yet."
-                             .format("|".join(s for s in (step, sTask) if s)))
+    if sgTask["sg_status_list"] == "fin":
+        return True
+
+    err = AssertionError("Status of the {} task is not final yet."
+                         .format("|".join(s for s in (step, sTask) if s)))
+    if critical:
+        raise err
+
+    promptToContinue(err)
+
+def loadRenderRefsFromCaches(damShot, sSpace):
+
+    proj = damShot.project
+
+    if sSpace == "local":
+        sCacheDirPath = getMayaCacheDir(damShot)
+    elif sSpace in ("public", "private"):
+        sCacheDirPath = damShot.getPath(sSpace, "finalLayout_cache_dir")
+    else:
+        raise ValueError("Invalid space argument: '{}'".format(sSpace))
+
+    if not osp.isdir(sCacheDirPath):
+        raise EnvironmentError("Could not found {} caches directory: '{}'"
+                               .format(sSpace, sCacheDirPath))
+
+    p = osp.normpath(osp.join(sCacheDirPath, "abcExport.json"))
+    exportInfos = jsonRead(p)
+
+    sNmspcList = tuple(getNamespace(j["root"]) for j in exportInfos["jobs"])
+    return myaref.importAssetRefsFromNamespaces(proj, sNmspcList, "render_ref")
 
 @withErrorDialog
 @withSelectionRestored
@@ -988,20 +1030,13 @@ def setupShotScene(sceneManager):
 
     elif sStepName == "final layout":
 
-        #bNoRefsAtAll = True if not pc.listReferences() else False
+        bNoRefsAtAll = True if not pc.listReferences() else False
         bNoLoadedRefs = False#True if not pc.listReferences(loaded=True, unloaded=False) else False
 
-        sAbcDirPath = getMayaCacheDir(damShot)
-        if not osp.isdir(sAbcDirPath):
-            raise EnvironmentError("Could not found caches directory: '{}'".format(sAbcDirPath))
+        if bNoRefsAtAll:
+            loadRenderRefsFromCaches(damShot, "local")
 
-        p = osp.normpath(osp.join(sAbcDirPath, "abcExport.json"))
-        exportInfos = jsonRead(p)
-
-        sNmspcList = tuple(getNamespace(j["root"]) for j in exportInfos["jobs"])
-        myaref.importAssetRefsFromNamespaces(proj, sNmspcList, "render_ref")
-
-        if bNoLoadedRefs:
+        elif bNoLoadedRefs:
 
             oFileRefList = pc.listReferences(loaded=False, unloaded=True)
             for oFileRef in oFileRefList:
@@ -1035,6 +1070,18 @@ def setupShotScene(sceneManager):
             except Exception as e:
                 pc.displayWarning(e.message)
                 pmu.putEnv("MAYA_TESTING_CLEANUP", "")
+
+    elif sStepName == "fx3d":
+
+        if not pc.listReferences():
+            assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
+            initShotSceneFrom(damShot, "fx3d_scene", "finalLayout_scene")
+
+    elif sStepName == "rendering":
+
+        if not pc.listReferences():
+            assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
+            initShotSceneFrom(damShot, "rendering_scene", "finalLayout_scene")
 
     #rename any other shot camera
     remainingCamera = None
@@ -1125,6 +1172,8 @@ COMMANDS = {
         'animation':setupShotScene,
         'charfx':setupShotScene,
         'final layout':setupShotScene,
+        'fx3D':setupShotScene,
+        'rendering':setupShotScene,
     }
 }
 

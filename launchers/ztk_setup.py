@@ -10,6 +10,18 @@ from datetime import datetime
 
 BASE_NAME = "z2k-pipeline-toolkit"
 
+APPS_INFOS = {
+    "rv":{"loc_path":r"C:\Program Files\Shotgun\RV 6.2.6",
+          "end_path":r"bin\rv.exe",
+          "loc_env":"Z2K_RV_LOC"},
+    "maya":{"loc_path":r"C:\Program Files\Autodesk\Maya2016",
+            "end_path":r"bin\maya.exe",
+            "loc_env":"Z2K_MAYA_LOC"},
+    "mayabatch":{"loc_path":r"C:\Program Files\Autodesk\Maya2016",
+                 "end_path":r"bin\mayabatch.exe",
+                 "loc_env":"Z2K_MAYA_LOC"},
+}
+
 class Z2kToolkit(object):
 
     def __init__(self, customEnvs=None):
@@ -241,7 +253,7 @@ class Z2kToolkit(object):
         sNoSummary = "/NJS" if not summary else ""
 
         sExcludeFiles = ["*.pyc", ".git*", ".*project", "*.lic", "Thumbs.db",
-                         "pull_all.bat", "release_*.bat"]
+                         "pull_all.bat", "release.bat"]
         if not self.isDev:
             sExcludeFiles += ["setup_*.bat"]
 
@@ -272,13 +284,22 @@ class Z2kToolkit(object):
 
         return pathJoin(sReleaseLoc, BASE_NAME)
 
-    def launchCmd(self, cmdArgs, launch=True):
+    def launchApp(self, appArgs, launch=True):
 
-        if (not launch) and not cmdArgs:
+        if (not launch) and not appArgs:
             return
 
-        sAppPath = cmdArgs[0]
-        sAppName = osp.basename(sAppPath)
+        sAppPath = osp.normpath(appArgs[0])
+
+        if os.sep in sAppPath:
+            sAppPath = osp.expandvars(sAppPath)
+            sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
+        elif sAppPath.startswith("@"):
+            sAppName = sAppPath.strip("@").lower()
+            appInfos = APPS_INFOS[sAppName]
+            sAppLocPath = os.environ.get(appInfos["loc_env"], appInfos["loc_path"])
+            sAppPath = osp.normpath(osp.join(sAppLocPath, appInfos["end_path"]))
+            appArgs[0] = sAppPath
 
         if not osp.isfile(sAppPath):
             raise EnvironmentError("No such application: '{}'".format(sAppPath))
@@ -292,13 +313,13 @@ class Z2kToolkit(object):
 
 #        startupinfo = subprocess.STARTUPINFO()
 #        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-#        subprocess.call(cmdArgs, startupinfo=startupinfo)
+#        subprocess.call(appArgs, startupinfo=startupinfo)
 
         if self.isDev:
-            print cmdArgs
+            print appArgs
 
         if launch:
-            return callCmd(cmdArgs)
+            return callCmd(appArgs)
 
     def runFromCmd(self):
 
@@ -316,7 +337,7 @@ class Z2kToolkit(object):
                 cmdArgs = sys.argv[1:2]
                 c = 2
                 for arg in sys.argv[2:]:
-                    if ("/" in arg) or ("\\" in arg):
+                    if ("/" in arg) or ("\\" in arg) or (arg.startswith("@")):
                         break
                     cmdArgs.append(arg)
                     c += 1
@@ -324,16 +345,20 @@ class Z2kToolkit(object):
                 launchArgs = sys.argv[c:]
 
         parser = argparse.ArgumentParser()
-        parser.add_argument("command", choices=sActionList)
+        parser.add_argument("action", choices=sActionList)
 
         ns = parser.parse_args(cmdArgs if not sAction else [sAction])
 
-        sAction = ns.command
+        sAction = ns.action
 
         if self.dirName.endswith("_master"):
             if sAction != "release":
-                raise EnvironmentError("Only 'release' action is allowed from '{}'"
-                                       .format(self.rootPath))
+                raise EnvironmentError("You can't {} from location: '{}'. Only 'release' action allowed."
+                                       .format(sAction, self.rootPath))
+        elif osp.normcase(self.rootPath) == osp.normcase(self.releasePath()):
+            if sAction != "install":
+                raise EnvironmentError("You can't {} from location: '{}'. Only 'install' action allowed."
+                                       .format(sAction, self.rootPath))
 
         if sAction in ("launch", "loadenv"):
             parser.add_argument("--update", "-u", type=int, default=1)
@@ -369,7 +394,7 @@ class Z2kToolkit(object):
             if ns.renew:
                 self.loadEnvs(self.customEnvs, replace=True)
 
-            return self.launchCmd(launchArgs, launch=(sAction == "launch"))
+            return self.launchApp(launchArgs, launch=(sAction == "launch"))
 
         if sAction == "install":
             self.install()

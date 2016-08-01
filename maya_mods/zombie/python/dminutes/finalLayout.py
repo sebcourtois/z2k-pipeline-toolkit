@@ -216,7 +216,7 @@ def createNukeBatch(gui=True):
         nukePathLoc= r"C:\Program Files\Nuke10.0v1\Nuke10.0.exe"
 
 
-    nukeScript = miscUtils.normPath(zombToolsPath + r"\z2k-pipeline-toolkit\nuke\template\finalLayoutTemplate.nk")
+    nukeScript = miscUtils.normPath(zombToolsPath + r"\template\nuke\finalLayoutTemplate.nk")
     renderBatch_obj = open(renderBatch_trg, "w")
     renderBatch_obj.write("set foundry_LICENSE="+licenceLocation+"\n")
     renderBatch_obj.write("set nuke="+nukePath+"\n")
