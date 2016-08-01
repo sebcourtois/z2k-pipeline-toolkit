@@ -693,13 +693,11 @@ class set3d(object):
     }
 
     resource_settings = {
-    "texture_dir":{"per_ext_sync_rules":{".jpg":["all_sites"],
+    "texture_dir":{"per_ext_sync_rules":{".jpg":["all_sites"], ".tga":["all_sites"],
                                          ".psd":["online", "dmn_paris", "dream_wall"]},
-                   "default_sync_rules":["online", "dmn_paris",
-                                         "dream_wall", "dmn_angouleme"],
+                   "default_sync_rules":["online", "dmn_paris", "dream_wall", "dmn_angouleme"],
                    },
-    "geometry_dir":{"free_to_publish":True,
-                    },
+    "geometry_dir":{"free_to_publish":True, },
     }
     resource_settings.update(asset_lib.resource_settings)
 
