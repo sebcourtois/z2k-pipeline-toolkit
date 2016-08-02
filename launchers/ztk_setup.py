@@ -7,6 +7,7 @@ import subprocess
 import argparse
 from shutil import make_archive, ignore_patterns
 from datetime import datetime
+import traceback
 
 BASE_NAME = "z2k-pipeline-toolkit"
 
@@ -92,6 +93,11 @@ class Z2kToolkit(object):
 
         #print "\n----------------", sAppPath
 
+        # initializing an empty DamProject to have project's environ loaded
+        from davos.core.damproject import DamProject
+        proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
+        proj.loadEnviron()
+
         bNeedPy27Site = True
 
         if sAppName in ("maya", "mayabatch", "render", "mayapy"):
@@ -127,11 +133,6 @@ class Z2kToolkit(object):
         if bNeedPy27Site:
             updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
                    conflict="add")
-
-        # initializing an empty DamProject to have project's environ loaded
-        from davos.core.damproject import DamProject
-        proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
-        proj.loadEnviron()
 
     def install(self):
 
@@ -272,7 +273,7 @@ class Z2kToolkit(object):
 
         return callCmd(cmdLine, catchStdout=dryRun)
 
-    def releasePath(self, location=""):
+    def releasePath(self, location="", fail=True):
 
         if location:
             sReleaseLoc = location
@@ -280,7 +281,10 @@ class Z2kToolkit(object):
             sReleaseLoc = os.environ["ZOMB_TOOL_PATH"]
 
         if not osp.isdir(sReleaseLoc):
-            raise EnvironmentError("No such Release location: '{}'".format(sReleaseLoc))
+            if fail:
+                raise EnvironmentError("No such release location: '{}'".format(sReleaseLoc))
+            else:
+                print "WARNING:", "No such release location: '{}'".format(sReleaseLoc)
 
         return pathJoin(sReleaseLoc, BASE_NAME)
 
@@ -309,7 +313,8 @@ class Z2kToolkit(object):
         except Exception as e:
             print ("\n\n!!!!!!! Failed loading '{}' environments: {}"
                    .format(sAppName, e))
-            if raw_input("\nPress enter to continue...") == "raise": raise
+            traceback.print_exc()
+            if raw_input("\nPress enter to continue anyway...") == "raise": raise
 
 #        startupinfo = subprocess.STARTUPINFO()
 #        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -355,7 +360,7 @@ class Z2kToolkit(object):
             if sAction != "release":
                 raise EnvironmentError("You can't {} from location: '{}'. Only 'release' action allowed."
                                        .format(sAction, self.rootPath))
-        elif osp.normcase(self.rootPath) == osp.normcase(self.releasePath()):
+        elif osp.normcase(self.rootPath) == osp.normcase(self.releasePath(fail=False)):
             if sAction != "install":
                 raise EnvironmentError("You can't {} from location: '{}'. Only 'install' action allowed."
                                        .format(sAction, self.rootPath))
