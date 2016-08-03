@@ -27,8 +27,8 @@
         "h" the help description.
 -->
 <renderer desc="Arnold renderer">
-    <melheader s='string $opt=""; string $rl=""; string $rp=""; float $resize=-1.; loadPlugin -quiet mtoa;'/>
-    <meltrailer s='setMayaSoftwareLayers($rl, $rp); setImageSizePercent($resize);mayaBatchRenderProcedure(0, "", "", "arnold", $opt); '/>
+    <melheader s='string $opt=""; string $rl=""; string $rp=""; float $resize=-1.; int $interactive=0; loadPlugin -quiet mtoa;'/>
+    <meltrailer s='setMayaSoftwareLayers($rl, $rp); setImageSizePercent($resize);mayaBatchRenderProcedure($interactive, "", "", "arnold", $opt); '/>
     <sep/>
     <!-- ______________________________________________________________ -->
     <sep desc="General purpose flags:"/>

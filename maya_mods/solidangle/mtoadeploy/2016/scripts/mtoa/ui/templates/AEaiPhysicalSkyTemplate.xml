@@ -1,0 +1,49 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiPhysicalSky'>
+		<attribute name='turbidity' type='maya.float'>
+			<label>Turbidity</label>
+		</attribute>
+		<attribute name='groundAlbedo' type='maya.float3'>
+			<label>Ground Albedo</label>
+		</attribute>
+		<attribute name='elevation' type='maya.float'>
+			<label>Elevation</label>
+		</attribute>
+		<attribute name='azimuth' type='maya.float'>
+			<label>Azimuth</label>
+		</attribute>
+		<attribute name='intensity' type='maya.float'>
+			<label>Intensity</label>
+		</attribute>
+		<attribute name='skyTint' type='maya.float3'>
+			<label>skyTint</label>
+		</attribute>
+		<attribute name='sunTint' type='maya.float3'>
+			<label>sunTint</label>
+		</attribute>
+		<attribute name='sunSize' type='maya.float'>
+			<label>sunSize</label>
+		</attribute>
+		<attribute name='enableSun' type='maya.bool'>
+			<label>Enable Sun</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiPhysicalSky'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='sky_attributes'>
+			<label>Physical Sky Attributes</label>
+			<property name='turbidity'/>
+			<property name='groundAlbedo'/>
+			<property name='elevation'/>
+			<property name='azimuth'/>
+			<property name='intensity'/>
+			<property name='skyTint'/>
+			<property name='sunTint'/>
+			<property name='sunSize'/>
+			<property name='enableSun'/>
+		</group>
+	</view>
+</templates>

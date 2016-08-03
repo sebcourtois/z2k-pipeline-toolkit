@@ -1,0 +1,28 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiAmbientOcclusion'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='white' type='maya.float3'>
+			<label>White</label>
+		</attribute>
+		<attribute name='black' type='maya.float3'>
+			<label>Black</label>
+		</attribute>
+		<attribute name='falloff' type='maya.float'>
+			<label>Falloff</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiAmbientOcclusion'>
+		<property name='outColor'/>
+		<property name='white'/>
+		<property name='black'/>
+		<property name='falloff'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiAmbientOcclusion'>
+		<property name='outColor'/>
+	</view>
+</templates>

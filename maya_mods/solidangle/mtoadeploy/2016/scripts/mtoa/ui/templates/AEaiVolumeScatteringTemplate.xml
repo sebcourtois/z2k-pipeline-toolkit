@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiVolumeScattering'>
+		<attribute name='rgbDensity' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='density' type='maya.float'>
+			<label>Density</label>
+		</attribute>
+		<attribute name='rgbAttenuation' type='maya.float3'>
+			<label>Attenuation Color</label>
+		</attribute>
+		<attribute name='attenuation' type='maya.float'>
+			<label>Attenuation</label>
+		</attribute>
+		<attribute name='eccentricity' type='maya.float'>
+			<label>Anisotropy</label>
+		</attribute>
+		<attribute name='samples' type='maya.int'>
+			<label>Samples</label>
+		</attribute>
+		<attribute name='affectCamera' type='maya.float'>
+			<label>Camera</label>
+		</attribute>
+		<attribute name='affectDiffuse' type='maya.float'>
+			<label>Diffuse</label>
+		</attribute>
+		<attribute name='affectReflection' type='maya.float'>
+			<label>Reflection</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiVolumeScattering'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='volume_attributes'>
+			<label>Volume Attributes</label>
+			<property name='rgbDensity'/>
+			<property name='density'/>
+			<property name='rgbAttenuation'/>
+			<property name='attenuation'/>
+			<property name='eccentricity'/>
+			<property name='samples'/>
+		</group>
+		<group name='contribution_attributes'>
+			<label>Contribution Attributes</label>
+			<property name='affectCamera'/>
+			<property name='affectDiffuse'/>
+			<property name='affectReflection'/>
+		</group>
+	</view>
+</templates>

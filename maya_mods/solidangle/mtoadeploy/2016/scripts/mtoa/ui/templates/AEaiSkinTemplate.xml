@@ -1,0 +1,143 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiSkin'>
+		<attribute name='sssWeight' type='maya.float'>
+			<label>SSS Weight</label>
+		</attribute>
+		<attribute name='globalSssRadiusMultiplier' type='maya.float'>
+			<label>Radius Multiplier</label>
+		</attribute>
+
+		<attribute name='shallowScatterColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='shallowScatterWeight' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='shallowScatterRadius' type='maya.float'>
+			<label>Radius</label>
+		</attribute>
+
+		<attribute name='midScatterColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='midScatterWeight' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='midScatterRadius' type='maya.float'>
+			<label>Radius</label>
+		</attribute>
+
+		<attribute name='deepScatterColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='deepScatterWeight' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='deepScatterRadius' type='maya.float'>
+			<label>Radius</label>
+		</attribute>
+
+		<attribute name='specularColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='specularWeight' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='specularRoughness' type='maya.float'>
+			<label>Roughness</label>
+		</attribute>
+		<attribute name='specularIor' type='maya.float'>
+			<label>IOR</label>
+		</attribute>
+
+		<attribute name='sheenColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='sheenWeight' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='sheenRoughness' type='maya.float'>
+			<label>Roughness</label>
+		</attribute>
+		<attribute name='sheenIor' type='maya.float'>
+			<label>IOR</label>
+		</attribute>
+
+		<attribute name='opacity' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='opacityColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+
+		<attribute name='specularInSecondaryRays' type='maya.bool'>
+			<label>Specular in 2nd ARY Rays</label>
+		</attribute>
+		<attribute name='fresnelAffectSss' type='maya.bool'>
+			<label>Fresnel Affect SSS</label>
+		</attribute>
+
+		<attribute name='normalCamera' type='maya.float3'>
+			<label>Bump Mapping</label>
+			<description language="cb">PPattrNavigationControlGrp</description>
+		</attribute>
+
+	</template>
+	<view name='Lookdev' template='AEaiSkin'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='sss_properties'>
+			<label>SSS</label>
+			<property name='sssWeight'/>
+			<property name='globalSssRadiusMultiplier'/>
+			<group name='shallow_scatter_properties'>
+				<label>Shallow Scatter</label>
+				<property name='shallowScatterColor'/>
+				<property name='shallowScatterWeight'/>
+				<property name='shallowScatterRadius'/>
+			</group>
+			<group name='mid_scatter_properties'>
+				<label>Mid Scatter</label>
+				<property name='midScatterColor'/>
+				<property name='midScatterWeight'/>
+				<property name='midScatterRadius'/>
+			</group>
+			<group name='deep_scatter_properties'>
+				<label>Deep Scatter</label>
+				<property name='deepScatterColor'/>
+				<property name='deepScatterWeight'/>
+				<property name='deepScatterRadius'/>
+			</group>
+		</group>
+		<group name='specular_properties'>
+			<label>Specular</label>
+			<property name='specularColor'/>
+			<property name='specularWeight'/>
+			<property name='specularRoughness'/>
+			<property name='specularIor'/>
+		</group>
+		<group name='sheen_properties'>
+			<label>Sheen Layer</label>
+			<property name='sheenColor'/>
+			<property name='sheenWeight'/>
+			<property name='sheenRoughness'/>
+			<property name='sheenIor'/>
+		</group>
+		<group name='opacity_properties'>
+			<label>Opacity</label>
+			<property name='opacity'/>
+			<property name='opacityColor'/>
+		</group>
+		<group name='advanced_properties'>
+			<label>Advanced</label>
+			<property name='specularInSecondaryRays'/>
+			<property name='fresnelAffectSss'/>
+		</group>
+		<group name='bump_properties'>
+			<label>Bump Mapping</label>
+			<property name='normalCamera'/>
+		</group>
+	</view>
+</templates>

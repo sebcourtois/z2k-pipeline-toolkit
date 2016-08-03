@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiBump3d'>
+		<attribute name='bumpMap' type='maya.float'>
+			<label>Bump Map</label>
+		</attribute>
+		<attribute name='bumpHeight' type='maya.float'>
+			<label>Bump Height</label>
+		</attribute>
+		<attribute name='epsilon' type='maya.float'>
+			<label>Epsilon</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiBump3d'>
+		<property name='bumpMap'/>
+		<property name='bumpHeight'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiBump3d'>
+		<property name='outColor'/>
+	</view>
+</templates>

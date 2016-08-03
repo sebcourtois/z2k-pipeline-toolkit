@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiVolumeSampleFloat'>
+		<attribute name='channel' type='maya.string'>
+			<label>Channel</label>
+		</attribute>
+		<attribute name='positionOffset' type='maya.float3'>
+			<label>Position Offset</label>
+		</attribute>
+		<attribute name='interpolation' type='maya.int'>
+			<label>Interpolation</label>
+		</attribute>
+		<attribute name='inputMin' type='maya.float'>
+			<label>Input Min</label>
+		</attribute>
+		<attribute name='inputMax' type='maya.float'>
+			<label>Input Max</label>
+		</attribute>
+		<attribute name='contrast' type='maya.float'>
+			<label>Contrast</label>
+		</attribute>
+		<attribute name='contrastPivot' type='maya.float'>
+			<label>Contrast Pivot</label>
+		</attribute>
+		<attribute name='bias' type='maya.float'>
+			<label>Bias</label>
+		</attribute>
+		<attribute name='gain' type='maya.float'>
+			<label>Gain</label>
+		</attribute>
+		<attribute name='outputMin' type='maya.float'>
+			<label>Output Min</label>
+		</attribute>
+		<attribute name='outputMax' type='maya.float'>
+			<label>Output Max</label>
+		</attribute>
+		<attribute name='clampMin' type='maya.float'>
+			<label>Clamp Min</label>
+		</attribute>
+		<attribute name='clampMax' type='maya.float'>
+			<label>Clamp Max</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiVolumeSampleFloat'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='volumesample_attributes'>
+			<label>Volume Sample Attributes</label>
+			<property name='channel'/>
+			<property name='positionOffset'/>
+			<property name='interpolation'/>
+		</group>
+		<group name='correction_attributes'>
+			<label>Collor Correction Attributes</label>
+			<property name='inputMin'/>
+			<property name='inputMax'/>
+			<property name='contrast'/>
+			<property name='contrastPivot'/>
+			<property name='bias'/>
+			<property name='gain'/>
+			<property name='outputMin'/>
+			<property name='outputMax'/>
+			<property name='clampMin'/>
+			<property name='clampMax'/>
+		</group>
+	</view>
+</templates>

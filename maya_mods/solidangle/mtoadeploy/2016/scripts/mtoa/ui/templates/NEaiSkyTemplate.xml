@@ -1,0 +1,24 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiSky'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='color' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='intensity' type='maya.floa3'>
+			<label>Intensity</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiSky'>
+		<property name='outColor'/>
+		<property name='color'/>
+		<property name='intensity'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiSky'>
+		<property name='outColor'/>
+	</view>
+</templates>

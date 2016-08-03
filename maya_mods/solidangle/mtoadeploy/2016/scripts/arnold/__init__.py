@@ -18,6 +18,7 @@ from .ai_plugins import *
 from .ai_ray import *
 from .ai_render import *
 from .ai_shader_radiance import *
+from .ai_texture import *
 from .ai_types import *
 from .ai_unit_test import *
 from .ai_universe import *

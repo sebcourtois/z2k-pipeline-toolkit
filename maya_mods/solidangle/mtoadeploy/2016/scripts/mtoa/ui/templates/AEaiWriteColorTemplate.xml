@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiWriteColor'>
+		<attribute name='beauty' type='maya.float3'>
+			<label>Beauty</label>
+		</attribute>
+		<attribute name='input' type='maya.float3'>
+			<label>Input</label>
+		</attribute>
+		<attribute name='aovName' type='maya.string'>
+			<label>Name</label>
+		</attribute>
+		<attribute name='blend' type='maya.bool'>
+			<label>Blend</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiWriteColor'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='writecolor_attributes'>
+			<label>Write Color Attributes</label>
+			<property name='beauty'/>
+			<property name='input'/>
+			<property name='aovName'/>
+			<property name='blend'/>
+		</group>
+	</view>
+</templates>

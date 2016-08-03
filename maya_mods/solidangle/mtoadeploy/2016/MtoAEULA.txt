@@ -1,41 +1,73 @@
-End User License Agreement
-This End User License Agreement ("EULA") is a legal agreement between you, an individual or single entity ("End User") and Solid Angle Limited, a company registered in England and Wales ("Solid Angle"), which sets forth the terms and conditions of the license to use the Arnold software, plug-ins and accompanying documentation ("Arnold Software").
+Solid Angle Software License Agreement
+
+This Software License Agreement (“SLA” or "EULA") is a legal agreement between you, an individual or other legal entity ("End User") and Solid Angle S.L., which has its registered address at C/ Gran Vía 51 5-C, 28013 and is holder of Spanish Tax Code Number B-857786455 ("Solid Angle"), which sets forth the terms and conditions of the license to use the Arnold software, plug-ins and accompanying documentation ("Arnold Software").
 
 By downloading, installing, copying, accessing or otherwise using the Arnold Software, you agree to be bound by the terms of this EULA. If you do not agree to the terms of this EULA, do not download, install or use the Arnold Software.
 
+The attention of the End User is particularly drawn to clauses 4 and 5 of this EULA regarding the extent of the warranty Solid Angle gives to the End User and the extent to which it accepts liability to the End User.
+
 The Arnold Software is licensed and not sold. In return for acquiring a license to use the Arnold Software the End User agrees as follows:
 
-1. License Grant
-In consideration of the payment in full of the license fee, Solid Angle grants the End User a limited, non-exclusive and non-transferable license: ( a ) to use the Arnold Software; ( b ) to install the Arnold Software on a network server and use that number of copies of the Arnold Software as have been licensed hereunder at any one time; ( c ) to copy the Arnold Software solely for the purpose of installing it on the End User's computers and for backup storage.
+1. License Grant.
+
+In consideration of the payment in full of the license fee, Solid Angle grants the End User a limited, non-exclusive and non-transferable license: ( a ) to use the Arnold Software; ( b ) to install the Arnold Software on a network server and use that number of copies of the Arnold Software as have been licensed and paid for at any one time; ( c ) to copy the Arnold Software solely for the purpose of installing it on the End User's computers and for backup storage, in each case for the duration of the license period indicated on the applicable quote or order form.
 
 The creation of multiple instances of the Arnold Software on a single computer with multiple processors shall be deemed a single licensed copy of the Arnold Software for the purposes of calculating the number of copies used pursuant to this license.
 
-The use of the Arnold Software at any facility owned by the End User regardless of geographic location is permitted under this license.
+The use of the Arnold Software at any facility owned by the End User regardless of geographic location is permitted under this license; provided, however, End User (including other facilities owned by the End User) shall not at any one time use more copies of the Arnold Software than the total number of copies of the Arnold Software stated in the applicable quote or order form.
 
-2. Restrictions on Use
-The End User may only use the Arnold Software for authorised purposes and may not: ( a ) assign, sublicense, loan, sell, distribute, share, transfer, pledge, lease or rent the Arnold Software or End User's rights hereunder to others without the written permission of Solid Angle; ( b ) reverse engineer, decompile, disassemble, alter or otherwise attempt to discover the source code of the Arnold Software; ( c ) circumvent the license management software; ( d ) adapt, modify, translate or create derivative works based on the Arnold Software.
+2. Restrictions on Use.
+
+The End User may only use the Arnold Software for authorised purposes in relation to its own business and not to provide any service to third parties, and may not: ( a ) assign, sublicense, loan, sell, distribute, share, transfer, pledge, lease or rent the Arnold Software or End User's rights hereunder to others without the written permission of Solid Angle; ( b ) (except to the extent permitted by applicable law) reverse engineer, decompile, disassemble, alter or otherwise attempt to discover the source code of the Arnold Software; ( c ) circumvent the license management software; ( d ) adapt, modify, translate or create derivative works based on the Arnold Software.
 
 The Arnold Software will operate in evaluation mode with a watermarked output if a valid license key is not installed. The use of the watermarked output for commercial use is strictly prohibited.
 
 Licenses that are used for education purposes or have been purchased at an educational discount may only be used by the End User for training and instruction and for no other purpose.
+ 
+Solid Angle’s license grant (and, with that grant, End User’s right to install and use the Arnold Software) is conditioned on End User’s continuous compliance with all license limitations, restrictions and other terms in this Agreement. If End User violates any of these limitations, restrictions or other terms, Section 7 (Term and Termination) will apply. The license descriptions in Section 1 (Grant of License) and this Section 2 (Restrictions on Use) define the scope of rights that Solid Angle grants to End User. Any usage of the Arnold Software outside the scope of the applicable license grant or otherwise not in accordance with this Agreement constitutes an infringement of Solid Angle’s intellectual property rights as well as a material breach of this Agreement.
 
-The End User may not export or re-export the Arnold Software to any country or entity subject to United Kingdom export restrictions.
+3. Ownership.
 
-3. Ownership
-The End User agrees that the Arnold Software and all intellectual property rights shall remain the sole property of Solid Angle. The license granted in this agreement is not a sale of the Arnold Software and this agreement does not give the End User any rights to patents, copyrights, trademarks, service marks, trade secrets, confidential information or any other rights or license with respect to the Arnold Software. The End User agrees to hold the Arnold Software in confidence and to take reasonable measures to prevent unauthorised copying or disclosure. The End User shall not remove or modify any copyright symbols, trademarks, labels and property notices on any and all copies of the Arnold Software.
+The End User agrees that the Arnold Software and all intellectual property rights shall remain the sole property of Solid Angle or its licensor. The license granted in this EULA is not a sale of the Arnold Software and this EULA does not give the End User any rights to patents, copyrights, trademarks, service marks, trade secrets, confidential information or any other rights or license with respect to the Arnold Software. The End User agrees to hold the Arnold Software in confidence and to take reasonable measures to prevent unauthorised copying or disclosure. The End User shall not remove or modify any copyright symbols, trademarks, labels and property notices on any and all copies of the Arnold Software.
 
-4. No Warranties
-Solid Angle expressly disclaims any warranty for the Arnold Software. The Arnold Software is provided "As Is" without any express or implied warranty of any kind, including but not limited to any implied warranty of title, merchantability, non-infringement of third party rights, or fitness for a particular purpose. Solid Angle does not warrant that the Arnold Software will meet your requirements or that the operation of the Arnold Software will be uninterrupted or error free, or that defects in the software will be corrected. Solid Angle does not warrant the correctness or accuracy of the results obtained from the use of the Arnold Software.
+4. Limited Warranty.
 
-5. Limited Liability
-In no event shall Solid Angle or its suppliers be liable to the End User for any consequential, incidental, punitive, special, direct or indirect damages of any kind (including but not limited to damages resulting from loss of use, loss of data, loss of profits, loss of goodwill, loss of business or loss or damage suffered by you as a result of an action brought by a third party) arising out of or relating to the use of the Arnold Software, regardless of whether such loss was reasonably foreseeable or Solid Angle had been advised of the possibility of such damages. In no event will Solid Angle's liability for any claim, whether in contract, tort or any other theory of liability, exceed the license fee paid by the End User.
+Solid Angle warrants that:
 
-6. Term and Termination
-This EULA shall remain in effect until terminated. 
+(a) the Arnold Software will, when properly used and on an operating system for which it was designed, perform substantially in accordance with the functions described in the accompanying documentation; and (b) that the accompanying documentation correctly describes the operation of the Arnold Software in all material respects, in each case for a period of 90 days from the date that the End User downloads the Arnold Software (Warranty Period).
 
-Solid Angle may terminate this agreement, and the license it grants, immediately if the End User breaches any term or condition of this agreement. On termination by Solid Angle, the End User agrees to immediately stop using the Arnold Software, permanently delete the Arnold Software and all copies and within five (5) days thereafter provide Solid Angle with written confirmation that you have complied with these actions.
+If, within the Warranty Period, the End User notifies Solid Angle in writing of any defect or fault in the Arnold Software as a result of which it fails to perform substantially in accordance with the accompanying documentation, Solid Angle will, at its sole option, either repair or replace the Arnold Software, provided that the End User makes available all the information that may be necessary to help Solid Angle to remedy the defect or fault, including sufficient information to enable it to recreate the defect or fault.
 
-The End User may terminate this agreement, and the license it grants, at any time by permanently deleting the Arnold Software and all copies.
+The warranty given by Solid Angle does not apply if the defect or fault in the Arnold Software results from any amendment or attempted amendment of the Arnold Software by any person other than Solid Angle or if the defect or fault in the Arnold Software results from use of the Arnold Software in contravention of the terms of this EULA.
 
-7. Law
-This agreement shall be governed and interpreted in accordance with English Law. In the event that one or more of the provisions in this agreement is found to be illegal or unenforceable by a court of competent jurisdiction, this agreement shall not be rendered inoperative, the provision in question shall be enforced to the maximum extent permissible and the remaining provisions shall continue in full force and effect.
+The End User acknowledges that the Arnold Software has not been developed to meet the End User's individual requirements and that it is therefore the End User's responsibility to ensure that the facilities and functionality of the Arnold Software meet such requirements. Solid Angle does not warrant that the Arnold Software will meet the End User's requirements or that the operation of the Arnold Software will be uninterrupted or error free, or that defects in the Arnold Software will be corrected. Solid Angle does not warrant the correctness or accuracy of the results obtained from the use of the Arnold Software.
+
+EXCEPT AS EXPRESSLY STATED IN THIS EULA, THERE ARE NO CONDITIONS, WARRANTIES, REPRESENTATIONS OR OTHER TERMS, EXPRESS OR IMPLIED, THAT ARE BINDING ON SOLID ANGLE. ANY CONDITION, WARRANTY, REPRESENTATION OR OTHER TERM CONCERNING THE SUPPLY OF THE ARNOLD SOFTWARE WHICH MIGHT OTHERWISE BE IMPLIED INTO, OR INCORPORATED IN, THIS EULA WHETHER BY STATUTE, COMMON LAW OR OTHERWISE, IS EXCLUDED TO THE FULLEST EXTENT PERMITTED BY LAW.
+
+5. Limited Liability.
+
+Nothing in this EULA shall limit or exclude Solid Angle's liability for death or personal injury resulting from its negligence, for fraud or fraudulent misrepresentation or for any other liability that cannot be excluded or limited by applicable law.
+
+IN NO EVENT SHALL SOLID ANGLE OR ITS SUPPLIERS BE LIABLE TO THE END USER FOR ANY THIRD PARTY CLAIMS OR ANY CONSEQUENTIAL, INCIDENTAL, PUNITIVE, SPECIAL, OR INDIRECT DAMAGES OF ANY KIND (INCLUDING BUT NOT LIMITED TO DAMAGES RESULTING FROM LOSS OF USE, LOSS OR CORRUPTION OF DATA, LOSS OF PROFITS, LOSS OF GOODWILL, LOSS OF BUSINESS OR OTHER LOSS OR DAMAGE SUFFERED) ARISING OUT OF OR RELATING TO THE USE OF THE ARNOLD SOFTWARE, REGARDLESS OF WHETHER SUCH LOSS WAS REASONABLY FORESEEABLE OR SOLID ANGLE HAD BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. IN NO EVENT WILL SOLID ANGLE'S LIABILITY FOR ANY CLAIM, WHETHER IN CONTRACT, TORT (INCLUDING NEGLIGENCE), MISREPRESENTATION (WHETHER INNOCENT OR NEGLIGENT), NEGLIGENT MISSTATEMENT, BREACH OF STATUTORY DUTY OR ANY OTHER THEORY OF LIABILITY, EXCEED THE LICENSE FEE PAID BY THE END USER.
+
+6. Events Outside our Control.
+
+We will not be liable or responsible for any failure to perform, or delay in performance of, any of our obligations under this EULA that is caused by an Event Outside Our Control, as defined below.
+
+An Event Outside Our Control means any act or event beyond our reasonable control, including without limitation failure of public or private telecommunications networks.
+
+If an Event Outside Our Control takes place that affects the performance of our obligations under this EULA our obligations under this EULA will be suspended and the time for performance of our obligations will be extended for the duration of the Event Outside Our Control.
+
+7. Term and Termination.
+
+This EULA shall remain in effect until terminated or until the end of the license period indicated on the applicable quote or order form, whichever is sooner.
+
+Solid Angle may terminate this EULA, and the license it grants, immediately if the End User breaches any term of this EULA. On termination by Solid Angle, the End User agrees to immediately stop using the Arnold Software, permanently delete the Arnold Software and all copies and within five (5) days thereafter provide Solid Angle with written confirmation that it has complied with these actions.
+
+The End User may terminate this EULA, and the license it grants, at any time by permanently deleting the Arnold Software and all copies and notifying Solid Angle.
+
+Sections 2, 3, 5, 7, and 8 shall survive any termination or expiration of this Agreement.
+
+8. Miscellaneous.
+
+ This Agreement is the exclusive agreement between the parties concerning the subject matter hereof and supersedes any and all prior oral or written agreements, negotiations, or other dealings between the parties concerning such subject. This Agreement may be modified only by a written instrument signed by both parties. If any action is brought by either party to this Agreement against the other party regarding the subject matter hereof, the prevailing party shall be entitled to recover, in addition to any other relief granted, reasonable attorneys' fees and expenses of litigation. Should any term of this Agreement be declared void or unenforceable by any court of competent jurisdiction, such declaration shall have no effect on the remaining terms of this Agreement. The failure of either party to enforce any rights granted hereunder or to take action against the other party in the event of any breach hereunder shall not be deemed a waiver by that party as to subsequent enforcement of rights or subsequent actions in the event of future breaches. This Agreement shall be governed by, and construed in accordance with the laws of England and Wales, without reference to conflict-of-laws principles and excluding the UN Convention on Contracts for the International Sale of Goods.  End User acknowledges and agrees that the Uniform Computer Information Transactions Act is excluded from application to this Agreement. Any claims, legal proceeding or litigation arising in connection with this Agreement will be brought solely in London, England, United Kingdom, and both parties consent to the jurisdiction of such courts.

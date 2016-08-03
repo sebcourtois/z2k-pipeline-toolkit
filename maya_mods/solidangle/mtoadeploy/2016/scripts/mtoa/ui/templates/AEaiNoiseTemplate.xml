@@ -1,0 +1,41 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiNoise'>
+		<attribute name='octaves' type='maya.int'>
+			<label>Octaves</label>
+		</attribute>
+		<attribute name='distortion' type='maya.float'>
+			<label>Distortion</label>
+		</attribute>
+		<attribute name='lacunarity' type='maya.float'>
+			<label>Lacunarity</label>
+		</attribute>
+		<attribute name='amplitude' type='maya.float'>
+			<label>Amplitude</label>
+		</attribute>
+		<attribute name='scale' type='maya.float3'>
+			<label>Scale</label>
+		</attribute>
+		<attribute name='offset' type='maya.float3'>
+			<label>Offset</label>
+		</attribute>
+		<attribute name='coordSpace' type='maya.int'>
+			<label>Coord Space</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiNoise'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='noise_attributes'>
+			<label>Nouise Attributes</label>
+			<property name='octaves'/>
+			<property name='distortion'/>
+			<property name='lacunarity'/>
+			<property name='amplitude'/>
+			<property name='scale'/>
+			<property name='offset'/>
+			<property name='coordSpace'/>
+		</group>
+	</view>
+</templates>

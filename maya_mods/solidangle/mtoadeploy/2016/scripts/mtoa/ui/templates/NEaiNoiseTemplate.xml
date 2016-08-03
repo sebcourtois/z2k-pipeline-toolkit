@@ -1,0 +1,28 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiNoise'>
+		<attribute name='outValue' type='maya.float'>
+			<label>Out Value</label>
+		</attribute>
+		<attribute name='amplitude' type='maya.float'>
+			<label>Amplitude</label>
+		</attribute>
+		<attribute name='scale' type='maya.float3'>
+			<label>Scale</label>
+		</attribute>
+		<attribute name='offset' type='maya.float3'>
+			<label>Offset</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiNoise'>
+		<property name='outValue'/>
+		<property name='amplitude'/>
+		<property name='scale'/>
+		<property name='offset'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiNoise'>
+		<property name='outValue'/>
+	</view>
+</templates>

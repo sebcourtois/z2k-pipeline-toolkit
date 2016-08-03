@@ -1,0 +1,82 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiVolumeCollector'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='scatteringSource' type='maya.int'>
+			<label>Scattering Source</label>
+		</attribute>
+		<attribute name='scattering' type='maya.float3'>
+			<label>Scattering</label>
+		</attribute>
+		<attribute name='scatteringChannel' type='maya.string'>
+			<label>Scattering Channel</label>
+		</attribute>
+		<attribute name='scatteringColor' type='maya.float3'>
+			<label>Scattering Color</label>
+		</attribute>
+		<attribute name='scatteringIntensity' type='maya.float'>
+			<label>Scattering Intensity</label>
+		</attribute>
+		<attribute name='anisotropy' type='maya.float'>
+			<label>Anisotropy</label>
+		</attribute>
+		<attribute name='attenuationSource' type='maya.int'>
+			<label>Attenuation Source</label>
+		</attribute>
+		<attribute name='attenuation' type='maya.float3'>
+			<label>Attenuation</label>
+		</attribute>
+		<attribute name='attenuationChannel' type='maya.string'>
+			<label>Attenuation Channel</label>
+		</attribute>
+		<attribute name='attenuationColor' type='maya.float3'>
+			<label>Attenuation Color</label>
+		</attribute>
+		<attribute name='attenuationIntensity' type='maya.float'>
+			<label>Attenuation Intensity</label>
+		</attribute>
+		<attribute name='attenuationMode' type='maya.int'>
+			<label>Attenuation Mode</label>
+		</attribute>
+		<attribute name='emissionSource' type='maya.int'>
+			<label>Emission Source</label>
+		</attribute>
+		<attribute name='emission' type='maya.float3'>
+			<label>Emission</label>
+		</attribute>
+		<attribute name='emissionChannel' type='maya.string'>
+			<label>Emission Channel</label>
+		</attribute>
+		<attribute name='emissionColor' type='maya.float3'>
+			<label>Emission Color</label>
+		</attribute>
+		<attribute name='emissionIntensity' type='maya.float'>
+			<label>Emission Intensity</label>
+		</attribute>
+		<attribute name='positionOffset' type='maya.float3'>
+			<label>Position Offset</label>
+		</attribute>
+		<attribute name='interpolation' type='maya.int'>
+			<label>Interpolation</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiVolumeCollector'>
+		<property name='outColor'/>
+		<property name='scattering'/>
+		<property name='scatteringColor'/>
+		<property name='scatteringIntensity'/>
+		<property name='attenuation'/>
+		<property name='attenuationColor'/>
+		<property name='attenuationIntensity'/>
+		<property name='emission'/>
+		<property name='emissionColor'/>
+		<property name='emissionIntensity'/>
+		<property name='positionOffset'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiVolumeCollector'>
+		<property name='outColor'/>
+	</view>
+</templates>

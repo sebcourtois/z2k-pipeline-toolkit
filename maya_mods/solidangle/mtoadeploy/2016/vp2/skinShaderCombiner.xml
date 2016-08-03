@@ -9,6 +9,7 @@
         <float3 name="deepScatterColor" />
         <float name="deepScatterWeight" />
         <float3 name="diffuseInput" />
+        <undefined name="GPUStage" semantic="GPUStage" />
     </properties>
     <values>
         <float name="sssWeight" value="1.0" />
@@ -77,28 +78,28 @@ mayaSurfaceShaderOutput skinShaderCombiner(
                 ]]>
             </source>
         </implementation>
-        <implementation render="OGSRenderer" language="HLSL" lang_version="10.0">
+        <implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
             <function_name val="skinShaderCombiner" />
             <source>
                  <![CDATA[
 mayaSurfaceShaderOutput skinShaderCombiner(
                 float sssWeight,
-                float3 shallowScatterColor,
+                vec3 shallowScatterColor,
                 float shallowScatterWeight,
-                float3 midScatterColor,
+                vec3 midScatterColor,
                 float midScatterWeight,
-                float3 deepScatterColor,
+                vec3 deepScatterColor,
                 float deepScatterWeight,
-                float3 diffuseInput)
+                vec3 diffuseInput)
 {
     mayaSurfaceShaderOutput result;
 
-    float3 scatterColor = sssWeight * (shallowScatterColor * shallowScatterWeight + midScatterColor * midScatterWeight + deepScatterColor * deepScatterWeight);
+    vec3 scatterColor = sssWeight * (shallowScatterColor * shallowScatterWeight + midScatterColor * midScatterWeight + deepScatterColor * deepScatterWeight);
     result.outColor = scatterColor * diffuseInput;
-    result.outTransparency = float3(0.0f, 0.0f, 0.0f);
-    result.outGlowColor = float3(0.0f, 0.0f, 0.0f);
-    result.outMatteOpacity = float3(-1.0e+06f, -1.0e+06f, -1.0e+06f);
-    result.outSurfaceFinal = float4(result.outColor, 1.0f);
+    result.outTransparency = vec3(0.0f, 0.0f, 0.0f);
+    result.outGlowColor = vec3(0.0f, 0.0f, 0.0f);
+    result.outMatteOpacity = vec3(-1.0e+06f, -1.0e+06f, -1.0e+06f);
+    result.outSurfaceFinal = vec4(result.outColor, 1.0f);
     return result;
 }
                 ]]>

@@ -1,0 +1,53 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiAmbientOcclusion'>
+		<attribute name='samples' type='maya.int'>
+			<label>Samples</label>
+		</attribute>
+		<attribute name='spread' type='maya.float'>
+			<label>Spread</label>
+		</attribute>
+		<attribute name='falloff' type='maya.float'>
+			<label>Falloff</label>
+		</attribute>
+		<attribute name='nearClip' type='maya.float'>
+			<label>Near Clip</label>
+		</attribute>
+		<attribute name='farClip' type='maya.float'>
+			<label>Far Clip</label>
+		</attribute>
+		<attribute name='white' type='maya.float3'>
+			<label>White</label>
+		</attribute>
+		<attribute name='black' type='maya.float3'>
+			<label>Black</label>
+		</attribute>
+		<attribute name='opacity' type='maya.float3'>
+			<label>Opacity</label>
+		</attribute>
+		<attribute name='invertNormals' type='maya.bool'>
+			<label>Invert Normals</label>
+		</attribute>
+		<attribute name='selfOnly' type='maya.bool'>
+			<label>Self Only</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiAmbientOcclusion'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='ao_attributes'>
+			<label>Ambient Occlusion Attributes</label>
+			<property name='samples'/>
+			<property name='spread'/>
+			<property name='falloff'/>
+			<property name='nearClip'/>
+			<property name='farClip'/>
+			<property name='white'/>
+			<property name='black'/>
+			<property name='opacity'/>
+			<property name='invertNormals'/>
+			<property name='selfOnly'/>
+		</group>
+	</view>
+</templates>

@@ -20,6 +20,8 @@ enum ArnoldSessionMode
    MTOA_SESSION_ASS,
    MTOA_SESSION_AIR,
    MTOA_SESSION_RENDERVIEW,
+   MTOA_SESSION_MATERIALVIEW,
+   MTOA_SESSION_SEQUENCE,
    MTOA_SESSION_ANY
 };
 
@@ -171,6 +173,9 @@ private:
    void FormatTexturePath(MString& texturePath) const;
    void FormatProceduralPath(MString& proceduralPath) const;
 
+   const MStringArray &GetTextureSearchPaths() const {return m_textureSearchPaths;}
+   const MStringArray &GetProceduralSearchPaths() const {return m_proceduralSearchPaths;}
+   
 private:
 
    MObject              m_options;

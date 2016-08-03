@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiVolumeSampleRgb'>
+		<attribute name='channel' type='maya.string'>
+			<label>Channel</label>
+		</attribute>
+		<attribute name='positionOffset' type='maya.float3'>
+			<label>Position Offset</label>
+		</attribute>
+		<attribute name='interpolation' type='maya.int'>
+			<label>Interpolation</label>
+		</attribute>
+		<attribute name='gamma' type='maya.float'>
+			<label>Gamma</label>
+		</attribute>
+		<attribute name='hueShift' type='maya.float'>
+			<label>Hue Shift</label>
+		</attribute>
+		<attribute name='saturation' type='maya.float'>
+			<label>Saturation</label>
+		</attribute>
+		<attribute name='contrast' type='maya.float'>
+			<label>Contrast</label>
+		</attribute>
+		<attribute name='contrastPivot' type='maya.float'>
+			<label>Contrast Pivot</label>
+		</attribute>
+		<attribute name='exposure' type='maya.float'>
+			<label>Exposure</label>
+		</attribute>
+		<attribute name='multiply' type='maya.float'>
+			<label>Multiply</label>
+		</attribute>
+		<attribute name='add' type='maya.float'>
+			<label>Add</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiVolumeSampleRgb'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='volumesample_attributes'>
+			<label>Volume Sample Attributes</label>
+			<property name='channel'/>
+			<property name='positionOffset'/>
+			<property name='interpolation'/>
+		</group>
+		<group name='correction_attributes'>
+			<label>Collor Correction Attributes</label>
+			<property name='gamma'/>
+			<property name='hueShift'/>
+			<property name='saturation'/>
+			<property name='contrast'/>
+			<property name='contrastPivot'/>
+			<property name='exposure'/>
+			<property name='multiply'/>
+			<property name='add'/>
+		</group>
+	</view>
+</templates>

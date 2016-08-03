@@ -1,0 +1,32 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiPhysicalSky'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='groundAlbedo' type='maya.float3'>
+			<label>Ground Albedo</label>
+		</attribute>
+		<attribute name='intensity' type='maya.float'>
+			<label>Intensity</label>
+		</attribute>
+		<attribute name='skyTint' type='maya.float3'>
+			<label>skyTint</label>
+		</attribute>
+		<attribute name='sunTint' type='maya.float3'>
+			<label>sunTint</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiPhysicalSky'>
+		<property name='outColor'/>
+		<property name='groundAlbedo'/>
+		<property name='intensity'/>
+		<property name='skyTint'/>
+		<property name='sunTint'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiPhysicalSky'>
+		<property name='outColor'/>
+	</view>
+</templates>

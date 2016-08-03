@@ -9,9 +9,16 @@
 #include <vector>
 #include <string>
 
+#include "SessionOptions.h"
+
 class CArnoldLightLinks{
 public:
-   CArnoldLightLinks() {}
+   CArnoldLightLinks() 
+   : m_numArnoldLights(0)
+   , m_lightMode(MTOA_LIGHTLINK_NONE)
+   , m_shadowMode(MTOA_LIGHTLINK_NONE)
+   {}
+
    ~CArnoldLightLinks() {}
    
    // Building the database from the lightLinker nodes
