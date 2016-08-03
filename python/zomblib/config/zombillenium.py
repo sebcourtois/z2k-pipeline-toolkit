@@ -16,8 +16,7 @@ class project(object):
     dir_name = "zomb"
     aliases = ("proj",)
 
-    #public_path = '//ZOMBIWALK/z2k/05_3D/{}/'.format(dir_name)
-    private_path = join(expand('$ZOMB_PRIVATE_LOC'), "private", "$DAVOS_USER", "{proj.dir_name}")
+    private_path = join(expand("$ZOMB_PRIVATE_LOC"), "private", "{$DAVOS_USER@user_name}", "{proj.dir_name@project_dir}")
     template_path = expand('$ZOMB_TOOL_PATH/template/').replace("\\", "/")
 
     damas_root_path = "/{}/".format(dir_name)
@@ -53,15 +52,16 @@ class project(object):
                         }
 
 class damas(object):
+
     public_path = project.damas_root_path
-    private_path = join(project.damas_root_path, "private", "$DAVOS_USER", "{proj.dir_name}")
+    private_path = join(project.damas_root_path, "private", "$DAVOS_USER", "{proj.dir_name@project_dir}")
 
 class shot_lib(object):
 
     entity_class = "davos.core.damtypes.DamShot"
 
-    dir_name = "shot"
-    public_path = join(expand('$ZOMB_SHOT_LOC'), "{proj.dir_name}", dir_name)
+    dir_name = "{shot@library_dir}"
+    public_path = join(expand('$ZOMB_SHOT_LOC'), "{proj.dir_name@project_dir}", dir_name)
     private_path = join(project.private_path, dir_name)
 
     public_path_envars = ('ZOMB_SHOT_PATH',)
@@ -86,13 +86,13 @@ class shot_lib(object):
                      "{name}_camera.abc -> camera_abc":None,
                      "{name}_infoSet.txt -> infoSet_file":None,
                     },
-                 "{step:01_previz} -> previz_dir":
+                 "{01_previz@step} -> previz_dir":
                     {
                      "export -> previz_export_dir":{},
                      "{name}_previz.ma -> previz_scene":None,
                      "{name}_previz.mov -> previz_capture":None,
                     },
-                 "{step:01_stereo} -> stereo_dir":
+                 "{01_stereo@step} -> stereo_dir":
                     {
                      "{name}_stereo.ma -> stereo_scene":None,
                      "{name}_left.mov -> left_capture":None,
@@ -100,13 +100,13 @@ class shot_lib(object):
                      "{name}_stereoCam.atom -> stereoCam_anim":None,
                      "{name}_stereoInfo.json -> stereoCam_info":None,
                     },
-                "{step:02_layout} -> layout_dir":
+                "{02_layout@step} -> layout_dir":
                    {
                     "{name}_layout.ma -> layout_scene":None,
                     "{name}_layout.mov -> layout_capture":None,
                     "{name}_layoutInfo.json -> layoutInfo_file":None,
                    },
-                "{step:04_anim} -> anim_dir":
+                "{04_anim@step} -> anim_dir":
                    {
                     "geoCache -> animCache_dir":{},
                     "{name}_anim.ma -> anim_scene":None,
@@ -122,20 +122,20 @@ class shot_lib(object):
                     "{name}_animSplitC.ma -> animSplitC_scene":None,
                     "{name}_animSplitC.mov -> animSplitC_capture":None,
                    },
-                "{step:05_charFx} -> charFx_dir":
+                "{05_charFx@step} -> charFx_dir":
                    {
                     "geoCache -> charFx_cache_dir":{},
                     "{name}_charFx.ma -> charFx_scene":None,
                     "{name}_charFx.mov -> charFx_capture":None,
                    },
-                "{step:06_finalLayout} -> finalLayout_dir":
+                "{06_finalLayout@step} -> finalLayout_dir":
                    {
                     "geoCache -> finalLayout_cache_dir":{},
                     "{name}_finalLayout.ma -> finalLayout_scene":None,
                     "{name}_finalLayout.mov -> finalLayout_movie":None,
                     "{name}_arlequin.mov -> arlequin_movie":None,
                    },
-                "{step:07_fx3d} -> fx3d_dir":
+                "{07_fx3d@step} -> fx3d_dir":
                    {
                     "geoCache -> fx3d_geoCache_dir":{},
                     "fxCache -> fx3d_fxCache_dir":{},
@@ -143,7 +143,7 @@ class shot_lib(object):
                     "{name}_fx3d.ma -> fx3d_scene":None,
                     "{name}_fx3d.mov -> fx3d_capture":None,
                    },
-                "{step:08_render} -> rendering_dir":
+                "{08_render@step} -> rendering_dir":
                    {
                     "{name}_render.ma -> rendering_scene":None,
                     "{name}_render.mov -> rendering_movie":None,
@@ -340,8 +340,8 @@ class shot_lib(object):
 
 class output_lib(object):
 
-    dir_name = "output"
-    public_path = join(expand('$ZOMB_OUTPUT_LOC'), "{proj.dir_name}", dir_name)
+    dir_name = "{output@library_dir}"
+    public_path = join(expand('$ZOMB_OUTPUT_LOC'), "{proj.dir_name@project_dir}", dir_name)
     private_path = join(project.private_path, dir_name)
 
     public_path_envars = ('ZOMB_OUTPUT_PATH',)
@@ -356,8 +356,8 @@ class output_lib(object):
 
 class misc_lib(object):
 
-    dir_name = "misc"
-    public_path = join(expand('$ZOMB_MISC_LOC'), "{proj.dir_name}", dir_name)
+    dir_name = "{misc@library_dir}"
+    public_path = join(expand('$ZOMB_MISC_LOC'), "{proj.dir_name@project_dir}", dir_name)
     private_path = join(project.private_path, dir_name)
 
     public_path_envars = ('ZOMB_MISC_PATH',)
@@ -367,8 +367,8 @@ class misc_lib(object):
 
 class asset_lib(object):
 
-    dir_name = "asset"
-    public_path = join(expand('$ZOMB_ASSET_LOC'), "{proj.dir_name}", dir_name)
+    dir_name = "{asset@library_dir}"
+    public_path = join(expand('$ZOMB_ASSET_LOC'), "{proj.dir_name@project_dir}", dir_name)
     private_path = join(project.private_path, dir_name)
 
     public_path_envars = ('ZOMB_ASSET_PATH', 'ZOMB_TEXTURE_PATH', 'ZOMB_GEOMETRY_PATH')

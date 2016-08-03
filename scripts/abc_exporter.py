@@ -271,7 +271,7 @@ def makeOutputPath(sSrcRcName, sFileName, timestamp=None, save=True):
     return sFilePath
 
 def loadDbNodes(proj, drcFileList):
-    dbNodeList = proj.dbNodesForResources(drcFileList)
+    dbNodeList = proj.dbNodesFromEntries(drcFileList)
     for scnFile, dbNode in izip(drcFileList, dbNodeList):
         if not dbNode:
             scnFile.loadDbNode(fromCache=False)
