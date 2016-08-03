@@ -1,0 +1,20 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiVolumeSampleFloat'>
+		<attribute name='outValue' type='maya.float'>
+			<label>Out Value</label>
+		</attribute>
+		<attribute name='positionOffset' type='maya.float3'>
+			<label>Position Offset</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiVolumeSampleFloat'>
+		<property name='outValue'/>
+		<property name='positionOffset'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiVolumeSampleFloat'>
+		<property name='outValue'/>
+	</view>
+</templates>

@@ -1,0 +1,52 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiShadowCatcher'>
+		<attribute name='backgroundColor' type='maya.float3'>
+			<label>Background Color</label>
+		</attribute>
+		<attribute name='reflection' type='maya.float3'>
+			<label>Reflection</label>
+		</attribute>
+		<attribute name='catchShadows' type='maya.bool'>
+			<label>Catch Shadows</label>
+		</attribute>
+		<attribute name='shadowColor' type='maya.float3'>
+			<label>Shadow Color</label>
+		</attribute>
+		<attribute name='backlighting' type='maya.float'>
+			<label>Backlighting</label>
+		</attribute>
+		<attribute name='enableTransparency' type='maya.bool'>
+			<label>Enable Transparency</label>
+		</attribute>
+		<attribute name='shadowTransparency' type='maya.float3'>
+			<label>Shadow Transparency</label>
+		</attribute>
+		<attribute name='catchDiffuse' type='maya.bool'>
+			<label>Catch Diffuse</label>
+		</attribute>
+		<attribute name='diffuseColor' type='maya.float3'>
+			<label>Diffuse Color</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiShadowCatcher'>
+		<description>View optimized for lookdev workflows</description>
+		<property name='backgroundColor'/>
+		<property name='reflection'/>
+		<group name='shadow_properties'>
+			<label>Shadows</label>
+			<property name='catchShadows'/>
+			<property name='shadowColor'/>
+			<property name='backlighting'/>
+			<property name='enableTransparency'/>
+			<property name='shadowTransparency'/>
+		</group>
+		<group name='difffuse_properties'>
+			<label>Diffuse</label>
+			<property name='catchDiffuse'/>
+			<property name='diffuseColor'/>
+		</group>
+	</view>
+</templates>

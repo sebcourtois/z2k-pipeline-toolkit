@@ -71,7 +71,7 @@ public:
 
    // Render Methods.
    /// Render into the Render View, not IPR.
-   void DoInteractiveRender(const MString& postRenderMel="");
+   int DoInteractiveRender();
    /// Render in the background of Maya.
    int DoBatchRender();
 
@@ -100,7 +100,7 @@ public:
    static void InteractiveRenderCallback(float, float, void* data);
 
    /// Stop a render, leaving Arnold univierse active.
-   void InterruptRender(bool waitFinished = false);
+   void InterruptRender(bool waitFinished = true);
 
    void RunRenderView();
    void SetRenderViewOption(const MString &option, const MString &value);
@@ -167,6 +167,8 @@ public:
    inline bool IsActive() const { return m_is_active; }
 
    static void ClearIdleRenderViewCallback();
+
+   bool RenderSequence();
       
 private:
 

@@ -3,30 +3,6 @@ from ctypes import *
 from .arnold_common import ai
 from .ai_types import *
 
-AiLicenseSetServer = ai.AiLicenseSetServer
-AiLicenseSetServer.argtypes = [AtString, c_uint]
-AiLicenseSetServer.restype = c_bool
-
-ai.AiLicenseGetServer.argtypes = [AtString, POINTER(c_uint)]
-ai.AiLicenseGetServer.restype = c_bool
-
-def AiLicenseGetServer(host, port):
-    return ai.AiLicenseGetServer(host, byref(port))
-
-AiLicenseSetAttempts = ai.AiLicenseSetAttempts
-AiLicenseSetAttempts.argtypes = [c_int]
-
-AiLicenseGetAttempts = ai.AiLicenseGetAttempts
-AiLicenseGetAttempts.argtypes = []
-AiLicenseGetAttempts.restype = c_uint
-
-AiLicenseSetAttemptDelay = ai.AiLicenseSetAttemptDelay
-AiLicenseSetAttemptDelay.argtypes = [c_int]
-
-AiLicenseGetAttemptDelay = ai.AiLicenseGetAttemptDelay
-AiLicenseGetAttemptDelay.argtypes = []
-AiLicenseGetAttemptDelay.restype = c_uint
-
 class AtLicenseInfo(Structure):
     _fields_ = [("used", c_bool),
                 ("name", c_char * 64),

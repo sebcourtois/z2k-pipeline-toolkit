@@ -3,6 +3,7 @@
     <properties>
         <float3 name="hardwareColor" />
         <float3 name="diffuseInput" />
+        <undefined name="GPUStage" semantic="GPUStage" />
     </properties>
     <values>
         <float3 name="hardwareColor" value="1.0 1.0 1.0" />
@@ -51,21 +52,21 @@ mayaSurfaceShaderOutput genericShaderCombiner(
                 ]]>
             </source>
         </implementation>
-        <implementation render="OGSRenderer" language="HLSL" lang_version="10.0">
+        <implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
             <function_name val="genericShaderCombiner" />
             <source>
                  <![CDATA[
 mayaSurfaceShaderOutput genericShaderCombiner(
-                float3 hardwareColor,
-                float3 diffuseInput)
+                vec3 hardwareColor,
+                vec3 diffuseInput)
 {
     mayaSurfaceShaderOutput result;
 
     result.outColor = hardwareColor * diffuseInput;
-    result.outTransparency = float3(0.0f, 0.0f, 0.0f);
-    result.outGlowColor = float3(0.0f, 0.0f, 0.0f);
-    result.outMatteOpacity = float3(-1.0e+06f, -1.0e+06f, -1.0e+06f);
-    result.outSurfaceFinal = float4(result.outColor, 1.0f);
+    result.outTransparency = vec3(0.0f, 0.0f, 0.0f);
+    result.outGlowColor = vec3(0.0f, 0.0f, 0.0f);
+    result.outMatteOpacity = vec3(-1.0e+06f, -1.0e+06f, -1.0e+06f);
+    result.outSurfaceFinal = vec4(result.outColor, 1.0f);
     return result;
 }
                 ]]>

@@ -26,6 +26,7 @@ import math
 import re
 
 import pymel.core as pm
+import pymel.versions as versions
 
 import mtoa.utils as utils
 from mtoa.ui.ae.templates import createTranslatorMenu
@@ -112,12 +113,12 @@ def createArnoldTargetFilePreview():
               font="smallBoldLabelFont",
               label=pm.mel.uiRes("m_createMayaSoftwareCommonGlobalsTab.kPath"))
 
-    pm.text('exampleArnoldText1',
+    pm.text('exampleText1',
               align="left",
               font="smallBoldLabelFont",
               label=pm.mel.uiRes("m_createMayaSoftwareCommonGlobalsTab.kFileName"))
 
-    pm.text('exampleArnoldText2',
+    pm.text('exampleText2',
               align="left",
               font="smallBoldLabelFont",
               label=pm.mel.uiRes("m_createMayaSoftwareCommonGlobalsTab.kTo"))
@@ -164,7 +165,6 @@ def createArnoldTargetFilePreview():
 
     # Now we establish scriptJobs to invoke the procedure which updates the
     # target file preview when any of the above attributes change.
-
     for attr in attrArray:
         pm.scriptJob(attributeChange = (attr,updateArnoldTargetFilePreview),
                         parent='targetFilePreview')
@@ -216,7 +216,12 @@ def updateArnoldTargetFilePreview(*args):
 
     kwargs['createDirectory'] = False
     kwargs['leaveUnmatchedTokens'] = True
+
+    if not pm.objExists('defaultArnoldRenderOptions'):
+        return
+
     aovsEnabled = pm.getAttr('defaultArnoldRenderOptions.aovMode') and aovs.getAOVs(enabled=True, exclude=['beauty', 'RGBA', 'RGB'])
+
     if aovsEnabled:
         tokens['RenderPass'] = '<RenderPass>'
     kwargs['strictAOVs'] = not (aovsEnabled and not pm.getAttr('defaultArnoldDriver.mergeAOVs'))
@@ -239,15 +244,15 @@ def updateArnoldTargetFilePreview(*args):
         path = pm.format(pathLabel, s=fullPath)
         pm.text('exampleText0', edit=True, label=path)
 
-    pm.text('exampleArnoldText1', edit=True, label=pm.format(title1, s=first))
+    pm.text('exampleText1', edit=True, label=pm.format(title1, s=first))
     settings = pm.api.MCommonRenderSettingsData()
     pm.api.MRenderUtil.getCommonRenderSettings(settings)
     if settings.isAnimated():
         tokens['Frame'] = pm.getAttr('defaultRenderGlobals.endFrame')
         last = utils.getFileName('relative', tokens, **kwargs)
-        pm.text('exampleArnoldText2', edit=True, label=pm.format(title2, s=last))
+        pm.text('exampleText2', edit=True, label=pm.format(title2, s=last))
     else:
-        pm.text('exampleArnoldText2', edit=True, label="")
+        pm.text('exampleText2', edit=True, label="")
 
     #
     # Update the Image Size portion of the preview.
@@ -2243,6 +2248,19 @@ def createArnoldRendererCommonGlobalsTab():
     createArnoldCommonResolution()
 
     pm.setParent(commonTabColumn)
+    
+    # Scene Assembly Section
+    #
+    maya_version = versions.shortName()
+    if int(float(maya_version)) >= 2017:
+        pm.frameLayout('sceneAssemblyFrame',
+                        label=pm.mel.uiRes("m_createMayaSoftwareCommonGlobalsTab.kSceneAssembly"),
+                        collapsable=True,
+                        collapse=True)
+
+        pm.mel.eval('createCommonSceneAssembly()')
+    
+        pm.setParent(commonTabColumn)
 
     # Render Options
     #

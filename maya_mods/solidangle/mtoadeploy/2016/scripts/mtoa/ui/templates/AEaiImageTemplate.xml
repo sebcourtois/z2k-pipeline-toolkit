@@ -1,0 +1,87 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiImage'>
+		<attribute name='filename' type='maya.string'>
+			<label>Image Name</label>
+		</attribute>
+		<attribute name='filter' type='maya.int'>
+			<label>Filter</label>
+		</attribute>
+		<attribute name='mipmapBias' type='maya.int'>
+			<label>Mipmap Bias</label>
+		</attribute>
+		<attribute name='multiply' type='maya.float3'>
+			<label>Multiply</label>
+		</attribute>
+		<attribute name='offset' type='maya.float3'>
+			<label>Offset</label>
+		</attribute>
+		<attribute name='ignoreMissingTiles' type='maya.bool'>
+			<label>Ignore Missing Tiles</label>
+		</attribute>
+		<attribute name='missingTileColor' type='maya.float3'>
+			<label>Missing Tile Color</label>
+		</attribute>
+		<attribute name='uvset' type='maya.string'>
+			<label>UV Set</label>
+		</attribute>
+		<attribute name='uvcoords' type='maya.float2'>
+			<label>UV Coords</label>
+		</attribute>
+		<attribute name='soffset' type='maya.float'>
+			<label>Offset U</label>
+		</attribute>
+		<attribute name='toffset' type='maya.float'>
+			<label>Offset V</label>
+		</attribute>
+		<attribute name='swrap' type='maya.int'>
+			<label>Wrap U</label>
+		</attribute>
+		<attribute name='twrap' type='maya.int'>
+			<label>Wrap V</label>
+		</attribute>
+		<attribute name='sscale' type='maya.float'>
+			<label>Scale U</label>
+		</attribute>
+		<attribute name='tscale' type='maya.float'>
+			<label>Scale V</label>
+		</attribute>
+		<attribute name='sflip' type='maya.bool'>
+			<label>Flip U</label>
+		</attribute>
+		<attribute name='tflip' type='maya.bool'>
+			<label>Flip V</label>
+		</attribute>
+		<attribute name='swapSt' type='maya.bool'>
+			<label>Swap UV</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiImage'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='image_attributes'>
+			<label>Image Attributes</label>
+			<property name='filename'/>
+			<property name='filter'/>
+			<property name='multiply'/>
+			<property name='offset'/>
+			<property name='ignoreMissingTiles'/>
+			<property name='missingTileColor'/>
+		</group>
+		<group name='uv_attributes'>
+			<label>UV Coordinates</label>
+			<property name='uvset'/>
+			<property name='uvcoords'/>
+			<property name='soffset'/>
+			<property name='toffset'/>
+			<property name='swrap'/>
+			<property name='twrap'/>
+			<property name='sscale'/>
+			<property name='tscale'/>
+			<property name='sflip'/>
+			<property name='tflip'/>
+			<property name='swapSt'/>
+		</group>
+	</view>
+</templates>

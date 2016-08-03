@@ -1,0 +1,237 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiStandard'>
+		<attribute name='color' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='Kd' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='diffuseRoughness' type='maya.float'>
+			<label>Roughness</label>
+		</attribute>
+		<attribute name='Kb' type='maya.float'>
+			<label>Backlight</label>
+		</attribute>
+		<attribute name='FresnelAffectDiff' type='maya.bool'>
+			<label>Fresnel affect Diffuse</label>
+		</attribute>
+		<attribute name='directDiffuse' type='maya.float'>
+			<label>Direct Diffuse</label>
+		</attribute>
+		<attribute name='indirectDiffuse' type='maya.float'>
+			<label>Indirect Diffuse</label>
+		</attribute>
+
+		<attribute name='KsColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='Ks' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='specularRoughness' type='maya.float'>
+			<label>Roughness</label>
+		</attribute>
+		<attribute name='specularAnisotropy' type='maya.float'>
+			<label>Anisotropy</label>
+		</attribute>
+		<attribute name='specularRotation' type='maya.float'>
+			<label>Rotation</label>
+		</attribute>
+		<attribute name='specularDistribution' type='maya.int'>
+			<label>Microfacet Distribution</label>
+		</attribute>
+		<attribute name='specularFresnel' type='maya.bool'>
+			<label>Fresnel</label>
+		</attribute>
+		<attribute name='Ksn' type='maya.float'>
+			<label>Reflectanve at Normal</label>
+		</attribute>
+		<attribute name='directSpecular' type='maya.float'>
+			<label>Direct Specluar</label>
+		</attribute>
+		<attribute name='indirectSpecular' type='maya.float'>
+			<label>Indirect Specluar</label>
+		</attribute>
+
+		<attribute name='KrColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='Kr' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='enableInternalReflections' type='maya.bool'>
+			<label>Internal Reflections</label>
+		</attribute>
+		<attribute name='Fresnel' type='maya.bool'>
+			<label>Fresnel</label>
+		</attribute>
+		<attribute name='Krn' type='maya.float'>
+			<label>Reflectanve at Normal</label>
+		</attribute>
+		<attribute name='reflectionExitUseEnvironment' type='maya.bool'>
+			<label>Use Environment</label>
+		</attribute>
+		<attribute name='reflectionExitColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+
+		<attribute name='KtColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='Kt' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='IOR' type='maya.float'>
+			<label>IOR</label>
+		</attribute>
+		<attribute name='dispersionAbbe' type='maya.float'>
+			<label>Dispersion Abbe Number</label>
+		</attribute>
+		<attribute name='refractionRoughness' type='maya.float'>
+			<label>Roughness</label>
+		</attribute>
+		<attribute name='FresnelUseIOR' type='maya.bool'>
+			<label>Fresnel use IOR</label>
+		</attribute>
+		<attribute name='transmittance' type='maya.float3'>
+			<label>Transmittance</label>
+		</attribute>
+		<attribute name='opacity' type='maya.float3'>
+			<label>Opacity</label>
+		</attribute>
+		<attribute name='refractionExitUseEnvironment' type='maya.bool'>
+			<label>Use Environment</label>
+		</attribute>
+		<attribute name='refractionExitColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+
+		<attribute name='normalCamera' type='maya.float3'>
+			<label>Bump Mapping</label>
+			<description language="cb">PPattrNavigationControlGrp</description>
+		</attribute>
+
+		<attribute name='KsssColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='Ksss' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='sssRadius' type='maya.float3'>
+			<label>Radius</label>
+		</attribute>
+		<attribute name='sssProfile' type='maya.int'>
+			<label>Diffusion Profile</label>
+		</attribute>
+
+		<attribute name='emissionColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='emission' type='maya.float'>
+			<label>Scale</label>
+		</attribute>
+
+		<attribute name='enableGlossyCaustics' type='maya.bool'>
+			<label>Enable Glossy Caustics</label>
+		</attribute>
+		<attribute name='enableReflectiveCaustics' type='maya.bool'>
+			<label>Enable Reflective Caustics</label>
+		</attribute>
+		<attribute name='enableRefractiveCaustics' type='maya.bool'>
+			<label>Enable Refractive Caustics</label>
+		</attribute>
+		<attribute name='bounceFactor' type='maya.bool'>
+			<label>Bounce Factor</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiStandard'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='diffuse_properties'>
+			<label>Diffuse</label>
+			<property name='color'/>
+			<property name='Kd'/>
+			<property name='diffuseRoughness'/>
+			<property name='Kb'/>
+			<property name='FresnelAffectDiff'/>
+			<group name='diffuse_ext_properties'>
+				<label>Extended Controls</label>
+				<property name='directDiffuse'/>
+				<property name='indirectDiffuse'/>
+			</group>
+		</group>
+		<group name='specular_properties'>
+			<label>Specular</label>
+			<property name='KsColor'/>
+			<property name='Ks'/>
+			<property name='specularRoughness'/>
+			<property name='specularAnisotropy'/>
+			<property name='specularRotation'/>
+			<property name='specularDistribution'/>
+			<property name='specularFresnel'/>
+			<property name='Ksn'/>
+			<group name='specular_ext_properties'>
+				<label>Extended Controls</label>
+				<property name='directSpecular'/>
+				<property name='indirectSpecular'/>
+			</group>
+		</group>
+		<group name='reflection_properties'>
+			<label>Reflection</label>
+			<property name='KrColor'/>
+			<property name='Kr'/>
+			<property name='enableInternalReflections'/>
+			<property name='Fresnel'/>
+			<property name='Krn'/>
+			<group name='reflection_exit_color_properties'>
+				<label>Exit Color</label>
+				<property name='reflectionExitUseEnvironment'/>
+				<property name='reflectionExitColor'/>
+			</group>
+		</group>
+		<group name='refraction_properties'>
+			<label>Refraction</label>
+			<property name='KtColor'/>
+			<property name='Kt'/>
+			<property name='IOR'/>
+			<property name='dispersionAbbe'/>
+			<property name='refractionRoughness'/>
+			<property name='FresnelUseIOR'/>
+			<property name='transmittance'/>
+			<property name='opacity'/>
+			<group name='refraction_exit_color_properties'>
+				<label>Exit Color</label>
+				<property name='refractionExitUseEnvironment'/>
+				<property name='refractionExitColor'/>
+			</group>
+		</group>
+		<group name='bump_properties'>
+			<label>Bump Mapping</label>
+			<property name='normalCamera'/>
+		</group>
+		<group name='sss_properties'>
+			<label>Sub-Surface Scattering</label>
+			<property name='KsssColor'/>
+			<property name='Ksss'/>
+			<property name='sssRadius'/>
+			<property name='sssProfile'/>
+		</group>
+		<group name='emission_properties'>
+			<label>Emission</label>
+			<property name='emissionColor'/>
+			<property name='emission'/>
+		</group>
+		<group name='caustics_properties'>
+			<label>Caustics</label>
+			<property name='enableGlossyCaustics'/>
+			<property name='enableReflectiveCaustics'/>
+			<property name='enableRefractiveCaustics'/>
+		</group>
+		<group name='advanced_properties'>
+			<label>Advanced</label>
+			<property name='bounceFactor'/>
+		</group>
+	</view>
+</templates>

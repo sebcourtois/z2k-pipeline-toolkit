@@ -719,7 +719,7 @@ class Ui_instancerTool_Dialog(QtGui.QMainWindow):
             mc.setAttr(my_nParticle+".radius",self.particleRadius)
             mc.setAttr(my_nParticle+".emissionOverlapPruning",self.emisOverlapPruning)
             mc.setAttr(my_nParticle+".collide",0)
-            mc.setAttr(my_nParticle+".seed[0]",random.randint(1, 300))
+            mc.setAttr(my_nParticle+".seed[0]",random.randint(1, 300))#ne fais un seed que pour les rot et scale mais visblement pas pour les positions des particules
             cTime = mc.currentTime(q=True)
             initTime = mc.currentTime(q=True)
             #mc.refresh(suspend = True)

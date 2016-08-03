@@ -1,0 +1,24 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiWireframe'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='fillColor' type='maya.float3'>
+			<label>Fill Color</label>
+		</attribute>
+		<attribute name='lineColor' type='maya.float3'>
+			<label>Line Color</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiWireframe'>
+		<property name='outColor'/>
+		<property name='fillColor'/>
+		<property name='lineColor'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiWireframe'>
+		<property name='outColor'/>
+	</view>
+</templates>

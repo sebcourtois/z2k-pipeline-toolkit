@@ -37,12 +37,12 @@ float3 standardShaderEmission(
                 ]]>
             </source>
         </implementation>
-        <implementation render="OGSRenderer" language="HLSL" lang_version="10.0">
+        <implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
             <function_name val="standardShaderEmission" />
             <source>
                 <![CDATA[
-float3 standardShaderEmission(
-        float3 emissionColor,
+vec3 standardShaderEmission(
+        vec3 emissionColor,
         float emission)
 {
     return emissionColor * emission;

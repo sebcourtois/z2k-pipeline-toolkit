@@ -67,6 +67,12 @@ class AEaiImageTemplate(ShaderAETemplate):
         except:
             pass
 
+##   In case we need an attribute "imageName" so that colorSpace is updated correctly
+#    def imageNameConnect(self, attrName):
+#        if not cmds.isConnected(self.nodeAttr('filename'), self.nodeAttr('imageName')):
+#            cmds.connectAttr(self.nodeAttr('filename'), self.nodeAttr('imageName'))
+
+
     def setup(self):
         self.addSwatch()
         self.beginScrollLayout()
@@ -78,6 +84,12 @@ class AEaiImageTemplate(ShaderAETemplate):
         self.addControl("mipmap_bias", label="Mipmap Bias")
         self.addControl("multiply", label="Multiply")
         self.addControl("offset", label="Offset")
+        # self.addCustom('imageName', self.imageNameConnect, self.imageNameConnect)
+    
+
+        cmds.editorTemplate('AEcolorSpaceNew', 'AEcolorSpaceReplace', 'colorSpace', callCustom=True)
+        self.addControl("ignoreColorSpaceFileRules", label="Ignore Color Space File Rules")
+        self.addControl("autoTx", label="Auto-generate TX Textures")
         self.addSeparator()
         
         self.addControl("ignoreMissingTiles", label="Ignore Missing Tiles")

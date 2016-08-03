@@ -1,0 +1,20 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiVolumeSampleRgb'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='positionOffset' type='maya.float3'>
+			<label>Position Offset</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiVolumeSampleRgb'>
+		<property name='outColor'/>
+		<property name='positionOffset'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiVolumeSampleRgb'>
+		<property name='outColor'/>
+	</view>
+</templates>

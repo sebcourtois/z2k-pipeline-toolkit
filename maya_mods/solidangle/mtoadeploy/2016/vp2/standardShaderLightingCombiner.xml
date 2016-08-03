@@ -62,17 +62,17 @@ standardShaderLightingData standardShaderLightingCombiner(
                 ]]>
             </source>
         </implementation>
-        <implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+        <implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
             <function_name val="standardShaderLightingCombiner" />
             <source>
                 <![CDATA[
 standardShaderLightingData standardShaderLightingCombiner(
-                float3 N,
-                float3 V,
-                float3 L,
-                float3 SL,
-                float3 diffuse,
-                float3 specular)
+                vec3 N,
+                vec3 V,
+                vec3 L,
+                vec3 SL,
+                vec3 diffuse,
+                vec3 specular)
 {
     standardShaderLightingData result;
     result.N = N;

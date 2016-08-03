@@ -23,6 +23,7 @@
         <float3 name="diffuseI" ref="standardShaderLightingCombiner.diffuse" />
         <float3 name="specularI" ref="standardShaderLightingCombiner.specular" />
         <string name="selector" ref="maya16LightAccum.selector" />
+        <undefined name="GPUStage" ref="genericShaderCombiner.GPUStage" />
     </properties>
     <values>
     </values>

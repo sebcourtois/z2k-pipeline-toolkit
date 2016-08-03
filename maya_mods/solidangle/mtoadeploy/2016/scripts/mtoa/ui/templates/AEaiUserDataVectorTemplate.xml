@@ -1,0 +1,21 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiUserDataVector'>
+		<attribute name='vectorAttrName' type='maya.string'>
+			<label>Vector Attr Name</label>
+		</attribute>
+		<attribute name='defaultValue' type='maya.float3'>
+			<label>Default Value</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiUserDataVector'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='userdata_attributes'>
+			<label>User Data Attributes</label>
+			<property name='vectorAttrName'/>
+			<property name='defaultValue'/>
+		</group>
+	</view>
+</templates>

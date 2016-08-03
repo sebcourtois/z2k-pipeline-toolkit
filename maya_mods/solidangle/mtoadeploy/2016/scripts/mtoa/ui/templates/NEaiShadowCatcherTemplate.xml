@@ -1,0 +1,36 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiShadowCatcher'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='backgroundColor' type='maya.float3'>
+			<label>Background Color</label>
+		</attribute>
+		<attribute name='reflection' type='maya.float3'>
+			<label>Reflection</label>
+		</attribute>
+		<attribute name='shadowColor' type='maya.float3'>
+			<label>Shadow Color</label>
+		</attribute>
+		<attribute name='shadowTransparency' type='maya.float3'>
+			<label>Shadow Transparency</label>
+		</attribute>
+		<attribute name='diffuseColor' type='maya.float3'>
+			<label>Diffuse Color</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiShadowCatcher'>
+		<property name='outColor'/>
+		<property name='backgroundColor'/>
+		<property name='reflection'/>
+		<property name='shadowColor'/>
+		<property name='shadowTransparency'/>
+		<property name='diffuseColor'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiShadowCatcher'>
+		<property name='outColor'/>
+	</view>
+</templates>

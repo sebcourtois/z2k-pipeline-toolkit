@@ -1,0 +1,20 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiUserDataPnt2'>
+		<attribute name='outValue' type='maya.float2'>
+			<label>Out Value</label>
+		</attribute>
+		<attribute name='defaultValue' type='maya.float2'>
+			<label>Default Value</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiUserDataPnt2'>
+		<property name='outValue'/>
+		<property name='defaultValue'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiUserDataPnt2'>
+		<property name='outValue'/>
+	</view>
+</templates>

@@ -1,0 +1,21 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiUserDataInt'>
+		<attribute name='intAttrName' type='maya.string'>
+			<label>Int Attr Name</label>
+		</attribute>
+		<attribute name='defaultValue' type='maya.int'>
+			<label>Default Value</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiUserDataInt'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='userdata_attributes'>
+			<label>User Data Attributes</label>
+			<property name='intAttrName'/>
+			<property name='defaultValue'/>
+		</group>
+	</view>
+</templates>

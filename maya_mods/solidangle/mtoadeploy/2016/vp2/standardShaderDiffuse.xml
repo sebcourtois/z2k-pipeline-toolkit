@@ -2,10 +2,8 @@
     <description><![CDATA[Fragment for the arnold standard shader.]]></description>
     <properties>
         <struct name="lightingData" struct_name="standardShaderLightingData" />
-        <float name="Kd" />
     </properties>
     <values>
-        <float name="Kd" value="1.0" />        
     </values>
     <outputs>
         <float3 name="outColor" />
@@ -16,12 +14,11 @@
             <source>
                 <![CDATA[
 float3 standardShaderDiffuse(
-        standardShaderLightingData lightingData,
-        float Kd)
+        standardShaderLightingData lightingData)
 {
     float NDL = saturate(dot(lightingData.N, lightingData.L));
     if (NDL > 0.0f)
-        return lightingData.diffuse * Kd * NDL;
+        return lightingData.diffuse * NDL;
     else
         return float3(0.0f, 0.0f, 0.0f);
 }
@@ -33,31 +30,29 @@ float3 standardShaderDiffuse(
             <source>
                 <![CDATA[
 float3 standardShaderDiffuse(
-        standardShaderLightingData lightingData,
-        float Kd)
+        standardShaderLightingData lightingData)
 {
     float NDL = saturate(dot(lightingData.N, lightingData.L));
     if (NDL > 0.0f)
-        return lightingData.diffuse * Kd * NDL;
+        return lightingData.diffuse * NDL;
     else
         return float3(0.0f, 0.0f, 0.0f);
 }
                 ]]>
             </source>
         </implementation>
-        <implementation render="OGSRenderer" language="HLSL" lang_version="10.0">
+        <implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
             <function_name val="standardShaderDiffuse" />
             <source>
                 <![CDATA[
-float3 standardShaderDiffuse(
-        standardShaderLightingData lightingData,
-        float Kd)
+vec3 standardShaderDiffuse(
+        standardShaderLightingData lightingData)
 {
     float NDL = saturate(dot(lightingData.N, lightingData.L));
     if (NDL > 0.0f)
-        return lightingData.diffuse * Kd * NDL;
+        return lightingData.diffuse * NDL;
     else
-        return float3(0.0f, 0.0f, 0.0f);
+        return vec3(0.0f, 0.0f, 0.0f);
 }
                 ]]>
             </source>

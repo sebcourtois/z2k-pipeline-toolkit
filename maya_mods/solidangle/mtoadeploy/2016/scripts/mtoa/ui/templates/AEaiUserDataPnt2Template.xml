@@ -1,0 +1,21 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiUserDataPnt2'>
+		<attribute name='pnt2AttrName' type='maya.string'>
+			<label>Pnt2 Attr Name</label>
+		</attribute>
+		<attribute name='defaultValue' type='maya.float2'>
+			<label>Default Value</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiUserDataPnt2'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='userdata_attributes'>
+			<label>User Data Attributes</label>
+			<property name='pnt2AttrName'/>
+			<property name='defaultValue'/>
+		</group>
+	</view>
+</templates>

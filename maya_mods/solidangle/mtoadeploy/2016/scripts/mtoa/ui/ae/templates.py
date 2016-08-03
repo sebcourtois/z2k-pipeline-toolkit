@@ -708,7 +708,7 @@ class TranslatorControl(AttributeTemplate):
         """
         called to create an optionMenuGrp for choosing between multiple translator options for a given node
         """
-        self._optionMenu = pm.optionMenuGrp(self._optionMenu, label=self._label,
+        self._optionMenu = pm.optionMenuGrp(self._optionMenu, label=self._label, columnWidth=(1, 150),
                                              cc=lambda *args: self.menuChanged(nodeName, args[0]))
         # create menu items
         for tran in self.getTranslators():

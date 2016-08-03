@@ -26,6 +26,9 @@ def _uiName(tag):
 global _updating
 _updating = False
 
+global _tabEditor
+_tabEditor = None
+
 AOV_CALLBACK_ATTRS = ('type', 'defaultValue')
 
 class AOVBrowser(object):
@@ -313,8 +316,11 @@ class AOVItem(object):
 
     def fixOptionMenus(self):
         for menu in self.getMenus():
-            pm.optionMenu(menu, edit=True, visible=False)
-            pm.optionMenu(menu, edit=True, visible=True)
+            try:
+                pm.optionMenu(menu, edit=True, visible=False)
+                pm.optionMenu(menu, edit=True, visible=True)
+            except:
+                pass
 
     def delete(self):
         '''
@@ -563,8 +569,11 @@ class AOVOutputItem(object):
         self.aovItem.outputsChanged = True
 
     def fixOptionMenus(self):
-        pm.optionMenu(self.filterMenu, edit=True, visible=False)
-        pm.optionMenu(self.filterMenu, edit=True, visible=True)
+        try:
+            pm.optionMenu(self.filterMenu, edit=True, visible=False)
+            pm.optionMenu(self.filterMenu, edit=True, visible=True)
+        except:
+            pass
 
 class ArnoldAOVEditor(object):
 
@@ -667,7 +676,10 @@ class ArnoldAOVEditor(object):
         Delete and rebuild the AOV control rows
         '''
         self.waitingToRefresh = False
-        pm.setParent(self.aovCol)
+        try:
+            pm.setParent(self.aovCol)
+        except:
+            return
         pm.cmds.columnLayout(self.aovCol, edit=True, visible=False)
         numDeleted = len(self.optionMenus)
         for ctrl in self.aovControls:
@@ -677,8 +689,11 @@ class ArnoldAOVEditor(object):
         self.aovRows = {}
 
         # add all control rows
-        if self.renderOptions.node.exists():
-            self.addRows()
+        try:
+            if self.renderOptions.node.exists():
+                self.addRows()
+        except:
+            return
 
         self.browser.updateActiveAOVs()
 
@@ -713,8 +728,11 @@ class ArnoldAOVEditor(object):
         #print self.idle_id, self.idle_ticker
         for menu in self.optionMenus:
             #print "fixing", menu
-            pm.optionMenu(menu, edit=True, visible=False)
-            pm.optionMenu(menu, edit=True, visible=True)
+            try:
+                pm.optionMenu(menu, edit=True, visible=False)
+                pm.optionMenu(menu, edit=True, visible=True)
+            except:
+                pass
 
 
         
@@ -756,7 +774,7 @@ def createArnoldAOVTab():
     # we must remove it or we'll leave behind invalid copies
     global _aovDisplayCtrl
     if _aovDisplayCtrl is not None:
-        aovs.removeAOVChangedCallback(_aovDisplayCtrl.update)
+        aovs.removeAOVChangedCallback(_aovDisplayCtrl.safeUpdate)
 
     _aovDisplayCtrl = shaderTemplate.AOVOptionMenuGrp('aiOptions', 'displayAOV', label='Render View AOV',
                                            allowCreation=False,
@@ -772,7 +790,8 @@ def createArnoldAOVTab():
 
     cmds.columnLayout('arnoldTabColumn', adjustableColumn=True)
 
-    ed = ArnoldAOVEditor(aovNode)
+    global _tabEditor
+    _tabEditor = ArnoldAOVEditor(aovNode)
 
     cmds.formLayout(parentForm,
                edit=True,
@@ -788,11 +807,16 @@ def createArnoldAOVTab():
     pm.setUITemplate('attributeEditorTemplate', popTemplate=True)
 
     cmds.setParent(parentForm)
-    pm.evalDeferred(ed.fixOptionMenus)
-    ed.setEnabledState()
-    pm.scriptJob(attributeChange = (aovNode.node.aovMode, ed.setEnabledState), parent=ed.mainCol)
+    pm.evalDeferred(_tabEditor.fixOptionMenus)
+    _tabEditor.setEnabledState()
+    pm.scriptJob(attributeChange = (aovNode.node.aovMode, _tabEditor.setEnabledState), parent=_tabEditor.mainCol)
 
     #cmds.setUITemplate(popTemplate=True)
 
 def updateArnoldAOVTab():
     pass
+
+def refreshArnoldAOVTab():
+    global _tabEditor
+    if _tabEditor:
+        _tabEditor.refresh()

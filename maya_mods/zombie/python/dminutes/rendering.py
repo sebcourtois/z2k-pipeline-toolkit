@@ -273,7 +273,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
 
     if renderMode == 'render':
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 8)
-        resolution = 2048
+        resolution = 1998
     elif renderMode == 'finalLayout':
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 2)
         miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples", 2)

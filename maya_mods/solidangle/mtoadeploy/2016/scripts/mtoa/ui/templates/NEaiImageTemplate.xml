@@ -1,0 +1,27 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiImage'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='multiply' type='maya.float3'>
+			<label>Multiply</label>
+		</attribute>
+		<attribute name='offset' type='maya.float3'>
+			<label>Offset</label>
+		</attribute>
+		<attribute name='missingTileColor' type='maya.float3'>
+			<label>Missing Tile Color</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiImage'>
+		<property name='multiply'/>
+		<property name='offset'/>
+		<property name='missingTileColor'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiImage'>
+		<property name='outColor'/>
+	</view>
+</templates>
