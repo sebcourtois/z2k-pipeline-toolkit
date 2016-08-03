@@ -42,7 +42,7 @@ class project(object):
     allowed_texture_formats = (".tga", ".jpg", ".exr")
     sg_versions_mandatory = True
 
-    all_sync_sites = ("dmn_paris", "dmn_angouleme", "online", "dream_wall", "pipangai")
+    all_sync_sites = ("online", "dmn_paris", "dmn_angouleme", "dream_wall", "pipangai")
 
     sg_publish_statuses = ("ip", "rev", "wfa", "omt")
 
@@ -245,7 +245,7 @@ class shot_lib(object):
                      "sg_tasks":("Animation|reference",),
                      "sg_status":"rev",
                     },
-    "anim_dir":{"default_sync_rules":["dmn_paris", "online", "dream_wall", "pipangai"], },
+    "anim_dir":{"default_sync_rules":["online", "dmn_paris", "dream_wall", "pipangai"], },
 
     #===========================================================================
     # CHARFX RESOURCES
