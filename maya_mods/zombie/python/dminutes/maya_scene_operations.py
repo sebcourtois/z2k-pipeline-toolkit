@@ -906,11 +906,12 @@ def setupAnimatic(sceneManager, create=True, checkUpdate=False):
 
     #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
     sAudioEnvPath = infos["public_audio"].path
-    pc.mel.DeleteAllSounds()
+    if mc.objExists("audio"):
+        mc.delete("audio")
     if infos["public_audio"].found:
         # --- Import Sound
         # - Import current shot Sound
-        sAudioNode = pc.sound(offset=101, file=sAudioEnvPath, name='audio')
+        sAudioNode = pc.sound(offset=101, file=sAudioEnvPath, name="audio")
 
         # - Show Sound in Timeline
         aPlayBackSliderPython = pc.mel.eval('$tmpVar=$gPlayBackSlider')

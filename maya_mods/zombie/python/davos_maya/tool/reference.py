@@ -514,7 +514,7 @@ def loadAssetsAsResource(sRcName, fail=False, checkSyncState=False,
             if rcFile:
                 rcFileList.append(rcFile)
 
-        dbNodeList = proj.dbNodesForResources(rcFileList)
+        dbNodeList = proj.dbNodesFromEntries(rcFileList)
         for rcFile, dbNode in izip(rcFileList, dbNodeList):
             if not dbNode:
                 rcFile.loadDbNode(fromCache=False)

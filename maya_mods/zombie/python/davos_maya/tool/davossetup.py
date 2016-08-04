@@ -187,7 +187,7 @@ class DavosSetup(ToolSetup):
                     sRefEnvPath = re.split(re.escape(sPubLibPath), sRefRawPath, 1, flags=flags)[-1]
                     sRefEnvPath = osp.join(sLibEnv, sRefEnvPath).replace("\\", "/")
                     if osp.isfile(osp.expanduser(osp.expandvars(sRefEnvPath))):
-                        #print "\n","ref from '{}': {} ...\n    ...conformed to {}".format(sLibName,sRefRawPath, sRefEnvPath)
+                        #print "\n","ref from '{}': {} ...\n    ...conformed to {}".format(sLibSection,sRefRawPath, sRefEnvPath)
                         print "reference conformed to {}".format(sRefEnvPath)
                         mFileObj.setRawFullName(sRefEnvPath)
                         break

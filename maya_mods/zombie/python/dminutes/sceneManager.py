@@ -8,13 +8,13 @@ import re
 import stat
 from collections import OrderedDict
 import shutil
-from itertools import izip
+import traceback
 
 import pymel.core as pc
 import maya.cmds as mc
 import maya.mel
 
-from pytd.util.fsutils import pathResolve, normCase, pathSuffixed
+from pytd.util.fsutils import pathResolve, pathSuffixed, normCase
 from pytd.util.logutils import logMsg
 from pytd.util.sysutils import toStr, inDevMode
 from pytd.util.strutils import padded
@@ -38,6 +38,7 @@ import dminutes.jipeLib_Z2K as jpZ
 import dminutes.camImpExp as camIE
 import dminutes.infoSetExp as infoE
 from dminutes.geocaching import exportLayoutInfo, removeCacheReferences
+from dminutes.maya_scene_operations import playbackTimesFromScene
 #from dminutes.miscUtils import deleteUnknownNodes
 
 reload(jpZ)
@@ -666,6 +667,8 @@ class SceneManager():
         sTask = context['task']['content']
         damShot = self.getDamShot()
 
+        aPlayBackSliderPython = pc.mel.eval('$tmpVar=$gPlayBackSlider')
+
         sCaptRcList = MOV_FOR_TASK.get(sTask, MOV_FOR_STEP.get(sStep))
         if not sCaptRcList:
             pc.displayWarning("No capture defined for '{}|{}'".format(sStep, sTask))
@@ -813,11 +816,22 @@ class SceneManager():
                 _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
                 mop.arrangeViews(oShotCam, oImgPlaneCam, oStereoCam, singleView=True)
 
+            sCurSound = ""
+            currTimes = None
             width, height = (1280, 720)
             bAoEnabled = mc.getAttr('hardwareRenderingGlobals.ssaoEnable')
-            if (not quick) and sStep.lower() in ("animation", "charfx"):
-                width, height = (1920, 1080)
-                mc.setAttr('hardwareRenderingGlobals.ssaoEnable', True)
+            if (not quick):
+                if sStep.lower() in ("animation", "charfx", "fx3d"):
+                    width, height = (1920, 1080)
+                    mc.setAttr('hardwareRenderingGlobals.ssaoEnable', True)
+
+                currTimes = playbackTimesFromScene()
+                self.setPlaybackTimes()
+
+                # - Show Sound in Timeline
+                if mc.objExists("audio"):
+                    sCurSound = pc.timeControl(aPlayBackSliderPython, q=True, sound=True)
+                    mc.timeControl(aPlayBackSliderPython, e=True, sound="audio", displaySound=True)
 
             iFontMode = mc.displayPref(q=True, fontSettingMode=True)
             iFontSize = mc.displayPref(q=True, smallFontSize=True)
@@ -848,7 +862,15 @@ class SceneManager():
                 mc.displayPref(smallFontSize=iFontSize)
                 mc.displayPref(fontSettingMode=iFontMode)
                 mc.setAttr('hardwareRenderingGlobals.ssaoEnable', bAoEnabled)
+
+                if currTimes:
+                    mc.playbackOptions(e=True, **currTimes)
+
+                if sCurSound and mc.objExists(sCurSound):
+                    mc.timeControl(aPlayBackSliderPython, e=True,
+                                   sound=sCurSound, displaySound=True)
             except Exception as e:
+                traceback.print_exc()
                 pc.displayError(toStr(e))
 
             if sRecorder:
