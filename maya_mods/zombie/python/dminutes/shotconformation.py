@@ -67,6 +67,8 @@ def finalLayoutToLighting(gui=True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="finalLayoutToLighting")
     deletedNodeL=[]
 
+    mc.editRenderLayerGlobals( currentRenderLayer='defaultRenderLayer' )
+
     mc.ls("mat_arelequin_*")+mc.ls("aiAOV_arlequin*")
     toDeleteNodeL=mc.ls("mat_arelequin_*")+mc.ls("aiAOV_arlequin*")+mc.ls("lay_finalLayout_*")
     for each in toDeleteNodeL: 
@@ -81,6 +83,7 @@ def finalLayoutToLighting(gui=True):
     txt = "{} node(s) deleted: '{}': ".format(len(deletedNodeL),deletedNodeL)
     log.printL("i", txt)
 
+    pm.mel.eval("source updateSoundMenu")
     pm.mel.eval("setSoundDisplay audio 0")
     log.printL("i", "sound turned off")
 
