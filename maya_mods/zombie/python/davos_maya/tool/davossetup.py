@@ -164,7 +164,7 @@ class DavosSetup(ToolSetup):
     def onSceneOpened(self, *args):
         ToolSetup.onSceneOpened(self, *args)
         if smui:
-            if smui.isLaunched() and smui.isVisible():
+            if smui.isLaunched():
                 smui.doDetect()
 
     def onPreCreateReferenceCheck(self, mFileObj, clientData=None):

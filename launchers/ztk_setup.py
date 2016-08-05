@@ -12,15 +12,16 @@ import traceback
 BASE_NAME = "z2k-pipeline-toolkit"
 
 APPS_INFOS = {
-    "rv":{"loc_path":r"C:\Program Files\Shotgun\RV 6.2.6",
-          "end_path":r"bin\rv.exe",
-          "loc_env":"Z2K_RV_LOC"},
-    "maya":{"loc_path":r"C:\Program Files\Autodesk\Maya2016",
-            "end_path":r"bin\maya.exe",
-            "loc_env":"Z2K_MAYA_LOC"},
-    "mayabatch":{"loc_path":r"C:\Program Files\Autodesk\Maya2016",
-                 "end_path":r"bin\mayabatch.exe",
-                 "loc_env":"Z2K_MAYA_LOC"},
+    "rv":{"app_loc_paths":(r"C:\Program Files\Shotgun\RV-6.2.8",
+                       r"C:\Program Files\Shotgun\RV 6.2.6",),
+          "app_end_path":r"bin\rv.exe",
+          "app_loc_var":"Z2K_RV_LOC"},
+    "maya":{"app_loc_paths":(r"C:\Program Files\Autodesk\Maya2016",),
+            "app_end_path":r"bin\maya.exe",
+            "app_loc_var":"Z2K_MAYA_LOC"},
+    "mayabatch":{"app_loc_paths":(r"C:\Program Files\Autodesk\Maya2016",),
+                 "app_end_path":r"bin\mayabatch.exe",
+                 "app_loc_var":"Z2K_MAYA_LOC"},
 }
 
 class Z2kToolkit(object):
@@ -295,18 +296,40 @@ class Z2kToolkit(object):
 
         sAppPath = osp.normpath(appArgs[0])
 
-        if os.sep in sAppPath:
+        if ("/" in sAppPath) or ("\\" in sAppPath):
             sAppPath = osp.expandvars(sAppPath)
             sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
+            if not osp.isfile(sAppPath):
+                raise EnvironmentError("No such application found: '{}'".format(sAppPath))
+            
         elif sAppPath.startswith("@"):
             sAppName = sAppPath.strip("@").lower()
             appInfos = APPS_INFOS[sAppName]
-            sAppLocPath = os.environ.get(appInfos["loc_env"], appInfos["loc_path"])
-            sAppPath = osp.normpath(osp.join(sAppLocPath, appInfos["end_path"]))
-            appArgs[0] = sAppPath
 
-        if not osp.isfile(sAppPath):
-            raise EnvironmentError("No such application: '{}'".format(sAppPath))
+            sAppLocPath = os.environ.get(appInfos["app_loc_var"])
+            if sAppLocPath:
+                sLocPathList = (sAppLocPath,)
+            else:
+                sLocPathList = appInfos["app_loc_paths"]
+            
+            sNotFoundList = []
+            for sLocPath in sLocPathList:
+
+                sAppPath = osp.normpath(osp.join(sLocPath, appInfos["app_end_path"]))
+                if osp.isfile(sAppPath):
+                    sNotFoundList = []
+                    break
+                sNotFoundList.append(sAppPath)
+
+            numNotFound = len(sNotFoundList)
+            if numNotFound == 1:
+                raise EnvironmentError("'{}' application NOT found: '{}'".format(sAppName.capitalize(), sAppPath))
+            elif numNotFound > 1:
+                sSep = "\n    - "
+                sMsg = "None of '{}' applications found:" + sSep + sSep.join(sNotFoundList)
+                raise EnvironmentError(sMsg.format(sAppName.capitalize()))
+
+            appArgs[0] = sAppPath
 
         try:
             self.loadAppEnvs(sAppPath)

@@ -32,6 +32,7 @@ from zomblib import rvutils
 
 from dminutes import maya_scene_operations as mop
 from dminutes import sceneManager
+from dminutes.sceneManager import scnFromTask
 
 reload(myaref)
 pc = pymel.core
@@ -50,28 +51,10 @@ ENTITIES_PER_CATEG = {}
 CURRENT_ENTITY_TASKS = {}
 VERSIONS = {}
 
-ACTION_BUTTONS = []
 QWIDGETS = {}
 #------------------------------------------------------------------
 #               Main UI Creation/Initialization
 #------------------------------------------------------------------
-
-def withErrorDialog(func):
-    def doIt(*args, **kwargs):
-        try:
-            res = func(*args, **kwargs)
-        except Exception as e:
-            pc.confirmDialog(title='SORRY !'
-                             , message=toStr(e)
-                            , button=["OK"]
-                            , defaultButton="OK"
-                            , cancelButton="OK"
-                            , dismissString="OK"
-                            , icon="critical")
-            raise
-
-        return res
-    return doIt
 
 def kill():
 
@@ -101,6 +84,7 @@ def isLaunched():
 def isVisible():
     return mc.dockControl(SCENE_MANAGER_DOCK, q=True, visible=True)
 
+@withSelectionRestored
 def launch():
     """Main UI Creator"""
     global QWIDGETS
@@ -115,6 +99,9 @@ def launch():
             mc.evaluationManager(mode="off")
 
         kill()
+
+        if not mc.ls(sl=True):
+            mc.select("|persp")
 
         dirname, _ = osp.split(osp.abspath(__file__))
         sLoadedUi = mc.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui", v=False)
@@ -184,13 +171,13 @@ def initialize():
     pc.textField('sm_user_bt', edit=True, text=curSgUser['name'])
     pc.textField('sm_project_bt', edit=True, text=SCENE_MANAGER.projectname)
 
-    sStepCodes = list(step['code'] for step in curSgUser['sg_allowedsteps']
+    sAllowedSteps = list(step['code'] for step in curSgUser['sg_allowedsteps']
                                         if step['entity_type'] == 'Shot')
-    refreshOptionMenu('sm_step_dd', sStepCodes)
+    refreshOptionMenu('sm_step_dd', sAllowedSteps)
 
     #print userSgStep
     sUserStep = userSgStep['code']
-    if (userSgStep is not None) and (sUserStep in sStepCodes):
+    if (userSgStep is not None) and (sUserStep in sAllowedSteps):
         pc.optionMenu("sm_step_dd", edit=True, value=sUserStep)
 
     #Hide some controls
@@ -206,15 +193,17 @@ def initialize():
         pc.control("sm_pouet_bt", edit=True, visible=False)
 
     doStepChanged(updateStep=False)
-    loadContextFromScene()
 
     damShot = SCENE_MANAGER.getDamShot()
     sAnn = "Create a capture into local project: '{}'".format(mop.getWipCaptureDir(damShot))
     pc.control("sm_wipCapture_bt", edit=True, annotation=sAnn)
-    sAnn = "Create a PUBLISHABLE capture into private area: '{}'".format(damShot.getPath("private", "entity_dir"))
+    sAnn = ("Create a PUBLISHABLE capture into private area: '{}'"
+            .format(damShot.getPath("private", "entity_dir")))
     pc.control("sm_capture_bt", edit=True, annotation=sAnn)
 
     pc.control("sm_increment_chk", edit=True, visible=False)
+
+    loadContextFromScene()
 
 test_toggle = False
 
@@ -233,14 +222,12 @@ def refreshContextUI():
     bPublishable = bRcsMatchUp and SCENE_MANAGER.scenePublishable(sceneInfos)
     sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
 
-    for buttonName in ACTION_BUTTONS:
-        _, action, _ = buttonName.rsplit("|", 1)[-1].split('_')
-        bEnabled = (('task' in SCENE_MANAGER.context)
-                    and mop.canDo(action, SCENE_MANAGER.context['task']['content'])
-                    and bRcsMatchUp)
-        pc.control(buttonName, edit=True, enable=bEnabled)
+    bEnabled = (('task' in SCENE_MANAGER.context)
+                and scnFromTask(SCENE_MANAGER.context['task'])
+                and bRcsMatchUp)
+    pc.control("sm_init_bt", edit=True, enable=bEnabled)
 
-    pc.control('sm_switchContext_bt', edit=True, enable=not bPublishable)
+    pc.control('sm_switchContext_bt', edit=True, enable=(not bPublishable))
 
     pc.control('sm_capture_bt', edit=True, enable=bPublishable)
     pc.control('sm_wipCapture_bt', edit=True, enable=bRcsMatchUp)
@@ -259,7 +246,7 @@ def refreshContextUI():
     sLabel = pc.button('sm_setupAnimatic_bt', q=True, label=True).rsplit(sInfo, 1)[0]
     sStyle = "background-color: none;"
     if bEnabled:
-        infos = mop.getAnimaticInfos(SCENE_MANAGER)
+        infos = mop.getAnimaticInfos(SCENE_MANAGER.getDamShot(), sCtxStep)
         pc.button('sm_setupAnimatic_bt', q=True, label=True)
         if infos["newer_movie"]:
             if (sInfo not in sLabel):
@@ -291,21 +278,29 @@ def refreshContextUI():
     updSmoothOnCaptureState(bEnable, warn=False)
 
 def loadContextFromScene(**kwargs):
-    """Initialize UI from scene"""
-    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
-    context = SCENE_MANAGER.contextFromSceneInfos(sceneInfos)
+    """Initialize UI Context from scene"""
 
-    if context:
+    sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
+    uiContext = SCENE_MANAGER.contextFromSceneInfos(sceneInfos)
+
+    if uiContext:
         #print context
         somethingChanged = False
 
-        #print context["step"]
-        somethingChanged |= setOption("sm_step_dd", context["step"], runEntityChanged=False)
-
-        if "shot" in context:
+        if "shot" in uiContext:
             #print context["seq"], context["shot"]
-            somethingChanged |= setOption("sm_seq_dd", context["seq"], runEntityChanged=False)
-            somethingChanged |= setOption("sm_shot_dd", context["shot"], runEntityChanged=False)
+            somethingChanged |= setOption("sm_seq_dd", uiContext["seq"], runEntityChanged=False)
+            somethingChanged |= setOption("sm_shot_dd", uiContext["shot"], runEntityChanged=False)
+
+        sCtxStep = uiContext["step"]
+        curSgUser = SG_ENGINE.currentUser
+        sAllowedSteps = list(step['code'] for step in curSgUser['sg_allowedsteps']
+                                                if step['entity_type'] == 'Shot')
+        if sCtxStep not in sAllowedSteps:
+            pc.displayError("{} NOT assigned to '{}' step yet."
+                            .format(SG_ENGINE.currentUser["name"], sCtxStep))
+        else:
+            somethingChanged |= setOption("sm_step_dd", sCtxStep, runEntityChanged=False)
 
         doEntityChanged(**kwargs)
 
@@ -425,7 +420,7 @@ def connectCallbacks():
     pc.button('sm_viewLatest_bt', edit=True, c=doPlayLatestCapture)
 
     #shot operations
-    ACTION_BUTTONS.append(pc.button('sm_init_bt', edit=True, c=doInitScene))
+    pc.button('sm_init_bt', edit=True, c=doShotSetup)
     pc.button('sm_setupAnimatic_bt', edit=True, c=doSetupAnimatic)
     pc.button('sm_editCam_bt', edit=True, c=doEditCam)
 
@@ -456,9 +451,6 @@ def connectCallbacks():
     pc.button('sm_wipCapture_bt', edit=True, c=doWipCapture)
 
     #File operations
-#    pc.button('sm_unlock_bt', edit=True, c=doUnlock)
-#    pc.button('sm_edit_bt', edit=True, c=doEdit)
-#    pc.button('sm_createFolder_bt', edit=True, c=doCreateFolder)
     pc.button('sm_incrementSave_bt', edit=True, c=doIncrementSave)
     pc.button('sm_publish_bt', edit=True, c=doPublish)
 
@@ -466,8 +458,8 @@ def connectCallbacks():
     QWIDGETS["relatedAssetsGroup"].clicked[bool].connect(updRelatedAssetsShown)
     pc.button('sm_refreshScene_bt', edit=True, c=doRefreshSceneInfo)
     pc.button('sm_selectRefs_bt', edit=True, c=doSelectRefs)
-    pc.button('sm_updScene_bt', edit=True, c=doUpdateScene)
-    pc.button('sm_updShotgun_bt', edit=True, c=doUpdateShotgun)
+    pc.button('sm_updScene_bt', edit=True, c=doUpdateSceneAssets)
+    pc.button('sm_updShotgun_bt', edit=True, c=doUpdateShotgunAssets)
     sMsg = "Which assets do you want to lock to a version ?"
     pc.button('sm_lockVersions_bt', edit=True, c=partial(setAssetVersionsLocked, True, sMsg))
     sMsg = "Which assets do you want to switch to latest file ?"
@@ -581,7 +573,12 @@ def doPlayLatestCapture(*args):
 @mop.undoAtOnce
 @withSelectionRestored
 def doSetupAnimatic(*args):
-    mop.setupAnimatic(SCENE_MANAGER, create=False)
+
+    damShot = SCENE_MANAGER.getDamShot()
+    sSgStep = SCENE_MANAGER.context["step"]["code"]
+
+    mop.setupAnimatic(mop.getAnimaticInfos(damShot, sSgStep), create=False)
+
     pc.refresh()
     refreshContextUI()
 
@@ -955,17 +952,7 @@ def doRefreshSceneInfo(*args):
 
     return itemList
 
-def doUnlock(*args):
-    """Simply unlocks current entry, but button is hidden (forbidden)"""
-    entry = SCENE_MANAGER.rcFileFromContext()
-
-    if entry == None:
-        pc.error("Cannot get entry form context {0}".format(SCENE_MANAGER.context))
-
-    entry.setLocked(False)
-    doRefreshFileStatus()
-
-def doUpdateScene(*args):
+def doUpdateSceneAssets(*args):
     """Matches scene Assets with Shotgun Assets"""
     #addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
     if SCENE_MANAGER.updateSceneAssets():
@@ -973,7 +960,7 @@ def doUpdateScene(*args):
 
     pc.displayWarning("Done !")
 
-def doUpdateShotgun(*args):
+def doUpdateShotgunAssets(*args):
     """Matches Shotgun Assets with scene Assets (NOT IMPLEMENTED)"""
     #addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
     if SCENE_MANAGER.updateShotgunAssets():
@@ -1037,15 +1024,6 @@ def doSwitchContext(*args, **kwargs):
     SCENE_MANAGER.edit(True)
     doTaskChanged()
 
-#davos
-def doEdit(*args):
-    """Associated button is hidden (forbidden)"""
-    if SCENE_MANAGER.assertScenePublishable():
-        SCENE_MANAGER.edit(False)
-        doTaskChanged()
-    else:
-        doDetect(args)
-
 def doPublish(*args):
 
     if SCENE_MANAGER.assertScenePublishable():
@@ -1074,28 +1052,17 @@ def doPublish(*args):
     else:
         doDetect(args)
 
-def doCreateFolder(*args):
-    """Associated button is hidden (forbidden)"""
-    #For debug purposes (Cheers !!!)
-    #print str(SCENE_MANAGER.context)
-    SCENE_MANAGER.createFolder()
-
 #action buttons
-def doInitScene(*args):
+def doShotSetup(*args):
     """Button is named 'Shot Setup'"""
 
     sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
     SCENE_MANAGER.assertEntitiesMatchUp(sceneInfos)
 
-    SCENE_MANAGER.do('init')
+    SCENE_MANAGER.setupShotScene()
+
     doRefreshSceneInfo()
     refreshContextUI()
-
-def doCreateScene(*args):
-    """Associated button is hidden (forbidden)"""
-    SCENE_MANAGER.do('create')
-    doRefreshSceneInfo()
-    doRefreshFileStatus()
 
 def doEditCam(*args):
 

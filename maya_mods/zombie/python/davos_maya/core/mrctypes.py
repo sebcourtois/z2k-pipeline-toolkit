@@ -23,21 +23,16 @@ class MrcFile(DrcFile):
     def __init__(self, drcLib, absPathOrInfo=None, **kwargs):
         super(MrcFile, self).__init__(drcLib, absPathOrInfo, **kwargs)
 
-    def edit(self, openFile=False, **kwargs):
+    def edit(self, openFile=False, existing="", prompt=False, **kwargs):
 
         self.library.project.assertMayaVersion(pmv.current())
         self.assertIsMayaScene()
 
-        privFile = DrcFile.edit(self, openFile=False, **kwargs)
+        privFile = DrcFile.edit(self, openFile=openFile, existing=existing, prompt=prompt)
 
         if openFile and privFile:
-            if not privFile.mayaOpen(checkFile=False):
+            if not privFile.mayaOpen(checkFile=False, **kwargs):
                 self.restoreLockState()
-#            else:
-#                v, w = privFile.getEditNums()
-#                if w == 0:
-#                    w1File = self.getEditFile(v, 1, weak=True)
-#                    mc.file(rename=w1File.absPath())
 
         return privFile
 

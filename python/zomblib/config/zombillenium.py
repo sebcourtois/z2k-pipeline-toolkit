@@ -265,7 +265,7 @@ class shot_lib(object):
     #===========================================================================
 
     "finalLayout_scene":{"create_sg_version":True,
-                         "sg_tasks":("final layout",),
+                         "sg_tasks":("Final Layout|final layout",),
                          "dependency_types":
                             {"geoCache_dep":
                                 {"dep_public_loc":"finalLayout_cache_dir",
