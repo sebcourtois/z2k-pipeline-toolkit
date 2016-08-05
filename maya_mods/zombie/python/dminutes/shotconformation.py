@@ -69,8 +69,8 @@ def finalLayoutToLighting(gui=True):
 
     mc.editRenderLayerGlobals( currentRenderLayer='defaultRenderLayer' )
 
-    mc.ls("mat_arelequin_*")+mc.ls("aiAOV_arlequin*")
-    toDeleteNodeL=mc.ls("mat_arelequin_*")+mc.ls("aiAOV_arlequin*")+mc.ls("lay_finalLayout_*")
+    mc.ls("cam_animatic:asset*")
+    toDeleteNodeL=mc.ls("mat_arelequin_*")+mc.ls("aiAOV_arlequin*")+mc.ls("lay_finalLayout_*")+mc.ls("cam_animatic:asset*")
     for each in toDeleteNodeL: 
         try: 
             mc.delete(each)
@@ -86,6 +86,9 @@ def finalLayoutToLighting(gui=True):
     pm.mel.eval("source updateSoundMenu")
     pm.mel.eval("setSoundDisplay audio 0")
     log.printL("i", "sound turned off")
+
+
+    miscUtils.deleteUnknownNodes()
 
     return dict(resultB=log.resultB, logL=log.logL)
 
