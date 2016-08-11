@@ -1,1 +1,1 @@
-"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch -u 0 "C:\Program Files\Shotgun\RV 6.2.6\bin\rvpush.exe" %*
+"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch -u 0 @rvpush %*

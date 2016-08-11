@@ -1,8 +1,9 @@
-import os
-osp = os.path
-import sys
 
-sys.path.append(osp.join(osp.dirname(__file__), ".."))
+import sys
+import os
+import os.path as osp
+
+sys.path.append(osp.abspath(osp.join(osp.dirname(__file__), "..")))
 from ztk_setup import Z2kToolkit
 
 #Nouveau chemins:

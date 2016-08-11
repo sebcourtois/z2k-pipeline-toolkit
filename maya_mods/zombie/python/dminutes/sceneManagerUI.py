@@ -967,7 +967,7 @@ def doUpdateShotgunAssets(*args):
         doRefreshSceneInfo(args)
         pc.displayWarning("Done !")
 
-#@timer
+@mop.withErrorDialog
 def doCapture(*args , **kwargs):
 
     bQuick = kwargs.get("quick", False)
