@@ -2,6 +2,8 @@ import maya.cmds as mc
 #from mtoa.aovs import AOVInterface
 from mtoa import aovs
 
+from davos_maya.tool.general import entityFromScene
+from dminutes import maya_scene_operations as mop
 
 import os
 import re
@@ -190,22 +192,10 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     """
     log = miscUtils.LogBuilder(gui=gui, funcName="setArnoldRenderOptionShot")
 
-
-
-    from davos_maya.tool.general import entityFromScene
-    from dminutes import maya_scene_operations as mop
-    damShot = entityFromScene()
-    oShotCam = mop.getShotCamera(damShot.name)
-    if oShotCam:
-        #myCamName = mc.ls('*:cam_*',type = "camera")
-        myCamName = oShotCam.name()
-        allCam = mc.ls(type="camera")
-        for eachCam in allCam:
-            eachCam = eachCam.replace("Shape", "")
-            if myCamName not in eachCam:
-                mc.setAttr (eachCam + ".renderable", 0)
-            else:
-                mc.setAttr (eachCam + ".renderable", 1)
+    if renderMode == 'finalLayout':
+        rendering.setRenderCamera(leftCam = False, rightCam = False)
+    else:
+        rendering.setRenderCamera(leftCam = True, rightCam = False)
 
     mc.colorManagementPrefs(e=True, cmEnabled=False)
 
@@ -297,6 +287,105 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
 
     txt = "#### info: render options are now production ready"
     log.printL("i", txt)
+
+
+
+def setRenderCamera(leftCam = True, rightCam = False, gui = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="setRenderCamera")
+
+    defaultCamS = ""
+    leftCamS =""
+    rightCamS=""
+
+    damShot = entityFromScene()
+    oShotCam = mop.getShotCamera(damShot.name)
+
+    if oShotCam:
+        defaultCamNameS = oShotCam.name()
+        leftCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_left').replace('cam_sq', 'stereo_cam_sq')
+        rightCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_right').replace('cam_sq', 'stereo_cam_sq')
+
+        allCam = mc.ls(type="camera")     
+        for eachCam in allCam:
+            eachCam = eachCam.replace("Shape", "")
+            if eachCam == leftCamNameS:
+                leftCamS = eachCam
+            elif eachCam == rightCamNameS and rightCam:
+                rightCamS = eachCam
+            elif eachCam == defaultCamNameS:
+                defaultCamS = eachCam
+            else:
+                try:
+                    mc.setAttr (eachCam + ".renderable", 0)
+                except:
+                    pass
+
+    if leftCam:
+        if leftCamS: 
+            mc.setAttr (leftCamS + ".renderable", 1)
+            #mc.renderSettings(camera=leftCamS)
+            log.printL("i", "render camera: '{}'".format(leftCamS))
+        else:
+            log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_reft'")
+            try:
+                mc.setAttr (leftCamS + ".renderable", 0)
+            except:
+                pass
+
+            if defaultCamS:
+                log.printL("i", "render camera: '{}'".format(defaultCamS))
+                mc.setAttr (defaultCamS + ".renderable", 1)
+            else:
+                log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
+                mc.setAttr (defaultCamS + ".renderable", 0)
+    else:
+        try:
+            mc.setAttr (leftCamS + ".renderable", 0)
+        except:
+            pass
+
+    if rightCam:
+        if rightCamS: 
+            mc.setAttr (rightCamS + ".renderable", 1)
+            log.printL("i", "render camera: '{}'".format(rightCamS))
+        else:
+            try:
+                mc.setAttr (rightCamS + ".renderable", 0)
+                log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_right'")
+            except:
+                pass
+
+    if not rightCam and not leftCam:
+        if defaultCamS:
+            log.printL("i", "render camera: '{}'".format(defaultCamS))
+            mc.setAttr (defaultCamS + ".renderable", 1)
+        else:
+            log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
+            mc.setAttr (defaultCamS + ".renderable", 0)
+
+
+    return dict(resultB=log.resultB, logL=log.logL)
+
+
+
+def UVSetCount(gui = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="UVSetCount")
+    multiUVmapObjL=[]
+
+    meshList, instanceList = miscUtils.getAllTransfomMeshes(inParent = "|asset|grp_geo")
+
+    for each in meshList:
+        uvMapList = mc.polyUVSet(each, query=True, allUVSets=True )
+        if "uvSet_display" in uvMapList:
+            uvMapList.remove("uvSet_display")
+        if len(uvMapList)>1:
+            multiUVmapObjL.append(each)
+
+    if multiUVmapObjL :
+        txt = "{} meshes has several uv maps, please clean: '{}': ".format(len(multiUVmapObjL), multiUVmapObjL)
+        log.printL("e", txt)
+
+    return dict(resultB=log.resultB, logL=log.logL)
 
 
 
