@@ -84,6 +84,11 @@ def tkMirror(*args, **kwargs):
 
                       'Right_JawTendon_Start_Control':'Left_JawTendon_Start_Control',
                       
+
+                      # hairs willy
+                      'Left_hair_1_1_Bone_Ctrl_2M':'Right_hair_1_1_Bone_Ctrl_2M',
+                      'Right_hair_1_1_Bone_Ctrl_2M':'Left_hair_1_1_Bone_Ctrl_2M',
+
                     }
 
         customAllSymD = dict(realSymD,**upperBrowD )
