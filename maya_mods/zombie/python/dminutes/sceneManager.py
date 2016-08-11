@@ -485,12 +485,11 @@ class SceneManager():
 
     @mop.withErrorDialog
     @withSelectionRestored
-    def setupShotScene(self):
+    def setupScene(self):
 
         sStepName = self.context["step"]["code"].lower()
         damShot = self.getDamShot()
         proj = damShot.project
-        sShotCode = damShot.name
         sgEntity = self.context['entity']
         sgTask = self.context["task"]
         sCurScnRc = scnFromTask(sgTask, fail=True)
@@ -606,16 +605,11 @@ class SceneManager():
             oShotCam = self.getShotCamera(fail=True)
 
             if sStepName == "stereo":
-                oStereoCam = mop.getStereoCam(sShotCode, fail=False)
-                if not oStereoCam:
-                    stereoCamFile = proj.getLibrary("public", "misc_lib").getEntry("layout/stereo_cam.ma")
-                    sImpNs = mop.mkStereoCamNamespace(sShotCode)
-                    stereoCamFile.mayaImportScene(ns=sImpNs, returnNewNodes=False)
-                    oStereoCam = mop.getStereoCam(sShotCode, fail=True)
-
-                matchTransform(oStereoCam, oShotCam, atm="tr")
-                pc.parentConstraint(oShotCam, oStereoCam, maintainOffset=True)
-                oShotCam.attr("focalLength") >> oStereoCam.attr("focalLength")
+                oStereoCam = mop.loadStereoCam(damShot, withAnim=False)
+            elif sStepName == "rendering":
+                oStereoCam = mop.loadStereoCam(damShot, withAnim=True)
+                oStereoCam.getShape().setAttr("zeroParallaxPlane", False)
+                oStereoCam = None
 
         _, oAnimaticCam = mop.setupAnimatic(mop.getAnimaticInfos(damShot, sStepName))
 
