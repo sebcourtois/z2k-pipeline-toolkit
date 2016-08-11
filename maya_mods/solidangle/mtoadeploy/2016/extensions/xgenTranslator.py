@@ -36,5 +36,6 @@ templates.registerTranslatorUI(xgmDescriptionTemplate, "xgmDescription", "xgenTr
 
 xg.registerCallback( "RenderAPIRendererTabUIInit", "xgenArnoldUI.xgArnoldUI" )
 xg.registerCallback( "RenderAPIRendererTabUIRefresh", "xgenArnoldUI.xgArnoldRefresh" )
+xg.registerCallback( "ArchiveExportInit", "xgenArnoldUI.xgArnoldArchiveExportInit" )
 if xg.xgGlobal.DescriptionEditor is not None:
     xg.xgGlobal.DescriptionEditor.refresh( "Full" )

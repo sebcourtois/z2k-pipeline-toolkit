@@ -1,0 +1,98 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiHair'>
+		<attribute name='rootcolor' type='maya.float3'>
+			<label>Root Color</label>
+		</attribute>
+		<attribute name='tipcolor' type='maya.float3'>
+			<label>Tip Color</label>
+		</attribute>
+		<attribute name='ambdiff' type='maya.float'>
+			<label>Ambient Diffuse</label>
+		</attribute>
+		<attribute name='kdInd' type='maya.float'>
+			<label>Indirect Diffuse</label>
+		</attribute>
+		<attribute name='diffuseCache' type='maya.bool'>
+			<label>Diffuse Cache</label>
+		</attribute>
+
+		<attribute name='gloss' type='maya.float'>
+			<label>Glossiness</label>
+		</attribute>
+		<attribute name='spec' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='specColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='specShift' type='maya.float'>
+			<label>Angular Shift</label>
+		</attribute>
+
+		<attribute name='gloss2' type='maya.float'>
+			<label>Glossiness</label>
+		</attribute>
+		<attribute name='spec2' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='spec2Color' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='spec2Shift' type='maya.float'>
+			<label>Angular Shift</label>
+		</attribute>
+
+		<attribute name='transmission' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='transmissionColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='transmissionSpread' type='maya.float'>
+			<label>Spread</label>
+		</attribute>
+
+		<attribute name='opacity' type='maya.float3'>
+			<label>Opacity</label>
+		</attribute>
+
+	</template>
+	<view name='Lookdev' template='AEaiHair'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='diffuse_properties'>
+			<label>Diffuse</label>
+			<property name='rootcolor'/>
+			<property name='tipcolor'/>
+			<property name='ambdiff'/>
+			<property name='kdInd'/>
+			<property name='diffuseCache'/>
+		</group>
+		<group name='specular_properties'>
+			<label>Specular</label>
+			<property name='gloss'/>
+			<property name='spec'/>
+			<property name='specColor'/>
+			<property name='specShift'/>
+			<group name='specular2_properties'>
+				<label>Secondary Specular</label>
+				<property name='gloss2'/>
+				<property name='spec2'/>
+				<property name='spec2Color'/>
+				<property name='spec2Shift'/>
+			</group>
+		</group>
+		<group name='transmission_properties'>
+			<label>Transmission</label>
+			<property name='transmission'/>
+			<property name='transmissionColor'/>
+			<property name='transmissionSpread'/>
+		</group>
+		<group name='opacity_properties'>
+			<label>Opacity</label>
+			<property name='opacity'/>
+		</group>
+	</view>
+</templates>

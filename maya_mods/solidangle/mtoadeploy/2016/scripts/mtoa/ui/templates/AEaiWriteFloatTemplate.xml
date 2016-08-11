@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiWriteFloat'>
+		<attribute name='beauty' type='maya.float3'>
+			<label>Beauty</label>
+		</attribute>
+		<attribute name='input' type='maya.float'>
+			<label>Input</label>
+		</attribute>
+		<attribute name='aovName' type='maya.string'>
+			<label>Name</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiWriteFloat'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='writefloat_attributes'>
+			<label>Write Float Attributes</label>
+			<property name='beauty'/>
+			<property name='input'/>
+			<property name='aovName'/>
+		</group>
+	</view>
+</templates>

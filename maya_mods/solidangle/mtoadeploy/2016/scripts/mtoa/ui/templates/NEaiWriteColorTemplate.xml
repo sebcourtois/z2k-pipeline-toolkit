@@ -1,0 +1,24 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiWriteColor'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='beauty' type='maya.float3'>
+			<label>Beauty</label>
+		</attribute>
+		<attribute name='input' type='maya.float3'>
+			<label>Input</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiWriteColor'>
+		<property name='outColor'/>
+		<property name='beauty'/>
+		<property name='input'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiWriteColor'>
+		<property name='outValue'/>
+	</view>
+</templates>

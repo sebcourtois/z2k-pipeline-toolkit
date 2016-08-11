@@ -291,12 +291,9 @@ def PrintLicenseInfo():
    print("environment:")
    print("")
 
-   print("solidangle_LICENSE           = %s" % os.environ.get('solidangle_LICENSE', failobj='(null)'))
-   print("RLM_LICENSE                  = %s" % os.environ.get('RLM_LICENSE', failobj='(null)'))
-   print("ARNOLD_LICENSE_ATTEMPTS      = %s" % os.environ.get('ARNOLD_LICENSE_ATTEMPTS', failobj='(null)'))
-   print("ARNOLD_LICENSE_ATTEMPT_DELAY = %s" % os.environ.get('ARNOLD_LICENSE_ATTEMPT_DELAY', failobj='(null)'))
+   print("solidangle_LICENSE = %s" % os.environ.get('solidangle_LICENSE', failobj='(null)'))
+   print("RLM_LICENSE        = %s" % os.environ.get('RLM_LICENSE', failobj='(null)'))
 
    AiFree(licenses)
 
    return diagnose_result
-

@@ -4,6 +4,15 @@
 import maya
 maya.utils.loadStringResourcesForModule(__name__)
 
+try:
+	from PySide import QtGui, QtCore
+	from PySide.QtGui import *
+	from PySide.QtCore import *
+except ImportError:
+	from PySide2 import QtGui, QtCore, QtWidgets
+	from PySide2.QtGui import *
+	from PySide2.QtCore import *
+	from PySide2.QtWidgets import *
 
 import sys
 import os.path
@@ -35,6 +44,12 @@ def castSelf(selfid):
 
 def addMethod( self, method ):
     self.__dict__[method.__name__] = types.MethodType( method, self, xg.ui.tabs.RendermanRendererTabUI )
+    
+if 'DpiScale' not in locals():
+    def DpiScale(x):
+        return x
+    locals()['DpiScale'] = DpiScale
+    
 #
 # RenderAPI RendererTab UI callbacks
 
@@ -58,47 +73,47 @@ def xgArnoldUI(selfid):
 
 
     # Horizontal layout
-    row = QtGui.QWidget()
-    hbox = QtGui.QHBoxLayout()
-    hbox.setSpacing(3)
-    hbox.setContentsMargins(1,1,1,1)
-    label = QtGui.QLabel(maya.stringTable[ 'y_xgenArnoldUI.kArnoldRenderMode'  ])
+    row = QWidget()
+    hbox = QHBoxLayout()
+    hbox.setSpacing(DpiScale(3))
+    hbox.setContentsMargins(DpiScale(1),DpiScale(1),DpiScale(1),DpiScale(1))
+    label = QLabel(maya.stringTable[ 'y_xgenArnoldUI.kArnoldRenderMode'  ])
     label.setFixedWidth(labelWidth())
-    label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
-    label.setIndent(10)
+    label.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+    label.setIndent(DpiScale(10))
     label.setToolTip(maya.stringTable[ 'y_xgenArnoldUI.kArnoldRenderModeAnn'  ])
     hbox.addWidget(label)
-    self.arnold_rendermode = QtGui.QComboBox()
-    self.arnold_rendermode.setFixedWidth( 120 )
+    self.arnold_rendermode = QComboBox()
+    self.arnold_rendermode.setFixedWidth( DpiScale(120) )
     self.arnold_rendermode.addItem(maya.stringTable[ 'y_xgenArnoldUI.kRenderModeLive'  ], "1" )
     self.arnold_rendermode.addItem(maya.stringTable[ 'y_xgenArnoldUI.kRenderModeBatch' ], "3" )
     self.arnold_rendermode.setToolTip(label.toolTip())
     self.connect(self.arnold_rendermode , QtCore.SIGNAL("activated(int)"), self.xgArnoldRenderModeChanged )
     hbox.addWidget(self.arnold_rendermode)
-    filler = QtGui.QWidget()
+    filler = QWidget()
     hbox.addWidget(filler)
     row.setLayout(hbox)
     expand.addWidget(row)
 
     # Horizontal layout
-    row = QtGui.QWidget()
-    hbox = QtGui.QHBoxLayout()
-    hbox.setSpacing(3)
-    hbox.setContentsMargins(1,1,1,1)
-    label = QtGui.QLabel(maya.stringTable[ 'y_xgenArnoldUI.kTools'  ])
+    row = QWidget()
+    hbox = QHBoxLayout()
+    hbox.setSpacing(DpiScale(3))
+    hbox.setContentsMargins(DpiScale(1),DpiScale(1),DpiScale(1),DpiScale(1))
+    label = QLabel(maya.stringTable[ 'y_xgenArnoldUI.kTools'  ])
     label.setFixedWidth(labelWidth())
-    label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
-    label.setIndent(10)
+    label.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+    label.setIndent(DpiScale(10))
     hbox.addWidget(label)
 
-    self.arnold_apply_hair_shader = QtGui.QPushButton()
+    self.arnold_apply_hair_shader = QPushButton()
     self.arnold_apply_hair_shader.setText(maya.stringTable[ 'y_xgenArnoldUI.kArnoldApplyHair'  ])
     self.arnold_apply_hair_shader.setToolTip(maya.stringTable[ 'y_xgenArnoldUI.kArnoldApplyHairAnn'  ])
     self.connect(self.arnold_apply_hair_shader, QtCore.SIGNAL("activated(int)"),
                  lambda: mel.eval("print 'NEED TO ADD CODE HERE TO CREATE AI HAIR AND ASSIGN IT TO DESCRIPTION:'" % (xgg.DescriptionEditor.currentDescription(), xgg.DescriptionEditor.currentPalette )))
     hbox.addWidget(self.arnold_apply_hair_shader)
 
-    filler = QtGui.QWidget()
+    filler = QWidget()
     hbox.addWidget(filler)
     row.setLayout(hbox)
     expand.addWidget(row)
@@ -117,23 +132,23 @@ def xgArnoldUI(selfid):
     
 
     # Horizontal layout
-    row = QtGui.QWidget()
-    hbox = QtGui.QHBoxLayout()
-    hbox.setSpacing(3)
-    hbox.setContentsMargins(1,1,1,1)
-    label = QtGui.QLabel(maya.stringTable[ 'y_xgenArnoldUI.kCurveMode'  ])
+    row = QWidget()
+    hbox = QHBoxLayout()
+    hbox.setSpacing(DpiScale(3))
+    hbox.setContentsMargins(DpiScale(1),DpiScale(1),DpiScale(1),DpiScale(1))
+    label = QLabel(maya.stringTable[ 'y_xgenArnoldUI.kCurveMode'  ])
     label.setFixedWidth(labelWidth())
-    label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
-    label.setIndent(10)
+    label.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+    label.setIndent(DpiScale(10))
     label.setToolTip(maya.stringTable[ 'y_xgenArnoldUI.kSplineModeAnn'  ])
     hbox.addWidget(label)
-    self.arnold_curveMode = QtGui.QComboBox()
+    self.arnold_curveMode = QComboBox()
     self.arnold_curveMode.addItem(maya.stringTable[ 'y_xgenArnoldUI.kCurveModeRibbon'  ], "0" )
     self.arnold_curveMode.addItem(maya.stringTable[ 'y_xgenArnoldUI.kCurveModeThick'  ], "1" )
     self.arnold_curveMode.setToolTip(label.toolTip())
     self.connect(self.arnold_curveMode, QtCore.SIGNAL("activated(int)"), self.xgArnoldCurveModeChanged )
     hbox.addWidget(self.arnold_curveMode)
-    filler = QtGui.QWidget()
+    filler = QWidget()
     hbox.addWidget(filler)
     row.setLayout(hbox)
     expand.addWidget(row)
@@ -146,48 +161,48 @@ def xgArnoldUI(selfid):
 
     
     # Horizontal layout
-    row = QtGui.QWidget()
-    hbox = QtGui.QHBoxLayout()
-    hbox.setSpacing(3)
-    hbox.setContentsMargins(1,1,1,1)
-    label = QtGui.QLabel(maya.stringTable[ 'y_xgenArnoldUI.kMotionBlur'  ])
+    row = QWidget()
+    hbox = QHBoxLayout()
+    hbox.setSpacing(DpiScale(3))
+    hbox.setContentsMargins(DpiScale(1),DpiScale(1),DpiScale(1),DpiScale(1))
+    label = QLabel(maya.stringTable[ 'y_xgenArnoldUI.kMotionBlur'  ])
     label.setFixedWidth(labelWidth())
-    label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
-    label.setIndent(10)
+    label.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+    label.setIndent(DpiScale(10))
     label.setToolTip(maya.stringTable[ 'y_xgenArnoldUI.kArnoldKeyframeLocationAnn'  ])
     hbox.addWidget(label)
-    self.arnold_motion_blur = QtGui.QComboBox()
+    self.arnold_motion_blur = QComboBox()
     self.arnold_motion_blur.addItem(maya.stringTable[ 'y_xgenArnoldUI.kArnoldGlobalSettings' ], "0")
     self.arnold_motion_blur.addItem(maya.stringTable[ 'y_xgenArnoldUI.kArnoldOn' ], "1")
     self.arnold_motion_blur.addItem(maya.stringTable[ 'y_xgenArnoldUI.kArnoldOff' ], "2")
     self.arnold_motion_blur.setToolTip(label.toolTip())
     self.connect(self.arnold_motion_blur, QtCore.SIGNAL("activated(int)"), self.xgArnoldMotionBlurChanged )
     hbox.addWidget(self.arnold_motion_blur)
-    filler = QtGui.QWidget()
+    filler = QWidget()
     hbox.addWidget(filler)
     row.setLayout(hbox)
     expand.addWidget(row)
 
     
     # Horizontal layout
-    row = QtGui.QWidget()
-    hbox = QtGui.QHBoxLayout()
-    hbox.setSpacing(3)
-    hbox.setContentsMargins(1,1,1,1)
-    self.arnold_motion_blur_mode_label = QtGui.QLabel(maya.stringTable[ 'y_xgenArnoldUI.kMotionBlurMode'  ])
+    row = QWidget()
+    hbox = QHBoxLayout()
+    hbox.setSpacing(DpiScale(3))
+    hbox.setContentsMargins(DpiScale(1),DpiScale(1),DpiScale(1),DpiScale(1))
+    self.arnold_motion_blur_mode_label = QLabel(maya.stringTable[ 'y_xgenArnoldUI.kMotionBlurMode'  ])
     self.arnold_motion_blur_mode_label.setFixedWidth(labelWidth())
-    self.arnold_motion_blur_mode_label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
-    self.arnold_motion_blur_mode_label.setIndent(10)
+    self.arnold_motion_blur_mode_label.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+    self.arnold_motion_blur_mode_label.setIndent(DpiScale(10))
     self.arnold_motion_blur_mode_label.setToolTip(maya.stringTable[ 'y_xgenArnoldUI.kArnoldKeyframeLocationAnn'  ])
     hbox.addWidget(self.arnold_motion_blur_mode_label)
-    self.arnold_motion_blur_mode = QtGui.QComboBox()
+    self.arnold_motion_blur_mode = QComboBox()
     self.arnold_motion_blur_mode.addItem(maya.stringTable[ 'y_xgenArnoldUI.kArnoldKeyframeLocationStart' ], "0")
     self.arnold_motion_blur_mode.addItem(maya.stringTable[ 'y_xgenArnoldUI.kArnoldKeyframeLocationMiddle' ], "1")
     self.arnold_motion_blur_mode.addItem(maya.stringTable[ 'y_xgenArnoldUI.kArnoldKeyframeLocationEnd' ], "2")
     self.arnold_motion_blur_mode.setToolTip(label.toolTip())
     self.connect(self.arnold_motion_blur_mode, QtCore.SIGNAL("activated(int)"), self.xgArnoldMotionBlurModeChanged )
     hbox.addWidget(self.arnold_motion_blur_mode)
-    filler = QtGui.QWidget()
+    filler = QWidget()
     hbox.addWidget(filler)
     row.setLayout(hbox)
     expand.addWidget(row)
@@ -319,6 +334,10 @@ def xgArnoldRefresh(selfid):
                 cmds.setAttr( nExistsName + ".render_mode", 3 ) #  batch = 3
         else:
             print "Couldn't find Description Shape!"
+
+def xgArnoldArchiveExportInit(selfid):
+    self = castSelf(selfid)
+    self.batch_plugins.append( "mtoa" )
 
 # Callback after description creation to switch to Arnold render
 def xgArnoldOnCreateDescription( param ):

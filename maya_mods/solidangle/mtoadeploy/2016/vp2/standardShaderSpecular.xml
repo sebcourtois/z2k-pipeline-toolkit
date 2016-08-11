@@ -127,7 +127,7 @@ float3 standardShaderSpecular(
                 ]]>
             </source>
         </implementation>
-        <implementation render="OGSRenderer" language="HLSL" lang_version="10.0">
+        <implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
             <function_name val="standardShaderSpecular" />
             <source>
                 <![CDATA[
@@ -136,27 +136,27 @@ float SQR(float a)
     return a * a;
 }
 
-float3 standardShaderSpecular(
+vec3 standardShaderSpecular(
         standardShaderLightingData lightingData,
         float roughness)
 {
     
     float LdotN = saturate(dot(lightingData.SL, lightingData.N));
     if (LdotN == 0.0f)
-        return float3(0.0f, 0.0f, 0.0f);
+        return vec3(0.0f, 0.0f, 0.0f);
     float VdotN = saturate(dot(lightingData.V, lightingData.N));
     if (VdotN == 0.0f)
-        return float3(0.0f, 0.0f, 0.0f);
+        return vec3(0.0f, 0.0f, 0.0f);
 
-    float3 iPlusO = lightingData.L + lightingData.V;
-    float3 microfacet = normalize(iPlusO);
+    vec3 iPlusO = lightingData.L + lightingData.V;
+    vec3 microfacet = normalize(iPlusO);
 
     float LdotM = saturate(dot(lightingData.SL, microfacet));
-    if (LdotM == 0.0f) return float3(0.0f, 0.0f, 0.0f);
+    if (LdotM == 0.0f) return vec3(0.0f, 0.0f, 0.0f);
     float VdotM = saturate(dot(lightingData.V, microfacet));
-    if (VdotM == 0.0f) return float3(0.0f, 0.0f, 0.0f);
+    if (VdotM == 0.0f) return vec3(0.0f, 0.0f, 0.0f);
     float MdotN = saturate(dot(microfacet, lightingData.N));
-    if (MdotN == 0.0f) return float3(0.0f, 0.0f, 0.0f);
+    if (MdotN == 0.0f) return vec3(0.0f, 0.0f, 0.0f);
 
     float LdotN2 = SQR(LdotN);
     float VdotN2 = SQR(VdotN);
@@ -180,7 +180,7 @@ float3 standardShaderSpecular(
 
     float D = (rx2 > 0.0f) ? exp(-tan2ThetaM / rx2) / (3.14159f * rx2 * MdotN4) : 0.0f;
 
-    return max(float3(0.0f, 0.0f, 0.0f), ((G * D) / (4.f * LdotN * VdotN)) * lightingData.specular);
+    return max(vec3(0.0f, 0.0f, 0.0f), ((G * D) / (4.f * LdotN * VdotN)) * lightingData.specular);
 }
                 ]]>
             </source>

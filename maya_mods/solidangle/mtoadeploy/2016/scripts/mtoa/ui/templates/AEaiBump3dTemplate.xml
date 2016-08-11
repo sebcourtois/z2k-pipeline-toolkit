@@ -1,0 +1,29 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiBump3d'>
+		<attribute name='bumpMap' type='maya.float'>
+			<label>Bump Map</label>
+		</attribute>
+		<attribute name='bumpHeight' type='maya.float'>
+			<label>Bump Height</label>
+		</attribute>
+		<attribute name='epsilon' type='maya.float'>
+			<label>Epsilon</label>
+		</attribute>
+		<attribute name='shader' type='maya.float3'>
+			<label>Shader</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiBump3d'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='bump_attributes'>
+			<label>Bump Attributes</label>
+			<property name='bumpMap'/>
+			<property name='bumpHeight'/>
+			<property name='epsilon'/>
+			<property name='shader'/>
+		</group>
+	</view>
+</templates>

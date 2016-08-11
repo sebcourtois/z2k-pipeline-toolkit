@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiFog'>
+		<attribute name='color' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='distance' type='maya.float'>
+			<label>Distance</label>
+		</attribute>
+		<attribute name='height' type='maya.float'>
+			<label>Height</label>
+		</attribute>
+		<attribute name='groundNormal' type='maya.float3'>
+			<label>Ground Normal</label>
+		</attribute>
+		<attribute name='groundPoint' type='maya.float3'>
+			<label>Ground Point</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiFog'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='fog_attributes'>
+			<label>Fog Attributes</label>
+			<property name='color'/>
+			<property name='distance'/>
+			<property name='height'/>
+			<property name='groundNormal'/>
+			<property name='groundPoint'/>
+		</group>
+	</view>
+</templates>

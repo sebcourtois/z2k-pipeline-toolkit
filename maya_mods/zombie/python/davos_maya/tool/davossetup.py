@@ -164,7 +164,7 @@ class DavosSetup(ToolSetup):
     def onSceneOpened(self, *args):
         ToolSetup.onSceneOpened(self, *args)
         if smui:
-            if smui.isLaunched() and smui.isVisible():
+            if smui.isLaunched():
                 smui.doDetect()
 
     def onPreCreateReferenceCheck(self, mFileObj, clientData=None):
@@ -187,7 +187,7 @@ class DavosSetup(ToolSetup):
                     sRefEnvPath = re.split(re.escape(sPubLibPath), sRefRawPath, 1, flags=flags)[-1]
                     sRefEnvPath = osp.join(sLibEnv, sRefEnvPath).replace("\\", "/")
                     if osp.isfile(osp.expanduser(osp.expandvars(sRefEnvPath))):
-                        #print "\n","ref from '{}': {} ...\n    ...conformed to {}".format(sLibName,sRefRawPath, sRefEnvPath)
+                        #print "\n","ref from '{}': {} ...\n    ...conformed to {}".format(sLibSection,sRefRawPath, sRefEnvPath)
                         print "reference conformed to {}".format(sRefEnvPath)
                         mFileObj.setRawFullName(sRefEnvPath)
                         break

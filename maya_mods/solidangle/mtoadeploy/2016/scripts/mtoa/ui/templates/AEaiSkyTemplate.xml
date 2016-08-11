@@ -1,0 +1,74 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiSky'>
+		<attribute name='format' type='maya.float'>
+			<label>Format</label>
+		</attribute>
+		<attribute name='color' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='intensity' type='maya.float'>
+			<label>Intensity</label>
+		</attribute>
+		<attribute name='castsShadows' type='maya.bool'>
+			<label>Casts Shadows</label>
+		</attribute>
+		<attribute name='primaryVisibility' type='maya.bool'>
+			<label>Primary Visibility</label>
+		</attribute>
+		<attribute name='aiVisibleInDiffuse' type='maya.bool'>
+			<label>Visible in Diffuse</label>
+		</attribute>
+		<attribute name='aiVisibleInGlossy' type='maya.bool'>
+			<label>Visible in Glossy</label>
+		</attribute>
+		<attribute name='visibleInReflections' type='maya.bool'>
+			<label>Visible in Reflections</label>
+		</attribute>
+		<attribute name='visibleInRefractions' type='maya.bool'>
+			<label>Visible in Refractions</label>
+		</attribute>
+		<attribute name='sampling' type='maya.int'>
+			<label>Texture Resolution</label>
+		</attribute>
+		<attribute name='hwtexalpha' type='maya.float'>
+			<label>Opacity</label>
+		</attribute>
+		<attribute name='skyRadius' type='maya.float'>
+			<label>Sky Radius</label>
+		</attribute>
+		<attribute name='skyFacing' type='maya.int'>
+			<label>Facing</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiSky'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='sky_attributes'>
+			<label>Sky Attributes</label>
+			<property name='format'/>
+			<property name='color'/>
+			<property name='intensity'/>
+		</group>
+		<group name='renderstats_attributes'>
+			<label>Render Stats</label>
+			<property name='castsShadows'/>
+			<property name='primaryVisibility'/>
+			<property name='aiVisibleInDiffuse'/>
+			<property name='aiVisibleInGlossy'/>
+			<property name='visibleInReflections'/>
+			<property name='visibleInRefractions'/>
+		</group>
+		<group name='hw_tex_attributes'>
+			<label>Hardware Texturing</label>
+			<property name='sampling'/>
+			<property name='hwtexalpha'/>
+		</group>
+		<group name='viewport_attributes'>
+			<label>Viewport</label>
+			<property name='skyRadius'/>
+			<property name='skyFacing'/>
+		</group>
+	</view>
+</templates>

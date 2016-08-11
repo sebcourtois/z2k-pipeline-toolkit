@@ -96,7 +96,12 @@ public:
    
    bool useExistingTiledTextures() const 
    { 
-     return m_use_existing_tiled_textures; 
+     return m_use_existing_tiled_textures || m_autotx;
+   }
+
+   bool autoTx() const
+   {
+     return m_autotx;
    }
 
    MString outputAssFile() const
@@ -278,6 +283,7 @@ private:
    bool m_force_translate_shading_engines;
    bool m_lock_sampling_noise;
    bool m_use_existing_tiled_textures;
+   bool m_autotx;
    bool m_outputAssBoundingBox;
    bool m_progressive_rendering;
    bool m_isAnimated;

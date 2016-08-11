@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiDensity'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='scatterColor' type='maya.float3'>
+			<label>Scatter Color</label>
+		</attribute>
+		<attribute name='absorptionColor' type='maya.float3'>
+			<label>Absorption Color</label>
+		</attribute>
+		<attribute name='emissionColor' type='maya.float3'>
+			<label>Emission Color</label>
+		</attribute>
+		<attribute name='positionOffset' type='maya.float3'>
+			<label>Position Offset</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiDensity'>
+		<property name='outColor'/>
+		<property name='scatterColor'/>
+		<property name='absorptionColor'/>
+		<property name='emissionColor'/>
+		<property name='positionOffset'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiDensity'>
+		<property name='outColor'/>
+	</view>
+</templates>

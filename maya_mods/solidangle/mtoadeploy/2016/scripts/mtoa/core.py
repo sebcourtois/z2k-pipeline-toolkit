@@ -6,6 +6,7 @@ import pymel.core as pm
 import mtoa.utils as utils
 import mtoa.callbacks as callbacks
 import maya.cmds as cmds
+import maya.mel as mel
 import os
 
 CATEGORY_TO_RUNTIME_CLASS = {
@@ -84,6 +85,7 @@ def createArnoldNode(nodeType, name=None, skipSelect=False, runtimeClassificatio
         pm.warning("[mtoa] Could not determine runtime classification of %s: set maya.classification metadata" % nodeType)
         node = pm.createNode(nodeType, **kwargs)
 
+    createShadingGroupIfNeeded(nodeType, node)
     createOptions()
 
     return node
@@ -254,6 +256,19 @@ def createOptions():
     except:
         pass
     
+
+# If the current node is a surface shader then create the shading group for it and connect it.
+def createShadingGroupIfNeeded(nodeType, node):
+    if cmds.getClassification(nodeType, sat="shader/surface") and cmds.getClassification(nodeType, sat="rendernode/arnold/shader/surface"):
+        shadingNodeGroupName = node + "SG"
+        group = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=shadingNodeGroupName)
+        outAttr = node
+        if mel.eval("attributeExists(\"outColor\", \"" + node + "\")"):
+            outAttr += ".outColor"
+        else:
+            outAttr += ".message"
+        cmds.connectAttr(outAttr, group + ".surfaceShader")
+
 
 #-------------------------------------------------
 # translator defaults

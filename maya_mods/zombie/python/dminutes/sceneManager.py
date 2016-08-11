@@ -8,18 +8,22 @@ import re
 import stat
 from collections import OrderedDict
 import shutil
-from itertools import izip
+import traceback
 
 import pymel.core as pc
 import maya.cmds as mc
-import maya.mel
 
-from pytd.util.fsutils import pathResolve, normCase, pathSuffixed
+from pytd.util.fsutils import pathResolve, pathSuffixed, normCase
 from pytd.util.logutils import logMsg
-from pytd.util.sysutils import toStr, inDevMode
+from pytd.util.sysutils import toStr, inDevMode, fromUtf8
 from pytd.util.strutils import padded
+
 from pytaya.core.general import copyAttrs, getObject
 from pytaya.core import system as myasys
+from davos_maya.tool import reference as myaref
+from pytaya.util.sysutils import withSelectionRestored
+from pytaya.core.transform import matchTransform
+
 
 from davos.core import damproject
 from davos.core.damtypes import DamShot
@@ -34,6 +38,7 @@ from zomblib.editing import playMovie
 from zomblib import damutils
 
 import dminutes.maya_scene_operations as mop
+from dminutes.shotconformation import removeRefEditByAttr
 import dminutes.jipeLib_Z2K as jpZ
 import dminutes.camImpExp as camIE
 import dminutes.infoSetExp as infoE
@@ -44,49 +49,45 @@ reload(jpZ)
 reload(camIE)
 reload(infoE)
 
-# get zomb project
-PROJECTNAME = os.environ.get("DAVOS_INIT_PROJECT")
-
-#FROM DAVOS !!!!
-RC_FOR_STEP = {'Previz 3D':'previz_scene',
-               'Stereo':'stereo_scene',
-               'Layout':'layout_scene',
-               'Animation':'anim_scene',
-               'CharFX':'charFx_scene',
-               'Final Layout':'finalLayout_scene',
-               'Fx3D':'fx3d_scene',
-               'Rendering':'rendering_scene',
-               }
-RC_FOR_TASK = {}
-
-REF_FOR_STEP = {'Previz 3D':'previz_ref',
-                'Layout':'anim_ref',
-                'Animation':'anim_ref',
-                'CharFX':'anim_ref',
-                'Final Layout':'render_ref',
-                'Rendering':'render_ref',
-                }
-REF_FOR_TASK = {}
-
-MOV_FOR_STEP = {'Previz 3D':('previz_capture',),
-                'Stereo':('right_capture', 'left_capture',),
-                'Layout':('layout_capture',),
-                'Animation':('anim_capture',),
-                'CharFX':('charFx_capture',),
-                'Fx3D':('fx3d_capture',),
-               }
-MOV_FOR_TASK = {}
-
 DAVOS_LIBS = {'Asset':'asset_lib', 'Shot':'shot_lib'}
 
 MAX_INCR = 50
 
-def rcFromTask(sgTask, fail=False):
+SCN_FOR_STEP = {'previz 3d':'previz_scene',
+                'stereo':'stereo_scene',
+                'layout':'layout_scene',
+                'animation':'anim_scene',
+                'charfx':'charFx_scene',
+                'final layout':'finalLayout_scene',
+                'fx3d':'fx3d_scene',
+                'rendering':'rendering_scene',
+               }
+SCN_FOR_TASK = {}
 
-    sTask = sgTask['content']
-    sStep = sgTask['step']['name']
+REF_FOR_STEP = {'previz 3d':'previz_ref',
+                'layout':'anim_ref',
+                'animation':'anim_ref',
+                'charfx':'anim_ref',
+                'final layout':'render_ref',
+                'rendering':'render_ref',
+                }
+REF_FOR_TASK = {}
 
-    sName = RC_FOR_TASK.get(sTask, RC_FOR_STEP.get(sStep, ""))
+MOV_FOR_STEP = {'previz 3d':('previz_capture',),
+                'stereo':('right_capture', 'left_capture',),
+                'layout':('layout_capture',),
+                'animation':('anim_capture',),
+                'charfx':('charFx_capture',),
+                'fx3d':('fx3d_capture',),
+               }
+MOV_FOR_TASK = {}
+
+def scnFromTask(sgTask, fail=False):
+
+    sTask = sgTask['content'].lower()
+    sStep = sgTask['step']['name'].lower()
+
+    sName = SCN_FOR_TASK.get(sTask, SCN_FOR_STEP.get(sStep, ""))
 
     if (not sName):
         sMsg = ("No resource file associated with task: {}".format(sgTask))
@@ -99,8 +100,8 @@ def rcFromTask(sgTask, fail=False):
 
 def refFromTask(sgTask, fail=False):
 
-    sTask = sgTask['content']
-    sStep = sgTask['step']['name']
+    sTask = sgTask['content'].lower()
+    sStep = sgTask['step']['name'].lower()
 
     sName = REF_FOR_TASK.get(sTask, REF_FOR_STEP.get(sStep, ""))
 
@@ -113,36 +114,9 @@ def refFromTask(sgTask, fail=False):
 
     return sName
 
-def getReversedDict(in_dict):
-    """Get a copy of a dictionary key<=>value (Beware of identical values)"""
-    reverseDict = {}
-
-    for key in in_dict:
-        if not in_dict[key] in reverseDict:
-            reverseDict[in_dict[key]] = key
-
-    return reverseDict
-
 def pathNorm(p):
     """Normalize a path, in term of separator"""
     return os.path.normpath(p).replace("\\", "/")
-
-def restoreSelection(func):
-
-    def doIt(*args, **kwargs):
-
-        sSelList = mc.ls(sl=True)
-        try:
-            ret = func(*args, **kwargs)
-        finally:
-            if sSelList:
-                try:
-                    mc.select(sSelList)
-                except Exception as e:
-                    print "Could restore previous selection: {}".format(e)
-
-        return ret
-    return doIt
 
 def iterIncrementFiles(sFilePath):
 
@@ -155,119 +129,6 @@ def iterIncrementFiles(sFilePath):
 
         if stat.S_ISREG(st.st_mode):
             yield dict(path=p, mtime=st.st_mtime, num=i)
-
-@restoreSelection
-def makeCapture(sFilePath, start, end, width, height, displaymode="",
-                showFrameNumbers=True, format="iff", compression="jpg",
-                ornaments=False, play=False, useCamera=None, audioNode=None,
-                camSettings=None, quick=False):
-#                i_inFilmFit=0, i_inDisplayResolution=0, i_inDisplayFilmGate=0,
-#                i_inOverscan=1.0, i_inSafeAction=0, i_inSafeTitle=0,
-#                i_inGateMask=0, f_inMaskOpacity=0.8, quick=False):
-
-    pc.select(cl=True)
-    names = []
-    name = ""
-
-    pan = pc.playblast(activeEditor=True)
-    #sViewType = mc.modelEditor(pan, q=True, viewType=True)
-    #if sViewType == "stereoCameraView":
-
-    #Camera settings
-    oldCamera = None
-    if useCamera:
-        curCam = pc.modelEditor(pan, query=True, camera=True)
-        if curCam != useCamera:
-            oldCamera = curCam
-            pc.modelEditor(pan, edit=True, camera=useCamera)
-
-    app = pc.modelEditor(pan, query=True, displayAppearance=True)
-    tex = pc.modelEditor(pan, query=True, displayTextures=True)
-    wireOnShaded = pc.modelEditor(pan, query=True, wireframeOnShaded=True)
-    xray = pc.modelEditor(pan, query=True, xray=True)
-    jointXray = pc.modelEditor(pan, query=True, jointXray=True)
-    hud = pc.modelEditor(pan, query=True, hud=True)
-
-    oCamShape = pc.modelEditor(pan, query=True, camera=True)
-    if oCamShape.type() == "transform":
-        sCamShape = oCamShape.getShape().name()
-    else:
-        sCamShape = oCamShape.name()
-
-    #visible types
-    nurbsCurvesShowing = pc.modelEditor(pan, query=True, nurbsCurves=True)
-
-    editorKwargs = dict(hud=ornaments, wireframeOnShaded=False, displayAppearance="smoothShaded")
-    pc.modelEditor(pan, edit=True, nurbsCurves=False, **editorKwargs)
-
-    playblastKwargs = dict(format=format, compression=compression, quality=90,
-                           sequenceTime=False, clearCache=True, viewer=play,
-                           showOrnaments=ornaments,
-                           framePadding=4,
-                           forceOverwrite=True,
-                           percent=100,
-                           startTime=start, endTime=end,
-                           widthHeight=[width, height],
-                           offScreen=True, #fixes clamping of the capture in Legacy viewports
-                           )
-
-    sAudioNode = audioNode
-    if not sAudioNode:
-        gPlayBackSlider = maya.mel.eval('$tmpVar=$gPlayBackSlider')
-        sAudioNode = mc.timeControl(gPlayBackSlider, q=True, sound=True)
-
-    if sAudioNode:
-        sSoundPath = pathResolve(mc.getAttr(".".join((sAudioNode, "filename"))))
-        if not os.path.exists(sSoundPath):
-            pc.displayError("File of '{}' node not found: '{}' !"
-                              .format(sAudioNode, sSoundPath))
-        else:
-            playblastKwargs.update(sound=sAudioNode)
-
-    savedSettings = {}
-    if camSettings:
-        for sAttr, value in camSettings.iteritems():
-            sNodeAttr = sCamShape + "." + sAttr
-            savedSettings[sAttr] = mc.getAttr(sNodeAttr)
-            pc.setAttr(sNodeAttr, value)
-
-    try:
-        if format == "iff" and showFrameNumbers:
-            name = mc.playblast(filename=sFilePath, **playblastKwargs)
-
-            for i in range(start, end + 1):
-                oldFileName = name.replace("####", str(i).zfill(4))
-                newFileName = oldFileName.replace(".", "_", 1)
-                if os.path.isfile(newFileName):
-                    os.remove(newFileName)
-                os.rename(oldFileName, newFileName)
-                names.append(newFileName)
-        else:
-            if format == "iff":
-                name = mc.playblast(completeFilename=sFilePath, **playblastKwargs)
-            else:
-                name = mc.playblast(filename=sFilePath, **playblastKwargs)
-
-            names.append(name)
-
-    finally:
-        #Reset values
-        pc.modelEditor(pan, edit=True, displayAppearance=app,
-                       displayTextures=tex,
-                       wireframeOnShaded=wireOnShaded,
-                       xray=xray,
-                       jointXray=jointXray,
-                       nurbsCurves=nurbsCurvesShowing,
-                       hud=hud)
-        #Camera
-        if savedSettings:
-            for sAttr, value in savedSettings.iteritems():
-                pc.setAttr(sCamShape + "." + sAttr, value)
-
-    if oldCamera:
-        pc.modelEditor(pan, edit=True, camera=oldCamera)
-
-    return names
 
 class SceneManager():
     """Main Class to handle SceneManager Data and operations"""
@@ -335,9 +196,9 @@ class SceneManager():
                 infos["priv_file"] = privFile
                 infos["pub_file"] = privFile.getPublicFile()
 
-                pathData = proj.contextFromPath(privFile)
-                infos["path_data"] = pathData
-                infos["dam_entity"] = proj._entityFromContext(pathData, fail=False)
+                pathCtx = proj.contextFromPath(privFile)
+                infos["path_ctx"] = pathCtx
+                infos["dam_entity"] = pathCtx.get("dam_entity")
 
         return infos
 
@@ -346,28 +207,28 @@ class SceneManager():
 
         davosContext = {}
         #proj = self.context['damProject']
-        scnPathData = sceneInfos.get("path_data", {})
-        #print "-------------", scnPathData
-        if (("resource" not in scnPathData) or ("section" not in scnPathData)
-            or ("name" not in scnPathData)):
+        scnPathCtx = sceneInfos.get("path_ctx", {})
+        #print "-------------", scnPathCtx
+        if (("resource" not in scnPathCtx) or ("section" not in scnPathCtx)
+            or ("name" not in scnPathCtx)):
             return None
 
-        sSection = scnPathData["section"]
+        sSection = scnPathCtx["section"]
         if sSection == "shot_lib":
 
-            sSgStep = scnPathData.get("sg_step")
+            sSgStep = scnPathCtx.get("sg_step")
             if not sSgStep:
                 return None
 
             davosContext['step'] = sSgStep
-            davosContext['seq'] = scnPathData["sequence"]
-            davosContext['shot'] = scnPathData["name"]
+            davosContext['seq'] = scnPathCtx["sequence"]
+            davosContext['shot'] = scnPathCtx["name"]
 
         elif sSection == "asset_lib":
             pc.warning("asset_lib section not managed yet !!")
             return None
         else:
-            pc.warning("Unknown section {0}".format(scnPathData["section"]))
+            pc.warning("Unknown section {0}".format(scnPathCtx["section"]))
             return None
 
         return davosContext
@@ -460,9 +321,9 @@ class SceneManager():
         curScenePath = pc.sceneName()
         if curScenePath:
             curScenePath = os.path.abspath(curScenePath)
-            entry = proj.entryFromPath(curScenePath)
-            if entry is not None:
-                self.context['sceneEntry'] = entry
+            scnFile = proj.entryFromPath(curScenePath)
+            if scnFile is not None:
+                self.context['sceneEntry'] = scnFile
                 self.context['sceneData'] = proj.contextFromPath(curScenePath)
 
         return self.contextIsMatching()
@@ -489,27 +350,6 @@ class SceneManager():
 
         self.context['sceneState'] = "Your context does not match with current scene ({0} => {1}) !".format(os.path.basename(contextEntry.absPath()), os.path.basename(sceneEntryPath))
         return False
-
-    def isEditable(self):
-        if self.context['lock'] != "Error":
-            return self.context['lock'] == "" or self.context['lock'] == self.context['damProject']._shotgundb.currentUser['login']
-
-        return False
-
-    def assert_isEditable(self):
-        message = ""
-
-        if not self.refreshSceneContext():
-            message = self.context['sceneState']
-
-        if not self.isEditable():
-            message = "Your entity is locked by {0} !".format(self.context['lock'])
-
-        if message != "":
-            pc.confirmDialog(title='Entity not editable', message=message, button=['Ok'])
-            return False
-
-        return True
 
     def refreshStatus(self, entry=None):
         """Refresh the 'lock' status"""
@@ -547,7 +387,7 @@ class SceneManager():
                 raise RuntimeError("Current context has no task defined.")
             return None
 
-        sRcName = rcFromTask(self.context['task'])
+        sRcName = scnFromTask(self.context['task'])
         if sRcName:
             try:
                 damEntity = self.getDamEntity()
@@ -558,15 +398,6 @@ class SceneManager():
                 pc.warning(toStr(e))
 
         return entry
-
-    def createFolder(self):
-        nameKey = 'name'
-
-        if self.context['entity']['type'] == 'Shot':
-            nameKey = 'code'
-
-            damShot = DamShot(self.context['damProject'], name=self.context['entity'][nameKey])
-            damShot.createDirsAndFiles()
 
     def save(self, force=True):
         entry = self.rcFileFromContext()
@@ -613,8 +444,8 @@ class SceneManager():
 
         context = self.context
         proj = context['damProject']
-        sStep = context['step']['code']
-        sTask = context['task']['content']
+        sStep = context['step']['code'].lower()
+        sTask = context['task']['content'].lower()
         damShot = self.getDamShot()
         sWipCaptDirPath = mop.getWipCaptureDir(damShot)
         seqId = context["entity"]["sg_sequence"]["id"]
@@ -652,6 +483,145 @@ class SceneManager():
 
         return playMovie(sLatestPath, **playKwargs)
 
+    @mop.withErrorDialog
+    @withSelectionRestored
+    def setupShotScene(self):
+
+        sStepName = self.context["step"]["code"].lower()
+        damShot = self.getDamShot()
+        proj = damShot.project
+        sShotCode = damShot.name
+        sgEntity = self.context['entity']
+        sgTask = self.context["task"]
+        sCurScnRc = scnFromTask(sgTask, fail=True)
+
+        mop.init_scene_base()
+        #Import only if does not exists...
+        if not mc.objExists('|shot'):
+            sEntityType = sgEntity['type']
+            sTemplateDirPath = proj.getPath('template', 'project')
+            mop.importSceneStructure(sEntityType, sTemplateDirPath)
+
+        if sStepName == "animation":
+
+            if not pc.listNamespaces(root=None, recursive=False, internal=False):
+                mop.assertTaskIsFinal(damShot, "layout", sgEntity=sgEntity)
+                mop.initShotSceneFrom(damShot, sCurScnRc, "layout_scene", lrd="none")
+
+            if not pc.listReferences(loaded=True, unloaded=False):
+
+                sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution")
+                removeRefEditByAttr(attr=sAttrList, GUI=False)
+
+                oAstRefList = myaref.loadAssetRefsToDefaultFile(project=proj, selected=False)
+
+                for oFileRef in pc.listReferences(loaded=False, unloaded=True):
+                    if oFileRef in oAstRefList:
+                        continue
+                    oFileRef.load()
+
+        elif sStepName == "charfx":
+
+            if not pc.listNamespaces(root=None, recursive=False, internal=False):
+                mop.assertTaskIsFinal(damShot, "animation", sgEntity=sgEntity)
+                mop.initShotSceneFrom(damShot, sCurScnRc, "anim_scene")
+
+        elif sStepName == "final layout":
+
+            if not pc.listNamespaces(root=None, recursive=False, internal=False):
+                mop.loadRenderRefsFromCaches(damShot, "local")
+
+        elif sStepName == "fx3d":
+
+            if not pc.listNamespaces(root=None, recursive=False, internal=False):
+                mop.assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
+                mop.initShotSceneFrom(damShot, sCurScnRc, "finalLayout_scene")
+
+        elif sStepName == "rendering":
+
+            if not pc.listNamespaces(root=None, recursive=False, internal=False):
+                mop.assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
+                mop.initShotSceneFrom(damShot, sCurScnRc, "finalLayout_scene")
+
+
+        self.setPlaybackTimes()
+
+        #rename any other shot camera
+        remainingCamera = None
+
+        sShotCamNspace = self.mkShotCamNamespace()
+
+        otherCams = pc.ls(mop.CAMPATTERN, type='camera')
+        camsLength = len(otherCams)
+        if camsLength > 0:
+            if camsLength > 1:#Delete cameras except first
+                for otherCam in otherCams:
+                    if camsLength == 1:
+                        remainingCamera = otherCam
+                        break
+                    sCamNs = otherCam.parentNamespace()
+                    if sShotCamNspace != sCamNs:
+                        otherCam.setAttr("renderable", False)
+                        #mc.setAttr(sCamNs + ":asset.visibility", False)
+                        camsLength -= 1
+            else:
+                remainingCamera = otherCams[0]
+
+            if remainingCamera and remainingCamera.parentNamespace() != sShotCamNspace:
+                #rename camera
+                pc.namespace(rename=(remainingCamera.namespace(), sShotCamNspace))
+
+
+        oShotCam = self.getShotCamera()
+        bCamAdded = False
+        if not oShotCam:
+            oShotCam = self.importShotCam()
+            bCamAdded = True
+        else:
+            oCamRef = oShotCam.referenceFile()
+            if oCamRef:
+                bWasLocked = oCamRef.refNode.getAttr("locked")
+                oShotCam = mop.setCamRefLocked(oShotCam, False)
+                oCamRef.importContents()
+                mop.setShotCamLocked(oShotCam, bWasLocked)
+
+        sceneInfos = self.infosFromCurrentScene()
+        bRcsMatchUp = self.resourcesMatchUp(sceneInfos)
+
+        oStereoCam = None
+        if sStepName != "previz 3d" and bRcsMatchUp:
+
+            if sStepName == "layout":
+                try:
+                    geomLayerL = mc.ls('*:geometry', type="displayLayer")
+                    for each in geomLayerL:
+                        if not mc.getAttr(each + ".texturing"):
+                            mc.setAttr(each + ".texturing", 1)
+                except Exception as e:
+                    pc.displayWarning(toStr(e))
+
+            if ((not self.isShotCamEdited()) or bCamAdded) and self.camAnimFilesExist():
+                self.importShotCamAbcFile()
+
+            oShotCam = self.getShotCamera(fail=True)
+
+            if sStepName == "stereo":
+                oStereoCam = mop.getStereoCam(sShotCode, fail=False)
+                if not oStereoCam:
+                    stereoCamFile = proj.getLibrary("public", "misc_lib").getEntry("layout/stereo_cam.ma")
+                    sImpNs = mop.mkStereoCamNamespace(sShotCode)
+                    stereoCamFile.mayaImportScene(ns=sImpNs, returnNewNodes=False)
+                    oStereoCam = mop.getStereoCam(sShotCode, fail=True)
+
+                matchTransform(oStereoCam, oShotCam, atm="tr")
+                pc.parentConstraint(oShotCam, oStereoCam, maintainOffset=True)
+                oShotCam.attr("focalLength") >> oStereoCam.attr("focalLength")
+
+        _, oAnimaticCam = mop.setupAnimatic(mop.getAnimaticInfos(damShot, sStepName))
+
+        mop.reArrangeAssets()
+        mop.arrangeViews(oShotCam.getShape(), oAnimaticCam, oStereoCam, stereoDisplay="interlace")
+
     @mop.undoAtOnce
     def capture(self, saveScene=False, increment=False, quick=True, sendToRv=False, smoothData=None):
         # BUG pas de son alors que son present dans la scene
@@ -662,9 +632,11 @@ class SceneManager():
 
         context = self.context
         proj = context['damProject']
-        sStep = context['step']['code']
-        sTask = context['task']['content']
+        sStep = context['step']['code'].lower()
+        sTask = context['task']['content'].lower()
         damShot = self.getDamShot()
+
+        aPlayBackSliderPython = pc.mel.eval('$tmpVar=$gPlayBackSlider')
 
         sCaptRcList = MOV_FOR_TASK.get(sTask, MOV_FOR_STEP.get(sStep))
         if not sCaptRcList:
@@ -699,7 +671,7 @@ class SceneManager():
         else:
             CAPTURE_INFOS['task'] = sStep + " | " + sTask
 
-        CAPTURE_INFOS['user'] = proj._shotgundb.currentUser['name']
+        CAPTURE_INFOS['user'] = fromUtf8(proj._shotgundb.currentUser['name'])
 
         sCamFile = ""
         if (not quick) and sStep.lower() != "previz 3d":
@@ -813,11 +785,22 @@ class SceneManager():
                 _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
                 mop.arrangeViews(oShotCam, oImgPlaneCam, oStereoCam, singleView=True)
 
+            sCurSound = ""
+            currTimes = None
             width, height = (1280, 720)
             bAoEnabled = mc.getAttr('hardwareRenderingGlobals.ssaoEnable')
-            if (not quick) and sStep.lower() in ("animation", "charfx"):
-                width, height = (1920, 1080)
-                mc.setAttr('hardwareRenderingGlobals.ssaoEnable', True)
+            if (not quick):
+                if sStep.lower() in ("animation", "charfx", "fx3d"):
+                    width, height = (1920, 1080)
+                    mc.setAttr('hardwareRenderingGlobals.ssaoEnable', True)
+
+                currTimes = mop.playbackTimesFromScene()
+                self.setPlaybackTimes()
+
+                # - Show Sound in Timeline
+                if mc.objExists("audio"):
+                    sCurSound = pc.timeControl(aPlayBackSliderPython, q=True, sound=True)
+                    mc.timeControl(aPlayBackSliderPython, e=True, sound="audio", displaySound=True)
 
             iFontMode = mc.displayPref(q=True, fontSettingMode=True)
             iFontSize = mc.displayPref(q=True, smallFontSize=True)
@@ -832,9 +815,9 @@ class SceneManager():
                     mc.stereoCameraView("StereoPanelEditor", e=True, displayMode=sStereoMode)
                     mc.refresh()
 
-                res = makeCapture(sCapturePath, captureStart, captureEnd, width, height,
-                                  format="qt", compression="H.264", camSettings=camSettings,
-                                  ornaments=True, play=False, quick=quick)
+                res = mop.makeCapture(sCapturePath, captureStart, captureEnd, width, height,
+                                      format="qt", compression="H.264", camSettings=camSettings,
+                                      ornaments=True, play=False, quick=quick)
 
                 sOutFilePath = res[0]
                 if not quick:
@@ -848,7 +831,15 @@ class SceneManager():
                 mc.displayPref(smallFontSize=iFontSize)
                 mc.displayPref(fontSettingMode=iFontMode)
                 mc.setAttr('hardwareRenderingGlobals.ssaoEnable', bAoEnabled)
+
+                if currTimes:
+                    mc.playbackOptions(e=True, **currTimes)
+
+                if sCurSound and mc.objExists(sCurSound):
+                    mc.timeControl(aPlayBackSliderPython, e=True,
+                                   sound=sCurSound, displaySound=True)
             except Exception as e:
+                traceback.print_exc()
                 pc.displayError(toStr(e))
 
             if sRecorder:
@@ -899,7 +890,7 @@ class SceneManager():
             return
 
         sgTask = self.context['task']
-        sRcName = rcFromTask(sgTask)
+        sRcName = scnFromTask(sgTask)
         if not sRcName:
             return
 
@@ -912,8 +903,8 @@ class SceneManager():
         if not path:
             return
 
-        entry = proj.entryFromPath(path)
-        if not entry:
+        scnFile = proj.entryFromPath(path)
+        if not scnFile:
             sMsg = "No such file: '{}'".format(path)
             pc.confirmDialog(title='SORRY !',
                              message=sMsg,
@@ -933,7 +924,7 @@ class SceneManager():
                                       dismissString='No')
 
         if result == "Yes":
-            privFile = entry.edit(openFile=False, existing="keep")#existing values = choose, fail, keep, abort, overwrite
+            privFile = scnFile.edit(openFile=False, existing="keep")#existing values = choose, fail, keep, abort, overwrite
 
             rootPath, filename = os.path.split(privFile.absPath())
             vSplit = filename.split('.')
@@ -952,11 +943,14 @@ class SceneManager():
 
             iversion = int(version) + 1
 
-            newpath = os.path.join(rootPath, vSplit[0] + ".{0:03}.ma".format(iversion))
-            mc.file(rename=newpath)
+            sNewPath = os.path.join(rootPath, vSplit[0] + ".{0:03}.ma".format(iversion))
+            mc.file(rename=sNewPath)
             mc.file(save=True)
+            privFile = privFile.library.getEntry(sNewPath)
+            pc.mel.addRecentFile(sNewPath, mc.file(sNewPath, q=1, type=1)[0])
         else:
-            privFile = entry.edit(openFile=not onBase, existing='choose')#existing values = choose, fail, keep, abort, overwrite
+            privFile = scnFile.edit(openFile=(not onBase), existing='choose',
+                                  addToRecent=True)#existing values = choose, fail, keep, abort, overwrite
 
         if privFile is None:
             pc.warning('There was a problem with the edit !')
@@ -1051,11 +1045,6 @@ class SceneManager():
                                   postPublishFunc=self.postPublishCurrentScene)
 
         return res
-
-    def getShotgunContent(self):
-        #print 'getShotgunContent ' + self.context['entity']['code']
-        content = self.context['damProject']._shotgundb.getShotAssets(self.context['entity']['code'])
-        return content if content is not None else []
 
     def listRelatedAssets(self):
         return listRelatedAssets(self.getDamShot())
@@ -1196,9 +1185,6 @@ class SceneManager():
             proj.updateSgEntity(astShotConn, sg_occurences=iOccur)
 
         return True
-
-    def do(self, s_inCmd):
-        mop.do(s_inCmd, self.context['task']['content'], self)
 
     def getDuration(self):
         return damutils.getShotDuration(self.context['entity'])
@@ -1429,12 +1415,12 @@ class SceneManager():
 
         return oAbcNode
 
-    @restoreSelection
+    @mop.restoreSelection
     def editShotCam(self):
 
         oShotCam = self.getShotCamera()
         damShot = self.getDamShot()
-        atomFile = damShot.getResource("public", "camera_atom", fail=True)
+        atomFile = damShot.getResource("public", "camera_atom", fail=False)
 
         sCamAstGrp = self.mkShotCamNamespace() + ":asset"
         oCamAstGrp = pc.PyNode(sCamAstGrp)
@@ -1457,16 +1443,17 @@ class SceneManager():
             pc.displayWarning("Shot camera is already edited.")
             return
 
-        try:
-            mc.select(sCamAstGrp)
-            myasys.importAtomFile(atomFile.absPath(),
-                                  targetTime="from_file",
-                                  option="replace",
-                                  match="string",
-                                  selected="childrenToo")
-        except:
-            self.importShotCamAbcFile()
-            raise
+        if atomFile:
+            try:
+                mc.select(sCamAstGrp)
+                myasys.importAtomFile(atomFile.absPath(),
+                                      targetTime="from_file",
+                                      option="replace",
+                                      match="string",
+                                      selected="childrenToo")
+            except:
+                self.importShotCamAbcFile()
+                raise
 
     def isShotCamEdited(self):
 

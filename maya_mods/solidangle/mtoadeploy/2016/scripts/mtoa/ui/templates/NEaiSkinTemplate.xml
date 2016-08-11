@@ -1,0 +1,73 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiSkin'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='sssWeight' type='maya.float'>
+			<label>SSS Weight</label>
+		</attribute>
+		<attribute name='shallowScatterColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='shallowScatterWeight' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='midScatterColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='midScatterWeight' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='deepScatterColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='deepScatterWeight' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='specularColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='specularWeight' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='sheenColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='sheenWeight' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='opacity' type='maya.float'>
+			<label>Weight</label>
+		</attribute>
+		<attribute name='opacityColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='normalCamera' type='maya.float3'>
+			<label>Bump Mapping</label>
+			<description language="cb">PPattrNavigationControlGrp</description>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiSkin'>
+		<property name='outColor'/>
+		<property name='sssWeight'/>
+		<property name='shallowScatterColor'/>
+		<property name='shallowScatterWeight'/>
+		<property name='midScatterColor'/>
+		<property name='midScatterWeight'/>
+		<property name='deepScatterColor'/>
+		<property name='deepScatterWeight'/>
+		<property name='specularColor'/>
+		<property name='specularWeight'/>
+		<property name='sheenColor'/>
+		<property name='sheenWeight'/>
+		<property name='opacity'/>
+		<property name='opacityColor'/>
+		<property name='normalCamera'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiSkin'>
+		<property name='outColor'/>
+	</view>
+</templates>

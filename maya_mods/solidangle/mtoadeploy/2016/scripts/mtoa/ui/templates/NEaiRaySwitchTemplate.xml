@@ -1,0 +1,40 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiRaySwitch'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='camera' type='maya.float3'>
+			<label>Camera</label>
+		</attribute>
+		<attribute name='shadow' type='maya.float3'>
+			<label>Shadow</label>
+		</attribute>
+		<attribute name='reflection' type='maya.float3'>
+			<label>Reflection</label>
+		</attribute>
+		<attribute name='refraction' type='maya.float3'>
+			<label>Refraction</label>
+		</attribute>
+		<attribute name='diffuse' type='maya.float3'>
+			<label>Diffuse</label>
+		</attribute>
+		<attribute name='glossy' type='maya.float3'>
+			<label>Glossy</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiRaySwitch'>
+		<property name='outColor'/>
+		<property name='camera'/>
+		<property name='shadow'/>
+		<property name='reflection'/>
+		<property name='refraction'/>
+		<property name='diffuse'/>
+		<property name='glossy'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiRaySwitch'>
+		<property name='outColor'/>
+	</view>
+</templates>

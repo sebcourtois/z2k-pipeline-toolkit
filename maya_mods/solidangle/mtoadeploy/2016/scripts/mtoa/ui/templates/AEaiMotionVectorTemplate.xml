@@ -1,0 +1,29 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiMotionVector'>
+		<attribute name='time0' type='maya.float'>
+			<label>Start Time</label>
+		</attribute>
+		<attribute name='time1' type='maya.float'>
+			<label>End Time</label>
+		</attribute>
+		<attribute name='raw' type='maya.bool'>
+			<label>Encode Raw Vector</label>
+		</attribute>
+		<attribute name='maxDisplace' type='maya.float'>
+			<label>Max Displace</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiMotionVector'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='motion_vector_attributes'>
+			<label>Motion Vector Attributes</label>
+			<property name='time0'/>
+			<property name='time1'/>
+			<property name='raw'/>
+			<property name='maxDisplace'/>
+		</group>
+	</view>
+</templates>

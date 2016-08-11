@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaiVolumeScattering'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='rgbDensity' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='density' type='maya.float'>
+			<label>Density</label>
+		</attribute>
+		<attribute name='rgbAttenuation' type='maya.float3'>
+			<label>Attenuation Color</label>
+		</attribute>
+		<attribute name='attenuation' type='maya.float'>
+			<label>Attenuation</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaiVolumeScattering'>
+		<property name='outColor'/>
+		<property name='rgbDensity'/>
+		<property name='density'/>
+		<property name='rgbAttenuation'/>
+		<property name='attenuation'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEaiVolumeScattering'>
+		<property name='outColor'/>
+	</view>
+</templates>

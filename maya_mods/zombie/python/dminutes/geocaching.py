@@ -6,7 +6,7 @@ from collections import OrderedDict
 from datetime import datetime
 from functools import partial
 
-import maya.api.OpenMaya as om
+#import maya.api.OpenMaya as om
 import maya.cmds as mc
 
 from pymel.util.arguments import listForNone
@@ -352,7 +352,7 @@ def exportCaches(**kwargs):
     else:
         prevExportInfos = {}
 
-    sJobOpts = "-dataFormat ogawa -noNormals -uvWrite -writeVisibility"
+    sJobOpts = "-dataFormat ogawa -noNormals -uvWrite -writeVisibility -attr dynamicTopology"
 
     sJobParts = [
     r"-root {root} -file {file}",
@@ -730,48 +730,62 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
                 pm.displayWarning("Mesh with history ignored: '{}'".format(sAstMeshShape))
                 continue
 
-        abcMeshStat = mc.polyEvaluate(sAbcMeshShape, v=True, f=True, e=True, t=True)
-        astMeshStat = mc.polyEvaluate(sAstMeshShape, v=True, f=True, e=True, t=True)
+        bDynTopo = False
+        abcMeshPath = myapi.getDagPath(sAbcMeshShape)
+        sAbcMeshXfm = abcMeshPath.fullPathName().rsplit("|", 1)[0]
+        sDynTopoAttr = sAbcMeshXfm + ".dynamicTopology"
+        if mc.objExists(sDynTopoAttr):
+            bDynTopo = mc.getAttr(sDynTopoAttr)
 
-        if abcMeshStat != astMeshStat:
-            if abcMeshStat["vertex"] != astMeshStat["vertex"]:
-                sMsg = "Number of vertices differs:"
-                sMsg += "\n    - '{}': {} verts".format(sAbcMeshShape, abcMeshStat["vertex"])
-                sMsg += "\n    - '{}': {} verts".format(sAstMeshShape, astMeshStat["vertex"])
-                pm.displayWarning(sMsg)
-                sVertsDifferList.extend((sAbcMeshShape, sAstMeshShape))
-                continue
-            else:
-                sMsg = "Same vertices but topology differs:"
-                sMsg += ("\n    - cache mesh: {}  on '{}'"
-                         .format(meshMismatchStr(abcMeshStat, astMeshStat), sAbcMeshShape))
-                sMsg += ("\n    - asset mesh: {}  on '{}'"
-                         .format(meshMismatchStr(astMeshStat, abcMeshStat), sAstMeshShape))
-                pm.displayInfo(sMsg)
-                sTopoDifferList.extend((sAbcMeshShape, sAstMeshShape))
+        if not bDynTopo:
+            abcMeshStat = mc.polyEvaluate(sAbcMeshShape, v=True, f=True, e=True, t=True)
+            astMeshStat = mc.polyEvaluate(sAstMeshShape, v=True, f=True, e=True, t=True)
+
+            if abcMeshStat != astMeshStat:
+                if abcMeshStat["vertex"] != astMeshStat["vertex"]:
+                    sMsg = "Number of vertices differs:"
+                    sMsg += "\n    - '{}': {} verts".format(sAbcMeshShape, abcMeshStat["vertex"])
+                    sMsg += "\n    - '{}': {} verts".format(sAstMeshShape, astMeshStat["vertex"])
+                    pm.displayWarning(sMsg)
+                    sVertsDifferList.extend((sAbcMeshShape, sAstMeshShape))
+                    continue
+                else:
+                    sMsg = "Same vertices but topology differs:"
+                    sMsg += ("\n    - cache mesh: {}  on '{}'"
+                             .format(meshMismatchStr(abcMeshStat, astMeshStat), sAbcMeshShape))
+                    sMsg += ("\n    - asset mesh: {}  on '{}'"
+                             .format(meshMismatchStr(astMeshStat, abcMeshStat), sAstMeshShape))
+                    pm.displayInfo(sMsg)
+                    sTopoDifferList.extend((sAbcMeshShape, sAstMeshShape))
 
         sAbcOutAttr = mc.listConnections(sAbcMeshShape, s=True, d=False,
                                          type="AlembicNode", plugs=True)
-        bDeformedMesh = False
+        bAnimatedMesh = False
         if sAbcOutAttr:
             sAbcOutAttr = sAbcOutAttr[0]
-            bDeformedMesh = True
+            bAnimatedMesh = True
 
-        bSameVerts = False
-        if not bDeformedMesh:
-            bSameVerts = (mc.polyCompare(sAbcMeshShape, sAstMeshShape, vertices=True) == 0)
+        bSameVtxPos = False
+        if not bAnimatedMesh:
+            bSameVtxPos = (mc.polyCompare(sAbcMeshShape, sAstMeshShape, vertices=True) == 0)
 
-        if mc.referenceQuery(sAstMeshShape, isNodeReferenced=True):
-            if (bDeformedMesh or (not bSameVerts)) and (not dryRun):
+        #if mc.referenceQuery(sAstMeshShape, isNodeReferenced=True):
+
+        if bDynTopo:
+            if (bAnimatedMesh or (not bSameVtxPos)) and (not dryRun):
+                mc.connectAttr(sAbcOutAttr, sAstMeshShape + ".inMesh", f=True)
+        else:
+            if (bAnimatedMesh or (not bSameVtxPos)) and (not dryRun):
                 sPolyTrans = mc.polyTransfer(sAstMeshShape, ao=sAbcMeshShape,
                                              uv=False, v=True, vc=False, ch=True)[0]
-            if bDeformedMesh and (not dryRun):
+            if bAnimatedMesh and (not dryRun):
                 mc.connectAttr(sAbcOutAttr, sPolyTrans + ".otherPoly", f=True)
-        elif not bSameVerts:
-            srcMesh = om.MFnMesh(myapi.getDagPath(sAbcMeshShape))
-            dstMesh = om.MFnMesh(astMeshPath)
-            if not dryRun:
-                dstMesh.setPoints(srcMesh.getPoints())
+
+#        elif not bSameVtxPos:
+#            srcMesh = om.MFnMesh(abcMeshPath)
+#            dstMesh = om.MFnMesh(astMeshPath)
+#            if not dryRun:
+#                dstMesh.setPoints(srcMesh.getPoints())
 
     if sHasHistoryList:
         sNmspc = getNamespace(sHasHistoryList[0])
@@ -888,7 +902,6 @@ def importCaches(sSpace, **kwargs):
     bDryRun = kwargs.pop("dryRun", False)
     bRemoveRefs = kwargs.pop("removeRefs", True)
     bUseCacheObjset = kwargs.pop("useCacheSet", True)
-    #bForce = kwargs.pop("force", False)
 
     sepWidth = 120
     def doneWith(oAbcRef, remove=True, container=None):
@@ -897,10 +910,6 @@ def importCaches(sSpace, **kwargs):
 
     scnInfos = infosFromScene()
     damShot = scnInfos.get("dam_entity")
-
-#    if not bDryRun:
-#        sMsg = "Caches can only be imported onto a final layout scene."
-#        assertSceneInfoMatches(scnInfos, "finalLayout_scene", msg=sMsg)
 
     if sSpace == "local":
         sCacheDirPath = mop.getMayaCacheDir(damShot)

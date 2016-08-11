@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiDensity'>
+		<attribute name='scatterChannel' type='maya.string'>
+			<label>Scatter Channel</label>
+		</attribute>
+		<attribute name='scatterColor' type='maya.float3'>
+			<label>Scatter Color</label>
+		</attribute>
+		<attribute name='scatterG' type='maya.float'>
+			<label>Scatter G</label>
+		</attribute>
+		<attribute name='absorptionChannel' type='maya.string'>
+			<label>Absorption Channel</label>
+		</attribute>
+		<attribute name='absorptionColor' type='maya.float3'>
+			<label>Absorption Color</label>
+		</attribute>
+		<attribute name='emissionChannel' type='maya.string'>
+			<label>Emission Channel</label>
+		</attribute>
+		<attribute name='emissionColor' type='maya.float3'>
+			<label>Emission Color</label>
+		</attribute>
+		<attribute name='positionOffset' type='maya.float3'>
+			<label>Position Offset</label>
+		</attribute>
+		<attribute name='interpolation' type='maya.int'>
+			<label>Interpolation</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiDensity'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='density_attributes'>
+			<label>Density Attributes</label>
+			<property name='scatterChannel'/>
+			<property name='scatterColor'/>
+			<property name='scatterG'/>
+			<property name='absorptionChannel'/>
+			<property name='absorptionColor'/>
+			<property name='emissionChannel'/>
+			<property name='emissionColor'/>
+			<property name='positionOffset'/>
+			<property name='interpolation'/>
+		</group>
+	</view>
+</templates>

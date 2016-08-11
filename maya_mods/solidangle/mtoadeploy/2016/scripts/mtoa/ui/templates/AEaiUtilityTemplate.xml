@@ -1,0 +1,37 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiUtility'>
+		<attribute name='shadeMode' type='maya.int'>
+			<label>Shade Mode</label>
+		</attribute>
+		<attribute name='colorMode' type='maya.int'>
+			<label>Color Mode</label>
+		</attribute>
+		<attribute name='overlayMode' type='maya.int'>
+			<label>Overlay Mode</label>
+		</attribute>
+		<attribute name='color' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='opacity' type='maya.float'>
+			<label>Opacity</label>
+		</attribute>
+		<attribute name='aoDistance' type='maya.float'>
+			<label>AO Distance</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiUtility'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='utility_atributes'>
+			<label>Utility Attributes</label>
+			<property name='shadeMode'/>
+			<property name='colorMode'/>
+			<property name='overlayMode'/>
+			<property name='color'/>
+			<property name='opacity'/>
+			<property name='aoDistance'/>
+		</group>
+	</view>
+</templates>

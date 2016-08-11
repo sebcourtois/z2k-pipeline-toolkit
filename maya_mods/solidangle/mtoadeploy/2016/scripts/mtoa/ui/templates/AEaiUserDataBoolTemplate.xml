@@ -1,0 +1,21 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEaiUserDataBool'>
+		<attribute name='boolAttrName' type='maya.string'>
+			<label>Bool Attr Name</label>
+		</attribute>
+		<attribute name='defaultValue' type='maya.bool'>
+			<label>Default Value</label>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEaiUserDataBool'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='userdata_attributes'>
+			<label>User Data Attributes</label>
+			<property name='boolAttrName'/>
+			<property name='defaultValue'/>
+		</group>
+	</view>
+</templates>

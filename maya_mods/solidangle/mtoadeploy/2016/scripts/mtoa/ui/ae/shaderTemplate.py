@@ -40,7 +40,7 @@ class AOVOptionMenuGrp(templates.AttributeTemplate):
     
     def __init__(self, nodeType, attr, label=None, allowCreation=True, includeBeauty=False, allowEmpty=True, allowDisable=False):
         super(AOVOptionMenuGrp, self).__init__(nodeType)
-        aovs.addAOVChangedCallback(self.update)
+        aovs.addAOVChangedCallback(self.safeUpdate)
         self.allowCreation = allowCreation
         self.includeBeauty = includeBeauty
         self.allowDisable = allowDisable
@@ -65,7 +65,12 @@ class AOVOptionMenuGrp(templates.AttributeTemplate):
             if cattr[0:3] == 'Aov':
                 cattr = cattr[3:]
             return cattr
-        
+            
+    def safeUpdate(self):
+        try:
+            self.update()
+        except:
+            pass
 
     def changeCallback(self, nodeAttr, newAOV):
         """
