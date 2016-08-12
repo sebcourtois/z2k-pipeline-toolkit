@@ -217,7 +217,7 @@ def listRelatedAssets(damShot, assetNames=None):
             mrcVersFile = None
             try:
                 mrcVersFile = mrcFile.assertLatestFile(refresh=False, returnVersion=True)
-            except AssertionError as e:
+            except EnvironmentError as e:
                 pm.displayWarning(e.message)
                 rcDct["status"] = "OUT OF SYNC"
 
@@ -236,7 +236,7 @@ def listRelatedAssets(damShot, assetNames=None):
                 else:
                     try:
                         curVersFile = curRcFile.assertLatestFile(refresh=False, returnVersion=True)
-                    except AssertionError as e:
+                    except EnvironmentError as e:
                         pm.displayWarning(e.message)
 
                 iCurVers = curRcFile.currentVersion

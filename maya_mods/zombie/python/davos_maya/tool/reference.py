@@ -134,7 +134,7 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
 
         try:
             mrcFile.assertUpToDate(refresh=False)
-        except AssertionError as e:
+        except EnvironmentError as e:
             sMsg = "File is out of sync: '{}'. {}".format(sRcPath, e.message)
             nonSwitchedRefList.append((oFileRef, sMsg))
             print sMsg
@@ -467,7 +467,7 @@ def _loadAssetsAsResource(oFileRef, sRcName, astLib, logData,
 
         try:
             rcFile.assertUpToDate(refresh=False)
-        except AssertionError as e:
+        except EnvironmentError as e:
             logItems.append((sRefNode, "{}: ".format(sSeverity.upper()) + toStr(e)))
             if sSeverity == "error":
                 logData["failed"] += 1

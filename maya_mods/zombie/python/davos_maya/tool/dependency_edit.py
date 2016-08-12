@@ -150,7 +150,7 @@ def scanTexturesToEdit(scnInfos):
 
             try:
                 editSrcFile = pubFile.assertLatestFile(refresh=False)
-            except AssertionError as e:
+            except EnvironmentError as e:
                 scanLogDct.setdefault("error", []).append(('FileOutOfSync', e.message))
             else:
                 sEditSrcPath = sPubFilePath
@@ -192,7 +192,7 @@ def editTextureFiles(dryRun=False):
     sCurScnPath = pm.sceneName()
     scnInfos = infosFromScene(sCurScnPath)
 
-    damEntity = scnInfos.get("dam_entity")
+    #damEntity = scnInfos.get("dam_entity")
     proj = scnInfos["project"]
 
     privScnFile = scnInfos["rc_entry"]

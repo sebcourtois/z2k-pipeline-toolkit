@@ -513,7 +513,7 @@ def scanTextureFiles(scnInfos, depConfDct=None):
             else:
                 try:
                     assertChars(sBaseName, r"[\w]")
-                except AssertionError, e:
+                except ValueError as e:
                     sMsg = toStr(e)
                 else:
                     sNameParts = sBaseName.split("_")
@@ -805,7 +805,7 @@ def _setPublishableState(resultDct):
     if pubFile.exists():
         try:
             pubFile._assertPublishable(sSrcFilePath, refresh=False)
-        except AssertionError as e:
+        except EnvironmentError as e:
             bPublishable = False
             sErrMsg = toStr(e)
     elif dbNode:

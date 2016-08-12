@@ -58,6 +58,14 @@ def autoKeyDisabled(func):
         return res
     return doIt
 
+def addNode(sNodeType, sNodeName, parent=None, unique=True, skipSelect=True):
+    if unique and mc.objExists(sNodeName):
+        return sNodeName
+    return mc.createNode(sNodeType, parent=parent, name=sNodeName, skipSelect=skipSelect)
+
+def getNode(sNodeName):
+    return sNodeName if mc.objExists(sNodeName) else None
+
 def getNamespace(sNode):
     return sNode.rsplit("|", 1)[-1].rsplit(":", 1)[0]
 
@@ -92,7 +100,7 @@ def addLoggingSet(sBaseName, members):
         mc.container(sCurCnt, e=True, current=False)
 
     try:
-        sObjSet = mop.addNode("objectSet", "log_" + sBaseName + sDate, unique=True)
+        sObjSet = addNode("objectSet", "log_" + sBaseName + sDate, unique=True)
         mc.sets(members, e=True, include=sObjSet)
     finally:
         if sCurCnt:
@@ -987,7 +995,7 @@ def importCaches(sSpace, **kwargs):
                        .format(len(sToDelList), sAstNmspc))
                 mc.delete(sToDelList)
 
-            sScnAbcNode = mop.getNode(sScnAbcNodeName)
+            sScnAbcNode = getNode(sScnAbcNodeName)
             if sScnAbcNode:
                 mc.delete(sScnAbcNode)
 
@@ -1053,7 +1061,7 @@ def importCaches(sSpace, **kwargs):
         if bUseCacheObjset:
 
             sCacheSetName = sAstNmspc + ":set_meshCache"
-            sCacheObjset = mop.getNode(sCacheSetName)
+            sCacheObjset = getNode(sCacheSetName)
             if not sCacheObjset:
                 pm.displayError("Could not found '{}' !".format(sCacheSetName))
                 doneWith(oAbcRef, bRemRef);continue
@@ -1092,8 +1100,8 @@ def importCaches(sSpace, **kwargs):
                 sAstGrp = sAstGeoGrp.replace(":grp_geo", ":asset")
                 sParentList = mc.listRelatives(sAstGrp, parent=True, path=True)
                 sParent = sParentList[0] if sParentList else None
-                sAbcHook = mop.addNode("transform", "hook_" + sAbcNmspc,
-                                       parent=sParent, unique=True)
+                sAbcHook = addNode("transform", "hook_" + sAbcNmspc,
+                                   parent=sParent, unique=True)
                 mc.connectAttr(sScnAbcNode + ".transOp[0]", sAbcHook + ".translateX", f=True)
 
         doneWith(oAbcRef, bRemRef)

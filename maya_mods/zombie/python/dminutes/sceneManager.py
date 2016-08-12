@@ -18,24 +18,22 @@ from pytd.util.logutils import logMsg
 from pytd.util.sysutils import toStr, inDevMode, fromUtf8
 from pytd.util.strutils import padded
 
-from pytaya.core.general import copyAttrs, getObject
-from pytaya.core import system as myasys
-from davos_maya.tool import reference as myaref
-from pytaya.util.sysutils import withSelectionRestored
-from pytaya.core.transform import matchTransform
-
-
 from davos.core import damproject
 from davos.core.damtypes import DamShot
-from davos_maya.tool.publishing import publishCurrentScene
-from davos_maya.tool.publishing import linkAssetVersionsInShotgun
-from davos_maya.tool.general import okValue, noneValue
-from davos_maya.tool.general import listRelatedAssets
-
 
 from zomblib import shotgunengine
 from zomblib.editing import playMovie
 from zomblib import damutils
+
+from pytaya.core.general import copyAttrs, getObject
+from pytaya.core import system as myasys
+from pytaya.util.sysutils import withSelectionRestored
+
+from davos_maya.tool.publishing import publishCurrentScene
+from davos_maya.tool.publishing import linkAssetVersionsInShotgun
+from davos_maya.tool.general import okValue, noneValue
+from davos_maya.tool.general import listRelatedAssets
+from davos_maya.tool import reference as myaref
 
 import dminutes.maya_scene_operations as mop
 from dminutes.shotconformation import removeRefEditByAttr
@@ -280,11 +278,14 @@ class SceneManager():
 
         return True
 
-    def resourcesMatchUp(self, sceneInfos):
+    def resourcesMatchUp(self, sceneInfos, warn=False):
         try:
             self.assertResourcesMatchUp(sceneInfos)
         except AssertionError as e:
-            logMsg(toStr(e), log="debug")
+            if warn:
+                pc.displayWarning(toStr(e))
+            else:
+                logMsg(toStr(e), log="debug")
             return False
         return True
 
@@ -297,18 +298,18 @@ class SceneManager():
         scnPubFile = sceneInfos["pub_file"]
         scnPubFile.assertEditedVersion(sceneInfos["priv_file"], outcomes=False,
                                        remember=False)
-        try:
-            scnPubFile.ensureLocked(autoLock=False)
-        except RuntimeError as e:
-            raise AssertionError(e.message)
+        scnPubFile.ensureLocked(autoLock=False)
 
         return True
 
-    def scenePublishable(self, sceneInfos):
+    def scenePublishable(self, sceneInfos, warn=False):
         try:
             self.assertScenePublishable(sceneInfos)
-        except AssertionError as e:
-            logMsg(toStr(e), log="debug")
+        except Exception as e:
+            if warn:
+                pc.displayWarning(toStr(e))
+            else:
+                logMsg(toStr(e), log="debug")
             return False
         return True
 

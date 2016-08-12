@@ -33,6 +33,7 @@ from zomblib import rvutils
 from dminutes import maya_scene_operations as mop
 from dminutes import sceneManager
 from dminutes.sceneManager import scnFromTask
+from dminutes import smoothOnCapture as soc
 
 reload(myaref)
 pc = pymel.core
@@ -586,11 +587,11 @@ def setAllViewsUpdated(bEnable):
     mc.playbackOptions(e=True, view="all" if bEnable else "active")
 
 def doClearObjectSet(sSetName, bChecked):
-    mop.clearObjectSet(sSetName)
+    soc.clearObjectSet(sSetName)
     updSmoothOnCaptureState()
 
 def doSelectSetMembers(sSetName, bChecked):
-    members = mop.objectSetMembers(sSetName, recursive=False)
+    members = soc.objectSetMembers(sSetName, recursive=False)
     if members:
         mc.select(list(members))
     else:
@@ -605,11 +606,11 @@ def doSelectSmoothed(*args):
     mc.select(smoothData.keys())
 
 def doDelFromSmooth(*args):
-    mop.delFromSmooth()
+    soc.delFromSmooth()
     updSmoothOnCaptureState()
 
 def doAddToSmooth(*args):
-    mop.addToSmooth()
+    soc.addToSmooth()
     updSmoothOnCaptureState()
 
 def doShowInShotgun(*args):
@@ -646,7 +647,7 @@ def updSmoothOnCaptureState(bEnable=None, warn=True):
         bEnable = pc.optionVar.get("Z2K_SM_smoothOnCapture", False)
 
     if bEnable:
-        smoothData, numFaces = mop.listSmoothableMeshes(project=SCENE_MANAGER.context["damProject"],
+        smoothData, numFaces = soc.listSmoothableMeshes(project=SCENE_MANAGER.context["damProject"],
                                                         warn=warn)
         QWIDGETS["smoothGroup"].setTitle("Smooth On Capture ({} meshes - {:,} faces)"
                                          .format(len(smoothData), numFaces))
@@ -1000,8 +1001,9 @@ def doSwitchContext(*args, **kwargs):
     (basically an edit, creating folders if needed)"""
 
     sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
-
-    if SCENE_MANAGER.resourcesMatchUp(sceneInfos) and SCENE_MANAGER.scenePublishable(sceneInfos):
+    bRcsMatchUp = SCENE_MANAGER.resourcesMatchUp(sceneInfos, warn=True)
+    bPublishable = bRcsMatchUp and SCENE_MANAGER.scenePublishable(sceneInfos, warn=True)
+    if bPublishable:
         pc.warning("Your context is already matching !!")
         return
 
