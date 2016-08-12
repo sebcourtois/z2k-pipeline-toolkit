@@ -1,9 +1,9 @@
-import os
-osp = os.path
+
 import sys
+import os
+import os.path as osp
 
-
-sys.path.append(osp.join(osp.dirname(__file__), ".."))
+sys.path.append(osp.abspath(osp.join(osp.dirname(__file__), "..")))
 from ztk_setup import Z2kToolkit
 
 # Common envs, may be different for each studio

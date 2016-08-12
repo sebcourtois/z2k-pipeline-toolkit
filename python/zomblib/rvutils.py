@@ -2,12 +2,13 @@
 import os
 import os.path as osp
 import subprocess
+from ztk_setup import getAppPath
 
 def sessionExists(sTag):
 
     bRvFound = True
 
-    p = r"C:\Program Files\Shotgun\RV 6.2.6\bin\rvpush.exe"
+    p = getAppPath("rvpush")
     if not osp.isfile(p):
         raise EnvironmentError("RVPUSH command-line utility not found: '{}'.".format(p))
 
