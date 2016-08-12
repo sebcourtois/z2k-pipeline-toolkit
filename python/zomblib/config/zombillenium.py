@@ -147,7 +147,12 @@ class shot_lib(object):
                    {
                     "{name}_render.ma -> rendering_scene":None,
                     "{name}_render.mov -> rendering_movie":None,
-                    "{name}_precomp.nk -> rendering_precomp":None,
+                    "{name}_precomp.nk -> rendering_comp":None,
+                   },
+                "{10_compo@step} -> compo_dir":
+                   {
+                    "{name}_compo.mov -> compo_movie":None,
+                    "{name}_compo.nk -> compo_comp":None,
                    },
                 },
             },
@@ -277,13 +282,13 @@ class shot_lib(object):
                          "sg_uploaded_movie":True,
                          "sg_path_to_movie":True,
                          "sg_tasks":("Final Layout|FL_Art",),
-                         "sg_status":"rev",
+                         #"sg_status":"rev",
                          },
     "arlequin_movie":{"create_sg_version":True,
                       "sg_uploaded_movie":True,
                       "sg_path_to_movie":True,
                       "sg_tasks":("Final Layout|Anim_MeshCache",),
-                      "sg_status":"rev",
+                      #"sg_status":"rev",
                       },
     "finalLayout_dir":{"default_sync_rules":["all_sites"], },
     "finalLayout_cache_dir":{"default_sync_rules":["online", "dmn_paris",
@@ -311,7 +316,7 @@ class shot_lib(object):
 #                 "sg_uploaded_movie":True,
 #                 "sg_path_to_movie":True,
 #                 "sg_tasks":("Fx3D|fx3d",),
-#                 "sg_status":"rev",
+#                 #"sg_status":"rev",
 #                 },
 
     "fx3d_geoCache_dir":{"free_to_publish":False,
@@ -334,8 +339,24 @@ class shot_lib(object):
                        "sg_uploaded_movie":True,
                        "sg_path_to_movie":True,
                        "sg_tasks":("Rendering|rendering",),
-                       "sg_status":"rev",
+                       #"sg_status":"rev",
                        },
+
+    #===========================================================================
+    # COMPOSITING RESOURCES
+    #===========================================================================
+
+    "commpo_dir":{"default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
+
+    "compo_comp":{"create_sg_version":True,
+                  "sg_tasks":("Compositing|compositing",),
+                  },
+    "compo_movie":{"create_sg_version":True,
+                   "sg_uploaded_movie":True,
+                   "sg_path_to_movie":True,
+                   "sg_tasks":("Compositing|compositing",),
+                   #"sg_status":"rev",
+                   },
     }
 
 class output_lib(object):
