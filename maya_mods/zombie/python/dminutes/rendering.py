@@ -195,9 +195,10 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     log = miscUtils.LogBuilder(gui=gui, funcName="setArnoldRenderOptionShot")
 
     if renderMode == 'finalLayout':
-        rendering.setRenderCamera(leftCam = False, rightCam = False)
+        setRenderCamera(leftCam = False, rightCam = False)
     else:
-        rendering.setRenderCamera(leftCam = True, rightCam = False)
+        #setRenderCamera(leftCam = True, rightCam = True)  temprairement off on fait pour le moment encore les rendus avec la defaut cam
+        setRenderCamera(leftCam = False, rightCam = False)
 
     mc.colorManagementPrefs(e=True, cmEnabled=False)
 
@@ -292,7 +293,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
 
 
 
-def setRenderCamera(leftCam = True, rightCam = False, updateStereoCam = False , gui = True):
+def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , gui = True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="setRenderCamera")
 
     defaultCamS = ""
@@ -318,6 +319,8 @@ def setRenderCamera(leftCam = True, rightCam = False, updateStereoCam = False , 
             if not mc.ls("stereo_rig:cam_stereo", type = "stereoRigTransform") or updateStereoCam:
                 log.printL("i", "importing stereo camera")
                 mop.loadStereoCam(infosFromScene()["dam_entity"])
+                mc.setAttr (defaultCamS + ".farClipPlane", 100000)
+
 
         allCam = mc.ls(type="camera")     
         for eachCam in allCam:
@@ -339,8 +342,8 @@ def setRenderCamera(leftCam = True, rightCam = False, updateStereoCam = False , 
         if leftCam:
             if leftCamS: 
                 mc.setAttr (leftCamS + ".renderable", 1)
-                mc.setAttr (stereoCam + ".renderable", 1)
-                mc.renderSettings(camera=stereoCam)
+                #mc.setAttr (stereoCam + ".renderable", 1)
+                #mc.renderSettings(camera=stereoCam)
                 if defaultCamS:
                     mc.setAttr (defaultCamS + ".renderable", 0)
                 log.printL("i", "render camera: '{}'".format(leftCamS))
@@ -366,8 +369,8 @@ def setRenderCamera(leftCam = True, rightCam = False, updateStereoCam = False , 
         if rightCam:
             if rightCamS: 
                 mc.setAttr (rightCamS + ".renderable", 1)
-                mc.setAttr (stereoCam + ".renderable", 1)
-                mc.renderSettings(camera=stereoCam)
+                #mc.setAttr (stereoCam + ".renderable", 1)
+                #mc.renderSettings(camera=stereoCam)
                 log.printL("i", "render camera: '{}'".format(rightCamS))
             else:
                 try:
