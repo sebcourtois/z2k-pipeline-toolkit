@@ -57,7 +57,7 @@ def tkMirror(*args, **kwargs):
                     'Left_Teeth_up_01_Ctrl':'Right_Teeth_up_01_Ctrl',
                     'Left_Teeth_up_02_Ctrl':'Right_Teeth_up_02_Ctrl',
                     'Left_Jaw_Corner_01_ctrl':'Right_Jaw_Corner_01_ctrl',
-                    'Left_Jaw_Corner_02_ctrl':'Right_Jaw_Corner_02_ctrl',
+                    'Left_Jaw_Corner_02_ctrl':'Right_Jaw_Corner_02_ctrl', 
                     'Left_Jaw_Corner_03_ctrl':'Right_Jaw_Corner_03_ctrl',
                     
 
@@ -90,7 +90,7 @@ def tkMirror(*args, **kwargs):
                     'Left_hair_1_7_Bone_IK_Drive_2M_ctrl':'Right_hair_1_7_Bone_IK_Drive_2M_ctrl',
                     'Left_hair_1_6_Bone_IK_Drive_2M_ctrl':'Right_hair_1_6_Bone_IK_Drive_2M_ctrl',
                     'Left_hair_1_5_Bone_IK_Drive_2M_ctrl':'Right_hair_1_5_Bone_IK_Drive_2M_ctrl',
-                    'Left_hair_1_4_Bone_IK_Drive_2M_ctrl':'Right_hair_1_4_Bone_IK_Drive_2M_ctrl',
+                    'Left_hair_1_4_Bone_IK_Drive_2M_ctrl':'Right_hair_1_4_Bone_IK_Drive_2M_ctrl', 
                     'Left_hair_1_3_Bone_IK_Drive_2M_ctrl':'Right_hair_1_3_Bone_IK_Drive_2M_ctrl',
                     'Left_hair_1_2_Bone_IK_Drive_2M_ctrl':'Right_hair_1_2_Bone_IK_Drive_2M_ctrl',
                     'Left_hair_2_7_Bone_IK_Drive_2M_ctrl':'Right_hair_2_7_Bone_IK_Drive_2M_ctrl',
@@ -441,12 +441,15 @@ def tkMirror(*args, **kwargs):
             for attr,val in attrD.iteritems():
                 # print "   ",attr,val
                 if cmds.objExists(obj+"."+attr):
-                    cmds.setAttr(obj+"."+attr,val)
+                    if not cmds.lockNode(obj+"."+attr,lock=1,q=1)[0]:
+                        cmds.setAttr(obj+"."+attr,val)
+                    else:
+                        print obj+"."+attr,"LOCKED MOTHAFUKA"
         
     except Exception,err:
         print Exception,err
         # cmds.undoInfo(closeChunk = True)
-        print "Mirror Error: {0}\n{1}".formation(Exception,err)
+        print "Mirror Error: {0}\n{1}".format(Exception,err)
 
     finally:
         # Fix toonKit error
