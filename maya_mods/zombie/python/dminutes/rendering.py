@@ -2,8 +2,10 @@ import maya.cmds as mc
 #from mtoa.aovs import AOVInterface
 from mtoa import aovs
 
+from davos_maya.tool.general import infosFromScene
 from davos_maya.tool.general import entityFromScene
 from dminutes import maya_scene_operations as mop
+reload(mop)
 
 import os
 import re
@@ -290,7 +292,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
 
 
 
-def setRenderCamera(leftCam = True, rightCam = False, gui = True):
+def setRenderCamera(leftCam = True, rightCam = False, updateStereoCam = False , gui = True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="setRenderCamera")
 
     defaultCamS = ""
@@ -300,10 +302,22 @@ def setRenderCamera(leftCam = True, rightCam = False, gui = True):
     damShot = entityFromScene()
     oShotCam = mop.getShotCamera(damShot.name)
 
+
+
+
     if oShotCam:
         defaultCamNameS = oShotCam.name()
-        leftCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_left').replace('cam_sq', 'stereo_cam_sq')
-        rightCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_right').replace('cam_sq', 'stereo_cam_sq')
+        # leftCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_left').replace('cam_sq', 'stereo_cam_sq')
+        # rightCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_right').replace('cam_sq', 'stereo_cam_sq')
+        # stereoCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_stereo').replace('cam_sq', 'stereo_cam_sq')
+        leftCamNameS = "stereo_rig:cam_left"
+        rightCamNameS = "stereo_rig:cam_right"
+        stereoCamNameS = "stereo_rig:cam_stereo"
+
+        if leftCam or rightCam:
+            if not mc.ls("stereo_rig:cam_stereo", type = "stereoRigTransform") or updateStereoCam:
+                log.printL("i", "importing stereo camera")
+                mop.loadStereoCam(infosFromScene()["dam_entity"])
 
         allCam = mc.ls(type="camera")     
         for eachCam in allCam:
@@ -314,24 +328,55 @@ def setRenderCamera(leftCam = True, rightCam = False, gui = True):
                 rightCamS = eachCam
             elif eachCam == defaultCamNameS:
                 defaultCamS = eachCam
+            elif eachCam == stereoCamNameS:
+                stereoCam = eachCam
             else:
                 try:
                     mc.setAttr (eachCam + ".renderable", 0)
                 except:
                     pass
 
-    if leftCam:
-        if leftCamS: 
-            mc.setAttr (leftCamS + ".renderable", 1)
-            #mc.renderSettings(camera=leftCamS)
-            log.printL("i", "render camera: '{}'".format(leftCamS))
+        if leftCam:
+            if leftCamS: 
+                mc.setAttr (leftCamS + ".renderable", 1)
+                mc.setAttr (stereoCam + ".renderable", 1)
+                mc.renderSettings(camera=stereoCam)
+                if defaultCamS:
+                    mc.setAttr (defaultCamS + ".renderable", 0)
+                log.printL("i", "render camera: '{}'".format(leftCamS))
+            else:
+                log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_reft'")
+                try:
+                    mc.setAttr (leftCamS + ".renderable", 0)
+                except:
+                    pass
+
+                if defaultCamS:
+                    log.printL("i", "render camera: '{}'".format(defaultCamS))
+                    mc.setAttr (defaultCamS + ".renderable", 1)
+                else:
+                    log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
+                    mc.setAttr (defaultCamS + ".renderable", 0)
         else:
-            log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_reft'")
             try:
                 mc.setAttr (leftCamS + ".renderable", 0)
             except:
                 pass
 
+        if rightCam:
+            if rightCamS: 
+                mc.setAttr (rightCamS + ".renderable", 1)
+                mc.setAttr (stereoCam + ".renderable", 1)
+                mc.renderSettings(camera=stereoCam)
+                log.printL("i", "render camera: '{}'".format(rightCamS))
+            else:
+                try:
+                    mc.setAttr (rightCamS + ".renderable", 0)
+                    log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_right'")
+                except:
+                    pass
+
+        if not rightCam and not leftCam:
             if defaultCamS:
                 log.printL("i", "render camera: '{}'".format(defaultCamS))
                 mc.setAttr (defaultCamS + ".renderable", 1)
@@ -339,30 +384,7 @@ def setRenderCamera(leftCam = True, rightCam = False, gui = True):
                 log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
                 mc.setAttr (defaultCamS + ".renderable", 0)
     else:
-        try:
-            mc.setAttr (leftCamS + ".renderable", 0)
-        except:
-            pass
-
-    if rightCam:
-        if rightCamS: 
-            mc.setAttr (rightCamS + ".renderable", 1)
-            log.printL("i", "render camera: '{}'".format(rightCamS))
-        else:
-            try:
-                mc.setAttr (rightCamS + ".renderable", 0)
-                log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_right'")
-            except:
-                pass
-
-    if not rightCam and not leftCam:
-        if defaultCamS:
-            log.printL("i", "render camera: '{}'".format(defaultCamS))
-            mc.setAttr (defaultCamS + ".renderable", 1)
-        else:
-            log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
-            mc.setAttr (defaultCamS + ".renderable", 0)
-
+        log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
 
     return dict(resultB=log.resultB, logL=log.logL)
 
