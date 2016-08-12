@@ -6,6 +6,7 @@ import shutil
 from collections import namedtuple
 from collections import OrderedDict
 #from itertools import izip
+import traceback
 
 import pymel.core as pc
 #import pymel.util as pmu
@@ -14,10 +15,14 @@ import maya.cmds as mc
 from pytd.util.sysutils import toStr
 from pytd.util.fsutils import jsonWrite, pathResolve, jsonRead, copyFile
 
-from davos_maya.tool import reference as myaref
 from zomblib.editing import makeFilePath, movieToJpegSequence
+
+from pytaya.core.general import copyAttrs, getObject
+from pytaya.core import system as myasys
+from pytaya.core.transform import matchTransform
+from davos_maya.tool import reference as myaref
+
 from dminutes.miscUtils import deleteUnknownNodes
-from pytaya.core.system import openScene
 
 pc.mel.source("AEimagePlaneTemplate.mel")
 
@@ -57,7 +62,7 @@ def withErrorDialog(func):
             raise
         except Exception as e:
             pc.confirmDialog(title='SORRY !',
-                             message=e.message,
+                             message=toStr(e),
                              button=["OK"],
                              defaultButton="OK",
                              cancelButton="OK",
@@ -609,23 +614,98 @@ def getShotCamera(sShotCode, fail=False):
     else:
         raise RuntimeError("Multiple cameras named '{}'".format(sCamName))
 
-def mkStereoCamNamespace(sShotCode):
+def mkOldStereoCamNamespace(sShotCode):
     return "stereo_" + mkShotCamNamespace(sShotCode)
 
-def getStereoCam(sShotCode, fail=False):
-
-    sCamName = mkStereoCamNamespace(sShotCode) + ":cam_stereo"
-    sCamList = mc.ls(sCamName)
-
-    if not sCamList:
+def getOldStereoCam(sShotCode, fail=False):
+    sCamName = mkOldStereoCamNamespace(sShotCode) + ":cam_stereo"
+    try:
+        oStereoCam = pc.PyNode(sCamName)
+    except pc.MayaNodeError:
         if fail:
-            raise RuntimeError("Stereo Camera not found: '{}'".format(sCamName))
+            raise
         return None
 
-    if len(sCamList) == 1:
-        return pc.PyNode(sCamList[0])
-    else:
-        raise RuntimeError("Multiple cameras named '{}'".format(sCamName))
+    return oStereoCam
+
+def mkStereoCamNamespace():
+    return "stereo_rig"
+
+def getStereoCam(sShotCode="", fail=False):
+
+    sCamNspc = mkStereoCamNamespace()
+
+    if sShotCode:
+        oStereoCam = getOldStereoCam(sShotCode, fail=False)
+        if oStereoCam:
+            oFileRef = oStereoCam.referenceFile()
+            if oFileRef:
+                oFileRef.namespace = sCamNspc
+            else:
+                sNamespace = oStereoCam.parentNamespace()
+                pc.namespace(rename=(sNamespace, sCamNspc), parent=':')
+
+    sCamName = sCamNspc + ":cam_stereo"
+    try:
+        oStereoCam = pc.PyNode(sCamName)
+    except pc.MayaNodeError:
+        if fail:
+            raise
+        return None
+
+    return oStereoCam
+
+def loadStereoCam(damShot, withAnim=True):
+
+    proj = damShot.project
+    sShotCode = damShot.name
+
+    oShotCam = getShotCamera(sShotCode, fail=True)
+    oStereoCam = getStereoCam(sShotCode, fail=False)
+    sStereoNs = mkStereoCamNamespace()
+
+    if not oStereoCam:
+        stereoCamFile = proj.getLibrary("public", "misc_lib").getEntry("layout/stereo_cam.ma")
+        stereoCamFile.mayaImportScene(ns=sStereoNs, returnNewNodes=False)
+        oStereoCam = getStereoCam(fail=True)
+    
+    oStereoCamShape = oStereoCam.getShape()
+    sStereoGrp = getObject(sStereoNs + ":grp_stereo", fail=True)
+    try:
+        mc.parent(sStereoGrp, "|shot|grp_camera")
+    except Exception as e:
+        pc.displayWarning(e.message)
+
+    try:
+        if withAnim:
+            atomFile = damShot.getResource("public", "stereoCam_anim", fail=True)
+            if atomFile:
+                mc.select(sStereoGrp)
+                myasys.importAtomFile(atomFile.absPath(),
+                                      targetTime="from_file",
+                                      option="replace",
+                                      match="string",
+                                      search=mkOldStereoCamNamespace(sShotCode) + ":",
+                                      replace=sStereoNs + ":",
+                                      selected="childrenToo")
+                
+                sAtomFixCamShape = sStereoNs + ":atomFix_" + oStereoCamShape.nodeName(stripNamespace=True)
+                sAtomFixCamShape = getObject(sAtomFixCamShape, fail=True)
+                sAttrList = pc.listAttr(sAtomFixCamShape, k=True)
+                sAttrList = copyAttrs(sAtomFixCamShape, oStereoCamShape, *sAttrList,
+                                      create=False, values=True, inConnections=True)
+
+    except Exception as e:
+        traceback.print_exc()
+        pc.displayError("Failed importing animation on '{}' from '{}'"
+                        .format(sStereoGrp, atomFile.absPath()))
+    finally:
+        matchTransform(oStereoCam, oShotCam, atm="tr")
+        pc.parentConstraint(oShotCam, oStereoCam, maintainOffset=True)
+        oShotCam.attr("focalLength") >> oStereoCam.attr("focalLength")
+        oShotCam.attr("cameraAperture") >> oStereoCam.attr("cameraAperture")
+
+    return oStereoCam
 
 def addNode(sNodeType, sNodeName, parent=None, unique=True, skipSelect=True):
     if unique and mc.objExists(sNodeName):
@@ -985,7 +1065,7 @@ def initShotSceneFrom(damShot, sCurScnRc, sSrcScnRc, **kwargs):
 
     sCurScnPath = pc.sceneName()
     copyFile(srcPubScnVers.absPath(), sCurScnPath)
-    openScene(sCurScnPath, force=True, fail=False, **kwargs)
+    myasys.openScene(sCurScnPath, force=True, fail=False, **kwargs)
 
     try:
         deleteUnknownNodes()

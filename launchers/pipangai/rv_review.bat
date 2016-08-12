@@ -1,2 +1,2 @@
 set ZOMB_SHOT_PATH=P:\zomb\shot
-"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch "C:\Program Files\Shotgun\RV 6.2.6\bin\rv.exe" %*
+"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch @rv %*

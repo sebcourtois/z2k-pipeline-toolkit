@@ -11,19 +11,58 @@ import traceback
 
 BASE_NAME = "z2k-pipeline-toolkit"
 
-APPS_INFOS = {
-    "rv":{"app_loc_paths":(r"C:\Program Files\Shotgun\RV-7.0",
-                           r"C:\Program Files\Shotgun\RV-6.2.8",
-                           r"C:\Program Files\Shotgun\RV 6.2.6",),
-          "app_end_path":r"bin\rv.exe",
-          "app_loc_var":"Z2K_RV_LOC"},
-    "maya":{"app_loc_paths":(r"C:\Program Files\Autodesk\Maya2016",),
-            "app_end_path":r"bin\maya.exe",
-            "app_loc_var":"Z2K_MAYA_LOC"},
-    "mayabatch":{"app_loc_paths":(r"C:\Program Files\Autodesk\Maya2016",),
-                 "app_end_path":r"bin\mayabatch.exe",
-                 "app_loc_var":"Z2K_MAYA_LOC"},
+APPS_LOCATIONS = {
+"Z2K_RV_LOC":(#r"C:\Program Files\Shotgun\RV-7.0\bin",
+              r"C:\Program Files\Shotgun\RV-6.2.8\bin",
+              r"C:\Program Files\Shotgun\RV 6.2.6\bin",),
+"Z2K_MAYA_LOC":(r"C:\Program Files\Autodesk\Maya2016\bin",),
 }
+
+APPS_INFOS = {
+"rv":{"app_loc_var":"Z2K_RV_LOC",
+      "app_bin_name":r"rv.exe",
+      },
+"rvpush":{"app_loc_var":"Z2K_RV_LOC",
+          "app_bin_name":r"rvpush.exe",
+          },
+"maya":{"app_loc_var":"Z2K_MAYA_LOC",
+        "app_bin_name":r"maya.exe",
+        },
+"mayabatch":{"app_loc_var":"Z2K_MAYA_LOC",
+             "app_bin_name":r"mayabatch.exe",
+             },
+}
+
+def getAppPath(sAppName):
+
+    appInfos = APPS_INFOS[sAppName]
+
+    sAppLocVar = appInfos["app_loc_var"]
+    sAppLocPath = os.environ.get(sAppLocVar)
+    if sAppLocPath:
+        sLocPathList = (sAppLocPath,)
+    else:
+        sLocPathList = APPS_LOCATIONS[sAppLocVar]
+
+    sNotFoundList = []
+    for sLocPath in sLocPathList:
+
+        sAppPath = osp.normpath(osp.join(sLocPath, appInfos["app_bin_name"]))
+        if osp.isfile(sAppPath):
+            sNotFoundList = []
+            break
+        sNotFoundList.append(sAppPath)
+
+    numNotFound = len(sNotFoundList)
+    if numNotFound == 1:
+        raise EnvironmentError("'{}' application NOT found: '{}'"
+                               .format(sAppName.capitalize(), sAppPath))
+    elif numNotFound > 1:
+        sSep = "\n    - "
+        sMsg = "None of '{}' applications found:" + sSep + sSep.join(sNotFoundList)
+        raise EnvironmentError(sMsg.format(sAppName.capitalize()))
+
+    return sAppPath
 
 class Z2kToolkit(object):
 
@@ -63,6 +102,10 @@ class Z2kToolkit(object):
             updEnv(sVar, value, conflict=sConflictMode)
 
         print "\nLoading toolkit environment:"
+
+        sZtkSetupLoc = osp.dirname(__file__)
+        updEnv("PYTHONPATH", sZtkSetupLoc, conflict="add")
+        sys.path.append(sZtkSetupLoc)
 
         updEnv("PYTHONPATH", self.pythonPath, conflict="add")
         sys.path.append(self.pythonPath)
@@ -305,31 +348,7 @@ class Z2kToolkit(object):
             
         elif sAppPath.startswith("@"):
             sAppName = sAppPath.strip("@").lower()
-            appInfos = APPS_INFOS[sAppName]
-
-            sAppLocPath = os.environ.get(appInfos["app_loc_var"])
-            if sAppLocPath:
-                sLocPathList = (sAppLocPath,)
-            else:
-                sLocPathList = appInfos["app_loc_paths"]
-            
-            sNotFoundList = []
-            for sLocPath in sLocPathList:
-
-                sAppPath = osp.normpath(osp.join(sLocPath, appInfos["app_end_path"]))
-                if osp.isfile(sAppPath):
-                    sNotFoundList = []
-                    break
-                sNotFoundList.append(sAppPath)
-
-            numNotFound = len(sNotFoundList)
-            if numNotFound == 1:
-                raise EnvironmentError("'{}' application NOT found: '{}'".format(sAppName.capitalize(), sAppPath))
-            elif numNotFound > 1:
-                sSep = "\n    - "
-                sMsg = "None of '{}' applications found:" + sSep + sSep.join(sNotFoundList)
-                raise EnvironmentError(sMsg.format(sAppName.capitalize()))
-
+            sAppPath = getAppPath(sAppName)
             appArgs[0] = sAppPath
 
         try:

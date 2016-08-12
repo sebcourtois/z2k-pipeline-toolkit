@@ -485,12 +485,11 @@ class SceneManager():
 
     @mop.withErrorDialog
     @withSelectionRestored
-    def setupShotScene(self):
+    def setupScene(self):
 
         sStepName = self.context["step"]["code"].lower()
         damShot = self.getDamShot()
         proj = damShot.project
-        sShotCode = damShot.name
         sgEntity = self.context['entity']
         sgTask = self.context["task"]
         sCurScnRc = scnFromTask(sgTask, fail=True)
@@ -606,16 +605,11 @@ class SceneManager():
             oShotCam = self.getShotCamera(fail=True)
 
             if sStepName == "stereo":
-                oStereoCam = mop.getStereoCam(sShotCode, fail=False)
-                if not oStereoCam:
-                    stereoCamFile = proj.getLibrary("public", "misc_lib").getEntry("layout/stereo_cam.ma")
-                    sImpNs = mop.mkStereoCamNamespace(sShotCode)
-                    stereoCamFile.mayaImportScene(ns=sImpNs, returnNewNodes=False)
-                    oStereoCam = mop.getStereoCam(sShotCode, fail=True)
-
-                matchTransform(oStereoCam, oShotCam, atm="tr")
-                pc.parentConstraint(oShotCam, oStereoCam, maintainOffset=True)
-                oShotCam.attr("focalLength") >> oStereoCam.attr("focalLength")
+                oStereoCam = mop.loadStereoCam(damShot, withAnim=False)
+            elif sStepName == "rendering":
+                oStereoCam = mop.loadStereoCam(damShot, withAnim=True)
+                oStereoCam.getShape().setAttr("zeroParallaxPlane", False)
+                oStereoCam = None
 
         _, oAnimaticCam = mop.setupAnimatic(mop.getAnimaticInfos(damShot, sStepName))
 
@@ -664,7 +658,7 @@ class SceneManager():
 
         oStereoCam = None
         if sStep.lower() == "stereo":
-            oStereoCam = self.getStereoCam(fail=True)
+            oStereoCam = mop.getStereoCam(fail=True)
 
         if sStep.lower() == sTask.lower():
             CAPTURE_INFOS['task'] = sTask
@@ -1200,9 +1194,6 @@ class SceneManager():
     def getShotCamera(self, fail=False):
         return mop.getShotCamera(self.context['entity']['code'].lower(), fail=fail)
 
-    def getStereoCam(self, fail=False):
-        return mop.getStereoCam(self.context['entity']['code'].lower(), fail=fail)
-
     def importShotCam(self):
 
         sCamNspace = self.mkShotCamNamespace()
@@ -1319,12 +1310,12 @@ class SceneManager():
     def exportStereoCamFiles(self, publish=False, comment=""):
 
         damShot = self.getDamShot()
-        sShotCode = damShot.name
 
-        oStereoCam = self.getStereoCam(fail=True).getShape()
-        sStereoNs = mop.mkStereoCamNamespace(sShotCode)
+        oStereoCamShape = mop.getStereoCam(fail=True).getShape()
+        sStereoNs = mop.mkStereoCamNamespace()
         sStereoGrp = getObject(sStereoNs + ":grp_stereo", fail=True)
-        sAtomFixCam = getObject(sStereoNs + ":atomFix_" + oStereoCam.nodeName(stripNamespace=True), fail=True)
+        sAtomFixCamShape = sStereoNs + ":atomFix_" + oStereoCamShape.nodeName(stripNamespace=True)
+        sAtomFixCamShape = getObject(sAtomFixCamShape, fail=True)
 
         self.setPlaybackTimes()
 
@@ -1339,8 +1330,8 @@ class SceneManager():
             if not os.path.exists(sDirPath):
                 os.makedirs(sDirPath)
 
-        sAttrList = pc.listAttr(oStereoCam, k=True)
-        sAttrList = copyAttrs(oStereoCam, sAtomFixCam, *sAttrList,
+        sAttrList = pc.listAttr(oStereoCamShape, k=True)
+        sAttrList = copyAttrs(oStereoCamShape, sAtomFixCamShape, *sAttrList,
                               create=False, values=True, inConnections=True)
 
         pc.select(sStereoGrp)
@@ -1356,7 +1347,7 @@ class SceneManager():
                               timeRange="all",
                               )
 
-        sAttrList = copyAttrs(sAtomFixCam, oStereoCam, *sAttrList,
+        sAttrList = copyAttrs(sAtomFixCamShape, oStereoCamShape, *sAttrList,
                               create=False, values=True, inConnections=True)
 
         if publish:

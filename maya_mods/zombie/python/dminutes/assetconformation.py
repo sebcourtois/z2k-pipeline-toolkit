@@ -218,17 +218,24 @@ def setSubdiv(GUI= False ):
                                     mc.loadPlugin("mtoa")
                                 except Exception,err:
                                     print err
-                                    miscUtils.setAttrC(eachGeoShape+".aiSubdivType",1)
                                     miscUtils.setAttrC(eachGeoShape+".aiSubdivIterations",subdivLevel)
+                                    if subdivLevel > 0:
+                                        miscUtils.setAttrC(eachGeoShape+".aiSubdivType",1)
+                                    else:
+                                        miscUtils.setAttrC(eachGeoShape+".aiSubdivType",0)
+
                                 if not mc.attributeQuery ("aiSubdivType", node = eachGeoShape , exists = True):
                                     logMessage = "#### {:>7}: 'setSubdiv' {}.aiSubdivType attribute coud not be found, please check if Arnold is properly installed on your computer".format("Error",eachGeoShape)
                                     if GUI == True: raise ValueError(logMessage)
                                     logL.append(logMessage)
                                     returnB = False
                         else:
-
-                            miscUtils.setAttrC(eachGeoShape+".aiSubdivType",1)
                             miscUtils.setAttrC(eachGeoShape+".aiSubdivIterations",subdivLevel)
+                            if subdivLevel > 0:
+                                miscUtils.setAttrC(eachGeoShape+".aiSubdivType",1)
+                            else:
+                                miscUtils.setAttrC(eachGeoShape+".aiSubdivType",0)
+                                
                         processedTransL.append(eachGeo)
                     else:
                         skippedTransL.append(eachGeo)

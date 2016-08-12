@@ -967,7 +967,7 @@ def doUpdateShotgunAssets(*args):
         doRefreshSceneInfo(args)
         pc.displayWarning("Done !")
 
-#@timer
+@mop.withErrorDialog
 def doCapture(*args , **kwargs):
 
     bQuick = kwargs.get("quick", False)
@@ -1059,7 +1059,7 @@ def doShotSetup(*args):
     sceneInfos = SCENE_MANAGER.infosFromCurrentScene()
     SCENE_MANAGER.assertEntitiesMatchUp(sceneInfos)
 
-    SCENE_MANAGER.setupShotScene()
+    SCENE_MANAGER.setupScene()
 
     doRefreshSceneInfo()
     refreshContextUI()
