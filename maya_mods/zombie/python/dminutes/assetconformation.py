@@ -235,7 +235,7 @@ def setSubdiv(GUI= False ):
                                 miscUtils.setAttrC(eachGeoShape+".aiSubdivType",1)
                             else:
                                 miscUtils.setAttrC(eachGeoShape+".aiSubdivType",0)
-                                
+
                         processedTransL.append(eachGeo)
                     else:
                         skippedTransL.append(eachGeo)
@@ -1276,13 +1276,16 @@ def softClean(struct2CleanList=["asset"], verbose = False, keepRenderLayers = Tr
     objRemFromNameSpaceI = 0
     for each in myAssetNodeList:
         if ":"in each:
-            mc.lockNode(each, lock=False)
-            newEach= mc.rename(each,each.split(":")[-1],ignoreShape=True)
-            objRemFromNameSpaceI += 1
-            if verbose == True:
-                logMessage = u"#### {:>7}: 'softClean' Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
-                print logMessage
-                outLogL.append(logMessage)
+            if "|grp_xgen|" in mc.ls(each, long=True)[0] or (mc.nodeType(each)=="shadingEngine" and mc.lockNode(each, q=True)[0]):
+                continue # do not remove name space on xgen elements (and lockecd shading engines)
+            else:
+                mc.lockNode(each, lock=False)
+                newEach= mc.rename(each,each.split(":")[-1],ignoreShape=True)
+                objRemFromNameSpaceI += 1
+                if verbose == True:
+                    logMessage = u"#### {:>7}: 'softClean' Remove from any namespace:  '{}' --> '{}' ".format("Info",each,newEach)
+                    print logMessage
+                    outLogL.append(logMessage)
 
     if objRemFromNameSpaceI > 0:
         logMessage ="#### {:>7}: 'softClean' {} nodes has been removed from name spaces".format("Info",objRemFromNameSpaceI)
@@ -1450,7 +1453,7 @@ def assetGrpClean( clean = True, GUI = True):
 
 
     validDefaultGrpL = ["|asset|grp_geo", "|asset|grp_rig"]
-    validSetGrpL = ["|asset|grp_geo", "|asset|grp_placeHolders", "|asset|grp_rig", "|asset|grp_particles"]
+    validSetGrpL = ["|asset|grp_geo", "|asset|grp_placeHolders", "|asset|grp_rig", "|asset|grp_particles","|asset|grp_xgen"]
     validChrGrpL = ["|asset|grp_geo", "|asset|grp_placeHolders", "|asset|grp_rig"]
     if assetType == "set":
         validGrpL = validSetGrpL
