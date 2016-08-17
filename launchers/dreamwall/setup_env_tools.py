@@ -16,6 +16,10 @@ ENVS = {
 
         "ZOMB_TOOL_PATH":"\\\\lv7000_fileserver\\Zombidamas\\zomb\\tool",
         "DAVOS_SITE":"dream_wall",
+		
+		"XGEN_CONFIG_PATH":r"//lv7000_fileserver/Zombidamas/zomb/tool/z2k-pipeline-toolkit/launchers/dreamwall/xgen",
+        "XGEN_PATH":r"//lv7000_fileserver/Zombidamas/zomb/tool/xgen",
+		
         }
 
 try:
