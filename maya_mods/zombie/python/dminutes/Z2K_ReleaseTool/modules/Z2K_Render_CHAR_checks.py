@@ -300,9 +300,9 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 12   display layer update
-        self.printF("modeling: display layer update", st="t")
-        resultD = modeling.layerUpdate(inParent="asset|grp_geo", GUI = False, displayMode = 2)
+        # 12   delete display layer
+        self.printF("modeling: delete display layers", st="t")
+        resultD = modeling.layerUpdate(inParent="asset|grp_geo", GUI = self.GUI, displayMode = 2, deleteAll = True)
         # prints -------------------
         self.printF(resultD["resultB"], st="r")
         for each in resultD["logL"]:
@@ -310,7 +310,7 @@ class checkModule(object):
         # --------------------------
         if not resultD["resultB"]:
             boolResult = False
-        self.pBar_upd(step= 1,)   
+        self.pBar_upd(step= 1,)     
 
 
 
@@ -368,7 +368,7 @@ class checkModule(object):
         # steps
 
         # 1   checkBaseStructure()
-        result,debugD = jpZ.checkBaseStructure(baseLayerL = ["geometry"], baseCTRL = [])
+        result,debugD = jpZ.checkBaseStructure(baseLayerL = [], baseCTRL = [])
         # prints -------------------
         self.printF("checkBaseStructure()", st="t")
         self.printF(result, st="r")
