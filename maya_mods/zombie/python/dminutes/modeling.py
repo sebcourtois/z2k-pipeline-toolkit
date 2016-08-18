@@ -1496,7 +1496,7 @@ def getRelatedInstance(transformL=[]):
     return dict(resultB=resultB, logL=logL, resultL= resultL)
 
 
-def layerUpdate(inParent="asset|grp_geo", GUI = True, displayMode = 0):
+def layerUpdate(inParent="asset|grp_geo", GUI = True, displayMode = 0, deleteAll = False):
     """
     display mode:   '0' --> default values
                     '1' --> anim   mode, crtl: visib 'on'  select 'on' , geo: visib 'on' select 'off' 
@@ -1505,6 +1505,20 @@ def layerUpdate(inParent="asset|grp_geo", GUI = True, displayMode = 0):
 
     resultB = True
     logL = []
+
+    if deleteAll:
+        toDeleteL =list(set(cmds.ls(type="displayLayer")) & set([u'control',u'instance',u'geometry']))
+        try:
+            cmds.delete(toDeleteL)
+            logMessage = "#### {:>7}: 'layerUpdate' deleting layer(s): '{}'".format("Info", toDeleteL)
+        except Exception,err:
+            resultB = False
+            logMessage = "#### {:>7}: 'layerUpdate' could not delete layer(s) --> '{}'".format("Error", err)
+
+        logL.append(logMessage)
+        if GUI == True : print logMessage
+        return dict(resultB=resultB, logL=logL)
+
 
     geoTransformL, instanceTransformL = miscUtils.getAllTransfomMeshes(inParent)
     setCtrl = cmds.ls('set_control')
