@@ -299,9 +299,9 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 12   display layer update
-        self.printF("modeling: display layer update", st="t")
-        resultD = modeling.layerUpdate(inParent="asset|grp_geo", GUI = self.GUI, displayMode = 2)
+        # 12   delete display layer
+        self.printF("modeling: delete display layers", st="t")
+        resultD = modeling.layerUpdate(inParent="asset|grp_geo", GUI = self.GUI, displayMode = 2, deleteAll = True)
         # prints -------------------
         self.printF(resultD["resultB"], st="r")
         for each in resultD["logL"]:
@@ -369,7 +369,7 @@ class checkModule(object):
         # steps
 
         # 1   checkBaseStructure()
-        result,debugD = jpZ.checkBaseStructure()
+        result,debugD = jpZ.checkBaseStructure(baseLayerL=[])
         # prints -------------------
         self.printF("checkBaseStructure()", st="t")
         self.printF(result, st="r")
@@ -393,8 +393,7 @@ class checkModule(object):
 
 
         # 2   checkAssetStructure()
-        result,debugD = jpZ.checkAssetStructure(assetgpN="asset", expectedL=["grp_rig","grp_geo"],
-        additionalL=["grp_placeHolders","grp_xgen"])
+        result,debugD = jpZ.checkAssetStructure(assetgpN="asset", expectedL=["grp_rig","grp_geo"], extraL=['grp_light', 'grp_particles',"grp_xgen","grp_placeHolders"])
         # prints -------------------
         self.printF("checkAssetStructure()", st="t")
         self.printF(result, st="r")
