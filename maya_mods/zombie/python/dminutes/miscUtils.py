@@ -547,3 +547,23 @@ def mayaBatchExample():
 
 
 
+def createPartitionSets(setL =  ["set_0","set_1","set_2"],partitionS = "par_default",gui = True):
+    log = LogBuilder(gui=gui, funcName ="createPartitionSets")
+    createdNodesL=[]
+
+    if not mc.ls(partitionS, type = "partition"):
+        mc.partition( name=partitionS)
+        createdNodesL.append(partitionS)
+
+    preExistingSetsL =  mc.ls(setL, type = "objectSet")
+    for eachSet in setL:
+        if eachSet not in preExistingSetsL:
+            mc.sets(name=eachSet, empty=True)
+            mc.partition( eachSet, add= partitionS)
+            createdNodesL.append(eachSet)
+
+    if createdNodesL:
+        txt = "{} partition/sets created: {}".format( len(createdNodesL), createdNodesL)
+        log.printL("i", txt)
+
+    return dict(resultB=log.resultB, logL=log.logL)
