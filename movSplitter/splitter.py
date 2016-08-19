@@ -69,11 +69,11 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
             if in_sSeqFilter != None and in_sSeqOverrideName != None:
                 sequenceCode = in_sSeqOverrideName
 
-            damShot = DamShot(proj, name=sequenceCode + "_" + shotCode)
-            sPrivMoviePath = osp.normpath(damShot.getPath("private", "animatic_capture"))
+            damShot = proj.getShot(sequenceCode + "_" + shotCode)
+            sPrivMoviePath = damShot.getPath("private", "animatic_capture")
             sPrivOutDirPath, sFilename = osp.split(sPrivMoviePath)
 
-            fmtFields = (batchFile, "{0}".format(in_sSourcePath),
+            fmtFields = (batchFile, "{0}".format(osp.normpath(in_sSourcePath)),
                          convertTcToSecondsTc(shot["start"], in_iHoursOffset=-1),
                          convertTcToSecondsTc(shot["end"], in_iHoursOffset=-1, in_iFramesOffset=0),
                          sFilename)
@@ -82,7 +82,7 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
             if in_bExportInShotFolders:
                 if not osp.exists(sPrivOutDirPath):
                     os.makedirs(sPrivOutDirPath)
-                cmdLine += " {0}\\".format(sPrivOutDirPath)
+                cmdLine += " {0}\\".format(osp.normpath(sPrivOutDirPath))
 
             if doSplit:
                 os.system(cmdLine)
@@ -93,6 +93,7 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
 
                 sPubMoviePath = damShot.getPath("public", "animatic_capture")
                 sPubOutDirPath = osp.dirname(sPubMoviePath)
+
                 pubOutDir = shotLib._weakDir(sPubOutDirPath, dbNode=False)
                 if not osp.exists(sPubOutDirPath):
                     os.makedirs(sPubOutDirPath)
@@ -111,14 +112,12 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
                     if sgVersion:
                         proj.uploadSgVersion(sgVersion, versionFile.absPath())
 
-                    sPrivSoundPath = damShot.getPath("private", "animatic_sound")
-                    sPubSoundPath = damShot.getPath("public", "animatic_sound")
-                    copyFile(sPrivSoundPath, sPubSoundPath, dry_run=bDryRun)
-
-                    soundFile = shotLib.getEntry(sPubSoundPath, dbNode=True)
-                    if not soundFile._dbnode:
-                        dbNode = soundFile.createDbNode(check=False)
-                        print "created:", dbNode
+                sPrivSoundPath = sPrivMoviePath.replace("_animatic.mov", "_sound.wav")
+                pubOutDir.publishFile(sPrivSoundPath,
+                                      autoLock=True,
+                                      autoUnlock=True,
+                                      saveChecksum=True,
+                                      dryRun=bDryRun)
 
             percent = counter * 100 / lenShots
             bar = ["-" for _ in range(int(percent * .5))]

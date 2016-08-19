@@ -21,6 +21,9 @@ ENVS = {
 
         "ZOMB_TOOL_PATH":"\\\\ZOMBILLENIUM\\ZOMBIDAMAS\\zomb\\tool",
         "DAVOS_SITE":"dmn_angouleme",
+		
+        "XGEN_CONFIG_PATH":r"//ZOMBILLENIUM/ZOMBIDAMAS/zomb/tool/z2k-pipeline-toolkit/launchers/angouleme/xgen",
+        "XGEN_PATH":r"//ZOMBILLENIUM/ZOMBIDAMAS/zomb/tool/xgen",
         }
 
 try:

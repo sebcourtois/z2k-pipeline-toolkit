@@ -20,6 +20,9 @@ ENVS = {
 
         "MAYA_MODULE_PATH":"\\\\Servnas02\\z2k\\04_WG_PIPANGAI\\PythonTree\\maya_mod",
         "CUSTOM_CASHBAH": "\\\\Servnas02\\z2k\\04_WG_PIPANGAI\\PythonTree\\",
+
+        "XGEN_CONFIG_PATH":r"//Servnas02/zombidamas/ZOMB/tool/z2k-pipeline-toolkit/launchers/pipangai/xgen",
+        "XGEN_PATH":r"//Servnas02/zombidamas/ZOMB/tool/xgen",
         }
 
 try:
