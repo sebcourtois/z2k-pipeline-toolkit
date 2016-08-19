@@ -68,7 +68,8 @@ reload(jpZ)
 import dminutes.Z2K_ReleaseTool.modules as ini
 reload(ini)
 from dminutes.Z2K_ReleaseTool.modules import *
-
+import dminutes.Z2K_Create_Tertiaire_FacialUI as ctf
+reload(ctf)
 
 from dminutes import miscUtils
 reload (miscUtils)
@@ -581,6 +582,7 @@ class checkModule(object):
 
         # 8 resetCTR (controlObjL)
         self.printF("resetCTR()", st="t")
+        print"!!!!",controlObjL
         result,debugD = jpZ.resetCTR(inObjL=controlObjL, userDefined=True, SRT=True)
         # prints -------------------
         self.printF(result, st="r")
@@ -699,7 +701,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=25, e=True)
+        self.pBar_upd(step=1, maxValue=26, e=True)
 
 
         # 1 connectVisibility ()
@@ -1080,6 +1082,19 @@ class checkModule(object):
 
         
         # restart from 26 here
+        self.printF("Create_Third_FacialUI()", st="t")
+        thirdC= ctf.Create_Third_FacialUI()
+        result,debug = thirdC.generate()
+        # prints -------------------
+        self.printF(result, st="r")
+        self.printF("-"+debug )
+        # --------------------------
+        # --------------------------
+        if not result :
+            boolResult = False
+        self.pBar_upd(step= 1,)
+
+
 
         # colors
         print "*btn_specialSettings:",boolResult
@@ -1103,7 +1118,7 @@ class checkModule(object):
         cmds.button(self.BSpecialSettings, e=1, bgc= defCol)
         cmds.button(self.BApplyShadersFromRender, e=1, bgc= defCol)
 
-    def btn_cleanAll(self,  *args, **kwargs):
+    def btn_cleanAll(self,applyShader=True,  *args, **kwargs):
         print "btn_cleanAll()"
         
 
@@ -1125,8 +1140,10 @@ class checkModule(object):
         if not boolResultStructure in [True]:
             if not self.btn_checkStructure(controlN=self.BcheckStructure, ):
                 boolResult = False
-        if not self.btn_applyShadersFromRender(controlN=self.BApplyShadersFromRender, ):
-            boolResult = False
+
+        if applyShader:
+            if not self.btn_applyShadersFromRender(controlN=self.BApplyShadersFromRender, ):
+                boolResult = False
         
         # colors
         self.colorBoolControl(controlL=[self.BCleanAll], boolL=[boolResult], labelL=[""],)
@@ -1207,7 +1224,7 @@ class checkModule(object):
 
         cmds.image(image=self.upImg)
         cmds.columnLayout("layoutImportModule",columnOffset= ["both",0],adj=True,)
-        self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= partial(self.btn_cleanAll),en=1)
+        self.BCleanAll = cmds.button("CLEAN-CHECK ALL",c= partial(self.btn_cleanAll,True),en=1)
 
         self.BcheckStructure = cmds.button("checkStructure", )
         cmds.button(self.BcheckStructure,e=1,c= partial( self.btn_checkStructure,self.BcheckStructure) )

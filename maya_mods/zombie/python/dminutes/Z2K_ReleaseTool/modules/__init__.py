@@ -15,7 +15,7 @@ DEBUGFILE_RENDER_SET='//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Render_SE
 DEBUGFILE_ANIM_CHR='//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Anim_CHR_Release_debug.txt'
 DEBUGFILE_ANIM_PRP='//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Anim_PRP_Release_debug.txt'
 DEBUGFILE_ANIM_SET='//zombiwalk/Z2K/06_PARTAGE/DEBUG_FILES/BATCHATOR/Anim_SET_Release_debug.txt'
-
+DEBUGFILE_ANIM_CHR_PIPANGAI = 'C:/JIPE_DEV/debug_batch_files/Anim_CHR_Release_debug.txt'
 
 # GUI
 Z2K_ICONPATH = "zombie/python/dminutes/Z2K_ReleaseTool/icons/Z2K_ReleaseTool/"
