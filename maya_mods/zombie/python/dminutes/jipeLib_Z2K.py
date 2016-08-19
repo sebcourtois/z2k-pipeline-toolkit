@@ -1704,7 +1704,7 @@ def checkBaseStructure(*args, **kwargs):
         baseExcludeL = ["persp", "top", "front", "side", "left", "back", "bottom", "defaultCreaseDataSet", "defaultLayer"]
         baseObjL = ["asset", ]
         baseSetL = ["set_meshCache", "set_control", ]
-        additionnalSetL = ["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init"]
+        additionnalSetL = ["set_subdiv_0", "set_subdiv_1", "set_subdiv_2", "set_subdiv_3", "set_subdiv_init","textureEditorIsolateSelectSet"]
         if "baseLayerL" in kwargs.keys():
             baseLayerL = kwargs["baseLayerL"]
         else:
@@ -2134,30 +2134,31 @@ def resetCTR(inObjL=[], userDefined=True, SRT=True, *args, **kwargs):
     toReturnB = True
 
     for i in cursel:
-        # print i
-        if SRT:
-            # if  not checkSRT([i])[0]:
-            # print "    reseting",i
-            try:
-                cmds.xform(i, ro=(0, 0, 0), t=(0, 0, 0), s=(1, 1, 1))
-                resetedL.append(i)
-            except Exception, err:
-                toReturnB = False
-                debugL.append(err)
-        if userDefined:
-            udAttrL = cmds.listAttr(i, ud=1, k=1)
-            if udAttrL:
-                for attr in udAttrL:
-                    try:
-                        dv = cmds.addAttr(i + "." + attr, q=True, defaultValue=True)
-                        if not dv in [None] and cmds.getAttr(i + "." + attr, settable=1):
-                            cmds.setAttr(i + "." + attr, dv)
-                        else:
-                            # cmds.setAttr(i+"."+attr,0)
-                            print i+ "."+ attr,": No default value"
-                    except Exception, err:
-                        toReturnB = False
-                        debugL.append(err)
+        # print "***",i
+        if cmds.objExists(i):
+            if SRT:
+                # if  not checkSRT([i])[0]:
+                # print "    reseting",i
+                try:
+                    cmds.xform(i, ro=(0, 0, 0), t=(0, 0, 0), s=(1, 1, 1))
+                    resetedL.append(i)
+                except Exception, err:
+                    toReturnB = False
+                    debugL.append(err)
+            if userDefined:
+                udAttrL = cmds.listAttr(i, ud=1, k=1)
+                if udAttrL:
+                    for attr in udAttrL:
+                        try:
+                            dv = cmds.addAttr(i + "." + attr, q=True, defaultValue=True)
+                            if not dv in [None] and cmds.getAttr(i + "." + attr, settable=1):
+                                cmds.setAttr(i + "." + attr, dv)
+                            else:
+                                # cmds.setAttr(i+"."+attr,0)
+                                print i+ "."+ attr,": No default value"
+                        except Exception, err:
+                            toReturnB = False
+                            debugL.append(err)
 
 
     debugD["errors"] = debugL
@@ -4440,8 +4441,8 @@ def chr_applyVisLevel(objL="",curLvl="Controls_3",GUI=True,*args, **kwargs):
 
         if not aboard:
             if cursel:
-                cursel = getShapeL(cmds.ls(sl=1)  )
-                for i in cursel:
+                shapeL = getShapeL(cursel  )
+                for i in shapeL:
                     try:
                         multiply_Vis = cmds.createNode("multDoubleLinear")
                         cmds.connectAttr(visHolder+ "." + curLvl, multiply_Vis + "." + "input2", f=1)
