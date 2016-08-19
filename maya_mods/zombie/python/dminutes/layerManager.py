@@ -22,9 +22,14 @@ class LayerManager:
         self.gui=gui
         self.log = miscUtils.LogBuilder(gui=gui, logL = [], resultB = True)
 
-        self.allRndObjL = []    # all renderable objects
+        self.allRndObjL = mc.ls("geo_*",type="transform")+mc.ls("*:geo_*",type="transform")+mc.ls("*:*:geo_*",type="transform")    # all renderable objects
         self.envRndObjL = []    # evironement renderable objects
         self.astRndObjL = []    # asset renderable objects (basically all renderable except environement)
+        for each in self.allRndObjL:
+            if "env_" in each:
+                self.envRndObjL.append(each)
+            else:
+                self.astRndObjL.append(each)
 
         self.rndItemL = []      # renderable item to be manipulated (for instance, add or remove to a set or layer)
 
@@ -64,6 +69,7 @@ class LayerManager:
         for each in rndItemL:
             if each in self.allRndObjL:
                 self.rndItemL.append(each)
+        return self.rndItemL
 
 
     def initLayer(self, layerNameS = ""):
@@ -100,7 +106,7 @@ class LayerManager:
 
 
 
-    def createRndlayer(self, layerName="lyr_default_name", layerContentL=None, layerPosition = 0):
+    def createRndlayer(self, layerName="lyr_default_name", layerContentL=None, layerPosition = 0, disableLayer = False):
         self.log.funcName ="'createRndlayer' "
 
         if layerContentL is None:
@@ -118,16 +124,25 @@ class LayerManager:
         #mc.editRenderLayerGlobals( currentRenderLayer=layerName )
         self.initLayer()
 
+        toDeleteL= mc.ls("par_lyrID"+layerIdS)+ mc.ls(self.layerSetL)
+        if toDeleteL:
+            mc.delete(toDeleteL)
+
         miscUtils.createPartitionSets(setL = self.layerSetL ,partitionS = "par_lyrID"+layerIdS,gui = self.gui)
         mc.sets(layerContentL, forceElement=self.layerSetL[0])
 
         mc.addAttr(self.layerSetL[1], shortName='aiMatte', longName='aiMatte', attributeType='bool')
+        mc.setAttr(self.layerSetL[1]+".aiMatte", 0)
         mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiMatte")
         mc.setAttr(self.layerSetL[1]+".aiMatte", 1)
 
         mc.addAttr(self.layerSetL[2], shortName='primaryVisibility', longName='primaryVisibility', attributeType='bool')
+        mc.setAttr(self.layerSetL[2]+".primaryVisibility", 1)
         mc.editRenderLayerAdjustment(self.layerSetL[2]+".primaryVisibility")
         mc.setAttr(self.layerSetL[2]+".primaryVisibility", 0)
+
+        if disableLayer:
+            mc.setAttr(layerName+".renderable", 0)
 
         return dict(resultB=self.log.resultB, logL=self.log.logL)
 
@@ -158,7 +173,7 @@ class LayerManager:
         if mode == "add":
             itemToAddL = list(set(rndItemL) - set(self.layerMemberL))
             if itemToAddL:
-                mc.editRenderLayerMembers(self.layerMemberL, itemToAddL, remove= False, noRecurse=True)
+                mc.editRenderLayerMembers(self.layerNameS, itemToAddL, remove= False, noRecurse=True)
                 mc.sets(itemToAddL, forceElement=self.layerSetL[0])
                 self.log.printL("i", "added {} items to layer'{}': {}".format(len(itemToAddL), self.layerNameS, itemToAddL))
             else:
@@ -166,7 +181,7 @@ class LayerManager:
         else:
             itemToRemoveL = list(set(rndItemL) & set(self.layerMemberL))
             if itemToRemoveL:
-                mc.editRenderLayerMembers(self.layerMemberL, itemToRemoveL, remove= True, noRecurse=True)
+                mc.editRenderLayerMembers(self.layerNameS, itemToRemoveL, remove= True, noRecurse=True)
                 for eachSet in self.layerSetL:
                     mc.sets(itemToRemoveL, remove=eachSet)
                 self.log.printL("i", "removed {} items from layer'{}': {}".format(len(itemToRemoveL), self.layerNameS, itemToRemoveL))
