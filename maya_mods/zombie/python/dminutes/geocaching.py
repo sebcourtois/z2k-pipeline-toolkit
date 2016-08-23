@@ -24,6 +24,8 @@ from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
 from davos_maya.tool.general import iterGeoGroups
 
 from dminutes import maya_scene_operations as mop
+from pytaya.util.sysutils import argsToPyNode
+from pytaya.core.transform import matchTransform
 
 LOGGING_SETS = []
 USE_LOGGING_SETS = True
@@ -66,11 +68,14 @@ def addNode(sNodeType, sNodeName, parent=None, unique=True, skipSelect=True):
 def getNode(sNodeName):
     return sNodeName if mc.objExists(sNodeName) else None
 
-def getNamespace(sNode):
-    return sNode.rsplit("|", 1)[-1].rsplit(":", 1)[0]
+def getNamespace(sNodePath):
+    sNodeName =  sNodePath.rsplit("|", 1)[-1]
+    if ":" in sNodeName:
+        return sNodeName.rsplit(":", 1)[0]
+    return ""
 
-def splitNamespace(sNode):
-    res = sNode.rsplit("|", 1)[-1].rsplit(":", 1)
+def splitNamespace(sNodePath):
+    res = sNodePath.rsplit("|", 1)[-1].rsplit(":", 1)
     return ("", res[0]) if len(res) == 1 else res
 
 def iterConnectedAttrs(sNode, **kwargs):
@@ -777,23 +782,30 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
         if not bAnimatedMesh:
             bSameVtxPos = (mc.polyCompare(sAbcMeshShape, sAstMeshShape, vertices=True) == 0)
 
-        #if mc.referenceQuery(sAstMeshShape, isNodeReferenced=True):
-
         if bDynTopo:
-            if (bAnimatedMesh or (not bSameVtxPos)) and (not dryRun):
-                mc.connectAttr(sAbcOutAttr, sAstMeshShape + ".inMesh", f=True)
-        else:
-            if (bAnimatedMesh or (not bSameVtxPos)) and (not dryRun):
-                sPolyTrans = mc.polyTransfer(sAstMeshShape, ao=sAbcMeshShape,
-                                             uv=False, v=True, vc=False, ch=True)[0]
-            if bAnimatedMesh and (not dryRun):
-                mc.connectAttr(sAbcOutAttr, sPolyTrans + ".otherPoly", f=True)
+            if bAnimatedMesh:
+                if not dryRun:
+                    mc.connectAttr(sAbcOutAttr, sAstMeshShape + ".inMesh", f=True)
+            elif not dryRun:
+                sCacheShapeName = splitNamespace(sAstMeshXfm)[1] + "ShapeFromCache"
+                sCacheShapePath = "|".join((sAstMeshXfm, sCacheShapeName))
+                if mc.objExists(sCacheShapePath):
+                    mc.delete(sCacheShapePath)
+                
+                sAbcCopiedShape = copyShape(sAbcMeshShape, sAstMeshXfm, add=True,
+                                            inPlace=True, s=True, t=True, r=True)[0]
 
-#        elif not bSameVtxPos:
-#            srcMesh = om.MFnMesh(abcMeshPath)
-#            dstMesh = om.MFnMesh(astMeshPath)
-#            if not dryRun:
-#                dstMesh.setPoints(srcMesh.getPoints())
+                sAbcCopiedShape = mc.rename(sAbcCopiedShape, sCacheShapeName)
+                mc.connectAttr(sAbcCopiedShape + ".outMesh", sAstMeshShape + ".inMesh", f=True)
+                mc.setAttr(sAbcCopiedShape + ".intermediateObject", True)
+        else:
+            if bAnimatedMesh or (not bSameVtxPos):
+                if not dryRun:
+                    sPolyTrans = mc.polyTransfer(sAstMeshShape, ao=sAbcMeshShape,
+                                                 uv=False, v=True, vc=False, ch=True)[0]
+            if bAnimatedMesh:
+                if not dryRun:
+                    mc.connectAttr(sAbcOutAttr, sPolyTrans + ".otherPoly", f=True)
 
     if sHasHistoryList:
         sNmspc = getNamespace(sHasHistoryList[0])
@@ -1212,3 +1224,50 @@ def scanCachesToImport(sSrcFilePathList, scnInfos=None, depConfDct=None):
         scanResults[-1]["publish_count"] = 0
 
     return {sDepType:scanResults}
+
+
+def copyShape(source, *targetObjList, **kwargs):
+
+    vPreRot = kwargs.pop("rot", [])
+    bInPlace = kwargs.pop("inPlace", kwargs.get('ip', False))
+    bAdd = kwargs.pop("add", False)
+
+    (oSource, oTargetObjList) = argsToPyNode(source, targetObjList)
+
+    returnList = []
+
+    for oTargetObj in oTargetObjList:
+
+        oSrcCopy = pm.duplicate(oSource, rr=True, renameChildren=True)[0]
+        #fncAttr.unlockHideXAttr(oSrcCopy, 't', 'r', 's')
+
+        if not bInPlace:
+            matchTransform(oSrcCopy, oTargetObj)
+
+        pm.parent(oSrcCopy, oTargetObj)
+
+        if vPreRot:
+            oSrcCopy.setAttr("r", vPreRot)
+
+        pm.makeIdentity(oSrcCopy, apply=True, **kwargs)##FREEZE
+        pm.makeIdentity(oSrcCopy, apply=False, **kwargs)##RESET
+
+        sShapeName = oTargetObj.nodeName() + 'Shape'
+        oTargetShape = oTargetObj.getShape()
+
+        if not bAdd:
+            if oTargetShape:
+                pm.delete(oTargetShape)
+
+        oNewShape = oSrcCopy.getShape()
+
+        pm.parent(oNewShape, oTargetObj, add=True, shape=True)
+        pm.delete(oSrcCopy)
+
+        if not bAdd:
+            oTargetShape = oTargetObj.getShape()
+            oTargetShape.rename(sShapeName)
+
+        returnList.append(oNewShape.name(update=False))
+
+    return returnList
