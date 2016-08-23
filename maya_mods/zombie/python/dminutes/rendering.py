@@ -640,7 +640,7 @@ def createAovs(renderMode="render"):
             elif each == "aiAOV_Z" and not 'aiAOV_Z' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("Z", aovType='float')
             elif each == "aiAOV_P" and not 'aiAOV_P' in mc.ls(type="aiAOV"):
-                myAOVs.addAOV("P", aovType='float')
+                myAOVs.addAOV("P", aovType='point')
                 #changeAovFilter(aovName = "Z", filterName = "default")
 
         aovs.refreshAliases()
