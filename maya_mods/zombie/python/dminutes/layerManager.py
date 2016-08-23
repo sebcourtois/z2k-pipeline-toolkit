@@ -22,14 +22,9 @@ class LayerManager:
         self.gui=gui
         self.log = miscUtils.LogBuilder(gui=gui, logL = [], resultB = True)
 
-        self.allRndObjL = mc.ls("geo_*",type="transform")+mc.ls("*:geo_*",type="transform")+mc.ls("*:*:geo_*",type="transform")    # all renderable objects
+        self.allRndObjL = []    # all renderable objects
         self.envRndObjL = []    # evironement renderable objects
         self.astRndObjL = []    # asset renderable objects (basically all renderable except environement)
-        for each in self.allRndObjL:
-            if "env_" in each:
-                self.envRndObjL.append(each)
-            else:
-                self.astRndObjL.append(each)
 
         self.rndItemL = []      # renderable item to be manipulated (for instance, add or remove to a set or layer)
 
@@ -38,6 +33,8 @@ class LayerManager:
         self.layerMemberL = [] #  layer members list
         self.layerNameS = ""
 
+        self.initRndItem()
+        self.scriptJobManager(delete = False, create = True)
 
         # self.rndLayerD = {}
         # for each in mc.ls("*",type="renderLayer"):
@@ -59,11 +56,13 @@ class LayerManager:
         if rndItemL is None:
             selectionL = mc.ls(selection=True)
             if not selectionL:
-                txt = "Nothing selected".format(layerSetL[layerIdI])
-                self.log.printL("w", txt)
+                self.log.printL("w", "Nothing selected")
                 rndItemL = []
             else:
-                rndItemL = mc.listRelatives(selectionL, allDescendents = True, type = "transform")
+                allDescendentL= mc.listRelatives(selectionL, allDescendents = True, type = "transform")
+                if allDescendentL is None:
+                    allDescendentL = []
+                rndItemL = allDescendentL + selectionL
 
         self.rndItemL = []
         for each in rndItemL:
@@ -89,7 +88,8 @@ class LayerManager:
             self.log.printL("e", txt)
             self.layerIdI = 0
             self.layerNameS = ""
-            raise ValueError(txt)
+            self.layerSetL = []
+            self.layerMemberL = []
         else:
             self.layerIdI = layerIdI
             self.layerNameS = layerNameS
@@ -106,7 +106,55 @@ class LayerManager:
 
 
 
-    def createRndlayer(self, layerName="lyr_default_name", layerContentL=None, layerPosition = 0, disableLayer = False):
+    def initLayerDisplay(self):
+        self.log.funcName ="'initLayerDisplay' "
+
+        setBlackMatteOnL = mc.ls(self.layerSetL[1], type = "objectSet")
+        setPrimaryRayOffL = mc.ls(self.layerSetL[2], type = "objectSet")
+
+        if mc.ls("primaryRayOff",type="displayLayer"):
+            mc.delete("primaryRayOff")
+        if mc.ls("blackMatteOn",type="displayLayer"):
+            mc.delete("blackMatteOn")
+
+        if setBlackMatteOnL and setPrimaryRayOffL:
+            setBlackMatteOnMemberL = mc.sets(setBlackMatteOnL[0], q=True)
+            setPrimaryRayOffMemberL= mc.sets(setPrimaryRayOffL[0], q=True)
+        else:
+            txt = "No 'set_lyrIDx_blackMatteOn' or 'set_lyrIDx_primaryRayOff' found, cannot update display layers"
+            self.log.printL("w", txt)
+            return
+
+
+        if setPrimaryRayOffMemberL:
+            mc.createDisplayLayer(setPrimaryRayOffMemberL,number=1, empty=False, noRecurse=False, name="primaryRayOff")
+            mc.setAttr("primaryRayOff.shading", 0)
+            mc.setAttr("primaryRayOff.color", 7)
+        if setBlackMatteOnMemberL:
+            mc.createDisplayLayer(setBlackMatteOnMemberL,number=1, empty=False, noRecurse=False, name="blackMatteOn")
+            mc.setAttr("blackMatteOn.color", 4)
+
+
+
+    def scriptJobManager(self, delete = False, create = True):
+        self.log.funcName ="'scriptJobManager' "
+        scriptJobL = mc.scriptJob( listJobs =True)
+        existingScriptJobNumb = 0
+        for each in scriptJobL:
+            if "protected=True, event=['renderLayerManagerChange', 'from dminutes import layerManager" in each:
+                existingScriptJobNumb+=1
+                if delete:
+                    jobId = int(each.split(":")[0])
+                    mc.scriptJob( kill=jobId, force=True)
+                    self.log.printL("i", "'renderLayerManagerChange' scriptjob number '{}' deleted".format(jobId) )
+        if not existingScriptJobNumb and create:
+            jobId = mc.scriptJob( event= ['renderLayerManagerChange','from dminutes import layerManager ;lm=layerManager.LayerManager(); lm.initLayer(); lm.initLayerDisplay()'], protected=True)
+            self.log.printL("i", "'renderLayerManagerChange' scriptjob number '{}' created".format(jobId) )
+
+
+
+
+    def createRndlayer(self, layerName="lyr_default_name", layerContentL=None, disableLayer = False):
         self.log.funcName ="'createRndlayer' "
 
         if layerContentL is None:
@@ -119,7 +167,7 @@ class LayerManager:
             return dict(resultB=self.log.resultB, logL=self.log.logL)
 
         mc.createRenderLayer( layerContentL, noRecurse=True, name=layerName, makeCurrent=True )
-        maya.mel.eval("layerEditorMoveRenderItem RenderLayerTab "+str(layerPosition))
+        #maya.mel.eval("layerEditorMoveRenderItem RenderLayerTab "+str(layerPosition))  #deactive car le 'layerPosition' decale le layer vers le haut ou le bas de la pile en fonction de sa valeur (0 ou 1). il ne s'agit pas d'un d'une position
         layerIdS = str(mc.getAttr(layerName+".identification"))
         #mc.editRenderLayerGlobals( currentRenderLayer=layerName )
         self.initLayer()
@@ -189,5 +237,7 @@ class LayerManager:
                 self.log.printL("i", "nothing to remove from layer'{}'".format(self.layerNameS))
 
         self.layerMemberL = mc.editRenderLayerMembers(self.layerNameS,q=True)
+
+
 
 
