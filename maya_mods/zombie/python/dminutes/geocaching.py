@@ -665,40 +665,52 @@ def transferXfmAttrs(astToAbcXfmMap, only=None, attrs=None, discardAttrs=None, d
 
     return True
 
-def transferVisibilities(astToAbcXfmMap, dryRun=False):
+def transferVisibilities(astToAbcObjMap, dryRun=False):
 
-    if isinstance(astToAbcXfmMap, dict):
-        astToAbcXfmItems = tuple(astToAbcXfmMap.iteritems())
+    if isinstance(astToAbcObjMap, dict):
+        astToAbcObjItems = tuple(astToAbcObjMap.iteritems())
     else:
-        astToAbcXfmItems = astToAbcXfmMap
+        astToAbcObjItems = astToAbcObjMap
 
     sAttr = "visibility"
 
     sHiddenList = []
     sShowedList = []
 
-    for sAstXfm, sAbcXfm in iterMatchedObjects(astToAbcXfmItems):
+    for sAstObjPath, sAbcObjPath in iterMatchedObjects(astToAbcObjItems):
 
-        sAbcVizAttr = sAbcXfm + "." + sAttr
-        sAstVizAttr = sAstXfm + "." + sAttr
+        sAbcVizAttr = sAbcObjPath + "." + sAttr
+        sAstVizAttr = sAstObjPath + "." + sAttr
 
-        bAbcViz = mc.getAttr(sAbcVizAttr)
-        bAstViz = mc.getAttr(sAstVizAttr)
-
-        if bAstViz == bAbcViz:
-            continue
-
-        if bAstViz:
-            sHiddenList.append(sAstXfm)
-            sMsg = "CACHE HIDES: '{}'".format(sAstXfm)
+        sInConnList = mc.listConnections(sAbcVizAttr, s=True, d=False,
+                                         type="AlembicNode", plugs=True)
+        if sInConnList:
+            try:
+                mc.connectAttr(sInConnList[0], sAstVizAttr, f=True)
+            except RuntimeError as e:
+                pm.displayWarning(e.message)
         else:
-            sShowedList.append(sAstXfm)
-            sMsg = "CACHE SHOWS: '{}'".format(sAstXfm)
+            bAbcViz = mc.getAttr(sAbcVizAttr)
+            bAstViz = mc.getAttr(sAstVizAttr)
 
-        print sMsg
+            if bAstViz == bAbcViz:
+                continue
 
-        mc.copyAttr(sAbcXfm, sAstXfm, values=True, inConnections=True,
-                    keepSourceConnections=True, attribute=sAttr)
+            sAstObjRepr = mc.ls(sAstObjPath)[0]
+
+            if bAstViz:
+                sHiddenList.append(sAstObjPath)
+                sMsg = "CACHE HIDES: '{}'".format(sAstObjRepr)
+            else:
+                sShowedList.append(sAstObjPath)
+                sMsg = "CACHE SHOWS: '{}'".format(sAstObjRepr)
+
+            try:
+                mc.setAttr(sAstVizAttr, bAbcViz)
+            except RuntimeError as e:
+                pm.displayWarning(e.message)
+            else:
+                print sMsg
 
     if sHiddenList:
         sNmspc = getNamespace(sHiddenList[0])
@@ -727,6 +739,8 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
 
         astMeshPath = myapi.getDagPath(sAstMeshShape)
         sAstMeshXfm = astMeshPath.fullPathName().rsplit("|", 1)[0]
+        sAstMeshShapeName = astMeshPath.partialPathName()
+
         if sOnlyList and (sAstMeshXfm not in sOnlyList):
             continue
 
@@ -736,16 +750,16 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
         if sConnecList:
             sNotTypeList = ("displayLayer", "renderLayer", "renderLayerManager", "displayLayerManager")
             sConnecList = lsNodes(sConnecList, nodeNames=True, not_rn=True, not_type=sNotTypeList)
-            #sConnecList = tuple(n for n in sConnecList if mc.nodeType(n) not in sNotTypeList)
-            #print sAstMeshShape, sConnecList
             if sConnecList:
                 sHasHistoryList.append(sAstMeshShape)
-                pm.displayWarning("Mesh with history ignored: '{}'".format(sAstMeshShape))
+                pm.displayWarning("Mesh with history ignored: '{}'".format(sAstMeshShapeName))
                 continue
 
         bDynTopo = False
         abcMeshPath = myapi.getDagPath(sAbcMeshShape)
         sAbcMeshXfm = abcMeshPath.fullPathName().rsplit("|", 1)[0]
+        sAbcMeshShapeName = abcMeshPath.partialPathName()
+
         sDynTopoAttr = sAbcMeshXfm + ".dynamicTopology"
         if mc.objExists(sDynTopoAttr):
             bDynTopo = mc.getAttr(sDynTopoAttr)
@@ -757,25 +771,26 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
             if abcMeshStat != astMeshStat:
                 if abcMeshStat["vertex"] != astMeshStat["vertex"]:
                     sMsg = "Number of vertices differs:"
-                    sMsg += "\n    - '{}': {} verts".format(sAbcMeshShape, abcMeshStat["vertex"])
-                    sMsg += "\n    - '{}': {} verts".format(sAstMeshShape, astMeshStat["vertex"])
+                    sMsg += "\n    - '{}': {} verts".format(sAbcMeshShapeName, abcMeshStat["vertex"])
+                    sMsg += "\n    - '{}': {} verts".format(sAstMeshShapeName, astMeshStat["vertex"])
                     pm.displayWarning(sMsg)
                     sVertsDifferList.extend((sAbcMeshShape, sAstMeshShape))
                     continue
                 else:
                     sMsg = "Same vertices but topology differs:"
                     sMsg += ("\n    - cache mesh: {}  on '{}'"
-                             .format(meshMismatchStr(abcMeshStat, astMeshStat), sAbcMeshShape))
+                             .format(meshMismatchStr(abcMeshStat, astMeshStat), sAbcMeshShapeName))
                     sMsg += ("\n    - asset mesh: {}  on '{}'"
-                             .format(meshMismatchStr(astMeshStat, abcMeshStat), sAstMeshShape))
+                             .format(meshMismatchStr(astMeshStat, abcMeshStat), sAstMeshShapeName))
                     pm.displayInfo(sMsg)
                     sTopoDifferList.extend((sAbcMeshShape, sAstMeshShape))
 
-        sAbcOutAttr = mc.listConnections(sAbcMeshShape + ".inMesh", s=True, d=False,
+        sInConnList = mc.listConnections(sAbcMeshShape + ".inMesh", s=True, d=False,
                                          type="AlembicNode", plugs=True)
+        sAbcOutAttr = None
         bAnimatedMesh = False
-        if sAbcOutAttr:
-            sAbcOutAttr = sAbcOutAttr[0]
+        if sInConnList:
+            sAbcOutAttr = sInConnList[0]
             bAnimatedMesh = True
 
         bSameVtxPos = False
@@ -865,6 +880,8 @@ def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
                 pm.displayWarning(sMsg)
             continue
 
+        sObjPathName = sFoundList[0]
+
         for sAttr, v in values.iteritems():
 
             if "visibility" not in sAttr.lower():
@@ -890,14 +907,14 @@ def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
 
             if sAttr == "visibility":
                 if bObjViz:
-                    sMsg = "LAYOUT HIDES: '{}'".format(sObjPath)
+                    sMsg = "LAYOUT HIDES: '{}'".format(sObjPathName)
                 else:
-                    sMsg = "LAYOUT SHOWS: '{}'".format(sObjPath)
+                    sMsg = "LAYOUT SHOWS: '{}'".format(sObjPathName)
             else:
                 if bObjViz:
-                    sMsg = "LAYOUT HIDES: '{}'".format(sObjAttr)
+                    sMsg = "LAYOUT HIDES: '{}'".format(sObjPathName + "." + sAttr)
                 else:
-                    sMsg = "LAYOUT SHOWS: '{}'".format(sObjAttr)
+                    sMsg = "LAYOUT SHOWS: '{}'".format(sObjPathName + "." + sAttr)
 
             print sMsg
 
@@ -1099,6 +1116,7 @@ def importCaches(sSpace, **kwargs):
                     mc.rename(sNodeName, sNodeName.rsplit(":", 1)[-1])
 
         transferVisibilities(astToAbcXfmItems, dryRun=bDryRun)
+        transferVisibilities(astToAbcMeshItems, dryRun=bDryRun)
 
         if not bDryRun:
             sFoundList = mc.ls(sAbcNodeList, type="AlembicNode")
