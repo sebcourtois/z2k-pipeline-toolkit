@@ -113,8 +113,8 @@ def importGpuCache(sAbcPath):
     mc.addAttr(sGpuShape, ln="cacheFileSize", at="long", dv=0)
 
     sGpuXfm = mc.listRelatives(sGpuShape, parent=True, path=True)[0]
-    sGpuXfm = mc.rename(sGpuXfm, sBaseName)
-    mc.parent(sGpuXfm, sGpuGrp)
+    sGpuXfm = mc.parent(sGpuXfm, sGpuGrp)[0]
+    sGpuShape = mc.listRelatives(sGpuXfm, c=True, path=True)[0]
 
     mc.setAttr(sGpuShape + ".cacheFileName", sAbcPath, type="string")
     mc.setAttr(sGpuShape + ".cacheGeomPath", "|", type="string")
