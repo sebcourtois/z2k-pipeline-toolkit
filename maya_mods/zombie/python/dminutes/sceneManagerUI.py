@@ -248,8 +248,7 @@ def refreshContextUI():
     sStyle = "background-color: none;"
     if bEnabled:
         infos = mop.getAnimaticInfos(SCENE_MANAGER.getDamShot(), sCtxStep)
-        pc.button('sm_setupAnimatic_bt', q=True, label=True)
-        if infos["newer_movie"]:
+        if infos and infos["newer_movie"]:
             if (sInfo not in sLabel):
                 sLabel += sInfo
                 sStyle = "background-color:rgba(200, 0, 0, 90);"

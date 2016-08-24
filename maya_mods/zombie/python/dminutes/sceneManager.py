@@ -13,7 +13,7 @@ import traceback
 import pymel.core as pc
 import maya.cmds as mc
 
-from pytd.util.fsutils import pathResolve, pathSuffixed, normCase
+from pytd.util.fsutils import pathSuffixed
 from pytd.util.logutils import logMsg
 from pytd.util.sysutils import toStr, inDevMode, fromUtf8
 from pytd.util.strutils import padded
@@ -675,12 +675,14 @@ class SceneManager():
 
             bShotCamEdited = self.isShotCamEdited()
 
-            oCamAbcNode = self.getShotCamAbcNode()
-            if oCamAbcNode:
-                sAbcNodePath = pathResolve(oCamAbcNode.getAttr("abc_File"))
-                if osp.normcase(sAbcNodePath) != osp.normcase(abcFile.absPath()):
-                    raise RuntimeError("Unexpected path on '{}' node: \n         got: '{}'\n    expected: '{}'")
-
+#            oCamAbcNodeList = self.getShotCamAbcNodes()
+#            if oCamAbcNodeList:
+#                sMsg = "Unexpected path on '{}' node: \n         got: '{}'\n    expected: '{}'"
+#                for oCamAbcNode in oCamAbcNodeList:
+#                    sAbcNodePath = pathResolve(oCamAbcNode.getAttr("abc_File"))
+#                    if osp.normcase(sAbcNodePath) != osp.normcase(abcFile.absPath()):
+#                        raise RuntimeError(sMsg.format(oCamAbcNode.name(), sAbcNodePath,
+#                                                       abcFile.absPath()))
             if abcFile.exists():
                 if bShotCamEdited:
                     sCamFile = abcFile.nextVersionName()
@@ -872,7 +874,8 @@ class SceneManager():
         if sendToRv:
             playKwargs.update(pushToRv="playblast", sequenceId=seqId)
 
-        return playMovie(sOutFilePath, **playKwargs)
+        if sOutFilePath:
+            return playMovie(sOutFilePath, **playKwargs)
 
     def edit(self, editInPlace=None, onBase=False):
         privFile = None
@@ -1223,7 +1226,7 @@ class SceneManager():
 #        shotLib = proj.getLibrary("public", "shot_lib")
         return DamShot(proj, name=sShotCode)
 
-    def getShotCamAbcNode(self):
+    def getShotCamAbcNodes(self):
 
         sShotCamNs = self.mkShotCamNamespace()
 
@@ -1243,11 +1246,16 @@ class SceneManager():
                 sAbcNodeList.append(sAbcNode)
 
         if not sAbcNodeList:
-            return None
-        elif len(sAbcNodeList) > 1:
-            raise RuntimeError("Multiple AlembicNode found: {}".format(sAbcNodeList))
-        else:
-            return pc.PyNode(sAbcNodeList[0])
+            return sAbcNodeList
+
+        return pc.ls(sAbcNodeList)
+
+#        if not sAbcNodeList:
+#            return None
+#        elif len(sAbcNodeList) > 1:
+#            raise RuntimeError("Multiple AlembicNode found: {}".format(sAbcNodeList))
+#        else:
+#            return pc.PyNode(sAbcNodeList[0])
 
     def camAnimFilesExist(self):
 
@@ -1391,21 +1399,28 @@ class SceneManager():
             mop.setShotCamLocked(oShotCam, False)
 
         try:
+            oAbcNodeList = self.getShotCamAbcNodes()
+            if oAbcNodeList:
+                for oAbcNode in oAbcNodeList:
+                    pc.lockNode(oAbcNode, lock=False)
+                    pc.delete(oAbcNode)
+
             mc.select(sCamAstGrp)
             sAbcPath = abcFile.absPath()
             mc.AbcImport(sAbcPath, mode="import", connect=sCamAstGrp)
 
-            oAbcNode = self.getShotCamAbcNode()
-            if oAbcNode:
-                oAbcNode.setAttr("abc_File", abcFile.envPath())
-                pc.lockNode(oAbcNode, lock=True)
+            oAbcNodeList = self.getShotCamAbcNodes()
+            if oAbcNodeList:
+                for oAbcNode in oAbcNodeList:
+                    oAbcNode.setAttr("abc_File", abcFile.envPath())
+                    pc.lockNode(oAbcNode, lock=True)
         finally:
             if oFileRef:
                 mop.setCamRefLocked(self.getShotCamera(), True)
             else:
                 mop.setShotCamLocked(oShotCam, True)
 
-        return oAbcNode
+        return oAbcNodeList
 
     @mop.restoreSelection
     def editShotCam(self):
@@ -1427,10 +1442,11 @@ class SceneManager():
             if bLocked:
                 mop.setShotCamLocked(oShotCam, False)
 
-        oAbcNode = self.getShotCamAbcNode()
-        if oAbcNode:
-            pc.lockNode(oAbcNode, lock=False)
-            pc.delete(oAbcNode)
+        oAbcNodeList = self.getShotCamAbcNodes()
+        if oAbcNodeList:
+            for oAbcNode in oAbcNodeList:
+                pc.lockNode(oAbcNode, lock=False)
+                pc.delete(oAbcNode)
         elif not bLocked:
             pc.displayWarning("Shot camera is already edited.")
             return
@@ -1449,16 +1465,16 @@ class SceneManager():
 
     def isShotCamEdited(self):
 
-        if self.getShotCamAbcNode():
+        if self.getShotCamAbcNodes():
             return False
 
         oShotCam = self.getShotCamera()
 
         oFileRef = oShotCam.referenceFile()
         if oFileRef:
-            return (not oFileRef.refNode.getAttr("locked")) and (not self.getShotCamAbcNode())
+            return (not oFileRef.refNode.getAttr("locked")) and (not self.getShotCamAbcNodes())
         else:
-            return (not oShotCam.isLocked()) and (not self.getShotCamAbcNode())
+            return (not oShotCam.isLocked()) and (not self.getShotCamAbcNodes())
 
     def showInShotgun(self):
         self.context['damProject']._shotgundb.showInBrowser(self.context['entity'])

@@ -711,6 +711,9 @@ def loadStereoCam(damShot, withAnim=True):
 
 def getAnimaticInfos(damShot, sSgStep):
 
+    if not damShot.name.lower().endswith("a"):
+        return
+
     sStepName = sSgStep.lower()
 
     sRcName = "anim_capture" if sStepName == "final layout" else "animatic_capture"
@@ -746,9 +749,12 @@ def getAnimaticInfos(damShot, sSgStep):
 def setupAnimatic(animaticInfos, create=True):
 
     oImgPlane, oImgPlaneCam = getImagePlaneItems(create=False)
+    if animaticInfos is None:
+        return oImgPlane, oImgPlaneCam
+
     if (not create) and (not oImgPlaneCam):
         pc.displayError("Animatic camera not found: 'Shot Setup' needed.")
-        return
+        return oImgPlane, oImgPlaneCam
 
     sErrorList = []
     sPanelList = tuple(iterPanelsFromCam(oImgPlaneCam)) if oImgPlaneCam else []
