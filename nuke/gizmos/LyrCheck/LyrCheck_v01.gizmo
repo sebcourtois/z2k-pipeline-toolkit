@@ -1,0 +1,358 @@
+#! C:/Program Files/Nuke10.0v3/nuke-10.0.3.dll -nx
+version 10.0 v3
+Gizmo {
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos 501
+  ypos 230
+ }
+ Dot {
+  name Dot1
+  xpos 535
+  ypos 270
+ }
+set N2bf46800 [stack 0]
+ Dot {
+  name Dot4
+  xpos 535
+  ypos 598
+ }
+set N2bf46400 [stack 0]
+ Dot {
+  name Dot3
+  xpos 535
+  ypos 770
+ }
+set N2bf46000 [stack 0]
+ Dot {
+  name Dot2
+  xpos 535
+  ypos 980
+ }
+set N2bf47000 [stack 0]
+push $N2bf47000
+push $N2bf47000
+push $N2bf47000
+push $N2bf47000
+push $N2bf47000
+push $N2bf47000
+push $N2bf47000
+push $N2bf47000
+push $N2bf47000
+push $N2bf46000
+push $N2bf46000
+push $N2bf46000
+push $N2bf46000
+push $N2bf46400
+push $N2bf46400
+push $N2bf46800
+add_layer {dmn_rimToon dmn_rimToon.red dmn_rimToon.green dmn_rimToon.blue}
+ Multiply {
+  channels dmn_rimToon
+  value 1000
+  name Multiply2
+  xpos 802
+  ypos 340
+ }
+push $N2bf46800
+push $N2bf46800
+push $N2bf46800
+push $N2bf46800
+push $N2bf46800
+ Constant {
+  inputs 0
+  channels rgb
+  format "2048 1107 0 0 2048 1107 1 "
+  name Constant5
+  xpos 997
+  ypos 143
+ }
+ ShuffleCopy {
+  inputs 2
+  red red
+  green green
+  blue blue
+  name ShuffleCopy3
+  xpos 997
+  ypos 215
+ }
+add_layer {dmn_ambient dmn_ambient.red dmn_ambient.green dmn_ambient.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_ambient
+  in2 dmn_ambient
+  red red
+  green green
+  blue blue
+  out dmn_ambient
+  name ShuffleCopy1
+  xpos 997
+  ypos 241
+ }
+add_layer {dmn_contour_inci_occ dmn_contour_inci_occ.red dmn_contour_inci_occ.green dmn_contour_inci_occ.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_contour_inci_occ
+  in2 dmn_contour_inci_occ
+  red red
+  green green
+  blue blue
+  out dmn_contour_inci_occ
+  name ShuffleCopy4
+  xpos 997
+  ypos 267
+ }
+add_layer {dmn_diffuse dmn_diffuse.red dmn_diffuse.green dmn_diffuse.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_diffuse
+  in2 dmn_diffuse
+  red red
+  green green
+  blue blue
+  out dmn_diffuse
+  name ShuffleCopy5
+  xpos 997
+  ypos 293
+ }
+add_layer {dmn_lambert_shdMsk_toon dmn_lambert_shdMsk_toon.red dmn_lambert_shdMsk_toon.green dmn_lambert_shdMsk_toon.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_lambert_shdMsk_toon
+  in2 dmn_lambert_shdMsk_toon
+  red red
+  green green
+  blue blue
+  out dmn_lambert_shdMsk_toon
+  name ShuffleCopy6
+  xpos 997
+  ypos 319
+ }
+ ShuffleCopy {
+  inputs 2
+  in dmn_rimToon
+  in2 dmn_rimToon
+  red red
+  green green
+  blue blue
+  out dmn_rimToon
+  name ShuffleCopy10
+  xpos 997
+  ypos 345
+ }
+add_layer {dmn_lgtMask01 dmn_lgtMask01.red dmn_lgtMask01.green dmn_lgtMask01.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_lgtMask01
+  in2 dmn_lgtMask01
+  red red
+  green green
+  blue blue
+  out dmn_lgtMask01
+  name ShuffleCopy18
+  xpos 997
+  ypos 582
+ }
+add_layer {dmn_lgtMask02 dmn_lgtMask02.red dmn_lgtMask02.green dmn_lgtMask02.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_lgtMask02
+  in2 dmn_lgtMask02
+  red red
+  green green
+  blue blue
+  out dmn_lgtMask02
+  name ShuffleCopy22
+  xpos 997
+  ypos 606
+ }
+add_layer {dmn_mask_transp dmn_mask_transp.red dmn_mask_transp.green dmn_mask_transp.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_mask_transp
+  in2 dmn_mask_transp
+  red red
+  green green
+  blue blue
+  out dmn_mask_transp
+  name ShuffleCopy7
+  xpos 997
+  ypos 714
+ }
+add_layer {dmn_reflection dmn_reflection.red dmn_reflection.green dmn_reflection.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_reflection
+  in2 dmn_reflection
+  red red
+  green green
+  blue blue
+  out dmn_reflection
+  name ShuffleCopy8
+  xpos 997
+  ypos 740
+ }
+add_layer {dmn_refraction dmn_refraction.red dmn_refraction.green dmn_refraction.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_refraction
+  in2 dmn_refraction
+  red red
+  green green
+  blue blue
+  out dmn_refraction
+  name ShuffleCopy9
+  xpos 997
+  ypos 766
+ }
+add_layer {dmn_specular dmn_specular.red dmn_specular.green dmn_specular.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_specular
+  in2 dmn_specular
+  red red
+  green green
+  blue blue
+  out dmn_specular
+  name ShuffleCopy11
+  xpos 997
+  ypos 792
+ }
+add_layer {dmn_mask00 dmn_mask00.red dmn_mask00.green dmn_mask00.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_mask00
+  in2 dmn_mask00
+  red red
+  green green
+  blue blue
+  out dmn_mask00
+  name ShuffleCopy2
+  xpos 997
+  ypos 872
+ }
+add_layer {dmn_mask01 dmn_mask01.red dmn_mask01.green dmn_mask01.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_mask01
+  in2 dmn_mask01
+  red red
+  green green
+  blue blue
+  out dmn_mask01
+  name ShuffleCopy15
+  xpos 997
+  ypos 898
+ }
+add_layer {dmn_mask02 dmn_mask02.red dmn_mask02.green dmn_mask02.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_mask02
+  in2 dmn_mask02
+  red red
+  green green
+  blue blue
+  out dmn_mask02
+  name ShuffleCopy12
+  xpos 997
+  ypos 924
+ }
+add_layer {dmn_mask03 dmn_mask03.red dmn_mask03.green dmn_mask03.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_mask03
+  in2 dmn_mask03
+  red red
+  green green
+  blue blue
+  out dmn_mask03
+  name ShuffleCopy13
+  xpos 997
+  ypos 950
+ }
+add_layer {dmn_mask04 dmn_mask04.red dmn_mask04.green dmn_mask04.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_mask04
+  in2 dmn_mask04
+  red red
+  green green
+  blue blue
+  out dmn_mask04
+  name ShuffleCopy14
+  xpos 997
+  ypos 976
+ }
+add_layer {dmn_mask05 dmn_mask05.red dmn_mask05.green dmn_mask05.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_mask05
+  in2 dmn_mask05
+  red red
+  green green
+  blue blue
+  out dmn_mask05
+  name ShuffleCopy16
+  xpos 997
+  ypos 1002
+ }
+add_layer {dmn_mask06 dmn_mask06.red dmn_mask06.green dmn_mask06.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_mask06
+  in2 dmn_mask06
+  red red
+  green green
+  blue blue
+  out dmn_mask06
+  name ShuffleCopy17
+  xpos 997
+  ypos 1028
+ }
+add_layer {dmn_mask07 dmn_mask07.red dmn_mask07.green dmn_mask07.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_mask07
+  in2 dmn_mask07
+  red red
+  green green
+  blue blue
+  out dmn_mask07
+  name ShuffleCopy19
+  xpos 997
+  ypos 1054
+ }
+add_layer {dmn_mask08 dmn_mask08.red dmn_mask08.green dmn_mask08.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_mask08
+  in2 dmn_mask08
+  red red
+  green green
+  blue blue
+  out dmn_mask08
+  name ShuffleCopy20
+  xpos 997
+  ypos 1080
+ }
+add_layer {dmn_mask09 dmn_mask09.red dmn_mask09.green dmn_mask09.blue}
+ ShuffleCopy {
+  inputs 2
+  in dmn_mask09
+  in2 dmn_mask09
+  red red
+  green green
+  blue blue
+  out dmn_mask09
+  name ShuffleCopy21
+  xpos 997
+  ypos 1106
+ }
+ Output {
+  name Output1
+  xpos 997
+  ypos 1206
+ }
+end_group

@@ -1,0 +1,385 @@
+#! C:/Program Files/Nuke10.0v3/nuke-10.0.3.dll -nx
+version 10.0 v3
+Gizmo {
+ inputs 2
+ addUserKnob {20 User}
+ addUserKnob {41 which l Shadows_Mask T MaskShadows.which}
+ addUserKnob {41 Shadows_Mask l Shadows_mode T MergeShadows.operation}
+ addUserKnob {41 which_1 l Toon_Mask T MaskToon.which}
+ addUserKnob {41 operation l Toon_mode T MergeToon.operation}
+ addUserKnob {41 which_2 l Contour_Mask T MaskContour.which}
+ addUserKnob {41 operation_2 l Contour_mode T MergeContour.operation}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos 208
+  ypos -450
+ }
+ Unpremult {
+  channels all
+  name Unpremult1
+  xpos 208
+  ypos -350
+ }
+set Neb084400 [stack 0]
+ Dot {
+  name Dot2
+  xpos 242
+  ypos -276
+ }
+set Neb084000 [stack 0]
+add_layer {dmn_lgtMask02 dmn_lgtMask02.red dmn_lgtMask02.green dmn_lgtMask02.blue}
+ Shuffle {
+  in dmn_lgtMask02
+  name lgtMask02
+  xpos 608
+  ypos -95
+ }
+push $Neb084000
+add_layer {dmn_mask00 dmn_mask00.red dmn_mask00.green dmn_mask00.blue}
+ Shuffle {
+  in dmn_mask00
+  name mask00
+  xpos 695
+  ypos -93
+ }
+push $Neb084000
+add_layer {dmn_mask01 dmn_mask01.red dmn_mask01.green dmn_mask01.blue}
+ Shuffle {
+  in dmn_mask01
+  name mask01
+  xpos 785
+  ypos -92
+ }
+push $Neb084000
+add_layer {dmn_mask02 dmn_mask02.red dmn_mask02.green dmn_mask02.blue}
+ Shuffle {
+  in dmn_mask02
+  name mask02
+  xpos 873
+  ypos -92
+ }
+push $Neb084000
+add_layer {dmn_mask03 dmn_mask03.red dmn_mask03.green dmn_mask03.blue}
+ Shuffle {
+  in dmn_mask03
+  name mask03
+  xpos 961
+  ypos -92
+ }
+push $Neb084000
+add_layer {dmn_mask04 dmn_mask04.red dmn_mask04.green dmn_mask04.blue}
+ Shuffle {
+  in dmn_mask04
+  name mask04
+  xpos 1053
+  ypos -92
+ }
+push $Neb084000
+add_layer {dmn_mask06 dmn_mask06.red dmn_mask06.green dmn_mask06.blue}
+ Shuffle {
+  in dmn_mask06
+  name mask06
+  xpos 1156
+  ypos -92
+ }
+push $Neb084000
+add_layer {dmn_mask07 dmn_mask07.red dmn_mask07.green dmn_mask07.blue}
+ Shuffle {
+  in dmn_mask07
+  name mask07
+  xpos 1363
+  ypos -92
+ }
+push $Neb084000
+add_layer {dmn_mask08 dmn_mask08.red dmn_mask08.green dmn_mask08.blue}
+ Shuffle {
+  in dmn_mask08
+  name mask08
+  xpos 1458
+  ypos -92
+ }
+push $Neb084000
+add_layer {dmn_mask09 dmn_mask09.red dmn_mask09.green dmn_mask09.blue}
+ Shuffle {
+  in dmn_mask09
+  name mask09
+  xpos 1558
+  ypos -94
+ }
+push $Neb084000
+add_layer {dmn_mask_transp dmn_mask_transp.red dmn_mask_transp.green dmn_mask_transp.blue}
+ Shuffle {
+  in dmn_mask_transp
+  name mask_transp
+  xpos 1655
+  ypos -93
+ }
+push $Neb084000
+add_layer {dmn_reflection dmn_reflection.red dmn_reflection.green dmn_reflection.blue}
+ Shuffle {
+  in dmn_reflection
+  name reflection
+  xpos 1758
+  ypos -94
+ }
+push $Neb084000
+add_layer {dmn_refraction dmn_refraction.red dmn_refraction.green dmn_refraction.blue}
+ Shuffle {
+  in dmn_refraction
+  name refraction
+  xpos 1874
+  ypos -97
+ }
+push $Neb084000
+add_layer {dmn_rimToon dmn_rimToon.red dmn_rimToon.green dmn_rimToon.blue}
+ Shuffle {
+  in dmn_rimToon
+  name rimToon
+  xpos 1977
+  ypos -100
+ }
+push $Neb084000
+add_layer {dmn_specular dmn_specular.red dmn_specular.green dmn_specular.blue}
+ Shuffle {
+  in dmn_specular
+  name specular
+  xpos 2085
+  ypos -103
+ }
+push $Neb084000
+ Shuffle {
+  in dmn_mask00
+  name mask6
+  xpos 1260
+  ypos -92
+ }
+push $Neb084000
+add_layer {dmn_lgtMask01 dmn_lgtMask01.red dmn_lgtMask01.green dmn_lgtMask01.blue}
+ Shuffle {
+  in dmn_lgtMask01
+  name lgtMask01
+  xpos 509
+  ypos -94
+ }
+push $Neb084000
+add_layer {dmn_ambient dmn_ambient.red dmn_ambient.green dmn_ambient.blue}
+ Shuffle {
+  in dmn_ambient
+  name ambient
+  xpos -223
+  ypos -116
+ }
+push $Neb084000
+add_layer {dmn_lambert_shdMsk_toon dmn_lambert_shdMsk_toon.red dmn_lambert_shdMsk_toon.green dmn_lambert_shdMsk_toon.blue}
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  name diffuse
+  xpos -313
+  ypos -117
+ }
+push $Neb084000
+add_layer {dmn_contour_inci_occ dmn_contour_inci_occ.red dmn_contour_inci_occ.green dmn_contour_inci_occ.blue}
+ Shuffle {
+  in dmn_contour_inci_occ
+  name contour_inci_occ
+  xpos -124
+  ypos -118
+ }
+ Input {
+  inputs 0
+  name Input2
+  selected true
+  xpos -418
+  ypos -2
+  number 1
+ }
+set Neca64c00 [stack 0]
+push $Neca64c00
+push $Neca64c00
+push $Neb084000
+ Dot {
+  name Dot1
+  xpos 242
+  ypos -95
+ }
+set Neca64800 [stack 0]
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  red blue
+  green blue
+  alpha blue
+  name Shuffle1
+  xpos 82
+  ypos -7
+ }
+ Merge2 {
+  inputs 2
+  name MergeShadows
+  xpos 42
+  ypos 19
+ }
+push $Neca64800
+ Copy {
+  inputs 2
+  from0 -rgba.red
+  to0 -dmn_lambert_shdMsk_toon.red
+  from1 -rgba.green
+  to1 -dmn_lambert_shdMsk_toon.green
+  from2 rgba.blue
+  to2 dmn_lambert_shdMsk_toon.blue
+  metainput A
+  rangeinput A
+  name Copy1
+  xpos 82
+  ypos 61
+ }
+set Neb02bc00 [stack 0]
+push $Neca64800
+ Switch {
+  inputs 2
+  which 1
+  name MaskShadows
+  xpos 208
+  ypos 198
+ }
+ Dot {
+  name Dot3
+  xpos 242
+  ypos 273
+ }
+set Neb02b800 [stack 0]
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  red green
+  blue green
+  alpha green
+  name Shuffle3
+  xpos 86
+  ypos 342
+ }
+ Merge2 {
+  inputs 2
+  operation max
+  name MergeToon
+  xpos 25
+  ypos 389
+ }
+push $Neb02b800
+ Copy {
+  inputs 2
+  from0 -rgba.red
+  to0 -dmn_lambert_shdMsk_toon.red
+  from1 rgba.green
+  to1 dmn_lambert_shdMsk_toon.green
+  from2 -rgba.blue
+  to2 -dmn_lambert_shdMsk_toon.blue
+  metainput A
+  rangeinput A
+  name Copy2
+  xpos 82
+  ypos 429
+ }
+push $Neb02b800
+ Switch {
+  inputs 2
+  name MaskToon
+  xpos 208
+  ypos 547
+ }
+ Dot {
+  name Dot4
+  xpos 242
+  ypos 673
+ }
+set Neb02a800 [stack 0]
+ Shuffle {
+  in dmn_contour_inci_occ
+  green red
+  blue red
+  alpha red
+  name Shuffle4
+  xpos 91
+  ypos 725
+ }
+ Merge2 {
+  inputs 2
+  operation max
+  name MergeContour
+  xpos -11
+  ypos 766
+ }
+push $Neb02a800
+ Copy {
+  inputs 2
+  from0 rgba.red
+  to0 dmn_contour_inci_occ.red
+  from1 -rgba.green
+  to1 -dmn_lambert_shdMsk_toon.green
+  from2 -rgba.blue
+  to2 -dmn_lambert_shdMsk_toon.blue
+  metainput A
+  rangeinput A
+  name Copy3
+  xpos 86
+  ypos 820
+ }
+set N6376dc00 [stack 0]
+ Shuffle {
+  in dmn_contour_inci_occ
+  name Shuffle2
+  xpos 111
+  ypos 1023
+ }
+push $Neb084400
+ Shuffle {
+  in alpha
+  in2 alpha
+  green red
+  blue red
+  alpha black
+  name alpha
+  xpos -743
+  ypos -344
+ }
+ Dot {
+  name Dot13
+  xpos -709
+  ypos 1321
+ }
+push $N6376dc00
+push $Neb02a800
+ Switch {
+  inputs 2
+  name MaskContour
+  xpos 208
+  ypos 949
+ }
+ ShuffleCopy {
+  inputs 2
+  alpha blue
+  name ShuffleCopy1
+  xpos 208
+  ypos 1317
+ }
+ Premult {
+  channels all
+  name Premult1
+  xpos 208
+  ypos 1343
+ }
+ Output {
+  name Output1
+  xpos 199
+  ypos 1506
+ }
+push $Neb02bc00
+ Viewer {
+  frame_range 1-20
+  channels rgb
+  name Viewer1
+  xpos 345
+  ypos 1535
+ }
+end_group

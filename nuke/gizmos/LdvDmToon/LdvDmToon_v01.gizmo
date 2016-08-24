@@ -1,0 +1,636 @@
+#! C:/Program Files/Nuke10.0v3/nuke-10.0.3.dll -nx
+version 10.0 v3
+Gizmo {
+ addUserKnob {20 User}
+ addUserKnob {41 value_5 l Ambient_Tint T TintAmbient1.value}
+ addUserKnob {41 value_4 l Diffuse_Tint T TintDiffuse1.value}
+ addUserKnob {41 value l Spec_Tint T TintSpec1.value}
+ addUserKnob {41 value_3 l RimToon_Tint T TintRimToon1.value}
+ addUserKnob {41 value_1 l Reflection_Tint T TintRefl1.value}
+ addUserKnob {41 value_2 l Refraction_Tint T TintRefraction1.value}
+ addUserKnob {26 ""}
+ addUserKnob {41 which l Shadow_Blend T TweakShadow.which}
+ addUserKnob {41 which_2 l Occlusion_Blend T TweakOcclusion.which}
+ addUserKnob {41 which_3 l Toon_Blend T TweakToon.which}
+ addUserKnob {41 which_1 l Contour_Blend T TweakContour.which}
+ addUserKnob {26 ""}
+ addUserKnob {41 value_6 l Face_Tint T TintFace.value}
+ addUserKnob {41 value_7 l Eyes_Tint T TintEyes.value}
+ addUserKnob {41 value_8 l Mouth_Tint T TintMouth.value}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos -1314
+  ypos -305
+ }
+set N6beb6800 [stack 0]
+ Unpremult {
+  channels all
+  name Unpremult1
+  xpos -1314
+  ypos -279
+ }
+ Dot {
+  name Dot12
+  xpos -1280
+  ypos -241
+ }
+set N6beb6000 [stack 0]
+ Dot {
+  name Dot15
+  xpos -1397
+  ypos -212
+ }
+set Nd0459c00 [stack 0]
+ Shuffle {
+  in alpha
+  in2 alpha
+  green red
+  blue red
+  alpha black
+  name alpha
+  xpos -1913
+  ypos -58
+ }
+ Dot {
+  name Dot13
+  xpos -1879
+  ypos 1244
+ }
+push $Nd0459c00
+add_layer {dmn_refraction dmn_refraction.red dmn_refraction.green dmn_refraction.blue}
+ Shuffle {
+  in dmn_refraction
+  alpha black
+  name refraction
+  xpos -1808
+  ypos -60
+ }
+ Dot {
+  name Dot10
+  xpos -1774
+  ypos 1219
+ }
+ Multiply {
+  channels rgb
+  value {1 1 1 1}
+  name TintRefraction1
+  xpos -1244
+  ypos 1215
+ }
+push $Nd0459c00
+add_layer {dmn_reflection dmn_reflection.red dmn_reflection.green dmn_reflection.blue}
+ Shuffle {
+  in dmn_reflection
+  alpha black
+  name spec_indirect
+  xpos -1706
+  ypos -54
+ }
+ Dot {
+  name Dot9
+  xpos -1672
+  ypos 1192
+ }
+ Multiply {
+  channels rgb
+  value {1 1 1 1}
+  name TintRefl1
+  xpos -1243
+  ypos 1188
+ }
+push $Nd0459c00
+add_layer {dmn_rimToon dmn_rimToon.red dmn_rimToon.green dmn_rimToon.blue}
+ Shuffle {
+  in dmn_rimToon
+  alpha black
+  name rim_toon
+  xpos -1506
+  ypos -53
+ }
+ Dot {
+  name Dot21
+  xpos -1472
+  ypos 1140
+ }
+ Multiply {
+  channels rgb
+  value {1 1 1 1}
+  name TintRimToon1
+  xpos -1245
+  ypos 1136
+ }
+push $Nd0459c00
+add_layer {dmn_diffuse dmn_diffuse.red dmn_diffuse.green dmn_diffuse.blue}
+ Shuffle {
+  in dmn_diffuse
+  alpha black
+  name diffuse
+  xpos -1404
+  ypos -49
+ }
+ Dot {
+  name Dot1
+  xpos -1370
+  ypos 624
+ }
+set Nefd50800 [stack 0]
+push $N6beb6000
+ Dot {
+  name Dot17
+  xpos -909
+  ypos -194
+ }
+set Nefd50400 [stack 0]
+add_layer {dmn_contour_inci_occ dmn_contour_inci_occ.red dmn_contour_inci_occ.green dmn_contour_inci_occ.blue}
+ Shuffle {
+  in dmn_contour_inci_occ
+  red blue
+  green blue
+  alpha black
+  name occlusion
+  xpos -1210
+  ypos -46
+ }
+push $N6beb6000
+ Dot {
+  name Dot11
+  xpos -1280
+  ypos -207
+ }
+ Shuffle {
+  red alpha
+  green alpha
+  blue alpha
+  name Shuffle1
+  xpos -1314
+  ypos -183
+ }
+ Unpremult {
+  channels all
+  name Unpremult2
+  xpos -1314
+  ypos -3
+ }
+set Nf167f400 [stack 0]
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakOcclusion
+  xpos -1210
+  ypos 75
+ }
+set Nf167f000 [stack 0]
+ Dot {
+  name Dot14
+  xpos -1105
+  ypos 286
+ }
+set Nf167ec00 [stack 0]
+push $Nefd50400
+add_layer {dmn_lambert_shdMsk_toon dmn_lambert_shdMsk_toon.red dmn_lambert_shdMsk_toon.green dmn_lambert_shdMsk_toon.blue}
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  red blue
+  green blue
+  alpha blue
+  name shadow_msk
+  xpos -887
+  ypos -47
+ }
+set Nf167e800 [stack 0]
+push 0
+push $Nefd50400
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  red green
+  blue green
+  alpha black
+  name toon
+  xpos -990
+  ypos -47
+ }
+set Nf167e400 [stack 0]
+push $Nefd50400
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  green red
+  blue red
+  alpha black
+  name lambert
+  xpos -752
+  ypos -48
+ }
+ Merge2 {
+  inputs 3+1
+  operation multiply
+  name Merge10
+  xpos -752
+  ypos 86
+ }
+push $Nefd50400
+ Shuffle {
+  in dmn_contour_inci_occ
+  red green
+  blue green
+  alpha black
+  name incidence
+  xpos -655
+  ypos -49
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge7
+  xpos -664
+  ypos 180
+ }
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge15
+  xpos -921
+  ypos 386
+ }
+ Dot {
+  name Dot20
+  xpos -887
+  ypos 445
+ }
+set Nd7b8ac00 [stack 0]
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge9
+  xpos -1260
+  ypos 620
+ }
+push $Nefd50800
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge11
+  xpos -1260
+  ypos 646
+ }
+ Dot {
+  name Dot18
+  xpos -1200
+  ypos 772
+ }
+set Nd7b8a000 [stack 0]
+push $Nefd50400
+ Shuffle {
+  in dmn_contour_inci_occ
+  green red
+  blue red
+  alpha black
+  name contour
+  xpos -1113
+  ypos -47
+ }
+push $Nf167f400
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakContour
+  xpos -1113
+  ypos 77
+ }
+push $Nf167f000
+push 0
+push $Nf167e400
+push $Nf167f400
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakToon
+  xpos -990
+  ypos 81
+ }
+push $Nf167e800
+push $Nf167f400
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakShadow
+  xpos -887
+  ypos 79
+ }
+ Merge2 {
+  inputs 4+1
+  operation multiply
+  name Merge13
+  xpos -990
+  ypos 192
+ }
+ Dot {
+  name Dot16
+  xpos -956
+  ypos 770
+ }
+set Nec9f4800 [stack 0]
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge1
+  xpos -1152
+  ypos 1036
+ }
+ Multiply {
+  channels rgb
+  value {1 1 1 1}
+  name TintDiffuse1
+  xpos -1152
+  ypos 1062
+ }
+ Dot {
+  name Dot4
+  xpos -1118
+  ypos 1088
+ }
+push $Nec9f4800
+ Invert {
+  channels rgb
+  name Invert2
+  xpos -899
+  ypos 903
+ }
+push $Nefd50400
+add_layer {dmn_ambient dmn_ambient.red dmn_ambient.green dmn_ambient.blue}
+ Shuffle {
+  in dmn_ambient
+  alpha black
+  name ambient
+  xpos -561
+  ypos -50
+ }
+ Dot {
+  name Dot2
+  xpos -527
+  ypos 630
+ }
+set N3d66b000 [stack 0]
+push $N3d66b000
+push $Nd7b8ac00
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge12
+  xpos -708
+  ypos 626
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge18
+  xpos -708
+  ypos 652
+ }
+push $Nf167ec00
+push $Nf167f400
+ Dot {
+  name Dot3
+  xpos -1280
+  ypos 417
+ }
+ Dissolve {
+  inputs 2
+  which 1
+  name Dissolve1
+  xpos -1139
+  ypos 407
+ }
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge5
+  xpos -708
+  ypos 727
+ }
+ Dot {
+  name Dot19
+  xpos -674
+  ypos 772
+ }
+set N787e9800 [stack 0]
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge2
+  xpos -817
+  ypos 1033
+ }
+ Multiply {
+  channels rgb
+  value {1 1 1 1}
+  name TintAmbient1
+  xpos -817
+  ypos 1062
+ }
+ Dot {
+  name Dot5
+  xpos -783
+  ypos 1088
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge14
+  xpos -988
+  ypos 1084
+ }
+ Transform {
+  center {1024 553.5}
+  name _OUTRGB_noRFL_noRFR_
+  xpos -988
+  ypos 1110
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name RIMTOON
+  xpos -988
+  ypos 1136
+ }
+push $Nd0459c00
+add_layer {dmn_specular dmn_specular.red dmn_specular.green dmn_specular.blue}
+ Shuffle {
+  in dmn_specular
+  alpha black
+  name spec_direct
+  xpos -1610
+  ypos -54
+ }
+ Dot {
+  name Dot8
+  xpos -1576
+  ypos 1166
+ }
+ Multiply {
+  channels rgb
+  value {1 1 1 1}
+  name TintSpec1
+  xpos -1245
+  ypos 1162
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name plusSPECULAR
+  xpos -988
+  ypos 1162
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name plusREFLECTION
+  xpos -988
+  ypos 1188
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name plusREFRACTION
+  xpos -988
+  ypos 1214
+ }
+ ShuffleCopy {
+  inputs 2
+  alpha blue
+  name ShuffleCopy1
+  xpos -988
+  ypos 1240
+ }
+ Dot {
+  name Dot6
+  xpos -954
+  ypos 1312
+ }
+set N6b378000 [stack 0]
+add_layer {dmn_mask05 dmn_mask05.red dmn_mask05.green dmn_mask05.blue}
+ Shuffle {
+  in dmn_mask05
+  name Shuffle2
+  xpos -1212
+  ypos 1308
+ }
+ Dot {
+  name Dot23
+  xpos -1178
+  ypos 1334
+ }
+set N63713800 [stack 0]
+ Dot {
+  name Dot22
+  xpos -1178
+  ypos 1360
+ }
+set N63713400 [stack 0]
+ Dot {
+  name Dot7
+  xpos -1178
+  ypos 1386
+ }
+ Shuffle {
+  red blue
+  green blue
+  alpha blue
+  name Shuffle4
+  xpos -1122
+  ypos 1382
+ }
+push $N63713400
+ Shuffle {
+  red green
+  blue green
+  alpha green
+  name Shuffle5
+  xpos -1122
+  ypos 1356
+ }
+push $N63713800
+ Shuffle {
+  green red
+  blue red
+  alpha red
+  name Shuffle3
+  xpos -1121
+  ypos 1330
+ }
+push $N6b378000
+ Multiply {
+  inputs 1+1
+  channels rgb
+  value {1 1 1 1}
+  name TintFace
+  xpos -988
+  ypos 1330
+ }
+ Multiply {
+  inputs 1+1
+  channels rgba
+  value {1 1 1 1}
+  name TintEyes
+  xpos -988
+  ypos 1356
+ }
+ Multiply {
+  inputs 1+1
+  channels rgb
+  value {1 1 1 1}
+  name TintMouth
+  selected true
+  xpos -988
+  ypos 1382
+ }
+set Ncd949800 [stack 0]
+ Premult {
+  name Premult1
+  xpos -988
+  ypos 1445
+ }
+ Output {
+  name Output1
+  xpos -988
+  ypos 1471
+ }
+push $Nd7b8ac00
+ Transform {
+  center {1024 553.5}
+  name _MERGE15_in_shader
+  xpos -799
+  ypos 441
+ }
+push $Nd7b8a000
+ Transform {
+  center {1024 553.5}
+  name _MERGE9_in_shader
+  xpos -1136
+  ypos 768
+ }
+push $Nec9f4800
+ Transform {
+  center {1024 553.5}
+  name _MERGE7_in_shader
+  xpos -889
+  ypos 766
+ }
+push $N787e9800
+ Transform {
+  center {1024 553.5}
+  name _MERGE14_in_shader
+  xpos -633
+  ypos 768
+ }
+push $N6beb6800
+push $Ncd949800
+ Viewer {
+  inputs 2
+  frame_range 1-20
+  name Viewer1
+  xpos -218
+  ypos 1668
+ }
+end_group
