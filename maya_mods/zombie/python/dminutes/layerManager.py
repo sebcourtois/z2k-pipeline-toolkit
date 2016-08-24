@@ -180,14 +180,16 @@ class LayerManager:
         mc.sets(layerContentL, forceElement=self.layerSetL[0])
 
         mc.addAttr(self.layerSetL[1], shortName='aiMatte', longName='aiMatte', attributeType='bool')
-        mc.setAttr(self.layerSetL[1]+".aiMatte", 0)
-        mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiMatte")
         mc.setAttr(self.layerSetL[1]+".aiMatte", 1)
+        mc.setAttr(self.layerSetL[1]+".aiOverride", 0)
+        mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiOverride")
+        mc.setAttr(self.layerSetL[1]+".aiOverride", 1)
 
         mc.addAttr(self.layerSetL[2], shortName='primaryVisibility', longName='primaryVisibility', attributeType='bool')
-        mc.setAttr(self.layerSetL[2]+".primaryVisibility", 1)
-        mc.editRenderLayerAdjustment(self.layerSetL[2]+".primaryVisibility")
         mc.setAttr(self.layerSetL[2]+".primaryVisibility", 0)
+        mc.setAttr(self.layerSetL[2]+".aiOverride", 0)
+        mc.editRenderLayerAdjustment(self.layerSetL[2]+".aiOverride")
+        mc.setAttr(self.layerSetL[2]+".aiOverride", 1)
 
         if disableLayer:
             mc.setAttr(layerName+".renderable", 0)
