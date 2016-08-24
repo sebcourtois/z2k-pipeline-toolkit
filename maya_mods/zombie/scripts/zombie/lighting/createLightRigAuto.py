@@ -7,7 +7,7 @@ def createLightRigFromShot():
     print characterList
     for each in characterList : # Acces to character asset list
         chrName = each.split('_')[1]
-        ref = pm.createReference('//zombiwalk/Projects/zomb/misc/shading/lightRigs/lgt_rig_character.ma', namespace='lgt_' + chrName)
+        pm.createReference('//zombiwalk/Projects/zomb/misc/shading/lightRigs/lgt_rig_character.ma', namespace='lgt_' + chrName)
         vertexLoc = []
         locatorPerso = pm.spaceLocator(n=chrName + '_pos')
         for char in each.getChildren()[0].getChildren() : # Accces the actual character's geo
@@ -17,11 +17,13 @@ def createLightRigFromShot():
         pm.mel.PointOnPolyConstraint()
         pm.select(chrName + '_pos', 'lgt_' + chrName + ':lgt_Rig_Character')
         pm.pointConstraint()
-        pm.select('cam*:Local_SRT', 'lgt_' + chrName + ':lgt_Light2D')
+        pm.select('cam*:cam_shot_default', 'lgt_' + chrName + ':lgt_Light2D')
         pm.aimConstraint()
         pm.select(chrName + '_pos', 'lgt_' + chrName + ':lgt_Rig_Character', grp)
         pm.parent(pm.ls(sl=True))
         pm.setAttr('lgt_' + chrName + ':lgt_offsetRotLight.rotateY', -90)
         del vertexLoc
+        pm.lightlink(light=('lgt_' + chrName + ':lgt_key'), object=(each.split(':')[0] + ':grp_geo'))
+        pm.lightlink(light=('lgt_' + chrName + ':lgt_rim'), object=(each.split(':')[0] + ':grp_geo'))
 
 createLightRigFromShot()
