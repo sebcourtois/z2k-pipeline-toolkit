@@ -1026,6 +1026,7 @@ def doSwitchContext(*args, **kwargs):
     SCENE_MANAGER.edit(True)
     doTaskChanged()
 
+@mop.withErrorDialog
 def doPublish(*args):
 
     if SCENE_MANAGER.assertScenePublishable():
