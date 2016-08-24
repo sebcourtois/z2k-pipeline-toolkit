@@ -771,7 +771,7 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
                     pm.displayInfo(sMsg)
                     sTopoDifferList.extend((sAbcMeshShape, sAstMeshShape))
 
-        sAbcOutAttr = mc.listConnections(sAbcMeshShape, s=True, d=False,
+        sAbcOutAttr = mc.listConnections(sAbcMeshShape + ".inMesh", s=True, d=False,
                                          type="AlembicNode", plugs=True)
         bAnimatedMesh = False
         if sAbcOutAttr:
