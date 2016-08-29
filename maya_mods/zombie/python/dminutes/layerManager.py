@@ -241,5 +241,78 @@ class LayerManager:
         self.layerMemberL = mc.editRenderLayerMembers(self.layerNameS,q=True)
 
 
+    def createLightPassLayer(self, rndItemL = None):
+        self.log.funcName ="'createLightPassLayer' "
+
+        self.createRndlayer(layerName="lyr_astX_lgtPass", layerContentL=None, disableLayer = False)
+        notSetItem = []
+        setItem = []
+        for each in self.layerMemberL:
+            if not "set_" in each:
+                notSetItem.append(each)
+            else:
+                setItem.append(each)
+        self.addItemToSet(rndItemL = notSetItem, setTypeI = 2 )
+
+
+    def duplicateLayer(self, layerName= "", rndItemL = None):
+        self.log.funcName ="'duplicateLayer'"
+        if not layerName:
+            layerName = self.layerNameS+"_copy"
+
+        layerContentOrigL = self.layerMemberL
+        layerSetOrigL = self.layerSetL
+        layerIdOrigI = self.layerIdI
+        layerNameOrigS = self.layerNameS
+
+
+        if not self.layerNameS:
+            txt = "'{}' cannot be duplicated".format(layerName)
+            self.log.printL("i", txt)
+            return dict(resultB=self.log.resultB, logL=self.log.logL)
+
+        if layerName in mc.ls("*",type="renderLayer"):
+            txt = "'{}' render layer already exist".format(layerName)
+            self.log.printL("e", txt)
+            return dict(resultB=self.log.resultB, logL=self.log.logL)
+
+        allPartitionL = mc.ls(type="partition")
+        partitionOrigS = ""
+        for each in allPartitionL:
+            setL =  mc.partition( each, q=True )
+            if setL == layerSetOrigL:
+                partitionOrigS = each
+                break
+
+        mc.createRenderLayer( layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True )
+
+        self.initLayer()
+        layerIdS = str(mc.getAttr(self.layerNameS+".identification"))
+
+        toDeleteL= mc.ls("par_lyrID"+layerIdS)+ mc.ls(self.layerSetL)
+        if toDeleteL:
+            mc.delete(toDeleteL)
+            print "deleting:",toDeleteL
+
+        mc.partition( name="par_lyrID"+layerIdS)
+
+        mc.duplicate(layerSetOrigL[0],  name=self.layerSetL[0], inputConnections = True)
+        mc.duplicate(layerSetOrigL[1],  name=self.layerSetL[1], inputConnections = True)
+        mc.duplicate(layerSetOrigL[2],  name=self.layerSetL[2], inputConnections = True)
+
+        for eachSet in self.layerSetL:
+            outConnectionL = mc.listConnections( eachSet+".partition", d=True, s=False, plugs=True)
+            if outConnectionL:
+                for eachConnection in outConnectionL:
+                    mc.disconnectAttr (eachSet+".partition", eachConnection)
+
+        mc.partition(self.layerSetL, add= "par_lyrID"+layerIdS)
+
+
+        txt = "'{}' duplicated to {}".format(layerNameOrigS, layerName)
+        self.log.printL("i", txt)
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
+
+
 
 
