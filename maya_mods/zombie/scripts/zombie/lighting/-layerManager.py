@@ -54,7 +54,9 @@ def buttonDuplicateLayer(*args):
 	lm.initLayer()
 	lm.duplicateLayer(layerName= "", rndItemL = None)
 
-
+def buttonCreateLightPass(*args):
+	lm.initLayer()
+	lm.createLightPass()
 
 #layer member
 def buttonAddSelectionToLayer(*args):
@@ -96,7 +98,7 @@ if mc.window( "layerManager", exists = True ):
 
 
 window = mc.window( "layerManager", title="layer manager", iconName='layer manager',toolbox = True, sizeable = False )
-mc.window(window, e = True, widthHeight=(260, 225))
+mc.window(window, e = True, widthHeight=(260, 275))
 
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 
@@ -112,7 +114,9 @@ mc.setParent( '..' )
 mc.flowLayout()
 mc.button( label='duplicate layer', recomputeSize = False, width = 250, c= buttonDuplicateLayer )
 mc.setParent( '..' )
-
+mc.flowLayout()
+mc.button( label='create light pass', recomputeSize = False, width = 250, c= buttonCreateLightPass )
+mc.setParent( '..' )
 #layer member
 mc.separator(style = 'in', h = 5  )
 mc.text(label="Layer Members", align='center')
