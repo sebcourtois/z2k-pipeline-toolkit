@@ -36,7 +36,6 @@ def buttonCreateAutoLayering(*args):
 	lm.initLayerDisplay()
 
 def buttonCreateCustomLayer(*args):
-	log = miscUtils.LogBuilder(gui=True, funcName ="buttonCreateCustomLayer")
 
 	result = mc.promptDialog(title='Create Custom Render layer', message='Enter Layer Name: lyr_...._.........', text="lyr_cust_", button=['OK', 'Cancel'], defaultButton='OK', cancelButton='Cancel', dismissString='Cancel')
 
@@ -49,6 +48,11 @@ def buttonCreateCustomLayer(*args):
 	else:
 		return
 	lm.createRndlayer(layerName=layerNameS, layerContentL=lm.astRndObjL, disableLayer = False)
+
+
+def buttonDuplicateLayer(*args):
+	lm.initLayer()
+	lm.duplicateLayer(layerName= "", rndItemL = None)
 
 
 
@@ -104,6 +108,9 @@ mc.button( label='automatic layering', recomputeSize = False, width = 250, c= bu
 mc.setParent( '..' )
 mc.flowLayout()
 mc.button( label='create custom layer', recomputeSize = False, width = 250, c= buttonCreateCustomLayer )
+mc.setParent( '..' )
+mc.flowLayout()
+mc.button( label='duplicate layer', recomputeSize = False, width = 250, c= buttonDuplicateLayer )
 mc.setParent( '..' )
 
 #layer member
