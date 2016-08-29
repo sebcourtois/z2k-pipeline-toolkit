@@ -170,7 +170,7 @@ class camImpExp(object):
 
                 else:
                     errored=True
-                    errmsg = "camera_grp not found!"
+                    errmsg = "'grp_camera' not found !"
                     print errmsg
                 # check exported content
                 # pas forcement necessaire
@@ -181,17 +181,15 @@ class camImpExp(object):
                 print errmsg
                 pathToReturn = None
 
-            if GUI and not errmsg in ["UNKNWON"]:
-                cmds.confirmDialog( title='Error', message='Export impossible mon pote!\n{0}'.format(errmsg), button=['ok'], 
+            if GUI and (errmsg not in ["UNKNWON"]):
+                cmds.confirmDialog(title='Error', message='Export impossible mon pote!\n\n{}'.format(errmsg), button=['ok'],
                                     defaultButton='ok', cancelButton='ok', dismissString='ok',icon="warning" )
 
             cmds.undoInfo( closeChunk=True)
         except:
             cmds.undoInfo( closeChunk=True)
 
-
         return pathToReturn
-
 
     def importCam(self,  sceneName="",replaceCam=True, GUI=False, MergeRef=True,refDigit=3, *args, **kwargs):
         """ Description: import la camera de sceneName dans la scene courante
