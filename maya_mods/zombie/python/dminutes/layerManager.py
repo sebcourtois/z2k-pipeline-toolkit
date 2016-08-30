@@ -335,7 +335,6 @@ class LayerManager:
         layerNameS = "lyr_"+self.layerNameS.split("_")[1]+"_lgtPass"
         layerNameOrigS = self.layerNameS
         self.duplicateLayer(layerName= layerNameS)
-        #self.initLayer()
 
         if not self.layerNameS:
             txt = "'{}' cannot be duplicated".format(layerName)
@@ -352,13 +351,12 @@ class LayerManager:
         dmnToonL = []
         for eachGeo in setVisibleMemberL:
             shdGroupL = mc.ls(mc.listHistory(eachGeo,future = True),type="shadingEngine")
-            if "EyePupille" in eachGeo or "eye" in eachGeo or "outline" in eachGeo:
+            if "eye" in eachGeo or "outline" in eachGeo:
                 pass
             else:
                 if mc.getAttr(eachGeo+".aiSelfShadows")!=1:
                     mc.editRenderLayerAdjustment(eachGeo+".aiSelfShadows")
                     mc.setAttr(eachGeo+".selfShadows",1)
-
                 if mc.getAttr(eachGeo+".castsShadows")!=1:
                     mc.editRenderLayerAdjustment(eachGeo+".castsShadows")
                     mc.setAttr(eachGeo+".castsShadows",1)
@@ -371,7 +369,6 @@ class LayerManager:
                     else:
                         txt = "'{}' is not the right type, should be a 'dmnToon'".format(aiShaderL[0])
                         self.log.printL("e", txt)
-
 
         toDeleteL= mc.ls(self.visDmnToonS)
         if toDeleteL:
@@ -389,19 +386,15 @@ class LayerManager:
                         mc.editRenderLayerAdjustment(each+".selfShadows")
                         mc.disconnectAttr (eachConnection,each+".selfShadows")
                     mc.setAttr(each+".selfShadows",1)
-
                 if mc.getAttr(each+".selfShadows")!=1:
                     mc.editRenderLayerAdjustment(each+".selfShadows")
                     mc.setAttr(each+".selfShadows",1)
-
 
         mc.addAttr(self.visDmnToonS, shortName='output', longName='output', attributeType="enum", enumName= "composite:final_layout:toon:rim_toon:contour:shadow_mask:incidence:lambert:occlusion:diffuse:ambient:specular:reflection:refraction:lightpass:diffuse_bounces:glossy_bounce")
         mc.setAttr(self.visDmnToonS+".output", 14)
         mc.setAttr(self.visDmnToonS+".aiOverride", 0)
         mc.editRenderLayerAdjustment(self.visDmnToonS+".aiOverride")
         mc.setAttr(self.visDmnToonS+".aiOverride", 1)            
-
-
 
         txt = "Created '{}' light pass from '{}'".format(layerNameS, layerNameOrigS)
         self.log.printL("i", txt)
