@@ -248,18 +248,7 @@ class LayerManager:
         self.layerMemberL = mc.editRenderLayerMembers(self.layerNameS,q=True, fullNames =True)
 
 
-    def createLightPassLayer(self, rndItemL = None):
-        self.log.funcName ="'createLightPassLayer' "
 
-        self.createRndlayer(layerName="lyr_astX_lgtPass", layerContentL=None, disableLayer = False)
-        notSetItem = []
-        setItem = []
-        for each in self.layerMemberL:
-            if not "set_" in each:
-                notSetItem.append(each)
-            else:
-                setItem.append(each)
-        self.addItemToSet(rndItemL = notSetItem, setTypeI = 2 )
 
 
     def duplicateLayer(self, layerName= "", rndItemL = None):
@@ -307,12 +296,13 @@ class LayerManager:
         mc.duplicate(layerSetOrigL[1],  name=self.layerSetL[1], inputConnections = True)
         mc.duplicate(layerSetOrigL[2],  name=self.layerSetL[2], inputConnections = True)
 
+        print self.layerSetL
         mc.setAttr(self.layerSetL[1]+".aiOverride", 0)
         mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiOverride")
         mc.setAttr(self.layerSetL[1]+".aiOverride", 1)
 
         mc.setAttr(self.layerSetL[2]+".aiOverride", 0)
-        mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiOverride")
+        mc.editRenderLayerAdjustment(self.layerSetL[2]+".aiOverride")
         mc.setAttr(self.layerSetL[2]+".aiOverride", 1)
 
         for eachSet in self.layerSetL:
