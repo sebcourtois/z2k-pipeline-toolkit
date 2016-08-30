@@ -101,7 +101,7 @@ class LayerManager:
                             "set_lyrID"+layerIdS+"_primaryRayOff"
                             ]
         self.visDmnToonS = "set_lyrID"+layerIdS+"_visDmnToon"
-        self.layerMemberL = mc.editRenderLayerMembers(layerNameS,q=True)
+        self.layerMemberL = mc.editRenderLayerMembers(layerNameS,q=True, fullNames =True)
 
         txt = "layer '{}' initialised".format(layerNameS)
         self.log.printL("i", txt)
@@ -245,7 +245,7 @@ class LayerManager:
             else:
                 self.log.printL("i", "nothing to remove from layer'{}'".format(self.layerNameS))
 
-        self.layerMemberL = mc.editRenderLayerMembers(self.layerNameS,q=True)
+        self.layerMemberL = mc.editRenderLayerMembers(self.layerNameS,q=True, fullNames =True)
 
 
     def createLightPassLayer(self, rndItemL = None):
