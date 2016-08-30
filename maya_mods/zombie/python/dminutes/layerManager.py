@@ -352,7 +352,7 @@ class LayerManager:
         dmnToonL = []
         for eachGeo in setVisibleMemberL:
             shdGroupL = mc.ls(mc.listHistory(eachGeo,future = True),type="shadingEngine")
-            if "EyePupille" in eachGeo or "_Eye_" in eachGeo or "outline" in eachGeo:
+            if "EyePupille" in eachGeo or "eye" in eachGeo or "outline" in eachGeo:
                 pass
             else:
                 if mc.getAttr(eachGeo+".aiSelfShadows")!=1:
