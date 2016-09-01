@@ -281,8 +281,9 @@ class LayerManager:
                 break
 
         mc.createRenderLayer( layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True )
-
         self.initLayer()
+
+
         layerIdS = str(mc.getAttr(self.layerNameS+".identification"))
 
         toDeleteL= mc.ls("par_lyrID"+layerIdS)+ mc.ls(self.layerSetL)
@@ -291,12 +292,17 @@ class LayerManager:
             print "deleting:",toDeleteL
 
         mc.partition( name="par_lyrID"+layerIdS)
-
         mc.duplicate(layerSetOrigL[0],  name=self.layerSetL[0], inputConnections = True)
         mc.duplicate(layerSetOrigL[1],  name=self.layerSetL[1], inputConnections = True)
         mc.duplicate(layerSetOrigL[2],  name=self.layerSetL[2], inputConnections = True)
 
-        print self.layerSetL
+        print "switch to ", layerNameOrigS
+        mc.editRenderLayerGlobals( currentRenderLayer=layerNameOrigS )
+        mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiOverride", remove=True)
+        mc.editRenderLayerAdjustment(self.layerSetL[2]+".aiOverride", remove=True)
+        mc.editRenderLayerGlobals( currentRenderLayer=layerName )
+        print "switch to ", layerName
+
         mc.setAttr(self.layerSetL[1]+".aiOverride", 0)
         mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiOverride")
         mc.setAttr(self.layerSetL[1]+".aiOverride", 1)
