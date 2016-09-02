@@ -227,6 +227,6 @@ def createNukeBatch(gui=True):
     finalCommand = r'%nuke% -x %nkscript% %argva% %argv0%'
     renderBatch_obj.write(finalCommand+"\n")
     renderBatch_obj.write("\n")
-    renderBatch_obj.write("pause\n")
+    #renderBatch_obj.write("pause\n")
     renderBatch_obj.close()
     print "#### Info: nukeBatch.bat created: {}".format(os.path.normpath(renderBatch_trg))

@@ -32,6 +32,7 @@ class LayerManager:
         self.layerSetL = []     # '_visible', '_blackMatteOn'... set names for the current layer
         self.layerMemberL = [] #  layer members list
         self.layerNameS = ""
+        self.visDmnToonS = [] # set name gathering the dmnToon of all the visible object in the layer
 
         self.initRndItem()
         self.scriptJobManager(delete = False, create = True)
@@ -46,7 +47,7 @@ class LayerManager:
     def initRndItem(self, rndItemL = None):
         self.log.funcName ="'initRndItem' "
 
-        self.allRndObjL = mc.ls("geo_*",type="transform")+mc.ls("*:geo_*",type="transform")+mc.ls("*:*:geo_*",type="transform")
+        self.allRndObjL = mc.ls("geo_*",type="transform")+mc.ls("*:geo_*",type="transform")+mc.ls("*:*:geo_*",type="transform")+mc.ls("vol_*",type="transform")+mc.ls("*:vol_*",type="transform")+mc.ls("*:*:vol_*",type="transform")
         for each in self.allRndObjL:
             if "env_" in each:
                 self.envRndObjL.append(each)
@@ -97,8 +98,10 @@ class LayerManager:
         layerIdS = str(layerIdI)
         self.layerSetL =[   "set_lyrID"+layerIdS+"_visible",
                             "set_lyrID"+layerIdS+"_blackMatteOn",
-                            "set_lyrID"+layerIdS+"_primaryRayOff"]
-        self.layerMemberL = mc.editRenderLayerMembers(layerNameS,q=True)
+                            "set_lyrID"+layerIdS+"_primaryRayOff"
+                            ]
+        self.visDmnToonS = "set_lyrID"+layerIdS+"_visDmnToon"
+        self.layerMemberL = mc.editRenderLayerMembers(layerNameS,q=True, fullNames =True)
 
         txt = "layer '{}' initialised".format(layerNameS)
         self.log.printL("i", txt)
@@ -116,6 +119,8 @@ class LayerManager:
             mc.delete("primaryRayOff")
         if mc.ls("blackMatteOn",type="displayLayer"):
             mc.delete("blackMatteOn")
+        if mc.ls("template",type="displayLayer"):
+            mc.delete("template")
 
         if setBlackMatteOnL and setPrimaryRayOffL:
             setBlackMatteOnMemberL = mc.sets(setBlackMatteOnL[0], q=True)
@@ -124,6 +129,8 @@ class LayerManager:
             txt = "No 'set_lyrIDx_blackMatteOn' or 'set_lyrIDx_primaryRayOff' found, cannot update display layers"
             self.log.printL("w", txt)
             return
+        # if setTemplateMemberL:
+        #     setTemplateMemberL= mc.sets(setTemplateL[0], q=True)
 
 
         if setPrimaryRayOffMemberL:
@@ -238,7 +245,156 @@ class LayerManager:
             else:
                 self.log.printL("i", "nothing to remove from layer'{}'".format(self.layerNameS))
 
-        self.layerMemberL = mc.editRenderLayerMembers(self.layerNameS,q=True)
+        self.layerMemberL = mc.editRenderLayerMembers(self.layerNameS,q=True, fullNames =True)
+
+
+
+
+
+    def duplicateLayer(self, layerName= "", rndItemL = None):
+        self.log.funcName ="'duplicateLayer'"
+        if not layerName:
+            layerName = self.layerNameS+"_copy"
+
+        layerContentOrigL = self.layerMemberL
+        layerSetOrigL = self.layerSetL
+        layerIdOrigI = self.layerIdI
+        layerNameOrigS = self.layerNameS
+
+
+        if not self.layerNameS:
+            txt = "'{}' cannot be duplicated".format(layerName)
+            self.log.printL("i", txt)
+            return dict(resultB=self.log.resultB, logL=self.log.logL)
+
+        if layerName in mc.ls("*",type="renderLayer"):
+            txt = "'{}' render layer already exist".format(layerName)
+            self.log.printL("e", txt)
+            return dict(resultB=self.log.resultB, logL=self.log.logL)
+
+        allPartitionL = mc.ls(type="partition")
+        partitionOrigS = ""
+        for each in allPartitionL:
+            setL =  mc.partition( each, q=True )
+            if setL == layerSetOrigL:
+                partitionOrigS = each
+                break
+
+        mc.createRenderLayer( layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True )
+        self.initLayer()
+
+
+        layerIdS = str(mc.getAttr(self.layerNameS+".identification"))
+
+        toDeleteL= mc.ls("par_lyrID"+layerIdS)+ mc.ls(self.layerSetL)
+        if toDeleteL:
+            mc.delete(toDeleteL)
+            print "deleting:",toDeleteL
+
+        mc.partition( name="par_lyrID"+layerIdS)
+        mc.duplicate(layerSetOrigL[0],  name=self.layerSetL[0], inputConnections = True)
+        mc.duplicate(layerSetOrigL[1],  name=self.layerSetL[1], inputConnections = True)
+        mc.duplicate(layerSetOrigL[2],  name=self.layerSetL[2], inputConnections = True)
+
+        print "switch to ", layerNameOrigS
+        mc.editRenderLayerGlobals( currentRenderLayer=layerNameOrigS )
+        mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiOverride", remove=True)
+        mc.editRenderLayerAdjustment(self.layerSetL[2]+".aiOverride", remove=True)
+        mc.editRenderLayerGlobals( currentRenderLayer=layerName )
+        print "switch to ", layerName
+
+        mc.setAttr(self.layerSetL[1]+".aiOverride", 0)
+        mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiOverride")
+        mc.setAttr(self.layerSetL[1]+".aiOverride", 1)
+
+        mc.setAttr(self.layerSetL[2]+".aiOverride", 0)
+        mc.editRenderLayerAdjustment(self.layerSetL[2]+".aiOverride")
+        mc.setAttr(self.layerSetL[2]+".aiOverride", 1)
+
+        for eachSet in self.layerSetL:
+            outConnectionL = mc.listConnections( eachSet+".partition", d=True, s=False, plugs=True)
+            if outConnectionL:
+                for eachConnection in outConnectionL:
+                    mc.disconnectAttr (eachSet+".partition", eachConnection)
+
+        mc.partition(self.layerSetL, add= "par_lyrID"+layerIdS)
+
+
+        txt = "'{}' duplicated to {}".format(layerNameOrigS, layerName)
+        self.log.printL("i", txt)
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
+
+
+    def createLightPass(self):
+        self.log.funcName ="'createLightPass' "
+
+        layerNameS = "lyr_"+self.layerNameS.split("_")[1]+"_lgtPass"
+        layerNameOrigS = self.layerNameS
+        self.duplicateLayer(layerName= layerNameS)
+
+        if not self.layerNameS:
+            txt = "'{}' cannot be duplicated".format(layerName)
+            self.log.printL("i", txt)
+            return dict(resultB=self.log.resultB, logL=self.log.logL)
+
+        setVisibleL = mc.ls(self.layerSetL[0], type = "objectSet")
+        if setVisibleL:
+            setVisibleMemberL= mc.sets(setVisibleL[0], q=True)
+        else:
+            txt = "no 'set_lyrX_visible' set found for layer '{}'".format(self.layerNameS)
+            self.log.printL("e", txt)
+
+        dmnToonL = []
+        for eachGeo in setVisibleMemberL:
+            shdGroupL = mc.ls(mc.listHistory(eachGeo,future = True),type="shadingEngine")
+            if "eye" in eachGeo or "outline" in eachGeo:
+                pass
+            else:
+                if mc.getAttr(eachGeo+".aiSelfShadows")!=1:
+                    mc.editRenderLayerAdjustment(eachGeo+".aiSelfShadows")
+                    mc.setAttr(eachGeo+".selfShadows",1)
+                if mc.getAttr(eachGeo+".castsShadows")!=1:
+                    mc.editRenderLayerAdjustment(eachGeo+".castsShadows")
+                    mc.setAttr(eachGeo+".castsShadows",1)
+
+            for eachSG in shdGroupL:
+                aiShaderL = mc.listConnections(eachSG+'.aiSurfaceShader',connections = False,  source =True, destination = False)
+                if aiShaderL:
+                    if mc.nodeType(aiShaderL[0]) == "dmnToon":
+                        dmnToonL.append(aiShaderL[0])
+                    else:
+                        txt = "'{}' is not the right type, should be a 'dmnToon'".format(aiShaderL[0])
+                        self.log.printL("e", txt)
+
+        toDeleteL= mc.ls(self.visDmnToonS)
+        if toDeleteL:
+            mc.delete(toDeleteL)
+            print "deleting:",toDeleteL
+
+        mc.sets(name=self.visDmnToonS, empty=True)
+
+        if dmnToonL:
+            mc.sets(dmnToonL, forceElement=self.visDmnToonS)
+            for each in dmnToonL:
+                connectL = mc.listConnections(each+".selfShadows",plugs = True, source =True, destination = False) 
+                if connectL:               
+                    for eachConnection in connectL:
+                        mc.editRenderLayerAdjustment(each+".selfShadows")
+                        mc.disconnectAttr (eachConnection,each+".selfShadows")
+                    mc.setAttr(each+".selfShadows",1)
+                if mc.getAttr(each+".selfShadows")!=1:
+                    mc.editRenderLayerAdjustment(each+".selfShadows")
+                    mc.setAttr(each+".selfShadows",1)
+
+        mc.addAttr(self.visDmnToonS, shortName='output', longName='output', attributeType="enum", enumName= "composite:final_layout:toon:rim_toon:contour:shadow_mask:incidence:lambert:occlusion:diffuse:ambient:specular:reflection:refraction:lightpass:diffuse_bounces:glossy_bounce")
+        mc.setAttr(self.visDmnToonS+".output", 14)
+        mc.setAttr(self.visDmnToonS+".aiOverride", 0)
+        mc.editRenderLayerAdjustment(self.visDmnToonS+".aiOverride")
+        mc.setAttr(self.visDmnToonS+".aiOverride", 1)            
+
+        txt = "Created '{}' light pass from '{}'".format(layerNameS, layerNameOrigS)
+        self.log.printL("i", txt)
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
 
