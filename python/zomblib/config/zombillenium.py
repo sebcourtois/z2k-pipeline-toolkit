@@ -632,12 +632,12 @@ class vehicle3d(prop3d):
 
     dependency_types = asset_lib.dependency_types
 
-class fx_previz(object):
+class crowd_previz(object):
 
     entity_class = "davos.core.damtypes.DamAsset"
 
-    prefix = "fxp"
-    sg_type = "FX"
+    prefix = "cwp"
+    sg_type = "Crowd Previz"
     aliases = (prefix, sg_type,)
     assetType = prefix
     template_dir = "asset_fxpCwp"
@@ -652,25 +652,31 @@ class fx_previz(object):
         "ref -> ref_dir":
             {
             "{name}_previzRef.mb -> previz_ref":None,
-            },
-        "review -> review_dir":
-            {
-            #"{name}_previz.mov -> previz_review":None,
+            "{name}_animRef.mb -> anim_ref":None,
+            "{name}_renderRef.mb -> render_ref":None,
             },
         "texture -> texture_dir":{},
+
+        "{name}_anim.ma -> anim_scene":None,
         "{name}_previz.ma -> previz_scene":None,
+        "{name}_render.ma -> render_scene":None,
         },
     }
 
     resource_settings = asset_lib.resource_settings
+    resource_settings.update({
+    "texture_dir":{"per_ext_sync_rules":{".jpg":["all_sites"],
+                                         ".psd":["online", "dmn_paris", "dmn_angouleme"]},
+                   }, })
+
     dependency_types = asset_lib.dependency_types
 
-class crowd_previz(fx_previz):
+class fx_previz(crowd_previz):
 
     entity_class = "davos.core.damtypes.DamAsset"
 
-    prefix = "cwp"
-    sg_type = "Crowd Previz"
+    prefix = "fxp"
+    sg_type = "FX"
     aliases = (prefix, sg_type,)
     assetType = prefix
 
