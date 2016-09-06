@@ -101,7 +101,7 @@ class LayerManager:
                             "set_lyrID"+layerIdS+"_primaryRayOff"
                             ]
         self.visDmnToonS = "set_lyrID"+layerIdS+"_visDmnToon"
-        self.layerMemberL = mc.editRenderLayerMembers(layerNameS,q=True)
+        self.layerMemberL = mc.editRenderLayerMembers(layerNameS,q=True, fullNames =True)
 
         txt = "layer '{}' initialised".format(layerNameS)
         self.log.printL("i", txt)
@@ -245,21 +245,10 @@ class LayerManager:
             else:
                 self.log.printL("i", "nothing to remove from layer'{}'".format(self.layerNameS))
 
-        self.layerMemberL = mc.editRenderLayerMembers(self.layerNameS,q=True)
+        self.layerMemberL = mc.editRenderLayerMembers(self.layerNameS,q=True, fullNames =True)
 
 
-    def createLightPassLayer(self, rndItemL = None):
-        self.log.funcName ="'createLightPassLayer' "
 
-        self.createRndlayer(layerName="lyr_astX_lgtPass", layerContentL=None, disableLayer = False)
-        notSetItem = []
-        setItem = []
-        for each in self.layerMemberL:
-            if not "set_" in each:
-                notSetItem.append(each)
-            else:
-                setItem.append(each)
-        self.addItemToSet(rndItemL = notSetItem, setTypeI = 2 )
 
 
     def duplicateLayer(self, layerName= "", rndItemL = None):
@@ -292,8 +281,9 @@ class LayerManager:
                 break
 
         mc.createRenderLayer( layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True )
-
         self.initLayer()
+
+
         layerIdS = str(mc.getAttr(self.layerNameS+".identification"))
 
         toDeleteL= mc.ls("par_lyrID"+layerIdS)+ mc.ls(self.layerSetL)
@@ -302,17 +292,23 @@ class LayerManager:
             print "deleting:",toDeleteL
 
         mc.partition( name="par_lyrID"+layerIdS)
-
         mc.duplicate(layerSetOrigL[0],  name=self.layerSetL[0], inputConnections = True)
         mc.duplicate(layerSetOrigL[1],  name=self.layerSetL[1], inputConnections = True)
         mc.duplicate(layerSetOrigL[2],  name=self.layerSetL[2], inputConnections = True)
+
+        print "switch to ", layerNameOrigS
+        mc.editRenderLayerGlobals( currentRenderLayer=layerNameOrigS )
+        mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiOverride", remove=True)
+        mc.editRenderLayerAdjustment(self.layerSetL[2]+".aiOverride", remove=True)
+        mc.editRenderLayerGlobals( currentRenderLayer=layerName )
+        print "switch to ", layerName
 
         mc.setAttr(self.layerSetL[1]+".aiOverride", 0)
         mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiOverride")
         mc.setAttr(self.layerSetL[1]+".aiOverride", 1)
 
         mc.setAttr(self.layerSetL[2]+".aiOverride", 0)
-        mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiOverride")
+        mc.editRenderLayerAdjustment(self.layerSetL[2]+".aiOverride")
         mc.setAttr(self.layerSetL[2]+".aiOverride", 1)
 
         for eachSet in self.layerSetL:
@@ -335,7 +331,6 @@ class LayerManager:
         layerNameS = "lyr_"+self.layerNameS.split("_")[1]+"_lgtPass"
         layerNameOrigS = self.layerNameS
         self.duplicateLayer(layerName= layerNameS)
-        #self.initLayer()
 
         if not self.layerNameS:
             txt = "'{}' cannot be duplicated".format(layerName)
@@ -352,13 +347,12 @@ class LayerManager:
         dmnToonL = []
         for eachGeo in setVisibleMemberL:
             shdGroupL = mc.ls(mc.listHistory(eachGeo,future = True),type="shadingEngine")
-            if "EyePupille" in eachGeo or "_Eye_" in eachGeo or "outline" in eachGeo:
+            if "eye" in eachGeo or "outline" in eachGeo:
                 pass
             else:
                 if mc.getAttr(eachGeo+".aiSelfShadows")!=1:
                     mc.editRenderLayerAdjustment(eachGeo+".aiSelfShadows")
                     mc.setAttr(eachGeo+".selfShadows",1)
-
                 if mc.getAttr(eachGeo+".castsShadows")!=1:
                     mc.editRenderLayerAdjustment(eachGeo+".castsShadows")
                     mc.setAttr(eachGeo+".castsShadows",1)
@@ -371,7 +365,6 @@ class LayerManager:
                     else:
                         txt = "'{}' is not the right type, should be a 'dmnToon'".format(aiShaderL[0])
                         self.log.printL("e", txt)
-
 
         toDeleteL= mc.ls(self.visDmnToonS)
         if toDeleteL:
@@ -389,19 +382,15 @@ class LayerManager:
                         mc.editRenderLayerAdjustment(each+".selfShadows")
                         mc.disconnectAttr (eachConnection,each+".selfShadows")
                     mc.setAttr(each+".selfShadows",1)
-
                 if mc.getAttr(each+".selfShadows")!=1:
                     mc.editRenderLayerAdjustment(each+".selfShadows")
                     mc.setAttr(each+".selfShadows",1)
-
 
         mc.addAttr(self.visDmnToonS, shortName='output', longName='output', attributeType="enum", enumName= "composite:final_layout:toon:rim_toon:contour:shadow_mask:incidence:lambert:occlusion:diffuse:ambient:specular:reflection:refraction:lightpass:diffuse_bounces:glossy_bounce")
         mc.setAttr(self.visDmnToonS+".output", 14)
         mc.setAttr(self.visDmnToonS+".aiOverride", 0)
         mc.editRenderLayerAdjustment(self.visDmnToonS+".aiOverride")
         mc.setAttr(self.visDmnToonS+".aiOverride", 1)            
-
-
 
         txt = "Created '{}' light pass from '{}'".format(layerNameS, layerNameOrigS)
         self.log.printL("i", txt)
