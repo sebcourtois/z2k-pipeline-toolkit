@@ -14,7 +14,9 @@ class AEalSwitchColorTemplate(alShadersTemplate):
 		self.params["inputF"] = Param("inputF", "Input 5", "Connect a color here to have it selected by the mix value", "rgb", presets=None)
 		self.params["inputG"] = Param("inputG", "Input 6", "Connect a color here to have it selected by the mix value", "rgb", presets=None)
 		self.params["inputH"] = Param("inputH", "Input 7", "Connect a color here to have it selected by the mix value", "rgb", presets=None)
-		self.params["mix"] = Param("mix", "mix", "Signal that selects from one of the 8 inputs.", "float", presets=None)
+		self.params["inputI"] = Param("inputI", "Input 8", "Connect a color here to have it selected by the mix value", "rgb", presets=None)
+		self.params["inputJ"] = Param("inputJ", "Input 9", "Connect a color here to have it selected by the mix value", "rgb", presets=None)
+		self.params["mix"] = Param("mix", "mix", "Signal that selects from one of the 10 inputs.", "float", presets=None)
 		self.params["threshold"] = Param("threshold", "threshold", "Partial threshold at which the signal transitions from one input to the next.", "float", presets=None)
 
 		self.addSwatch()
@@ -28,6 +30,8 @@ class AEalSwitchColorTemplate(alShadersTemplate):
 		self.addCustomRgb("inputF")
 		self.addCustomRgb("inputG")
 		self.addCustomRgb("inputH")
+		self.addCustomRgb("inputI")
+		self.addCustomRgb("inputJ")
 		self.addCustomFlt("mix")
 		self.addCustomFlt("threshold")
 
