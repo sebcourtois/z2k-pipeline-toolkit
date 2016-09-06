@@ -103,6 +103,7 @@ class Create_Third_FacialUI(object):
         theMax= cmds.addAttr(theObj+"."+theAttr, q=1, max=True, )
 
         theKeya = cmds.getAttr(theObj+"."+theAttr, k=True, )
+        print 'theKeya=',theKeya
         theLock = cmds.getAttr(theObj+"."+theAttr, lock=1,)
         theCbDisp = cmds.getAttr(theObj+"."+theAttr, channelBox=1,)
 
