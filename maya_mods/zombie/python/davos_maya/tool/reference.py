@@ -9,7 +9,7 @@ import maya.cmds as mc
 import pymel.core as pm
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 
-from pytd.util.fsutils import pathResolve, normCase
+from pytd.util.fsutils import pathResolve, pathEqual
 from pytd.util.sysutils import toStr
 #from pytd.gui.dialogs import confirmDialog
 
@@ -107,7 +107,7 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
             print sMsg
             continue
 
-        if normCase(sRcPath) == normCase(sRefPath):
+        if pathEqual(sRcPath, sRefPath):
             sMsg = "Reference already switched to '{}'".format(sChosenRcName)
             nonSwitchedRefList.append((oFileRef, sMsg))
             print sMsg
@@ -729,7 +729,7 @@ def conformAssetRefsToEnvPath(relatedAssetList, dryRun=False):
         sEnvPath = rcFile.envPath()
         for oFileRef in relAstData["file_refs"]:
 
-            if normCase(oFileRef.unresolvedPath()) == normCase(sEnvPath):
+            if pathEqual(oFileRef.unresolvedPath(), sEnvPath):
                 continue
 
             cmdFlags = dict()

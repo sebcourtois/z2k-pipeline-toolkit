@@ -13,7 +13,8 @@ from pymel.util.arguments import listForNone
 import pymel.core as pm
 
 from pytd.util.qtutils import setWaitCursor
-from pytd.util.fsutils import pathJoin, jsonWrite, jsonRead, pathRelativeTo
+from pytd.util.fsutils import jsonWrite, jsonRead
+from pytd.util.fsutils import pathJoin, pathRelativeTo, pathEqual
 from pytd.util.sysutils import grouper, argToSet
 
 from pytaya.util import apiutils as myapi
@@ -1066,7 +1067,7 @@ def importCaches(sSpace, **kwargs):
         bRemRef = True
         if sAbcNmspc in oFileRefDct:
             oAbcRef = oFileRefDct[sAbcNmspc]
-            if osp.normcase((oAbcRef.path)) == osp.normcase(sAbcFilePath):
+            if pathEqual(oAbcRef.path, sAbcFilePath):
                 print "Reloading cache reference: '{}'".format(sAbcFilePath)
                 oAbcRef.load()
                 sAbcNodeList = mc.ls(sAbcNmspc + ":*")
