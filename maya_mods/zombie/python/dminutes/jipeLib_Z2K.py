@@ -2323,8 +2323,9 @@ def connectVisibility(connectOnShape=True, force=True, driverObj="Global_SRT", d
     try :
         # driverObj= "Global_SRT"
         # driverAttr= "showMesh"
-        addAttr(inObj=driverObj, theAttrName=driverAttr, dv=1,)
-        cmds.setAttr(driverObj + "." + driverAttr, 1)
+        if not cmds.objExists(driverObj+"."+ driverAttr):
+            addAttr(inObj=driverObj, theAttrName=driverAttr, dv=1,)
+            cmds.setAttr(driverObj + "." + driverAttr, 1)
         targetObjL = getSetContent(inSetL=["set_meshCache"])
 
         finalTargetObjL = []

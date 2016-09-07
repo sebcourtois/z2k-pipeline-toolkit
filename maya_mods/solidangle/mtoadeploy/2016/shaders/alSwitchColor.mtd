@@ -8,7 +8,7 @@
 	houdini.icon STRING "VOP_switch"
 	houdini.category STRING "alShaders"
 	houdini.help_url STRING "http://www.anderslanglands.com/alshaders/alSwitchColor.html"
-	houdini.order STRING "inputA inputB inputC inputD inputE inputF inputG inputH mix threshold "
+	houdini.order STRING "inputA inputB inputC inputD inputE inputF inputG inputH inputI inputJ mix threshold "
 
 	[attr inputA]
 		houdini.label STRING "Input 0"
@@ -42,9 +42,17 @@
 		houdini.label STRING "Input 7"
 		desc STRING "Connect a color here to have it selected by the mix value"
 		linkable BOOL TRUE
+	[attr inputI]
+		houdini.label STRING "Input 8"
+		desc STRING "Connect a color here to have it selected by the mix value"
+		linkable BOOL TRUE
+	[attr inputJ]
+		houdini.label STRING "Input 9"
+		desc STRING "Connect a color here to have it selected by the mix value"
+		linkable BOOL TRUE
 	[attr mix]
 		houdini.label STRING "mix"
-		desc STRING "Signal that selects from one of the 8 inputs."
+		desc STRING "Signal that selects from one of the 10 inputs."
 		linkable BOOL TRUE
 	[attr threshold]
 		houdini.label STRING "threshold"
