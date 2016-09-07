@@ -939,6 +939,7 @@ def importCaches(sSpace, **kwargs):
     bDryRun = kwargs.pop("dryRun", False)
     bRemoveRefs = kwargs.pop("removeRefs", True)
     bUseCacheObjset = kwargs.pop("useCacheSet", True)
+    bLayoutViz = kwargs.pop("layoutViz", True)
 
     sepWidth = 120
     def doneWith(oAbcRef, remove=True, container=None):
@@ -1031,7 +1032,9 @@ def importCaches(sSpace, **kwargs):
     sNmspcList = None
     if bSelected:
         sNmspcList = tuple(getNamespace(s) for s in sGeoGrpList)
-    importLayoutVisibilities(damShot, onNamespaces=sNmspcList, dryRun=bDryRun)
+
+    if bLayoutViz:
+        importLayoutVisibilities(damShot, onNamespaces=sNmspcList, dryRun=bDryRun)
 
     mc.refresh()
 
