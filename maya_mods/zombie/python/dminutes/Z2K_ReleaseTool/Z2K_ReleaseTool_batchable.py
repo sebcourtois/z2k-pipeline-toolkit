@@ -161,7 +161,7 @@ class Z2K_ReleaseTool (object):
 
 
 
-        elif  self.assetCat in ["prp","vhl","c2d","fxp",]:
+        elif  self.assetCat in ["prp","vhl","fxp",]:
             print "It' is a PROP test"
             if self.destinationAssetType in ["modeling_ref"]:
                 print tab, "No modeling test, no release for modeling_scene"
@@ -183,7 +183,7 @@ class Z2K_ReleaseTool (object):
                 Z2K_check = Z2K_check_ANIM
                 
             
-        elif  self.assetCat in ["set","env"]:
+        elif  self.assetCat in ["set","env","c2d"]:
             # a voir avec maybe master_ref
             print "It' is a SET test"
             if self.destinationAssetType in ["modeling_ref"]:
