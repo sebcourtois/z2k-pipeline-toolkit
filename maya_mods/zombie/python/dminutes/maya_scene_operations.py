@@ -716,7 +716,13 @@ def getAnimaticInfos(damShot, sSgStep):
 
     sStepName = sSgStep.lower()
 
-    sRcName = "anim_capture" if sStepName == "final layout" else "animatic_capture"
+    if sStepName == "final layout":
+        sRcName = "anim_capture"
+    elif sStepName == "fx3d":
+        sRcName = "finalLayout_movie"
+    else:
+        sRcName = "animatic_capture"
+
     sPubMoviePath = damShot.getPath("public", sRcName)
     sLocMoviePath = osp.normpath(osp.join(getWipCaptureDir(damShot),
                                           osp.basename(sPubMoviePath)))
@@ -830,12 +836,15 @@ def setupAnimatic(animaticInfos, create=True):
 
     #son "Y:\shot\...\00_data\sqXXXX_shXXXXa_sound.wav"
     sAudioEnvPath = infos["public_audio"].path
+    fOffset = 101.0
     if mc.objExists("audio"):
+        fOffset = pc.sound("audio", q=True, offset=True)
         mc.delete("audio")
+
     if infos["public_audio"].found:
         # --- Import Sound
         # - Import current shot Sound
-        sAudioNode = pc.sound(offset=101, file=sAudioEnvPath, name="audio")
+        sAudioNode = pc.sound(offset=fOffset, file=sAudioEnvPath, name="audio")
 
         # - Show Sound in Timeline
         if bWithSound:

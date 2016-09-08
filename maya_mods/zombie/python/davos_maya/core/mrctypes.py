@@ -7,7 +7,7 @@ import pymel.versions as pmv
 from davos.core.drctypes import DrcDir, DrcFile
 from pytaya.core import system as myasys
 from pytd.util.strutils import padded, underJoin
-from pytd.util.fsutils import normCase
+from pytd.util.fsutils import pathEqual
 from davos.core.utils import mkVersionSuffix
 #from pytd.util.fsutils import pathSuffixed
 
@@ -110,7 +110,7 @@ class MrcFile(DrcFile):
                 damEntity = self.getEntity()
                 if damEntity:
                     refDir = damEntity.getResource("public", "ref_dir", fail=False)
-                    if refDir and (normCase(self.parentDir().absPath()) == normCase(refDir.absPath())):
+                    if refDir and pathEqual(self.parentDir().absPath(), refDir.absPath()):
                         sNamespace = underJoin((damEntity.name, padded(1, 2)))
         else:
             p = self.absPath()

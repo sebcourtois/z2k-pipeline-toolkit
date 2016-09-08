@@ -40,7 +40,7 @@ from dminutes.shotconformation import removeRefEditByAttr
 import dminutes.jipeLib_Z2K as jpZ
 import dminutes.camImpExp as camIE
 import dminutes.infoSetExp as infoE
-from dminutes.geocaching import exportLayoutInfo, removeCacheReferences
+from dminutes import geocaching
 #from dminutes.miscUtils import deleteUnknownNodes
 
 reload(jpZ)
@@ -535,14 +535,15 @@ class SceneManager():
 
             if not pc.listNamespaces(root=None, recursive=False, internal=False):
                 mop.assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
-                mop.initShotSceneFrom(damShot, sCurScnRc, "finalLayout_scene")
+                mop.loadRenderRefsFromCaches(damShot, "local")
+                geocaching.importCaches("local", dryRun=False, removeRefs=True,
+                                        processLabel="Apply", layoutViz=False)
 
         elif sStepName == "rendering":
 
             if not pc.listNamespaces(root=None, recursive=False, internal=False):
                 mop.assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
                 mop.initShotSceneFrom(damShot, sCurScnRc, "finalLayout_scene")
-
 
         self.setPlaybackTimes()
 
@@ -963,7 +964,7 @@ class SceneManager():
         sStepCode = self.context["step"]["code"].lower()
 
         if sStepCode == "final layout":
-            removeCacheReferences()
+            geocaching.removeCacheReferences()
 
         if sStepCode not in ("previz 3d", "stereo") and self.isShotCamEdited():
             self.exportCamAnimFiles(publish=True)
@@ -995,7 +996,7 @@ class SceneManager():
         if sStepCode in ("previz 3d", "layout"):
 
             if sStepCode == "layout":
-                exportLayoutInfo(publish=True, comment=sComment)
+                geocaching.exportLayoutInfo(publish=True, comment=sComment)
 
             # here is the publish of the infoSet file with the position of the global and local srt of sets assets
             infoSetExpI = infoE.infoSetExp()
