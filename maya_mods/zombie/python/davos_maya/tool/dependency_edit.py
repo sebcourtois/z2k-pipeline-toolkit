@@ -12,7 +12,7 @@ from . import dependency_scan
 from davos_maya.tool.general import infosFromScene
 
 from pytaya.core.rendering import fileNodesFromObjects, fileNodesFromShaders
-from pytd.util.fsutils import pathResolve, normCase
+from pytd.util.fsutils import pathResolve, pathEqual
 from pytd.util.qtutils import setWaitCursor
 
 #from pytd.util.sysutils import toStr
@@ -113,7 +113,7 @@ def scanTexturesToEdit(scnInfos):
 
         sPubTexPath = texFile.absPath()
         sTexDirPath = osp.dirname(sPubTexPath)
-        if normCase(sTexDirPath) != normCase(sPubTexDirPath):
+        if not pathEqual(sTexDirPath, sPubTexDirPath):
             continue
 
         if sPubTexPath not in sSelTexPathSet:

@@ -13,7 +13,8 @@ from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 import pymel.core as pm
 
 
-from pytd.util.fsutils import pathResolve, normCase, pathJoin, pathReSub
+from pytd.util.fsutils import pathResolve, normCase, pathJoin
+from pytd.util.fsutils import pathReSub, pathEqual
 from pytd.util.fsutils import ignorePatterns, iterPaths
 from pytd.util.strutils import labelify, assertChars
 from pytd.util.qtutils import setWaitCursor
@@ -460,7 +461,7 @@ def scanTextureFiles(scnInfos, depConfDct=None):
 
                     scanLogDct.setdefault("info", []).append(('PublicFiles', sTexAbsPath))
 
-                    if normCase(sTexDirPath) == normCase(sPubDepDirPath):
+                    if pathEqual(sTexDirPath, sPubDepDirPath):
                         privFile = texFile.getPrivateFile(weak=True)
                         sPrivFileList.append(normCase(privFile.absPath()))
 
@@ -502,7 +503,7 @@ def scanTextureFiles(scnInfos, depConfDct=None):
                 sMsg = ("Only accepts: '{}'".format("' '".join(sAllowedTexTypes)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadTextureFormat', sMsg))
 
-            if (not bPublicFile) and (normCase(sTexDirPath) != normCase(sSrcDepDirPath)):
+            if (not bPublicFile) and (not pathEqual(sTexDirPath, sSrcDepDirPath)):
                 sMsg = ("Not in '{}'".format(osp.normpath(sSrcDepDirPath)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
 
@@ -563,7 +564,7 @@ def scanTextureFiles(scnInfos, depConfDct=None):
 
                         budScanLogDct.setdefault("info", []).append(('PublicFiles', sFellowPath))
 
-                        if normCase(osp.dirname(sFellowPath)) == normCase(sPubDepDirPath):
+                        if pathEqual(osp.dirname(sFellowPath), sPubDepDirPath):
                             privBudFile = budFile.getPrivateFile(weak=True)
                             sPrivFileList.append(normCase(privBudFile.absPath()))
 
@@ -755,7 +756,7 @@ def scanAlembicFiles(scnInfos, depConfDct=None):
                 sDepPubPath = pathJoin(sPubDepDirPath, sDepFilename)
                 resultDct["public_file"] = pubLib._weakFile(sDepPubPath, dbNode=False)
 
-            if (not bPublicFile) and (normCase(sDepDirPath) != normCase(sSrcDepDirPath)):
+            if (not bPublicFile) and (not pathEqual(sDepDirPath, sSrcDepDirPath)):
                 sMsg = ("Not in '{}'".format(osp.normpath(sSrcDepDirPath)))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
 
