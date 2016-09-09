@@ -38,6 +38,7 @@ if inDevMode():
 
 def doDependencyScan(*args):
     from davos_maya.tool import dependency_scan
+    reload(dependency_scan)
     dependency_scan.launch()
 
 def doEditTextures(*args):
