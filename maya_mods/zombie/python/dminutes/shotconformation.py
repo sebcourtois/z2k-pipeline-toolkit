@@ -3,6 +3,7 @@ import pymel.core as pm
 
 import os
 import re
+from datetime import datetime
 
 from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
 from davos.core.damproject import DamProject
@@ -145,4 +146,78 @@ def releaseShotAsset(gui = True ,toReleaseL = [], dryRun=True, astPrefix = "fx3"
             releaseDir.publishFile(sPrivateFilePath, autoLock=True, autoUnlock=True, comment=sComment, dryRun=dryRun, saveChecksum=False)
 
     return dict(resultB=log.resultB, logL=log.logL)
+
+
+
+
+def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3"):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="referenceShotAsset")
+
+    #proj = DamProject("zombillenium")
+    #damShot = proj.getShot("sq0300_sh0120a")
+    lPublicReleaseFilePath = []
+
+    scnInfos = infosFromScene()
+    damShot = scnInfos.get("dam_entity")
+    privScnFile = scnInfos["rc_entry"]
+    shotLib = damShot.project.getLibrary("public","shot_lib")
+
+    sPublicReleaseDir = miscUtils.pathJoin(os.path.dirname(damShot.getPath("public", "fx3d_scene")),"release")
+
+
+    resultD = getRefFileList(name=astPrefix+"_*")
+    sceneRefFileL=resultD["refFilePathL"]
+
+    # dir scan
+    if not os.path.isdir(sPublicReleaseDir):
+        txt = "Nothing to reference,'{}' doesn't exist".format(sPublicReleaseDir)
+        log.printL("e", txt)
+        return
+    else:
+        dirItemL = os.listdir(sPublicReleaseDir)
+        if dirItemL:
+            for each in dirItemL:
+                if os.path.isfile(miscUtils.pathJoin(sPublicReleaseDir,each)) and re.match('^[a-zA-Z0-9]{3}_[a-zA-Z0-9]{1,16}_[a-zA-Z0-9]{1,16}.mb$', each) and each.split("_")[0]==astPrefix :
+                    sPublicReleaseFilePath = miscUtils.pathJoin(sPublicReleaseDir,each)
+                    if sPublicReleaseFilePath not in sceneRefFileL:
+                        statInfo = os.stat(sPublicReleaseFilePath)
+                        statDate = statInfo.st_mtime
+                        statSize = statInfo.st_size
+                        if statSize > 75000:
+                            dateS = datetime.fromtimestamp(int(statDate)).strftime(u"%Y-%m-%d %H:%M")
+                            lPublicReleaseFilePath.append(sPublicReleaseFilePath)
+                            txt = "Referencing: '{}'  publish date: {}".format(sPublicReleaseFilePath, dateS)
+                            log.printL("i", txt)
+                            if not dryRun:
+                                mc.file( sPublicReleaseFilePath, type= 'mayaBinary', ignoreVersion=True, namespace=each.split(".")[0]+"_1", preserveReferences= True, reference = True )
+                            else:
+                                log.printL("w", "dry run mode")
+                        else:
+                            txt = "skipping empty file: '{}'".format(sPublicReleaseFilePath)
+                            log.printL("w", txt)
+                    else:
+                        txt = "skipping file is already referenced: '{}'".format(sPublicReleaseFilePath)
+                        log.printL("w", txt)
+                    
+    return dict(resultB=log.resultB, logL=log.logL)
+
+
+
+def getRefFileList(name="fx3_*" ):
+    log = miscUtils.LogBuilder(gui=True, funcName ="getRefFileList")
+
+    refFilePathL =[]
+    refNodeFailedL=[]
+    refNodeL = mc.ls(name, references=True)
+
+    for each in refNodeL:
+        try:
+            refFilePathS = mc.referenceQuery(each, filename=True)
+            refFilePathL.append(refFilePathS)
+        except RuntimeError as e:
+            mc.warning(e.message.strip())
+        else:
+            refNodeFailedL.append(each)
+    
+    return dict(resultB=log.resultB, logL=log.logL, refFilePathL=refFilePathL)
 
