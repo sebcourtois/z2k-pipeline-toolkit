@@ -1570,6 +1570,64 @@ def z2k_selAll_asset_Ctr(*args, **kwargs):
     return toSel
 
 
+def selAll_asset_Ctr(setN="set_control",*args, **kwargs):
+    print "selAll_asset_Ctr()"
+    # select all controler of selected asset
+    toSel = []
+    cursel = cmds.ls(sl=1)
+    append = toSel.append
+    if len(cursel):
+        print "sel"
+        allNSL = [x.split(":",1)[0] for x in cursel if ":" in x ]
+        if len(allNSL):
+            for NS in allNSL:
+                append(NS+":"+ setN)
+                
+        else:
+            toSel = [setN]
+        
+    else:
+        print "No sel"
+        if cmds.objExists("*:"+setN):
+            toSel = ["*:"+setN]
+        if cmds.objExists(setN):
+            append(setN)
+    
+    # finaly select
+    cmds.select(toSel)
+        
+
+    return toSel
+
+def selAll_asset_Mesh(setN="set_meshcache",*args, **kwargs):
+    print "selAll_asset_Mesh()"
+    # select all controler of selected asset
+    toSel = []
+    cursel = cmds.ls(sl=1)
+    append = toSel.append
+    if len(cursel):
+        print "sel"
+        allNSL = [x.split(":",1)[0] for x in cursel if ":" in x ]
+        if len(allNSL):
+            for NS in allNSL:
+                append(NS+":"+ setN)
+                
+        else:
+            toSel = [setN]
+        
+    else:
+        print "No sel"
+        if cmds.objExists("*:"+setN):
+            toSel = ["*:"+setN]
+        if cmds.objExists(setN):
+            append(setN)
+    
+    # finaly select
+    cmds.select(toSel)
+        
+
+    return toSel
+    
 ##### SPINE TWEAK #####
 def spineTweak():
     '''
@@ -4613,8 +4671,8 @@ def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
             print "MATCH FK ON IK"
             toReselectCtr = inFkControl
             # remach ik sur FK et reset FK
-            # matchByXformMatrix([inFkControl, inIKControl,])
-            # resetCTR([inFkControl])
+            matchByXformMatrix([inFkControl, inIKControl,])
+            resetCTR([inFkControl])
 
         elif baseMode >0.5:
             print "FK mode"
