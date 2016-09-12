@@ -4671,8 +4671,8 @@ def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
             print "MATCH FK ON IK"
             toReselectCtr = inFkControl
             # remach ik sur FK et reset FK
-            matchByXformMatrix([inFkControl, inIKControl,])
-            resetCTR([inFkControl])
+            # matchByXformMatrix([inFkControl, inIKControl,])
+            # resetCTR([inFkControl])
 
         elif baseMode >0.5:
             print "FK mode"
@@ -4681,9 +4681,9 @@ def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
 
 
             # wiiiiiippp store pose - find deltaMat - re apply pose
-        #     oldIKMat = cmds.xform(inIKControl, matrix=True, q=True, worldSpace=False)
-        #     oldFKMat = cmds.xform(inFkControl, matrix=True, q=True, worldSpace=False)
-        #     resetSRT(inObjL=[inIKControl,inFkControl])
+            oldIKMat = cmds.xform(inIKControl, matrix=True, q=True, worldSpace=False)
+            oldFKMat = cmds.xform(inFkControl, matrix=True, q=True, worldSpace=False)
+            # resetSRT(inObjL=[inIKControl,inFkControl])
 
         #     refIKinvMat = cmds.getAttr(inIKControl + ".worldInverseMatrix")
         #     refFKMat = cmds.xform(inFkControl, matrix=True, q=True, worldSpace=True)
@@ -4697,7 +4697,7 @@ def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
         #     cmds.xform(inFkControl, matrix=oldFKMat)
 
         #     # remach ik sur FK et reset FK
-        #     matchByXformMatrix([inFkControl, inIKControl,])
+            matchByXformMatrix([inFkControl, inIKControl,])
         #     newIKMat = cmds.xform(inIKControl, matrix=True, q=True, worldSpace=True)
         #     finalFK_mat = []
         #     for i,j in zip(newIKMat,deltaFKIKMat):
@@ -4706,13 +4706,13 @@ def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
 
         #     cmds.xform(inFkControl, matrix=finalFK_mat)
         #     # handle leur puting de 180 sur Y entre FK et IK d'un cote du rig et pas de l autre
-        #     if "Right_" in curobj:
-        #         cmds.rotate(-180,inIKControl , rotateY=True,os=1,relative=1)
+            if "Right_" in curobj:
+                cmds.rotate(-180,inIKControl , rotateY=True,os=1,relative=1)
 
-        #     resetCTR([inFkControl])
+            resetCTR([inFkControl])
 
         # # set upV coord
-        # cmds.xform(inUpV, m=McoorOld, worldSpace=True)
+        cmds.xform(inUpV, m=McoorOld, worldSpace=True)
 
 
         # select the good hand control
