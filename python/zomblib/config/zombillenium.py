@@ -152,6 +152,8 @@ class shot_lib(object):
                 "{10_compo@step} -> compo_dir":
                    {
                     "{name}_compo.mov -> compo_movie":None,
+                    "{name}_left.mov -> compo_left_movie":None,
+                    "{name}_right.mov -> compo_right_movie":None,
                     "{name}_compo.nk -> compo_comp":None,
                    },
                 },
@@ -346,17 +348,30 @@ class shot_lib(object):
     # COMPOSITING RESOURCES
     #===========================================================================
 
-    "commpo_dir":{"default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
+    "compo_dir":{"default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
 
     "compo_comp":{"create_sg_version":True,
                   "sg_tasks":("Compositing|compositing",),
                   },
+
     "compo_movie":{"create_sg_version":True,
                    "sg_uploaded_movie":True,
                    "sg_path_to_movie":True,
                    "sg_tasks":("Compositing|compositing",),
                    #"sg_status":"rev",
                    },
+    "compo_left_movie":{"create_sg_version":True,
+                        "sg_uploaded_movie":True,
+                        "sg_path_to_movie":True,
+                        "sg_tasks":("Compositing|compo_stereo",),
+                        #"sg_status":"rev",
+                        },
+    "compo_right_movie":{"create_sg_version":True,
+                         "sg_uploaded_movie":True,
+                         "sg_path_to_movie":True,
+                         "sg_tasks":("Compositing|compo_stereo",),
+                        #"sg_status":"rev",
+                        },
     }
 
 class output_lib(object):
