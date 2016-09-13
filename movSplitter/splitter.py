@@ -24,7 +24,7 @@ SHOT_TEMPLATE = "{sequence}\\{sequence}_{shot}\\00_data"
 def getShotFolder(in_sSequence, in_sShot):
     return SHOT_FOLDER + SHOT_TEMPLATE.format(sequence=in_sSequence, shot=in_sShot)
 
-def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter, in_sSeqOverrideName=None,
+def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideName=None,
                 doSplit=True, exportCsv=True, in_sShotSuffix="", in_bExportInShotFolders=True):
 
     bDryRun = (not doSplit)
