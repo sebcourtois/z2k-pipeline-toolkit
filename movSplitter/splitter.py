@@ -30,9 +30,10 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter, in_sSeqOverrideName=N
     bDryRun = (not doSplit)
 
     if not in_sSeqFilter:
-        raise ValueError("No sequences given.")
-
-    sSeqList = in_sSeqFilter.lower().split(",")
+        sInput = raw_input("sequences (comma separated):")
+        sSeqList = list(s.strip().lower() for s in sInput.split(','))
+    else:
+        sSeqList = in_sSeqFilter.lower().split(",")
 
     # checks if csv file is writable
     if exportCsv:
