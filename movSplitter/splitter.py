@@ -24,10 +24,15 @@ SHOT_TEMPLATE = "{sequence}\\{sequence}_{shot}\\00_data"
 def getShotFolder(in_sSequence, in_sShot):
     return SHOT_FOLDER + SHOT_TEMPLATE.format(sequence=in_sSequence, shot=in_sShot)
 
-def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideName=None,
+def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter, in_sSeqOverrideName=None,
                 doSplit=True, exportCsv=True, in_sShotSuffix="", in_bExportInShotFolders=True):
 
     bDryRun = (not doSplit)
+
+    if not in_sSeqFilter:
+        raise ValueError("No sequences given.")
+
+    sSeqList = in_sSeqFilter.lower().split(",")
 
     # checks if csv file is writable
     if exportCsv:
@@ -64,9 +69,9 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
         startseconds = convertTcToSeconds(shot["start"], in_iHoursOffset=-1)
         endseconds = convertTcToSeconds(shot["end"], in_iHoursOffset=-1, in_iFramesOffset=-1)
 
-        if in_sSeqFilter == None or shot["sequence"] == in_sSeqFilter:
+        if sequenceCode.lower() in sSeqList:
 
-            if in_sSeqFilter != None and in_sSeqOverrideName != None:
+            if in_sSeqOverrideName:
                 sequenceCode = in_sSeqOverrideName
 
             damShot = proj.getShot(sequenceCode + "_" + shotCode)
