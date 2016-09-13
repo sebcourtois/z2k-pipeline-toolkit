@@ -504,7 +504,8 @@ def scanTextureFiles(scnInfos, depConfDct=None):
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadTextureFormat', sMsg))
 
             if (not bPublicFile) and (not pathEqual(sTexDirPath, sSrcDepDirPath)):
-                sMsg = ("Not in '{}'".format(osp.normpath(sSrcDepDirPath)))
+                sMsg = "'{}'\n".format(osp.normpath(sTexAbsPath))
+                sMsg += "NOT in '{}'".format(osp.normpath(sSrcDepDirPath))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
 
             sMsg = ""
@@ -757,7 +758,8 @@ def scanAlembicFiles(scnInfos, depConfDct=None):
                 resultDct["public_file"] = pubLib._weakFile(sDepPubPath, dbNode=False)
 
             if (not bPublicFile) and (not pathEqual(sDepDirPath, sSrcDepDirPath)):
-                sMsg = ("Not in '{}'".format(osp.normpath(sSrcDepDirPath)))
+                sMsg = "'{}'\n".format(osp.normpath(sDepAbsPath))
+                sMsg += "NOT in '{}'".format(osp.normpath(sSrcDepDirPath))
                 scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
 
             _setPublishableState(resultDct)
