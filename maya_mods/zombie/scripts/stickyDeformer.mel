@@ -816,32 +816,10 @@ global proc float[] getClosestPointOnGeo( string $transform, float $position[], 
 	{
 		int $mayaVersion = getMayaVersion();
 		int $useClosest = false;
-		int $useNearest = false;
-		if( $mayaVersion < 7 )
-		{
-			if( !exists("closestPointOnMesh") )
-				error("Procedure \"getClosestPointOnGeo\": command \"closestPointOnMesh\" unknown.");
-			else
-				$useClosest = true;
-		}
-		else
-		{
-			if( !exists("nearestPointOnMesh") )
-			{
-				warning("Procedure \"getClosestPointOnGeo\": command \"nearestPointOnMesh\" unknown, trying with \"closestPointOnMesh\".");
-				if( !exists("closestPointOnMesh") )
-					error("Procedure \"getClosestPointOnGeo\": command \"closestPointOnMesh\" unknown.");
-				else
-					$useClosest = true;
-			}
-			else
-				$useNearest = true;
-		}
+		int $useNearest = true;
+
 		float $closestResults[];
-		if( $useClosest )
-			$closestResults = `closestPointOnMesh -ip $position[0] $position[1] $position[2] -q -p -nr -u -v -f $geometry`;	
-		else if( $useNearest )
-			$closestResults = `nearestPointOnMesh -ip $position[0] $position[1] $position[2] -q -p -nr -u -v -f $geometry`;
+		$closestResults = `nearestPointOnMesh -ip $position[0] $position[1] $position[2] -q -p -nr -u -v -f $geometry`;
 		
 		float $closestPoint[3];
 		$closestPoint[0] = $closestResults[0];
@@ -2162,21 +2140,7 @@ global proc int updateStickyTransform()
 	float $closestResults[9];
 	if( $geometryType == "mesh" )
 	{
-		int $mayaVersion = getMayaVersion();
-		if( $mayaVersion < 7 )
-			$closestResults = `closestPointOnMesh -ip $position[0] $position[1] $position[2] -q -p -nr -u -v -f $shape`;	
-		else
-		{
-			if(!`pluginInfo -q -loaded "nearestPointOnMesh"`)
-			{
-				if(`pluginInfo -q -loaded "closestPointOnMesh"`)
-					$closestResults = `closestPointOnMesh -ip $position[0] $position[1] $position[2] -q -p -nr -u -v -f $shape`;
-				else
-					error("Plug-in \"closestPointOnMesh\" and \"nearestPointOnMesh\" are not loaded.");
-			}
-			else
-				$closestResults = `nearestPointOnMesh -ip $position[0] $position[1] $position[2] -q -p -nr -u -v -f $shape`;
-		}
+		$closestResults = `nearestPointOnMesh -ip $position[0] $position[1] $position[2] -q -p -nr -u -v -f $shape`;
 	}
 	else if( $geometryType == "nurbsCurve" )
 		$closestResults[0] = `closestPointOnCurve -ip $position[0] $position[1] $position[2] -q -u $shape`;	
