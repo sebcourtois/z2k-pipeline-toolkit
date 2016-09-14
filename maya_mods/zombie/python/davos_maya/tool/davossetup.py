@@ -90,7 +90,11 @@ class DavosSetup(ToolSetup):
                        "AbcImport.mll",
                        "atomImportExport.mll",
                        "matrixNodes.mll" if (pmv.current() > pmv.v2013) else "decomposeMatrix.mll",
-                       "mtoa.mll",
+                       "nearestPointOnMesh.mll",# for stickyDeformer
+                       "pointOnMeshInfo.mll",# bonus tools for stickyDeformer
+                       "closestPointOnCurve.mll", # bonus tools for stickyDeformer
+                       "mtoa.mll", # arnold
+
                        )
 
         for sPlugin in sPluginList:
