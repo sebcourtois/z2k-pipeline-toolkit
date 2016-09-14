@@ -1,0 +1,51 @@
+//
+//  Alias Script File
+//  MODIFY THIS AT YOUR OWN RISK
+//
+//  Creation Date:  29 August 2006
+//	Author       :  Olivier Georges
+//
+//  Description:
+//		This script create a menu in the main Maya menu bar for the stickyDeformer command.
+//
+//
+
+global string $gMainWindow;     // defined elsewhere by Maya
+
+// --------------------------------------------------------------------------
+    
+    // Get rid of existing menu in case it exists already...
+    //
+if (`menu -q -exists stickyDeformer`)
+{
+	menu -e -dai stickyDeformer;
+}
+else
+{
+	setParent $gMainWindow ;
+	menu -l "Sticky Deformer" -p MayaWindow -to true -allowOptionBoxes true stickyDeformer ;
+}
+
+setParent 	-menu stickyDeformer ;
+menuItem 	-label "Create Sticky Deformer"
+			-allowOptionBoxes true
+			-annotation "Create a deformer sticky on the object`s surface (mesh/curve/nurbs)"
+			-command "performStickyDeformer 0"
+			-dmc "performStickyDeformer 2";
+			menuItem 	-optionBox true
+						-annotation "Sticky Deformer Option Box"
+						-l "Sticky Deformer Option Box"
+						-c "performStickyDeformer 1";
+			
+menuItem -divider true ;
+menuItem 	-label "Attach Job"
+			-annotation "Attach a callBack to the sticky transform to allow interactive manipulation of the deformer"
+			-command "attachJob";
+menuItem 	-label "Detach Job"
+			-annotation "Remove the callBack attach to the sticky transform to allow interactive manipulation of the deformer"
+			-command "detachJob";
+
+
+// --------------------------------------------------------------------------
+
+

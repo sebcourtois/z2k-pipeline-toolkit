@@ -1,0 +1,2280 @@
+//
+//  Creation Date:  29 August 2006
+//	Author       :  Olivier Georges
+//
+//  Description:
+//		This script provides all the necessary procedure for the stickyDeformer tool.
+//
+//
+
+//
+//  Procedure Name:
+//      createDGNode
+//
+//  Description:
+//		Create DG nodes.
+//
+//  Input Arguments:
+//		Node type.
+//		Node name.
+//		If the node is a dag, the optional parent
+//
+//  Return Value:
+//      The created node.
+//
+
+global proc string createDGNode( string $type, string $name, string $parent )
+{
+	string $knownTypes[] = `ls -nodeTypes`;
+	if(!isStringInArray($type, $knownTypes) )
+		warning("Procedure createDGNode : unknown type.");
+	string $currentSelection[];
+	string $cmd = "createNode "+$type+" ";
+	int $mayaVersion = getMayaVersion();
+	if( $mayaVersion < 8 ) // no -ss flag so restore selection after creation
+		$currentSelection = `ls -sl`;
+	else
+		$cmd+= "-ss ";
+	
+	if(size($name) )
+		$cmd+= "-name "+$name+" ";
+	
+	if( `objExists $parent`)
+		$cmd+= "-parent "+$parent;
+	
+	string $createdNode = eval($cmd);
+	if( size( $currentSelection ) )
+		select $currentSelection;
+	return $createdNode;
+}
+
+
+//
+//  Procedure Name:
+//      isIntermediateObject
+//
+//  Description:
+//		Check if a shape is an intermediateObject.
+//
+//  Input Arguments:
+//		A deformable shape
+//
+//  Return Value:
+//      Boolean.
+//
+
+global proc int isIntermediateObject( string $shape )
+{
+	if(!`objExists $shape`)
+		error("Procedure \"isIntermediateObject\": Invalid supplied shape.");
+	
+	if( !attributeExists("intermediateObject", $shape) )
+		return false;
+	
+	int $intermediateObject = `getAttr ($shape+".intermediateObject")`;
+	return $intermediateObject;
+}
+
+//
+//  Procedure Name:
+//      setIntermediateObject
+//
+//  Description:
+//		Tag an object as intermediateObject.
+//
+//  Input Arguments:
+//		A deformable shape.
+//
+//  Return Value:
+//      Boolean.
+//
+
+global proc int setIntermediateObject( string $shape )
+{
+	if(!`objExists $shape`)
+		error("Procedure \"isIntermediateObject\": Invalid supplied shape.");
+	
+	if( !attributeExists("intermediateObject", $shape) )
+		return false;
+	
+	return (!catch(`setAttr ($shape+".intermediateObject") true`));
+}
+
+//
+//  Procedure Name:
+//      setNoIntermediateObject
+//
+//  Description:
+//		Tag an object as no intermediateObject.
+//
+//  Input Arguments:
+//		A deformable shape.
+//
+//  Return Value:
+//      Boolean.
+//
+global proc int setNoIntermediateObject( string $shape )
+{
+	if(!`objExists $shape`)
+		error("Procedure \"isIntermediateObject\": Invalid supplied shape.");
+	
+	if( !attributeExists("intermediateObject", $shape) )
+		return false;
+	
+	return (!catch(`setAttr ($shape+".intermediateObject") false`));
+}
+
+
+//
+//  Procedure Name:
+//      buildBasisMatrix
+//
+//  Description:
+// 				build matrix to transform from world (or whatever space $origin, $u, $v, $n are expressed in)
+// 				to ($origin, $u, $v, $n) space, $u, $v, $n supposed normaized and orthogonal
+// 				To transform from the ($origin, $u, $v, $n) local space to world, you must use the inverse matrix
+//  Input Arguments:
+//		A float[3] to specify the origin space.
+//		Three float[3] u v n normalized
+//
+//  Return Value:
+//      A float[16] to represent the 4x4 transformation matrix.
+//
+global proc float[] buildBasisMatrix(float $org[], float $u[], float $v[], float $n[])
+{
+	float $bMatrix[16];
+
+	$bMatrix[0] = $u[0];		// matrix[0][0]
+	$bMatrix[1] = $v[0];		// matrix[0][0]
+	$bMatrix[2] = $n[0];		// matrix[0][2]
+	$bMatrix[3] = 0;			// matrix[0][3]
+	
+	$bMatrix[4] = $u[1];		// matrix[1][0]
+	$bMatrix[5] = $v[1];
+	$bMatrix[6] = $n[1];
+	$bMatrix[7] = 0;
+	
+	$bMatrix[8] = $u[2];		// matrix[2][0]
+	$bMatrix[9] = $v[2];
+	$bMatrix[10] = $n[2];
+	$bMatrix[11] = 0;	
+	
+	$bMatrix[12] = - dotProduct($org, $u, false);
+	$bMatrix[13] = - dotProduct($org, $v, false);
+	$bMatrix[14] = - dotProduct($org, $n, false);
+	$bMatrix[15] = 1.0;
+	
+	return $bMatrix;
+}
+
+//
+//  Procedure Name:
+//      floatVectorFloatMatrixMult
+//
+//  Description:
+// 				Vector Matrix Multiplication 
+//  Input Arguments:
+//		A float[3] to specify the vector.
+//		A float[16] to specify the matrix
+//
+//  Return Value:
+//      A float[3] the multiplied vector.
+//
+
+global proc float[] floatVectorFloatMatrixMult( float $a[], float $m[] )
+// Vector by matrix, ignoring matrix translation then
+{
+	float $b[3] = {0.0, 0.0, 0.0};
+	
+	 for ( $i = 0; $i < 3; $i++ )
+	    for ( $j = 0; $j < 3; $j++ )
+			$b[$i] += $a[$j]*$m[ ($j*4) + $i ];
+			
+	return $b;
+}
+
+//
+//  Procedure Name:
+//      floatPointFloatMatrixMult
+//
+//  Description:
+// 				Point Matrix Multiplication 
+//  Input Arguments:
+//		A float[3] to specify the vector.
+//		A float[16] to specify the matrix
+//
+//  Return Value:
+//      A float[4] the multiplied point.
+//
+global proc float[] floatPointFloatMatrixMult( float $a[], float $m[] )
+// Maya's pointMatrixMult is a dirty hack and makes you loose selection,
+// and does in fact a vector by matrix multiplication, not point, BAD!
+{
+	float $p[4] = {$a[0], $a[1], $a[2], 1.0};
+	float $b[3] = {0.0, 0.0, 0.0};
+	
+	 for ( $i = 0; $i < 3; $i++ )
+	    for ( $j = 0; $j < 4; $j++ )
+			$b[$i] += $p[$j]*$m[ ($j*4) + $i ];
+			
+	return $b;
+}
+
+//
+//  Procedure Name:
+//      getCpBaryCenter
+//
+//  Description:
+// 				Retreive the baryCenter in local or world space from a control points selection 
+//  Input Arguments:
+//		A string array to specify the control points.
+//		A string to specify the space.
+//
+//  Return Value:
+//      A float[3] the baryCenter.
+//
+global proc float[] getCpBaryCenter( string $cpArray[], string $localOrWorld ) // default "world"
+{
+	global int $gSelectMeshVerts, $gSelectCVsBit;
+	float $bary[];
+	if ( size( $cpArray ) )
+	{
+		float $posSum[];
+		string $vtxArray[] = `filterExpand -ex true -sm $gSelectMeshVerts $cpArray`;
+		int $numCp = size( $vtxArray );
+		if( !$numCp ) // vertices
+		{
+			string $cvArray[] = `filterExpand -ex true -sm $gSelectCVsBit $cpArray`;
+			if( !size( $cvArray ) )
+				error("Invalid control points supplied.");
+			else
+			{
+				$numCp = size( $cvArray );
+				$cpArray = $cvArray;
+			}
+		}
+		else
+			$cpArray = $vtxArray;
+		
+		string $cp;
+		for ( $cp in $cpArray )
+		{
+			float $pos[]; clear $pos;
+			if ($localOrWorld == "local")
+				$pos = `xform -q -os -t $cp`;
+			else
+				$pos = `xform -q -ws -t $cp`;
+			
+			$posSum[0] += $pos[0];	
+			$posSum[1] += $pos[1];
+			$posSum[2] += $pos[2];
+		}
+		$bary[0] = $posSum[0] / $numCp ;
+		$bary[1] = $posSum[1] / $numCp ;
+		$bary[2] = $posSum[2] / $numCp ;
+	}
+	else
+		error("Procedure \"getCpBaryCenter\": The controlPoints array supplied is empty.");
+	return $bary;
+}
+
+//
+//  Procedure Name:
+//      distanceSquared
+//
+//  Description:
+// 				Compute the squared distance (quickest than computing the reel distance no sqrt to compute)
+//  Input Arguments:
+//		Two float[3] to specify point A and point B
+//
+//  Return Value:
+//      A float the squared distance.
+//
+global proc float distanceSquared(float $a[], float $b[])
+{
+	float $result = ( ($b[0]-$a[0])*($b[0]-$a[0]) + ($b[1]-$a[1])*($b[1]-$a[1]) + ($b[2]-$a[2])*($b[2]-$a[2]) );
+		
+	return $result;
+}
+//
+//  Procedure Name:
+//      distance
+//
+//  Description:
+// 				Compute the distance 
+//  Input Arguments:
+//		Two float[3] to specify point A and point B
+//
+//  Return Value:
+//      A float the distance.
+//
+global proc float distance(float $a[], float $b[])
+{
+	float $result = sqrt( ($b[0]-$a[0])*($b[0]-$a[0]) + ($b[1]-$a[1])*($b[1]-$a[1]) + ($b[2]-$a[2])*($b[2]-$a[2]) );
+		
+	return $result;
+}
+
+//
+//  Procedure Name:
+//      distance
+//
+//  Description:
+// 				Compute the length squared 
+//  Input Arguments:
+//		One float[3] to specify a vector
+//
+//  Return Value:
+//      A float the length squared.
+//
+global proc float lengthSquared(float $a[])
+{
+	float $result = ( $a[0]*$a[0] + $a[1]*$a[1] + $a[2]*$a[2] );
+		
+	return $result;
+}
+
+//
+//  Procedure Name:
+//      distance
+//
+//  Description:
+// 				Compute the length
+//  Input Arguments:
+//		One float[3] to specify a vector
+//
+//  Return Value:
+//      A float the length.
+//
+global proc float length(float $a[])
+{
+	float $result = sqrt( $a[0]*$a[0] + $a[1]*$a[1] + $a[2]*$a[2] );
+		
+	return $result;
+}
+
+//
+//  Procedure Name:
+//      getCpBoundingSphereRadius
+//
+//  Description:
+// 				Compute the bounding sphere radius in local or world space from a control points selection 
+//  Input Arguments:
+//		A string array to specify the control points.
+//		A string to specify the space.
+//
+//  Return Value:
+//      A float the radius.
+//
+global proc float getCpBoundingSphereRadius( string $cpArray[], string $localOrWorld ) // default "world"
+{
+	//float $startTime = `timerX`;
+
+	global int $gSelectMeshVerts, $gSelectCVsBit;
+	float $radius;
+	if ( size( $cpArray ) )
+	{
+		float $posSum[];
+		string $vtxArray[] = `filterExpand -ex true -sm $gSelectMeshVerts $cpArray`;
+		int $numCp = size( $vtxArray );
+		if( !$numCp ) // vertices
+		{
+			string $cvArray[] = `filterExpand -ex true -sm $gSelectCVsBit $cpArray`;
+			if( !size( $cvArray ) )
+				error("Invalid control points supplied.");
+			else
+			{
+				$numCp = size( $cvArray );
+				$cpArray = $cvArray;
+			}
+		}
+		else
+			$cpArray = $vtxArray;
+		float $baryCenter[] = getCpBaryCenter( $cpArray, $localOrWorld );
+		int $i;
+		float $d = 0.0;
+		for( $i = 0; $i < size( $cpArray ); $i++ )
+		{
+			string $cp = $cpArray[$i];
+			float $pos[]; clear $pos;
+				if ($localOrWorld == "local")
+					$pos = `xform -q -os -t $cp`;
+				else
+					$pos = `xform -q -ws -t $cp`;
+				float $tmpDist = distanceSquared($baryCenter, $pos);
+				if( $tmpDist >= $d )
+					$d = $tmpDist;
+		}
+		$radius = sqrt( $d );
+	}
+	else
+		error("Procedure \"getCpBoundingSphereRadius\": The controlPoints array supplied is empty.");
+	// code that is being timed
+   	//$totalTime = `timerX -startTime $startTime`;
+   	//print ("Total Time: "+$totalTime+"\n");
+	return $radius;
+}
+
+//
+//  Procedure Name:
+//      getFirstShape
+//
+//  Description:
+// 				Retreive the first shape under a transform 
+//  Input Arguments:
+//		A string to specify the transform.
+//
+//  Return Value:
+//      A string representing the shape, or the transform if no shape found.
+//
+global proc string getFirstShape(string $transform)
+{
+	string $res[];
+	string $shape = "";
+	
+	$transform = nodeFromPlug($transform);
+	if (`objExists $transform`)
+	{
+		$res = `listRelatives -s -pa -ni $transform`;
+		if (size($res) > 0)
+			$shape = $res[0];
+		else
+			$shape = $transform;
+	}
+		
+	return $shape;
+}
+
+//
+//  Procedure Name:
+//      isDeformable
+//
+//  Description:
+// 				Check if a node is a deformable object 
+//  Input Arguments:
+//		A string to specify the node.
+//
+//  Return Value:
+//      Boolean
+//
+global proc int isDeformable(string $node)
+{
+	return (size(`ls -type deformableShape $node`));
+}
+
+//
+//  Procedure Name:
+//      getDeformableInputAttribute
+//
+//  Description:
+// 				Retreive the input attribute of a deformable node/type 
+//  Input Arguments:
+//		A string to specify the node or type.
+//
+//  Return Value:
+//      String representing the attribute
+//
+global proc string getDeformableInputAttribute(string $nodeOrType)
+{
+	string $inputAttribute = "";
+	string $type = "";
+	
+	if( !isDeformable($nodeOrType) )
+		error("No deformable node or type supplied.");
+	
+	if (`objExists $nodeOrType`)
+		$type = `nodeType $nodeOrType`;
+	else
+		$type = $nodeOrType;	
+
+	switch( $type )
+	{
+		case "mesh" 		: 	$inputAttribute = "inMesh";
+								break;
+		case "subdiv"		:
+		case "nurbsSurface"	:
+		case "nurbsCurve" 	: 	$inputAttribute = "create";
+								break;
+		case "lattice"		:	$inputAttribute = "latticeInput";
+								break;
+	}
+	return $inputAttribute;
+} 
+//
+//  Procedure Name:
+//      getDeformableOutputAttribute
+//
+//  Description:
+// 				Retreive the output attribute of a deformable node/type 
+//  Input Arguments:
+//		A string to specify the node or type.
+//
+//  Return Value:
+//      String representing the attribute
+//
+global proc string getDeformableOutputAttribute(string $nodeOrType)
+{
+	string $outputAttribute = "";
+	string $type = "";
+	
+	if( !isDeformable ($nodeOrType) )
+		error("No deformable node or type supplied.");
+	
+	if (`objExists $nodeOrType`)
+		$type = `nodeType $nodeOrType`;
+	else
+		$type = $nodeOrType;	
+
+	switch( $type )
+	{
+		case "mesh" 		: 	$outputAttribute = "worldMesh";
+								break;
+		case "subdiv"		:	$outputAttribute = "outSubdiv";
+								break;
+		case "nurbsSurface"	:
+		case "nurbsCurve" 	: 	$outputAttribute = "worldSpace";
+								break;
+		case "lattice"		:	$outputAttribute = "latticeOutput";
+								break;
+	}
+	return $outputAttribute;
+}
+//
+//  Procedure Name:
+//      addUpStreamDeformableShape
+//
+//  Description:
+// 				Create an upstream shape 
+//  Input Arguments:
+//		A string to specify the shape.
+//		A flag to set the newly created shape as intermediate
+//		A flag to set the newly created shape hiden
+//
+//  Return Value:
+//      String representing the newly created shape
+//
+global proc string addUpStreamDeformableShape( string $shape, int $flagAsIntermediate, int $hide )
+{
+	if( !`objExists $shape` )
+		error("The supplied node "+$shape+" does not exist.");
+	
+	string $shapes[] = `ls -shapes $shape`;
+	if( !size( $shapes ) )
+	{
+		$shapes = `listRelatives -shapes -noIntermediate -path $shape`;
+		if( size( $shapes ) )
+			$shape = $shapes[0];
+		else
+			error("No valid shapes found under "+$shape+".");
+	}
+		
+	//print($shape);	
+	string $type = `nodeType $shape`;
+	if( !isDeformable( $shape ) )
+		error("The shape was not a deformable object.");
+	
+	string $parents[] = `listRelatives -p -pa $shape`;
+	string $transform = $parents[0];
+	string $newShape = createDGNode( $type, "", $transform );
+	
+	string $inputAttr = getDeformableInputAttribute($shape);
+	string $inCx[] = `listConnections -s 1 -d 0 -scn 1 -p 1 -c 1 ($shape+"."+$inputAttr)`;
+	if( !size( $inCx ) )
+	{
+		string $outAttr = getDeformableOutputAttribute($shape);
+		connectAttr -f ($shape+"."+$outAttr) ($newShape+"."+$inputAttr);
+		getAttr -type ($newShape+"."+$outAttr); // to propagate and force an evaluation of the dependency graph
+		disconnectAttr ($shape+"."+$outAttr) ($newShape+"."+$inputAttr);
+		connectAttr -f ($newShape+"."+$outAttr) ($shape+"."+$inputAttr);
+	}
+	else
+	{
+		string $outAttr = getDeformableOutputAttribute($shape);
+		string $inputPlug = $inCx[0];
+		string $outputPlug = $inCx[1];
+		connectAttr -f $outputPlug ($newShape+"."+$inputAttr);
+		getAttr -type ($newShape+"."+$outAttr); // to propagate and force an evaluation of the dependency graph
+		connectAttr -f ($newShape+"."+$outAttr) $inputPlug;
+	}
+	setAttr ($newShape+".visibility") (!$hide);	
+	setAttr ($newShape+".intermediateObject") $flagAsIntermediate;
+	
+	
+	return $newShape;
+}
+//
+//  Procedure Name:
+//      addParallelDeformableShape
+//
+//  Description:
+// 				Create a parallele shape ( to avoid dependency cycle ) 
+//  Input Arguments:
+//		A string to specify the shape.
+//		A flag to set the newly created shape as intermediate
+//		A flag to set the newly created shape hiden
+//
+//  Return Value:
+//      String representing the newly created shape
+//
+global proc string addParallelDeformableShape( string $shape, int $flagAsIntermediate, int $hide )
+{
+	if( !`objExists $shape` )
+		error("The supplied node "+$shape+" does not exist.");
+	
+	string $shapes[] = `ls -shapes $shape`;
+	if( !size( $shapes ) )
+	{
+		$shapes = `listRelatives -shapes -noIntermediate -path $shape`;
+		if( size( $shapes ) )
+			$shape = $shapes[0];
+		else
+			error("No valid shapes found under "+$shape+".");
+	}
+		
+	//print($shape);	
+	string $type = `nodeType $shape`;
+	if( !isDeformable( $shape ) )
+		error("The shape was not a deformable object.");
+	
+	string $parents[] = `listRelatives -p -pa $shape`;
+	string $transform = $parents[0];
+	string $newShape = createDGNode( $type, "", $transform );
+	
+	string $inputAttr = getDeformableInputAttribute($shape);
+	string $inCx[] = `listConnections -s 1 -d 0 -scn 1 -p 1 -c 1 ($shape+"."+$inputAttr)`;
+	if( !size( $inCx ) )
+		error("To add a parallel shape, the original shape must have a construction history (eg: deformers)");
+	else
+	{
+		string $outAttr = getDeformableOutputAttribute($shape);
+		string $inputPlug = $inCx[0];
+		string $outputPlug = $inCx[1];
+		connectAttr -f $outputPlug ($newShape+"."+$inputAttr);
+		getAttr -type ($newShape+"."+$outAttr); // to propagate and force an evaluation of the dependency graph
+	}
+	setAttr ($newShape+".visibility") (!$hide);		
+	setAttr ($newShape+".intermediateObject") $flagAsIntermediate;
+	
+	return $newShape;
+}
+
+//
+//  Procedure Name:
+//      isStringInArray
+//
+//  Description:
+// 				Check if a string is in an array of string 
+//  Input Arguments:
+//		A string.
+//		An array of strings
+//
+//  Return Value:
+//      boolean
+//	
+	
+global proc int isStringInArray( string $theString, string $theArray[] )
+{
+	int $i;
+	int $inArray = false;
+	int $size = size( $theArray );
+	for ($i = 0; $i < $size; $i++ )
+	{
+		string $s = $theArray[$i];
+		if( $s == $theString )
+		{
+			$inArray = true;
+			break;
+		}
+	}
+	return $inArray;
+}
+
+//
+//  Procedure Name:
+//      getMayaVersion
+//
+//  Description:
+// 				Retreive the Maya version 
+//  Input Arguments:
+//		None
+//
+//  Return Value:
+//      string
+//
+global proc string getMayaVersion()
+{
+	string $mayaVersion = `about -v`;
+	return `substring $mayaVersion 1 1`;
+}
+//
+//  Procedure Name:
+//      createTransformAxisAttributes
+//
+//  Description:
+// 				create aim up attributes 
+//  Input Arguments:
+//		string a transform
+//
+//  Return Value:
+//      boolean 
+//
+global proc int createTransformAxisAttributes(string $transform)
+{
+	if(!`objExists $transform`)
+		error("The supplied node "+$transform+" does not exist.");
+	
+	int $success = true;
+	
+	if (!attributeExists ("aim", $transform))
+	{
+		$success *= !catch(`addAttr -ln aim -at double3  $transform`);
+		$success *= !catch(`addAttr -ln aimX -at double -p aim  $transform`);
+		$success *= !catch(`addAttr -ln aimY -at double -p aim  $transform`);
+		$success *= !catch(`addAttr -ln aimZ -at double -p aim  $transform`);
+		$success *= !catch(`setAttr -type double3 ($transform+".aim") 0 0 0`);
+	}
+	if (!attributeExists ("up", $transform))
+	{
+		$success *= !catch(`addAttr -ln up -at double3  $transform`);
+		$success *= !catch(`addAttr -ln upX -at double -p up  $transform`);
+		$success *= !catch(`addAttr -ln upY -at double -p up  $transform`);
+		$success *= !catch(`addAttr -ln upZ -at double -p up  $transform`);
+		$success *= !catch(`setAttr -type double3 ($transform+".up") 0 0 0`);
+	}
+	
+	return $success;
+}
+//
+//  Procedure Name:
+//      writeTransformAxis
+//
+//  Description:
+// 				write aim up attributes 
+//  Input Arguments:
+//		string a transform
+//		vector aim
+//		vector up
+//
+//  Return Value:
+//      boolean 
+//
+global proc int writeTransformAxis(string $transform, vector $aim, vector $up )
+{
+	int $success = false;
+	
+	$success = createTransformAxisAttributes($transform);
+
+	if ( (`getAttr -se ($transform+".aim")`) && (!catch(`setAttr -type double3 ($transform+".aim") ($aim.x) ($aim.y) ($aim.z)`)) )
+		$success = true;
+	else
+		error ("Attribute Aim for "+$transform+" cannot be set");
+
+	if ( (`getAttr -se ($transform+".up")`) && (!catch(`setAttr -type double3 ($transform+".up") ($up.x) ($up.y) ($up.z)`)) )
+		$success *= true;
+	else
+		error ("Attribute Up for "+$transform+" cannot be set");
+		
+	return $success;
+}
+
+//
+//  Procedure Name:
+//      getClosestPointOnGeo
+//
+//  Description:
+// 				get the closet point on a mesh/nurbsSurface/nurbsCurve 
+//  Input Arguments:
+//		string a transform [optional]
+//		float[3] position
+//		string the surface/mesh/curve
+//
+//  Return Value:
+//      float[3] the closest position 
+//
+global proc float[] getClosestPointOnGeo( string $transform, float $position[], string $geometry )
+{
+	float $results[];
+	if( `objExists $transform` && size(`ls -tr $transform`) ) // a transform has been supplied
+		$position = `xform -q -rp -a -ws $transform`;
+	
+	global int $gSelectMeshesBit, $gSelectNurbsSurfacesBit, $gSelectNurbsCurvesBit;
+	
+	if( !`objExists $geometry` )
+		error("Invalid geometry "+$geometry+" supplied.");
+	
+	string $geometryType = "";
+	if( size( `filterExpand -ex true -sm $gSelectMeshesBit $geometry` ) )
+		$geometryType = "mesh";
+	else if( size( `filterExpand -ex true -sm $gSelectNurbsCurvesBit $geometry` ) )
+		$geometryType = "nurbsCurve";
+	else if( size( `filterExpand -ex true -sm $gSelectNurbsSurfacesBit $geometry` ) )
+		$geometryType = "nurbsSurface";
+	else
+		error("Procedure \"getClosestPointOnGeo\": Invalid geometry type for node "+$geometry+".");
+	
+	if( $geometryType == "mesh" )
+	{
+		int $mayaVersion = getMayaVersion();
+		int $useClosest = false;
+		int $useNearest = false;
+		if( $mayaVersion < 7 )
+		{
+			if( !exists("closestPointOnMesh") )
+				error("Procedure \"getClosestPointOnGeo\": command \"closestPointOnMesh\" unknown.");
+			else
+				$useClosest = true;
+		}
+		else
+		{
+			if( !exists("nearestPointOnMesh") )
+			{
+				warning("Procedure \"getClosestPointOnGeo\": command \"nearestPointOnMesh\" unknown, trying with \"closestPointOnMesh\".");
+				if( !exists("closestPointOnMesh") )
+					error("Procedure \"getClosestPointOnGeo\": command \"closestPointOnMesh\" unknown.");
+				else
+					$useClosest = true;
+			}
+			else
+				$useNearest = true;
+		}
+		float $closestResults[];
+		if( $useClosest )
+			$closestResults = `closestPointOnMesh -ip $position[0] $position[1] $position[2] -q -p -nr -u -v -f $geometry`;	
+		else if( $useNearest )
+			$closestResults = `nearestPointOnMesh -ip $position[0] $position[1] $position[2] -q -p -nr -u -v -f $geometry`;
+		
+		float $closestPoint[3];
+		$closestPoint[0] = $closestResults[0];
+		$closestPoint[1] = $closestResults[1];
+		$closestPoint[2] = $closestResults[2];
+		float $d = distance($position, $closestPoint);
+		
+		$results[0] = $closestResults[0]; 								// posX
+		$results[1] = $closestResults[1];								// posY
+		$results[2] = $closestResults[2];								// posZ
+		$results[3] = $closestResults[3];								// normalX
+		$results[4] = $closestResults[4];								// normalY
+		$results[5] = $closestResults[5];								// normalZ
+		$results[6] = $closestResults[6];								// u
+		$results[7] = $closestResults[7];								// v
+		$results[8] = int($closestResults[8]);							// face index
+		$results[9] = $d;												// distance
+	}
+	else if( $geometryType == "nurbsSurface" )
+	{
+		string $closestPointOnSurface = createDGNode( "closestPointOnSurface", "", "" );
+		connectAttr ($geometry+".worldSpace") ($closestPointOnSurface+".inputSurface");
+		setAttr ($closestPointOnSurface+".inPosition") $position[0] $position[1] $position[2];
+		string $pointOnSurfaceInfo = createDGNode( "pointOnSurfaceInfo", "", "" );
+		connectAttr ($geometry+".worldSpace") ($pointOnSurfaceInfo+".inputSurface");
+		connectAttr -f ($closestPointOnSurface+".parameterU") ($pointOnSurfaceInfo+".parameterU");
+		connectAttr -f ($closestPointOnSurface+".parameterV") ($pointOnSurfaceInfo+".parameterV");
+		
+		
+		float $closestPoint[3] 	= `getAttr ($pointOnSurfaceInfo+".position")`;
+		float $normal[3]		= `getAttr ($pointOnSurfaceInfo+".normalizedNormal")`;
+		float $tangentU[3]		= `getAttr ($pointOnSurfaceInfo+".normalizedTangentU")`;
+		float $tangentV[3]		= `getAttr ($pointOnSurfaceInfo+".normalizedTangentV")`;
+		float $d = distance($position, $closestPoint);
+		float $u = `getAttr ($closestPointOnSurface+".parameterU")`;
+		float $v = `getAttr ($closestPointOnSurface+".parameterV")`;
+		$results[0] = $closestPoint[0]; 							// posX
+		$results[1] = $closestPoint[1];								// posY
+		$results[2] = $closestPoint[2];								// posZ
+		$results[3] = $normal[1];									// normalX
+		$results[4] = $normal[2];									// normalY	
+		$results[5] = $normal[3];									// normalZ		
+		$results[6] = $tangentU[1];									// tangentUX
+		$results[7] = $tangentU[2];									// tangentUY
+		$results[8] = $tangentU[3];									// tangentUZ
+		$results[9] = $tangentV[1];									// tangentVX
+		$results[10] = $tangentV[2];								// tangentVY
+		$results[11] = $tangentV[3];								// tangentVZ
+		$results[12] = $u;											// u
+		$results[13] = $v;											// v
+		$results[14] = $d;											// distance
+		delete $closestPointOnSurface $pointOnSurfaceInfo;
+	}
+	else if( $geometryType == "nurbsCurve" )
+	{
+		if(!`pluginInfo -q -loaded "closestPointOnCurve"`)
+			error("Procedure \"getClosestPointOnGeo\": plug-in \"closestPointOnCurve\" from Bonus tools is not loaded, load it and re-source this script.");
+								
+		$results = `closestPointOnCurve -ip $position[0] $position[1] $position[2] -q -p -nr -t -u -d $geometry`;
+		//position, normal, tangent, uParam, distance;
+    }
+	return $results;
+}
+	
+//
+//  Procedure Name:
+//      textureSpaceUvToFaceSpaceUv
+//
+//  Description:
+// 				transform absolute uv in relative uv 
+//  Input Arguments:
+//		float u value
+//		float v value
+//		string the face
+// 		string array the face`s uv
+//
+//  Return Value:
+//      float[2] the relative u and v 
+//
+global proc float[] textureSpaceUvToFaceSpaceUv( float $u, float $v, string $face, string $UVs[] )
+{
+	float $epsilon = 1.0e-10;
+	float $infinite = 1.0e10;
+	float $tol = `tolerance -q -l`;
+	global int $gSelectMeshFaces, $gSelectMeshUVs;
+	if(!size(`filterExpand -ex true -sm $gSelectMeshFaces $face`))
+		error("Procedure \"uvTextureSpaceTouvFaceSpace\": The supplied face is invalid.");
+
+	float $faceSpaceU = 0.0;
+	float $faceSpaceV = 0.0;	
+
+	int $nbUVs = size($UVs);
+	if ($nbUVs) {
+		float $uv[2];
+		float $minU = $infinite;
+		float $maxU = -$infinite;
+		float $minV = $infinite;
+		float $maxV = -$infinite;
+		// print ("// For face "+$face+" found "+$nbUVs+" uvs //\n");
+		for($i = 0; $i<$nbUVs; $i++ ) {
+			$uv = `polyEditUV -query $UVs[$i]`;
+			// print ("// \tFor UV "+$UVs[$i]+" found u "+$uv[0]+" and v "+$uv[1]+" //\n");
+			if ($uv[0] > $maxU)
+				$maxU = $uv[0];
+			if ($uv[0] < $minU)
+				$minU = $uv[0];
+			if ($uv[1] > $maxV)
+				$maxV = $uv[1];
+			if ($uv[1] < $minV)
+				$minV = $uv[1];			
+		}
+		float $dU = ($maxU - $minU);
+		float $dV = ($maxV - $minV);
+		float $low = $tol;
+		float $high = 1.0 - $tol;		
+		// print ("//\tFound dU "+$dU+" dV "+$dV+" //\n");
+		if ($dU > $epsilon) {
+			$faceSpaceU = clamp($low , $high, ($u - $minU) / $dU);
+		} else {
+			warning ("could not normalize U coordinates for face "+$face+", returning clamped absolute U");
+			$faceSpaceU = clamp($low , $high, $u);
+		}
+		if ($dV > $epsilon)	{
+			$faceSpaceV = clamp($low , $high, ($v - $minV) / $dV);
+		} else {
+			warning ("could not normalize V coordinates for face "+$face+", returning clamped absolute V");
+			$faceSpaceV = clamp($low , $high, $v);
+		}
+	} else {
+		warning ("could not find UV coordinates for face "+$face+", returning null u and v");
+	}
+	// If no UV return 0.0
+		
+	// print ("//\tFound relative u "+$faceSpaceU+" and relative v  "+$faceSpaceV+" //\n");	
+	return {$faceSpaceU, $faceSpaceV};
+}
+
+//
+//  Procedure Name:
+//      pointInFaceToFaceSpaceUv
+//
+//  Description:
+// 				In case there are no UVs gets a relative u and v from face points position, project on the face average plane 
+//  Input Arguments:
+//
+//  Return Value:
+//      float[2] the relative u and v 
+//
+global proc float[] pointInFaceToFaceSpaceUv( float $closestPoint[], float $closestNormal[], string $face,
+												string $facePoints[], int $facePtIndex[], float $facePtU[], float $facePtV[])
+{
+	float $epsilon = 1.0e-10;
+	float $infinite = 1.0e10;
+	float $tol = `tolerance -q -l`;
+	global int $gSelectMeshFaces, $gSelectMeshUVs;
+	if(!size(`filterExpand -ex true -sm $gSelectMeshFaces $face`))
+		error("Procedure \"pointInFaceToFaceSpaceUv\": The supplied face is invalid.");
+
+	float $faceSpaceU = 0.0;
+	float $faceSpaceV = 0.0;
+	clear ($facePtIndex);
+	clear ($facePtU);
+	clear ($facePtV);
+	
+	float $faceCenter[3] = {0.0, 0.0, 0.0};
+	float $pos[3];	
+	float $x[], $y[], $z[];
+	// We need the global vertices indices but in the vertex per face order
+	string $points[];
+	int $k=0;
+	int $index;
+	for ($fp in $facePoints) {
+		$index = match ("[0-9]+", match ("\[[0-9]+\]", $fp));
+		$facePtIndex[$k] = $index;
+		$points[$k] = match ("^[^.]+", $fp)+".vtx["+$index+"]";
+		$pos = `xform -q -ws -t $points[$k]`;
+		$faceCenter[0] += $pos[0];
+		$faceCenter[1] += $pos[1];
+		$faceCenter[2] += $pos[2];
+		$x[$k] = $pos[0];
+		$y[$k] = $pos[1];
+		$z[$k] = $pos[2];
+		$k++;
+	}
+	int $nbPoints = $k;
+	float $nbf = float($nbPoints);
+	$faceCenter[0] /= $nbf;
+	$faceCenter[1] /= $nbf;
+	$faceCenter[2] /= $nbf;
+	// Will fail in case of 0 length edge
+	$k = 0;
+	float $vectU[3] = {0.0, 0.0, 0.0};
+	while ( (lengthSquared($vectU) < $epsilon) && (++$k < $nbPoints) )
+		$vectU = {($x[$k] - $x[0]), ($y[$k] - $y[0]), ($z[$k] - $z[0])};
+	// if we got a non null first edge
+	if (normalize($vectU)) {
+		float $vectN[3] = $closestNormal;
+		normalize($vectN);
+		float $vectV[3] = crossProduct( $vectN, $vectU, false, true);
+		$vectU = crossProduct( $vectV, $vectN, false, true);
+		float $base[16] = buildBasisMatrix ($faceCenter, $vectU, $vectV, $vectN);
+		float $proj[3];
+		float $Us[];
+		float $Vs[];
+		float $minU = $infinite;
+		float $maxU = -$infinite;
+		float $minV = $infinite;
+		float $maxV = -$infinite;
+		// Project and find UVs for face points
+		// Note : finding the affine transformation to the unit square
+		// would be better than a simple projection
+		for ($i=0; $i<$nbPoints; $i++) {
+			$pos = {$x[$i], $y[$i], $z[$i]};
+			$proj = floatPointFloatMatrixMult ( $pos, $base );
+			$Us[$i] = $proj[0];
+			$Vs[$i] = $proj[1];
+			if ($Us[$i] > $maxU)
+				$maxU = $Us[$i];
+			if ($Us[$i] < $minU)
+				$minU = $Us[$i];
+			if ($Vs[$i] > $maxV)
+				$maxV = $Vs[$i];
+			if ($Vs[$i] < $minV)
+				$minV = $Vs[$i];
+		}
+		// UVs for the closest point
+		$proj = floatPointFloatMatrixMult ( $closestPoint, $base );
+		float $u = $proj[0];
+		float $v = $proj[1];
+		// Convert to relative (0-1) UVs		
+		float $dU = ($maxU - $minU);
+		float $dV = ($maxV - $minV);
+		float $low = $tol;
+		float $high = 1.0 - $tol;			
+		if ( ($dU > $epsilon) && ($dV > $epsilon) ) {
+			for ($i=0; $i<$nbPoints; $i++) {
+				$facePtU[$i] = clamp(0, 1, ($Us[$i] - $minU) / $dU);
+				$facePtV[$i] = clamp(0, 1, ($Vs[$i] - $minV) / $dV);
+			}
+			$faceSpaceU = clamp($low, $high, ($u - $minU) / ($maxU - $minU));
+			$faceSpaceV = clamp($low, $high, ($v - $minV) / ($maxV - $minV));
+		} else {
+			warning ("could not normalize UV coordinates for face "+$face+", returning absolute u and v");
+			for ($i=0; $i<$nbPoints; $i++) {
+				$facePtU[$i] = clamp(0, 1, $Us[$i]);
+				$facePtV[$i] = clamp(0, 1, $Vs[$i]);
+			}
+			$faceSpaceU = clamp($low, $high, $u);
+			$faceSpaceV =clamp($low, $high, $v);
+		}
+		
+	 } else {
+		 warning ("could not build UV coordinates for face "+$face+", returning null u and v");
+	 }
+	 
+	return {$faceSpaceU, $faceSpaceV};	
+}
+
+
+//
+//  Procedure Name:
+//      addUnitUV
+//
+//  Description:
+// 				At unit uv on the face  
+//  Input Arguments:
+//
+//  Return Value:
+//      string the newly polyTweakUV created 
+//	ToDo: add an option to create the UVs on the shapeOrig, the polyTweakUV before the deformer is slowest
+
+global proc string addUnitUV(string $shape, int $faceIndex, int $facePtId[], float $facePtU[], float $facePtV[])
+{
+	string $polyTweakUVNode = "";
+	string $res[];
+	string $inPlug = "";
+	string $inNode = "";
+	
+	$res = `listConnections -s true -d false -p true ($shape+".inMesh")`;
+	if (size($res)) {
+		for ($inPlug in $res) {
+			$inNode = nodeFromPlug($inPlug);
+			if (nodeType($inNode) == "polyTweakUV") {
+				$polyTweakUVNode = $inNode;
+				break;
+			}
+		}
+		warning ("Adding UVs in the middle of a deformation chain will slow the playback");
+	} else {
+		// Could add the option of resetting UVs to addUpStreamDeformableShape
+		// and addParallelDeformableShape
+		$inNode = addUpStreamDeformableShape( $shape, true, true );
+		$inPlug = $inNode + ".outMesh";
+	}
+	
+	if ($polyTweakUVNode == "") {
+		$polyTweakUVNode = createDGNode( "polyTweakUV", "", "" );
+		connectAttr -f $inPlug ($polyTweakUVNode+".inputPolymesh");
+		connectAttr -f ($polyTweakUVNode+".output") ($shape+".inMesh");
+		// Always create on default UVset
+		connectAttr -f ($polyTweakUVNode+".uvTweak[0]") ($shape+".uvSet[0].uvSetTweakLocation");
+		// print ("// adding new polyTweakUV node "+$polyTweakUVNode+" //\n");
+	} else {
+		// print ("// adding to existing polyTweakUV node "+$polyTweakUVNode+" //\n");
+	}
+	
+	// Add the UVs to the tweak node
+	int $nbNewUVs = `getAttr -s ($polyTweakUVNode+".newUV")`;
+	int $nbFacePts = size($facePtId);
+	int $k = $nbNewUVs;
+
+	// print ("// On face "+$shape+".f["+$faceIndex+"] //\n");
+	// print ("// Points in that order");
+	// for ($i=0; $i<$nbFacePts; $i++)
+		// print (" "+$shape+".vtx["+$facePtId[$i]+"] "+$facePtU[$i]+" "+$facePtV[$i]);
+	// print (" //\n");
+
+	// Not checking if UV for this face point already exists (and then using UVTweak attribute)
+	// is faster but might cause problems in case of partially mapped meshes
+	for ($i=0; $i<$nbFacePts; $i++) {
+		setAttr ($polyTweakUVNode+".newUV["+$k+"].faceId") $faceIndex;
+		setAttr ($polyTweakUVNode+".newUV["+$k+"].vertexId") $facePtId[$i];
+		setAttr ($polyTweakUVNode+".newUV["+$k+"].newUValue") $facePtU[$i];
+		setAttr ($polyTweakUVNode+".newUV["+$k+"].newVValue") $facePtV[$i];
+		$k++;
+	}
+	
+	return $polyTweakUVNode;
+	
+}
+									
+
+
+//
+//  Procedure Name:
+//      createStickyTransformOnGeo
+//
+//  Description:
+// 				Create a transform sticky on the surface   
+//  Input Arguments:
+//
+//  Return Value:
+//      string the newly transform created 
+
+
+global proc string createStickyTransformOnGeo( 	string $name, float $position[], string $geometry,
+												vector $aim, vector $up, string $worldUp, int $interactiveManipulation )
+{
+	global int $gSelectMeshesBit, $gSelectNurbsSurfacesBit, $gSelectNurbsCurvesBit;
+	global int $gSelectMeshVtxFaces, $gSelectMeshFaces, $gSelectMeshUVs;
+	
+	if( !`objExists $geometry` )
+		error("Invalid geometry "+$geometry+" supplied.");
+	
+	string $geometryType = "";
+	if( size( `filterExpand -ex true -sm $gSelectMeshesBit $geometry` ) )
+		$geometryType = "mesh";
+	else if( size( `filterExpand -ex true -sm $gSelectNurbsCurvesBit $geometry` ) )
+		$geometryType = "nurbsCurve";
+	else if( size( `filterExpand -ex true -sm $gSelectNurbsSurfacesBit $geometry` ) )
+		$geometryType = "nurbsSurface";
+	else
+		error("Procedure \"createStickyTransformOnGeo\": Invalid geometry type for node "+$geometry+".");
+	
+	float $tol = `tolerance -q -linear`;
+	
+	$aim = unit( $aim); 
+	$up = unit( $up);
+	
+	if(  equivalentTol( dot($aim,$up), 1.0, $tol ) ) // the aim and up vector are identique
+		error("The supplied aim and up vectors are equal.");
+	
+	int $addGeoCnst = true;
+	int $addNormalCnst = true;
+		
+	string $transform;
+	if( size($name) )
+		$transform = `group -name $name -em`;	
+	else
+		$transform = `group -name ("stickyNull#") -em`;
+	setAttr ($transform+".displayLocalAxis") true;
+	
+	string $attrsKeyable[] = `listAttr -k -v $transform`;
+	// write the aim up attrs
+	//
+	writeTransformAxis( $transform, $aim, $up );
+	
+	float $closestResults[9];
+	switch( $geometryType )
+	{
+		case "mesh" 		:	string $pointOnMeshInfo;
+								string $history[] = `listHistory $geometry`;
+								string $shape = "";
+								string $parallelShape = "";
+
+								// Get closest point
+								$closestResults = getClosestPointOnGeo( "", $position, $geometry );
+		
+								// Add intermediate shape
+								if( size( $history ) == 1 )
+								{
+									warning("No history on the node "+$geometry+", a shapeOrig will be added to avoid cycle with the deformer.");
+									$shape = $parallelShape = addUpStreamDeformableShape( $geometry, true, true );
+									$pointOnMeshInfo = createDGNode( "pointOnMeshInfo", "", "" );
+									connectAttr -f ($shape+".worldMesh") ($pointOnMeshInfo+".inMesh");
+								}
+								else
+								{
+									$shape = $history[0];
+									int $flagAsIntermediate = true;
+									int $hide = true;
+									$parallelShape = addParallelDeformableShape( $shape, $flagAsIntermediate, $hide );
+									string $outputAttr = getDeformableOutputAttribute( $parallelShape );
+									$pointOnMeshInfo = createDGNode( "pointOnMeshInfo", "", "" );
+									connectAttr -f ($parallelShape+"."+$outputAttr) ($pointOnMeshInfo+".inMesh");
+								}
+								
+								float $closestPoint[3] = {$closestResults[0], $closestResults[1], $closestResults[2]};
+								float $closestNormal[3] = {$closestResults[3], $closestResults[4], $closestResults[5]};
+								float $closestU = $closestResults[6];
+								float $closestV = $closestResults[7];
+								int $closestFaceIndex = int($closestResults[8]);
+								string $face = $parallelShape+".f["+$closestFaceIndex+"]";
+								float $relativesUV[];
+								// If we have UVs for this face
+								if( isIntermediateObject($parallelShape) )
+									setNoIntermediateObject($parallelShape);
+								string $UVs[] = `polyListComponentConversion -fromFace -toUV $face `;
+								$UVs = `filterExpand -ex true -sm $gSelectMeshUVs $UVs`;
+								string $facePoints[] = `polyListComponentConversion -fromFace -toVertexFace $face `;
+								$facePoints = `filterExpand -ex true -sm $gSelectMeshVtxFaces $facePoints`;
+								// int $thereAreUVs = ( size($UVs) == size($facePoints) );
+								int $thereAreUVs = (size($UVs));
+								if ( $thereAreUVs ) {
+									$relativesUV = textureSpaceUvToFaceSpaceUv( $closestU, $closestV, $face, $UVs );
+								} else {
+									int $facePtId[];
+									float $facePtU[];
+									float $facePtV[];									
+									$relativesUV = pointInFaceToFaceSpaceUv( $closestPoint, $closestNormal, $face,
+																			$facePoints, $facePtId, $facePtU, $facePtV );
+									// Add "on the fly" UVs if needed
+									addUnitUV ($parallelShape, $closestFaceIndex, $facePtId, $facePtU, $facePtV);
+								}
+								setIntermediateObject($parallelShape);	
+								$closestU = $relativesUV[0];
+								$closestV = $relativesUV[1];
+
+								// Add geometry constraint if needed
+								if( $addGeoCnst == true )
+								{
+									string $cxIn[] = `listConnections -s 1 -d 0 -scn 1 -p 1 ($pointOnMeshInfo+".inMesh")`;
+									string $geoConstraint = createDGNode( "geometryConstraint", "", $transform );
+									connectAttr $cxIn[0] ($geoConstraint+".target[0].targetGeometry");
+									connectAttr ($geoConstraint+".constraintGeometry") ($transform+".geometry");
+									connectAttr ($transform+".parentInverseMatrix") ($geoConstraint+".constraintParentInverseMatrix");
+								}	
+								
+								setAttr ($pointOnMeshInfo+".relative") true;
+								setAttr ($pointOnMeshInfo+".faceIndex") -clamp $closestFaceIndex;
+								setAttr ($pointOnMeshInfo+".parameterU") -clamp $closestU;
+								setAttr ($pointOnMeshInfo+".parameterV") -clamp $closestV;
+								
+								string $dup[] = `duplicate -inputConnections $pointOnMeshInfo`;
+								string $pointOnMeshInfoUp;
+								if( size( $dup ) )
+									$pointOnMeshInfoUp = $dup[0];
+								else
+									error("Procedure \"createStickyTransformOnGeo\": Unable to duplicate the pointOnMeshInfo node "+$pointOnMeshInfo+"...");
+								
+								connectAttr ($pointOnMeshInfo+".faceIndex") ($pointOnMeshInfoUp+".faceIndex");
+								connectAttr ($pointOnMeshInfo+".parameterU") ($pointOnMeshInfoUp+".parameterU");
+								string $plusMin1 = createDGNode( "plusMinusAverage", "", "" );
+								setAttr ($plusMin1+".operation") 1; // sum operation
+								connectAttr ($pointOnMeshInfo+".parameterV") ($plusMin1+".input1D[0]");
+								setAttr ($plusMin1+".input1D[1]") 0.05;
+								$dup = `duplicate -inputConnections $plusMin1`;
+								string $negPlusMin1;
+								if( size( $dup ) )
+									$negPlusMin1 = $dup[0];
+								else
+									error("Procedure \"createStickyTransformOnGeo\": Unable to duplicate the plusMinusAverage node "+$plusMin1+"...");
+								setAttr ($negPlusMin1+".operation") 2; // sum operation
+								
+								string $condition = createDGNode( "condition", "", "" );
+								setAttr ($condition+".operation") 4;// less than
+								setAttr ($condition+".secondTerm") 1.0;
+								connectAttr ($plusMin1+".output1D") ($condition+".firstTerm");
+								connectAttr ($plusMin1+".output1D") ($condition+".colorIfTrueR");
+								setAttr ($condition+".colorIfTrueG") 1.0;
+								setAttr ($condition+".colorIfFalseG") -1.0;
+								connectAttr ($negPlusMin1+".output1D") ($condition+".colorIfFalseR");
+								string $multiplyDivide = createDGNode( "multiplyDivide", "", "" );
+								connectAttr ($transform+".up") ($multiplyDivide+".input1");
+								connectAttr ($condition+".outColorG") ($multiplyDivide+".input2X");
+								connectAttr ($condition+".outColorG") ($multiplyDivide+".input2Y");
+								connectAttr ($condition+".outColorG") ($multiplyDivide+".input2Z");
+								
+								connectAttr ($condition+".outColorR") ($pointOnMeshInfoUp+".parameterV");
+								//connectAttr ($plusMin1+".output1D") ($pointOnMeshInfoUp+".parameterV");
+								string $plusMin2 = createDGNode( "plusMinusAverage", "", "" );
+								setAttr ($plusMin2+".operation") 2; // substract operation
+								connectAttr ($pointOnMeshInfoUp+".position") ($plusMin2+".input3D[0]");
+								connectAttr ($pointOnMeshInfo+".position") ($plusMin2+".input3D[1]");
+								
+								
+								
+								string $pointConstraint = createDGNode( "pointConstraint", "", $transform );
+								string $pointConstraintPlug = ($pointConstraint+".target[0]");
+								connectAttr -f ($pointOnMeshInfo+".position") ($pointConstraintPlug+".targetTranslate");
+								setAttr ($pointConstraintPlug+".targetWeight") 1.0;
+								connectAttr -f ($transform+".parentInverseMatrix") ($pointConstraint+".constraintParentInverseMatrix");
+								connectAttr -f ($transform+".rotatePivot") ($pointConstraint+".constraintRotatePivot");
+								connectAttr -f ($transform+".rotatePivotTranslate") ($pointConstraint+".constraintRotateTranslate");
+								connectAttr -f ($pointConstraint+".constraintTranslateX") ($transform+".translateX");
+								connectAttr -f ($pointConstraint+".constraintTranslateY") ($transform+".translateY");
+								connectAttr -f ($pointConstraint+".constraintTranslateZ") ($transform+".translateZ");
+								
+								//-------------------------------------------------------------------------------------------------
+								// Custom attributes creation
+								int $faceCount[] = `polyEvaluate -f $shape`;
+								if( catch(`addAttr -keyable true -sn "f" -ln "faceIndex" -at long  -min 0 -max $faceCount[0] -dv 0 $transform`))
+									warning("Procedure \"createStickyTransformOnGeo\": Unable to add attribute faceIndex on the node "+$transform+" ...");
+								else
+								{
+									setAttr ($transform+".faceIndex") $closestFaceIndex;
+									connectAttr -f ($transform+".faceIndex") ($pointOnMeshInfo+".faceIndex");
+								}
+								
+								if( catch(`addAttr -keyable true -sn "paramU" -ln "parameterU" -at double  -min 0.0 -max 1.0 -dv 0.5 $transform`))
+									warning("Procedure \"createStickyTransformOnGeo\": Unable to add attribute parameterU on the node "+$transform+" ...");
+								else
+								{
+									setAttr ($transform+".parameterU") $closestU;
+									connectAttr -f ($transform+".parameterU") ($pointOnMeshInfo+".parameterU");
+								}
+								if( catch(`addAttr -keyable true -sn "paramV" -ln "parameterV" -at double  -min 0.0 -max 1.0 -dv 0.5 $transform`))
+									warning("Procedure \"createStickyTransformOnGeo\": Unable to add attribute parameterV on the node "+$transform+" ...");
+								else
+								{
+									setAttr ($transform+".parameterV") $closestV;
+									connectAttr -f ($transform+".parameterV") ($pointOnMeshInfo+".parameterV");
+								}
+								if( catch(`addAttr -hidden true -sn "stckongeo" -ln "stickOnGeo" -at message $transform`))
+									warning("Procedure \"createStickyTransformOnGeo\": Unable to add attribute stickOnGeo on the node "+$transform+" ...");
+								else
+								{
+									connectAttr -f ($parallelShape+".message") ($transform+".stickOnGeo");
+								}
+								
+								
+								// now orientation rig
+								//
+								
+								if ($addNormalCnst) {
+									string $normalConstraint = createDGNode( "normalConstraint", "", $transform );
+									string $normalConstraintPlug = ($normalConstraint+".target[0]");
+									setAttr ($normalConstraintPlug+".targetWeight") 1.0;
+									setAttr ($normalConstraint+".aimVector") ($aim.x) ($aim.y) ($aim.z);
+									setAttr ($normalConstraint+".upVector") ($up.x) ($up.y) ($up.z);
+									connectAttr ($transform+".aim") ($normalConstraint+".aimVector");
+									connectAttr ($multiplyDivide+".output") ($normalConstraint+".upVector");
+									string $cxIn[] = `listConnections -s 1 -d 0 -scn 1 -p 1 ($pointOnMeshInfo+".inMesh")`;
+									connectAttr $cxIn[0] ($normalConstraint+".target[0].targetGeometry");
+									
+									if( catch(`addAttr -keyable true -ln "worldUp" -at "enum" -en "Tangent:SceneUp:" $transform`))
+										warning("Procedure \"createStickyTransformOnGeo\": Unable to add attribute worldUp on the node "+$transform+" ...");
+									else
+									{
+										string $cond = createDGNode( "condition", "", "" );
+										connectAttr -f ($transform+".worldUp") ($cond+".firstTerm");
+										setAttr ($cond+".secondTerm") 0;
+										setAttr ($cond+".operation") 0; // equal operation
+										setAttr ($cond+".colorIfTrue") 3 0 0;
+										setAttr ($cond+".colorIfFalse") 0 0 0;
+										connectAttr -f ($cond+".outColorR") ($normalConstraint+".worldUpType");
+									}
+									connectAttr -f  ($plusMin2+".output3D") ($normalConstraint+".worldUpVector");
+									connectAttr -f ($transform+".parentInverseMatrix") ($normalConstraint+".constraintParentInverseMatrix");
+									connectAttr -f ($transform+".translate") ($normalConstraint+".constraintTranslate");
+									connectAttr -f ($transform+".rotatePivot") ($normalConstraint+".constraintRotatePivot");
+									connectAttr -f ($transform+".rotatePivotTranslate") ($normalConstraint+".constraintRotateTranslate");
+									connectAttr -f ($transform+".rotateOrder") ($normalConstraint+".constraintRotateOrder");
+
+									connectAttr -f ($normalConstraint+".constraintRotateX") ($transform+".rotateX");
+									connectAttr -f ($normalConstraint+".constraintRotateY") ($transform+".rotateY");
+									connectAttr -f ($normalConstraint+".constraintRotateZ") ($transform+".rotateZ");
+									
+								} else {
+									string $aimConstraint = createDGNode( "aimConstraint", "", $transform );
+									string $aimConstraintPlug = ($aimConstraint+".target[0]");
+									setAttr ($aimConstraintPlug+".targetWeight") 1.0;
+									setAttr ($aimConstraint+".aimVector") ($aim.x) ($aim.y) ($aim.z);
+									setAttr ($aimConstraint+".upVector") ($up.x) ($up.y) ($up.z);
+									connectAttr ($transform+".aim") ($aimConstraint+".aimVector");
+									//connectAttr ($transform+".up") ($aimConstraint+".upVector");
+									connectAttr ($multiplyDivide+".output") ($aimConstraint+".upVector");
+									setAttr ($aimConstraint+".worldUpType") 3; // worldUpType vector
+
+									string $plusMinusAverage = createDGNode( "plusMinusAverage", "", "" );
+									setAttr ($plusMinusAverage+".operation") 1; // sum operation
+									connectAttr -f ($pointOnMeshInfo+".position") ($plusMinusAverage+".input3D[0]");
+									connectAttr -f ($pointOnMeshInfo+".normal") ($plusMinusAverage+".input3D[1]");
+									connectAttr -f ($plusMinusAverage+".output3D") ($aimConstraintPlug+".targetTranslate");
+									connectAttr -f  ($plusMin2+".output3D") ($aimConstraint+".worldUpVector");
+
+									connectAttr -f ($transform+".parentInverseMatrix") ($aimConstraint+".constraintParentInverseMatrix");
+									connectAttr -f ($pointOnMeshInfo+".position") ($aimConstraint+".constraintTranslate");
+									connectAttr -f ($transform+".rotatePivot") ($aimConstraint+".constraintRotatePivot");
+									connectAttr -f ($transform+".rotatePivotTranslate") ($aimConstraint+".constraintRotateTranslate");
+									connectAttr -f ($transform+".rotateOrder") ($aimConstraint+".constraintRotateOrder");
+
+									connectAttr -f ($aimConstraint+".constraintRotateX") ($transform+".rotateX");
+									connectAttr -f ($aimConstraint+".constraintRotateY") ($transform+".rotateY");
+									connectAttr -f ($aimConstraint+".constraintRotateZ") ($transform+".rotateZ");
+								}
+								
+								break;
+		case "nurbsCurve" 	:	
+								
+		case "nurbsSurface" :	string $pointOnNurbsInfoType = "";
+								if( $geometryType == "nurbsCurve" )
+									$pointOnNurbsInfoType = "pointOnCurveInfo";
+								else if( $geometryType == "nurbsSurface" )
+									$pointOnNurbsInfoType = "pointOnSurfaceInfo";
+								
+								$closestResults = getClosestPointOnGeo( "", $position, $geometry );
+								// for a surface the results
+								//
+								float $closestPoint[3];
+								$closestPoint[0] = $closestResults[0];
+								$closestPoint[1] = $closestResults[1];
+								$closestPoint[2] = $closestResults[2];
+								float $closestU;
+								float $closestV;
+								if( $geometryType == "nurbsSurface" )
+								{
+									$closestU = $closestResults[12];
+									$closestV = $closestResults[13];
+								}
+								// for a curve the results are position, normal, tangent, uParam, distance;
+								//
+								else if( $geometryType == "nurbsCurve" )
+								{
+									$closestU = $closestResults[9];
+								}
+								
+								
+								string $pointOnNurbsInfo;
+								string $history[] = `listHistory $geometry`;
+								string $shape = "";
+								string $parallelShape = "";
+								if( size( $history ) == 1 )
+								{
+									warning("No history on the node "+$geometry+", a shapeOrig will be added to avoid cycle with the deformer.");
+									$shape = $parallelShape = addUpStreamDeformableShape( $geometry, true, true );
+									$pointOnNurbsInfo = createDGNode( $pointOnNurbsInfoType, "", "" );
+									if( $geometryType == "nurbsCurve" )
+										connectAttr -f ($shape+".worldSpace") ($pointOnNurbsInfo+".inputCurve");
+									else
+										connectAttr -f ($shape+".worldSpace") ($pointOnNurbsInfo+".inputSurface");
+								}
+								else
+								{
+									$shape = $history[0];
+									int $flagAsIntermediate = true;
+									int $hide = true;
+									$parallelShape = addParallelDeformableShape( $shape, $flagAsIntermediate, $hide );
+									string $outputAttr = getDeformableOutputAttribute( $parallelShape );
+									$pointOnNurbsInfo = createDGNode( $pointOnNurbsInfoType, "", "" );
+									if( $geometryType == "nurbsCurve" )
+										connectAttr -f ($parallelShape+"."+$outputAttr) ($pointOnNurbsInfo+".inputCurve");
+									else
+										connectAttr -f ($parallelShape+"."+$outputAttr) ($pointOnNurbsInfo+".inputSurface");
+								}
+								
+								if( $addGeoCnst == true )
+								{
+									string $cxIn[];
+									if( $geometryType == "nurbsCurve" )
+										$cxIn = `listConnections -s 1 -d 0 -scn 1 -p 1 ($pointOnNurbsInfo+".inputCurve")`;
+									else
+										$cxIn = `listConnections -s 1 -d 0 -scn 1 -p 1 ($pointOnNurbsInfo+".inputSurface")`;
+										
+									string $geoConstraint = createDGNode( "geometryConstraint", "", $transform );
+									connectAttr $cxIn[0] ($geoConstraint+".target[0].targetGeometry");
+									connectAttr ($geoConstraint+".constraintGeometry") ($transform+".geometry");
+									connectAttr ($transform+".parentInverseMatrix") ($geoConstraint+".constraintParentInverseMatrix");
+								}
+								
+								
+								if( $geometryType == "nurbsSurface" )
+								{
+									setAttr ($pointOnNurbsInfo+".parameterU") $closestU;
+									setAttr ($pointOnNurbsInfo+".parameterV") $closestV;
+								}
+								else
+									setAttr ($pointOnNurbsInfo+".parameter") $closestU;
+								
+								string $pointConstraint = createDGNode( "pointConstraint", "", $transform );
+								string $pointConstraintPlug = ($pointConstraint+".target[0]");
+								connectAttr -f ($pointOnNurbsInfo+".position") ($pointConstraintPlug+".targetTranslate");
+								setAttr ($pointConstraintPlug+".targetWeight") 1.0;
+								connectAttr -f ($transform+".parentInverseMatrix") ($pointConstraint+".constraintParentInverseMatrix");
+								connectAttr -f ($transform+".rotatePivot") ($pointConstraint+".constraintRotatePivot");
+								connectAttr -f ($transform+".rotatePivotTranslate") ($pointConstraint+".constraintRotateTranslate");
+								connectAttr -f ($pointConstraint+".constraintTranslateX") ($transform+".translateX");
+								connectAttr -f ($pointConstraint+".constraintTranslateY") ($transform+".translateY");
+								connectAttr -f ($pointConstraint+".constraintTranslateZ") ($transform+".translateZ");
+								
+								//-------------------------------------------------------------------------------------------------
+								// Custom attributes creation
+								if( $geometryType == "nurbsSurface" )
+								{
+									float $minMaxU[] = `getAttr ($shape+".minMaxRangeU")`;
+									float $minMaxV[] = `getAttr ($shape+".minMaxRangeV")`;
+									
+									if( catch(`addAttr -keyable true -sn "paramU" -ln "parameterU" -at double  -min $minMaxU[0] -max $minMaxU[1] -dv $closestU $transform`))
+										warning("Procedure \"createStickyTransformOnGeo\": Unable to add attribute parameterU on the node "+$transform+" ...");
+									else
+									{
+										setAttr ($transform+".parameterU") $closestU;
+										connectAttr -f ($transform+".parameterU") ($pointOnNurbsInfo+".parameterU");
+									}
+									if( catch(`addAttr -keyable true -sn "paramV" -ln "parameterV" -at double  -min $minMaxV[0] -max $minMaxV[1] -dv $closestU $transform`))
+										warning("Procedure \"createStickyTransformOnGeo\": Unable to add attribute parameterV on the node "+$transform+" ...");
+									else
+									{
+										setAttr ($transform+".parameterV") $closestV;
+										connectAttr -f ($transform+".parameterV") ($pointOnNurbsInfo+".parameterV");
+									}
+								}
+								else if( $geometryType == "nurbsCurve" )
+								{
+									float $minMaxU[] = `getAttr ($shape+".minMaxValue")`;
+									if( catch(`addAttr -keyable true -sn "paramU" -ln "parameterU" -at double  -min $minMaxU[0] -max $minMaxU[1] -dv $closestU $transform`))
+										warning("Procedure \"createStickyTransformOnGeo\": Unable to add attribute parameterU on the node "+$transform+" ...");
+									else
+									{
+										setAttr ($transform+".parameterU") $closestU;
+										connectAttr -f ($transform+".parameterU") ($pointOnNurbsInfo+".parameter");
+									}
+								}
+								if( catch(`addAttr -hidden true -sn "stckongeo" -ln "stickOnGeo" -at message $transform`))
+									warning("Procedure \"createStickyTransformOnGeo\": Unable to add attribute stickOnGeo on the node "+$transform+" ...");
+								else
+								{
+									connectAttr -f ($parallelShape+".message") ($transform+".stickOnGeo");
+								}
+																
+								// now orientation rig
+								//
+								if ($addNormalCnst) {
+									if(  $geometryType == "nurbsSurface" ){
+										string $normalConstraint = createDGNode( "normalConstraint", "", $transform );
+										string $normalConstraintPlug = ($normalConstraint+".target[0]");
+										setAttr ($normalConstraintPlug+".targetWeight") 1.0;
+										setAttr ($normalConstraint+".aimVector") ($aim.x) ($aim.y) ($aim.z);
+										setAttr ($normalConstraint+".upVector") ($up.x) ($up.y) ($up.z);
+										connectAttr ($transform+".aim") ($normalConstraint+".aimVector");
+										connectAttr ($transform+".up") ($normalConstraint+".upVector");
+										string $cxIn[] = `listConnections -s 1 -d 0 -scn 1 -p 1 ($pointOnNurbsInfo+".inputSurface")`;
+										connectAttr $cxIn[0] ($normalConstraint+".target[0].targetGeometry");
+										
+										if( catch(`addAttr -keyable true -ln "worldUp" -at "enum" -en "Tangent:SceneUp:" $transform`))
+											warning("Procedure \"createStickyTransformOnGeo\": Unable to add attribute worldUp on the node "+$transform+" ...");
+										else
+										{
+											string $cond = createDGNode( "condition", "", "" );
+											connectAttr -f ($transform+".worldUp") ($cond+".firstTerm");
+											setAttr ($cond+".secondTerm") 0;
+											setAttr ($cond+".operation") 0; // equal operation
+											setAttr ($cond+".colorIfTrue") 3 0 0;
+											setAttr ($cond+".colorIfFalse") 0 0 0;
+											connectAttr -f ($cond+".outColorR") ($normalConstraint+".worldUpType");
+										}
+										connectAttr -f  ($pointOnNurbsInfo+".normalizedTangentU") ($normalConstraint+".worldUpVector");
+										connectAttr -f ($transform+".parentInverseMatrix") ($normalConstraint+".constraintParentInverseMatrix");
+										connectAttr -f ($transform+".translate") ($normalConstraint+".constraintTranslate");
+										connectAttr -f ($transform+".rotatePivot") ($normalConstraint+".constraintRotatePivot");
+										connectAttr -f ($transform+".rotatePivotTranslate") ($normalConstraint+".constraintRotateTranslate");
+										connectAttr -f ($transform+".rotateOrder") ($normalConstraint+".constraintRotateOrder");
+	
+										connectAttr -f ($normalConstraint+".constraintRotateX") ($transform+".rotateX");
+										connectAttr -f ($normalConstraint+".constraintRotateY") ($transform+".rotateY");
+										connectAttr -f ($normalConstraint+".constraintRotateZ") ($transform+".rotateZ");
+									}else{
+										string $tangentConstraint = createDGNode( "tangentConstraint", "", $transform );
+										string $tangentConstraintPlug = ($tangentConstraint+".target[0]");
+										setAttr ($tangentConstraintPlug+".targetWeight") 1.0;
+										setAttr ($tangentConstraint+".aimVector") ($aim.x) ($aim.y) ($aim.z);
+										setAttr ($tangentConstraint+".upVector") ($up.x) ($up.y) ($up.z);
+										connectAttr ($transform+".aim") ($tangentConstraint+".aimVector");
+										connectAttr ($transform+".up") ($tangentConstraint+".upVector");
+										string $cxIn[] = `listConnections -s 1 -d 0 -scn 1 -p 1 ($pointOnNurbsInfo+".inputCurve")`;
+										connectAttr $cxIn[0] ($tangentConstraint+".target[0].targetGeometry");
+										
+										if( catch(`addAttr -keyable true -ln "worldUp" -at "enum" -en "Normal:SceneUp:" $transform`))
+											warning("Procedure \"createStickyTransformOnGeo\": Unable to add attribute worldUp on the node "+$transform+" ...");
+										else
+										{
+											string $cond = createDGNode( "condition", "", "" );
+											connectAttr -f ($transform+".worldUp") ($cond+".firstTerm");
+											setAttr ($cond+".secondTerm") 0;
+											setAttr ($cond+".operation") 0; // equal operation
+											setAttr ($cond+".colorIfTrue") 3 0 0;
+											setAttr ($cond+".colorIfFalse") 0 0 0;
+											connectAttr -f ($cond+".outColorR") ($tangentConstraint+".worldUpType");
+										}
+										connectAttr -f  ($pointOnNurbsInfo+".normalizedNormal") ($tangentConstraint+".worldUpVector");
+										connectAttr -f ($transform+".parentInverseMatrix") ($tangentConstraint+".constraintParentInverseMatrix");
+										connectAttr -f ($transform+".translate") ($tangentConstraint+".constraintTranslate");
+										connectAttr -f ($transform+".rotatePivot") ($tangentConstraint+".constraintRotatePivot");
+										connectAttr -f ($transform+".rotatePivotTranslate") ($tangentConstraint+".constraintRotateTranslate");
+										connectAttr -f ($transform+".rotateOrder") ($tangentConstraint+".constraintRotateOrder");
+	
+										connectAttr -f ($tangentConstraint+".constraintRotateX") ($transform+".rotateX");
+										connectAttr -f ($tangentConstraint+".constraintRotateY") ($transform+".rotateY");
+										connectAttr -f ($tangentConstraint+".constraintRotateZ") ($transform+".rotateZ");
+									}
+								}else{
+									string $aimConstraint = createDGNode( "aimConstraint", "", $transform );
+									string $aimConstraintPlug = ($aimConstraint+".target[0]");
+									setAttr ($aimConstraintPlug+".targetWeight") 1.0;
+									setAttr ($aimConstraint+".aimVector") ($aim.x) ($aim.y) ($aim.z);
+									setAttr ($aimConstraint+".upVector") ($up.x) ($up.y) ($up.z);
+									connectAttr ($transform+".aim") ($aimConstraint+".aimVector");
+									connectAttr ($transform+".up") ($aimConstraint+".upVector");
+									setAttr ($aimConstraint+".worldUpType") 3; // worldUpType vector
+									
+									string $plusMinusAverage = createDGNode( "plusMinusAverage", "", "" );
+									setAttr ($plusMinusAverage+".operation") 1; // sum operation
+									connectAttr -f ($pointOnNurbsInfo+".position") ($plusMinusAverage+".input3D[0]");
+									connectAttr -f ($pointOnNurbsInfo+".normalizedNormal") ($plusMinusAverage+".input3D[1]");
+									connectAttr -f ($plusMinusAverage+".output3D") ($aimConstraintPlug+".targetTranslate");
+									if( $geometryType == "nurbsSurface" )
+										connectAttr -f  ($pointOnNurbsInfo+".normalizedTangentU") ($aimConstraint+".worldUpVector");
+									else
+										connectAttr -f  ($pointOnNurbsInfo+".normalizedTangent") ($aimConstraint+".worldUpVector");
+									
+									connectAttr -f ($transform+".parentInverseMatrix") ($aimConstraint+".constraintParentInverseMatrix");
+									connectAttr -f ($pointOnNurbsInfo+".position") ($aimConstraint+".constraintTranslate");
+									connectAttr -f ($transform+".rotatePivot") ($aimConstraint+".constraintRotatePivot");
+									connectAttr -f ($transform+".rotatePivotTranslate") ($aimConstraint+".constraintRotateTranslate");
+									connectAttr -f ($transform+".rotateOrder") ($aimConstraint+".constraintRotateOrder");
+									
+									connectAttr -f ($aimConstraint+".constraintRotateX") ($transform+".rotateX");
+									connectAttr -f ($aimConstraint+".constraintRotateY") ($transform+".rotateY");
+									connectAttr -f ($aimConstraint+".constraintRotateZ") ($transform+".rotateZ");
+								}
+								break;
+		default				:	error("Procedure \"createStickyTransformOnGeo\": Invalid geometry type "+$geometryType+".");
+	
+	}
+
+	if( `objExists $transform` )
+	{
+		for( $attr in $attrsKeyable )
+		{
+			if(!size(`match "translate" $attr`) )
+				setAttr -k 0 -l 1 ($transform+"."+$attr);
+			else
+			{
+				if($interactiveManipulation)
+					setAttr -k 0 -l 0 ($transform+"."+$attr);
+				else
+					setAttr -k 0 -l 1 ($transform+"."+$attr);
+			}
+		}
+		
+		// set the world up option
+		//
+		switch($worldUp)
+		{
+			case "normal" :
+			case "tangent": catch(`setAttr ($transform+".worldUp") 0`);
+							break;
+			case "sceneUp": catch(`setAttr ($transform+".worldUp") 1`);
+							break;
+			default       : catch(`setAttr ($transform+".worldUp") 1`);
+							break;
+		}
+	}
+		
+	
+	
+	
+	return $transform;
+}
+//
+//  Procedure Name:
+//      attributeFromPlug
+//
+//  Description:
+// 				Return the attribute part of a plug   
+//  Input Arguments:
+//				String for the plug
+//  Return Value:
+//      string the attribute part 	
+//
+global proc string attributeFromPlug(string $plug)
+{
+	string $tok[];
+	tokenize $plug "." $tok;
+	string $attribute = "";
+	if (size($tok)>1)
+	{
+		$attribute = $tok[1];
+		for ($i=2; $i<size($tok); $i++)
+			$attribute += ("." + $tok[$i]);
+	}
+	
+	return $attribute;
+}		
+//
+//  Procedure Name:
+//      nodeFromPlug
+//
+//  Description:
+// 				Return the node part of a plug   
+//  Input Arguments:
+//				String for the plug
+//  Return Value:
+//      string the node part
+//
+global proc string nodeFromPlug(string $plug)
+{
+	string $tok[];
+	tokenize $plug "." $tok;
+	return $tok[0];
+}
+
+//
+//  Procedure Name:
+//      localSoftMod
+//
+//  Description:
+// 				Create a "local" soft Modifier by tweaking the bindPreMatrix   
+//  Input Arguments:
+//				String for the hook
+//				String array for the memberShip
+//				Boolean to specify to take all the object`s control points
+//  Return Value:
+//      string array for the softMod node and the handle 	
+//
+global proc string[] localSoftMod( string $hook, string $controlPoints[], int $all )
+{
+	global int $gSelectMeshVerts, $gSelectCVsBit;
+	if(!`objExists $hook` || !size(`ls -tr $hook`) )
+		error("Procedure \"localSoftMod\": invalid hook supplied.");
+	
+	string $cpArray[];
+	if ( size( $controlPoints ) )
+	{
+		string $vtxArray[] = `filterExpand -ex true -sm $gSelectMeshVerts $controlPoints`;
+		if( !size( $vtxArray ) ) // vertices
+		{
+			string $cvArray[] = `filterExpand -ex true -sm $gSelectCVsBit $controlPoints`;
+			if( !size( $cvArray ) )
+				error("Procedure \"localSoftMod\": Invalid control points supplied.");
+			else
+				$cpArray = $cvArray;
+		}
+		else
+			$cpArray = $vtxArray;
+	}
+	else
+		error("Procedure \"localSoftMod\": The controlPoints array supplied is empty.");
+	
+	string $geometry;
+	// eliminate controlPoints from another geometry
+	//
+	string $tmpArray[];
+	for( $i = 0; $i < size( $cpArray ); $i++ )
+	{
+		if( $i == 0 )
+		{
+			$geometry = nodeFromPlug( $cpArray[$i] );
+			$tmpArray[size($tmpArray)] = $cpArray[$i];
+		}
+		else
+		{
+			string $tmpNode = nodeFromPlug( $cpArray[$i] );
+			if( $tmpNode == $geometry )
+				$tmpArray[size($tmpArray)] = $cpArray[$i];
+		}
+	}
+	$cpArray = $tmpArray;
+	
+	select -cl; // be sure nothing is selected
+	
+	string $name = `match "^[^0-9]+" $hook`;
+	$name+= "SoftMod";
+	string $result[] = `softMod -n $name`;
+	string $node = $result[0];
+	string $handle = $result[1];
+	string $res[] = `parent $handle $hook`;
+	$handle = $res[0];
+	// reorder so that handle is first child
+	reorder -front $handle;
+	makeIdentity -apply false -translate true -rotate true -scale true $handle; // zero out transformations
+	connectAttr -f ($handle+".parentInverseMatrix") ($node+".bindPreMatrix");
+	string $clstSet[] = `listConnections -source false -destination true -type "objectSet" $node`;
+	if( $all == true )
+		sets -add $clstSet[0] $geometry; // add all the geometry
+	else 
+		sets -add $clstSet[0] $cpArray; // add only the selected vtx
+	string $localOrWorld = "world";
+	float $radius = getCpBoundingSphereRadius( $cpArray, $localOrWorld );
+	float $tol = `tolerance -q -linear`;
+	if( equivalentTol(0, $radius, $tol ) )
+		$radius = 1;
+	float $baryCenter[3] = getCpBaryCenter( $cpArray, $localOrWorld );
+	float $hookPos[3] = `xform -q -a -ws -rp $hook`;
+	float $d = distance( $hookPos, $baryCenter );
+	$radius = $radius+$d;
+	setAttr ($node+".falloffRadius") $radius;
+	connectAttr ($hook+".translateX") ($node+".falloffCenterX");
+	connectAttr ($hook+".translateY") ($node+".falloffCenterY");
+	connectAttr ($hook+".translateZ") ($node+".falloffCenterZ");
+	return $result;
+}
+
+//
+//  Procedure Name:
+//      doStickyDeformer
+//
+//  Description:
+// 				Create the sticky deformer   
+//  Input Arguments:
+//				String for the name
+//				Vector for the aim
+//				Vector for the up
+//				String for the world up type
+//				Boolean to specify to create a callBack that update u, v and face index each time the hook is modified ( allow interactive manipulation of the sticky deformer )
+//  Return Value:
+//      string array for the sticky transform, the softMod node, the handle and the scriptJob`s ID 	
+//
+global proc string[] doStickyDeformer( string $name, vector $aim, vector $up, string $worldUp, int $attachJob )
+{
+	string $controlPoints[] = `ls -sl -fl`;
+	global int $gSelectMeshVerts, $gSelectCVsBit;
+	string $cpArray[];
+	if ( size( $controlPoints ) )
+	{
+		string $vtxArray[] = `filterExpand -ex true -sm $gSelectMeshVerts $controlPoints`;
+		if( !size( $vtxArray ) ) // vertices
+		{
+			string $cvArray[] = `filterExpand -ex true -sm $gSelectCVsBit $controlPoints`;
+			if( !size( $cvArray ) )
+				error("Invalid control points selected.");
+			else
+				$cpArray = $cvArray;
+		}
+		else
+			$cpArray = $vtxArray;
+	}
+	else
+		error("Procedure \"doStickyDeformer\": No controlPoints selected.");
+	
+	string $geometry;
+	// eliminate controlPoints from another geometry
+	//
+	string $tmpArray[];
+	for( $i = 0; $i < size( $cpArray ); $i++ )
+	{
+		if( $i == 0 )
+		{
+			$geometry = nodeFromPlug( $cpArray[$i] );
+			$tmpArray[size($tmpArray)] = $cpArray[$i];
+		}
+		else
+		{
+			string $tmpNode = nodeFromPlug( $cpArray[$i] );
+			if( $tmpNode == $geometry )
+				$tmpArray[size($tmpArray)] = $cpArray[$i];
+		}
+	}
+	$cpArray = $tmpArray;
+	
+	
+	$tol = `tolerance -q -linear`;
+	$aim = unit( $aim); 
+	$up = unit( $up);
+	if(  equivalentTol( dot($aim,$up), 1.0, $tol ) ) // the aim and up vector are identique
+		error("Procedure \"doStickyDeformer\": The supplied aim and up vectors are equal.");
+	
+	string $localOrWorld = "world";
+	float $position[] = getCpBaryCenter( $cpArray, $localOrWorld );
+	int $interactiveManipulation = false;
+	if ($attachJob)
+		$interactiveManipulation = true;
+	string $transform = createStickyTransformOnGeo( $name, $position, $geometry, $aim, $up, $worldUp, $interactiveManipulation );
+	int $all = true;
+	string $softModResult[] = localSoftMod( $transform, $cpArray, $all );
+	
+	string $results[];
+	$results[0] = $transform;
+	$results = stringArrayCatenate( $results, $softModResult );
+	if ($attachJob)
+		$results[size($results)] = doAttachJob( $transform );
+
+	return $results;
+}
+
+//
+//  Procedure Name:
+//      stickyDeformer
+//
+//  Description:
+// 				Create the sticky deformer, interactive version, mainly for debug purpose   
+//  Input Arguments:
+//
+//  Return Value:
+//      string array for the sticky transform, the softMod node, the handle and the scriptJob`s ID 	
+//
+global proc string[] stickyDeformer()
+{
+	string $results[];
+	string $name = "sticky#";
+	vector $aim = <<1,0,0>>;
+	vector $up = <<0,1,0>>;
+	string $worldUp = "tangent";
+	int $attachJob = true;
+	$results = doStickyDeformer( $name, $aim, $up, $worldUp, $attachJob );
+	return $results;
+}
+
+//
+//
+//  Procedure Name:
+//      doAttachJob
+//
+//  Description:
+// 				 Attach an update job to the sticky transform   
+//  Input Arguments:
+//				String for the sticky transform
+//  Return Value:
+//      int for the scriptJob`s ID 	
+//
+global proc int doAttachJob( string $sticky )
+{
+	if(!`objExists $sticky` )
+		error("The supplied node "+$sticky+" does not exist.");
+	
+	if(!attributeExists( "stickOnGeo", $sticky) )
+		error("The supplied node "+$sticky+" is not a sticky transform.");
+	
+	int $job = -1;
+	if(attributeExists("jobId", $sticky) )
+	{
+		$job = `getAttr ($sticky+".jobId")`;
+		if(`scriptJob -exists $job`)
+		{
+			warning("A callBack has allready been attached to the sticky transform "+$sticky+".");
+			return $job;
+		}
+	}
+	
+	
+	int $success = true;
+	$success*=!catch(`setAttr -k 0 -l 0 ($sticky+".translateX")`);
+	$success*=!catch(`setAttr -k 0 -l 0 ($sticky+".translateY")`);
+	$success*=!catch(`setAttr -k 0 -l 0 ($sticky+".translateZ")`);
+	
+	if( $success )
+	{
+		$job = `scriptJob -allChildren -cu true -attributeChange ($sticky+".translate") updateStickyTransform`;
+		if(!attributeExists("jobId", $sticky) )
+		{
+			if( !catch(`addAttr -hidden true -ln jobId -at long $sticky`) )
+				setAttr ($sticky+".jobId") $job;
+		}
+		else
+			setAttr ($sticky+".jobId") $job;
+	}
+	else
+		error("Unable to unlock "+$sticky+"`s translate channel");
+	return $job;
+}
+//
+//
+//  Procedure Name:
+//      doDetachJob
+//
+//  Description:
+// 				 Detach an update job   
+//  Input Arguments:
+//				String for the sticky transform
+//  Return Value:
+//      int for the scriptJob`s ID deleted	
+//
+global proc int doDetachJob( string $sticky )
+{
+	if(!`objExists $sticky` )
+		error("The supplied node "+$sticky+" does not exist.");
+	
+	if(!attributeExists( "stickOnGeo", $sticky) )
+		error("The supplied node "+$sticky+" is not a sticky transform.");
+
+	int $job;
+	if(attributeExists("jobId", $sticky) )
+	{
+		$job = `getAttr ($sticky+".jobId")`;
+		if(`scriptJob -exists $job`)
+		{
+			if(!catch(`scriptJob -force -kill $job`))
+			{
+				deleteAttr ($sticky+".jobId");
+				int $success = true;
+				$success*=!catch(`setAttr -k 0 -l 1 ($sticky+".translateX")`);
+				$success*=!catch(`setAttr -k 0 -l 1 ($sticky+".translateY")`);
+				$success*=!catch(`setAttr -k 0 -l 1 ($sticky+".translateZ")`);
+				if( $success )
+					return $job;
+			}
+			else
+				return false;
+		}
+		else
+		{
+			warning("The script job ID "+$job+" does not exist.");
+			deleteAttr ($sticky+".jobId");
+			int $success = true;
+			$success*=!catch(`setAttr -k 0 -l 1 ($sticky+".translateX")`);
+			$success*=!catch(`setAttr -k 0 -l 1 ($sticky+".translateY")`);
+			$success*=!catch(`setAttr -k 0 -l 1 ($sticky+".translateZ")`);
+			return $success;
+		}
+	}
+	else
+		error("No callBack attach to this sticky transform.");
+	return false;
+}
+//
+//
+//  Procedure Name:
+//      attachJob
+//
+//  Description:
+// 				 interactive version of doAttachJob, , mainly for debug purpose   
+//  Input Arguments:
+//					none
+//  Return Value:
+//      int for the scriptJob`s ID	
+//
+global proc int[] attachJob()
+{
+	int $jobs[];
+	string $sel[] = `ls -sl -tr`;
+	if( size( $sel ) )
+	{
+		for( $sticky in $sel )
+			$jobs[size($jobs)] = doAttachJob( $sticky );
+	}
+	return $jobs;
+}
+//
+//
+//  Procedure Name:
+//      detachJob
+//
+//  Description:
+// 				 interactive version of doDetachJob, , mainly for debug purpose   
+//  Input Arguments:
+//					none
+//  Return Value:
+//      int for the scriptJob`s ID deleted	
+//
+global proc int[] detachJob()
+{
+	int $jobs[];
+	string $sel[] = `ls -sl -tr`;
+	if( size( $sel ) )
+	{
+		for( $sticky in $sel )
+			$jobs[size($jobs)] = doDetachJob( $sticky );
+	}
+	return $jobs;
+}
+
+//
+//
+//  Procedure Name:
+//      updateStickyTransform
+//
+//  Description:
+// 				 Used by the scriptJob to update the sticky transform (hook)   
+//  Input Arguments:
+//					none
+//  Return Value:
+//      success code true/false	
+//	
+global proc int updateStickyTransform()
+{
+	global int $gSelectMeshFaces, $gSelectMeshVtxFaces, $gSelectMeshUVs;	
+	
+	// test aussi condition false "playingBack"
+	// condition 
+	if( `isTrue playingBack` || `isTrue timeChanged` )
+		return 0;
+	string $sel[] = `ls -sl -tr`;
+	if(!size( $sel ) )
+		return 0;
+	string $sticky = $sel[0];
+	// check it is the right selection ?
+	if (!objExists($sticky+".stickOnGeo"))
+		return 0;
+
+	// print("// Entering updating procedure for sticky "+$sticky+" ... //\n");
+	float $position[3] = `xform -q -ws -t $sticky`;
+	string $cxIn[] = `listConnections -shapes 1 -s 1 -d 0 ($sticky+".stickOnGeo")`;
+	if( !size( $cxIn ) )
+		return 0;
+	string $shape = $cxIn[0];
+	//print("Found connection from shape "+$shape+"\n");
+	string $geometryType = `nodeType $shape`;
+	float $closestResults[9];
+	if( $geometryType == "mesh" )
+	{
+		int $mayaVersion = getMayaVersion();
+		if( $mayaVersion < 7 )
+			$closestResults = `closestPointOnMesh -ip $position[0] $position[1] $position[2] -q -p -nr -u -v -f $shape`;	
+		else
+		{
+			if(!`pluginInfo -q -loaded "nearestPointOnMesh"`)
+			{
+				if(`pluginInfo -q -loaded "closestPointOnMesh"`)
+					$closestResults = `closestPointOnMesh -ip $position[0] $position[1] $position[2] -q -p -nr -u -v -f $shape`;
+				else
+					error("Plug-in \"closestPointOnMesh\" and \"nearestPointOnMesh\" are not loaded.");
+			}
+			else
+				$closestResults = `nearestPointOnMesh -ip $position[0] $position[1] $position[2] -q -p -nr -u -v -f $shape`;
+		}
+	}
+	else if( $geometryType == "nurbsCurve" )
+		$closestResults[0] = `closestPointOnCurve -ip $position[0] $position[1] $position[2] -q -u $shape`;	
+	else if( $geometryType == "nurbsSurface" )
+	{
+		string $closestPointOnSurface = "";
+		string $cxOut[] = `listConnections -s 0 -d 1 -scn 1 -type "closestPointOnSurface" ($shape+".worldSpace")`;
+		if( !size( $cxOut ) )
+		{
+			$closestPointOnSurface = createDGNode( "closestPointOnSurface", "", "" );
+			connectAttr ($shape+".worldSpace") ($closestPointOnSurface+".inputSurface");
+			connectAttr ($sticky+".translateX")($closestPointOnSurface+".inPositionX");
+			connectAttr ($sticky+".translateY")($closestPointOnSurface+".inPositionY");
+			connectAttr ($sticky+".translateZ")($closestPointOnSurface+".inPositionZ");
+		}
+		else
+			$closestPointOnSurface = $cxOut[0];
+		
+		$closestResults[0] = `getAttr ($closestPointOnSurface+".parameterU")`;
+		$closestResults[1] = `getAttr ($closestPointOnSurface+".parameterV")`;
+	}
+	else
+		return 0;
+	float $tol = `tolerance -q -linear`;
+	int $face = 0;
+	float $u = 0;
+	float $v = 0;
+	if( $geometryType == "mesh" )
+	{
+		// we get more info in case there are no UVs
+		$face = $closestResults[8];
+		string $faceName = $shape+".f["+$face+"]";
+		//print("faceName	: "+$faceName+"\n");
+		//print("u 		: "+$closestResults[0]+"\n");
+		//print("v 		: "+$closestResults[1]+"\n");
+		float $closestU = $closestResults[6];
+		float $closestV = $closestResults[7];
+		float $closestPoint[3] = {$closestResults[0], $closestResults[1], $closestResults[2]};
+		float $closestNormal[3] = {$closestResults[3], $closestResults[4], $closestResults[5]};
+		float $relativesUV[2];
+		// Check if there are UVs (as much as face points)
+		if( isIntermediateObject($shape) )
+			setNoIntermediateObject($shape);
+		string $UVs[] = `polyListComponentConversion -fromFace -toUV $faceName`;
+		$UVs = `filterExpand -ex true -sm $gSelectMeshUVs $UVs`;
+		string $facePoints[] = `polyListComponentConversion -fromFace -toVertexFace $faceName`;
+		$facePoints = `filterExpand -ex true -sm $gSelectMeshVtxFaces $facePoints`;	
+		// print ("// for face "+$faceName+", found UVs //\n");
+		// print $UVs;
+		// print ("// found facePoints //\n");
+		// print $facePoints;
+		// int $thereAreUVs = ( size($UVs) == size($facePoints) );
+		int $thereAreUVs = (size($UVs));
+		// print ("// thereAreUVs = "+$thereAreUVs+" //\n");
+		if ( $thereAreUVs ) {
+			$relativesUV = textureSpaceUvToFaceSpaceUv( $closestU, $closestV, $faceName, $UVs );
+		} else {
+			int $facePtId[];
+			float $facePtU[];
+			float $facePtV[];			
+			$relativesUV = pointInFaceToFaceSpaceUv( $closestPoint, $closestNormal, $faceName,
+													$facePoints, $facePtId, $facePtU, $facePtV );
+			// Add "on the fly" UVs if needed										
+			addUnitUV($shape, $face, $facePtId, $facePtU, $facePtV);
+		}
+		setIntermediateObject($shape);
+		$u = $relativesUV[0];
+		$v = $relativesUV[1];
+	}
+	else if( $geometryType == "nurbsCurve" ) 
+		$u = $closestResults[0];
+	else if( $geometryType == "nurbsSurface" )
+	{
+		$u = $closestResults[0];
+		$v = $closestResults[1];
+	}
+	
+	// pour éviter que ça boucle
+	int $oldFace = 0;
+	float $oldU = 0;
+	float $oldV = 0;
+	if( $geometryType == "mesh" ) 
+		$oldFace = `getAttr ($sticky+".faceIndex")`;
+	$oldU = `getAttr ($sticky+".parameterU")`;
+	if( $geometryType == "mesh" || $geometryType == "nurbsSurface" ) 
+		$oldV = `getAttr ($sticky+".parameterV")`;
+	int $success = true;
+	if ( ($face != $oldFace) || !equivalentTol($oldU, $u, 0.01) || !equivalentTol($oldV, $v, 0.01) )
+	{	
+		//print ("// updating to face "+$face+" uv "+$u+" "+$v+" //\n");
+		//print ("// updating "+$sticky+" u,v and face info //\n");
+		if(attributeExists("faceIndex",$sticky))
+			$success*=!catch(`setAttr ($sticky+".faceIndex") -clamp $face`);
+		if(attributeExists("parameterU",$sticky))	
+			$success*=!catch(`setAttr ($sticky+".parameterU") -clamp $u`);
+		if(attributeExists("parameterV",$sticky))
+			$success*=!catch(`setAttr ($sticky+".parameterV") -clamp $v`);
+	}
+	
+	return $success;
+}
