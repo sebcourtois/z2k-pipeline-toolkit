@@ -1076,7 +1076,13 @@ class checkModule(object):
 
 
         # 16 chr_setVis_Params (chr_setVis_Params)
-        if not jpZ.chr_setVis_Params()[0] : 
+        self.printF("chr_setVis_Params()", st="t")
+        result = jpZ.chr_setVis_Params()[0]
+        # prints -------------------
+        self.printF(result, st="r")
+        # --------------------------
+        # --------------------------
+        if not result :
             boolResult = False
         self.pBar_upd(step= 1,)
 

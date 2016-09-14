@@ -1541,7 +1541,7 @@ def z2k_Select_Dyn_CTR( objL = [], mode="select", *args, **kwargs):
                 custAttrL = cmds.listAttr(i,ud=1)
                 if custAttrL:
                     testL = [ x.upper() for x in custAttrL]
-                    print "    testL    =", testL
+                    # print "    testL    =", testL
                     # print "    dynAttrL =", dynAttrL 
                     if ( set(dynAttrL).issubset( set( testL)  ) ) or ( set(dynShortAttrL).issubset( set( testL)  ) ) :
                         outSelL.append(i)
@@ -3489,7 +3489,7 @@ def chr_hideCurveAiAttr(*args, **kwargs):
 
 
 def chr_replace_chr_vis_Exp_System(*args, **kwargs):
-    print "chr_replace_chr_vis_Exp_System()"
+    print "chr_replace_chr_vis_Exp_System(TAMERE)"
     """ Description: Remplace le system original de toonkit comportant environ 320 expression par des nodes multiplyLinear
                      Renvoie toujours True et le nombre d'expression deleted/replaced
         Return : [BOOL,int]
@@ -3549,56 +3549,58 @@ def chr_replace_chr_vis_Exp_System(*args, **kwargs):
                     # print j,Attr
                     exp= cmds.listConnections( j+"."+Attr, s=1, d=0, scn=1,)
                     if exp:
-                        # print "exp=", exp
+                        print "exp=", exp
                         # print "exp[0]",exp[0]
                         exp = exp[0]
                         inExpConL = []
-                        if exp not in ["VisHolder_Main_Ctrl"]: 
-                            inputL = cmds.listAttr(exp+".input[*]")
-                            for i in inputL:
-                                inExpConL.append(cmds.listConnections(exp+"."+i,s=1,d=0)[0])
-                                # print "    <->",inExpConL
-                            # print "inExpConL=", inExpConL
-                            compensed= list(set(inExpConL) )
-                            if compensed == ["VisHolder_Main_Ctrl"]:
-                                # print "YEAHHHHHHH"
-                                if cmds.objectType(exp) in ["expression"]:
-                                    print "   exp=",exp
-                                    currentStr = cmds.expression(exp,string=1,q=1 )
-                                    # print "    ->",currentStr
-                                    activeLvl = currentStr.rsplit("{0}.Controls * {0}.".format(inObj),1)[-1]
-                                    
-
-                                    if not "." in activeLvl:
-                                        # replace the expression by node multiply 
-                                        # create Multiply_R_factor node
-                                        multiply_Vis = cmds.createNode("multDoubleLinear", name=j + "Ctr_Shape_Switch_Vis#")
-
-                                        # connect
+                        if  cmds.objectType(exp) in ["expression"]:
+                            if exp not in ["VisHolder_Main_Ctrl"]: 
+                                inputL = cmds.listAttr(exp+".input[*]")
+                                if inputL:
+                                    for i in inputL:
+                                        inExpConL.append(cmds.listConnections(exp+"."+i,s=1,d=0)[0])
+                                        # print "    <->",inExpConL
+                                    # print "inExpConL=", inExpConL
+                                    compensed= list(set(inExpConL) )
+                                    if compensed == ["VisHolder_Main_Ctrl"]:
+                                        # print "YEAHHHHHHH"
                                         
-                                        cmds.connectAttr(inObj + "." + mainVisAttr, multiply_Vis + "." + "input1",f=1)
-                                        cmds.connectAttr(inObj + "." + activeLvl  , multiply_Vis + "." + "input2",f=1)
-
-                                        cmds.connectAttr(multiply_Vis+"."+ "output", j + "." + "visibility",f=1)
-
-
-                                        # delete old expression
+                                        currentStr = cmds.expression(exp,string=1,q=1 )
+                                        # print "    ->",currentStr
+                                        activeLvl = currentStr.rsplit("{0}.Controls * {0}.".format(inObj),1)[-1]
                                         
-                                        cmds.delete(exp)
-                                        replacedExpL.append(exp)
 
+                                        if not "." in activeLvl:
+                                            # replace the expression by node multiply 
+                                            # create Multiply_R_factor node
+                                            multiply_Vis = cmds.createNode("multDoubleLinear", name=j + "Ctr_Shape_Switch_Vis#")
+
+                                            # connect
+                                            
+                                            cmds.connectAttr(inObj + "." + mainVisAttr, multiply_Vis + "." + "input1",f=1)
+                                            cmds.connectAttr(inObj + "." + activeLvl  , multiply_Vis + "." + "input2",f=1)
+
+                                            cmds.connectAttr(multiply_Vis+"."+ "output", j + "." + "visibility",f=1)
+
+
+                                            # delete old expression
+                                            
+                                            cmds.delete(exp)
+                                            replacedExpL.append(exp)
+
+                                        else:
+                                            # print "     @activeLvl:",activeLvl
+                                            spkipedObjL.append(j)
+
+                                        
                                     else:
-                                        # print "     @activeLvl:",activeLvl
                                         spkipedObjL.append(j)
-
                                 else:
                                     spkipedObjL.append(j)
+                                    # print "compensed tatin:", compensed
                             else:
                                 spkipedObjL.append(j)
-                                # print "compensed tatin:", compensed
-                        else:
-                            spkipedObjL.append(j)
-                            print "BAD CONNECTION: directly connected to visHolder", compensed
+                                print "BAD CONNECTION: directly connected to visHolder", compensed
 
                     else:
                         
@@ -3649,7 +3651,8 @@ def chr_replace_chr_vis_Exp_System(*args, **kwargs):
                     print "  activeLvl=", activeLvl
 
 
-    print len(replacedExpL)
+    print "  spkipedObjL=", spkipedObjL
+    print "  replaced Vis Expresseion =",len(replacedExpL)
     return [True,len(replacedExpL),debugL]
 
 
@@ -4732,4 +4735,5 @@ def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
 def armTwistFix (*args, **kwargs):
     print "armTwistFix()"
     # Left_Rounding_Deformer_End_Crv_upV_pathCns_Mult1 #tweak rotation
+
 
