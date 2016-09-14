@@ -12,7 +12,8 @@ import traceback
 BASE_NAME = "z2k-pipeline-toolkit"
 
 APPS_LOCATIONS = {
-"Z2K_RV_LOC":(#r"C:\Program Files\Shotgun\RV-7.0\bin",
+"Z2K_RV_LOC":(r"C:\Program Files\Shotgun\RV-7.0.0\bin",
+              r"C:\Program Files\Shotgun\RV-7.0\bin",
               r"C:\Program Files\Shotgun\RV-6.2.8\bin",
               r"C:\Program Files\Shotgun\RV 6.2.6\bin",),
 "Z2K_MAYA_LOC":(r"C:\Program Files\Autodesk\Maya2016\bin",),
