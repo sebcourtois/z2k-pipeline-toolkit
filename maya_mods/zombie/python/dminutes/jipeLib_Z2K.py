@@ -1541,7 +1541,7 @@ def z2k_Select_Dyn_CTR( objL = [], mode="select", *args, **kwargs):
                 custAttrL = cmds.listAttr(i,ud=1)
                 if custAttrL:
                     testL = [ x.upper() for x in custAttrL]
-                    print "    testL    =", testL
+                    # print "    testL    =", testL
                     # print "    dynAttrL =", dynAttrL 
                     if ( set(dynAttrL).issubset( set( testL)  ) ) or ( set(dynShortAttrL).issubset( set( testL)  ) ) :
                         outSelL.append(i)
@@ -1570,6 +1570,64 @@ def z2k_selAll_asset_Ctr(*args, **kwargs):
     return toSel
 
 
+def selAll_asset_Ctr(setN="set_control",*args, **kwargs):
+    print "selAll_asset_Ctr()"
+    # select all controler of selected asset
+    toSel = []
+    cursel = cmds.ls(sl=1)
+    append = toSel.append
+    if len(cursel):
+        print "sel"
+        allNSL = [x.split(":",1)[0] for x in cursel if ":" in x ]
+        if len(allNSL):
+            for NS in allNSL:
+                append(NS+":"+ setN)
+                
+        else:
+            toSel = [setN]
+        
+    else:
+        print "No sel"
+        if cmds.objExists("*:"+setN):
+            toSel = ["*:"+setN]
+        if cmds.objExists(setN):
+            append(setN)
+    
+    # finaly select
+    cmds.select(toSel)
+        
+
+    return toSel
+
+def selAll_asset_Mesh(setN="set_meshcache",*args, **kwargs):
+    print "selAll_asset_Mesh()"
+    # select all controler of selected asset
+    toSel = []
+    cursel = cmds.ls(sl=1)
+    append = toSel.append
+    if len(cursel):
+        print "sel"
+        allNSL = [x.split(":",1)[0] for x in cursel if ":" in x ]
+        if len(allNSL):
+            for NS in allNSL:
+                append(NS+":"+ setN)
+                
+        else:
+            toSel = [setN]
+        
+    else:
+        print "No sel"
+        if cmds.objExists("*:"+setN):
+            toSel = ["*:"+setN]
+        if cmds.objExists(setN):
+            append(setN)
+    
+    # finaly select
+    cmds.select(toSel)
+        
+
+    return toSel
+    
 ##### SPINE TWEAK #####
 def spineTweak():
     '''
@@ -3431,7 +3489,7 @@ def chr_hideCurveAiAttr(*args, **kwargs):
 
 
 def chr_replace_chr_vis_Exp_System(*args, **kwargs):
-    print "chr_replace_chr_vis_Exp_System()"
+    print "chr_replace_chr_vis_Exp_System(TAMERE)"
     """ Description: Remplace le system original de toonkit comportant environ 320 expression par des nodes multiplyLinear
                      Renvoie toujours True et le nombre d'expression deleted/replaced
         Return : [BOOL,int]
@@ -3491,56 +3549,58 @@ def chr_replace_chr_vis_Exp_System(*args, **kwargs):
                     # print j,Attr
                     exp= cmds.listConnections( j+"."+Attr, s=1, d=0, scn=1,)
                     if exp:
-                        # print "exp=", exp
+                        print "exp=", exp
                         # print "exp[0]",exp[0]
                         exp = exp[0]
                         inExpConL = []
-                        if exp not in ["VisHolder_Main_Ctrl"]: 
-                            inputL = cmds.listAttr(exp+".input[*]")
-                            for i in inputL:
-                                inExpConL.append(cmds.listConnections(exp+"."+i,s=1,d=0)[0])
-                                # print "    <->",inExpConL
-                            # print "inExpConL=", inExpConL
-                            compensed= list(set(inExpConL) )
-                            if compensed == ["VisHolder_Main_Ctrl"]:
-                                # print "YEAHHHHHHH"
-                                if cmds.objectType(exp) in ["expression"]:
-                                    print "   exp=",exp
-                                    currentStr = cmds.expression(exp,string=1,q=1 )
-                                    # print "    ->",currentStr
-                                    activeLvl = currentStr.rsplit("{0}.Controls * {0}.".format(inObj),1)[-1]
-                                    
-
-                                    if not "." in activeLvl:
-                                        # replace the expression by node multiply 
-                                        # create Multiply_R_factor node
-                                        multiply_Vis = cmds.createNode("multDoubleLinear", name=j + "Ctr_Shape_Switch_Vis#")
-
-                                        # connect
+                        if  cmds.objectType(exp) in ["expression"]:
+                            if exp not in ["VisHolder_Main_Ctrl"]: 
+                                inputL = cmds.listAttr(exp+".input[*]")
+                                if inputL:
+                                    for i in inputL:
+                                        inExpConL.append(cmds.listConnections(exp+"."+i,s=1,d=0)[0])
+                                        # print "    <->",inExpConL
+                                    # print "inExpConL=", inExpConL
+                                    compensed= list(set(inExpConL) )
+                                    if compensed == ["VisHolder_Main_Ctrl"]:
+                                        # print "YEAHHHHHHH"
                                         
-                                        cmds.connectAttr(inObj + "." + mainVisAttr, multiply_Vis + "." + "input1",f=1)
-                                        cmds.connectAttr(inObj + "." + activeLvl  , multiply_Vis + "." + "input2",f=1)
-
-                                        cmds.connectAttr(multiply_Vis+"."+ "output", j + "." + "visibility",f=1)
-
-
-                                        # delete old expression
+                                        currentStr = cmds.expression(exp,string=1,q=1 )
+                                        # print "    ->",currentStr
+                                        activeLvl = currentStr.rsplit("{0}.Controls * {0}.".format(inObj),1)[-1]
                                         
-                                        cmds.delete(exp)
-                                        replacedExpL.append(exp)
 
+                                        if not "." in activeLvl:
+                                            # replace the expression by node multiply 
+                                            # create Multiply_R_factor node
+                                            multiply_Vis = cmds.createNode("multDoubleLinear", name=j + "Ctr_Shape_Switch_Vis#")
+
+                                            # connect
+                                            
+                                            cmds.connectAttr(inObj + "." + mainVisAttr, multiply_Vis + "." + "input1",f=1)
+                                            cmds.connectAttr(inObj + "." + activeLvl  , multiply_Vis + "." + "input2",f=1)
+
+                                            cmds.connectAttr(multiply_Vis+"."+ "output", j + "." + "visibility",f=1)
+
+
+                                            # delete old expression
+                                            
+                                            cmds.delete(exp)
+                                            replacedExpL.append(exp)
+
+                                        else:
+                                            # print "     @activeLvl:",activeLvl
+                                            spkipedObjL.append(j)
+
+                                        
                                     else:
-                                        # print "     @activeLvl:",activeLvl
                                         spkipedObjL.append(j)
-
                                 else:
                                     spkipedObjL.append(j)
+                                    # print "compensed tatin:", compensed
                             else:
                                 spkipedObjL.append(j)
-                                # print "compensed tatin:", compensed
-                        else:
-                            spkipedObjL.append(j)
-                            print "BAD CONNECTION: directly connected to visHolder", compensed
+                                print "BAD CONNECTION: directly connected to visHolder", compensed
 
                     else:
                         
@@ -3591,7 +3651,8 @@ def chr_replace_chr_vis_Exp_System(*args, **kwargs):
                     print "  activeLvl=", activeLvl
 
 
-    print len(replacedExpL)
+    print "  spkipedObjL=", spkipedObjL
+    print "  replaced Vis Expresseion =",len(replacedExpL)
     return [True,len(replacedExpL),debugL]
 
 
@@ -4625,35 +4686,35 @@ def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
             # wiiiiiippp store pose - find deltaMat - re apply pose
             oldIKMat = cmds.xform(inIKControl, matrix=True, q=True, worldSpace=False)
             oldFKMat = cmds.xform(inFkControl, matrix=True, q=True, worldSpace=False)
-            resetSRT(inObjL=[inIKControl,inFkControl])
+            # resetSRT(inObjL=[inIKControl,inFkControl])
 
-            refIKinvMat = cmds.getAttr(inIKControl + ".worldInverseMatrix")
-            refFKMat = cmds.xform(inFkControl, matrix=True, q=True, worldSpace=True)
-            outL = []
-            for i,j in zip(refFKMat,refIKinvMat):
-                outL.append(i*j)
-            deltaFKIKMat = outL
-            print "deltaFKIKMat=", deltaFKIKMat
-            # re set original vals
-            cmds.xform(inIKControl, matrix=oldIKMat)
-            cmds.xform(inFkControl, matrix=oldFKMat)
+        #     refIKinvMat = cmds.getAttr(inIKControl + ".worldInverseMatrix")
+        #     refFKMat = cmds.xform(inFkControl, matrix=True, q=True, worldSpace=True)
+        #     outL = []
+        #     for i,j in zip(refFKMat,refIKinvMat):
+        #         outL.append(i*j)
+        #     deltaFKIKMat = outL
+        #     print "deltaFKIKMat=", deltaFKIKMat
+        #     # re set original vals
+        #     cmds.xform(inIKControl, matrix=oldIKMat)
+        #     cmds.xform(inFkControl, matrix=oldFKMat)
 
-            # remach ik sur FK et reset FK
+        #     # remach ik sur FK et reset FK
             matchByXformMatrix([inFkControl, inIKControl,])
-            newIKMat = cmds.xform(inIKControl, matrix=True, q=True, worldSpace=True)
-            finalFK_mat = []
-            for i,j in zip(newIKMat,deltaFKIKMat):
-                finalFK_mat.append(i*j)
+        #     newIKMat = cmds.xform(inIKControl, matrix=True, q=True, worldSpace=True)
+        #     finalFK_mat = []
+        #     for i,j in zip(newIKMat,deltaFKIKMat):
+        #         finalFK_mat.append(i*j)
 
 
-            cmds.xform(inFkControl, matrix=finalFK_mat)
-            # handle leur puting de 180 sur Y entre FK et IK d'un cote du rig et pas de l autre
+        #     cmds.xform(inFkControl, matrix=finalFK_mat)
+        #     # handle leur puting de 180 sur Y entre FK et IK d'un cote du rig et pas de l autre
             if "Right_" in curobj:
                 cmds.rotate(-180,inIKControl , rotateY=True,os=1,relative=1)
 
             resetCTR([inFkControl])
 
-        # set upV coord
+        # # set upV coord
         cmds.xform(inUpV, m=McoorOld, worldSpace=True)
 
 
@@ -4674,4 +4735,5 @@ def IKFK_switch_fixFuckingToonKit(*args, **kwargs):
 def armTwistFix (*args, **kwargs):
     print "armTwistFix()"
     # Left_Rounding_Deformer_End_Crv_upV_pathCns_Mult1 #tweak rotation
+
 

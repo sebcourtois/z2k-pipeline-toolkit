@@ -427,7 +427,7 @@ class Z2K_ReleaseTool_Gui (Z2K_ReleaseTool):
             print 'self.assetCat=',self.assetCat
             # THIS IS FOR NOW ONLY OK FOR THE PREVIZ, IT DOESN'T TEST infoDict["assetType"] but only infoDict["assetCat"]
             tab = "    "
-            if  self.assetCat in ["chr"]:
+            if  self.assetCat in ["chr","cwp"]:
                 print "It' is a CHAR test"
                 if self.SourceAssetType in ["modeling_scene"]:
                     print tab, "modeling, test not ready"

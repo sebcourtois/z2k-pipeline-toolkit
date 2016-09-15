@@ -1,0 +1,444 @@
+//
+//  Alias Script File
+//  MODIFY THIS AT YOUR OWN RISK
+//
+//  Creation Date:  29 August 2006
+//	Author       :  Olivier Georges
+//
+//  Description:
+//		This script provides an option box dialog for the stickyDeformer command.
+//
+//	Input Arguments:
+//		boolean showOptionBox	true - show the option box dialog
+//								false - just execute the command
+//
+
+//
+//  Procedure Name:
+//      setOptionVars
+//
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+
+proc setOptionVars(int $forceFactorySettings)
+{
+	//	name.
+	//
+	if ($forceFactorySettings || !`optionVar -exists stickyDeformerName`) {
+		optionVar 	-stringValue 		stickyDeformerName "sticky#";
+	}
+	
+	//	aimVector.
+	//
+	if ($forceFactorySettings || !`optionVar -exists stickyDeformerAimVector`) {
+		optionVar 	-floatValue 		stickyDeformerAimVector 1.0
+					-floatValueAppend 	stickyDeformerAimVector 0.0
+					-floatValueAppend 	stickyDeformerAimVector 0.0;
+	}
+
+	//	upVector.
+	//
+	if ($forceFactorySettings || !`optionVar -exists stickyDeformerUpVector`) {
+		optionVar 	-floatValue 		stickyDeformerUpVector 0.0
+					-floatValueAppend 	stickyDeformerUpVector 1.0
+					-floatValueAppend 	stickyDeformerUpVector 0.0;
+	}
+
+	// World up
+
+	if ($forceFactorySettings || !`optionVar -exists stickyDeformerWorldUpType`) {
+		optionVar -stringValue stickyDeformerWorldUpType "sceneUp";
+	}
+
+	
+	// interactive manipulation
+	//
+	if ($forceFactorySettings || !`optionVar -exists stickyDeformerInteractiveManip`) {
+		optionVar -intValue stickyDeformerInteractiveManip 1;
+	}
+}
+
+//
+//  Procedure Name:
+//      stickyDeformerSetup
+//
+//  Description:
+//		Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//		forceFactorySettings - Whether the option values should be set to
+//                             default values.
+//
+//  Return Value:
+//      None.
+//
+global proc stickyDeformerSetup(string $parent, int $forceFactorySettings)
+{
+	//	Retrieve the option settings
+	//
+	setOptionVars($forceFactorySettings);
+
+	setParent $parent;
+
+	//	Query the optionVar's and set the values into the controls.
+
+	string $name = `optionVar -query stickyDeformerName`;
+	textFieldGrp 	-edit
+					-text $name
+					stickyDeformerNameWidget;
+	
+	//	aimVector.
+	//
+	float $aimVector[] = `optionVar -query stickyDeformerAimVector`;
+	floatFieldGrp 	-edit 
+					-value1 $aimVector[0]
+					-value2 $aimVector[1]
+					-value3 $aimVector[2]
+					stickyDeformerAimVectorWidget;
+
+	//	upVector.
+	//
+	float $upVector[] = `optionVar -query stickyDeformerUpVector`;
+	floatFieldGrp 	-edit 
+					-value1 $upVector[0]
+					-value2 $upVector[1]
+					-value3 $upVector[2]
+					stickyDeformerUpVectorWidget;
+
+	// World up
+
+	string $worldUpType = `optionVar -query stickyDeformerWorldUpType`;
+	switch ( $worldUpType )
+	{
+	case "tangent":
+					optionMenuGrp -edit -select 1 stickyDeformerWorldUpTypeWidget;
+					break;
+	case "normal":
+					optionMenuGrp -edit -select 2 stickyDeformerWorldUpTypeWidget;
+					break;
+	case "sceneUp":
+					optionMenuGrp -edit -select 3 stickyDeformerWorldUpTypeWidget;
+					break;
+	}
+
+	
+
+	//	interactive manipulation
+	//
+	int $interactive = `optionVar -query stickyDeformerInteractiveManip`;
+	if ($interactive)
+		checkBoxGrp -edit -value1 1 stickyDeformerInteractiveManipWidget;
+	else
+		checkBoxGrp -edit -value1 0 stickyDeformerInteractiveManipWidget;
+		
+	
+}
+
+//
+//  Procedure Name:
+//      stickyDeformerCallback
+//
+//  Description:
+//		Update the option values with the current state of the option box UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//
+//		doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+global proc stickyDeformerCallback(string $parent, int $doIt)
+{
+    setParent $parent;
+
+	//	Set the optionVar's from the control values, and then
+	//	perform the command.
+
+	//	Query the optionVar's and set the values into the controls.
+
+	optionVar -stringValue stickyDeformerName `textFieldGrp -query -text stickyDeformerNameWidget`;
+	
+	//	aimVector.
+	//
+	optionVar -floatValue stickyDeformerAimVector
+		`floatFieldGrp -query -value1 stickyDeformerAimVectorWidget`
+		-floatValueAppend stickyDeformerAimVector
+		`floatFieldGrp -query -value2 stickyDeformerAimVectorWidget`
+		-floatValueAppend stickyDeformerAimVector
+		`floatFieldGrp -query -value3 stickyDeformerAimVectorWidget`;
+
+	//	upVector.
+	//
+	optionVar -floatValue stickyDeformerUpVector
+		`floatFieldGrp -query -value1 stickyDeformerUpVectorWidget`
+		-floatValueAppend stickyDeformerUpVector
+		`floatFieldGrp -query -value2 stickyDeformerUpVectorWidget`
+		-floatValueAppend stickyDeformerUpVector
+		`floatFieldGrp -query -value3 stickyDeformerUpVectorWidget`;
+
+	// World up
+
+	int $state = `optionMenuGrp -query -select stickyDeformerWorldUpTypeWidget`;
+	switch ( $state )
+	{
+	case 1:
+		optionVar -stringValue stickyDeformerWorldUpType "tangent";
+		break;
+	case 2:
+		optionVar -stringValue stickyDeformerWorldUpType "normal";
+		break;
+	case 3:
+		optionVar -stringValue stickyDeformerWorldUpType "sceneUp";
+		break;
+	
+	}
+
+	// interactive manipulation 
+	//
+	optionVar -intValue stickyDeformerInteractiveManip `checkBoxGrp -query -value1 stickyDeformerInteractiveManipWidget`;
+	
+	if ($doIt) {
+		performStickyDeformer 0; 
+		addToRecentCommandQueue "performStickyDeformer 0" "StickyDeformer";
+	}
+}
+
+
+//
+//  Procedure Name:
+//      stickyDeformerOptions
+//
+//  Description:
+//		Construct the option box UI.  Involves accessing the standard option
+//		box and customizing the UI accordingly.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+// 
+proc stickyDeformerOptions()
+{
+	//	Name of the command for this option box.
+	//
+	string $commandName = "doStickyDeformer";
+
+	//	Build the option box actions.
+	//
+	string $callback = "stickyDeformerCallback";
+	string $setup = "stickyDeformerSetup";
+
+	//	Get the option box.
+	//
+	string $layout = getOptionBox();
+	setParent $layout;
+	
+	//	Pass the command name to the option box.
+	//
+	setOptionBoxCommandName($commandName);
+	
+	//	Activate the default UI template.
+	//
+	setUITemplate -pushTemplate DefaultTemplate;
+
+	//	Turn on the wait cursor.
+	//
+	waitCursor -state 1;
+
+	tabLayout -scr true -tv false;
+	string $parent = `columnLayout -adjustableColumn 1`;
+
+	textFieldGrp -l "Sticky Deformer Name" stickyDeformerNameWidget;
+	
+	
+	separator;
+
+	floatFieldGrp -label "Aim Vector"
+		-numberOfFields 3
+		stickyDeformerAimVectorWidget;
+
+	floatFieldGrp -label "Up Vector"
+		-numberOfFields 3
+		stickyDeformerUpVectorWidget;
+
+	optionMenuGrp -l "World Up Type" stickyDeformerWorldUpTypeWidget;
+		menuItem -l "Tangent"		stickyDeformerUpDirMI1;
+		menuItem -l "Normal"		stickyDeformerUpDirMI2;
+		menuItem -l "Scene Up"		stickyDeformerUpDirMI3;
+		
+
+	separator;
+
+	checkBoxGrp -numberOfCheckBoxes 1 -label "Interactive Manipulation" stickyDeformerInteractiveManipWidget;
+		
+	//	Turn off the wait cursor.
+	//
+	waitCursor -state 0;
+	
+	//	Deactivate the default UI template.
+	//
+	setUITemplate -popTemplate;
+
+	//	'Apply' button.
+	//
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit
+		-label "Add"
+		-command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+
+	//	'Save' button.
+	//
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+
+	//	'Reset' button.
+	//
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+
+	//	Set the option box title.
+	//
+	setOptionBoxTitle("Sticky Deformer Options");
+
+	//	Customize the 'Help' menu item text.
+	//
+	setOptionBoxHelpTag( "StickyDeformer" );
+
+	//	Set the current values of the option box.
+	//
+	eval (($setup + " " + $parent + " " + 0));	
+	
+	//	Show the option box.
+	//
+	showOptionBox();
+}
+
+
+//
+//  Procedure Name:
+//      assembleCmd
+//
+//  Description:
+//		Construct the command that will apply the option box values.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+// doStickyDeformer( string $name, string $controlPoints[], vector $aim, vector $up, string $worldUp, int $attachJob )
+proc string assembleCmd()
+{
+	string $cmd = "doStickyDeformer";
+
+	setOptionVars(false);
+	// name related option
+	//
+	string $name = `optionVar -query stickyDeformerName`;
+	$cmd+= " \""+$name+"\" ";
+	// aim and up related options
+	//
+	float $aimVector[] = `optionVar -query stickyDeformerAimVector`;
+	float $upVector[] = `optionVar -query stickyDeformerUpVector`;
+
+	$cmd+= "\""+$aimVector[0]+" "+$aimVector[1]+" "+$aimVector[2]+"\" \""+$upVector[0]+" "+$upVector[1]+" "+ $upVector[2]+"\" ";
+
+	// world up related option
+	//
+	string $worldUpType = `optionVar -query stickyDeformerWorldUpType`;
+	$cmd+="\""+$worldUpType+"\" ";
+	
+	// interactive manipulation related option
+	//
+	int $attachJob = `optionVar -query stickyDeformerInteractiveManip`;
+	$cmd+=$attachJob;
+	
+	return $cmd;
+}
+
+//
+//  Procedure Name:
+//      performStickyDeformer
+//
+//  Description:
+//		Perform the stickyDeformer command using the corresponding 
+//		option values.  This procedure will also show the option box
+//		window if necessary as well as construct the command string
+//		that will invoke the aimConstraint command with the current
+//		option box values.
+//
+//  Input Arguments:
+//      0 - Execute the command.
+//      1 - Show the option box dialog.
+//      2 - Return the command.
+//
+//  Return Value:
+//      None.
+//
+global proc string performStickyDeformer(int $action)
+{
+	string $cmd = "";
+
+	switch ($action) {
+
+		//	Execute the command.
+		//
+		case 0:
+			//	Retrieve the option settings
+			//
+			setOptionVars(false);
+
+			//	Get the command.
+			//
+			$cmd = assembleCmd();
+
+			//	Execute the command with the option settings.
+			//
+			evalEcho($cmd);
+			//print($cmd+"\n");
+
+			break;
+
+		//	Show the option box.
+		//
+		case 1:
+			stickyDeformerOptions();
+			break;
+
+		//	Return the command string.
+		//
+		case 2:
+			//	Retrieve the option settings.
+			//
+			setOptionVars(false);
+
+			//	Get the command.
+			//
+			$cmd = assembleCmd();
+			break;
+	}
+	return $cmd;
+}
+

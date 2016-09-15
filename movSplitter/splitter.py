@@ -29,6 +29,12 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
 
     bDryRun = (not doSplit)
 
+    if not in_sSeqFilter:
+        sInput = raw_input("sequences (comma separated):")
+        sSeqList = list(s.strip().lower() for s in sInput.split(','))
+    else:
+        sSeqList = in_sSeqFilter.lower().split(",")
+
     # checks if csv file is writable
     if exportCsv:
         sCsvPath = in_sEdlPath.replace('.edl', '.csv')
@@ -64,9 +70,9 @@ def splitMovie(in_sSourcePath, in_sEdlPath, in_sSeqFilter=None, in_sSeqOverrideN
         startseconds = convertTcToSeconds(shot["start"], in_iHoursOffset=-1)
         endseconds = convertTcToSeconds(shot["end"], in_iHoursOffset=-1, in_iFramesOffset=-1)
 
-        if in_sSeqFilter == None or shot["sequence"] == in_sSeqFilter:
+        if sequenceCode.lower() in sSeqList:
 
-            if in_sSeqFilter != None and in_sSeqOverrideName != None:
+            if in_sSeqOverrideName:
                 sequenceCode = in_sSeqOverrideName
 
             damShot = proj.getShot(sequenceCode + "_" + shotCode)

@@ -26,8 +26,8 @@ ECHO "-------- PYTHON CALL ---------"
 SET "CMDLINE=%CURFOLDER%splitter.py %1"
 SET "CMDLINE=%CMDLINE% %EDL%"
 
-set /p FILTER=Sequence Filter:
-if NOT [%FILTER%]==[] (SET "CMDLINE=%CMDLINE% %FILTER%")
+REM set /p FILTER=Sequence Filter:
+REM if NOT [%FILTER%]==[] (SET "CMDLINE=%CMDLINE% %FILTER%")
 
 call C:\Python27\python.exe %CMDLINE%
 pause

@@ -2,6 +2,7 @@
 print "Executing Z2K Toolkit's userSetup..."
 
 import pymel.mayautils
+import pymel.core as pm
 
 def onStartup():
 
@@ -11,4 +12,9 @@ def onStartup():
 	import stxScriptMenu
 	stxScriptMenu.install()
 
+	for sScript in ("performStickyDeformer", "stickyDeformer", "stickyDeformerMenu"):
+		pm.mel.source(sScript)
+
 pymel.mayautils.executeDeferred(onStartup)
+
+
