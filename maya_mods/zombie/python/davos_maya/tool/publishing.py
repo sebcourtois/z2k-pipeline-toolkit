@@ -11,7 +11,7 @@ import pymel.util as pmu
 #from pytd.util.logutils import logMsg
 from pytd.util.sysutils import toStr, inDevMode, timer
 from pytd.gui.dialogs import confirmDialog
-from pytd.util.fsutils import normCase
+from pytd.util.fsutils import normCase, pathResolve, pathNorm, pathJoin
 from pytd.util.strutils import labelify
 from pytaya.core import system as myasys
 from pytaya.core import cleaning
@@ -21,10 +21,11 @@ from davos.tools import publish_dependencies
 from davos_maya.tool.general import infosFromScene, projectFromScene
 from davos_maya.tool.general import listRelatedAssets
 from davos_maya.tool import dependency_scan
+from davos.core.drctypes import DrcPack
 
 osp = os.path
 
-bDevDryRun = False
+_DRY_RUN = False
 
 class PublishContext(object):
 
@@ -35,7 +36,7 @@ class PublishContext(object):
 
 def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishInfos, **kwargs):
 
-    bDryRun = kwargs.pop("dryRun", False if not inDevMode() else bDevDryRun)
+    bDryRun = kwargs.pop("dryRun", False if not inDevMode() else _DRY_RUN)
     sComment = prePublishInfos["comment"]
 
     damEntity = scnInfos.get("dam_entity")
@@ -174,7 +175,7 @@ def publishDependencies(depConfDct, sDepPathList, sComment, **kwargs):
     numDep = len(sDepPathList)
     for i, sDepPath in enumerate(sDepPathList):
 
-        print u"Publishing file {}/{}: '{}'".format(i + 1, numDep, sDepPath)
+        print u"Publishing {}/{}: '{}'".format(i + 1, numDep, sDepPath)
 
         pubFile, versionFile = depDir.publishFile(sDepPath, autoLock=True,
                                                   autoUnlock=True,
@@ -190,10 +191,10 @@ def publishDependencies(depConfDct, sDepPathList, sComment, **kwargs):
 def linkDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
                              dependDataDct, **kwargs):
 
-    bDryRun = kwargs.pop("dryRun", False if not inDevMode() else bDevDryRun)
+    bDryRun = kwargs.pop("dryRun", False if not inDevMode() else _DRY_RUN)
 
     publishedItemsDct = dict(izip((normCase(p) for p in sDepPathList),
-                                        publishedItems))
+                                  publishedItems))
 
     sMsgFmt = "\nRelinking '{}' node: \n    from '{}'\n      to '{}'"
 
@@ -220,7 +221,10 @@ def linkDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
         if pubFile is None:
             pubFile = pubItems[0]
 
+
         sPubEnvPath = pubFile.envPath(sEnvVarName)
+        bIsPack = isinstance(pubFile, DrcPack)
+        sPackSep = "/{}/".format(pubFile.name)
 
         fileNodeList = depData["file_nodes"]
         for fileNode in fileNodeList:
@@ -231,11 +235,18 @@ def linkDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
 
             fileAttr = fileNode.listAttr(usedAsFilename=True)[0]
 
-            sMsg = (sMsgFmt.format(sNodeName, fileAttr.get(), sPubEnvPath))
+            sPrivFilePath = pathNorm(pathResolve(fileAttr.get()))
+            if bIsPack:
+                _, sEndPath = sPrivFilePath.rsplit(sPackSep, 1)
+                sPubFilePath = pathJoin(sPubEnvPath, sEndPath)
+            else:
+                sPubFilePath = sPubEnvPath
+
+            sMsg = (sMsgFmt.format(sNodeName, sPrivFilePath, sPubFilePath))
             print sMsg
 
             if not bDryRun:
-                fileAttr.set(sPubEnvPath)
+                fileAttr.set(sPubFilePath)
 
             sLinkedList.append(sNodeName)
 

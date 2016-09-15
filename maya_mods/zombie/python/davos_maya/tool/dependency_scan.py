@@ -2,6 +2,7 @@
 import os
 import re
 from itertools import groupby
+from pprint import pprint
 
 from PySide import QtGui
 from PySide.QtCore import Qt
@@ -12,9 +13,8 @@ import filecmp
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 import pymel.core as pm
 
-
-from pytd.util.fsutils import pathResolve, normCase, pathJoin
-from pytd.util.fsutils import pathReSub, pathEqual
+from pytd.util.fsutils import normCase, pathJoin, pathNorm, pathNormAll
+from pytd.util.fsutils import pathResolve, pathReSub, pathEqual
 from pytd.util.fsutils import ignorePatterns, iterPaths
 from pytd.util.strutils import labelify, assertChars
 from pytd.util.qtutils import setWaitCursor
@@ -29,7 +29,6 @@ from pytaya.core.system import iterNodeAttrFiles
 
 from .general import infosFromScene
 from davos.core.utils import isPack
-from davos.core.drctypes import DrcDir, DrcPack
 
 osp = os.path
 pilimage = PIL.Image
@@ -244,7 +243,7 @@ def scanReferenceFiles(proj):
 
         sAbsPath = pathResolve(oFileRef.path)
 
-        sNormPath = normCase(sAbsPath)
+        sNormPath = pathNormAll(sAbsPath)
         if sNormPath in fileNodeDct:
             fileNodeDct[sNormPath].append(oFileRef)
             continue
@@ -299,7 +298,7 @@ def scanNodeAttrFiles(proj, **kwargs):
             fileAttr = pm.PyNode(sNodeAttr)
             fileNode = fileAttr.node()
 
-            sNormPath = normCase(sAbsPath)
+            sNormPath = pathNormAll(sAbsPath)
             if sNormPath in fileNodeDct:
                 fileNodeDct[sNormPath].append(fileNode)
                 continue
@@ -333,17 +332,26 @@ def scanNodeAttrFiles(proj, **kwargs):
     return scanResults
 
 UDIM_MODE = 3
-UDIM_SEQ_REXP = r"\.1\d{3}\."
-IMG_SEQ_REXP = r"\.\d+\."
+UDIM_REXP = r"\.1\d{3}\."
+FRAME_REXP = r"\.\d+\."
 
 TGA_DEPTH_FOR_MODE = {"BGR;5": 16, "BGR":24, "BGRA":32,
                       "RGB;5": 16, "RGB":24, "RGBA":32}
 
 def _mkUdimFilePattern(p):
-    return pathReSub(UDIM_SEQ_REXP, ".1???.", osp.basename(p))
+    return pathReSub(UDIM_REXP, ".1???.", osp.basename(p))
 
 def _mkSeqFilePattern(p):
-    return pathReSub(IMG_SEQ_REXP, ".*.", osp.basename(p))
+    return pathReSub(FRAME_REXP, ".*.", osp.basename(p))
+
+def _getSeqExts(sTexName):
+    sFoundList = re.findall(UDIM_REXP, sTexName)
+    sUdimExt = sFoundList[0].rstrip('.') if sFoundList else ""
+    if sUdimExt:
+        sTexName = sTexName.replace(sUdimExt, "")
+    sFoundList = re.findall(FRAME_REXP, sTexName)
+    sFrameExt = sFoundList[0].rstrip('.') if sFoundList else ""
+    return sUdimExt, sFrameExt
 
 @setWaitCursor
 def scanTextureFiles(scnInfos, depConfDct=None):
@@ -374,20 +382,14 @@ def scanTextureFiles(scnInfos, depConfDct=None):
     sPrivFileList = []
     publishCount = 0
 
-    def addResult(res):
-#        for k, v in res.iteritems(): print k, v
-#        print ""
-        scanResults.append(res)
-        sAllSeveritySet.update(res["scan_log"].iterkeys())
-
     for fileNode in allFileNodes:
 
         sOnNodePath = fileNode.getAttr("fileTextureName")
         if not sOnNodePath:
             continue
 
-        sOnNodeAbsPath = pathResolve(sOnNodePath)
-        sOnNodeNormPath = normCase(sOnNodeAbsPath)
+        sOnNodeAbsPath = pathNorm(pathResolve(sOnNodePath))
+        sOnNodeNormPath = pathNormAll(sOnNodeAbsPath)
 
         iTilingMode = fileNode.getAttr("uvTilingMode")
         bUvTileOn = (iTilingMode != 0)
@@ -419,7 +421,7 @@ def scanTextureFiles(scnInfos, depConfDct=None):
             resultDct = {}
             foundBudResList = []
 
-            sTexNormPath = normCase(sTexAbsPath)
+            sTexNormPath = pathNormAll(sTexAbsPath)
             bPathOnNode = (sTexNormPath == sOnNodeNormPath)
             if sTexNormPath in fileNodeDct:
                 if bPathOnNode:
@@ -436,22 +438,9 @@ def scanTextureFiles(scnInfos, depConfDct=None):
             sBasePath, sTexExt = osp.splitext(sTexAbsPath)
             sTexExt = sTexExt.lower()
 
-            sFoundList = re.findall(UDIM_SEQ_REXP, sTexFilename)
-            sUdimSeqExt = sFoundList[0].rstrip('.') if sFoundList else ""
-            sFoundList = re.findall(IMG_SEQ_REXP, sTexFilename)
-            sImgSeqExt = sFoundList[0].rstrip('.') if sFoundList else ""
-
             bPublicFile = False
             sHighSeverity = "error"
-            rcFile = None
-
-            if sImgSeqExt:
-                rcFile = proj.entryFromPath(sTexDirPath)
-                if isinstance(rcFile, DrcDir):
-                    rcFile = None
-            if not rcFile:
-                rcFile = proj.entryFromPath(sTexAbsPath)
-
+            rcFile = proj.entryFromPath(sTexAbsPath, dbNode=False)
             if rcFile:
                 bExists = True
                 if rcFile.isPublic():
@@ -481,31 +470,46 @@ def scanTextureFiles(scnInfos, depConfDct=None):
                     privFile = rcFile.getPrivateFile(weak=True)
                     sPrivFileList.append(normCase(privFile.absPath()))
 
-                addResult(resultDct); continue
+                scanResults.append(resultDct); continue
 
             if not bExists:
                 scanLogDct.setdefault("error", []).append(('FileNotFound',
                                                            sTexAbsPath))
-                addResult(resultDct); continue
+                scanResults.append(resultDct); continue
 
-            if sImgSeqExt:
-                bIsPack = isinstance(rcFile, DrcPack) if rcFile else isPack(sTexDirPath)
-                if bIsPack:
-                    sMsg = ("Sequence NOT in a package directory: '{}' (must end with '_pkg')"
-                            .format(osp.basename(sTexDirPath)))
+            sUdimExt, sFrameExt = _getSeqExts(sTexFilename)
+
+            bInPack = isPack(sTexDirPath)
+            if sFrameExt and bUseFrame:
+                if (not bInPack):
+                    if pathEqual(sTexDirPath, sSrcDepDirPath):
+                        sMsg = "Add image sequence to a package folder (starts with 'pkg_')"
+                    else:
+                        sMsg = "Image sequence is NOT in a package.\n"
+                        sMsg += "Rename '{}' folder so it starts with 'pkg_'"
+                        sMsg = sMsg.format(osp.basename(sTexDirPath))
+
                     scanLogDct.setdefault("error", []).append(('BadLocation', sMsg))
-                    addResult(resultDct); continue
-                else:
-                    resultDct["is_pack"] = True
 
+                    scanResults.append(resultDct); continue
+                else:
+                    resultDct["pack_path"] = sTexDirPath
+
+            elif (not sFrameExt) and bInPack:
+                sMsg = ("Single texture file found in a package folder: '{}'.\n"
+                        .format(osp.basename(sTexDirPath)))
+                sMsg += "Package is intended to publish image sequence."
+                scanLogDct.setdefault("error", []).append(('BadLocation', sMsg))
+
+            if bInPack:
                 sTexDirPath = osp.dirname(sTexDirPath)
 
             sSeqExts = ""
-            if sUdimSeqExt or sImgSeqExt:
+            if sUdimExt or sFrameExt:
                 sBasePath = sBasePath.rsplit('.', 1)[0]
-                sSeqExts = sUdimSeqExt + sImgSeqExt
+                sSeqExts = sUdimExt + sFrameExt
 
-            if sUdimSeqExt:
+            if sUdimExt:
                 if not bUdimMode:
                     sMsg = "File is UDIM sequence but UDIM mode is disabled"
                     scanLogDct.setdefault(sHighSeverity, []).append(('BadUVTilingMode', sMsg))
@@ -513,9 +517,10 @@ def scanTextureFiles(scnInfos, depConfDct=None):
                     sMsg = "UDIM sequence must match 'name.1###.ext'"
                     scanLogDct.setdefault(sHighSeverity, []).append(('BadFilename', sMsg))
 
-            if sImgSeqExt and not bUseFrame:
-                sMsg = "Image sequence but 'Use Image Sequence' is disabled"
-                scanLogDct.setdefault(sHighSeverity, []).append(('SequenceDisabled', sMsg))
+            if sFrameExt and not bUseFrame:
+                sMsg = ("Has frame extension ('{}') but 'Use Image Sequence' disabled"
+                        .format(sFrameExt))
+                scanLogDct.setdefault(sHighSeverity, []).append(('UnusedImageSequence', sMsg))
 
             if sTexExt not in sAllowedTexTypes:
                 sMsg = ("Only accepts: '{}'".format("' '".join(sAllowedTexTypes)))
@@ -533,7 +538,7 @@ def scanTextureFiles(scnInfos, depConfDct=None):
 
             # list fellow (associated) files
             sFellowItems = []
-            if not sImgSeqExt:
+            if not sFrameExt:
                 if sTexExt == ".tga":
                     bColor = (sChannel == "col")
                     sPsdSeverity = sHighSeverity if bColor else "info"
@@ -556,10 +561,10 @@ def scanTextureFiles(scnInfos, depConfDct=None):
                         if sFellowSever != "info":
                             scanLogDct.setdefault(sFellowSever, []).append((sStatusCode, sFellowPath))
                 else:
-                    sFoundFileList.append(normCase(sFellowPath))
+                    sFoundFileList.append(pathNormAll(sFellowPath))
 
                     budScanLogDct = {}
-                    budFile = proj.entryFromPath(sFellowPath)
+                    budFile = proj.entryFromPath(sFellowPath, dbNode=False)
                     if budFile and budFile.isPublic():
 
                         budScanLogDct.setdefault("info", []).append(('PublicFile', sFellowPath))
@@ -615,18 +620,40 @@ def scanTextureFiles(scnInfos, depConfDct=None):
                     if tgaImg:
                         tgaImg.close()
 
-            resultDctList = [resultDct]
+            resultList = [resultDct]
             if foundBudResList:
-                resultDctList.extend(foundBudResList)
+                resultList.extend(foundBudResList)
                 sFellowFileList = list(d["abs_path"] for d in foundBudResList)
                 resultDct["fellow_paths"] = sFellowFileList
 
-            for resDct in resultDctList:
-                if resDct["exists"]:
-                    _setPublishableState(resDct)
-                    if resDct["publishable"]:
-                        publishCount += 1
-                addResult(resDct)
+            for res in resultList:
+                scanResults.append(res)
+
+    if pubDepDir.exists():
+        pubDepDir.loadChildDbNodes(recursive=True)
+
+    sPackPathList = []
+    for res in scanResults:
+
+        if not res["exists"]:
+            continue
+
+        rcFile = res["drc_file"]
+        sPackPath = res.get("pack_path")
+        if sPackPath:
+
+            sPackNormPath = pathNormAll(sPackPath)
+            if sPackNormPath in sPackPathList:
+                continue
+
+            res["abs_path"] = sPackPath
+            res["drc_file"] = proj.entryFromPath(sPackPath, dbNode=False)
+            sPackPathList.append(sPackNormPath)
+
+        _setPublishableState(res, dbNode=False)
+
+        if res["publishable"]:
+            publishCount += 1
 
 #    sAllowedFileTypes = [".tx", ".psd"]
 #    sAllowedFileTypes.extend(sAllowedTexTypes)
@@ -662,9 +689,13 @@ def scanTextureFiles(scnInfos, depConfDct=None):
 #                         "publishable":False,
 #                         "drc_file":None,
 #                         }
-#            addResult(resultDct)
+#            scanResults.append(resultDct)
 
     if scanResults:
+
+        for res in scanResults:
+            sAllSeveritySet.update(res["scan_log"].iterkeys())
+
         scanResults[-1]["scan_severities"] = sAllSeveritySet
         scanResults[-1]["publish_count"] = publishCount
 
@@ -735,8 +766,8 @@ def scanAlembicFiles(scnInfos, depConfDct=None):
             if not sAbcPath:
                 continue
 
-            sDepAbsPath = pathResolve(sAbcPath)
-            sDepNormPath = normCase(sDepAbsPath)
+            sDepAbsPath = pathNorm(pathResolve(sAbcPath))
+            sDepNormPath = pathNormAll(sDepAbsPath)
 
             if sDepNormPath in fileNodeDct:
                 fileNodeDct[sDepNormPath].append(fileNode)
@@ -750,7 +781,7 @@ def scanAlembicFiles(scnInfos, depConfDct=None):
 
         for sDepAbsPath in sAllDepPathList:
 
-            sDepNormPath = normCase(sDepAbsPath)
+            sDepNormPath = pathNormAll(sDepAbsPath)
             scanLogDct = {}
 
             sHighSeverity = "error"
@@ -807,18 +838,17 @@ def scanAlembicFiles(scnInfos, depConfDct=None):
 
     return scanResults
 
-def _setPublishableState(resultDct):
+def _setPublishableState(resultDct, dbNode=True):
 
     scanLogDct = resultDct["scan_log"]
     if "error" in scanLogDct:
         return
 
-    drcFile = resultDct["drc_file"]
-
-    if drcFile:
-        if drcFile.isPublic():
+    rcFile = resultDct["drc_file"]
+    if rcFile:
+        if rcFile.isPublic():
             return False
-        pubFile = drcFile.getPublicFile(weak=True, dbNode=False)
+        pubFile = rcFile.getPublicFile(weak=True, dbNode=False)
     else:
         pubFile = resultDct.get("public_file")
         if not pubFile:
@@ -827,11 +857,13 @@ def _setPublishableState(resultDct):
     bPublishable = True
     sPubFilePath = pubFile.absPath()
 
-    dbNode = pubFile.loadDbNode(fromDb=False)
-    if dbNode:
-        pubFile.refresh(simple=True)
-    else:
-        dbNode = pubFile.loadDbNode(fromCache=False)
+    dbnode = pubFile.loadDbNode(fromDb=False)
+    if dbnode:
+        pubFile.refresh(simple=True, dbNode=dbNode)
+    elif dbNode:
+        dbnode = pubFile.loadDbNode(fromCache=False)
+
+    print pubFile.dbPath(), dbnode
 
     sSrcFilePath = resultDct["abs_path"]
     if pubFile.exists():
@@ -840,7 +872,7 @@ def _setPublishableState(resultDct):
         except EnvironmentError as e:
             bPublishable = False
             sErrMsg = toStr(e)
-    elif dbNode:
+    elif dbnode:
         sErrMsg = """File declared in database but does not exist on your server.
 Wait for the next synchro and retry publishing."""
         bPublishable = False
