@@ -1454,7 +1454,7 @@ def assetGrpClean( clean = True, GUI = True):
 
     validDefaultGrpL = ["|asset|grp_geo", "|asset|grp_rig"]
     validSetGrpL = ["|asset|grp_geo", "|asset|grp_placeHolders", "|asset|grp_rig", "|asset|grp_particles","|asset|grp_xgen"]
-    validChrGrpL = ["|asset|grp_geo", "|asset|grp_placeHolders", "|asset|grp_rig"]
+    validChrGrpL = ["|asset|grp_geo", "|asset|grp_placeHolders", "|asset|grp_rig","|asset|grp_prx"]
     if assetType == "set":
         validGrpL = validSetGrpL
     elif assetType == "chr":
