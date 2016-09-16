@@ -384,11 +384,13 @@ class output_lib(object):
     private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
 
     resource_tree = {
-        "{sequence} -> sequence_dir":
-            {
-            "{name} -> entity_dir":{}
-             }
-        }
+    "{sequence} -> sequence_dir":
+        {
+        "{name} -> entity_dir":{}
+         }
+    }
+
+    free_to_publish = True
 
 class misc_lib(object):
 
