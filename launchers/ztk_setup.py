@@ -135,7 +135,7 @@ class Z2kToolkit(object):
     def loadAppEnvs(self, sAppPath):
 
         sAppPath = sAppPath.lower()
-        sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
+        sAppName, _ = osp.splitext(osp.basename(sAppPath))
 
         #print "\n----------------", sAppPath
 
@@ -144,11 +144,7 @@ class Z2kToolkit(object):
         proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
         proj.loadEnviron()
 
-        bNeedPy27Site = True
-
         if sAppName in ("maya", "mayabatch", "render", "mayapy"):
-
-            bNeedPy27Site = False
 
             print "\nLoading Maya environment:"
 
@@ -162,23 +158,22 @@ class Z2kToolkit(object):
 
         elif sAppName in ("rv", "rvpush"):
 
-            bNeedPy27Site = False
-
             print "\nLoading RV environment:"
 
             updEnv("MU_MODULE_PATH", pathJoin(self.rootPath, "RV", "Mu"),
                    conflict="add")
 
-#        elif sAppName in ("python", "pythonw"):
-#
-#            print "\nLoading Python environment:"
-#
-#            updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
-#                   conflict="add")
+        elif sAppName in ("python", "pythonw", "eclipse"):
 
-        if bNeedPy27Site:
+            print "\nLoading {} environment:".format(sAppName.capitalize())
+
             updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
                    conflict="add")
+
+#        if bNeedPy27Site:
+#            updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
+#                   conflict="add")
+        print ""
 
     def install(self):
 
@@ -346,7 +341,7 @@ class Z2kToolkit(object):
             sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
             if not osp.isfile(sAppPath):
                 raise EnvironmentError("No such application found: '{}'".format(sAppPath))
-            
+
         elif sAppPath.startswith("@"):
             sAppName = sAppPath.strip("@").lower()
             sAppPath = getAppPath(sAppName)
