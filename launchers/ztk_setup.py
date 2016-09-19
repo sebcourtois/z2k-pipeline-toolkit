@@ -163,7 +163,7 @@ class Z2kToolkit(object):
             updEnv("MU_MODULE_PATH", pathJoin(self.rootPath, "RV", "Mu"),
                    conflict="add")
 
-        elif sAppName in ("python", "pythonw", "eclipse"):
+        elif sAppName in ("python", "pythonw", "eclipse", "splitall"):
 
             print "\nLoading {} environment:".format(sAppName.capitalize())
 
