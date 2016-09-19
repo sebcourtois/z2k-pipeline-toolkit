@@ -650,7 +650,7 @@ def scanTextureFiles(scnInfos, depConfDct=None):
             res["drc_file"] = proj.entryFromPath(sPackPath, dbNode=False)
             sPackPathList.append(sPackNormPath)
 
-        _setPublishableState(res, dbNode=False)
+        _setPublishableState(res, refreshDbNode=False)
 
         if res["publishable"]:
             publishCount += 1
@@ -728,14 +728,18 @@ def _checkTextureBaseName(damEntity, sBaseName):
 
     return sChannel, ('BadFilename', sMsg) if sMsg else None
 
-
+def firstPrefix(sNodeName):
+    return sNodeName.split("_", 1)[0] if "_" in sNodeName else ""
 
 @setWaitCursor
-def scanAlembicFiles(scnInfos, depConfDct=None):
+def scanGeoCacheFiles(scnInfos, depConfDct=None):
 
     damEntity = scnInfos.get("dam_entity")
     proj = scnInfos["project"]
     pubLib = damEntity.getLibrary("public")
+
+    sGeoAstTypeList = list(proj.iterAssetPrefixes())
+    sGeoAstTypeList.remove("fxp")
 
     sDepType = "geoCache_dep"
     if not depConfDct:
@@ -768,6 +772,10 @@ def scanAlembicFiles(scnInfos, depConfDct=None):
 
             sDepAbsPath = pathNorm(pathResolve(sAbcPath))
             sDepNormPath = pathNormAll(sDepAbsPath)
+
+            sFileName = osp.basename(sDepNormPath)
+            if firstPrefix(sFileName) not in sGeoAstTypeList:
+                continue
 
             if sDepNormPath in fileNodeDct:
                 fileNodeDct[sDepNormPath].append(fileNode)
@@ -838,7 +846,111 @@ def scanAlembicFiles(scnInfos, depConfDct=None):
 
     return scanResults
 
-def _setPublishableState(resultDct, dbNode=True):
+@setWaitCursor
+def scanFxCacheFiles(scnInfos, depConfDct=None):
+
+    damEntity = scnInfos.get("dam_entity")
+    proj = scnInfos["project"]
+    pubLib = damEntity.getLibrary("public")
+
+    sGeoAstTypeList = list(proj.iterAssetPrefixes())
+    sGeoAstTypeList.remove("fxp")
+
+    sDepType = "fxCache_dep"
+    if not depConfDct:
+        depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
+    pubDepDir = depConfDct["dep_public_loc"]
+
+    sPubDepDirPath = pubDepDir.absPath()
+    if pubDepDir.exists():
+        pubDepDir.loadChildDbNodes()
+
+    scanResults = []
+    fileNodeDct = {}
+
+    sAllSeveritySet = set()
+
+    def addResult(res):
+        scanResults.append(res)
+        sAllSeveritySet.update(res["scan_log"].iterkeys())
+
+    def iterAlembicPaths():
+
+        allFileNodes = lsNodes("*", type='AlembicNode', not_rn=True)
+
+        for fileNode in allFileNodes:
+
+            sAbcPath = fileNode.getAttr("abc_File")
+            if not sAbcPath:
+                continue
+
+            sDepAbsPath = pathNorm(pathResolve(sAbcPath))
+            sDepNormPath = pathNormAll(sDepAbsPath)
+
+            sFileName = osp.basename(sDepNormPath)
+            if firstPrefix(sFileName) in sGeoAstTypeList:
+                continue
+
+            if sDepNormPath in fileNodeDct:
+                fileNodeDct[sDepNormPath].append(fileNode)
+                continue
+            else:
+                fileNodeDct[sDepNormPath] = [fileNode]
+
+            yield sDepAbsPath
+
+    def doScan(sAllDepPathList):
+
+        for sDepAbsPath in sAllDepPathList:
+
+            sDepNormPath = pathNormAll(sDepAbsPath)
+            scanLogDct = {}
+
+            bExists = osp.isfile(sDepAbsPath)
+
+            resultDct = {"dependency_type":sDepType,
+                         "abs_path":sDepAbsPath,
+                         "scan_log":scanLogDct,
+                         "file_nodes":fileNodeDct.get(sDepNormPath, []),
+                         "fellow_paths":[],
+                         "publishable":False,
+                         "drc_file":None,
+                         "exists":bExists,
+                         "public_file":None,
+                        }
+
+            _, sDepFilename = osp.split(sDepAbsPath)
+
+            if not bExists:
+                scanLogDct.setdefault("error", []).append(('FileNotFound', sDepAbsPath))
+                addResult(resultDct); continue
+
+            abcFile = proj.entryFromPath(sDepAbsPath, dbNode=False)
+            resultDct["drc_file"] = abcFile
+
+            print "\n", sDepNormPath
+            print sPubDepDirPath
+            if abcFile and abcFile.isPublic():
+                scanLogDct.setdefault("info", []).append(('PublicFile', sDepAbsPath))
+                resultDct["public_file"] = abcFile
+            else:
+                sDepPubPath = pathJoin(sPubDepDirPath, sDepFilename)
+                resultDct["public_file"] = pubLib._weakFile(sDepPubPath, dbNode=False)
+
+            _setPublishableState(resultDct)
+            addResult(resultDct)
+
+    doScan(iterAlembicPaths())
+
+    publishCount = sum(1 for d in scanResults if d["publishable"])
+
+    if scanResults:
+        scanResults[-1]["scan_severities"] = sAllSeveritySet
+        scanResults[-1]["publish_count"] = publishCount
+
+    return scanResults
+
+def _setPublishableState(resultDct, refreshDbNode=True):
 
     scanLogDct = resultDct["scan_log"]
     if "error" in scanLogDct:
@@ -859,11 +971,9 @@ def _setPublishableState(resultDct, dbNode=True):
 
     dbnode = pubFile.loadDbNode(fromDb=False)
     if dbnode:
-        pubFile.refresh(simple=True, dbNode=dbNode)
-    elif dbNode:
+        pubFile.refresh(simple=True, dbNode=refreshDbNode)
+    elif refreshDbNode:
         dbnode = pubFile.loadDbNode(fromCache=False)
-
-    print pubFile.dbPath(), dbnode
 
     sSrcFilePath = resultDct["abs_path"]
     if pubFile.exists():
@@ -916,7 +1026,9 @@ def scanAllDependencyTypes(scnInfos):
         if sDepType == "texture_dep":
             scanResults = scanTextureFiles(scnInfos)
         elif sDepType == "geoCache_dep":
-            scanResults = scanAlembicFiles(scnInfos)
+            scanResults = scanGeoCacheFiles(scnInfos)
+        elif sDepType == "fxCache_dep":
+            scanResults = scanFxCacheFiles(scnInfos)
         else:
             pm.displayWarning("Dependency type NOT supported yet: '{}'"
                               .format(sDepType))

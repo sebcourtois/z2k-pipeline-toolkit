@@ -142,6 +142,7 @@ class shot_lib(object):
                     "texture -> fx3d_texture_dir":{},
                     "{name}_fx3d.ma -> fx3d_scene":None,
                     "{name}_fx3d.mov -> fx3d_capture":None,
+                    "{name}_fxPrecomp.mov -> fx3d_precomp_movie":None,
                    },
                 "{08_render@step} -> rendering_dir":
                    {
@@ -312,17 +313,20 @@ class shot_lib(object):
                             {"dep_public_loc":"fx3d_geoCache_dir",
                              "dep_source_loc":"|mayaProj_alembic_dir",
                              "checksum":False},
+                         "fxCache_dep":
+                            {"dep_public_loc":"fx3d_fxCache_dir",
+                             "checksum":False},
                         }
                   },
-#    "fx3d_movie":{"create_sg_version":True,
-#                 "sg_uploaded_movie":True,
-#                 "sg_path_to_movie":True,
-#                 "sg_tasks":("Fx3D|fx3d",),
-#                 #"sg_status":"rev",
-#                 },
+    "fx3d_precomp_movie":{"create_sg_version":True,
+                          "sg_uploaded_movie":True,
+                          "sg_path_to_movie":True,
+                          "sg_tasks":("Fx3D|fx_precomp",),
+                          #"sg_status":"rev",
+                          },
 
     "fx3d_geoCache_dir":{"free_to_publish":False,
-                      "default_sync_rules":["no_sync"], },
+                         "default_sync_rules":["no_sync"], },
     "fx3d_fxCache_dir":{"free_to_publish":True,
                       "default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
     "fx3d_texture_dir":{"free_to_publish":True,
