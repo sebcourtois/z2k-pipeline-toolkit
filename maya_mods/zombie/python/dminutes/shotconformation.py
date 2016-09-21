@@ -187,7 +187,7 @@ def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3"):
                         statInfo = os.stat(sPublicReleaseFilePath)
                         statDate = statInfo.st_mtime
                         statSize = statInfo.st_size
-                        if statSize > 75000:
+                        if statSize > 2000:
                             dateS = datetime.fromtimestamp(int(statDate)).strftime(u"%Y-%m-%d %H:%M")
                             lPublicReleaseFilePath.append(sPublicReleaseFilePath)
                             txt = "Referencing: '{}'  publish date: {}".format(sPublicReleaseFilePath, dateS)
