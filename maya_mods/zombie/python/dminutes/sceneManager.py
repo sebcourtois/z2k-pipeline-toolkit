@@ -999,10 +999,11 @@ class SceneManager():
                 geocaching.exportLayoutInfo(publish=True, comment=sComment)
 
             # here is the publish of the infoSet file with the position of the global and local srt of sets assets
+            print "exporting the infoSet of the shot"
             infoSetExpI = infoE.infoSetExp()
             infoSetExpI.export(sceneName=jpZ.getShotName())
 
-        if sStepCode not in ("charfx", "fx3d", "rendering"):
+        #if sStepCode not in ("charfx", "fx3d", "rendering"):
             # here is incerted the publish of the camera of the scene
             print "exporting the camera of the shot"
             camImpExpI = camIE.camImpExp()
