@@ -122,7 +122,9 @@ def releaseShotAsset(gui = True ,toReleaseL = [], dryRun=True, astPrefix = "fx3"
     if not os.path.isdir(sPrivReleaseDir):
         os.makedirs(sPrivReleaseDir)
 
+    intSelection = mc.ls(selection=True)
     for each in toReleaseL:
+        mc.select(each,r=True)
         eachShort = each.split("|")[-1]
         if not re.match('^[a-zA-Z0-9]{3}_[a-zA-Z0-9]{1,16}_[a-zA-Z0-9]{1,16}$', eachShort) or eachShort.split("_")[0]!=astPrefix:
             txt = "'{}' doesn't match the naming convention: '{}_[a-zA-Z0-9](1,16)_[a-zA-Z0-9](1,16)'".format(eachShort, astPrefix)
@@ -144,6 +146,8 @@ def releaseShotAsset(gui = True ,toReleaseL = [], dryRun=True, astPrefix = "fx3"
             sComment = "from v{}".format(privScnFile.versionFromName())
             releaseDir = shotLib.getEntry(sPublicReleaseDir)
             releaseDir.publishFile(sPrivateFilePath, autoLock=True, autoUnlock=True, comment=sComment, dryRun=dryRun, saveChecksum=False)
+
+    mc.select(intSelection,r=True)
 
     return dict(resultB=log.resultB, logL=log.logL)
 
@@ -183,7 +187,7 @@ def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3"):
                         statInfo = os.stat(sPublicReleaseFilePath)
                         statDate = statInfo.st_mtime
                         statSize = statInfo.st_size
-                        if statSize > 75000:
+                        if statSize > 2000:
                             dateS = datetime.fromtimestamp(int(statDate)).strftime(u"%Y-%m-%d %H:%M")
                             lPublicReleaseFilePath.append(sPublicReleaseFilePath)
                             txt = "Referencing: '{}'  publish date: {}".format(sPublicReleaseFilePath, dateS)
