@@ -278,7 +278,7 @@ class shot_lib(object):
                             {"geoCache_dep":
                                 {"dep_public_loc":"finalLayout_cache_dir",
                                  "dep_source_loc":"|mayaProj_alembic_dir",
-                                 "checksum":False},
+                                 "checksum":True},
                             }
                          },
     "finalLayout_movie":{"create_sg_version":True,
@@ -312,10 +312,10 @@ class shot_lib(object):
                         {"geoCache_dep":
                             {"dep_public_loc":"fx3d_geoCache_dir",
                              "dep_source_loc":"|mayaProj_alembic_dir",
-                             "checksum":False},
+                             "checksum":True},
                          "fxCache_dep":
                             {"dep_public_loc":"fx3d_fxCache_dir",
-                             "checksum":False},
+                             "checksum":True},
                         }
                   },
     "fx3d_precomp_movie":{"create_sg_version":True,
