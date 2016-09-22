@@ -4,7 +4,7 @@ import os.path as osp
 import pymel.core as pm
 import pymel.versions as pmv
 
-from davos.core.drctypes import DrcDir, DrcFile
+from davos.core.drctypes import DrcDir, DrcFile, DrcPack
 from pytaya.core import system as myasys
 from pytd.util.strutils import padded, underJoin
 from pytd.util.fsutils import pathEqual
@@ -17,6 +17,17 @@ class MrcDir(DrcDir):
     def __init__(self, drcLib, absPathOrInfo=None, **kwargs):
         super(MrcDir, self).__init__(drcLib, absPathOrInfo, **kwargs)
 
+    def _publishFiles(self, sSrcPathList, **kwargs):
+
+        global SCRIPT_EDITOR_SHOWN
+
+        showScriptEditor()
+        try:
+            res = DrcDir._publishFiles(self, sSrcPathList, **kwargs)
+        finally:
+            SCRIPT_EDITOR_SHOWN = False
+
+        return res
 
 class MrcFile(DrcFile):
 
@@ -132,3 +143,24 @@ class MrcFile(DrcFile):
             p = self.absPath()
 
         return pm.mel.importImageFile(p, False, False, True)
+
+
+class MrcPack(DrcPack):
+
+    def __init__(self, drcLib, absPathOrInfo=None, **kwargs):
+        super(MrcPack, self).__init__(drcLib, absPathOrInfo, **kwargs)
+
+    def _makeCopyOf(self, sSrcPackPath, **kwargs):
+
+        if kwargs.pop("showScriptEditor", True):
+            kwargs["beforeCopyCall"] = showScriptEditor
+
+        return DrcPack._makeCopyOf(self, sSrcPackPath, **kwargs)
+
+SCRIPT_EDITOR_SHOWN = False
+def showScriptEditor():
+    global SCRIPT_EDITOR_SHOWN
+    if not SCRIPT_EDITOR_SHOWN:
+        pm.mel.ScriptEditor()
+        pm.mel.handleScriptEditorAction("maximizeHistory")
+        SCRIPT_EDITOR_SHOWN = True

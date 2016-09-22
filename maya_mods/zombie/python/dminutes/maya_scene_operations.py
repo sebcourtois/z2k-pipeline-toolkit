@@ -14,7 +14,7 @@ import maya.cmds as mc
 from pytd.util.sysutils import toStr
 from pytd.util.fsutils import jsonWrite, pathResolve, jsonRead, copyFile
 
-from zomblib.editing import makeFilePath, movieToJpegSequence
+from zomblib.editing import makeFilePath, movieToJpegSequence, convToH264
 
 from pytaya.core.general import copyAttrs, getObject
 from pytaya.core import system as myasys
@@ -381,7 +381,7 @@ def getCameraRig():
     return camInfo
 
 @restoreSelection
-def makeCapture(sFilePath, start, end, width, height, displaymode="",
+def makeCapture(sOutputPath, start, end, width, height, displaymode="",
                 showFrameNumbers=True, format="iff", compression="jpg",
                 ornaments=False, play=False, useCamera=None, audioNode=None,
                 camSettings=None, quick=False):
@@ -424,7 +424,7 @@ def makeCapture(sFilePath, start, end, width, height, displaymode="",
     editorKwargs = dict(hud=ornaments, wireframeOnShaded=False, displayAppearance="smoothShaded")
     pc.modelEditor(pan, edit=True, nurbsCurves=False, **editorKwargs)
 
-    playblastKwargs = dict(format=format, compression=compression, quality=90,
+    playblastKwargs = dict(format=format, compression=compression, quality=100,
                            sequenceTime=False, clearCache=True, viewer=play,
                            showOrnaments=ornaments,
                            framePadding=4,
@@ -456,22 +456,28 @@ def makeCapture(sFilePath, start, end, width, height, displaymode="",
             pc.setAttr(sNodeAttr, value)
 
     try:
-        if format == "iff" and showFrameNumbers:
-            name = mc.playblast(filename=sFilePath, **playblastKwargs)
+        if format == "iff":
+            if showFrameNumbers:
+                name = mc.playblast(filename=sOutputPath, **playblastKwargs)
 
-            for i in range(start, end + 1):
-                oldFileName = name.replace("####", str(i).zfill(4))
-                newFileName = oldFileName.replace(".", "_", 1)
-                if os.path.isfile(newFileName):
-                    os.remove(newFileName)
-                os.rename(oldFileName, newFileName)
-                names.append(newFileName)
-        else:
-            if format == "iff":
-                name = mc.playblast(completeFilename=sFilePath, **playblastKwargs)
+                for i in range(start, end + 1):
+                    oldFileName = name.replace("####", str(i).zfill(4))
+                    newFileName = oldFileName.replace(".", "_", 1)
+                    if os.path.isfile(newFileName):
+                        os.remove(newFileName)
+                    os.rename(oldFileName, newFileName)
+                    names.append(newFileName)
             else:
-                name = mc.playblast(filename=sFilePath, **playblastKwargs)
+                name = mc.playblast(completeFilename=sOutputPath, **playblastKwargs)
+                names.append(name)
 
+        elif format == "qt" and compression == "H.264" and os.environ.get("Z2K_H264_FIX"):
+            playblastKwargs["compression"] = "Photo - JPEG"
+            sTmpPath = mc.playblast(filename=osp.basename(sOutputPath), **playblastKwargs)
+            convToH264(sTmpPath, sOutputPath)
+            names.append(sOutputPath)
+        else:
+            name = mc.playblast(filename=sOutputPath, **playblastKwargs)
             names.append(name)
 
     finally:
@@ -670,7 +676,7 @@ def loadStereoCam(damShot, withAnim=True):
         stereoCamFile = proj.getLibrary("public", "misc_lib").getEntry("layout/stereo_cam.ma")
         stereoCamFile.mayaImportScene(ns=sStereoNs, returnNewNodes=False)
         oStereoCam = getStereoCam(fail=True)
-    
+
     oStereoCamShape = oStereoCam.getShape()
     sStereoGrp = getObject(sStereoNs + ":grp_stereo", fail=True)
     try:
@@ -691,7 +697,7 @@ def loadStereoCam(damShot, withAnim=True):
                                       search=mkOldStereoCamNamespace(sShotCode) + ":",
                                       replace=sStereoNs + ":",
                                       selected="childrenToo")
-                
+
                 sAtomFixCamShape = sStereoNs + ":atomFix_" + oStereoCamShape.nodeName(stripNamespace=True)
                 sAtomFixCamShape = getObject(sAtomFixCamShape, fail=True)
                 sAttrList = pc.listAttr(sAtomFixCamShape, k=True)
