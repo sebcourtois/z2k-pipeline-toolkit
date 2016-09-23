@@ -967,7 +967,7 @@ def _setPublishableState(resultDct, refreshDbNode=True):
             return False
 
     bPublishable = True
-    sPubFilePath = pubFile.absPath()
+    #sPubFilePath = pubFile.absPath()
 
     dbnode = pubFile.loadDbNode(fromDb=False)
     if dbnode:
@@ -975,10 +975,10 @@ def _setPublishableState(resultDct, refreshDbNode=True):
     elif refreshDbNode:
         dbnode = pubFile.loadDbNode(fromCache=False)
 
-    sSrcFilePath = resultDct["abs_path"]
+    sNewVersPath = resultDct["abs_path"]
     if pubFile.exists():
         try:
-            pubFile._assertPublishable(sSrcFilePath, refresh=False)
+            pubFile._assertPublishable(sNewVersPath, refresh=False)
         except EnvironmentError as e:
             bPublishable = False
             sErrMsg = toStr(e)
@@ -991,9 +991,10 @@ Wait for the next synchro and retry publishing."""
         scanLogDct.setdefault("error", []).append(("NotPublishable", sErrMsg))
     else:
         bModified = True
-        if pubFile.exists():
-            bModified = (not filecmp.cmp(sSrcFilePath, sPubFilePath))
-            #bDiffers, sSrcChecksum = pubFile.differsFrom(sPubFilePath)
+        if pubFile.isFile():
+            #bModified = (not filecmp.cmp(sNewVersPath, sPubFilePath))
+            bModified, sChecksum = pubFile.differsFrom(sNewVersPath)
+            resultDct["checksum"] = sChecksum
 
         if not bModified:
             scanLogDct.setdefault("info", []).append(("NotModified", "File has not been modified"))
@@ -1005,8 +1006,8 @@ Wait for the next synchro and retry publishing."""
                                  for p in sFellowFileList)
                 sMsg = (", ".join(s.upper() for s in sExtList) + " found"
                         if sFellowFileList else "")
-            elif inDevMode():
-                sMsg = resultDct["abs_path"]
+#            elif inDevMode():
+#                sMsg = resultDct["abs_path"]
 
             scanLogDct.setdefault("info", []).append(("ReadyToPublish", sMsg))
 
