@@ -68,7 +68,7 @@ def compileLayerQuickTime(renderDirS="", passNameL= ["lay_finalLayout_00"], aovN
                     raise ValueError(txt)
 
 
-            movFileName = nkU.pathJoin(os.environ["ZOMB_ROOT_PATH"],"private",fileO.user,"zomb","shot",fileO.seq,fileO.shot,fileO.dep,fileO.depSub,fileO.shot+"_"+fileO.layerName+".mov")
+            movFileName = nkU.pathJoin(os.environ["ZOMB_ROOT_PATH"],"private",fileO.user,"zomb","shot",fileO.seq,fileO.shot,fileO.depDir,fileO.depSub,fileO.shot+"_"+fileO.layerName+".mov")
             txt = "output movie: '{}'".format(movFileName)
             log.printL("i", txt)
             txt = "sound file: '{}'".format(wavFileName)
