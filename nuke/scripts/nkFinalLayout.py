@@ -8,6 +8,7 @@ import nuke
 
 def compileLayerQuickTime(renderDirS="", passNameL= ["lay_finalLayout_00"], aovNameL= ["beauty", "arlequin"], gui= False):
     log = nkU.LogBuilder(gui=gui, funcName ="'compileLayerQuickTime'")
+    nkU.initNukeShot(fileNameS=  nuke.root()["argv0"].getValue())
     outNodeL = []
     outBoundL = []
     fFrameRangeD = {}
