@@ -78,12 +78,13 @@ class LogBuilder():
 
 class dataFile():
     def __init__(self, fileNameS= "", gui = True):
-        self.log = LogBuilder(gui=gui, logL = [], resultB = True)
-
+        self.log = LogBuilder(gui=gui, logL = [])
         if not fileNameS:
             fileNameS = nuke.root().knob('name').value()
-        self.fileNameS=normPath(fileNameS)
+            if "finalLayoutTemplate.nk" in fileNameS:
+                fileNameS=  nuke.root()["argv0"].getValue()
 
+        self.fileNameS=normPath(fileNameS)
         self.gui = gui
 
         self.location = ""
@@ -102,12 +103,10 @@ class dataFile():
         self.ver = ""
         self.increment = ""
 
-
         if os.path.isfile(self.fileNameS) or os.path.isdir(self.fileNameS):
             fileNameL=self.fileNameS.split("/")
             if "private" in fileNameL and "shot" in fileNameL:
                 fileDataL = self.fileNameS.split("private/")[-1].split("/")
-                print fileDataL
                 self.location = "private"
                 self.user = fileDataL[0]
                 self.proj = fileDataL[1]
@@ -125,36 +124,36 @@ class dataFile():
                         self.imageFormat = fileDataL[9].split('.')[-1]
                         self.imageNumber = fileDataL[9].split('.')[-2]
                     self.ver = fileDataL[6].replace("render-v","")
+
                 elif "compo-v" in fileDataL[6]:
                     self.ver = fileDataL[6].split("compo-v")[-1].split(".")[0]
                     self.increment = fileDataL[6].split("compo-v")[-1].split(".")[1]
-
         else:
             txt = "is not a file: '{}'".format(self.fileNameS)
             self.log.printL("e", txt)
 
 
     def printData(self):
-            self.log = LogBuilder(gui=self.gui, funcName ="printData")
-            self.log.printL("i","fileNameS: '{}'".format(self.fileNameS))
-            self.log.printL("i","location: '{}'".format(self.location))
-            self.log.printL("i","user: '{}'".format(self.user))
-            self.log.printL("i","proj: '{}'".format(self.proj))
-            self.log.printL("i","typ: '{}'".format(self.typ))
-            self.log.printL("i","seq: '{}'".format(self.seq))
-            self.log.printL("i","shot: '{}'".format(self.shot))
-            self.log.printL("i","depDir: '{}'".format(self.depDir))
+        self.log = LogBuilder(gui=self.gui, funcName ="printData")
+        self.log.printL("i","fileNameS: '{}'".format(self.fileNameS))
+        self.log.printL("i","location: '{}'".format(self.location))
+        self.log.printL("i","user: '{}'".format(self.user))
+        self.log.printL("i","proj: '{}'".format(self.proj))
+        self.log.printL("i","typ: '{}'".format(self.typ))
+        self.log.printL("i","seq: '{}'".format(self.seq))
+        self.log.printL("i","shot: '{}'".format(self.shot))
+        self.log.printL("i","depDir: '{}'".format(self.depDir))
 
-            if "render-v"in self.depDirSub:
-                self.log.printL("i","passName: '{}'".format(self.passName))
-                self.log.printL("i","layerName: '{}'".format(self.layerName))
-                self.log.printL("i","imageName: '{}'".format(self.imageName))
-                self.log.printL("i","imageFormat: '{}'".format(self.imageFormat))
-                self.log.printL("i","imageNumber: '{}'".format(self.imageNumber))
-                self.log.printL("i","ver: '{}'".format(self.ver))
-            elif "compo-v" in self.depDirSub:
-                self.log.printL("i","ver: '{}'".format(self.ver))
-                self.log.printL("i","increment: '{}'".format(self.increment))
+        if "render-v"in self.depDirSub:
+            self.log.printL("i","passName: '{}'".format(self.passName))
+            self.log.printL("i","layerName: '{}'".format(self.layerName))
+            self.log.printL("i","imageName: '{}'".format(self.imageName))
+            self.log.printL("i","imageFormat: '{}'".format(self.imageFormat))
+            self.log.printL("i","imageNumber: '{}'".format(self.imageNumber))
+            self.log.printL("i","ver: '{}'".format(self.ver))
+        elif "compo-v" in self.depDirSub:
+            self.log.printL("i","ver: '{}'".format(self.ver))
+            self.log.printL("i","increment: '{}'".format(self.increment))
 
     def initNukeEnvVar(self):
         if self.seq and self.shot and self.user and self.depDir:
@@ -162,9 +161,12 @@ class dataFile():
             outputDirS = os.environ["ZOMB_OUTPUT_PATH"]+"/"+self.seq+"/"+self.shot
             shotDirS = os.environ["ZOMB_SHOT_PATH"]+"/"+self.seq+"/"+self.shot
             #privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].split("/$DAVOS_USER/")[0]
-            privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot
+            try:
+                privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot
+            except:
+                privateDirS = ""
+
             miscDirS = os.environ["ZOMB_MISC_PATH"]
-            print ""
             self.log.printL("i","initialising environnement variables")
             self.log.printL("i","SEQ: "+self.seq)
             self.log.printL("i","SHOT: "+self.shot)
@@ -186,7 +188,6 @@ class dataFile():
             os.environ["SHOT_DIR"] = shotDirS
             os.environ["PRIV_DIR"] = privateDirS
             os.environ["MISC_DIR"] = miscDirS
-
 
         else:
             txt = "one of the variable 'seq', 'shot', 'user' or 'dep' is undefined, could not set nuke proj environment var".format(self.fileNameS)
