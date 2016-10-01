@@ -219,6 +219,8 @@ def createNukeBatch(gui=True):
     nukeScript = miscUtils.normPath(zombToolsPath + r"\template\nuke\finalLayoutTemplate.nk")
     renderBatch_obj = open(renderBatch_trg, "w")
     renderBatch_obj.write("set foundry_LICENSE="+licenceLocation+"\n")
+    renderBatch_obj.write(r'''set "NUKE_PATH=C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\nuke"'''+"\n")
+
     renderBatch_obj.write("set nuke="+nukePath+"\n")
     renderBatch_obj.write("rem set nuke="+nukePathLoc+"\n")
     renderBatch_obj.write("set nkscript="+nukeScript+"\n")
@@ -230,3 +232,5 @@ def createNukeBatch(gui=True):
     #renderBatch_obj.write("pause\n")
     renderBatch_obj.close()
     print "#### Info: nukeBatch.bat created: {}".format(os.path.normpath(renderBatch_trg))
+
+    
