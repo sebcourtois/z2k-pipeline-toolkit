@@ -197,8 +197,8 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     if renderMode == 'finalLayout':
         setRenderCamera(leftCam = False, rightCam = False)
     else:
-        #setRenderCamera(leftCam = True, rightCam = True)  temprairement off on fait pour le moment encore les rendus avec la defaut cam
-        setRenderCamera(leftCam = False, rightCam = False)
+        setRenderCamera(leftCam=True, rightCam=True)  #temprairement off on fait pour le moment encore les rendus avec la defaut cam
+        #setRenderCamera(leftCam = False, rightCam = False)
 
     mc.colorManagementPrefs(e=True, cmEnabled=False)
 
@@ -311,9 +311,9 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
 
     if oShotCam:
         defaultCamNameS = oShotCam.name()
-        # leftCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_left').replace('cam_sq', 'stereo_cam_sq')
-        # rightCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_right').replace('cam_sq', 'stereo_cam_sq')
-        # stereoCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_stereo').replace('cam_sq', 'stereo_cam_sq')
+        leftCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_left').replace('cam_sq', 'stereo_cam_sq')
+        rightCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_right').replace('cam_sq', 'stereo_cam_sq')
+        stereoCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_stereo').replace('cam_sq', 'stereo_cam_sq')
         leftCamNameS = "stereo_rig:cam_left"
         rightCamNameS = "stereo_rig:cam_right"
         stereoCamNameS = "stereo_rig:cam_stereo"
@@ -345,15 +345,15 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
         if leftCam:
             if leftCamS: 
                 mc.setAttr (leftCamS + ".renderable", 1)
-                #mc.setAttr (stereoCam + ".renderable", 1)
-                #mc.renderSettings(camera=stereoCam)
+                mc.setAttr (stereoCam + ".renderable", 0)
+                mc.renderSettings(camera=stereoCam)
                 if defaultCamS:
                     mc.setAttr (defaultCamS + ".renderable", 0)
                 log.printL("i", "render camera: '{}'".format(leftCamS))
             else:
                 log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_reft'")
                 try:
-                    mc.setAttr (leftCamS + ".renderable", 0)
+                    mc.setAttr (leftCamS + ".renderable", 1)
                 except:
                     pass
 
@@ -365,19 +365,19 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
                     mc.setAttr (defaultCamS + ".renderable", 0)
         else:
             try:
-                mc.setAttr (leftCamS + ".renderable", 0)
+                mc.setAttr (leftCamS + ".renderable", 1)
             except:
                 pass
 
         if rightCam:
             if rightCamS: 
                 mc.setAttr (rightCamS + ".renderable", 1)
-                #mc.setAttr (stereoCam + ".renderable", 1)
-                #mc.renderSettings(camera=stereoCam)
+                mc.setAttr (stereoCam + ".renderable", 0)
+                mc.renderSettings(camera=stereoCam)
                 log.printL("i", "render camera: '{}'".format(rightCamS))
             else:
                 try:
-                    mc.setAttr (rightCamS + ".renderable", 0)
+                    mc.setAttr (rightCamS + ".renderable", 1)
                     log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_right'")
                 except:
                     pass
