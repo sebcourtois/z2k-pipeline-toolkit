@@ -606,3 +606,9 @@ def createWriteDir():
   except OSError, e:
     if e.errno != errno.EEXIST:
       raise
+
+
+
+def inportOutTemplate():
+
+    nuke.scriptReadFile(os.environ["ZOMB_TOOL_PATH"]+"/template/nuke/outputTemplate.nk")
