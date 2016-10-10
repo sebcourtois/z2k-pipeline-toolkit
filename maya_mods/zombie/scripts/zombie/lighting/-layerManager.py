@@ -58,6 +58,14 @@ def buttonCreateLightPass(*args):
 	lm.initLayer()
 	lm.createLightPass()
 
+def buttonCreateFxsPass(*args):
+	lm.initLayer()
+	lm.createFxsPass()
+
+def buttonUtilLayerPass(*args):
+	layerManager.createCryptomatteLayer()
+	layerManager.setCryptoAov()
+
 #layer member
 def buttonAddSelectionToLayer(*args):
 	lm.initRndItem()
@@ -98,7 +106,7 @@ if mc.window( "layerManager", exists = True ):
 
 
 window = mc.window( "layerManager", title="layer manager", iconName='layer manager',toolbox = True, sizeable = False )
-mc.window(window, e = True, widthHeight=(260, 275))
+mc.window(window, e=True, widthHeight=(260, 335))
 
 mc.columnLayout( columnAttach=('both', 5), rowSpacing=5, adjustableColumn = True,columnAlign = "center" )
 
@@ -117,6 +125,12 @@ mc.setParent( '..' )
 mc.flowLayout()
 mc.button( label='create light pass', recomputeSize = False, width = 250, c= buttonCreateLightPass )
 mc.setParent( '..' )
+mc.flowLayout()
+mc.button(label='create utl pass', recomputeSize=False, width=250, c=buttonUtilLayerPass)
+mc.setParent('..')
+mc.flowLayout()
+mc.button(label='create fxs pass', recomputeSize=False, width=250, c=buttonCreateFxsPass)
+mc.setParent('..')
 #layer member
 mc.separator(style = 'in', h = 5  )
 mc.text(label="Layer Members", align='center')
