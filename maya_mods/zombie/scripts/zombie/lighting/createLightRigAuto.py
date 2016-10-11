@@ -5,6 +5,12 @@ from mtoa.core import createOptions
 createOptions()
 
 def createLightRigFromShot():
+    hookL = pm.ls('shot|grp_character')[0].getChildren()
+    for hook in hookL :
+        if hook.split('_')[0] == 'hook' :
+            pm.delete(hook)
+        else:
+            pass
     fileTexL = pm.ls(type='file')
     [pm.setAttr(fileTex + '.aiAutoTx', 0) for fileTex in fileTexL]
     characterList = pm.PyNode('shot|grp_character').getChildren()
