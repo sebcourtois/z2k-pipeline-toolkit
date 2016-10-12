@@ -227,7 +227,6 @@ def conformFilePath(filePathS = "", gui = True):
     filePathS = filePathS.replace("/left/", "/%V/")
     filePathS = filePathS.replace("/right/", "/%V/")
 
-
     filePathOrigS = str(filePathS)
     if "output" in filePathS:
         insensitive_outShotDir = re.compile(re.escape(os.environ["OUTPUT_DIR"]), re.IGNORECASE)
@@ -256,6 +255,11 @@ def conformFileNode(readNodeL=[], gui=True, conformPathB = True):
 
     for each in readNodeL:
         eachNameS = each['name'].getValue()
+
+        if 'read_exr' in eachNameS:
+            log.printL("i","skipping output node: '{}'".format(eachNameS))
+            continue
+
         eachTypeS = nuke.getNodeClassName(each)
 
         #log.printL("i", "node: '{}'".format(eachNameS))
@@ -267,9 +271,12 @@ def conformFileNode(readNodeL=[], gui=True, conformPathB = True):
                 log.printL("i","'{}' --> {}".format(eachNameS, filePathNewS))
                 each['file'].setValue(filePathNewS)
 
+
         filePathExpS = nuke.filename(each)
-        filePathExpLeftS = ""
-        filePathExpRightS = ""
+        if not filePathExpS:
+            log.printL("e","Undefined file path: '{}'".format(eachNameS))
+            if each not in unvalidNodeL: unvalidNodeL.append(each)
+            continue
 
 
         if "%V" in filePathExpS:
@@ -286,26 +293,28 @@ def conformFileNode(readNodeL=[], gui=True, conformPathB = True):
                 if not (resultLeftD["firstImgI"] == 0 and resultLeftD["lastImgI"] == 0) and not (resultRightD["firstImgI"] == 0 and resultRightD["lastImgI"] == 0):
                     if resultLeftD["frameNumberI"]!=resultRightD["frameNumberI"]:
                         log.printL("e","'{}' missmaching frame number: left {}, right {} ".format(eachNameS, resultLeftD["frameNumberI"], resultRightD["frameNumberI"]))
+                        if each not in unvalidNodeL: unvalidNodeL.append(each)
 
                     if resultLeftD["firstImgI"] == resultRightD["firstImgI"]:
                         each['first'].setValue(resultLeftD["firstImgI"])
                     else:
                         each['first'].setValue(min(resultLeftD["firstImgI"],resultRightD["firstImgI"]))
                         log.printL("e","'{}' has different first frame on left and right camera".format(eachNameS))
+                        if each not in unvalidNodeL: unvalidNodeL.append(each)
 
                     if resultLeftD["lastImgI"] == resultRightD["lastImgI"]:
                         each['last'].setValue(resultLeftD["lastImgI"])
                     else:
                         each['last'].setValue(min(resultLeftD["lastImgI"],resultRightD["lastImgI"]))
                         log.printL("e","'{}' has different last frame on left and right camera".format(eachNameS))
+                        if each not in unvalidNodeL: unvalidNodeL.append(each)
 
                     if resultLeftD["missingFrameL"]:
                         log.printL("e","'{}' missing frames found on left camera seq: {} ".format(eachNameS, resultLeftD["missingFrameL"]))
-                        unvalidNodeL.append(each)
+                        if each not in unvalidNodeL: unvalidNodeL.append(each)
                     if resultRightD["missingFrameL"]:
                         log.printL("e","'{}' missing frames found on right camera seq: {} ".format(eachNameS, resultRightD["missingFrameL"]))
-                        if each not in unvalidNodeL:
-                            unvalidNodeL.append(each)
+                        if each not in unvalidNodeL: unvalidNodeL.append(each)
 
 
         else:
@@ -316,11 +325,20 @@ def conformFileNode(readNodeL=[], gui=True, conformPathB = True):
                     each['last'].setValue(resultD["lastImgI"])
                     if resultD["missingFrameL"]:
                         log.printL("e","'{}' missing frames found in seq: {} ".format(eachNameS, resultD["missingFrameL"]))
-                        if each not in unvalidNodeL:
-                            unvalidNodeL.append(each)
+                        if eachNameS not in unvalidNodeL: unvalidNodeL.append(eachNameS)
+
+    if gui:
+        unvalidNodeNameL=[]
+        if unvalidNodeL:
+            for each  in unvalidNodeL:
+                unvalidNodeNameL.append(each['name'].getValue())
+                each['selected'].setValue(True)
+
+            txt1 = "'{}' unvalid nodes found: {} ".format(len(unvalidNodeNameL), unvalidNodeNameL)
+            nuke.message("Info:\n"+txt1+"\nPlease read the log for more details")
 
 
-    return dict(resultB=log.resultB, logL=log.logL, unvalidNodeL=unvalidNodeL)
+    return dict(resultB=log.resultB, logL=log.logL)
 
 
 
@@ -452,13 +470,24 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
 
     for each in readNodeL:
         eachNameS = each['name'].getValue()
+
         filePathExpS = nuke.filename(each)
+        if not filePathExpS:
+            log.printL("i","skipping, undefined file path: '{}'".format(eachNameS))
+            skippedNodeL.append(eachNameS)
+            continue
+
         lyrDirNameS = os.path.basename(os.path.dirname(filePathExpS))
+        if not os.path.isdir(lyrDirNameS):
+            log.printL("i","skipping, missing directory: '{}', '{}'".format(eachNameS,filePathExpS))
+            skippedNodeL.append(eachNameS)
+            continue
+
         if os.environ["OUTPUT_DIR"] in filePathExpS:
             log.printL("i","skipping, already published: '{}', '{}'".format(eachNameS,filePathExpS))
             skippedNodeL.append(eachNameS)
         elif not "lyr_" in lyrDirNameS:
-            log.printL("e","skipping, not a layer: '{}', '{}'".format(eachNameS,filePathExpS))
+            log.printL("i","skipping, not a layer: '{}', '{}'".format(eachNameS,filePathExpS))
             skippedNodeL.append(eachNameS)
         elif "compo-v" in filePathExpS and destination == "output":
             log.printL("i","skipping, '.../compo-vxx/...' has to be published in the 'shot' structure: '{}', '{}'".format(eachNameS,lyrDirNameS))
@@ -582,13 +611,14 @@ def publishCompo(dryRun=False, gui = True):
 
     # testing presence of the 'read_exr' node presence (only one alowed) 
     readExrL=[]
-    allReadNodeL = nuke.allNodes('Read')
-    for each in allReadNodeL:
-        if "read_exr" in each['name'].getValue():
-            readExrL.append(each)
-    if len(readExrL)!=1:
-        log.printL("e","Publish failed, several or none 'read_exr' node fond: '{}'".format( nKFileNameS.split(".")[-1]),guiPopUp = True)
-        return
+    if depS == "10_compo":
+        allReadNodeL = nuke.allNodes('Read')
+        for each in allReadNodeL:
+            if "read_exr" in each['name'].getValue():
+                readExrL.append(each)
+        if len(readExrL)!=1:
+            log.printL("e","Publish failed, several or none 'read_exr' node fond: '{}'".format( nKFileNameS.split(".")[-1]),guiPopUp = True)
+            return
     
 
     commentS = nuke.getInput("Please enter a publish comment", "")
@@ -596,11 +626,12 @@ def publishCompo(dryRun=False, gui = True):
         log.printL("i","Pubish canceled")
         raise RuntimeError("Publish canceled")
 
-    try:
-        publishNode(readNodeL=readExrL,dryRun=False, destination = "shot", gui = True, guiPopUp = False, commentS = commentS)
-    except Exception as err:
-        log.printL("e","Seq output node publish failed: '{}'".format(err),guiPopUp = True)
-        raise
+    if depS == "10_compo":
+        try:
+            publishNode(readNodeL=readExrL,dryRun=False, destination = "shot", gui = True, guiPopUp = False, commentS = commentS)
+        except Exception as err:
+            log.printL("e","Seq output node publish failed: '{}'".format(err),guiPopUp = True)
+            raise
 
     try:
         resultD =  proj.publishEditedVersion(nKFilePathS, comment=commentS, returnDict=True)

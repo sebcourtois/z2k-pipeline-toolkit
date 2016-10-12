@@ -24,7 +24,7 @@ nuke.menu('Nodes').addCommand('Z2K/P_Matte', lambda: nuke.createNode('P_Matte'))
 
 ## Scripts
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/init nuke shot', lambda: nkU.initNukeShot() )
-nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform file nodes', lambda: nkU.conformFileNode(readNodeL=nuke.allNodes('Read')+nuke.allNodes('Write'), gui=True, conformPathB = True) )
+nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform file nodes', lambda: nkU.conformFileNode(readNodeL=nuke.allNodes('Read'), gui=True, conformPathB = True) )
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/import template/ compositing', lambda: nkU.inportOutTemplate(template = "compo") )
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/import template/ render precomp', lambda: nkU.inportOutTemplate(template = "renderprecomp") )
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/publish/publish compositing', lambda: nkU.publishCompo(dryRun=False, gui = True) )
