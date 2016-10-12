@@ -482,8 +482,8 @@ def setCryptoAov():
         Special aov for cryptomatte to use in an extra layer
     '''
     ## Set dmnToon output mode to lambert ##
-    dmnToonOutput = pm.ls(type='dmnToon')
-    [pm.setAttr(out + '.output', 7) for out in dmnToonOutput]
+#    dmnToonOutput = pm.ls(type='dmnToon')
+#    [pm.setAttr(out + '.output', 7) for out in dmnToonOutput]
 
     ## Create and set the Cryptomatte aov ##
     defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
