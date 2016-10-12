@@ -46,6 +46,12 @@ else:
 _token_generic_rx = re.compile('<[^>]*>')
 
 def expandFilename(filename):
+
+    if filename.find('<') < 0:
+        #no tokens, let's just return the filename in a single-element array
+        return [filename]
+
+
     '''Return a list of image filenames with all tokens expanded.
        Since there is a long list of supported tokens, we're now searching for
        them in a more generic way (instead of specially looking for <udim>, <tile>, <attr:>)
@@ -56,9 +62,17 @@ def expandFilename(filename):
 #    expand_glob = re.sub(_token_tile_rx, '_u[0-9]*_v[0-9]*', expand_glob)
 #    expand_glob = re.sub(_token_attr_rx, '*', expand_glob)
     
-    # retain only image files that Arnold can read
+    # testing AiTextureGetFormat to make sure the file is a valid image causes an image load.
+    # Either we discard it after calling this function, or we simply don't do the check.
+    # let's try the first option for now....
+    filteredList = filter(lambda p: AiTextureGetFormat(p), glob.glob(expand_glob))
+    for filteredImg in filteredList:
+        if os.path.splitext(filteredImg)[1] != '.tx':
+            # don't invalidate .tx files
+            AiTextureInvalidate(filteredImg)
 
-    return filter(lambda p: AiTextureGetFormat(p), glob.glob(expand_glob))
+    return filteredList
+
 
 def guessColorspace(filename):
     '''Guess the colorspace of the input image filename.
@@ -69,6 +83,9 @@ def guessColorspace(filename):
             return 'sRGB'
         else:
             return 'linear'
+
+        # now discard the image file as AiTextureGetFormat has loaded it
+        AiTextureInvalidate(filename)
     except:
         print '[maketx] Error: Could not guess colorspace for "%s"' % filename
         return 'linear'
