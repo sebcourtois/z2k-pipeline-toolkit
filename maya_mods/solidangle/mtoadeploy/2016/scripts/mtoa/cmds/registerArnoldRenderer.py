@@ -247,9 +247,10 @@ def _register():
     #
     pm.mel.source('createMayaSoftwareCommonGlobalsTab.mel')
     
-    utils.pyToMelProc(addOneTabToGlobalsWindow,
-                      [('string', 'renderer'), ('string', 'tabLabel'), ('string', 'createProc')],
-                      useName=True)
+    if int(float(maya_version)) < 2018:
+        utils.pyToMelProc(addOneTabToGlobalsWindow,
+                          [('string', 'renderer'), ('string', 'tabLabel'), ('string', 'createProc')],
+                          useName=True)
     utils.pyToMelProc(renderSettingsTabLabel_melToUI,
                       [('string', 'mel')],
                       useName=True)
