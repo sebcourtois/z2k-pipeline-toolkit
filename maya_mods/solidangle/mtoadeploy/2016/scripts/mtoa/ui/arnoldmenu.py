@@ -262,7 +262,6 @@ def arnoldLicenseDialog():
     cmds.showWindow(w)
     
 def arnoldTxManager():
-    core.createOptions()
     win = mtoa.txManager.MtoATxManager()
     win.create()
     win.refreshList()

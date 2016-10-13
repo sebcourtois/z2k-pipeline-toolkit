@@ -21,20 +21,6 @@ except:
 global arnoldAOVCallbacks
 
 try:
-    import maya.app.renderSetup.model.rendererCallbacks as rendererCallbacks
-    import mtoa.core as core
-
-    class ArnoldRenderSettingsCallbacks(rendererCallbacks.RenderSettingsCallbacks):
-    
-        # Create the default Arnold nodes
-        def createDefaultNodes(self):
-            core.createOptions()
-
-    arnoldRenderSettingsCallbacks = ArnoldRenderSettingsCallbacks()
-except:
-    arnoldRenderSettingsCallbacks = None
-
-try:
     import maya.app.renderSetup.model.renderSetup as renderSetup
     import maya.app.renderSetup.model.rendererCallbacks as rendererCallbacks
     import maya.app.renderSetup.model.typeIDs as typeIDs
@@ -461,15 +447,6 @@ def aiRenderSettingsBuiltCallback(currentRenderer):
                                                     utils.pyToMelProc(createArnoldRendererDiagnosticsTab, useName=True), 
                                                     utils.pyToMelProc(updateArnoldRendererDiagnosticsTab, useName=True)))
 
-def aiRendererAddOneTabToGlobalsWindowCreateProcCallback(createProc):
-    createProcs = ['createArnoldRendererCommonGlobalsTab',
-                   'createArnoldRendererGlobalsTab',
-                   'createArnoldRendererSystemTab',
-                   'createArnoldRendererDiagnosticsTab']
-
-    if createProc in createProcs:
-        pm.mel.eval(createProc)
-        
 def xgaiArchiveExport(selfid) :
     self = castSelf(selfid)
     aiExport( self, self.invokeArgs[0], self.invokeArgs[1], self.invokeArgs[2], self.invokeArgs[3] )
@@ -500,12 +477,9 @@ def registerCallbacks():
     if cmds.about(batch=True):
         return
         
-    if arnoldAOVCallbacks is not None:
+    if not arnoldAOVCallbacks is None:
         rendererCallbacks.registerCallbacks("arnold", rendererCallbacks.CALLBACKS_TYPE_AOVS, arnoldAOVCallbacks)
         
-    if arnoldRenderSettingsCallbacks is not None:
-        rendererCallbacks.registerCallbacks("arnold", rendererCallbacks.CALLBACKS_TYPE_RENDER_SETTINGS, arnoldRenderSettingsCallbacks)
-
     cmds.callbacks(addCallback=aiHyperShadePanelBuildCreateMenuCallback,
                    hook="hyperShadePanelBuildCreateMenu",
                    owner="arnold")
@@ -559,11 +533,6 @@ def registerCallbacks():
 
     cmds.callbacks(addCallback=aiRenderSettingsBuiltCallback,
                    hook="renderSettingsBuilt",
-                   owner="arnold")
-
-    # This callback is new for Maya 2018.
-    cmds.callbacks(addCallback=aiRendererAddOneTabToGlobalsWindowCreateProcCallback,
-                   hook="rendererAddOneTabToGlobalsWindowCreateProc",
                    owner="arnold")
 
 def clearCallbacks():

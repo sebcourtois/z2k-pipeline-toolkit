@@ -73,8 +73,6 @@ class MakeTxThread (threading.Thread):
                     
                 colorSpace = nodeColorSpace
 
-            if colorSpace == 'auto' and textureLine[2] != '':
-                colorSpace = textureLine[2]
             if not texture:
                 continue;
             # stopCreation has been called   
@@ -440,18 +438,14 @@ class MtoATxManager(object):
                 for root, dirs, files in os.walk(folder):
                     for texture in files:
                         if (isImage(texture)):
-                            inputFile = os.path.join(folder, texture)
-                            colorSpace = cmds.colorManagementFileRules(evaluate=inputFile)
-                            item = [os.path.join(root, texture), 0, colorSpace, '', [inputFile]]
+                            item = [os.path.join(root, texture), 0, '', '', [os.path.join(folder, texture)]]
                             self.selectedItems.append(item)
                             self.filesToCreate += 1
             else:
                 files = os.listdir(folder)
                 for texture in files:
                     if (isImage(texture)):
-                        inputFile = os.path.join(folder, texture)
-                        colorSpace = cmds.colorManagementFileRules(evaluate=inputFile)
-                        item = [os.path.join(folder, texture), 0, colorSpace, '', [inputFile]]
+                        item = [os.path.join(folder, texture), 0, '', '', [os.path.join(folder, texture)]]
                         self.selectedItems.append(item)
                         self.filesToCreate += 1
                 
