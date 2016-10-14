@@ -485,7 +485,7 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
                 log.printL("i","skipping, missing directory: '{}', '{}'".format(eachNameS,lyrDirNameLeftS))
                 skippedNodeL.append(eachNameS)
                 continue
-            lyrDirNameRightS = filePathExpS.replace("%V","right")
+            lyrDirNameRightS = lyrDirNameS.replace("%V","right")
             if not os.path.isdir(lyrDirNameRightS):
                 log.printL("i","skipping, missing directory: '{}', '{}'".format(eachNameS,lyrDirNameRightS))
                 skippedNodeL.append(eachNameS)
