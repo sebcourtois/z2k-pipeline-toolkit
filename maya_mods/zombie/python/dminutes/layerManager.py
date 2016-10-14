@@ -490,6 +490,19 @@ def setCryptoAov():
     pm.shadingNode('alSurface', asShader=True, name='alCryptoShader')
     pm.setAttr('alCryptoShader.standardCompatibleAOVs', 0)
     pm.setAttr('alCryptoShader.specular1Strength', 0)
+
+    if pm.objExists('alUtls') == True:
+        print 'AiUtls is already created, nothing to do !'
+        pass
+    else:
+        pm.shadingNode('aiUtility', asShader=True, name='alUtls')
+
+    if pm.listConnections('lyr_utl0_bty.shadingGroupOverride', source=True, destination=False)[0] == 'alUtlsSG':
+        print 'lyr_utl0 is already overided, nothing to do !'
+        pass
+    else:
+        maya.mel.eval('hookShaderOverride(\"lyr_utl0_bty\", \"\", \"alUtls\");')
+
     aovs.AOVInterface()
     #myAovs.addAOV("crypto_object", aovType='rgb')
     aovsL = defRenderOpt.aovs.get()
