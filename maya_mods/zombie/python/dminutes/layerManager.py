@@ -487,20 +487,21 @@ def setCryptoAov():
 
     ## Create and set the Cryptomatte aov ##
     defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
-    pm.shadingNode('alSurface', asShader=True, name='alCryptoShader')
-    pm.setAttr('alCryptoShader.standardCompatibleAOVs', 0)
-    pm.setAttr('alCryptoShader.specular1Strength', 0)
+    if pm.objExists('alCryptoShader') == True:
+        print 'alCryptoShader is already created, nothing to do !'
+        pass
+    else:
+        pm.shadingNode('alSurface', asShader=True, name='alCryptoShader')
+        pm.setAttr('alCryptoShader.standardCompatibleAOVs', 0)
+        pm.setAttr('alCryptoShader.specular1Strength', 0)
 
     if pm.objExists('alUtls') == True:
         print 'AiUtls is already created, nothing to do !'
         pass
     else:
         pm.shadingNode('aiUtility', asShader=True, name='alUtls')
-
-    if pm.listConnections('lyr_utl0_bty.shadingGroupOverride', source=True, destination=False)[0] == 'alUtlsSG':
-        print 'lyr_utl0 is already overided, nothing to do !'
-        pass
-    else:
+        pm.setAttr('alUtls.shadeMode', 2)
+        pm.setAttr('alUtls.colorMode', 5)
         maya.mel.eval('hookShaderOverride(\"lyr_utl0_bty\", \"\", \"alUtls\");')
 
     aovs.AOVInterface()
@@ -510,4 +511,8 @@ def setCryptoAov():
     pm.editRenderLayerAdjustment('aiAOV_*.enabled')
     [aov.attr('enabled').set(False) for aov in aovsL]
     [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'crypto_object']
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'P']
+    pm.editRenderLayerAdjustment('defaultArnoldDriver.halfPrecision')
+    pm.setAttr('defaultArnoldDriver.halfPrecision', 0)
     pm.connectAttr('alCryptoShader.outColor', 'aiAOV_crypto_object.defaultValue', force=True)
+
