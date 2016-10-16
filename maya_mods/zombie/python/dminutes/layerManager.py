@@ -471,7 +471,7 @@ class LayerManager:
 
 def createCryptomatteLayer():
     ## Add assets ##
-    pm.select('|shot|grp_character', '|shot|grp_prop', '|shot|grp_set')
+    pm.select('|shot|grp_character', '|shot|grp_prop', '|shot|grp_set', '|shot|grp_prop')
 
     ## Create custom layer and make current ##
     pm.createRenderLayer(n='lyr_utl0_bty')
@@ -494,6 +494,7 @@ def setCryptoAov():
         pm.shadingNode('alSurface', asShader=True, name='alCryptoShader')
         pm.setAttr('alCryptoShader.standardCompatibleAOVs', 0)
         pm.setAttr('alCryptoShader.specular1Strength', 0)
+        maya.mel.eval('hookShaderOverride(\"lyr_utl0_bty\", \"\", \"alCryptoShader\");')
 
     if pm.objExists('alUtls') == True:
         print 'AiUtls is already created, nothing to do !'
@@ -502,7 +503,6 @@ def setCryptoAov():
         pm.shadingNode('aiUtility', asShader=True, name='alUtls')
         pm.setAttr('alUtls.shadeMode', 2)
         pm.setAttr('alUtls.colorMode', 5)
-        maya.mel.eval('hookShaderOverride(\"lyr_utl0_bty\", \"\", \"alUtls\");')
 
     aovs.AOVInterface()
     #myAovs.addAOV("crypto_object", aovType='rgb')
@@ -512,7 +512,9 @@ def setCryptoAov():
     [aov.attr('enabled').set(False) for aov in aovsL]
     [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'crypto_object']
     [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'P']
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'Pref']
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'uvs']
     pm.editRenderLayerAdjustment('defaultArnoldDriver.halfPrecision')
     pm.setAttr('defaultArnoldDriver.halfPrecision', 0)
-    pm.connectAttr('alCryptoShader.outColor', 'aiAOV_crypto_object.defaultValue', force=True)
+    pm.connectAttr('alUtls.outColor', 'aiAOV_uvs.defaultValue', force=True)
 

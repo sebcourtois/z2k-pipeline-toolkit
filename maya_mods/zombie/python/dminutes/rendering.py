@@ -630,7 +630,7 @@ def createAovs(renderMode="render"):
             aovCustomNameL = ["aiAOV_arlequin"]
         else:
             aovDmnNameL = ["dmn_ambient", "dmn_diffuse", "dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon", "dmn_mask_transp", "dmn_lgtMask01", "dmn_lgtMask02"]
-            aovCustomNameL = ["aiAOV_depth_aa", "aiAOV_Z", "aiAOV_P", "aiAOV_Pref", "aiAOV_crypto_object"]
+            aovCustomNameL = ["aiAOV_depth_aa", "aiAOV_Z", "aiAOV_P", "aiAOV_Pref", "aiAOV_crypto_object", "aiAOV_uvs"]
 
 
         for each in aovDmnNameL:
@@ -653,9 +653,10 @@ def createAovs(renderMode="render"):
                 myAOVs.addAOV("P", aovType='point')
             elif each == "aiAOV_Pref" and not 'aiAOV_Pref' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("Pref", aovType='point')
-                #changeAovFilter(aovName = "Z", filterName = "default")
             elif each == "aiAOV_crypto_object" and not 'aiAOV_crypto_object' in mc.ls(type="aiAOV"):
-                myAOVs.addAOV("crypto_object", aovType='rgba')
+                myAOVs.addAOV("crypto_object", aovType='rgb')
+            elif each == "aiAOV_uvs" and not 'aiAOV_uvs' in mc.ls(type="aiAOV"):
+                myAOVs.addAOV("uvs", aovType='rgb')
                 #changeAovFilter(aovName = "Z", filterName = "default")
 
         aovs.refreshAliases()
@@ -741,6 +742,7 @@ def renderRightCam():
         pm.setAttr('stereo_rig:cam_rightShape.renderable', 1)
         if (pm.getAttr('stereo_rig:cam_rightShape.renderable')) :
             pm.setAttr('defaultRenderGlobals.imageFilePrefix', '/right/<RenderLayer>/' + imageFileName, type='string')
+            print (u'Ready pour le rendu cam droite')
     else :
         print (u'Merci, ok pour le rendu cam droite')
         pass
