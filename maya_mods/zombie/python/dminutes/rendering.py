@@ -715,11 +715,13 @@ def createCustomShader(shaderName="arlequin", gui=True):
 
     return dict(resultB=log.resultB, logL=log.logL, rootNodeOutputS=rootNodeOutput)
 
-mainFilePathS = cmds.file(q=True, list=True)[0]
+mainFilePathS = mc.file(q=True, list=True)[0]
 shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
 imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
 
 def renderLeftCam():
+    if pm.window("unifiedRenderGlobalsWindow", exists=True):
+        pm.deleteUI("unifiedRenderGlobalsWindow")
     if not '/left/<RenderLayer>/' in imageFileName or '/right/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
         pm.setAttr('cam_' + shotName + ':cam_shot_default.renderable', 0)
         pm.setAttr('stereo_rig:cam_stereoShape.renderable', 0)
@@ -734,6 +736,8 @@ def renderLeftCam():
         pass
 
 def renderRightCam():
+    if pm.window("unifiedRenderGlobalsWindow", exists=True):
+        pm.deleteUI("unifiedRenderGlobalsWindow")
     if not '/right/<RenderLayer>/' in imageFileName or '/left/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
         pm.setAttr('cam_' + shotName + ':cam_shot_default.renderable', 0)
         pm.setAttr('stereo_rig:cam_stereoShape.renderable', 0)
