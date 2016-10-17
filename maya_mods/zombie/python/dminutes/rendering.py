@@ -715,33 +715,33 @@ def createCustomShader(shaderName="arlequin", gui=True):
 
     return dict(resultB=log.resultB, logL=log.logL, rootNodeOutputS=rootNodeOutput)
 
+mainFilePathS = cmds.file(q=True, list=True)[0]
+shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
 imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
 
-### Render Left Cam
 def renderLeftCam():
-    if not (len(imageFileName) >= 15) :
-        pm.setAttr('cam_' + imageFileName + ':cam_shot_default.renderable', 0)
+    if not '/left/<RenderLayer>/' in imageFileName or '/right/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
+        pm.setAttr('cam_' + shotName + ':cam_shot_default.renderable', 0)
         pm.setAttr('stereo_rig:cam_stereoShape.renderable', 0)
         pm.setAttr('stereo_rig:cam_stereoShape.farClipPlane', 100000)
         pm.setAttr('stereo_rig:cam_rightShape.renderable', 0)
         pm.setAttr('stereo_rig:cam_leftShape.renderable', 1)
         if (pm.getAttr('stereo_rig:cam_leftShape.renderable')) :
-            pm.setAttr('defaultRenderGlobals.imageFilePrefix', '/left/<RenderLayer>/' + imageFileName, type='string')
+            pm.setAttr('defaultRenderGlobals.imageFilePrefix', '/left/<RenderLayer>/' + shotName, type='string')
             print (u'Ready pour le rendu cam gauche')
     else :
         print (u'Merci, cam gauche already set, nothing to do !!')
         pass
 
-### Render Right Cam
 def renderRightCam():
-    if not (len(imageFileName) >= 15) :
-        pm.setAttr('cam_' + imageFileName + ':cam_shot_default.renderable', 0)
+    if not '/right/<RenderLayer>/' in imageFileName or '/left/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
+        pm.setAttr('cam_' + shotName + ':cam_shot_default.renderable', 0)
         pm.setAttr('stereo_rig:cam_stereoShape.renderable', 0)
         pm.setAttr('stereo_rig:cam_stereoShape.farClipPlane', 100000)
         pm.setAttr('stereo_rig:cam_leftShape.renderable', 0)
         pm.setAttr('stereo_rig:cam_rightShape.renderable', 1)
         if (pm.getAttr('stereo_rig:cam_rightShape.renderable')) :
-            pm.setAttr('defaultRenderGlobals.imageFilePrefix', '/right/<RenderLayer>/' + imageFileName, type='string')
+            pm.setAttr('defaultRenderGlobals.imageFilePrefix', '/right/<RenderLayer>/' + shotName, type='string')
             print (u'Ready pour le rendu cam droite')
     else :
         print (u'Merci, ok pour le rendu cam droite')

@@ -5,4 +5,4 @@ import pymel.core as pm
 from dminutes import rendering
 reload (rendering)
 
-rendering.setRenderRightCam()
+rendering.renderRightCam()
