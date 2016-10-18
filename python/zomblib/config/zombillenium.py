@@ -253,7 +253,7 @@ class shot_lib(object):
                      "sg_tasks":("Animation|reference",),
                      "sg_status":"rev",
                     },
-    "anim_dir":{"default_sync_rules":["online", "dmn_paris", "dream_wall", "pipangai"], },
+    "anim_dir":{"default_sync_rules":["all_sites"], },
 
     #===========================================================================
     # CHARFX RESOURCES
