@@ -1,5 +1,6 @@
 import maya.cmds as mc
-
+import pymel.core as pm
+from mtoa import aovs
 
 # import os
 # import re
@@ -9,10 +10,6 @@ import maya.mel
 
 from dminutes import miscUtils
 reload (miscUtils)
-
-
-
-
 
 
 
@@ -328,7 +325,7 @@ class LayerManager:
     def createLightPass(self):
         self.log.funcName ="'createLightPass' "
 
-        layerNameS = "lyr_"+self.layerNameS.split("_")[1]+"_lgtPass"
+        layerNameS = "lyr_" + self.layerNameS.split("_")[1] + "_lgp"
         layerNameOrigS = self.layerNameS
         self.duplicateLayer(layerName= layerNameS)
 
@@ -352,7 +349,7 @@ class LayerManager:
             else:
                 if mc.getAttr(eachGeo+".aiSelfShadows")!=1:
                     mc.editRenderLayerAdjustment(eachGeo+".aiSelfShadows")
-                    mc.setAttr(eachGeo+".selfShadows",1)
+                    mc.setAttr(eachGeo + ".aiSelfShadows", 1)
                 if mc.getAttr(eachGeo+".castsShadows")!=1:
                     mc.editRenderLayerAdjustment(eachGeo+".castsShadows")
                     mc.setAttr(eachGeo+".castsShadows",1)
@@ -376,26 +373,148 @@ class LayerManager:
         if dmnToonL:
             mc.sets(dmnToonL, forceElement=self.visDmnToonS)
             for each in dmnToonL:
-                connectL = mc.listConnections(each+".selfShadows",plugs = True, source =True, destination = False) 
+                connectL = mc.listConnections(each + ".selfShadows", plugs=True, source=True, destination=False)
                 if connectL:               
                     for eachConnection in connectL:
-                        mc.editRenderLayerAdjustment(each+".selfShadows")
-                        mc.disconnectAttr (eachConnection,each+".selfShadows")
-                    mc.setAttr(each+".selfShadows",1)
-                if mc.getAttr(each+".selfShadows")!=1:
-                    mc.editRenderLayerAdjustment(each+".selfShadows")
-                    mc.setAttr(each+".selfShadows",1)
+                        mc.editRenderLayerAdjustment(each + ".selfShadows")
+                        mc.disconnectAttr (eachConnection, each + ".selfShadows")
+                    mc.setAttr(each + ".selfShadows", 1)
+                if mc.getAttr(each + ".selfShadows") != 1:
+                    mc.editRenderLayerAdjustment(each + ".selfShadows")
+                    mc.setAttr(each + ".selfShadows", 1)
 
         mc.addAttr(self.visDmnToonS, shortName='output', longName='output', attributeType="enum", enumName= "composite:final_layout:toon:rim_toon:contour:shadow_mask:incidence:lambert:occlusion:diffuse:ambient:specular:reflection:refraction:lightpass:diffuse_bounces:glossy_bounce")
         mc.setAttr(self.visDmnToonS+".output", 14)
         mc.setAttr(self.visDmnToonS+".aiOverride", 0)
         mc.editRenderLayerAdjustment(self.visDmnToonS+".aiOverride")
-        mc.setAttr(self.visDmnToonS+".aiOverride", 1)            
+        mc.setAttr(self.visDmnToonS + ".aiOverride", 1)
+        if mc.getAttr("defaultArnoldRenderOptions.aovMode") == True :
+            mc.editRenderLayerAdjustment("defaultArnoldRenderOptions.aovMode")
+            mc.setAttr("defaultArnoldRenderOptions.aovMode", 0)
+        else:
+            pass
+        txt = "Created '{}' light pass from '{}'".format(layerNameS, layerNameOrigS)
+        self.log.printL("i", txt)
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
+
+    def createFxsPass(self):
+        self.log.funcName = "'createFxsPass' "
+
+        layerNameS = "lyr_" + self.layerNameS.split("_")[1] + "_fxs"
+        layerNameOrigS = self.layerNameS
+        self.duplicateLayer(layerName=layerNameS)
+
+        if not self.layerNameS:
+            txt = "'{}' cannot be duplicated".format(layerName)
+            self.log.printL("i", txt)
+            return dict(resultB=self.log.resultB, logL=self.log.logL)
+
+        setVisibleL = mc.ls(self.layerSetL[0], type="objectSet")
+        if setVisibleL:
+            setVisibleMemberL = mc.sets(setVisibleL[0], q=True)
+        else:
+            txt = "no 'set_lyrX_visible' set found for layer '{}'".format(self.layerNameS)
+            self.log.printL("e", txt)
+
+        dmnToonL = []
+        for eachGeo in setVisibleMemberL:
+            shdGroupL = mc.ls(mc.listHistory(eachGeo, future=True), type="shadingEngine")
+            if "eye" in eachGeo or "outline" in eachGeo:
+                pass
+            else:
+                if mc.getAttr(eachGeo + ".selfShadows") != 1:
+                    mc.editRenderLayerAdjustment(eachGeo + ".selfShadows")
+                    mc.setAttr(eachGeo + ".selfShadows", 1)
+                if mc.getAttr(eachGeo + ".castsShadows") != 1:
+                    mc.editRenderLayerAdjustment(eachGeo + ".castsShadows")
+                    mc.setAttr(eachGeo + ".castsShadows", 1)
+
+            for eachSG in shdGroupL:
+                aiShaderL = mc.listConnections(eachSG + '.aiSurfaceShader', connections=False, source=True, destination=False)
+                if aiShaderL:
+                    if mc.nodeType(aiShaderL[0]) == "dmnToon":
+                        dmnToonL.append(aiShaderL[0])
+                    else:
+                        txt = "'{}' is not the right type, should be a 'dmnToon'".format(aiShaderL[0])
+                        self.log.printL("e", txt)
+
+        toDeleteL = mc.ls(self.visDmnToonS)
+        if toDeleteL:
+            mc.delete(toDeleteL)
+            print "deleting:", toDeleteL
+
+        mc.sets(name=self.visDmnToonS, empty=True)
+
+        if dmnToonL:
+            mc.sets(dmnToonL, forceElement=self.visDmnToonS)
+            for each in dmnToonL:
+                connectL = mc.listConnections(each + ".aiSelfShadows", plugs=True, source=True, destination=False)
+                if connectL:
+                    for eachConnection in connectL:
+                        mc.editRenderLayerAdjustment(each + ".aiSelfShadows")
+                        mc.disconnectAttr (eachConnection, each + ".aiSelfShadows")
+                    mc.setAttr(each + ".aiSelfShadows", 1)
+                if mc.getAttr(each + ".aiSelfShadows") != 1:
+                    mc.editRenderLayerAdjustment(each + ".aiSelfShadows")
+                    mc.setAttr(each + ".aiSelfShadows", 1)
+
+#        mc.addAttr(self.visDmnToonS, shortName='output', longName='output', attributeType="enum", enumName="composite:final_layout:toon:rim_toon:contour:shadow_mask:incidence:lambert:occlusion:diffuse:ambient:specular:reflection:refraction:lightpass:diffuse_bounces:glossy_bounce")
+#        mc.setAttr(self.visDmnToonS + ".output", 14)
+#        mc.setAttr(self.visDmnToonS + ".aiOverride", 0)
+#        mc.editRenderLayerAdjustment(self.visDmnToonS + ".aiOverride")
+#        mc.setAttr(self.visDmnToonS + ".aiOverride", 1)
 
         txt = "Created '{}' light pass from '{}'".format(layerNameS, layerNameOrigS)
         self.log.printL("i", txt)
         return dict(resultB=self.log.resultB, logL=self.log.logL)
 
 
+def createCryptomatteLayer():
+    ## Add assets ##
+    pm.select('|shot|grp_character', '|shot|grp_prop', '|shot|grp_set', '|shot|grp_prop')
 
+    ## Create custom layer and make current ##
+    pm.createRenderLayer(n='lyr_utl0_bty')
+    pm.editRenderLayerGlobals(currentRenderLayer='lyr_utl0_bty')
+
+def setCryptoAov():
+    ''''
+        Special aov for cryptomatte to use in an extra layer
+    '''
+    ## Set dmnToon output mode to lambert ##
+#    dmnToonOutput = pm.ls(type='dmnToon')
+#    [pm.setAttr(out + '.output', 7) for out in dmnToonOutput]
+
+    ## Create and set the Cryptomatte aov ##
+    defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
+    if pm.objExists('alCryptoShader') == True:
+        print 'alCryptoShader is already created, nothing to do !'
+        pass
+    else:
+        pm.shadingNode('alSurface', asShader=True, name='alCryptoShader')
+        pm.setAttr('alCryptoShader.standardCompatibleAOVs', 0)
+        pm.setAttr('alCryptoShader.specular1Strength', 0)
+        maya.mel.eval('hookShaderOverride(\"lyr_utl0_bty\", \"\", \"alCryptoShader\");')
+
+    if pm.objExists('alUtls') == True:
+        print 'AiUtls is already created, nothing to do !'
+        pass
+    else:
+        pm.shadingNode('aiUtility', asShader=True, name='alUtls')
+        pm.setAttr('alUtls.shadeMode', 2)
+        pm.setAttr('alUtls.colorMode', 5)
+
+    aovs.AOVInterface()
+    #myAovs.addAOV("crypto_object", aovType='rgb')
+    aovsL = defRenderOpt.aovs.get()
+    [aov.attr('enabled').set(0) for aov in aovsL if aov.attr('name').get() == 'crypto_object' and aov.attr('enabled').get() == 1]
+    pm.editRenderLayerAdjustment('aiAOV_*.enabled')
+    [aov.attr('enabled').set(False) for aov in aovsL]
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'crypto_object']
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'P']
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'Pref']
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'uvs']
+    pm.editRenderLayerAdjustment('defaultArnoldDriver.halfPrecision')
+    pm.setAttr('defaultArnoldDriver.halfPrecision', 0)
+    pm.connectAttr('alUtls.outColor', 'aiAOV_uvs.defaultValue', force=True)
 

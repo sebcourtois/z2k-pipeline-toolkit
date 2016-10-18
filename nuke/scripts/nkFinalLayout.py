@@ -8,6 +8,7 @@ import nuke
 
 def compileLayerQuickTime(renderDirS="", passNameL= ["lay_finalLayout_00"], aovNameL= ["beauty", "arlequin"], gui= False):
     log = nkU.LogBuilder(gui=gui, funcName ="'compileLayerQuickTime'")
+
     outNodeL = []
     outBoundL = []
     fFrameRangeD = {}
@@ -61,14 +62,14 @@ def compileLayerQuickTime(renderDirS="", passNameL= ["lay_finalLayout_00"], aovN
 
             fileO =  nkU.dataFile(fileNameS = firstFrameS)
 
-            wavFileName = nkU.pathJoin(os.environ["ZOMB_SHOT_PATH"],fileO.seq,fileO.shot,"00_data",fileO.shot+"_sound.wav")
+            wavFileName = nkU.pathJoin("//ZOMBIWALK/Projects/zomb/shot",fileO.seq,fileO.shot,"00_data",fileO.shot+"_sound.wav")
             if not os.path.isfile(wavFileName):
                     txt = "wav file does not exists: '{}'".format(wavFileName)
                     log.printL("e", txt)
                     raise ValueError(txt)
 
 
-            movFileName = nkU.pathJoin(os.environ["ZOMB_ROOT_PATH"],"private",fileO.user,"zomb","shot",fileO.seq,fileO.shot,fileO.dep,fileO.depSub,fileO.shot+"_"+fileO.layerName+".mov")
+            movFileName = nkU.pathJoin("//ZOMBIWALK/Projects","private",fileO.user,"zomb","shot",fileO.seq,fileO.shot,fileO.depDir,fileO.depDirSub,fileO.shot+"_"+fileO.layerName+".mov")
             txt = "output movie: '{}'".format(movFileName)
             log.printL("i", txt)
             txt = "sound file: '{}'".format(wavFileName)
