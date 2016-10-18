@@ -205,6 +205,7 @@ class shot_lib(object):
                     "sg_tasks":("stereo",),
                     "sg_status":"rev",
                     },
+    "stereo_dir":{"default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
 
     #===========================================================================
     # LAYOUT RESOURCES
