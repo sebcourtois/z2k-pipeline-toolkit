@@ -350,8 +350,8 @@ def setShadingMask(selectFailingNodes = False, gui = True):
     dmnMask04_G = ["chr_steven_","chr_dolores_","chr_ado18aine_"]
     dmnMask04_B = ["chr_sirius_","chr_femme_","chr_ado_","chr_gamine_"]
 
-    dmnMask05_R = []# visages, gazons, herbes folles custom
-    dmnMask05_G = []# yeux, custom
+    dmnMask05_R = []# visages, gazons, herbes folles custom et vegetation
+    dmnMask05_G = []# yeux, custom, xgen
     dmnMask05_B = []# bouches, custom
 
     dmnMask06_R = []# shading decor custom, gradient sourcil sur aurelien et francis, ombre orbites sirus
