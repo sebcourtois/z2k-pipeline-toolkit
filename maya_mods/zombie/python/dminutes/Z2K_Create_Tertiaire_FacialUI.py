@@ -90,7 +90,7 @@ class Create_Third_FacialUI(object):
         return theColor
 
     def replaceConnectAttr(self,theObj, attrHolder, theAttr):
-        # print "replaceConnectAttr()"
+        print "replaceConnectAttr()",theObj,attrHolder,theAttr
         
         # delete oldAttr if found
         if  cmds.objExists(attrHolder+"."+theAttr):
@@ -307,3 +307,6 @@ class Create_Third_FacialUI(object):
 # launch
 # Ctf= Create_Third_FacialUI()
 # Ctf.generate()
+
+thirdC= Create_Third_FacialUI()
+result,debug = thirdC.generate()
