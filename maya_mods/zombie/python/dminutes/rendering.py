@@ -715,12 +715,11 @@ def createCustomShader(shaderName="arlequin", gui=True):
 
     return dict(resultB=log.resultB, logL=log.logL, rootNodeOutputS=rootNodeOutput)
 
-    shotName = ''
-    imageFileName = ''
-    if not pm.sceneName() == '' :
-        mainFilePathS = mc.file(q=True, list=True)[0]
-        shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
-        imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
+shotName = ''
+if not pm.sceneName() == '' :
+    mainFilePathS = mc.file(q=True, list=True)[0]
+    shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
+imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
 
 def renderLeftCam():
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
