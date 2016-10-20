@@ -372,11 +372,12 @@ def exportCaches(**kwargs):
     r"-root {root} -file {file}",
     r"-frameRange {frameRange[0]} {frameRange[1]}",
     r"-frameRange {preRollRange[0]} {preRollRange[1]} -preRoll",
-    "{options}",
+    "{options}"
     ]
 
     if mc.about(batch=True):
-        sJobParts.append([r"-pythonPerFrameCallback '_abcProgress(int(\"#FRAME#\"),{frameRange[1]})'",
+        sJobParts.extend([
+                          r"-pythonPerFrameCallback '_abcProgress(int(\"#FRAME#\"),{frameRange[1]})'",
                           r"-pythonPostJobCallback 'print(\"Exported \'{root}\' >> \'{file}\'\")'",
                           ])
     sJobFmt = " ".join(sJobParts)
