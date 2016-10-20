@@ -70,7 +70,7 @@ def getNode(sNodeName):
     return sNodeName if mc.objExists(sNodeName) else None
 
 def getNamespace(sNodePath):
-    sNodeName =  sNodePath.rsplit("|", 1)[-1]
+    sNodeName = sNodePath.rsplit("|", 1)[-1]
     if ":" in sNodeName:
         return sNodeName.rsplit(":", 1)[0]
     return ""
@@ -366,16 +366,19 @@ def exportCaches(**kwargs):
     else:
         prevExportInfos = {}
 
-    sJobOpts = "-dataFormat ogawa -noNormals -uvWrite -writeVisibility -attr dynamicTopology"
+    sJobOpts = "-dataFormat ogawa -noNormals -uvWrite -writeVisibility -writeColorSets -attr dynamicTopology"
 
     sJobParts = [
     r"-root {root} -file {file}",
     r"-frameRange {frameRange[0]} {frameRange[1]}",
     r"-frameRange {preRollRange[0]} {preRollRange[1]} -preRoll",
     "{options}",
-    r"-pythonPerFrameCallback '_abcProgress(int(\"#FRAME#\"),{frameRange[1]})'",
-    r"-pythonPostJobCallback 'print(\"Exported \'{root}\' >> \'{file}\'\")'",
     ]
+
+    if mc.about(batch=True):
+        sJobParts.append([r"-pythonPerFrameCallback '_abcProgress(int(\"#FRAME#\"),{frameRange[1]})'",
+                          r"-pythonPostJobCallback 'print(\"Exported \'{root}\' >> \'{file}\'\")'",
+                          ])
     sJobFmt = " ".join(sJobParts)
 
     if (not bRaw) and sScnRcName in ("anim_scene", "charFx_scene"):
@@ -772,8 +775,10 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
             if abcMeshStat != astMeshStat:
                 if abcMeshStat["vertex"] != astMeshStat["vertex"]:
                     sMsg = "Number of vertices differs:"
-                    sMsg += "\n    - '{}': {} verts".format(sAbcMeshShapeName, abcMeshStat["vertex"])
-                    sMsg += "\n    - '{}': {} verts".format(sAstMeshShapeName, astMeshStat["vertex"])
+                    sMsg += "\n    - '{}': {} verts".format(sAbcMeshShapeName,
+                                                            abcMeshStat["vertex"])
+                    sMsg += "\n    - '{}': {} verts".format(sAstMeshShapeName,
+                                                            astMeshStat["vertex"])
                     pm.displayWarning(sMsg)
                     sVertsDifferList.extend((sAbcMeshShape, sAstMeshShape))
                     continue
@@ -799,15 +804,24 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
             bSameVtxPos = (mc.polyCompare(sAbcMeshShape, sAstMeshShape, vertices=True) == 0)
 
         if bDynTopo:
+
+            sColorSetList = mc.polyColorSet(sAbcMeshShape, q=True, allColorSets=True)
+            if sColorSetList and ("velocityColorSet" in sColorSetList):
+                mc.setAttr(sAstMeshShape + ".aiMotionVectorSource", "velocityColorSet", type="string")
+            else:
+                sMsg = "Dynamic topology mesh WITHOUT 'velocityColorSet': '{}'".format(sAstMeshShapeName)
+                pm.displayWarning(sMsg)
+
             if bAnimatedMesh:
                 if not dryRun:
                     mc.connectAttr(sAbcOutAttr, sAstMeshShape + ".inMesh", f=True)
+
             elif not dryRun:
                 sCacheShapeName = splitNamespace(sAstMeshXfm)[1] + "ShapeFromCache"
                 sCacheShapePath = "|".join((sAstMeshXfm, sCacheShapeName))
                 if mc.objExists(sCacheShapePath):
                     mc.delete(sCacheShapePath)
-                
+
                 sAbcCopiedShape = copyShape(sAbcMeshShape, sAstMeshXfm, add=True,
                                             inPlace=True, s=True, t=True, r=True)[0]
 
