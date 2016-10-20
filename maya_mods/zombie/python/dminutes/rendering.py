@@ -1,6 +1,7 @@
 import maya.cmds as mc
 #from mtoa.aovs import AOVInterface
 from mtoa import aovs
+from mtoa.core import createOptions
 
 from davos_maya.tool.general import infosFromScene
 from davos_maya.tool.general import entityFromScene
@@ -16,7 +17,13 @@ import pymel.core as pm
 from dminutes import miscUtils
 reload (miscUtils)
 
+createOptions()
 
+if pm.window("unifiedRenderGlobalsWindow", exists=True):
+    pm.deleteUI("unifiedRenderGlobalsWindow")
+
+if pm.window("hyperShadePanel1Window", exists=True):
+    pm.deleteUI("hyperShadePanel1Window")
 
 def setArnoldRenderOption(outputFormat, renderMode=""):
 
@@ -197,8 +204,8 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     if renderMode == 'finalLayout':
         setRenderCamera(leftCam = False, rightCam = False)
     else:
-        #setRenderCamera(leftCam = True, rightCam = True)  temprairement off on fait pour le moment encore les rendus avec la defaut cam
-        setRenderCamera(leftCam = False, rightCam = False)
+        setRenderCamera(leftCam=True, rightCam=True)  #temprairement off on fait pour le moment encore les rendus avec la defaut cam
+        #setRenderCamera(leftCam = False, rightCam = False)
 
     mc.colorManagementPrefs(e=True, cmEnabled=False)
 
@@ -311,9 +318,9 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
 
     if oShotCam:
         defaultCamNameS = oShotCam.name()
-        # leftCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_left').replace('cam_sq', 'stereo_cam_sq')
-        # rightCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_right').replace('cam_sq', 'stereo_cam_sq')
-        # stereoCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_stereo').replace('cam_sq', 'stereo_cam_sq')
+        leftCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_left').replace('cam_sq', 'stereo_cam_sq')
+        rightCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_right').replace('cam_sq', 'stereo_cam_sq')
+        stereoCamNameS = defaultCamNameS.replace('cam_shot_default', 'cam_stereo').replace('cam_sq', 'stereo_cam_sq')
         leftCamNameS = "stereo_rig:cam_left"
         rightCamNameS = "stereo_rig:cam_right"
         stereoCamNameS = "stereo_rig:cam_stereo"
@@ -322,7 +329,7 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
             if not mc.ls("stereo_rig:cam_stereo", type = "stereoRigTransform") or updateStereoCam:
                 log.printL("i", "importing stereo camera")
                 mop.loadStereoCam(infosFromScene()["dam_entity"])
-                mc.setAttr (defaultCamS + ".farClipPlane", 100000)
+                #mc.setAttr (defaultCamS + ".farClipPlane", 100000)
 
 
         allCam = mc.ls(type="camera")     
@@ -345,15 +352,15 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
         if leftCam:
             if leftCamS: 
                 mc.setAttr (leftCamS + ".renderable", 1)
-                #mc.setAttr (stereoCam + ".renderable", 1)
-                #mc.renderSettings(camera=stereoCam)
+                mc.setAttr (stereoCam + ".renderable", 0)
+                mc.renderSettings(camera=stereoCam)
                 if defaultCamS:
                     mc.setAttr (defaultCamS + ".renderable", 0)
                 log.printL("i", "render camera: '{}'".format(leftCamS))
             else:
                 log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_reft'")
                 try:
-                    mc.setAttr (leftCamS + ".renderable", 0)
+                    mc.setAttr (leftCamS + ".renderable", 1)
                 except:
                     pass
 
@@ -362,22 +369,22 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
                     mc.setAttr (defaultCamS + ".renderable", 1)
                 else:
                     log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
-                    mc.setAttr (defaultCamS + ".renderable", 0)
+                    mc.setAttr (defaultCamS + ".renderable", 1)
         else:
             try:
-                mc.setAttr (leftCamS + ".renderable", 0)
+                mc.setAttr (leftCamS + ".renderable", 1)
             except:
                 pass
 
         if rightCam:
             if rightCamS: 
                 mc.setAttr (rightCamS + ".renderable", 1)
-                #mc.setAttr (stereoCam + ".renderable", 1)
-                #mc.renderSettings(camera=stereoCam)
+                mc.setAttr (stereoCam + ".renderable", 0)
+                mc.renderSettings(camera=stereoCam)
                 log.printL("i", "render camera: '{}'".format(rightCamS))
             else:
                 try:
-                    mc.setAttr (rightCamS + ".renderable", 0)
+                    mc.setAttr (rightCamS + ".renderable", 1)
                     log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_right'")
                 except:
                     pass
@@ -388,7 +395,7 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
                 mc.setAttr (defaultCamS + ".renderable", 1)
             else:
                 log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
-                mc.setAttr (defaultCamS + ".renderable", 0)
+                mc.setAttr (defaultCamS + ".renderable", 1)
     else:
         log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
 
@@ -623,7 +630,7 @@ def createAovs(renderMode="render"):
             aovCustomNameL = ["aiAOV_arlequin"]
         else:
             aovDmnNameL = ["dmn_ambient", "dmn_diffuse", "dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon", "dmn_mask_transp", "dmn_lgtMask01", "dmn_lgtMask02"]
-            aovCustomNameL = ["aiAOV_depth_aa","aiAOV_Z","aiAOV_P"]
+            aovCustomNameL = ["aiAOV_depth_aa", "aiAOV_Z", "aiAOV_P", "aiAOV_Pref", "aiAOV_crypto_object", "aiAOV_uvs"]
 
 
         for each in aovDmnNameL:
@@ -644,6 +651,12 @@ def createAovs(renderMode="render"):
                 myAOVs.addAOV("Z", aovType='float')
             elif each == "aiAOV_P" and not 'aiAOV_P' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("P", aovType='point')
+            elif each == "aiAOV_Pref" and not 'aiAOV_Pref' in mc.ls(type="aiAOV"):
+                myAOVs.addAOV("Pref", aovType='point')
+            elif each == "aiAOV_crypto_object" and not 'aiAOV_crypto_object' in mc.ls(type="aiAOV"):
+                myAOVs.addAOV("crypto_object", aovType='rgb')
+            elif each == "aiAOV_uvs" and not 'aiAOV_uvs' in mc.ls(type="aiAOV"):
+                myAOVs.addAOV("uvs", aovType='rgb')
                 #changeAovFilter(aovName = "Z", filterName = "default")
 
         aovs.refreshAliases()
@@ -701,3 +714,41 @@ def createCustomShader(shaderName="arlequin", gui=True):
         rootNodeOutput = multDivNode + ".output"
 
     return dict(resultB=log.resultB, logL=log.logL, rootNodeOutputS=rootNodeOutput)
+
+shotName = ''
+if not pm.sceneName() == '' :
+    mainFilePathS = mc.file(q=True, list=True)[0]
+    shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
+imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
+
+def renderLeftCam():
+    if pm.window("unifiedRenderGlobalsWindow", exists=True):
+        pm.deleteUI("unifiedRenderGlobalsWindow")
+    if not '/left/<RenderLayer>/' in imageFileName or '/right/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
+        pm.setAttr('cam_' + shotName + ':cam_shot_default.renderable', 0)
+        pm.setAttr('stereo_rig:cam_stereoShape.renderable', 0)
+        pm.setAttr('stereo_rig:cam_stereoShape.farClipPlane', 100000)
+        pm.setAttr('stereo_rig:cam_rightShape.renderable', 0)
+        pm.setAttr('stereo_rig:cam_leftShape.renderable', 1)
+        if (pm.getAttr('stereo_rig:cam_leftShape.renderable')) :
+            pm.setAttr('defaultRenderGlobals.imageFilePrefix', '/left/<RenderLayer>/' + shotName, type='string')
+            print (u'Ready pour le rendu cam gauche')
+    else :
+        print (u'Merci, cam gauche already set, nothing to do !!')
+        pass
+
+def renderRightCam():
+    if pm.window("unifiedRenderGlobalsWindow", exists=True):
+        pm.deleteUI("unifiedRenderGlobalsWindow")
+    if not '/right/<RenderLayer>/' in imageFileName or '/left/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
+        pm.setAttr('cam_' + shotName + ':cam_shot_default.renderable', 0)
+        pm.setAttr('stereo_rig:cam_stereoShape.renderable', 0)
+        pm.setAttr('stereo_rig:cam_stereoShape.farClipPlane', 100000)
+        pm.setAttr('stereo_rig:cam_leftShape.renderable', 0)
+        pm.setAttr('stereo_rig:cam_rightShape.renderable', 1)
+        if (pm.getAttr('stereo_rig:cam_rightShape.renderable')) :
+            pm.setAttr('defaultRenderGlobals.imageFilePrefix', '/right/<RenderLayer>/' + shotName, type='string')
+            print (u'Ready pour le rendu cam droite')
+    else :
+        print (u'Merci, ok pour le rendu cam droite')
+        pass

@@ -16,7 +16,7 @@
 			<label>Backlight</label>
 		</attribute>
 		<attribute name='FresnelAffectDiff' type='maya.bool'>
-			<label>Fresnel affect Diffuse</label>
+			<label>Fresnel affects Diffuse</label>
 		</attribute>
 		<attribute name='directDiffuse' type='maya.float'>
 			<label>Direct Diffuse</label>
@@ -47,13 +47,13 @@
 			<label>Fresnel</label>
 		</attribute>
 		<attribute name='Ksn' type='maya.float'>
-			<label>Reflectanve at Normal</label>
+			<label>Reflectance at Normal</label>
 		</attribute>
 		<attribute name='directSpecular' type='maya.float'>
-			<label>Direct Specluar</label>
+			<label>Direct Specular</label>
 		</attribute>
 		<attribute name='indirectSpecular' type='maya.float'>
-			<label>Indirect Specluar</label>
+			<label>Indirect Specular</label>
 		</attribute>
 
 		<attribute name='KrColor' type='maya.float3'>
@@ -69,7 +69,7 @@
 			<label>Fresnel</label>
 		</attribute>
 		<attribute name='Krn' type='maya.float'>
-			<label>Reflectanve at Normal</label>
+			<label>Reflectance at Normal</label>
 		</attribute>
 		<attribute name='reflectionExitUseEnvironment' type='maya.bool'>
 			<label>Use Environment</label>

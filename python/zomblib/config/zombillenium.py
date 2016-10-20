@@ -205,6 +205,7 @@ class shot_lib(object):
                     "sg_tasks":("stereo",),
                     "sg_status":"rev",
                     },
+    "stereo_dir":{"default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
 
     #===========================================================================
     # LAYOUT RESOURCES
@@ -253,7 +254,7 @@ class shot_lib(object):
                      "sg_tasks":("Animation|reference",),
                      "sg_status":"rev",
                     },
-    "anim_dir":{"default_sync_rules":["online", "dmn_paris", "dream_wall", "pipangai"], },
+    "anim_dir":{"default_sync_rules":["all_sites"], },
 
     #===========================================================================
     # CHARFX RESOURCES
@@ -278,7 +279,7 @@ class shot_lib(object):
                             {"geoCache_dep":
                                 {"dep_public_loc":"finalLayout_cache_dir",
                                  "dep_source_loc":"|mayaProj_alembic_dir",
-                                 "checksum":False},
+                                 "checksum":True},
                             }
                          },
     "finalLayout_movie":{"create_sg_version":True,
@@ -312,10 +313,10 @@ class shot_lib(object):
                         {"geoCache_dep":
                             {"dep_public_loc":"fx3d_geoCache_dir",
                              "dep_source_loc":"|mayaProj_alembic_dir",
-                             "checksum":False},
+                             "checksum":True},
                          "fxCache_dep":
                             {"dep_public_loc":"fx3d_fxCache_dir",
-                             "checksum":False},
+                             "checksum":True},
                         }
                   },
     "fx3d_precomp_movie":{"create_sg_version":True,
@@ -354,16 +355,19 @@ class shot_lib(object):
 
     "compo_dir":{"default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
 
-    "compo_comp":{"create_sg_version":True,
+    "compo_comp":{"outcomes":("compo_movie",),
+                  "create_sg_version":True,
+                  "sg_uploaded_movie":"compo_movie",
+                  "sg_path_to_movie":"compo_movie",
                   "sg_tasks":("Compositing|compositing",),
                   },
 
-    "compo_movie":{"create_sg_version":True,
-                   "sg_uploaded_movie":True,
-                   "sg_path_to_movie":True,
-                   "sg_tasks":("Compositing|compositing",),
-                   #"sg_status":"rev",
-                   },
+    # "compo_movie":{"create_sg_version":True,
+                   # "sg_uploaded_movie":True,
+                   # "sg_path_to_movie":True,
+                   # "sg_tasks":("Compositing|compositing",),
+                   # #"sg_status":"rev",
+                   # },
     "compo_left_movie":{"create_sg_version":True,
                         "sg_uploaded_movie":True,
                         "sg_path_to_movie":True,

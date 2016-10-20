@@ -11,7 +11,7 @@ import pymel.util as pmu
 #from pytd.util.logutils import logMsg
 from pytd.util.sysutils import toStr, inDevMode, timer
 from pytd.gui.dialogs import confirmDialog
-from pytd.util.fsutils import normCase, pathResolve, pathNorm, pathJoin
+from pytd.util.fsutils import pathNormAll, pathResolve, pathNorm, pathJoin
 from pytd.util.strutils import labelify
 from pytaya.core import system as myasys
 from pytaya.core import cleaning
@@ -41,6 +41,12 @@ def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishIn
 
     damEntity = scnInfos.get("dam_entity")
     sRcName = scnInfos.get("resource", "")
+    sAbsScnPath = scnInfos.get("abs_path")
+    if sAbsScnPath:
+        sScnName = osp.basename(sAbsScnPath)
+        if damEntity and sScnName.startswith(damEntity.name):
+            sScnName = sScnName.split(damEntity.name, 1)[-1].strip("_")
+        sComment = "published with '{}':\n{}".format(sScnName, toStr(sComment))
 
     depConfDct = damEntity.getDependencyConf(sDependType, sRcName)
 
@@ -50,13 +56,14 @@ def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishIn
     sFellowPathList = []
     sDependPathList = []
     dependDataDct = {}
+
     for result in depScanResults:
 
         if result["dependency_type"] != sDependType:
             continue
 
         sAbsPath = result["abs_path"]
-        dependDataDct[normCase(sAbsPath)] = result
+        dependDataDct[pathNormAll(sAbsPath)] = result
 
         if not result["publishable"]:
             continue
@@ -82,6 +89,7 @@ def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishIn
 
         publishedDependItems = publishDependencies(depConfDct,
                                                    sDependPathList,
+                                                   dependDataDct,
                                                    sComment,
                                                    dryRun=bDryRun,
                                                    **kwargs)
@@ -96,6 +104,7 @@ def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishIn
 
             publishedFellowItems = publishDependencies(depConfDct,
                                                        sFellowPathList,
+                                                       dependDataDct,
                                                        sComment,
                                                        dryRun=bDryRun,
                                                        **kwargs)
@@ -157,7 +166,7 @@ def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishIn
 
     return (not bDryRun)
 
-def publishDependencies(depConfDct, sDepPathList, sComment, **kwargs):
+def publishDependencies(depConfDct, sDepPathList, dependDataDct, sComment, **kwargs):
 
     bDryRun = kwargs.get("dryRun", False)
 
@@ -177,9 +186,13 @@ def publishDependencies(depConfDct, sDepPathList, sComment, **kwargs):
 
         print u"Publishing {}/{}: '{}'".format(i + 1, numDep, sDepPath)
 
+        depData = dependDataDct[pathNormAll(sDepPath)]
+        sChecksum = depData.get("checksum", "")
+
         pubFile, versionFile = depDir.publishFile(sDepPath, autoLock=True,
                                                   autoUnlock=True,
                                                   saveChecksum=bChecksum,
+                                                  checksum=sChecksum,
                                                   comment=sComment,
                                                   **kwargs)
         publishItems[i] = (pubFile, versionFile)
@@ -193,7 +206,7 @@ def linkDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
 
     bDryRun = kwargs.pop("dryRun", False if not inDevMode() else _DRY_RUN)
 
-    publishedItemsDct = dict(izip((normCase(p) for p in sDepPathList),
+    publishedItemsDct = dict(izip((pathNormAll(p) for p in sDepPathList),
                                   publishedItems))
 
     sMsgFmt = "\nRelinking '{}' node: \n    from '{}'\n      to '{}'"
@@ -203,7 +216,7 @@ def linkDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
     sLinkedList = []
     for sTexPath, pubItems in izip(sDepPathList, publishedItems):
 
-        sTexNormPath = normCase(sTexPath)
+        sTexNormPath = pathNormAll(sTexPath)
 
         pubFile = None
         depData = dependDataDct[sTexNormPath]
@@ -211,7 +224,7 @@ def linkDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
         sUdimPathList = depData.get("udim_paths")
         if sUdimPathList:
             sUdimPath = sUdimPathList[0]
-            sUdimNormPath = normCase(sUdimPath)
+            sUdimNormPath = pathNormAll(sUdimPath)
             if sUdimNormPath != sTexNormPath:
                 pubFile = publishedItemsDct.get(sUdimNormPath, (None, None))[0]
                 if not pubFile:

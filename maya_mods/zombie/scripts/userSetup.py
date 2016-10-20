@@ -12,8 +12,9 @@ def onStartup():
 	import stxScriptMenu
 	stxScriptMenu.install()
 
-	for sScript in ("performStickyDeformer", "stickyDeformer", "stickyDeformerMenu"):
-		pm.mel.source(sScript)
+	if not pm.about(batch=True):
+		for sScript in ("performStickyDeformer", "stickyDeformer", "stickyDeformerMenu"):
+			pm.mel.source(sScript)
 
 pymel.mayautils.executeDeferred(onStartup)
 

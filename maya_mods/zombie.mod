@@ -16,3 +16,9 @@ PYTHONPATH+:=python
 plug-ins: plug-ins/2016_win
 
 + openVdb any ./openVdbForMaya
+
+
+
++ MAYAVERSION:2016 PLATFORM:win64 soup any ./soup
+plug-ins: plug-ins/maya2016_win
+MAYA_PLUG_IN_PATH +:= plug-ins/pyExpression
