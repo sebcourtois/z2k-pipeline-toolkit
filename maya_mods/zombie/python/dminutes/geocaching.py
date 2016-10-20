@@ -964,6 +964,7 @@ def importCaches(sSpace, **kwargs):
 
     scnInfos = infosFromScene()
     damShot = scnInfos.get("dam_entity")
+    shotLib = damShot.getLibrary("public")
 
     if sSpace == "local":
         sCacheDirPath = mop.getMayaCacheDir(damShot)
@@ -1092,6 +1093,7 @@ def importCaches(sSpace, **kwargs):
 
         if not oAbcRef:
             print "Importing cache file: '{}'".format(sAbcFilePath)
+
             sAbcNodeList = mc.file(sAbcFilePath, type="Alembic", r=True, ns=sAbcNmspc,
                                    rnn=True, mergeNamespacesOnClash=False, gl=True)
 
@@ -1152,6 +1154,11 @@ def importCaches(sSpace, **kwargs):
                 sAbcHook = addNode("transform", "hook_" + sAbcNmspc,
                                    parent=sParent, unique=True)
                 mc.connectAttr(sScnAbcNode + ".transOp[0]", sAbcHook + ".translateX", f=True)
+
+            if sSpace == "public":
+                abcFile = shotLib.getEntry(sAbcFilePath, dbNode=False)
+                if abcFile:
+                    mc.setAttr(sScnAbcNode + ".abc_File", abcFile.envPath(), type="string")
 
         doneWith(oAbcRef, bRemRef)
 
