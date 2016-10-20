@@ -4,11 +4,6 @@ import maya.mel as mel
 from dminutes import shotconformation
 reload (shotconformation)
 
-
-for path in paths:
-	if path not in sys.path:
-		sys.path.insert(0,path)
-
 from dminutes.fx.libs import fxGeneralLib as fxgal
 from dminutes.fx.libs import fxRenderLib as fxrnd
 from dminutes.fx.libs import fxMeshLib as fxm
