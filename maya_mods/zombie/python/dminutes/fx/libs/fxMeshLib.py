@@ -55,8 +55,8 @@ def outputMesh(item):
 	return renamed
 
 def envelopeMesh(mesh):
-    
-    try : 
+
+    try :
         cmds.loadPlugin('BE_OpenVDB')
         meshShape = cmds.listRelatives(mesh,s=True)[0]
         vdbFromPolygons = cmds.createNode('BE_VDBFromPolygons')

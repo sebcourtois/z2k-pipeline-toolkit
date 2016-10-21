@@ -7,7 +7,7 @@ reload (shotconformation)
 from dminutes.fx.libs import fxGeneralLib as fxgal
 from dminutes.fx.libs import fxRenderLib as fxrnd
 from dminutes.fx.libs import fxMeshLib as fxm
-from dminyes.fx import generateCachePath as gcp
+from dminutes.fx import generateCachePath as gcp
 
 reload(gcp)
 reload(fxgal)
