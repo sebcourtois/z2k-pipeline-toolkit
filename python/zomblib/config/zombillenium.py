@@ -44,11 +44,11 @@ class project(object):
 
     all_sync_sites = ("online", "dmn_paris", "dmn_angouleme", "dream_wall", "pipangai")
 
-    sg_publish_statuses = ("ip", "rev", "wfa", "omt")
+    sg_publish_statuses = ("ip", "rev", "wfa", "omt", "fin")
 
     sg_tasks_settings = {"model_hd":{"upd_status_art":True},
-                        "texture":{"upd_status_art":True},
-                        "shading":{"upd_status_art":True},
+                         "texture":{"upd_status_art":True},
+                         "shading":{"upd_status_art":True},
                         }
 
 class damas(object):
