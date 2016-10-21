@@ -7,6 +7,7 @@ import errno
 #cat plante en mode nuke render
 #from davos.core.damproject import DamProject
 from pprint import pprint
+import shutil
 
 
 
@@ -246,97 +247,207 @@ def conformFilePath(filePathS = "", gui = True):
 
 
 
-def conformFileNode(readNodeL=[], gui=True, conformPathB = True):
-    log = LogBuilder(gui=gui, funcName ="conformFileNode")
+def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRightLayers = False, changeOnErrorI = 99):
+    log = LogBuilder(gui=gui, funcName ="conformReadNode")
+
+    #0 : error
+    #1 : black
+    #2 : checkerboard
+    #3 : nearest frame
+    #99: do not change
 
     filePathOrigS=""
     filePathNewS = ""
     unvalidNodeL = []
+    validNodeL = []
+
+    def setAsUnvalid(errorMsgS = "",nodeNameS = ""):
+        log.printL("e","{}: '{}'".format(errorMsgS,nodeNameS))
+        each['tile_color'].setValue(3631284479) # orange
+        nuke.toNode(nodeNameS).setName("Read")
+        each['label'].setValue(errorMsgS)
 
     for each in readNodeL:
         eachNameS = each['name'].getValue()
+        if changeOnErrorI != 99:
+            eachOnErrorI = changeOnErrorI
+            each['on_error'].setValue(eachOnErrorI)
 
-        if 'read_exr' in eachNameS:
+        else:
+            eachOnErrorI = int(each['on_error'].getValue()) #0 : error  #1 : black #2 : checkerboard #3 : nearest frame
+
+        if 'read_exr' in eachNameS or 'read_comp' in eachNameS:
             log.printL("i","skipping output node: '{}'".format(eachNameS))
             continue
+        if each['disable'].getValue() == 1:
+            log.printL("i","skipping disabled node: '{}'".format(eachNameS))
+            continue
 
-        eachTypeS = nuke.getNodeClassName(each)
+        filePathExpS = nuke.filename(each)
+        if not filePathExpS:
+            setAsUnvalid(errorMsgS = "Undefined file path",nodeNameS = eachNameS)
+            unvalidNodeL.append(each)
+            continue
 
-        #log.printL("i", "node: '{}'".format(eachNameS))
+        imgNameS = os.path.basename(filePathExpS)
+        if len(imgNameS.split("."))!=3:
+            setAsUnvalid(errorMsgS = "Wrong image format",nodeNameS = eachNameS)
+            unvalidNodeL.append(each)
+            continue
+
+
+        # conform node name and label
+        layerDirS= filePathExpS.split("/")[-2]
+        if "-v" in layerDirS:
+            verS = str(layerDirS.split("-v")[-1])
+        else:
+            verS = ""
+
+        newEachNameS = str(layerDirS.split("-v")[0])
+        if verS :
+            newLabelS="v"+verS
+        else:
+            newLabelS = ""
+
+        nuke.toNode(eachNameS).setName(newEachNameS+"_0")
+        newEachNameS=each['name'].getValue()
+        each['label'].setValue(newLabelS)
+
+
+        # conform node color
+        # print nuke.selectedNode()['tile_color'].getValue()
+        if "/output/" in filePathExpS:
+            each['tile_color'].setValue(13172991) # vert
+        elif "/private/" in filePathExpS:
+            each['tile_color'].setValue(640082175) #bleu
+        else:
+            each['tile_color'].setValue(0) #gris neutre 
+
+
+        # conform file path
         filePathOrigS= each['file'].getValue()
         filePathNewS = conformFilePath(filePathS = filePathOrigS, gui = gui)
         if filePathNewS and conformPathB:
             if filePathNewS !=filePathOrigS:
-                log.printL("i","'{}' {}".format(eachNameS, filePathOrigS))
-                log.printL("i","'{}' --> {}".format(eachNameS, filePathNewS))
+                log.printL("i","'{}' {}".format(newEachNameS, filePathOrigS))
+                log.printL("i","'{}' --> {}".format(newEachNameS, filePathNewS))
                 each['file'].setValue(filePathNewS)
-
-
-        filePathExpS = nuke.filename(each)
-        if not filePathExpS:
-            log.printL("e","Undefined file path: '{}'".format(eachNameS))
-            if each not in unvalidNodeL: unvalidNodeL.append(each)
-            continue
-
 
         if "%V" in filePathExpS:
             filePathExpLeftS = filePathExpS.replace("%V","left")
             filePathExpRightS = filePathExpS.replace("%V","right")
 
-            if not os.path.isdir(os.path.dirname(filePathExpRightS)):
-                os.makedirs(os.path.dirname(filePathExpRightS))
+            if createEmptyRightLayers:
+                if not os.path.isdir(os.path.dirname(filePathExpRightS)):
+                    os.makedirs(os.path.dirname(filePathExpRightS))
 
+            fileDirS = os.path.dirname(filePathExpLeftS)
+            if not os.path.isdir(fileDirS):
+                setAsUnvalid(errorMsgS = "missing left directory",nodeNameS = newEachNameS)
+                unvalidNodeL.append(each)
+                continue
+            fileDirS = os.path.dirname(filePathExpRightS)
+            if not os.path.isdir(fileDirS):
+                setAsUnvalid(errorMsgS = "missing right directory",nodeNameS = newEachNameS)
+                unvalidNodeL.append(each)
+                continue
 
-            if eachTypeS=="Read":
-                resultLeftD = getImgSeqInfo(filePathExpLeftS, nodeNameS= eachNameS,gui=gui)
-                resultRightD = getImgSeqInfo(filePathExpRightS, nodeNameS= eachNameS,gui=gui)
-                if not (resultLeftD["firstImgI"] == 0 and resultLeftD["lastImgI"] == 0) and not (resultRightD["firstImgI"] == 0 and resultRightD["lastImgI"] == 0):
-                    if resultLeftD["frameNumberI"]!=resultRightD["frameNumberI"]:
-                        log.printL("e","'{}' missmaching frame number: left {}, right {} ".format(eachNameS, resultLeftD["frameNumberI"], resultRightD["frameNumberI"]))
-                        if each not in unvalidNodeL: unvalidNodeL.append(each)
+            resultLeftD = getImgSeqInfo(filePathExpLeftS, nodeNameS= newEachNameS,gui=gui)
+            resultRightD = getImgSeqInfo(filePathExpRightS, nodeNameS= newEachNameS,gui=gui)
 
-                    if resultLeftD["firstImgI"] == resultRightD["firstImgI"]:
-                        each['first'].setValue(resultLeftD["firstImgI"])
-                    else:
-                        each['first'].setValue(min(resultLeftD["firstImgI"],resultRightD["firstImgI"]))
-                        log.printL("e","'{}' has different first frame on left and right camera".format(eachNameS))
-                        if each not in unvalidNodeL: unvalidNodeL.append(each)
+            each['first'].setValue(resultLeftD["firstImgI"])
+            each['last'].setValue(resultLeftD["lastImgI"])
 
-                    if resultLeftD["lastImgI"] == resultRightD["lastImgI"]:
-                        each['last'].setValue(resultLeftD["lastImgI"])
-                    else:
-                        each['last'].setValue(min(resultLeftD["lastImgI"],resultRightD["lastImgI"]))
-                        log.printL("e","'{}' has different last frame on left and right camera".format(eachNameS))
-                        if each not in unvalidNodeL: unvalidNodeL.append(each)
+            if resultLeftD["frameNumberI"]==0:
+                txt="No left frames found"
+                setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
+                unvalidNodeL.append(each)
+                continue
 
-                    if resultLeftD["missingFrameL"]:
-                        log.printL("e","'{}' missing frames found on left camera seq: {} ".format(eachNameS, resultLeftD["missingFrameL"]))
-                        if each not in unvalidNodeL: unvalidNodeL.append(each)
-                    if resultRightD["missingFrameL"]:
-                        log.printL("e","'{}' missing frames found on right camera seq: {} ".format(eachNameS, resultRightD["missingFrameL"]))
-                        if each not in unvalidNodeL: unvalidNodeL.append(each)
+            if resultRightD["frameNumberI"]==0:
+                txt="No right frames found"
+                setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
+                unvalidNodeL.append(each)
+                continue
 
+            if resultLeftD["frameNumberI"]!=resultRightD["frameNumberI"]:
+                txt="'{}' missmaching frame number: left '{}', right '{}'' ".format(newEachNameS, resultLeftD["frameNumberI"], resultRightD["frameNumberI"])
+                setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
+                unvalidNodeL.append(each)
+                continue
+
+            if resultLeftD["firstImgI"] != resultRightD["firstImgI"]:                   
+                txt="First frame stereo missmach: left '{}', right '{}'' ".format(newEachNameS, resultLeftD["firstImgI"], resultRightD["firstImgI"])
+                setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
+                unvalidNodeL.append(each)
+                continue
+
+            if resultLeftD["lastImgI"] != resultRightD["lastImgI"]:
+                txt="Last frame stereo missmach: left '{}', right '{}'' ".format(newEachNameS, resultLeftD["lastImgI"], resultRightD["lastImgI"])
+                setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
+                unvalidNodeL.append(each)
+                continue
+
+            if resultLeftD["missingFrameL"] and eachOnErrorI == 0:
+                txt="'{}' missing frames left seq: {} ".format(newEachNameS, resultLeftD["missingFrameL"])
+                setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
+                unvalidNodeL.append(each)
+                continue
+
+            if resultRightD["missingFrameL"] and eachOnErrorI == 0:
+                txt="'{}' missing frames right seq: {} ".format(newEachNameS, resultRightD["missingFrameL"])
+                setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
+                unvalidNodeL.append(each)
+                continue
 
         else:
-            if eachTypeS=="Read":
-                resultD = getImgSeqInfo(filePathExpS, nodeNameS= eachNameS, gui=gui)
-                if not (resultD["firstImgI"] == 0 and resultD["lastImgI"] == 0):
-                    each['first'].setValue(resultD["firstImgI"])
-                    each['last'].setValue(resultD["lastImgI"])
-                    if resultD["missingFrameL"]:
-                        log.printL("e","'{}' missing frames found in seq: {} ".format(eachNameS, resultD["missingFrameL"]))
-                        if eachNameS not in unvalidNodeL: unvalidNodeL.append(eachNameS)
+            resultD = getImgSeqInfo(filePathExpS, nodeNameS= newEachNameS, gui=gui)
+
+            if resultD["frameNumberI"]==0:
+                txt="No frames found"
+                setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
+                unvalidNodeL.append(each)
+                continue
+
+            each['first'].setValue(resultD["firstImgI"])
+            each['last'].setValue(resultD["lastImgI"])
+            if resultD["missingFrameL"] and eachOnErrorI == 0:
+                txt="'{}' missing frames: {} ".format(newEachNameS, resultD["missingFrameL"])
+                setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
+                unvalidNodeL.append(each)
+                continue
+
+            fileDirS = os.path.dirname(filePathExpS)
+            if not os.path.isdir(fileDirS):
+                setAsUnvalid(errorMsgS = "Unvalid file path",nodeNameS = eachNameS)
+                unvalidNodeL.append(each)
+                continue
+
+        validNodeL.append(each)
 
     if gui:
         unvalidNodeNameL=[]
+        validNodeNameL=[]
         if unvalidNodeL:
             for each  in unvalidNodeL:
                 unvalidNodeNameL.append(each['name'].getValue())
-                each['selected'].setValue(True)
-
-            txt1 = "'{}' unvalid nodes found: {} ".format(len(unvalidNodeNameL), unvalidNodeNameL)
+        if validNodeL:
+            for each  in validNodeL:
+                validNodeNameL.append(each['name'].getValue())
+        if unvalidNodeNameL:
+            txt1 = "'{}' unvalid nodes found".format(len(unvalidNodeNameL))
+            txt2 = "'{}' nodes checked succesfully".format(len(validNodeNameL))
+            nuke.message("Error:\n"+txt1+"\n"+txt2+"\nPlease read the log for more details")
+        else:
+            txt1 = "'{}' nodes checked succesfully".format(len(validNodeNameL))
             nuke.message("Info:\n"+txt1+"\nPlease read the log for more details")
 
+        print ""
+        print "---- LOG RESUME"
+        txt = "'{}' unvalid nodes found: {} ".format(len(unvalidNodeNameL), unvalidNodeNameL)
+        log.printL("i",txt)
+        txt = "'{}' nodes checked succesfully: {} ".format(len(validNodeNameL), validNodeNameL)
+        log.printL("i",txt)
 
     return dict(resultB=log.resultB, logL=log.logL)
 
@@ -354,14 +465,11 @@ def getImgSeqInfo(filePathS = "", nodeNameS ="", gui = True):
     imgRadS = imgNameS.split(".")[0]
     imgExtS = imgNameS.split(".")[-1]
 
-    fileDirS = os.path.dirname(filePathS)
-    if not os.path.isdir(fileDirS):
-        log.printL("e","'{}' Could not find directory: '{}'".format(nodeNameS,fileDirS))
-        return dict(resultB=log.resultB, logL=log.logL, firstImgI=firstImgI, lastImgI=lastImgI, missingFrameL=missingFrameL, frameNumberI=len(imgNumL))
     if len(imgNameS.split("."))!=3:
-        log.printL("w","'{}' Could not find a 'name.####.ext' image sequence: '{}'".format(nodeNameS,filePathS))
-        return dict(resultB=log.resultB, logL=log.logL, firstImgI=0, lastImgI=0, missingFrameL=missingFrameL, frameNumberI=len(imgNumL))
+        log.printL("e","'{}' Could not find a 'name.####.ext' image sequence: '{}'".format(nodeNameS,filePathS))
+        return dict(resultB=log.resultB, logL=log.logL, firstImgI=0, lastImgI=0, missingFrameL=missingFrameL, frameNumberI=0)
 
+    fileDirS = os.path.dirname(filePathS)
     itemDirL = os.listdir(fileDirS)
     for each in itemDirL:
         eachSplitL = each.split(".")
@@ -369,12 +477,8 @@ def getImgSeqInfo(filePathS = "", nodeNameS ="", gui = True):
             imgNumL.append(int(eachSplitL[1]))
 
     if not imgNumL:
-        if "/right/" in fileDirS:
-            log.printL("w","'{}' No sequ found in right cam: '{}'".format(nodeNameS, fileDirS))
-            return dict(resultB=log.resultB, logL=log.logL, firstImgI=firstImgI, lastImgI=firstImgI, missingFrameL=missingFrameL, frameNumberI=len(imgNumL))
-        else:
-            log.printL("e","'{}' No sequ found in: '{}'".format(nodeNameS, fileDirS))
-            return dict(resultB=log.resultB, logL=log.logL, firstImgI=firstImgI, lastImgI=lastImgI, missingFrameL=missingFrameL, frameNumberI=len(imgNumL))
+        log.printL("e","'{}' No sequ found in: '{}'".format(nodeNameS, fileDirS))
+        return dict(resultB=log.resultB, logL=log.logL, firstImgI=firstImgI, lastImgI=lastImgI, missingFrameL=missingFrameL, frameNumberI=0)
 
     imgNumL.sort()
     firstImgI = imgNumL[0]
@@ -393,9 +497,37 @@ def getImgSeqInfo(filePathS = "", nodeNameS ="", gui = True):
 
 
 
-def publishLayer(layerPathS = "",destination = "output", comment="my comment",dryRun=False, gui = True):
+def publishLayer(layerPathS = "",destination = "output", comment="my comment", gui = True, dryRun = False):
     log = LogBuilder(gui=gui, funcName ="publishLayer")
     from davos.core.damproject import DamProject
+
+    def moveLayer2output(layerPathS="", publishDirS="", gui = True):
+        publishedLayerL=[]
+        layerNameS = os.path.basename(layerPathS)
+        versionDirS = publishDirS+"/_version"
+
+        #get the nextversion layer name
+        if not os.path.isdir(versionDirS):
+            os.makedirs(versionDirS)
+            nextVersionS = "v001"
+            layerNameNextVerS = layerNameS+"-v001"
+        else:
+            itemDirL = os.listdir(versionDirS)
+            for each in itemDirL:
+                if layerNameS+"-v" in each:
+                    publishedLayerL.append(each)
+            publishedLayerL.sort()
+            verI = int(publishedLayerL[-1].split("-v")[-1])
+            nextVersionS = "v"+'{0:03d}'.format(verI+1)
+            layerNameNextVerS = layerNameS+"-"+nextVersionS
+
+        if not dryRun:
+            try: 
+                shutil.move(layerPathS, versionDirS+"/"+layerNameNextVerS)
+            except Exception,err:
+                raise err
+
+        return layerNameNextVerS
 
     proj = DamProject("zombillenium")
     outLib=proj.getLibrary("public","output_lib")
@@ -416,21 +548,30 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment",dr
         if not os.path.isdir(outDirS):
             os.makedirs(outDirS)
         publishDir = outLib.getEntry(outDirS)
+        publishDirS = outDirS
     elif destination ==  "shot":
         shotDirS = os.environ["SHOT_DIR"]+"/"+os.environ["DEP"]+camDirS
         if not os.path.isdir(shotDirS):
             os.makedirs(shotDirS)
         publishDir = shotLib.getEntry(shotDirS)
-
-
-    _ , newVersion = publishDir.publishFile(layerPathS, autoLock=True, autoUnlock=True, comment=comment, dryRun=dryRun, saveChecksum=False)
+        publishDirS = shotDirS
 
     publishHeadDir = publishDir.absPath()
-    publishLastVersDir = publishDir.absPath()+"/_version/"+newVersion.name
 
-    log.printL("i","Published layer: '{}'".format(publishHeadDir))
+    if destination != "output":
+        _ , newVersion = publishDir.publishFile(layerPathS, autoLock=True, autoUnlock=True, comment=comment, dryRun=dryRun, saveChecksum=False)
+        publishLastVersDir = publishDir.absPath()+"/_version/"+newVersion.name
+    else:
+        newVersionNameS = moveLayer2output(layerPathS, publishDirS)
+        publishLastVersDir = publishDir.absPath()+"/_version/"+newVersionNameS
 
+    log.printL("i","Published layer: '{}'".format(publishHeadDir)) 
     return dict(resultB=log.resultB, logL=log.logL, publishHeadDir = publishHeadDir, publishLastVersDir= publishLastVersDir)
+
+
+
+
+
 
 
 
@@ -461,12 +602,14 @@ def publishFile(fileNameS = "", comment="test",dryRun=False, gui = True):
 
 
 
+
 def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, guiPopUp = False, commentS = "", conformFirstB = False):
     log = LogBuilder(gui=gui, funcName ="publishNode")
 
     toPubNodeL=[]
     publishedNodeL = []
-    skippedNodeL = []
+    publishedNodeNameL = []
+    skippedNodeNameL = []
 
     for each in readNodeL:
         eachNameS = each['name'].getValue()
@@ -474,7 +617,12 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
         filePathExpS = nuke.filename(each)
         if not filePathExpS:
             log.printL("i","skipping, undefined file path: '{}'".format(eachNameS))
-            skippedNodeL.append(eachNameS)
+            skippedNodeNameL.append(eachNameS)
+            continue
+
+        if each['disable'].getValue() == 1:
+            log.printL("i","skipping disabled node: '{}'".format(eachNameS))
+            skippedNodeNameL.append(eachNameS)
             continue
 
         lyrDirNameS = os.path.dirname(filePathExpS)
@@ -483,31 +631,34 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
             lyrDirNameLeftS = lyrDirNameS.replace("%V","left")
             if not os.path.isdir(lyrDirNameLeftS):
                 log.printL("i","skipping, missing directory: '{}', '{}'".format(eachNameS,lyrDirNameLeftS))
-                skippedNodeL.append(eachNameS)
+                skippedNodeNameL.append(eachNameS)
                 continue
             lyrDirNameRightS = lyrDirNameS.replace("%V","right")
             if not os.path.isdir(lyrDirNameRightS):
                 log.printL("i","skipping, missing directory: '{}', '{}'".format(eachNameS,lyrDirNameRightS))
-                skippedNodeL.append(eachNameS)
+                skippedNodeNameL.append(eachNameS)
                 continue
         else:
             if not os.path.isdir(lyrDirNameS):
                 log.printL("i","skipping, missing directory: '{}', '{}'".format(eachNameS,filePathExpS))
-                skippedNodeL.append(eachNameS)
+                skippedNodeNameL.append(eachNameS)
                 continue
 
         if os.environ["OUTPUT_DIR"] in filePathExpS:
             log.printL("i","skipping, already published: '{}', '{}'".format(eachNameS,filePathExpS))
-            skippedNodeL.append(eachNameS)
+            skippedNodeNameL.append(eachNameS)
         elif not "lyr_" in lyrDirNameS:
             log.printL("i","skipping, not a layer: '{}', '{}'".format(eachNameS,filePathExpS))
-            skippedNodeL.append(eachNameS)
+            skippedNodeNameL.append(eachNameS)
         elif "compo-v" in filePathExpS and destination == "output":
             log.printL("i","skipping, '.../compo-vxx/...' has to be published in the 'shot' structure: '{}', '{}'".format(eachNameS,lyrDirNameS))
-            skippedNodeL.append(eachNameS)
+            skippedNodeNameL.append(eachNameS)
+        elif not "/private/" in filePathExpS:
+            log.printL("i","skipping, layer must be in a 'private' directory structure: '{}', '{}'".format(eachNameS,lyrDirNameS))
+            skippedNodeNameL.append(eachNameS)
         elif "preComp-v" in filePathExpS and destination == "output":
             log.printL("i","skipping, '.../preComp-vxx/...' has to be published in the 'shot' structure: '{}', '{}'".format(eachNameS,lyrDirNameS))
-            skippedNodeL.append(eachNameS)
+            skippedNodeNameL.append(eachNameS)
         else:
             toPubNodeL.append(each)
 
@@ -530,6 +681,11 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
         fileNameS = os.path.basename(filePathExpS)
         layerPathS = os.path.dirname(filePathExpS)
         eachNameS = each['name'].getValue()
+
+        if "/left/"in layerPathS:
+            layerPathS.replace("/left/","/%V/")
+        elif "/right/"in layerPathS:
+            layerPathS.replace("/right/","/%V/")
         
         if "/%V/"in layerPathS:
             filePathLeftS = layerPathS.replace("/%V/","/left/")
@@ -541,7 +697,8 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
             resultD = publishLayer(layerPathS = layerPathS,comment=commentS,dryRun=dryRun,destination=destination, gui = True)
             log.printL("i","Publishing: '{}', '{}'".format(eachNameS,filePathExpS))
 
-        publishedNodeL.append(eachNameS)
+        publishedNodeL.append(each)
+        publishedNodeNameL.append(eachNameS)
 
         if destination == "output":
             newFileDirExpS = conformFilePath(filePathS=resultD["publishLastVersDir"], gui=gui)
@@ -551,19 +708,21 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
             each['file'].setValue(newFilePathExpS)
             log.printL("i","New path: '{}', '{}'".format(eachNameS,newFilePathExpS))
 
+    conformReadNode(readNodeL=publishedNodeL, gui=False, conformPathB = True)
     print ""
     print "---- LOG RESUME"
     for each in log.logL:
         print each
 
     print ""
-    publishedMsg = "{} file node published : '{}'".format(len(publishedNodeL),publishedNodeL)
-    skippedMsg = "{} file node skipped : '{}'".format(len(skippedNodeL),skippedNodeL)
+    publishedMsg = "{} file node published : '{}'".format(len(publishedNodeNameL),publishedNodeNameL)
+    skippedMsg = "{} file node skipped : '{}'".format(len(skippedNodeNameL),skippedNodeNameL)
     log.printL("i",publishedMsg)
     log.printL("i",skippedMsg)
 
     #log.printL("i","Nothing to publish", guiPopUp = guiPopUp)
-    nuke.message("Info:\n"+publishedMsg+"\n"+skippedMsg+"\nPlease read the log for more details")
+    if guiPopUp:
+        nuke.message("Info:\n"+publishedMsg+"\n"+skippedMsg+"\nPlease read the log for more details")
 
 
 
@@ -627,10 +786,11 @@ def publishCompo(dryRun=False, gui = True):
     if depS == "10_compo":
         allReadNodeL = nuke.allNodes('Read')
         for each in allReadNodeL:
-            if "read_exr" in each['name'].getValue():
+            eachNameS = each['name'].getValue()
+            if "read_exr" in eachNameS or "read_comp" in eachNameS :
                 readExrL.append(each)
         if len(readExrL)!=1:
-            log.printL("e","Publish failed, several or none 'read_exr' node fond: '{}'".format( nKFileNameS.split(".")[-1]),guiPopUp = True)
+            log.printL("e","Publish failed, several or none 'read_exr/read_comp' node fond: '{}'".format( nKFileNameS.split(".")[-1]),guiPopUp = True)
             return
     
 
@@ -641,7 +801,10 @@ def publishCompo(dryRun=False, gui = True):
 
     if depS == "10_compo":
         try:
-            publishNode(readNodeL=readExrL,dryRun=False, destination = "shot", gui = True, guiPopUp = False, commentS = commentS)
+            resultD = publishNode(readNodeL=readExrL,dryRun=False, destination = "shot", gui = True, guiPopUp = False, commentS = commentS)
+            if not resultD["resultB"]:
+                raise RuntimeError("Publish failed, please read the log for more info")
+
         except Exception as err:
             log.printL("e","Seq output node publish failed: '{}'".format(err),guiPopUp = True)
             raise
