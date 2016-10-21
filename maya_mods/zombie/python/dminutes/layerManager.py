@@ -474,8 +474,16 @@ def createCryptomatteLayer():
     pm.select('|shot|grp_character', '|shot|grp_prop', '|shot|grp_set', '|shot|grp_prop')
 
     ## Create custom layer and make current ##
-    pm.createRenderLayer(n='lyr_utl0_bty')
-    pm.editRenderLayerGlobals(currentRenderLayer='lyr_utl0_bty')
+    pm.createRenderLayer(n='lyr_utl0_bty_16')
+    pm.editRenderLayerGlobals(currentRenderLayer='lyr_utl0_bty_16')
+
+def createPLayer():
+    ## Add assets ##
+    pm.select('|shot|grp_character', '|shot|grp_prop', '|shot|grp_set', '|shot|grp_prop')
+
+    ## Create custom layer and make current ##
+    pm.createRenderLayer(n='lyr_utl1_bty_32')
+    pm.editRenderLayerGlobals(currentRenderLayer='lyr_utl1_bty_32')
 
 def setCryptoAov():
     ''''
@@ -488,33 +496,59 @@ def setCryptoAov():
     ## Create and set the Cryptomatte aov ##
     defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
     if pm.objExists('alCryptoShader') == True:
-        print 'alCryptoShader is already created, nothing to do !'
-        pass
-    else:
+        pm.delete('alCryptoShader')
+        print 'Delete alCryptoShader !'
+
+    if not pm.objExists('alCryptoShader') == True:
         pm.shadingNode('alSurface', asShader=True, name='alCryptoShader')
         pm.setAttr('alCryptoShader.standardCompatibleAOVs', 0)
         pm.setAttr('alCryptoShader.specular1Strength', 0)
-        maya.mel.eval('hookShaderOverride(\"lyr_utl0_bty\", \"\", \"alCryptoShader\");')
+        maya.mel.eval('hookShaderOverride(\"lyr_utl0_bty_16\", \"\", \"alCryptoShader\");')
 
-    if pm.objExists('alUtls') == True:
-        print 'AiUtls is already created, nothing to do !'
-        pass
     else:
-        pm.shadingNode('aiUtility', asShader=True, name='alUtls')
-        pm.setAttr('alUtls.shadeMode', 2)
-        pm.setAttr('alUtls.colorMode', 5)
+        pass
 
     aovs.AOVInterface()
     #myAovs.addAOV("crypto_object", aovType='rgb')
     aovsL = defRenderOpt.aovs.get()
-    [aov.attr('enabled').set(0) for aov in aovsL if aov.attr('name').get() == 'crypto_object' and aov.attr('enabled').get() == 1]
     pm.editRenderLayerAdjustment('aiAOV_*.enabled')
     [aov.attr('enabled').set(False) for aov in aovsL]
     [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'crypto_object']
+
+
+def setUtl16Aovs() :
+    aovs.AOVInterface()
+    defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
+    aovsL = defRenderOpt.aovs.get()
+
+    if pm.objExists('alUtls') == True:
+        pm.delete('alUtls')
+        print 'Delete AiUtls !'
+
+    if not pm.objExists('alUtls') == True:
+        pm.shadingNode('aiUtility', asShader=True, name='alUtls')
+        pm.setAttr('alUtls.shadeMode', 2)
+        pm.setAttr('alUtls.colorMode', 5)
+
+    else:
+        pass
+
+    pm.connectAttr('alUtls.outColor', 'aiAOV_uvs.defaultValue', force=True)
+    pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
+
+
+def setUtl32Aovs() :
+    aovs.AOVInterface()
+    defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
+    #pm.editRenderLayerAdjustment('aiAOV_*.enabled')
+    aovsL = defRenderOpt.aovs.get()
+    [aov.attr('enabled').set(False) for aov in aovsL if aov.attr('name').get() == 'crypto_object' and aov.attr('enabled').get() == 1]
+    [aov.attr('enabled').set(False) for aov in aovsL if aov.attr('name').get() == 'P' and aov.attr('enabled').get() == 1]
+    pm.editRenderLayerAdjustment('aiAOV_*.enabled')
+    [aov.attr('enabled').set(False) for aov in aovsL]
     [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'P']
-    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'Pref']
-    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'uvs']
+    #[aov.attr('enabled').set(False) for aov in aovsL if aov.attr('name').get() == 'crypto_object']
     pm.editRenderLayerAdjustment('defaultArnoldDriver.halfPrecision')
     pm.setAttr('defaultArnoldDriver.halfPrecision', 0)
-    pm.connectAttr('alUtls.outColor', 'aiAOV_uvs.defaultValue', force=True)
+
 

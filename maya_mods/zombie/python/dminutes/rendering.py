@@ -14,8 +14,11 @@ import shutil
 import maya.mel
 import pymel.core as pm
 
+
 from dminutes import miscUtils
 reload (miscUtils)
+from dminutes import layerManager
+reload (layerManager)
 
 createOptions()
 
@@ -618,8 +621,6 @@ def deleteAovs(GUI=True):
         if GUI: print infoS
     return toReturn, infoS
 
-
-
 def createAovs(renderMode="render"):
     if mc.ls("defaultArnoldRenderOptions"):
         myAOVs = aovs.AOVInterface()
@@ -663,7 +664,6 @@ def createAovs(renderMode="render"):
         print "#### {:>7}: 'createAovs' has created {} aovs".format("Info", len(aovDmnNameL) + len(aovCustomNameL))
     else:
         print "#### {:>7}: 'createAovs' no 'defaultArnoldRenderOptions' found in the scene cannot create aovs".format("Info")
-
 
 
 def changeAovFilter(aovName="Z", filterName="default", gui=True):
