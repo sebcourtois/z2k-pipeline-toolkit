@@ -971,6 +971,9 @@ class SceneManager():
             self.importShotCamAbcFile()
             mop.setCamAsPerspView(self.getShotCamera())
 
+        if sStepCode == "fx3d":
+            print 'TODO fxPUBLISH VDB'
+
     def postPublishCurrentScene(self, publishCtx, **kwargs):
 
         print publishCtx.sceneInfos.get("sg_step").center(100, "-")

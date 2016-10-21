@@ -35,6 +35,7 @@ def buttonCreateAutoLayering(*args):
 	lm.createRndlayer(layerName="lyr_ast2_bty", layerContentL=None, disableLayer = True)
 	lm.initLayerDisplay()
 
+
 def buttonCreateCustomLayer(*args):
 
 	result = mc.promptDialog(title='Create Custom Render layer', message='Enter Layer Name: lyr_...._.........', text="lyr_cust_", button=['OK', 'Cancel'], defaultButton='OK', cancelButton='Cancel', dismissString='Cancel')
@@ -62,9 +63,13 @@ def buttonCreateFxsPass(*args):
 	lm.initLayer()
 	lm.createFxsPass()
 
-def buttonUtilLayerPass(*args):
+def buttonUtilsPass(*args):
+	layerManager.setUtl16Aovs()
+	layerManager.createPLayer()
+	layerManager.setUtl32Aovs()
 	layerManager.createCryptomatteLayer()
 	layerManager.setCryptoAov()
+
 
 #layer member
 def buttonAddSelectionToLayer(*args):
@@ -126,7 +131,7 @@ mc.flowLayout()
 mc.button( label='create light pass', recomputeSize = False, width = 250, c= buttonCreateLightPass )
 mc.setParent( '..' )
 mc.flowLayout()
-mc.button(label='create utl pass', recomputeSize=False, width=250, c=buttonUtilLayerPass)
+mc.button(label='create utls 16 + 32 pass', recomputeSize=False, width=250, c=buttonUtilsPass)
 mc.setParent('..')
 mc.flowLayout()
 mc.button(label='create fxs pass', recomputeSize=False, width=250, c=buttonCreateFxsPass)

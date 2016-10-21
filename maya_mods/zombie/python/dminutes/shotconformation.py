@@ -105,9 +105,6 @@ def finalLayoutToLighting(gui=True):
 def releaseShotAsset(gui = True ,toReleaseL = [], dryRun=True, astPrefix = "fx3"):
     log = miscUtils.LogBuilder(gui=gui, funcName ="releaseShotAsset")
 
-    #proj = DamProject("zombillenium")
-    #damShot = proj.getShot("sq0300_sh0120a")
-
     scnInfos = infosFromScene()
     damShot = scnInfos.get("dam_entity")
     privScnFile = scnInfos["rc_entry"]
@@ -116,11 +113,18 @@ def releaseShotAsset(gui = True ,toReleaseL = [], dryRun=True, astPrefix = "fx3"
     sPublicReleaseDir = miscUtils.pathJoin(os.path.dirname(damShot.getPath("public", "fx3d_scene")),"release")
     sPrivReleaseDir = miscUtils.pathJoin(os.path.dirname(damShot.getPath("private", "fx3d_scene")),"release")
 
+    bRlsDirCreated = False
     # dir creation
     if not os.path.isdir(sPublicReleaseDir):
         os.makedirs(sPublicReleaseDir)
+        bRlsDirCreated = True
+
     if not os.path.isdir(sPrivReleaseDir):
         os.makedirs(sPrivReleaseDir)
+
+    releaseDir = shotLib.getEntry(sPublicReleaseDir)
+    if bRlsDirCreated:
+        releaseDir.setSyncRules(["all_sites"])
 
     intSelection = mc.ls(selection=True)
     for each in toReleaseL:
@@ -133,9 +137,11 @@ def releaseShotAsset(gui = True ,toReleaseL = [], dryRun=True, astPrefix = "fx3"
         else:
             #export
             sPrivateFilePath=miscUtils.pathJoin(sPrivReleaseDir,each+".mb")
-            sPublicFilePath=miscUtils.pathJoin(sPublicReleaseDir,each+".mb")
+            #sPublicFilePath=miscUtils.pathJoin(sPublicReleaseDir,each+".mb")
             if not dryRun:
-                mc.file(sPrivateFilePath, force =True,  options="v=0;", typ="mayaBinary", preserveReferences=True, exportSelected=True, ch=True, chn=True, con=True, exp=True, sh=True)
+                mc.file(sPrivateFilePath, force=True, options="v=0;", typ="mayaBinary",
+                        preserveReferences=True, exportSelected=True, ch=True,
+                        chn=True, con=True, exp=True, sh=True)
                 txt = "Exporting: {}".format(sPrivateFilePath)
                 log.printL("i", txt)
             else:
@@ -144,14 +150,12 @@ def releaseShotAsset(gui = True ,toReleaseL = [], dryRun=True, astPrefix = "fx3"
 
             # let's publish
             sComment = "from v{}".format(privScnFile.versionFromName())
-            releaseDir = shotLib.getEntry(sPublicReleaseDir)
-            releaseDir.publishFile(sPrivateFilePath, autoLock=True, autoUnlock=True, comment=sComment, dryRun=dryRun, saveChecksum=False)
+            releaseDir.publishFile(sPrivateFilePath, autoLock=True, autoUnlock=True,
+                                   comment=sComment, dryRun=dryRun, saveChecksum=False)
 
     mc.select(intSelection,r=True)
 
     return dict(resultB=log.resultB, logL=log.logL)
-
-
 
 
 def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3"):
@@ -167,7 +171,6 @@ def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3"):
     shotLib = damShot.project.getLibrary("public","shot_lib")
 
     sPublicReleaseDir = miscUtils.pathJoin(os.path.dirname(damShot.getPath("public", "fx3d_scene")),"release")
-
 
     resultD = getRefFileList(name=astPrefix+"_*")
     sceneRefFileL=resultD["refFilePathL"]
