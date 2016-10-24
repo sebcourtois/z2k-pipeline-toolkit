@@ -809,6 +809,7 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
             sColorSetList = mc.polyColorSet(sAbcMeshShape, q=True, allColorSets=True)
             if sColorSetList and ("velocityColorSet" in sColorSetList):
                 mc.setAttr(sAstMeshShape + ".aiMotionVectorSource", "velocityColorSet", type="string")
+                mc.setAttr(sAstMeshShape + ".aiMotionVectorScale", 0.0)
             else:
                 sMsg = "Dynamic topology mesh WITHOUT 'velocityColorSet': '{}'".format(sAstMeshShapeName)
                 pm.displayWarning(sMsg)
