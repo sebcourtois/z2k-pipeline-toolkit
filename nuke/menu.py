@@ -24,7 +24,13 @@ nuke.menu('Nodes').addCommand('Z2K/P_Matte', lambda: nuke.createNode('P_Matte'))
 
 ## Scripts
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/init nuke shot', lambda: nkU.initNukeShot() )
-nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform file nodes', lambda: nkU.conformFileNode(readNodeL=nuke.allNodes('Read'), gui=True, conformPathB = True) )
+nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform/all/read nodes', lambda: nkU.conformReadNode(readNodeL=nuke.allNodes('Read'), gui=True, conformPathB = True) )
+nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform/selected/read nodes', lambda: nkU.conformReadNode(readNodeL=nuke.selectedNodes('Read'), gui=True, conformPathB = True) )
+nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform/all/read nodes (error)', lambda: nkU.conformReadNode(readNodeL=nuke.allNodes('Read'), gui=True, conformPathB = True, changeOnErrorI = 0) )
+nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform/selected/read nodes (error)', lambda: nkU.conformReadNode(readNodeL=nuke.selectedNodes('Read'), gui=True, conformPathB = True, changeOnErrorI = 0) )
+nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform/all/read nodes (nearest frame)', lambda: nkU.conformReadNode(readNodeL=nuke.allNodes('Read'), gui=True, conformPathB = True, changeOnErrorI = 3) )
+nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform/selected/read nodes (nearest frame)', lambda: nkU.conformReadNode(readNodeL=nuke.selectedNodes('Read'), gui=True, conformPathB = True, changeOnErrorI = 3) )
+
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/import template/ compositing', lambda: nkU.inportOutTemplate(template = "compo") )
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/import template/ render precomp', lambda: nkU.inportOutTemplate(template = "renderprecomp") )
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/publish/publish compositing', lambda: nkU.publishCompo(dryRun=False, gui = True) )
@@ -32,5 +38,7 @@ nuke.menu( 'Nuke' ).addCommand( 'Zombi/publish/publish all inputs', lambda: nkU.
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/publish/publish selected inputs', lambda: nkU.publishNode(readNodeL=nuke.selectedNodes('Read'),guiPopUp = True) )
 # myMenu = myToolbar.addMenu( 'zomb Tools' )
 # myToolbar.addCommand( 'init nuke shot', lambda: nkU.initNukeShot() )
+
+
 
 
