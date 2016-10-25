@@ -673,7 +673,7 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
             txt= "Can't Publish, some of the nodes are pointing toward unvalid sequences. Please read the log for more detail"
             log.printL("e",txt)
             nuke.message("Error: "+txt)
-            return
+            return dict(resultB=log.resultB, logL=log.logL)
 
     if toPubNodeL and not commentS:
         commentS = nuke.getInput("Please enter a publish comment", "")
@@ -728,6 +728,8 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
     #log.printL("i","Nothing to publish", guiPopUp = guiPopUp)
     if guiPopUp:
         nuke.message("Info:\n"+publishedMsg+"\n"+skippedMsg+"\nPlease read the log for more details")
+
+    return dict(resultB=log.resultB, logL=log.logL)
 
 
 
