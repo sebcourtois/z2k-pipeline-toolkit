@@ -45,67 +45,86 @@ def createSetFromSelection(items,name=None,type=None):
         setName = cmds.sets(n='fx_'+type+'#')
     else:
         setName = cmds.sets(n='fx_set#')
+
+
+def exportAlembic(itemLists,start,end,path,types,variants,frameRelativeSample='0',dataFormat='ogawa'):
+
+    print ('[fxGeneralLib.exportAlembic] - START')
+    command=[None] * len(itemLists)
+
+    for i in range(len(itemLists)):
+        command[i] = ''
+        command[i] += ' -writeVisibility -writeColorSets '
+        command[i] += ' -frameRange ' + start + ' ' + end + ' -worldSpace '
+        command[i] += ' -dataFormat ' + dataFormat + ' '
     
-
-def exportAlembic(itemList,startFrame,endFrame,path,name,frameRelativeSample='0',dataFormat='ogawa'):
-
-    command = 'AbcExport -j "' #
-    command += ' -frameRange ' + startFrame + ' ' + endFrame + ' -worldSpace '
-    command += ' -dataFormat ' + dataFormat + ' ' 
-
-    if frameRelativeSample:
-        command += ' -frs -' + frameRelativeSample + ' -frs 0 -frs ' + frameRelativeSample + ' '
+        if frameRelativeSample:
+            command[i] += ' -frs -' + frameRelativeSample + ' -frs 0 -frs ' + frameRelativeSample + ' '
+        else:
+            command[i] += ' -frs 0 '
     
-    for item in itemList:
-        command+='-root ' + item + ' '
+        for j in range(len(itemLists[i])):
+            command[i] += ' -root ' + itemLists[i][j] + ' '
         
-    command += '-file ' + path + '/' + name + '.abc"'
-    print('[fxGeneralLib.exportAlembic] - command is ' + command)
-    
-    if not os.path.isdir(path):
-        print('[fxGeneralLib.exportAlembic] - path to create is ' + path)    
-        os.makedirs(path)
-    
-    mel.eval(command)
-    return command
-    
+        command[i] += ' -file ' + path + '/' + types[i] + '_' + variants[i] + '.abc'
+        #print 'cmds.AbcExport(v=False,j='+str(command[i])+')'
 
-def importAlembic(path,name):
+    print 'cmds.AbcExport(v=False,j='+str(command)+')'
+    cmds.AbcExport(v=False, j=command)
+    print ('[fxGeneralLib.exportAlembic] - END')
+    return 1
+
+
+def importAlembicCustom(name,path,numMeshes):
 
     #AbcImport -mode import "C:/Users/sebastienr/Desktop/bla.abc";
-    print('[fxGeneralLib.importAlembic] - path to import from is ' + path + '/' + name) 
+    print ('[fxGeneralLib.importAlembicCustom] - START')
+    print('[fxGeneralLib.importAlembicCustom] - path to import from is ' + path + '/' + name) 
     abcNode = cmds.createNode('AlembicNode',n=name+'_abcFile')
-    print('[fxGeneralLib.importAlembic] - abcNode = ' + abcNode)    
+    print('[fxGeneralLib.importAlembicCustom] - abcNode = ' + abcNode)    
     cmds.connectAttr('time1.outTime',abcNode+'.time')
     cmds.setAttr(abcNode+'.abc_File',path+'/'+name+'.abc',type="string")
+
+    newMeshes = connectAlembicCustom(abcNode,name,numMeshes)
+    print('[fxGeneralLib.importAlembicCustom] - newMesh = ' + str(newMeshes))
     
-    return abcNode
+    print ('[fxGeneralLib.importAlembicCustom] - END')
+    return newMeshes,abcNode
 
-def connectAlembic(abcNode,outMeshNumber,name):
 
-    meshShape = cmds.createNode('mesh',n=name+'_abcShape')
-    cmds.connectAttr(abcNode+'.outPolyMesh['+str(outMeshNumber)+']',meshShape+'.inMesh')
+def connectAlembicCustom(abcNode,name,numMeshes):
 
-    print('[fxGeneralLib.connectAlembic] - meshShape = ' + meshShape)    
-    meshParent = cmds.rename(cmds.listRelatives(meshShape,p=True)[0],name)
-    print('[fxGeneralLib.connectAlembic] - meshParent = ' + meshParent)    
+    print ('[fxGeneralLib.connectAlembicCustom] - START')
+    print ('[fxGeneralLib.connectAlembicCustom] - numMeshes = ' + str(numMeshes))
 
-    return meshParent
+    outMeshes=[]
+    for i in range(0,numMeshes):
+        meshShape = cmds.createNode('mesh',n=name+'_abcShape')
+        cmds.connectAttr(abcNode+'.outPolyMesh['+str(i)+']',meshShape+'.inMesh')
+        cmds.connectAttr(abcNode+'.prop['+str(i)+']',meshShape+'.visibility')
 
-def importAlembicStd(path,name):
+        print('[fxGeneralLib.connectAlembic] - meshShape = ' + meshShape)    
+        #meshParent = cmds.rename(cmds.listRelatives(meshShape,p=True)[0],name+'#')
+        meshParent = cmds.listRelatives(meshShape,p=True,f=True)[0]
+        outMeshes.append(meshParent)
+        print('[fxGeneralLib.connectAlembic] - meshParent = ' + meshParent)
 
-    print('[fxGeneralLib.importAlembicStd] - path to import from is ' + path + '/' + name) 
+
+
+    print ('[fxGeneralLib.connectAlembicCustom] - END')
+    return outMeshes
+
+
+def importAlembicStd(name,path):
+
     fullNodes = set(getTopNodes())
     print('[fxGeneralLib.importAlembicStd] - fullNodes ' + str(fullNodes))
-    
-    command = 'AbcImport -mode import "'
-    command += '/'.join([path,name])+'.abc"'
-    print('[fxGeneralLib.importAlembicStd] - command is ' + command)
 
-    mel.eval(command)
+    toImport = '/'.join([path,name+'.abc'])
+    cmds.AbcImport(toImport,mode='import')
+
     newfullNodes = set(getTopNodes())
     print('[fxGeneralLib.importAlembicStd] - newfullNodes ' + str(newfullNodes))
-
     newNodes = list(newfullNodes-fullNodes)
     print('[fxGeneralLib.importAlembicStd] - newNodes ' + str(newNodes))
 
@@ -114,17 +133,28 @@ def importAlembicStd(path,name):
     outAbc=[]
 
     for item in newNodes:
+        print('[fxGeneralLib.importAlembicStd] - item = ' + item)
+        shape = cmds.listRelatives(item,s=True,f=True)
+        print('[fxGeneralLib.importAlembicStd] - item shape = ' + str(shape))
+        nodeType = cmds.nodeType(item)
+        print('[fxGeneralLib.importAlembicStd] - item nodeType = ' + nodeType)
+
         if cmds.nodeType(item) == 'transform':
-            outTransform.append(item)
+            if shape:
+                print 'is mesh'
+                outMeshes.append(item)
+            else:
+                print 'is transform'
+                outTransform.append(item)   
         elif cmds.nodeType(item) == 'AlembicNode':
+            print 'not transform'
+            print 'test abc'
             outAbc.append(item)
-        elif cmds.listRelatives(item,s=True) and cmds.nodeType(cmds.listRelatives(item,s=True,f=True)[0]) == 'mesh':
-            outMeshes.append(cmds.rename(item,name))
 
     print('[fxGeneralLib.importAlembicStd] - outTransform = ' + str(outTransform))
     print('[fxGeneralLib.importAlembicStd] - outMeshes = ' + str(outMeshes))
     print('[fxGeneralLib.importAlembicStd] - outAbc = ' + str(outAbc))
-    return outMeshes,outAbc, outTransform
+    return outTransform, outMeshes, outAbc
 
 
 def exportSelectedtoSD(itemList,startFrame,endFrame,path,name,deformation,cam=None):
