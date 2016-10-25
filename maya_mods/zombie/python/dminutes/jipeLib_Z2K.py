@@ -3977,7 +3977,8 @@ def chr_fix_mirror_parameters(*args, **kwargs):
 
     for i in outFalseL:
         if cmds.objExists( i + theAttr):
-            cmds.setAttr( i + theAttr,False)
+            print "i+theAttr=", i+theAttr
+            cmds.setAttr( i + theAttr, False)
             print i,"set to FALSE"
 
     return [True,debugL]
