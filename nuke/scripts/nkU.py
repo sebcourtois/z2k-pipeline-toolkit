@@ -517,9 +517,13 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
                 if layerNameS+"-v" in each:
                     publishedLayerL.append(each)
             publishedLayerL.sort()
-            verI = int(publishedLayerL[-1].split("-v")[-1])
-            nextVersionS = "v"+'{0:03d}'.format(verI+1)
-            layerNameNextVerS = layerNameS+"-"+nextVersionS
+            if publishedLayerL:
+                verI = int(publishedLayerL[-1].split("-v")[-1])
+                nextVersionS = "v"+'{0:03d}'.format(verI+1)
+                layerNameNextVerS = layerNameS+"-"+nextVersionS
+            else:
+                layerNameNextVerS = layerNameS+"-v001"
+            
 
         if not dryRun:
             try: 
@@ -564,6 +568,7 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
     else:
         newVersionNameS = moveLayer2output(layerPathS, publishDirS)
         publishLastVersDir = publishDir.absPath()+"/_version/"+newVersionNameS
+
 
     log.printL("i","Published layer: '{}'".format(publishHeadDir)) 
     return dict(resultB=log.resultB, logL=log.logL, publishHeadDir = publishHeadDir, publishLastVersDir= publishLastVersDir)
@@ -668,7 +673,7 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
             txt= "Can't Publish, some of the nodes are pointing toward unvalid sequences. Please read the log for more detail"
             log.printL("e",txt)
             nuke.message("Error: "+txt)
-            return dict(resultB=log.resultB, logL=log.logL)
+            return
 
     if toPubNodeL and not commentS:
         commentS = nuke.getInput("Please enter a publish comment", "")
@@ -723,9 +728,6 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
     #log.printL("i","Nothing to publish", guiPopUp = guiPopUp)
     if guiPopUp:
         nuke.message("Info:\n"+publishedMsg+"\n"+skippedMsg+"\nPlease read the log for more details")
-
-    return dict(resultB=log.resultB, logL=log.logL)
-
 
 
 
