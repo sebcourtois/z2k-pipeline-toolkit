@@ -13,13 +13,15 @@ def createTesla(mode='1'):
         Base procedure, call every other procedures
     """
     
-    print ('[createTesla] - mode = ' + mode)
+    print ('[generateTesla.createTesla] - mode = ' + mode)
 
     #fxGroup = createFxGroup()
     teslaGroup = createTeslaGroup()
+    print ('[generateTesla.createTesla] - teslaGroup name = ' + teslaGroup)
     setupTeslaGroup(teslaGroup)
 
     nodes = createBaseNodes(mode,teslaGroup)
+    print nodes
 
     sourceMesh = nodes[0]
     targetMesh = nodes[1]
@@ -32,12 +34,17 @@ def createTesla(mode='1'):
     targetLoc = nodes[8]
     midLoc = nodes[9]
 
-
     connectBaseNodes(sourceMesh,targetMesh,curve,brush,stroke,mesh)
     setupStroke(stroke,teslaGroup)
     setupStdBrush(brush,distance,teslaGroup)
     #animateBrush(brush,teslaGroup)
     wobble = addLocalWobble(mesh,distance,midLoc,teslaGroup)
+
+    cmds.parent(curve,sourceMesh)
+    cmds.parent(sourceMesh,teslaGroup)
+    cmds.parent(targetMesh,teslaGroup)
+    cmds.parent(stroke,teslaGroup)
+    cmds.parent(mesh,teslaGroup)
 
     cmds.select(teslaGroup,r=True)
 
@@ -45,16 +52,65 @@ def createTesla(mode='1'):
 
 def createTeslaGroup():
 
-    groups = cmds.ls('*Tesla_G*')
+    groups = cmds.ls('Tesla_G*',type="transform")
+    print ('[generateTesla.createTeslaGroup] - groups = ' + str(groups))
+    j=1
     if groups:
-        for i in xrange(1,len(groups)):
-            if not cmds.objExists('|Tesla_G'+str(i)):
-                teslaGroup = cmds.group(em=True,n='Tesla_G'+str(i))
-                print('[createTeslaGroup] - teslaGroup created with name ' + teslaGroup)
-                return teslaGroup
-    else:
-        teslaGroup = cmds.group(em=True,n='Tesla_G1')
-        return teslaGroup
+        for i in xrange(len(groups)):
+            print groups[i]
+            if ('Tesla_G'+ str(j)) in groups[i]:
+                j+=1
+
+    teslaGroup = cmds.group(em=True,n='|Tesla_G'+str(j))
+    print('[generateTesla.createTeslaGroup] - teslaGroup created with name ' + teslaGroup)
+    return teslaGroup
+
+def setupTeslaGroup(group):
+
+    print ('[generateTesla.setupTeslaGroup] - input group = '+ group)
+    
+    ##group = group.split('|')[1]
+    cmds.addAttr(group,ln=group,at='enum',enumName='_')
+    cmds.setAttr(group+'.'+group,e=True,channelBox=True)
+
+    cmds.addAttr(group,ln='BASIC',at='enum',enumName='_')
+    cmds.setAttr(group+'.BASIC',e=True,channelBox=True)
+    cmds.addAttr(group,ln='seed',min=0,dv=0,k=True,at='long')
+    cmds.addAttr(group,ln='attractionMult',min=0,dv=1,k=True,at='double')
+    cmds.addAttr(group,ln='attractionSamples',min=1,dv=5,k=True,at='double')
+    cmds.addAttr(group,ln='startWidthMult',min=0,dv=1,k=True,at='double')
+    cmds.addAttr(group,ln='endWidthMult',min=0,dv=0,k=True,at='double')
+    cmds.addAttr(group,ln='flow',min=0,max=100,dv=0,k=True,at='double')
+
+    cmds.addAttr(group,ln='BRANCHES',at='enum',enumName='_')
+    cmds.setAttr(group+'.BRANCHES',e=True,channelBox=True)
+    cmds.addAttr(group,ln='branchesIsActive',nn='isActive',dv=1,k=True,at='bool')
+    cmds.addAttr(group,ln='splitBias',min=-.5,max=.5,dv=-.2,k=True,at='double')
+    cmds.addAttr(group,ln='splitRand',min=-0,max=1,dv=.5,k=True,at='double')
+    cmds.addAttr(group,ln='twistSpeedMult',min=0,dv=1,k=True,at='double')
+
+    cmds.addAttr(group,ln='NOISE',at='enum',enumName='_')
+    cmds.setAttr(group+'.NOISE',e=True,channelBox=True)
+    cmds.addAttr(group,ln='noiseStrenghtMult',min=0,dv=1,k=True,at='double')
+    cmds.addAttr(group,ln='noiseSpeedMult',min=-5,max=5,dv=1,k=True,at='double')
+    cmds.addAttr(group,ln='noiseFreqMult',min=0,dv=1,k=True,at='double')
+    
+
+    cmds.addAttr(group,ln='WOBBLE',at='enum',enumName='_')
+    cmds.setAttr(group+'.WOBBLE',e=True,channelBox=True)
+    cmds.addAttr(group,ln='wobbleIsActive',nn='isActive',at='bool',dv=1,k=True)
+    cmds.addAttr(group,ln='displayDeformer',at='bool',dv=0,k=True)
+    cmds.addAttr(group,ln='strengthMult',at='double',min=0,dv=1,k=True)
+    cmds.addAttr(group,ln='freqMult',at='double',min=0,dv=1,k=True)
+    cmds.addAttr(group,ln='timeMult',at='double',min=0,dv=1,k=True)
+    cmds.addAttr(group,ln='falloffMult',at='double',min=0,dv=1,k=True)
+    cmds.addAttr(group,ln='falloffAmount',nn='wobbleFalloffAmount (%)',at='double',min=0,max=100,dv=30,k=True)
+    
+    cmds.addAttr(group,ln='BLINK',at='enum',enumName='_')
+    cmds.setAttr(group+'.BLINK',e=True,channelBox=True)
+    cmds.addAttr(group,ln='blink',at='bool',dv=0,k=True)
+    cmds.addAttr(group,ln='blinkFrequency',at='double',min=0,dv=1,k=True)
+    cmds.addAttr(group,ln='blinkDuration',at='double',dv=0,k=True)
 
 def createBaseNodes(mode,parentName):
     """
@@ -65,7 +121,7 @@ def createBaseNodes(mode,parentName):
     cmds.setAttr(sourceMesh+'.sx',4)
     cmds.setAttr(sourceMesh+'.sy',4)
     cmds.setAttr(sourceMesh+'.sz',4)
-    print ('[sourceMesh] - sourceMesh created : ' + sourceMesh)
+    print ('[generateTesla.createBaseNodes] - sourceMesh created : ' + sourceMesh)
     if mode == '1':
         targetMesh = cmds.polySphere(n=parentName+'Target#')[0]
         cmds.setAttr(targetMesh+'.tx',160)
@@ -76,34 +132,28 @@ def createBaseNodes(mode,parentName):
         cmds.setAttr(targetMesh+'.sz',11)
     else:
         targetMesh = ''
-    print ('[createBaseNodes] - targetMesh created : ' + targetMesh)
+    print ('[generateTesla.createBaseNodes] - targetMesh created : ' + targetMesh)
 
     curve = cmds.curve(n=parentName+'Curve#',d=1,p=[(0, 0, 0), ( 1, 0, 0)])
-    print ('[createBaseNodes] - curve created : ' + curve)
+    print ('[generateTesla.createBaseNodes] - curve created : ' + curve)
     cmds.rename(cmds.listRelatives(curve,s=True)[0],curve+'Shape')
 
     outDimNodes = createDimensionTool(sourceMesh,targetMesh,parentName)
 
     brush = cmds.createNode('brush',n=parentName+'Brush#')
-    print ('[createBaseNodes] - brush created : ' + brush)
+    print ('[generateTesla.createBaseNodes] - brush created : ' + brush)
     stroke = cmds.stroke(n=parentName+'Stroke#' )
-    print ('[createBaseNodes] - stroke created : ' + stroke)
+    print ('[generateTesla.createBaseNodes] - stroke created : ' + stroke)
     cmds.rename(cmds.listRelatives(stroke,s=True)[0],stroke+'Shape')
 
     mesh = cmds.polySphere(n=parentName+'outMesh')
-    print ('[createBaseNodes] - mesh created : ' + str(mesh))
+    print ('[generateTesla.createBaseNodes] - mesh created : ' + str(mesh))
     cmds.delete(mesh[1])
     mesh=mesh[0]
 
     #cmds.connectAttr(parentName+'.teslaVisibility',mesh+'.visibility')
 
-    cmds.parent(curve,sourceMesh)
-    cmds.parent(sourceMesh,parentName)
-    cmds.parent(targetMesh,parentName)
-    cmds.parent(stroke,parentName)
-    cmds.parent(mesh,parentName)
-
-    print ('[createBaseNodes] - baseNodes = %s,%s,%s,%s,%s,%s' % (sourceMesh,targetMesh,curve,brush,stroke,mesh))
+    print ('[generateTesla.createBaseNodes] - baseNodes = %s,%s,%s,%s,%s,%s' % (sourceMesh,targetMesh,curve,brush,stroke,mesh))
     return [sourceMesh,targetMesh,curve,brush,stroke,mesh,outDimNodes[0],outDimNodes[1],outDimNodes[2],outDimNodes[3]]
 
 
@@ -113,15 +163,15 @@ def createDimensionTool(sourceMesh,targetMesh,parentName):
     """
 
     sourceLoc = cmds.spaceLocator(n=parentName+'DistSourceLoc#')[0]
-    print ('[createDimensionTool] - sourceLoc created : ' + sourceLoc)
+    print ('[generateTesla.createDimensionTool] - sourceLoc created : ' + sourceLoc)
     targetLoc = cmds.spaceLocator(n=parentName+'DistTargetLoc#')[0]
-    print ('[createDimensionTool] - targetLoc created : ' + targetLoc)
+    print ('[generateTesla.createDimensionTool] - targetLoc created : ' + targetLoc)
     distanceShape = cmds.createNode('distanceDimShape',n=parentName+'Dist#Shape')
     distance = cmds.rename(cmds.listRelatives(distanceShape,p=True)[0],parentName+'Dist#')
     distanceShape=cmds.listRelatives(distance,s=True)[0]
     cmds.setAttr(distance+'.overrideEnabled',1)
     cmds.setAttr(distance+'.overrideVisibility',0)
-    print ('[createDimensionTool] - distanceShape : ' + distanceShape)
+    print ('[generateTesla.createDimensionTool] - distanceShape : ' + distanceShape)
 
     cmds.parent(targetLoc,targetMesh,r=True)
     cmds.parent(sourceLoc,sourceMesh,r=True)
@@ -134,7 +184,7 @@ def createDimensionTool(sourceMesh,targetMesh,parentName):
     cmds.setAttr(targetLoc+'.overrideVisibility',0)
 
     midLoc = cmds.spaceLocator(n=parentName+'DistMidLoc#')[0]
-    print ('[createDimensionTool] - midLoc : ' + midLoc)
+    print ('[generateTesla.createDimensionTool] - midLoc : ' + midLoc)
     cmds.pointConstraint(sourceLoc,midLoc)
     cmds.pointConstraint(targetLoc,midLoc)
     cmds.aimConstraint(sourceLoc,midLoc,aimVector=[0,1,0],)
@@ -149,17 +199,18 @@ def connectBaseNodes(source,target,curve,brush,stroke,mesh):
     """
         Connect nodes created and returned by createBaseNodes():
     """
+    print mesh
 
-    sourceShape = cmds.listRelatives(source,s=True)[0]
-    print ('[connectBaseNodes] - sourceShape = ' + sourceShape)
-    targetShape = cmds.listRelatives(target,s=True)[0] 
-    print ('[connectBaseNodes] - targetShape = ' + targetShape)
-    curveShape = cmds.listRelatives(curve,s=True)[0]
-    print ('[connectBaseNodes] - curveShape = ' + curveShape)
-    strokeShape = cmds.listRelatives(stroke,s=True)[0]
-    print ('[connectBaseNodes] - strokeShape = ' + strokeShape)
-    meshShape = cmds.listRelatives(mesh,s=True)[0]
-    print ('[connectBaseNodes] - meshShape = ' + meshShape)
+    sourceShape = cmds.listRelatives(source,s=True,f=True)[0]
+    print ('[generateTesla.connectBaseNodes] - sourceShape = ' + sourceShape)
+    targetShape = cmds.listRelatives(target,s=True,f=True)[0] 
+    print ('[generateTesla.connectBaseNodes] - targetShape = ' + targetShape)
+    curveShape = cmds.listRelatives(curve,s=True,f=True)[0]
+    print ('[generateTesla.connectBaseNodes] - curveShape = ' + curveShape)
+    strokeShape = cmds.listRelatives(stroke,s=True,f=True)[0]
+    print ('[generateTesla.connectBaseNodes] - strokeShape = ' + strokeShape)
+    meshShape = cmds.listRelatives(mesh,s=True,f=True)[0]
+    print ('[generateTesla.connectBaseNodes] - meshShape = ' + meshShape)
 
     cmds.connectAttr(curveShape+'.worldSpace[0]',strokeShape+'.pathCurve[0].curve')
     cmds.connectAttr(brush+'.outBrush',strokeShape+'.brush')
@@ -172,16 +223,16 @@ def setupStroke(stroke,parentName):
         Set stroke base attributes
     """
 
-    print('[setupStroke] - START')
+    print('[generateTesla.setupStroke] - START')
     strokeShape = cmds.listRelatives(stroke,s=True)[0]
-    print ('[setupStroke] - strokeShape = ' + strokeShape)
+    print ('[generateTesla.setupStroke] - strokeShape = ' + strokeShape)
 
     cmds.setAttr(strokeShape+'.useNormal',0)
     #cmds.setAttr(strokeShape+'.minimalTwist',1)
 
     cmds.connectAttr(parentName+'.seed',stroke+'.seed')
 
-    print('[setupStroke] - END')
+    print('[generateTesla.setupStroke] - END')
 
 
 def setupStdBrush(brush,distance,parentName):
@@ -190,7 +241,7 @@ def setupStdBrush(brush,distance,parentName):
         "Standard" means that the distance between source and target are base value ( eg : about 185 )
     """
 
-    print('[SetupSTDBrush] - START')
+    print('[generateTesla.SetupSTDBrush] - START')
     cmds.setAttr(brush+'.globalScale',10)
     cmds.setAttr(brush+'.tubes',1)
     cmds.setAttr(brush+'.twistRand',0)
@@ -252,7 +303,7 @@ def setupStdBrush(brush,distance,parentName):
     cmds.connectAttr(parentName+'.attractionSamples',brush+'.surfaceSampleDensity')
     cmds.connectAttr(parentName+'.splitBias',brush+'.splitBias')
 
-    print('[SetupSTDBrush] - END')
+    print('[generateTesla.SetupSTDBrush] - END')
 
 def setupLongBrush(brush,distance,parentName):
     """
@@ -260,7 +311,7 @@ def setupLongBrush(brush,distance,parentName):
         "Standard" means that the distance between source and target are base value ( eg : about 185 )
     """
 
-    print('[SetupLongBrush] - START')
+    print('[generateTesla.SetupLongBrush] - START')
     cmds.setAttr(brush+'.globalScale',10)
     cmds.setAttr(brush+'.tubes',1)
     cmds.setAttr(brush+'.twistRand',0)
@@ -318,7 +369,7 @@ def setupLongBrush(brush,distance,parentName):
     cmds.connectAttr(parentName+'.attractionSamples',brush+'.surfaceSampleDensity')
     cmds.connectAttr(parentName+'.splitBias',brush+'.splitBias')
 
-    print('[SetupLongBrush] - END')
+    print('[generateTesla.SetupLongBrush] - END')
 
 def animateBrush(brush,parentName):
     
@@ -326,21 +377,21 @@ def animateBrush(brush,parentName):
         Set base brush animation
     """
 
-    print('[animateBrush] - START')
-    print('[animateBrush] - END')
+    print('[generateTesla.animateBrush] - START')
+    print('[generateTesla.animateBrush] - END')
 
 
 def addLocalWobble(mesh,distance,midLoc,parentName):
 
     #add wobble falloff expression based on distance
 
-    print('[addLocalWobble] - START')
+    print('[generateTesla.addLocalWobble] - START')
 
     if not cmds.pluginInfo('wobble-2016',q=True,l=True):
         try:
             cmds.loadPlugin('wobble-2016')
         except:
-            message = '[addLocalWobble] - Can\'t find Wobble plugin - script canceled'
+            message = '[generateTesla.addLocalWobble] - Can\'t find Wobble plugin - script canceled'
             mel.eval('warning('+message+')')
 
     wobble = cmds.deformer(type='wobble')
@@ -369,56 +420,8 @@ def addLocalWobble(mesh,distance,midLoc,parentName):
     cmds.connectAttr(parentName+'.wobbleIsActive',wobble[0]+'.envelope')
     cmds.connectAttr(parentName+'.displayDeformer',wobble[1]+'.lodVisibility')
     
-    print('[addLocalWobble] - END')
+    print('[generateTesla.addLocalWobble] - END')
     return wobble
-
-
-def setupTeslaGroup(group):
-
-    print ('[setupTeslaGroup]')
-    
-    print group
-    cmds.addAttr(group,ln=group,at='enum',enumName='_')
-    cmds.setAttr(group+'.'+group,e=True,channelBox=True)
-
-    cmds.addAttr(group,ln='BASIC',at='enum',enumName='_')
-    cmds.setAttr(group+'.BASIC',e=True,channelBox=True)
-    cmds.addAttr(group,ln='seed',min=0,dv=0,k=True,at='long')
-    cmds.addAttr(group,ln='attractionMult',min=0,dv=1,k=True,at='double')
-    cmds.addAttr(group,ln='attractionSamples',min=1,dv=5,k=True,at='double')
-    cmds.addAttr(group,ln='startWidthMult',min=0,dv=1,k=True,at='double')
-    cmds.addAttr(group,ln='endWidthMult',min=0,dv=0,k=True,at='double')
-    cmds.addAttr(group,ln='flow',min=0,max=100,dv=0,k=True,at='double')
-
-    cmds.addAttr(group,ln='BRANCHES',at='enum',enumName='_')
-    cmds.setAttr(group+'.BRANCHES',e=True,channelBox=True)
-    cmds.addAttr(group,ln='branchesIsActive',nn='isActive',dv=1,k=True,at='bool')
-    cmds.addAttr(group,ln='splitBias',min=-.5,max=.5,dv=-.2,k=True,at='double')
-    cmds.addAttr(group,ln='splitRand',min=-0,max=1,dv=.5,k=True,at='double')
-    cmds.addAttr(group,ln='twistSpeedMult',min=0,dv=1,k=True,at='double')
-
-    cmds.addAttr(group,ln='NOISE',at='enum',enumName='_')
-    cmds.setAttr(group+'.NOISE',e=True,channelBox=True)
-    cmds.addAttr(group,ln='noiseStrenghtMult',min=0,dv=1,k=True,at='double')
-    cmds.addAttr(group,ln='noiseSpeedMult',min=-5,max=5,dv=1,k=True,at='double')
-    cmds.addAttr(group,ln='noiseFreqMult',min=0,dv=1,k=True,at='double')
-    
-
-    cmds.addAttr(group,ln='WOBBLE',at='enum',enumName='_')
-    cmds.setAttr(group+'.WOBBLE',e=True,channelBox=True)
-    cmds.addAttr(group,ln='wobbleIsActive',nn='isActive',at='bool',dv=1,k=True)
-    cmds.addAttr(group,ln='displayDeformer',at='bool',dv=0,k=True)
-    cmds.addAttr(group,ln='strengthMult',at='double',min=0,dv=1,k=True)
-    cmds.addAttr(group,ln='freqMult',at='double',min=0,dv=1,k=True)
-    cmds.addAttr(group,ln='timeMult',at='double',min=0,dv=1,k=True)
-    cmds.addAttr(group,ln='falloffMult',at='double',min=0,dv=1,k=True)
-    cmds.addAttr(group,ln='falloffAmount',nn='wobbleFalloffAmount (%)',at='double',min=0,max=100,dv=30,k=True)
-    
-    cmds.addAttr(group,ln='BLINK',at='enum',enumName='_')
-    cmds.setAttr(group+'.BLINK',e=True,channelBox=True)
-    cmds.addAttr(group,ln='blink',at='bool',dv=0,k=True)
-    cmds.addAttr(group,ln='blinkFrequency',at='double',min=0,dv=1,k=True)
-    cmds.addAttr(group,ln='blinkDuration',at='double',dv=0,k=True)
 
 
 def addTarget(teslaGroup,newTarget):

@@ -44,11 +44,11 @@ class project(object):
 
     all_sync_sites = ("online", "dmn_paris", "dmn_angouleme", "dream_wall", "pipangai")
 
-    sg_publish_statuses = ("ip", "rev", "wfa", "omt")
+    sg_publish_statuses = ("ip", "rev", "omt", "wfa", "fin")
 
     sg_tasks_settings = {"model_hd":{"upd_status_art":True},
-                        "texture":{"upd_status_art":True},
-                        "shading":{"upd_status_art":True},
+                         "texture":{"upd_status_art":True},
+                         "shading":{"upd_status_art":True},
                         }
 
 class damas(object):
@@ -342,12 +342,18 @@ class shot_lib(object):
     "rendering_scene":{"create_sg_version":True,
                        "sg_tasks":("Rendering|rendering",),
                        },
-    "rendering_movie":{"create_sg_version":True,
-                       "sg_uploaded_movie":True,
-                       "sg_path_to_movie":True,
-                       "sg_tasks":("Rendering|rendering",),
-                       #"sg_status":"rev",
-                       },
+#    "rendering_movie":{"create_sg_version":True,
+#                       "sg_uploaded_movie":True,
+#                       "sg_path_to_movie":True,
+#                       "sg_tasks":("Rendering|rendering",),
+#                       #"sg_status":"rev",
+#                       },
+    "rendering_comp":{"outcomes":("rendering_movie",),
+                      "create_sg_version":True,
+                      "sg_uploaded_movie":"rendering_movie",
+                      "sg_path_to_movie":"rendering_movie",
+                      "sg_tasks":("Rendering|rendering",),
+                      },
 
     #===========================================================================
     # COMPOSITING RESOURCES
@@ -359,7 +365,7 @@ class shot_lib(object):
                   "create_sg_version":True,
                   "sg_uploaded_movie":"compo_movie",
                   "sg_path_to_movie":"compo_movie",
-                  "sg_tasks":("Compositing|compositing",),
+                  "sg_steps":("compositing",),
                   },
 
     # "compo_movie":{"create_sg_version":True,
