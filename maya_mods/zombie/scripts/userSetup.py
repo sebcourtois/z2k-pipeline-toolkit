@@ -16,6 +16,9 @@ def onStartup():
 		for sScript in ("performStickyDeformer", "stickyDeformer", "stickyDeformerMenu"):
 			pm.mel.source(sScript)
 
+	pm.loadPlugin("xgenToolkit.mll")
+	pm.mel.xgmPreRendering()
+
 pymel.mayautils.executeDeferred(onStartup)
 
 
