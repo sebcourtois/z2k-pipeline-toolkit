@@ -2,30 +2,61 @@ import maya.cmds as cmds
 import maya.mel as mel
 import os
 
-print '[FXLIBS] - Loading Lib : fxRenderLib'
+print '[FXLIBS] - Loading Lib : fxArnoldLib'
 
-def createArnoldShader(type,shaderName):
+def createArnoldShader(shaderName,type):
 
-    mat = cmds.createNode('dmnToon',n='mat_'+shaderName+'_dmnToon')
-    print('[fxRenderLib.createArnoldShader] - material = ' + mat)
+    print ('[fxArnoldLib.createArnoldShader] - START') 
+    mat = cmds.createNode(type,n='mat_'+shaderName+'_'+type)
+    print('[fxArnoldLib.createArnoldShader] - material = ' + mat)
     lambert = cmds.createNode('lambert',n='pre_'+shaderName+'_lambert')
-    print('[fxRenderLib.createArnoldShader] - lambert = ' + lambert)
+    print('[fxArnoldLib.createArnoldShader] - lambert = ' + lambert)
     cmds.select(cl=True)
     sgr= cmds.sets(n='sgr_'+shaderName,nss=True,r=True)
-    print('[fxRenderLib.createArnoldShader] - shading engine = ' + sgr)
+    print('[fxArnoldLib.createArnoldShader] - shading engine = ' + sgr)
 
     cmds.connectAttr(mat+'.outColor',sgr+'.aiSurfaceShader')
     cmds.connectAttr(lambert+'.outColor',sgr+'.surfaceShader')
 
+    print ('[fxArnoldLib.createArnoldShader] - END') 
     return [sgr,mat,lambert]
+
 
 def assignShader(sgr,node):
 
-    if cmds.sets([node],e=True,forceElement=sgr):
-        print('[fxRenderLib.assignShader] - d' + sgr + ' correctly assigned to ' + node)    
+    print ('[fxArnoldLib.assignShader] - START') 
+    if cmds.sets(node,e=True,forceElement=sgr):
+        print('[fxArnoldLib.assignShader] - d' + sgr + ' correctly assigned to ' + node)    
         return 1
     else:
         return 0
+    print ('[fxArnoldLib.assignShader] - END') 
+
+
+def setArnoldShaderAttr(shadingNetwork,type,component=''):
+
+    print ('[fxArnoldLib.setArnoldShaderAttr] - START')
+    if type == 'lightning':
+        cmds.setAttr(shadingNetwork[2]+'.color',0,0,0,type='double3')
+        cmds.setAttr(shadingNetwork[2]+'.incandescence',1,.3,.3,type='double3')
+        cmds.setAttr(shadingNetwork[1]+'.output',10)
+
+        if component:
+            value=[0,0,0]
+            value[int(component)]=1
+
+            cmds.setAttr(shadingNetwork[1]+'.ambientColor',value[0],value[1],value[2],type='double3')
+            cmds.setAttr(shadingNetwork[1]+'.ambientTint',value[0],value[1],value[2],type='double3')
+            cmds.setAttr(shadingNetwork[1]+'.ambientIntensity',1)
+
+
+    if type == 'meshLight':
+        cmds.setAttr(shadingNetwork[2]+'.color',0,0,0,type='double3')
+        cmds.setAttr(shadingNetwork[2]+'.incandescence',1,1,0,type='double3')
+    
+    print ('[fxArnoldLib.setArnoldShaderAttr] - END')
+    return 1
+
 
 def arnoldMotionVectorFromMesh(mesh,vscale=.1):
     '''
@@ -33,6 +64,8 @@ def arnoldMotionVectorFromMesh(mesh,vscale=.1):
         This def create the network to do motion blur on imported abc in Maya/Arnold
         The imported alembic should have a Cd attribut ( or v ? )
     '''
+    print ('[fxArnoldLib.arnoldMotionVectorFromMesh] - START')
+    print ('[fxArnoldLib.arnoldMotionVectorFromMesh] - base mesh = ' + mesh)
     connection = cmds.connectionInfo(mesh+'.inMesh',sfd=True)
     print('[fxRenderLib.arnoldMotionVectorFromMesh] - connection = ' + connection)    
     if connection:
@@ -66,7 +99,10 @@ def arnoldMotionVectorFromMesh(mesh,vscale=.1):
         cmds.setAttr(mesh+'.aiMotionVectorScale',vscale)
     else:
         print('[fxRenderLib.arnoldMotionVectorFromMesh] - No inMesh connection for ' + mesh + ' - this alembic is transformed only - can be motion blurred')    
+
+    print ('[fxArnoldLib.arnoldMotionVectorFromMesh] - END')
     return 1
+
 
 def arnoldMotionVectorFromAlembic(alembicNode,vscale=.1):
     '''
@@ -87,8 +123,10 @@ def arnoldMotionVectorFromAlembic(alembicNode,vscale=.1):
         atpc = cmds.createNode('arrayToPointColor')
         print('[fxRenderLib.arnoldMotionVectorFromMesh] - atpc = ' + atpc)
 
-def arnoldCreateMeshLight(mesh,aov=1):
 
+def arnoldCreateMeshLightFromMesh(mesh,aov=1):
+
+    print ('[fxArnoldLib.arnoldCreateMeshLightFromMesh] - START')
     incidenceShape = cmds.createNode('mesh',n=mesh+'_incidenceShape')
 
     cmds.connectAttr(mesh+'.worldMesh[0]',incidenceShape+'.inMesh')
@@ -98,8 +136,8 @@ def arnoldCreateMeshLight(mesh,aov=1):
     cmds.setAttr(incidenceShape+'.aiAov',aov,type='string')
     print('[fxRenderLib.arnoldCreateMeshLight] - incidenceShape = ' + incidenceShape)
 
-    incidenceParent = cmds.rename(cmds.listRelatives(incidenceShape,p=True)[0],mesh+'_incidence')
+    incidenceParent = cmds.listRelatives(incidenceShape,p=True,f=True)[0]
     print('[fxRenderLib.arnoldCreateMeshLight] - incidenceParent = ' + incidenceParent)
 
+    print ('[fxArnoldLib.arnoldCreateMeshLightFromMesh] - END')
     return incidenceParent
-
