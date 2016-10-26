@@ -17,7 +17,7 @@ import pymel.core
 from pytd.gui.itemviews.utils import toDisplayText
 from pytd.util.fsutils import pathResolve, pathJoin
 from pytd.util.sysutils import inDevMode, toStr, fromUtf8
-from pytd.util.logutils import logMsg
+from pytd.util.logutils import logMsg, forceLog
 from pytd.util.qtutils import setWaitCursor
 from pytd.gui.dialogs import QuickTreeDialog
 
@@ -223,9 +223,10 @@ def refreshContextUI():
     bPublishable = bRcsMatchUp and SCENE_MANAGER.scenePublishable(sceneInfos)
     sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
 
-    bEnabled = (('task' in SCENE_MANAGER.context)
-                and scnFromTask(SCENE_MANAGER.context['task'])
-                and bRcsMatchUp)
+
+    bEnabled = True if (('task' in SCENE_MANAGER.context)
+                        and scnFromTask(SCENE_MANAGER.context['task'])
+                        and bRcsMatchUp) else False
     pc.control("sm_init_bt", edit=True, enable=bEnabled)
 
     pc.control('sm_switchContext_bt', edit=True, enable=(not bPublishable))
@@ -277,6 +278,7 @@ def refreshContextUI():
     QWIDGETS["smoothGroup"].setChecked(bEnable)
     updSmoothOnCaptureState(bEnable, warn=False)
 
+#@forceLog(log="debug")
 def loadContextFromScene(**kwargs):
     """Initialize UI Context from scene"""
 
@@ -300,9 +302,17 @@ def loadContextFromScene(**kwargs):
             pc.displayError("{} NOT assigned to '{}' step yet."
                             .format(SG_ENGINE.currentUser["name"], sCtxStep))
         else:
-            somethingChanged |= setOption("sm_step_dd", sCtxStep, runEntityChanged=False)
+            bStepChanged = setOption("sm_step_dd", sCtxStep, runEntityChanged=False)
+            somethingChanged |= bStepChanged
+
+        sCtxTask = uiContext["task"]
+        if sCtxTask:
+            kwargs["runTaskChanged"] = False
 
         doEntityChanged(**kwargs)
+
+        if sCtxTask:
+            somethingChanged |= setOption("sm_task_dd", sCtxTask, runEntityChanged=False)
 
         if not somethingChanged:
             refreshContextUI()
@@ -313,42 +323,44 @@ def loadContextFromScene(**kwargs):
 
     return False
 
-
 #------------------------------------------------------------------
 #               UI Refresh helpers
 #------------------------------------------------------------------
 
-def setOption(s_inName, s_inValue, runEntityChanged=True):
+def setOption(in_sName, in_sValue, runEntityChanged=True):
     """Change a value in an option menu as if option was selected manually"""
     changed = False
-    items = pc.optionMenu(s_inName, query=True, itemListShort=True)
+    items = pc.optionMenu(in_sName, query=True, itemListShort=True)
     #print items
-    if not s_inName + "_" + s_inValue.replace(" ", "_") in items:
-        pc.error("Value does not exists or is not available for this user {0} ({1}) !!".format(s_inValue, s_inName))
-
-    if pc.optionMenu(s_inName, query=True, value=True) != s_inValue:
-        pc.optionMenu(s_inName, edit=True, value=s_inValue)
+    sValueItem = in_sName + "_" + in_sValue.replace(" ", "_").lower()
+    if sValueItem not in items:
+        pc.error("Value does not exists or is not available for this user {0} ({1}) !!".format(in_sValue, in_sName))
+    
+    sCurValue = pc.optionMenu(in_sName, query=True, value=True)
+    if sCurValue.lower() != in_sValue.lower():
+        sLabel = pc.menuItem(sValueItem, q=True, label=True)
+        pc.optionMenu(in_sName, edit=True, value=sLabel)
         changed = True
-        if s_inName == 'sm_step_dd':
+        if in_sName == 'sm_step_dd':
             doStepChanged(updateStep=False, runEntityChanged=runEntityChanged)
-        elif s_inName == 'sm_categ_dd' or s_inName == 'sm_seq_dd':
+        elif in_sName == 'sm_categ_dd' or in_sName == 'sm_seq_dd':
             doCategChanged(runEntityChanged=runEntityChanged)
-        elif s_inName == 'sm_asset_dd' or s_inName == 'sm_shot_dd':
+        elif in_sName == 'sm_asset_dd' or in_sName == 'sm_shot_dd':
             if runEntityChanged:
                 doEntityChanged()
-        elif s_inName == 'sm_task_dd':
+        elif in_sName == 'sm_task_dd':
             doTaskChanged()
 
     return changed
 
-def refreshOptionMenu(s_inName, a_Items):
+def refreshOptionMenu(in_sName, a_Items):
     """Change the items in an option menu (In Maya we have to delete old uiItems then create and associate new ones...)"""
-    items = pc.optionMenu(s_inName, query=True, itemListShort=True)
+    items = pc.optionMenu(in_sName, query=True, itemListShort=True)
     for item in items:
         pc.deleteUI(item)
 
     for item in a_Items:
-        pc.menuItem(s_inName + "_" + item, label=item, parent=s_inName)
+        pc.menuItem(in_sName + "_" + item.lower(), label=item, parent=in_sName)
 
 def refreshStep(*args, **kwargs):
     """Call when the step is changed (this could be included in 'doStepChanged')"""
