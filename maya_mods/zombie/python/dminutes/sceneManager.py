@@ -80,14 +80,15 @@ REF_FOR_TASK = {}
 MOV_FOR_STEP = {'previz 3d':('previz_capture',),
                 'stereo':('right_capture', 'left_capture',),
                 'layout':('layout_capture',),
-                'animation':('anim_capture',),
+                #'animation':('anim_capture',),
                 'charfx':('charFx_capture',),
                 'fx3d':('fx3d_capture',),
                }
 MOV_FOR_TASK = {'animation':('anim_capture',),
-                'split_a':('animSplitA_capture',),
-                'split_b':('animSplitB_capture',),
-                'split_c':('animSplitC_capture',), }
+                #'split_a':('animSplitA_capture',),
+                #'split_b':('animSplitB_capture',),
+                #'split_c':('animSplitC_capture',),
+                }
 
 def scnFromTask(sgTask, fail=False):
 
