@@ -156,6 +156,7 @@ class shot_lib(object):
                     "{name}_left.mov -> compo_left_movie":None,
                     "{name}_right.mov -> compo_right_movie":None,
                     "{name}_compo.nk -> compo_comp":None,
+                    "{name}_stereo.nk -> stereo_comp":None,
                    },
                 },
             },
@@ -365,7 +366,14 @@ class shot_lib(object):
                   "create_sg_version":True,
                   "sg_uploaded_movie":"compo_movie",
                   "sg_path_to_movie":"compo_movie",
-                  "sg_steps":("compositing",),
+                  "sg_tasks":("Compositing|compositing", "Compositing|compoDEF"),
+                  },
+
+    "stereo_comp":{"outcomes":("compo_right_movie", "compo_left_movie"),
+                  "create_sg_version":True,
+                  "sg_uploaded_movie":"compo_right_movie",
+                  "sg_path_to_movie":"compo_left_movie",
+                  "sg_tasks":("Compositing|compo_stereo",),
                   },
 
     # "compo_movie":{"create_sg_version":True,
