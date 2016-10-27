@@ -675,7 +675,9 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
             nuke.message("Error: "+txt)
             return dict(resultB=log.resultB, logL=log.logL)
 
-    if toPubNodeL and not commentS:
+    if destination == "output":
+        commentS == ""
+    elif toPubNodeL and not commentS:
         commentS = nuke.getInput("Please enter a publish comment", "")
         if not commentS:
             log.printL("i"," Publish canceled")
@@ -797,14 +799,46 @@ def publishCompo(dryRun=False, gui = True):
             if "read_exr" in eachNameS or "read_comp" in eachNameS :
                 readExrL.append(each)
         if len(readExrL)!=1:
-            log.printL("e","Publish failed, several or none 'read_exr/read_comp' node fond: '{}'".format( nKFileNameS.split(".")[-1]),guiPopUp = True)
+            log.printL("e","Publish failed, several or none 'read_exr/read_comp' node found: '{}'".format( nKFileNameS.split(".")[-1]),guiPopUp = True)
             return
+
+        readNode = readExrL[0]
+        readNodeName = readNode['name'].getValue()
+        filePathExpS = nuke.filename(readNode)
+        if not filePathExpS:
+            log.printL("e","Publish failed, undefined file path: '{}'".format(readNodeName))
+            return
+
+        if readNode['disable'].getValue() == 1:
+            log.printL("e","Publish failed, disabled node: '{}'".format(readNodeName))
+            return
+
+        lyrDirNameS = os.path.dirname(filePathExpS)    
+        if "%V" in lyrDirNameS:
+            lyrDirNameLeftS = lyrDirNameS.replace("%V","left")
+            if not os.path.isdir(lyrDirNameLeftS):
+                log.printL("e","Publish failed, missing directory: '{}', '{}'".format(readNodeName,lyrDirNameLeftS))
+                return
+            lyrDirNameRightS = lyrDirNameS.replace("%V","right")
+            if not os.path.isdir(lyrDirNameRightS):
+                log.printL("e","Publish failed, missing directory: '{}', '{}'".format(readNodeName,lyrDirNameRightS))
+                return
+        else:
+            if not os.path.isdir(lyrDirNameS):
+                log.printL("e","Publish failed, missing directory: '{}', '{}'".format(readNodeName,filePathExpS))
+                return
     
 
     commentS = nuke.getInput("Please enter a publish comment", "")
     if not commentS:
         log.printL("i","Pubish canceled")
         raise RuntimeError("Publish canceled")
+
+    try:
+        resultD =  proj.publishEditedVersion(nKFilePathS, comment=commentS, returnDict=True, uploadApart=False)
+    except Exception as err:
+        log.printL("e","Nuke file publish failed: '{}'".format(err),guiPopUp = True)
+        raise
 
     if depS == "10_compo":
         try:
@@ -815,17 +849,8 @@ def publishCompo(dryRun=False, gui = True):
         except Exception as err:
             log.printL("e","Seq output node publish failed: '{}'".format(err),guiPopUp = True)
             raise
-
-    try:
-        resultD =  proj.publishEditedVersion(nKFilePathS, comment=commentS, returnDict=True)
-    except Exception as err:
-        log.printL("e","Nuke file publish failed: '{}'".format(err),guiPopUp = True)
-        raise
   
-
     log.printL("i","Published successfully",guiPopUp = True)
-
-
     # print pubFile.getLockOwner(refresh=False)
 
 
