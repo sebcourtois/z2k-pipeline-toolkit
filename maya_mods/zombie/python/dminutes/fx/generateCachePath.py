@@ -2,15 +2,6 @@ import os, sys
 import maya.cmds as cmds
 import maya.mel as mel
 
-paths = ['//zombiwalk/ZOMBIWALK/Z2K/06_PARTAGE/sebastienr/TOOLS/libs']
-
-for path in paths:
-    if path not in sys.path:
-        sys.path.insert(0,path)
-
-import fxMeshLib as fxm
-reload(fxm)
-
 def generateCachePath(node):
     from davos_maya.tool.general import infosFromScene
     from dminutes import maya_scene_operations as mop

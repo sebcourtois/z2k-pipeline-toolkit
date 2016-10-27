@@ -74,7 +74,7 @@ def exportAlembic(itemLists,start,end,path,types,variants,frameRelativeSample='0
     print ('[fxGeneralLib.exportAlembic] - END')
     return 1
 
-
+'''
 def importAlembicCustom(name,path,numMeshes):
 
     #AbcImport -mode import "C:/Users/sebastienr/Desktop/bla.abc";
@@ -114,7 +114,7 @@ def connectAlembicCustom(abcNode,name,numMeshes):
     print ('[fxGeneralLib.connectAlembicCustom] - END')
     return outMeshes
 
-
+'''
 def importAlembicStd(name,path):
 
     fullNodes = set(getTopNodes())
