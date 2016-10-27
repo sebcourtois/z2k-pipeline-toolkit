@@ -32,6 +32,7 @@ nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform/all/read nodes (nearest frame)', 
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform/selected/read nodes (nearest frame)', lambda: nkU.conformReadNode(readNodeL=nuke.selectedNodes('Read'), gui=True, conformPathB = True, changeOnErrorI = 3) )
 
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/import template/ compositing', lambda: nkU.inportOutTemplate(template = "compo") )
+nuke.menu( 'Nuke' ).addCommand( 'Zombi/import template/ stereo', lambda: nkU.inportOutTemplate(template = "stereo") )
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/import template/ render precomp', lambda: nkU.inportOutTemplate(template = "renderprecomp") )
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/publish/publish compositing', lambda: nkU.publishCompo(dryRun=False, gui = True) )
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/publish/publish all inputs', lambda: nkU.publishNode(readNodeL=nuke.allNodes('Read'),guiPopUp = True) )
