@@ -6,18 +6,16 @@ reload (shotconformation)
 
 from dminutes.fx.libs import fxGeneralLib as fxgen
 from dminutes.fx.libs import fxArnoldLib as fxar
-from dminutes.fx.libs import fxMeshLib as fxm
 from dminutes.fx import generateCachePath as gcp
 from dminutes.fx.release import releaseLib
 
 reload(gcp)
 reload(fxgen)
 reload(fxar)
-reload(fxm)
 reload(releaseLib)
 
 
-def prepare(nodes,types,variants,blurValue='0.25'):
+def prepare(nodes,types,variants,blurValue='0'):
 	'''
 		Prepare the FX to be released
 	'''
@@ -85,6 +83,7 @@ def prepareMesh(nodes,types,variants,blurValue,releaseGroups):
 	for i in range(len(nodes)):
 		#newMeshes,abcNodes = fxgen.importAlembicCustom(types[i]+'_'+variants[i],path,len(nodes[i]))
 		outTransforms, newMeshes, abcNodes = fxgen.importAlembicStd(types[i]+'_'+variants[i],path)
+
 		print ('[release.prepareMesh] - newMeshes = ' + str(newMeshes))
 		print ('[release.prepareMesh] - abcNodes = ' + str(abcNodes))
 		print ('[release.prepareMesh] - outTransforms = ' + str(outTransforms))
@@ -109,9 +108,7 @@ def assignShadersToNodes(nodes,type,variant):
 
 	outMeshLights=[]
 	if len(nodes)<4:
-		print 'LESS THAN 4'
 		for i in range(len(nodes)):
-			print(nodes[i])
 			'''
 				Create Base Shader with component value : R, G or B
 			'''
@@ -130,6 +127,8 @@ def assignShadersToNodes(nodes,type,variant):
 				print 'INCIDENCE'
 				outMeshLight = fxar.arnoldCreateMeshLightFromMesh(nodes[i],str(i+1))
 				print ('[release.assignShadersToNodes] - arnoldCreateMeshLightFromMesh OK')
+				cmds.connectAttr(nodes[i]+'.visibility',outMeshLight+'.visibility')
+				print ('[release.assignShadersToNodes] - and visibility connected')
 				outMeshLights.append(outMeshLight)
 				shadingNetwork = fxar.createArnoldShader(type+'_'+variant+'_meshLight','dmnToon')
 				print ('[release.assignShadersToNodes] - createArnoldShader OK')
