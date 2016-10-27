@@ -676,6 +676,9 @@ def loadStereoCam(damShot, withAnim=True):
         stereoCamFile = proj.getLibrary("public", "misc_lib").getEntry("layout/stereo_cam.ma")
         stereoCamFile.mayaImportScene(ns=sStereoNs, returnNewNodes=False)
         oStereoCam = getStereoCam(fail=True)
+        withAnim = True
+        if sShotCode[-1] != "a":
+            damShot = proj.getShot(sShotCode[:-1] + "a")
 
     oStereoCamShape = oStereoCam.getShape()
     sStereoGrp = getObject(sStereoNs + ":grp_stereo", fail=True)
