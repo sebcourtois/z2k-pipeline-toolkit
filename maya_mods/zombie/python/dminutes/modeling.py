@@ -194,7 +194,7 @@ def cleanSet(inRoot):
             #Save the rig data (displays) and serialize a dictionary of disctionaries in a custom attribute of root
             dispDict = {}
 
-            #☻ajout Alex pour regler le probleme des vegetations dont le scale est resete 
+            #ajout Alex pour regler le probleme des vegetations dont le scale est resete 
             toDeleteL = mc.ls("*_sCns",type='scaleConstraint')+mc.ls("*_prCns",type='parentConstraint')
             mc.delete(toDeleteL)
 
