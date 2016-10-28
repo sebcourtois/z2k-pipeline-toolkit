@@ -210,6 +210,7 @@ test_toggle = False
 
 def refreshContextUI():
     """Update buttons availability from contexts (scene Context / UI Context)"""
+    logMsg(log="all")
 
     global test_toggle
 
@@ -278,7 +279,7 @@ def refreshContextUI():
     QWIDGETS["smoothGroup"].setChecked(bEnable)
     updSmoothOnCaptureState(bEnable, warn=False)
 
-#@forceLog(log="debug")
+'@forceLog(log="all")'
 def loadContextFromScene(**kwargs):
     """Initialize UI Context from scene"""
 
@@ -302,15 +303,11 @@ def loadContextFromScene(**kwargs):
             pc.displayError("{} NOT assigned to '{}' step yet."
                             .format(SG_ENGINE.currentUser["name"], sCtxStep))
         else:
-            bStepChanged = setOption("sm_step_dd", sCtxStep, runEntityChanged=False)
-            somethingChanged |= bStepChanged
-
-        sCtxTask = uiContext["task"]
-        if sCtxTask:
-            kwargs["runTaskChanged"] = False
+            somethingChanged |= setOption("sm_step_dd", sCtxStep, runEntityChanged=False)
 
         doEntityChanged(**kwargs)
 
+        sCtxTask = uiContext["task"]
         if sCtxTask:
             somethingChanged |= setOption("sm_task_dd", sCtxTask, runEntityChanged=False)
 
@@ -752,15 +749,16 @@ def doEntityChanged(*args, **kwargs):
 
     #get tasks on entity
     CURRENT_ENTITY_TASKS = {}
-    sgTasks = SCENE_MANAGER.getTasks()
+    sgTaskList = SCENE_MANAGER.getTasks()
 
     sTaskList = []
-    for sgTask in sgTasks:
+    for sgTask in sgTaskList:
         sTask = sgTask['content']
         CURRENT_ENTITY_TASKS[sTask] = sgTask
         sTaskList.append(sTask)
 
     refreshOptionMenu('sm_task_dd', sTaskList)
+    #print sTaskList
 
     if kwargs.get("runTaskChanged", True):
         doTaskChanged(*args)
@@ -789,7 +787,7 @@ def doTaskChanged(*args, **kwargs):
 
 #    doRefreshSceneInfo(*args)
     doRefreshFileStatus()
-    doVersionChanged()
+    refreshContextUI()#doVersionChanged()
 
 def doVersionChanged(*args):
     """I don't use versions at all in the end..."""

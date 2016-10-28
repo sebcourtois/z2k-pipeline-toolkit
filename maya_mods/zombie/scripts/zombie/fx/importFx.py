@@ -5,7 +5,7 @@ reload (shotconformation)
 
 
 
-shotconformation.referenceShotAsset(gui = True, astPrefix = "fx3", critical= True)
+shotconformation.referenceShotAsset(gui = True, astPrefix = "fx3", critical= False)
 
 grpFxL =mc.ls("shot|grp_fx")
 unparentedFx = mc.ls("|fx3_*:asset", type="transform")

@@ -85,12 +85,13 @@ MOV_FOR_STEP = {'previz 3d':('previz_capture',),
                 'fx3d':('fx3d_capture',),
                }
 MOV_FOR_TASK = {'animation':('anim_capture',),
-                #'split_a':('animSplitA_capture',),
-                #'split_b':('animSplitB_capture',),
-                #'split_c':('animSplitC_capture',),
+                'split_a':('animSplitA_capture',),
+                'split_b':('animSplitB_capture',),
+                'split_c':('animSplitC_capture',),
                 }
 
 def scnFromTask(sgTask, fail=False):
+    logMsg(log="all")
 
     sTask = sgTask['content'].lower()
     sStep = sgTask['step']['name'].lower()
@@ -101,8 +102,8 @@ def scnFromTask(sgTask, fail=False):
         sMsg = ("No resource file associated with task: {}".format(sgTask))
         if fail:
             raise EnvironmentError(sMsg)
-        else:
-            pc.displayError(sMsg)
+        elif inDevMode():
+            pc.displayInfo(sMsg)
 
     return sName
 
@@ -117,8 +118,8 @@ def refFromTask(sgTask, fail=False):
         sMsg = ("No reference file associated with task: {}".format(sgTask))
         if fail:
             raise EnvironmentError(sMsg)
-        else:
-            pc.displayError(sMsg)
+        elif inDevMode():
+            pc.displayInfo(sMsg)
 
     return sName
 
@@ -270,6 +271,7 @@ class SceneManager():
         return True
 
     def assertResourcesMatchUp(self, sceneInfos):
+        logMsg(log="all")
         """Compare davos data with UI data, return True if they match"""
 
         self.assertEntitiesMatchUp(sceneInfos)
@@ -292,6 +294,7 @@ class SceneManager():
         return True
 
     def resourcesMatchUp(self, sceneInfos, warn=False):
+        logMsg(log="all")
         try:
             self.assertResourcesMatchUp(sceneInfos)
         except AssertionError as e:
@@ -392,6 +395,7 @@ class SceneManager():
         return damEntity
 
     def rcFileFromContext(self, weak=False, fail=False):
+        logMsg(log="all")
         """Get davos entry from UI data"""
 
         entry = None

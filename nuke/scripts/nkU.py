@@ -103,9 +103,11 @@ class dataFile():
         self.imageNumber = ""
         self.ver = ""
         self.increment = ""
+        self.stepS = ""
 
         if os.path.isfile(self.fileNameS) or os.path.isdir(self.fileNameS):
             fileNameL=self.fileNameS.split("/")
+            self.stepS = fileNameL[-1].split("-v")[0].split("_")[-1]
             if "private" in fileNameL and "shot" in fileNameL:
                 fileDataL = self.fileNameS.split("private/")[-1].split("/")
                 self.location = "private"
@@ -129,6 +131,9 @@ class dataFile():
                 elif "compo-v" in fileDataL[6]:
                     self.ver = fileDataL[6].split("compo-v")[-1].split(".")[0]
                     self.increment = fileDataL[6].split("compo-v")[-1].split(".")[1]
+                elif "stereo-v" in fileDataL[6]:
+                    self.ver = fileDataL[6].split("stereo-v")[-1].split(".")[0]
+                    self.increment = fileDataL[6].split("stereo-v")[-1].split(".")[1]
                 elif "precomp-v" in fileDataL[6]:
                     self.ver = fileDataL[6].split("precomp-v")[-1].split(".")[0]
                     self.increment = fileDataL[6].split("precomp-v")[-1].split(".")[1]
@@ -140,6 +145,7 @@ class dataFile():
     def printData(self):
         self.log = LogBuilder(gui=self.gui, funcName ="printData")
         self.log.printL("i","fileNameS: '{}'".format(self.fileNameS))
+        self.log.printL("i","step: '{}'".format(self.stepS))
         self.log.printL("i","location: '{}'".format(self.location))
         self.log.printL("i","user: '{}'".format(self.user))
         self.log.printL("i","proj: '{}'".format(self.proj))
@@ -155,7 +161,7 @@ class dataFile():
             self.log.printL("i","imageFormat: '{}'".format(self.imageFormat))
             self.log.printL("i","imageNumber: '{}'".format(self.imageNumber))
             self.log.printL("i","ver: '{}'".format(self.ver))
-        elif "compo-v" in self.depDirSub:
+        elif "compo-v" in self.depDirSub or "stereo-v" in self.depDirSub:
             self.log.printL("i","ver: '{}'".format(self.ver))
             self.log.printL("i","increment: '{}'".format(self.increment))
 
@@ -182,6 +188,7 @@ class dataFile():
             self.log.printL("i","SHOT_DIR: "+shotDirS)
             self.log.printL("i","PRIV_DIR: "+privateDirS)
             self.log.printL("i","MISC_DIR: "+miscDirS)
+            self.log.printL("i","STEP: "+self.stepS)
             os.environ["SEQ"] = self.seq
             os.environ["VER"] = self.ver
             os.environ["INC"] = self.increment
@@ -192,6 +199,7 @@ class dataFile():
             os.environ["SHOT_DIR"] = shotDirS
             os.environ["PRIV_DIR"] = privateDirS
             os.environ["MISC_DIR"] = miscDirS
+            os.environ["STEP"] = self.stepS
 
         else:
             txt = "one of the variable 'seq', 'shot', 'user' or 'dep' is undefined, could not set nuke proj environment var".format(self.fileNameS)
@@ -225,8 +233,8 @@ def conformFilePath(filePathS = "", gui = True):
     insensitive_z2kWinDir = re.compile(re.escape("Z:/"), re.IGNORECASE)
     filePathS =  insensitive_z2kWinDir.sub("//ZOMBIWALK/z2k/", filePathS)
 
-    filePathS = filePathS.replace("/left/", "/%V/")
-    filePathS = filePathS.replace("/right/", "/%V/")
+    filePathS = filePathS.replace("left", "%V")
+    filePathS = filePathS.replace("right", "%V")
 
     filePathOrigS = str(filePathS)
     if "output" in filePathS:
@@ -247,7 +255,7 @@ def conformFilePath(filePathS = "", gui = True):
 
 
 
-def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRightLayers = False, changeOnErrorI = 99):
+def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRightLayers = False, changeOnErrorI = 99, switchToLastVer = False):
     log = LogBuilder(gui=gui, funcName ="conformReadNode")
 
     #0 : error
@@ -304,29 +312,41 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
             verS = ""
 
         newEachNameS = str(layerDirS.split("-v")[0])
+        nuke.toNode(eachNameS).setName(newEachNameS+"_0")
+        newEachNameS=each['name'].getValue()
+
+
+        #get the last version published
+        lastVerS=""
+        lastVersLyrS=""        
+        if "_version" in filePathExpS and "/output/" in filePathExpS:
+            filePathExpS=filePathExpS.replace("%V","left")
+            versionPathS = os.path.dirname(os.path.dirname(filePathExpS))
+            itemDirL = os.listdir(versionPathS)
+            lyrBaseNameS=layerDirS.split("-v")[0]
+            layerDirL = []
+            for eachItem in itemDirL:
+                if lyrBaseNameS in eachItem:
+                    layerDirL.append(eachItem)
+            layerDirL.sort()
+            if layerDirL:
+                lastVersLyrS = layerDirL[-1]
+                lastVerS = str(lastVersLyrS.split("-v")[-1])
+
+        # conform file path
+        filePathOrigS = each['file'].getValue()
+        filePathNewS = conformFilePath(filePathS = filePathOrigS, gui = gui)
+        if switchToLastVer and lastVerS and lastVerS!=verS:
+            filePathNewS = filePathNewS.replace(verS,lastVerS)
+            verS = str(lastVerS)
+
+
         if verS :
             newLabelS="v"+verS
         else:
             newLabelS = ""
-
-        nuke.toNode(eachNameS).setName(newEachNameS+"_0")
-        newEachNameS=each['name'].getValue()
         each['label'].setValue(newLabelS)
 
-
-        # conform node color
-        # print nuke.selectedNode()['tile_color'].getValue()
-        if "/output/" in filePathExpS:
-            each['tile_color'].setValue(13172991) # vert
-        elif "/private/" in filePathExpS:
-            each['tile_color'].setValue(640082175) #bleu
-        else:
-            each['tile_color'].setValue(0) #gris neutre 
-
-
-        # conform file path
-        filePathOrigS= each['file'].getValue()
-        filePathNewS = conformFilePath(filePathS = filePathOrigS, gui = gui)
         if filePathNewS and conformPathB:
             if filePathNewS !=filePathOrigS:
                 log.printL("i","'{}' {}".format(newEachNameS, filePathOrigS))
@@ -357,6 +377,8 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
 
             each['first'].setValue(resultLeftD["firstImgI"])
             each['last'].setValue(resultLeftD["lastImgI"])
+
+
 
             if resultLeftD["frameNumberI"]==0:
                 txt="No left frames found"
@@ -422,6 +444,19 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
                 setAsUnvalid(errorMsgS = "Unvalid file path",nodeNameS = eachNameS)
                 unvalidNodeL.append(each)
                 continue
+
+
+        # conform node color
+        # print nuke.selectedNode()['tile_color'].getValue()
+        if "/output/" in filePathExpS:
+            if lastVerS == verS: 
+                each['tile_color'].setValue(13172991) # vert
+            else:
+                each['tile_color'].setValue(5832959) # vert fonce
+        elif "/private/" in filePathExpS:
+            each['tile_color'].setValue(640082175) #bleu
+        else:
+            each['tile_color'].setValue(0) #gris neutre 
 
         validNodeL.append(each)
 
@@ -563,7 +598,7 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
     publishHeadDir = publishDir.absPath()
 
     if destination != "output":
-        _ , newVersion = publishDir.publishFile(layerPathS, autoLock=True, autoUnlock=True, comment=comment, dryRun=dryRun, saveChecksum=False)
+        _ , newVersion = publishDir.publishFile(layerPathS, autoLock=True, autoUnlock=True, comment=comment, dryRun=dryRun, saveChecksum=False, version=int(os.environ["VER"]))
         publishLastVersDir = publishDir.absPath()+"/_version/"+newVersion.name
     else:
         newVersionNameS = moveLayer2output(layerPathS, publishDirS)
@@ -675,7 +710,9 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
             nuke.message("Error: "+txt)
             return dict(resultB=log.resultB, logL=log.logL)
 
-    if toPubNodeL and not commentS:
+    if destination == "output":
+        commentS == ""
+    elif toPubNodeL and not commentS:
         commentS = nuke.getInput("Please enter a publish comment", "")
         if not commentS:
             log.printL("i"," Publish canceled")
@@ -687,14 +724,14 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
         layerPathS = os.path.dirname(filePathExpS)
         eachNameS = each['name'].getValue()
 
-        if "/left/"in layerPathS:
-            layerPathS.replace("/left/","/%V/")
-        elif "/right/"in layerPathS:
-            layerPathS.replace("/right/","/%V/")
+        if "left"in layerPathS:
+            layerPathS.replace("left","%V")
+        elif "right"in layerPathS:
+            layerPathS.replace("right","%V")
         
-        if "/%V/"in layerPathS:
-            filePathLeftS = layerPathS.replace("/%V/","/left/")
-            filePathRightS = layerPathS.replace("/%V/","/right/")
+        if "%V"in layerPathS:
+            filePathLeftS = layerPathS.replace("%V","left")
+            filePathRightS = layerPathS.replace("%V","right")
             resultD = publishLayer(layerPathS = filePathLeftS,comment=commentS,dryRun=dryRun,destination=destination, gui = True)
             resultD = publishLayer(layerPathS = filePathRightS,comment=commentS,dryRun=dryRun,destination=destination, gui = True)
             log.printL("i","Publishing stereo layers: '{}', '{}'".format(eachNameS,filePathExpS))
@@ -734,9 +771,10 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
 
 
 
-
 def publishCompo(dryRun=False, gui = True):
     log = LogBuilder(gui=gui, funcName ="publishCompo")
+
+    stepS = os.environ["STEP"]
 
     from davos.core.damproject import DamProject
     proj = DamProject("zombillenium")
@@ -753,7 +791,10 @@ def publishCompo(dryRun=False, gui = True):
     nuke.scriptSave()
 
     if depS == "10_compo":
-        nukeDepSufS = "compo"
+        if stepS == "stereo":
+            nukeDepSufS = "stereo"
+        else:
+            nukeDepSufS = "compo"
         movDepSufS = "compo"
     elif depS == "08_render":
         nukeDepSufS = "precomp"
@@ -783,10 +824,20 @@ def publishCompo(dryRun=False, gui = True):
         return
 
     # testing .mov file existence
-    movFilePathS = os.path.dirname(nKFilePathS)+"/"+shotS+"_"+movDepSufS+"-v"+verS+"."+incS+".mov"
-    if not os.path.isfile(movFilePathS):
-        log.printL("e","Publish failed, missing '.mov' : '{}'".format(movFilePathS),guiPopUp = True)
-        return
+    if stepS == "stereo":
+        movFilePathS = os.path.dirname(nKFilePathS)+"/"+shotS+"_left-v"+verS+"."+incS+".mov"
+        if not os.path.isfile(movFilePathS):
+            log.printL("e","Publish failed, missing '.mov' : '{}'".format(movFilePathS),guiPopUp = True)
+            return
+        movFilePathS = os.path.dirname(nKFilePathS)+"/"+shotS+"_right-v"+verS+"."+incS+".mov"
+        if not os.path.isfile(movFilePathS):
+            log.printL("e","Publish failed, missing '.mov' : '{}'".format(movFilePathS),guiPopUp = True)
+            return
+    else:
+        movFilePathS = os.path.dirname(nKFilePathS)+"/"+shotS+"_"+movDepSufS+"-v"+verS+"."+incS+".mov"
+        if not os.path.isfile(movFilePathS):
+            log.printL("e","Publish failed, missing '.mov' : '{}'".format(movFilePathS),guiPopUp = True)
+            return
 
     # testing presence of the 'read_exr' node presence (only one alowed) 
     readExrL=[]
@@ -797,14 +848,49 @@ def publishCompo(dryRun=False, gui = True):
             if "read_exr" in eachNameS or "read_comp" in eachNameS :
                 readExrL.append(each)
         if len(readExrL)!=1:
-            log.printL("e","Publish failed, several or none 'read_exr/read_comp' node fond: '{}'".format( nKFileNameS.split(".")[-1]),guiPopUp = True)
+            log.printL("e","Publish failed, several or none 'read_exr/read_comp' node found: '{}'".format( nKFileNameS.split(".")[-1]),guiPopUp = True)
             return
+
+        readNode = readExrL[0]
+        readNodeName = readNode['name'].getValue()
+        filePathExpS = nuke.filename(readNode)
+        if not filePathExpS:
+            log.printL("e","Publish failed, undefined file path: '{}'".format(readNodeName),guiPopUp = True)
+            return
+
+        if readNode['disable'].getValue() == 1:
+            log.printL("e","Publish failed, disabled node: '{}'".format(readNodeName),guiPopUp = True)
+            return
+
+        lyrDirNameS = os.path.dirname(filePathExpS)
+        if stepS == "stereo":
+            if not "%V" in lyrDirNameS:
+                log.printL("e","Publish failed, '%V' pattern not found in the 'read_exr' file path : '{}'".format(lyrDirNameS),guiPopUp = True)
+                return
+            lyrDirNameLeftS = lyrDirNameS.replace("%V","left")
+            if not os.path.isdir(lyrDirNameLeftS):
+                log.printL("e","Publish failed, missing directory: '{}', '{}'".format(readNodeName,lyrDirNameLeftS),guiPopUp = True)
+                return
+            lyrDirNameRightS = lyrDirNameS.replace("%V","right")
+            if not os.path.isdir(lyrDirNameRightS):
+                log.printL("e","Publish failed, missing directory: '{}', '{}'".format(readNodeName,lyrDirNameRightS),guiPopUp = True)
+                return
+        else:
+            if not os.path.isdir(lyrDirNameS):
+                log.printL("e","Publish failed, missing directory: '{}', '{}'".format(readNodeName,filePathExpS),guiPopUp = True)
+                return
     
 
     commentS = nuke.getInput("Please enter a publish comment", "")
     if not commentS:
         log.printL("i","Pubish canceled")
         raise RuntimeError("Publish canceled")
+
+    try:
+        resultD =  proj.publishEditedVersion(nKFilePathS, comment=commentS, returnDict=True, uploadApart=False)
+    except Exception as err:
+        log.printL("e","Nuke file publish failed: '{}'".format(err),guiPopUp = True)
+        raise
 
     if depS == "10_compo":
         try:
@@ -815,17 +901,8 @@ def publishCompo(dryRun=False, gui = True):
         except Exception as err:
             log.printL("e","Seq output node publish failed: '{}'".format(err),guiPopUp = True)
             raise
-
-    try:
-        resultD =  proj.publishEditedVersion(nKFilePathS, comment=commentS, returnDict=True)
-    except Exception as err:
-        log.printL("e","Nuke file publish failed: '{}'".format(err),guiPopUp = True)
-        raise
   
-
     log.printL("i","Published successfully",guiPopUp = True)
-
-
     # print pubFile.getLockOwner(refresh=False)
 
 
@@ -846,8 +923,8 @@ def createWriteDir():
 
   if "%V" in osdir:
     try:                        
-        os.makedirs( osdir.replace("/%V/","/left/") )        
-        os.makedirs( osdir.replace("/%V/","/right/") )
+        os.makedirs( osdir.replace("%V","left") )        
+        os.makedirs( osdir.replace("%V","right") )
     except OSError, e:
         if e.errno != errno.EEXIST:
             raise
@@ -865,3 +942,5 @@ def inportOutTemplate(template = "compo"):
         nuke.scriptReadFile(os.environ["ZOMB_TOOL_PATH"]+"/template/nuke/outputTemplate.nk")
     elif template == "renderprecomp":
         nuke.scriptReadFile(os.environ["ZOMB_TOOL_PATH"]+"/template/nuke/renderPreCompTemplate.nk")
+    elif template == "stereo":
+        nuke.scriptReadFile(os.environ["ZOMB_TOOL_PATH"]+"/template/nuke/stereoTemplate.nk")
