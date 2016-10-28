@@ -74,47 +74,6 @@ def exportAlembic(itemLists,start,end,path,types,variants,frameRelativeSample='0
     print ('[fxGeneralLib.exportAlembic] - END')
     return 1
 
-'''
-def importAlembicCustom(name,path,numMeshes):
-
-    #AbcImport -mode import "C:/Users/sebastienr/Desktop/bla.abc";
-    print ('[fxGeneralLib.importAlembicCustom] - START')
-    print('[fxGeneralLib.importAlembicCustom] - path to import from is ' + path + '/' + name) 
-    abcNode = cmds.createNode('AlembicNode',n=name+'_abcFile')
-    print('[fxGeneralLib.importAlembicCustom] - abcNode = ' + abcNode)    
-    cmds.connectAttr('time1.outTime',abcNode+'.time')
-    cmds.setAttr(abcNode+'.abc_File',path+'/'+name+'.abc',type="string")
-
-    newMeshes = connectAlembicCustom(abcNode,name,numMeshes)
-    print('[fxGeneralLib.importAlembicCustom] - newMesh = ' + str(newMeshes))
-    
-    print ('[fxGeneralLib.importAlembicCustom] - END')
-    return newMeshes,abcNode
-
-
-def connectAlembicCustom(abcNode,name,numMeshes):
-
-    print ('[fxGeneralLib.connectAlembicCustom] - START')
-    print ('[fxGeneralLib.connectAlembicCustom] - numMeshes = ' + str(numMeshes))
-
-    outMeshes=[]
-    for i in range(0,numMeshes):
-        meshShape = cmds.createNode('mesh',n=name+'_abcShape')
-        cmds.connectAttr(abcNode+'.outPolyMesh['+str(i)+']',meshShape+'.inMesh')
-        cmds.connectAttr(abcNode+'.prop['+str(i)+']',meshShape+'.visibility')
-
-        print('[fxGeneralLib.connectAlembic] - meshShape = ' + meshShape)    
-        #meshParent = cmds.rename(cmds.listRelatives(meshShape,p=True)[0],name+'#')
-        meshParent = cmds.listRelatives(meshShape,p=True,f=True)[0]
-        outMeshes.append(meshParent)
-        print('[fxGeneralLib.connectAlembic] - meshParent = ' + meshParent)
-
-
-
-    print ('[fxGeneralLib.connectAlembicCustom] - END')
-    return outMeshes
-
-'''
 def importAlembicStd(name,path):
 
     fullNodes = set(getTopNodes())
