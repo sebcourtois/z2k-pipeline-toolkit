@@ -314,7 +314,7 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
         newEachNameS = str(layerDirS.split("-v")[0])
         nuke.toNode(eachNameS).setName(newEachNameS+"_0")
         newEachNameS=each['name'].getValue()
-        each['label'].setValue(newLabelS)
+
 
         #get the last version published
         lastVerS=""
@@ -345,6 +345,7 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
             newLabelS="v"+verS
         else:
             newLabelS = ""
+        each['label'].setValue(newLabelS)
 
         if filePathNewS and conformPathB:
             if filePathNewS !=filePathOrigS:
