@@ -295,7 +295,7 @@ class Z2kToolkit(object):
         sNoSummary = "/NJS" if not summary else ""
 
         sExcludeFiles = ["*.pyc", ".git*", ".*project", "*.lic", "Thumbs.db",
-                         "pull_all.bat", "release.bat"]
+                         "pull_all.bat", "release.bat", "cifs*", ".DS_Store"]
         if not self.isDev:
             sExcludeFiles += ["setup_*.bat"]
 

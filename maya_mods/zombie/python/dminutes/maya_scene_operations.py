@@ -706,6 +706,7 @@ def loadStereoCam(damShot, withAnim=True):
                 sAttrList = pc.listAttr(sAtomFixCamShape, k=True)
                 sAttrList = copyAttrs(sAtomFixCamShape, oStereoCamShape, *sAttrList,
                                       create=False, values=True, inConnections=True)
+                oStereoCam.setAttr("stereoAnimFile", atomFile.envPath())
     except Exception as e:
         traceback.print_exc()
         pc.displayError("Failed importing animation on '{}' from '{}'"
