@@ -195,8 +195,8 @@ def cleanSet(inRoot):
             dispDict = {}
 
             #ajout Alex pour regler le probleme des vegetations dont le scale est resete 
-            toDeleteL = mc.ls("*_sCns",type='scaleConstraint')+mc.ls("*_prCns",type='parentConstraint')
-            mc.delete(toDeleteL)
+            toDeleteL = cmds.ls("*_sCns",type='scaleConstraint')+cmds.ls("*_prCns",type='parentConstraint')
+            cmds.delete(toDeleteL)
 
             if pc.objExists(CTRL_SETNAME):
                 ctrls = pc.sets(CTRL_SETNAME, query=True)
