@@ -255,7 +255,7 @@ def conformFilePath(filePathS = "", gui = True):
 
 
 
-def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRightLayers = False, changeOnErrorI = 99):
+def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRightLayers = False, changeOnErrorI = 99, switchToLastVer = False):
     log = LogBuilder(gui=gui, funcName ="conformReadNode")
 
     #0 : error
@@ -312,35 +312,40 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
             verS = ""
 
         newEachNameS = str(layerDirS.split("-v")[0])
+        nuke.toNode(eachNameS).setName(newEachNameS+"_0")
+        newEachNameS=each['name'].getValue()
+        each['label'].setValue(newLabelS)
+
+        #get the last version published
+        lastVerS=""
+        lastVersLyrS=""        
+        if "_version" in filePathExpS and "/output/" in filePathExpS:
+            filePathExpS=filePathExpS.replace("%V","left")
+            versionPathS = os.path.dirname(os.path.dirname(filePathExpS))
+            itemDirL = os.listdir(versionPathS)
+            lyrBaseNameS=layerDirS.split("-v")[0]
+            layerDirL = []
+            for eachItem in itemDirL:
+                if lyrBaseNameS in eachItem:
+                    layerDirL.append(eachItem)
+            layerDirL.sort()
+            if layerDirL:
+                lastVersLyrS = layerDirL[-1]
+                lastVerS = str(lastVersLyrS.split("-v")[-1])
+
+        # conform file path
+        filePathOrigS = each['file'].getValue()
+        filePathNewS = conformFilePath(filePathS = filePathOrigS, gui = gui)
+        if switchToLastVer and lastVerS and lastVerS!=verS:
+            filePathNewS = filePathNewS.replace(verS,lastVerS)
+            verS = str(lastVerS)
+
+
         if verS :
             newLabelS="v"+verS
         else:
             newLabelS = ""
 
-        nuke.toNode(eachNameS).setName(newEachNameS+"_0")
-        newEachNameS=each['name'].getValue()
-        each['label'].setValue(newLabelS)
-
-
-        #get the last version published
-
-
-        # conform node color
-        # print nuke.selectedNode()['tile_color'].getValue()
-        if "/output/" in filePathExpS:
-            if "_version" in filePathExpS:
-                versionPathS = 
-
-            each['tile_color'].setValue(13172991) # vert
-        elif "/private/" in filePathExpS:
-            each['tile_color'].setValue(640082175) #bleu
-        else:
-            each['tile_color'].setValue(0) #gris neutre 
-
-
-        # conform file path
-        filePathOrigS= each['file'].getValue()
-        filePathNewS = conformFilePath(filePathS = filePathOrigS, gui = gui)
         if filePathNewS and conformPathB:
             if filePathNewS !=filePathOrigS:
                 log.printL("i","'{}' {}".format(newEachNameS, filePathOrigS))
@@ -371,6 +376,8 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
 
             each['first'].setValue(resultLeftD["firstImgI"])
             each['last'].setValue(resultLeftD["lastImgI"])
+
+
 
             if resultLeftD["frameNumberI"]==0:
                 txt="No left frames found"
@@ -436,6 +443,19 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
                 setAsUnvalid(errorMsgS = "Unvalid file path",nodeNameS = eachNameS)
                 unvalidNodeL.append(each)
                 continue
+
+
+        # conform node color
+        # print nuke.selectedNode()['tile_color'].getValue()
+        if "/output/" in filePathExpS:
+            if lastVerS == verS: 
+                each['tile_color'].setValue(13172991) # vert
+            else:
+                each['tile_color'].setValue(5832959) # vert fonce
+        elif "/private/" in filePathExpS:
+            each['tile_color'].setValue(640082175) #bleu
+        else:
+            each['tile_color'].setValue(0) #gris neutre 
 
         validNodeL.append(each)
 
