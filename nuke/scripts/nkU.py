@@ -322,9 +322,15 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
         each['label'].setValue(newLabelS)
 
 
+        #get the last version published
+
+
         # conform node color
         # print nuke.selectedNode()['tile_color'].getValue()
         if "/output/" in filePathExpS:
+            if "_version" in filePathExpS:
+                versionPathS = 
+
             each['tile_color'].setValue(13172991) # vert
         elif "/private/" in filePathExpS:
             each['tile_color'].setValue(640082175) #bleu
@@ -571,7 +577,7 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
     publishHeadDir = publishDir.absPath()
 
     if destination != "output":
-        _ , newVersion = publishDir.publishFile(layerPathS, autoLock=True, autoUnlock=True, comment=comment, dryRun=dryRun, saveChecksum=False)
+        _ , newVersion = publishDir.publishFile(layerPathS, autoLock=True, autoUnlock=True, comment=comment, dryRun=dryRun, saveChecksum=False, version=int(os.environ["VER"]))
         publishLastVersDir = publishDir.absPath()+"/_version/"+newVersion.name
     else:
         newVersionNameS = moveLayer2output(layerPathS, publishDirS)
@@ -740,7 +746,6 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
         nuke.message("Info:\n"+publishedMsg+"\n"+skippedMsg+"\nPlease read the log for more details")
 
     return dict(resultB=log.resultB, logL=log.logL)
-
 
 
 
