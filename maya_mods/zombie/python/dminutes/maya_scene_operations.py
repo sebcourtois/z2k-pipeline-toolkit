@@ -676,6 +676,9 @@ def loadStereoCam(damShot, withAnim=True):
         stereoCamFile = proj.getLibrary("public", "misc_lib").getEntry("layout/stereo_cam.ma")
         stereoCamFile.mayaImportScene(ns=sStereoNs, returnNewNodes=False)
         oStereoCam = getStereoCam(fail=True)
+        withAnim = True
+        if sShotCode[-1] != "a":
+            damShot = proj.getShot(sShotCode[:-1] + "a")
 
     oStereoCamShape = oStereoCam.getShape()
     sStereoGrp = getObject(sStereoNs + ":grp_stereo", fail=True)
@@ -703,6 +706,7 @@ def loadStereoCam(damShot, withAnim=True):
                 sAttrList = pc.listAttr(sAtomFixCamShape, k=True)
                 sAttrList = copyAttrs(sAtomFixCamShape, oStereoCamShape, *sAttrList,
                                       create=False, values=True, inConnections=True)
+                oStereoCam.setAttr("stereoAnimFile", atomFile.envPath())
     except Exception as e:
         traceback.print_exc()
         pc.displayError("Failed importing animation on '{}' from '{}'"

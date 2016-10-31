@@ -54,13 +54,19 @@ MAX_INCR = 50
 SCN_FOR_STEP = {'previz 3d':'previz_scene',
                 'stereo':'stereo_scene',
                 'layout':'layout_scene',
-                'animation':'anim_scene',
+                #'animation':'anim_scene',
                 'charfx':'charFx_scene',
                 'final layout':'finalLayout_scene',
                 'fx3d':'fx3d_scene',
                 'rendering':'rendering_scene',
                }
-SCN_FOR_TASK = {}
+SCN_FOR_TASK = {'animation':'anim_scene',
+                'split_a':'animSplitA_scene',
+                'split_b':'animSplitB_scene',
+                'split_c':'animSplitC_scene',
+                }
+
+TASK_FOR_SCN = dict((v,k) for k,v in SCN_FOR_TASK.iteritems())
 
 REF_FOR_STEP = {'previz 3d':'previz_ref',
                 'layout':'anim_ref',
@@ -74,13 +80,18 @@ REF_FOR_TASK = {}
 MOV_FOR_STEP = {'previz 3d':('previz_capture',),
                 'stereo':('right_capture', 'left_capture',),
                 'layout':('layout_capture',),
-                'animation':('anim_capture',),
+                #'animation':('anim_capture',),
                 'charfx':('charFx_capture',),
                 'fx3d':('fx3d_capture',),
                }
-MOV_FOR_TASK = {}
+MOV_FOR_TASK = {'animation':('anim_capture',),
+                'split_a':('animSplitA_capture',),
+                'split_b':('animSplitB_capture',),
+                'split_c':('animSplitC_capture',),
+                }
 
 def scnFromTask(sgTask, fail=False):
+    logMsg(log="all")
 
     sTask = sgTask['content'].lower()
     sStep = sgTask['step']['name'].lower()
@@ -91,8 +102,8 @@ def scnFromTask(sgTask, fail=False):
         sMsg = ("No resource file associated with task: {}".format(sgTask))
         if fail:
             raise EnvironmentError(sMsg)
-        else:
-            pc.displayError(sMsg)
+        elif inDevMode():
+            pc.displayInfo(sMsg)
 
     return sName
 
@@ -107,8 +118,8 @@ def refFromTask(sgTask, fail=False):
         sMsg = ("No reference file associated with task: {}".format(sgTask))
         if fail:
             raise EnvironmentError(sMsg)
-        else:
-            pc.displayError(sMsg)
+        elif inDevMode():
+            pc.displayInfo(sMsg)
 
     return sName
 
@@ -218,9 +229,12 @@ class SceneManager():
             if not sSgStep:
                 return None
 
+            sRcName = scnPathCtx["resource"]
+
             davosContext['step'] = sSgStep
             davosContext['seq'] = scnPathCtx["sequence"]
             davosContext['shot'] = scnPathCtx["name"]
+            davosContext['task'] = TASK_FOR_SCN.get(sRcName)
 
         elif sSection == "asset_lib":
             pc.warning("asset_lib section not managed yet !!")
@@ -257,6 +271,7 @@ class SceneManager():
         return True
 
     def assertResourcesMatchUp(self, sceneInfos):
+        logMsg(log="all")
         """Compare davos data with UI data, return True if they match"""
 
         self.assertEntitiesMatchUp(sceneInfos)
@@ -279,6 +294,7 @@ class SceneManager():
         return True
 
     def resourcesMatchUp(self, sceneInfos, warn=False):
+        logMsg(log="all")
         try:
             self.assertResourcesMatchUp(sceneInfos)
         except AssertionError as e:
@@ -379,6 +395,7 @@ class SceneManager():
         return damEntity
 
     def rcFileFromContext(self, weak=False, fail=False):
+        logMsg(log="all")
         """Get davos entry from UI data"""
 
         entry = None
