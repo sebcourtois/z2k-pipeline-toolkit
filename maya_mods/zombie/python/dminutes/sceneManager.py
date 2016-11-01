@@ -36,7 +36,7 @@ from davos_maya.tool.general import listRelatedAssets
 from davos_maya.tool import reference as myaref
 
 import dminutes.maya_scene_operations as mop
-from dminutes.shotconformation import removeRefEditByAttr
+from dminutes.shotconformation import removeRefEditByAttr, assertTaskIsFinal
 import dminutes.jipeLib_Z2K as jpZ
 import dminutes.camImpExp as camIE
 import dminutes.infoSetExp as infoE
@@ -522,7 +522,7 @@ class SceneManager():
         if sStepName == "animation":
 
             if not pc.listNamespaces(root=None, recursive=False, internal=False):
-                mop.assertTaskIsFinal(damShot, "layout", sgEntity=sgEntity)
+                assertTaskIsFinal(damShot, "layout", sgEntity=sgEntity)
                 mop.initShotSceneFrom(damShot, sCurScnRc, "layout_scene", lrd="none")
 
             if not pc.listReferences(loaded=True, unloaded=False):
@@ -540,7 +540,7 @@ class SceneManager():
         elif sStepName == "charfx":
 
             if not pc.listNamespaces(root=None, recursive=False, internal=False):
-                mop.assertTaskIsFinal(damShot, "animation", sgEntity=sgEntity)
+                assertTaskIsFinal(damShot, "animation", sgEntity=sgEntity)
                 mop.initShotSceneFrom(damShot, sCurScnRc, "anim_scene")
 
         elif sStepName == "final layout":
@@ -551,7 +551,7 @@ class SceneManager():
         elif sStepName == "fx3d":
 
             if not pc.listNamespaces(root=None, recursive=False, internal=False):
-                mop.assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
+                assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
                 mop.loadRenderRefsFromCaches(damShot, "local")
                 geocaching.importCaches("local", dryRun=False, removeRefs=True,
                                         processLabel="Apply", layoutViz=False)
@@ -559,7 +559,7 @@ class SceneManager():
         elif sStepName == "rendering":
 
             if not pc.listNamespaces(root=None, recursive=False, internal=False):
-                mop.assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
+                assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
                 mop.initShotSceneFrom(damShot, sCurScnRc, "finalLayout_scene")
 
         self.setPlaybackTimes()

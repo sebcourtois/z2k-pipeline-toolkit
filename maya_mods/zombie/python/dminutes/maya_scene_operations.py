@@ -898,19 +898,6 @@ def initShotSceneFrom(damShot, sCurScnRc, sSrcScnRc, **kwargs):
 
     pc.refresh()
 
-def assertTaskIsFinal(damShot, sTask, step="", sgEntity=None, critical=True):
-
-    sgTask = damShot.getSgTask(sTask, step, sgEntity=sgEntity, fail=True)
-    if sgTask["sg_status_list"] == "fin":
-        return True
-
-    err = AssertionError("Status of the {} task is not final yet."
-                         .format("|".join(s for s in (step, sTask) if s)))
-    if critical:
-        raise err
-
-    promptToContinue(err)
-
 def loadRenderRefsFromCaches(damShot, sSpace):
 
     proj = damShot.project
