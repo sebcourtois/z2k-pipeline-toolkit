@@ -43,12 +43,14 @@ def setArnoldShaderAttr(shadingNetwork,type,component=''):
 
         if component:
             value=[0,0,0]
-            value[int(component)]=1
+            value[int(component)%3]=1
 
             cmds.setAttr(shadingNetwork[1]+'.ambientColor',value[0],value[1],value[2],type='double3')
             cmds.setAttr(shadingNetwork[1]+'.ambientTint',value[0],value[1],value[2],type='double3')
             cmds.setAttr(shadingNetwork[1]+'.ambientIntensity',1)
 
+            if cmds.nodeType(shadingNetwork[1]) == 'dmnToon':
+                cmds.setAttr(shadingNetwork[1]+'.dmn_mask0'+component,value[0],value[1],value[2],type='double3')
 
     if type == 'meshLight':
         cmds.setAttr(shadingNetwork[2]+'.color',0,0,0,type='double3')
@@ -64,6 +66,7 @@ def arnoldMotionVectorFromMesh(mesh,vscale=.1):
         This def create the network to do motion blur on imported abc in Maya/Arnold
         The imported alembic should have a Cd attribut ( or v ? )
     '''
+    print mesh
     print ('[fxArnoldLib.arnoldMotionVectorFromMesh] - START')
     print ('[fxArnoldLib.arnoldMotionVectorFromMesh] - base mesh = ' + mesh)
     connection = cmds.connectionInfo(mesh+'.inMesh',sfd=True)
@@ -141,3 +144,11 @@ def arnoldCreateMeshLightFromMesh(mesh,aov=1):
 
     print ('[fxArnoldLib.arnoldCreateMeshLightFromMesh] - END')
     return incidenceParent
+
+
+def setMeshLightFromMesh(mesh,aov=1):
+
+    cmds.setAttr(mesh+'.aiTranslator','mesh_light',type='string')
+    cmds.setAttr(mesh+'.aiNormalize',0)
+    cmds.setAttr(mesh+'.aiSamples',10)
+    cmds.setAttr(mesh+'.aiAov',aov,type='string')

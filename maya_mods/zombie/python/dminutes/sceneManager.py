@@ -36,7 +36,7 @@ from davos_maya.tool.general import listRelatedAssets
 from davos_maya.tool import reference as myaref
 
 import dminutes.maya_scene_operations as mop
-from dminutes.shotconformation import removeRefEditByAttr
+from dminutes.shotconformation import removeRefEditByAttr, assertTaskIsFinal
 import dminutes.jipeLib_Z2K as jpZ
 import dminutes.camImpExp as camIE
 import dminutes.infoSetExp as infoE
@@ -54,13 +54,19 @@ MAX_INCR = 50
 SCN_FOR_STEP = {'previz 3d':'previz_scene',
                 'stereo':'stereo_scene',
                 'layout':'layout_scene',
-                'animation':'anim_scene',
+                #'animation':'anim_scene',
                 'charfx':'charFx_scene',
                 'final layout':'finalLayout_scene',
                 'fx3d':'fx3d_scene',
                 'rendering':'rendering_scene',
                }
-SCN_FOR_TASK = {}
+SCN_FOR_TASK = {'animation':'anim_scene',
+                'split_a':'animSplitA_scene',
+                'split_b':'animSplitB_scene',
+                'split_c':'animSplitC_scene',
+                }
+
+TASK_FOR_SCN = dict((v,k) for k,v in SCN_FOR_TASK.iteritems())
 
 REF_FOR_STEP = {'previz 3d':'previz_ref',
                 'layout':'anim_ref',
@@ -74,13 +80,18 @@ REF_FOR_TASK = {}
 MOV_FOR_STEP = {'previz 3d':('previz_capture',),
                 'stereo':('right_capture', 'left_capture',),
                 'layout':('layout_capture',),
-                'animation':('anim_capture',),
+                #'animation':('anim_capture',),
                 'charfx':('charFx_capture',),
                 'fx3d':('fx3d_capture',),
                }
-MOV_FOR_TASK = {}
+MOV_FOR_TASK = {'animation':('anim_capture',),
+                'split_a':('animSplitA_capture',),
+                'split_b':('animSplitB_capture',),
+                'split_c':('animSplitC_capture',),
+                }
 
 def scnFromTask(sgTask, fail=False):
+    logMsg(log="all")
 
     sTask = sgTask['content'].lower()
     sStep = sgTask['step']['name'].lower()
@@ -91,8 +102,8 @@ def scnFromTask(sgTask, fail=False):
         sMsg = ("No resource file associated with task: {}".format(sgTask))
         if fail:
             raise EnvironmentError(sMsg)
-        else:
-            pc.displayError(sMsg)
+        elif inDevMode():
+            pc.displayInfo(sMsg)
 
     return sName
 
@@ -107,8 +118,8 @@ def refFromTask(sgTask, fail=False):
         sMsg = ("No reference file associated with task: {}".format(sgTask))
         if fail:
             raise EnvironmentError(sMsg)
-        else:
-            pc.displayError(sMsg)
+        elif inDevMode():
+            pc.displayInfo(sMsg)
 
     return sName
 
@@ -218,9 +229,12 @@ class SceneManager():
             if not sSgStep:
                 return None
 
+            sRcName = scnPathCtx["resource"]
+
             davosContext['step'] = sSgStep
             davosContext['seq'] = scnPathCtx["sequence"]
             davosContext['shot'] = scnPathCtx["name"]
+            davosContext['task'] = TASK_FOR_SCN.get(sRcName)
 
         elif sSection == "asset_lib":
             pc.warning("asset_lib section not managed yet !!")
@@ -257,6 +271,7 @@ class SceneManager():
         return True
 
     def assertResourcesMatchUp(self, sceneInfos):
+        logMsg(log="all")
         """Compare davos data with UI data, return True if they match"""
 
         self.assertEntitiesMatchUp(sceneInfos)
@@ -279,6 +294,7 @@ class SceneManager():
         return True
 
     def resourcesMatchUp(self, sceneInfos, warn=False):
+        logMsg(log="all")
         try:
             self.assertResourcesMatchUp(sceneInfos)
         except AssertionError as e:
@@ -379,6 +395,7 @@ class SceneManager():
         return damEntity
 
     def rcFileFromContext(self, weak=False, fail=False):
+        logMsg(log="all")
         """Get davos entry from UI data"""
 
         entry = None
@@ -505,25 +522,36 @@ class SceneManager():
         if sStepName == "animation":
 
             if not pc.listNamespaces(root=None, recursive=False, internal=False):
-                mop.assertTaskIsFinal(damShot, "layout", sgEntity=sgEntity)
+                assertTaskIsFinal(damShot, "layout", sgEntity=sgEntity)
                 mop.initShotSceneFrom(damShot, sCurScnRc, "layout_scene", lrd="none")
 
             if not pc.listReferences(loaded=True, unloaded=False):
 
+                sRes = pc.confirmDialog(title="DO YOU WANT ME TO...",
+                                         message="Load references ?",
+                                         button=["Yes", "No"],
+                                         defaultButton="Yes",
+                                         cancelButton="No",
+                                         dismissString="No",
+                                         icon="question")
+
+                bLoadedRefs = (sRes == "Yes")
+
                 sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution")
                 removeRefEditByAttr(attr=sAttrList, GUI=False)
 
-                oAstRefList = myaref.loadAssetRefsToDefaultFile(project=proj, selected=False)
+                if bLoadedRefs:
+                    oAstRefList = myaref.loadAssetRefsToDefaultFile(project=proj, selected=False)
 
-                for oFileRef in pc.listReferences(loaded=False, unloaded=True):
-                    if oFileRef in oAstRefList:
-                        continue
-                    oFileRef.load()
+                    for oFileRef in pc.listReferences(loaded=False, unloaded=True):
+                        if oFileRef in oAstRefList:
+                            continue
+                        oFileRef.load()
 
         elif sStepName == "charfx":
 
             if not pc.listNamespaces(root=None, recursive=False, internal=False):
-                mop.assertTaskIsFinal(damShot, "animation", sgEntity=sgEntity)
+                assertTaskIsFinal(damShot, "animation", sgEntity=sgEntity)
                 mop.initShotSceneFrom(damShot, sCurScnRc, "anim_scene")
 
         elif sStepName == "final layout":
@@ -534,7 +562,7 @@ class SceneManager():
         elif sStepName == "fx3d":
 
             if not pc.listNamespaces(root=None, recursive=False, internal=False):
-                mop.assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
+                assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
                 mop.loadRenderRefsFromCaches(damShot, "local")
                 geocaching.importCaches("local", dryRun=False, removeRefs=True,
                                         processLabel="Apply", layoutViz=False)
@@ -542,7 +570,7 @@ class SceneManager():
         elif sStepName == "rendering":
 
             if not pc.listNamespaces(root=None, recursive=False, internal=False):
-                mop.assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
+                assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
                 mop.initShotSceneFrom(damShot, sCurScnRc, "finalLayout_scene")
 
         self.setPlaybackTimes()
@@ -615,7 +643,7 @@ class SceneManager():
 
         _, oAnimaticCam = mop.setupAnimatic(mop.getAnimaticInfos(damShot, sStepName))
 
-        mop.reArrangeAssets()
+        mop.reArrangeAssets(oShotCam)
         mop.arrangeViews(oShotCam.getShape(), oAnimaticCam, oStereoCam, stereoDisplay="interlace")
 
     @mop.undoAtOnce

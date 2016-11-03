@@ -146,7 +146,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=13, e=True)
+        self.pBar_upd(step=1, maxValue=14, e=True)
 
         # steps
 
@@ -206,8 +206,20 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
+        # 5   optimize for anim"
+        self.printF("assetconformation: optimize for anim", st="t")
+        resultD = assetconformation.optimizeSetforAnim(gui = False, deteteXgen =True, deleteAnimSetContent = True)
+        # prints -------------------
+        self.printF(resultD["resultB"], st="r")
+        for each in resultD["logL"]:
+            self.printF( each )
+        # --------------------------
+        if not resultD["resultB"]:
+            boolResult = False
+        self.pBar_upd(step= 1,) 
 
-        # 5   soft clean
+
+        # 6   soft clean
         self.printF("asset conformation:   soft clean", st="t")
         result, logL = assetconformation.softClean(keepRenderLayers = False,struct2CleanList=["asset"])
         # prints -------------------
@@ -220,7 +232,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 6   delete unused nodes
+        # 7  delete unused nodes
         self.printF("miscUtils: delete unknown nodes ", st="t")
         result,details = miscUtils.deleteUnknownNodes(GUI= False)
         # prints -------------------
@@ -233,7 +245,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
         
 
-        # 7   delete color sets
+        # 8   delete color sets
         self.printF("miscUtils: delete all color set ", st="t")
         result,details = miscUtils.deleteAllColorSet(GUI= False)
         # prints -------------------
@@ -246,7 +258,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
         
-        # 8   delete history
+        # 9   delete history
         self.printF("modeling: delete all geo history ", st="t")
         result,details = modeling.geoGroupDeleteHistory(GUI = False)
         # prints -------------------
@@ -259,7 +271,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 9   create subdiv sets
+        # 10   create subdiv sets
         self.printF("assetconformation: create subdiv sets ", st="t")
         resultD = assetconformation.createSubdivSets(GUI = False)
         # prints -------------------
@@ -272,7 +284,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 10   apply setSubdiv
+        # 11   apply setSubdiv
         self.printF("assetconformation: apply setSubdiv ", st="t")
         resultD = assetconformation.setSubdiv(GUI = False)
         # prints -------------------
@@ -285,7 +297,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 11   assetGrpClean
+        # 12   assetGrpClean
         self.printF("assetconformation: clean asset group ", st="t")
         resultD = assetconformation.assetGrpClean( clean = True, GUI = False)
         # prints -------------------
@@ -298,7 +310,7 @@ class checkModule(object):
         self.pBar_upd(step= 1,)
 
 
-        # 12   display layer update
+        # 13   display layer update
         self.printF("modeling: display layer update", st="t")
         resultD = modeling.layerUpdate(inParent="asset|grp_geo", GUI = False, displayMode = 1)
         # prints -------------------
@@ -310,7 +322,7 @@ class checkModule(object):
             boolResult = False
         self.pBar_upd(step= 1,)
 
-        # 13   asset Object Clean"
+        # 14   asset Object Clean"
         self.printF("assetconformation: asset Object Clean", st="t")
         resultD = assetconformation.assetObjectClean( inParent= "|asset|grp_geo", clean = True, GUI = False)
         # prints -------------------
@@ -320,7 +332,9 @@ class checkModule(object):
         # --------------------------
         if not resultD["resultB"]:
             boolResult = False
-        self.pBar_upd(step= 1,)  
+        self.pBar_upd(step= 1,) 
+
+
 
 
         # colors

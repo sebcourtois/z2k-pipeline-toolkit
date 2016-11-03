@@ -5,14 +5,37 @@ import os
 import re
 from datetime import datetime
 
-from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
+from davos_maya.tool.general import infosFromScene
 from davos.core.damproject import DamProject
 
 from dminutes import miscUtils
 reload (miscUtils)
 
 
+def promptToContinue(exception):
 
+    res = pm.confirmDialog(title='WARNING !',
+                           message=exception.message,
+                           button=['Continue', 'Abort'],
+                           defaultButton='Abort',
+                           cancelButton='Abort',
+                           dismissString='Abort',
+                           icon="warning")
+    if res == "Abort":
+        raise RuntimeWarning("Aborted !")
+
+def assertTaskIsFinal(damShot, sTask, step="", sgEntity=None, critical=True):
+
+    sgTask = damShot.getSgTask(sTask, step, sgEntity=sgEntity, fail=True)
+    if sgTask["sg_status_list"] == "fin":
+        return True
+
+    err = AssertionError("Status of the {} task is not final yet."
+                         .format("|".join(s for s in (step, sTask) if s)))
+    if critical:
+        raise err
+
+    promptToContinue(err)
 
 def removeRefEditByAttr(inRefNodeL=[], attr="smoothDrawType", cmd="setAttr",failedRefEdit =False, GUI=True):
     log = miscUtils.LogBuilder(gui=GUI, funcName ="removeRefEditByAttr")
@@ -167,11 +190,13 @@ def releaseShotAsset(gui = True ,toReleaseL = [], dryRun=True, astPrefix = "fx3"
     return dict(resultB=log.resultB, logL=log.logL)
 
 
-def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3"):
+def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3", critical= True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="referenceShotAsset")
 
     #proj = DamProject("zombillenium")
-    #damShot = proj.getShot("sq0300_sh0120a")
+    #shotNameS = mc.file(q=True, list = True)[0].split('shot/')[-1].split("/")[1]
+    #damShot = proj.getShot(shotNameS)
+
     lPublicReleaseFilePath = []
 
     scnInfos = infosFromScene()
@@ -183,6 +208,11 @@ def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3"):
 
     resultD = getRefFileList(name=astPrefix+"_*")
     sceneRefFileL=resultD["refFilePathL"]
+
+    if astPrefix == "fx3":
+        sTask = "fx_precomp"
+        assertTaskIsFinal(damShot, sTask, step="", sgEntity=None, critical=critical)
+
 
     # dir scan
     if not os.path.isdir(sPublicReleaseDir):
@@ -199,7 +229,7 @@ def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3"):
                         statInfo = os.stat(sPublicReleaseFilePath)
                         statDate = statInfo.st_mtime
                         statSize = statInfo.st_size
-                        if statSize > 2000:
+                        if statSize > 6500:
                             dateS = datetime.fromtimestamp(int(statDate)).strftime(u"%Y-%m-%d %H:%M")
                             lPublicReleaseFilePath.append(sPublicReleaseFilePath)
                             txt = "Referencing: '{}'  publish date: {}".format(sPublicReleaseFilePath, dateS)

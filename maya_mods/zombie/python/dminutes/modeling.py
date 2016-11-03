@@ -193,6 +193,11 @@ def cleanSet(inRoot):
         if child.name() == "grp_rig":
             #Save the rig data (displays) and serialize a dictionary of disctionaries in a custom attribute of root
             dispDict = {}
+
+            #ajout Alex pour regler le probleme des vegetations dont le scale est resete 
+            toDeleteL = cmds.ls("*_sCns",type='scaleConstraint')+cmds.ls("*_prCns",type='parentConstraint')
+            cmds.delete(toDeleteL)
+
             if pc.objExists(CTRL_SETNAME):
                 ctrls = pc.sets(CTRL_SETNAME, query=True)
 

@@ -6,18 +6,16 @@ reload (shotconformation)
 
 from dminutes.fx.libs import fxGeneralLib as fxgen
 from dminutes.fx.libs import fxArnoldLib as fxar
-from dminutes.fx.libs import fxMeshLib as fxm
 from dminutes.fx import generateCachePath as gcp
 from dminutes.fx.release import releaseLib
 
 reload(gcp)
 reload(fxgen)
 reload(fxar)
-reload(fxm)
 reload(releaseLib)
 
 
-def prepare(nodes,types,variants,blurValue='0.25'):
+def prepare(nodes,types,variants,blurOffset='0'):
 	'''
 		Prepare the FX to be released
 	'''
@@ -26,16 +24,19 @@ def prepare(nodes,types,variants,blurValue='0.25'):
 	if fxgen.loadPlugin('SOuP.mll'):
 
 		releaseGroups = []
+		MLGroup = ''
 		for i in range(len(nodes)):
-			print i
 			releaseGroup = releaseLib.createReleaseGroup(types[i],variants[i])
 			releaseGroups.append(releaseGroup)
+
+		if 'lightning' in types:
+			MLGroup = releaseLib.createReleaseGroup('lightning','meshLights')
 
 		#nodeType = findPrepareType(nodes)
 		nodeType = 'mesh'
 
 		if nodeType == 'mesh':
-			outMeshes = prepareMesh(nodes,types,variants,blurValue,releaseGroups)
+			outMeshes = prepareMesh(nodes,types,variants,blurOffset,releaseGroups,MLGroup)
 
 		if nodeType == 'fluid':
 			outFluids = prepareFluid(nodes)
@@ -45,6 +46,7 @@ def prepare(nodes,types,variants,blurValue='0.25'):
 
 		print ('[release.prepare] - END') 
 		return 1
+
 
 def findPrepareType(nodes):
 	'''
@@ -70,7 +72,8 @@ def findPrepareType(nodes):
 			print nodeType
 	print ('[release.findPrepareType] - END') 
 
-def prepareMesh(nodes,types,variants,blurValue,releaseGroups):
+
+def prepareMesh(nodes,types,variants,blurOffset,releaseGroups,MLGroup):
 
 	print ('[release.prepareMesh] - START')
 	print ('[release.prepareMesh] - nodes = ' + str(nodes))
@@ -80,25 +83,43 @@ def prepareMesh(nodes,types,variants,blurValue,releaseGroups):
 	endFrame = str(cmds.playbackOptions(q=True,max=True)+1)
 	path = gcp.generatePrivateCachePath()
 
-	fxgen.exportAlembic(nodes,startFrame,endFrame,path,types,variants,blurValue,dataFormat='ogawa')
-	
+	fxgen.exportAlembic(nodes,startFrame,endFrame,path,types,variants,blurOffset,dataFormat='ogawa')
+
+	ml_grp = cmds.listRelatives(MLGroup,c=True,f=True)[0]
+
 	for i in range(len(nodes)):
+		geo_grp = cmds.listRelatives(releaseGroups[i],c=True,f=True)[0]
 		#newMeshes,abcNodes = fxgen.importAlembicCustom(types[i]+'_'+variants[i],path,len(nodes[i]))
 		outTransforms, newMeshes, abcNodes = fxgen.importAlembicStd(types[i]+'_'+variants[i],path)
+
 		print ('[release.prepareMesh] - newMeshes = ' + str(newMeshes))
 		print ('[release.prepareMesh] - abcNodes = ' + str(abcNodes))
 		print ('[release.prepareMesh] - outTransforms = ' + str(outTransforms))
 
 		out = assignShadersToNodes(newMeshes,types[i],variants[i])
 		print ('[release.prepareMesh] - out :' + str(out))
-		geo_grp = cmds.listRelatives(releaseGroups[i],c=True,f=True)[0]
 
-		for mesh in newMeshes:
-			cmds.parent('|'+mesh,geo_grp)
-		for mesh in out:
-			cmds.parent('|'+mesh,geo_grp)
+		if blurOffset != 0:
+			for mesh in newMeshes:
+				fxar.arnoldMotionVectorFromMesh(mesh,0)
+				print ('[release.prepareMesh] - arnoldMotionVectorFromMesh OK')
+				cmds.parent('|'+mesh,geo_grp)
+
+		if types[i]=='lightning':
+			outTransformsML, newMeshesML, abcNodesML = fxgen.importAlembicStd(types[i]+'_'+variants[i],path)
+			print ('[release.prepareMesh] - newMeshesML = ' + str(newMeshes))
+			print ('[release.prepareMesh] - abcNodesML = ' + str(abcNodes))
+			print ('[release.prepareMesh] - outTransformsML = ' + str(outTransforms))
+			assignShadersToNodes(newMeshesML,'meshLight',variants[i])
+
+			for i in range(len(newMeshesML)):
+				mesh = cmds.rename(newMeshesML[i],newMeshesML[i]+'meshLight')
+				fxar.setMeshLightFromMesh(mesh,str((i+1)%6))
+				print ('[release.prepareMesh] - arnoldCreateMeshLightFromMesh OK')
+				cmds.parent('|'+mesh,ml_grp)		
 
 	print ('[release.prepareMesh] - END')
+
 
 def assignShadersToNodes(nodes,type,variant):
 
@@ -107,70 +128,41 @@ def assignShadersToNodes(nodes,type,variant):
 	print ('[release.assignShadersToNodes] - type = ' + str(type))
 	print ('[release.assignShadersToNodes] - variant = ' + str(variant))
 
-	outMeshLights=[]
-	if len(nodes)<4:
-		print 'LESS THAN 4'
+	shadingNetworks =  []
+
+	if type != 'meshLight':
 		for i in range(len(nodes)):
-			print(nodes[i])
 			'''
 				Create Base Shader with component value : R, G or B
 			'''
+			print i
+			print (i)%10
 			shadingNetwork = fxar.createArnoldShader(type+'_'+variant,'dmnToon')
-			print ('[release.assignShadersToNodes] - createArnoldShader OK')
 			print ('[release.assignShadersToNodes] - shadingNetwork = ' + str(shadingNetwork))
-			fxar.setArnoldShaderAttr(shadingNetwork,type,str(i))
+			fxar.setArnoldShaderAttr(shadingNetwork,type,str(i%10))
 			print ('[release.assignShadersToNodes] - setArnoldShaderAttr OK')
 			fxar.assignShader(shadingNetwork[0],nodes[i])
 			print ('[release.assignShadersToNodes] - assignShader OK')
-			fxar.arnoldMotionVectorFromMesh(nodes[i],0)
-			#print ('[release.assignShadersToNodes] - arnoldMotionVectorFromMesh OK')
-			
-			#Create MeshLight + shader
-			if type == 'lightning':
-				print 'INCIDENCE'
-				outMeshLight = fxar.arnoldCreateMeshLightFromMesh(nodes[i],str(i+1))
-				print ('[release.assignShadersToNodes] - arnoldCreateMeshLightFromMesh OK')
-				outMeshLights.append(outMeshLight)
-				shadingNetwork = fxar.createArnoldShader(type+'_'+variant+'_meshLight','dmnToon')
-				print ('[release.assignShadersToNodes] - createArnoldShader OK')
-				print ('[release.assignShadersToNodes] - shadingNetwork = ' + str(shadingNetwork))
-				
-				fxar.setArnoldShaderAttr(shadingNetwork,'meshLight')
-				print ('[release.assignShadersToNodes] - setArnoldShaderAttr OK')
-				fxar.assignShader(shadingNetwork[0],outMeshLight)
+			shadingNetworks.append(shadingNetwork)
+
+	elif type == 'meshLight':
+
+			shadingNetwork = fxar.createArnoldShader(type+'_'+variant+'_meshLight','dmnToon')
+			print ('[release.assignShadersToNodes] - createArnoldShader OK')
+			print ('[release.assignShadersToNodes] - shadingNetwork = ' + str(shadingNetwork))
+
+			fxar.setArnoldShaderAttr(shadingNetwork,'meshLight')
+			print ('[release.assignShadersToNodes] - setArnoldShaderAttr OK')
+
+			for i in range(len(nodes)):
+				fxar.assignShader(shadingNetwork[0],nodes[i])
 				print ('[release.assignShadersToNodes] - assignShader OK')
-
-	else:
-		print '> 4'
-		shadingNetwork1 = fxar.createArnoldShader(type+'_'+variant,'dmnToon')
-		print ('[release.assignShadersToNodes] - createArnoldShader OK')
-		print ('[release.assignShadersToNodes] - shadingNetwork1 = ' + str(shadingNetwork1))		
-		fxar.setArnoldShaderAttr(shadingNetwork1,type,'0')
-		print ('[release.assignShadersToNodes] - setArnoldShaderAttr OK')
-
-		shadingNetwork2 = fxar.createArnoldShader(type+'_'+variant+'_meshLight','dmnToon')
-		print ('[release.assignShadersToNodes] - createArnoldShader OK')
-		print ('[release.assignShadersToNodes] - shadingNetwork2 = ' + str(shadingNetwork1))	
-		fxar.setArnoldShaderAttr(shadingNetwork2,'meshLight')
-		print ('[release.assignShadersToNodes] - setArnoldShaderAttr OK')		
-
-		for i in range(len(nodes)):
-			fxar.assignShader(shadingNetwork1[0],nodes[i])
-			#fxar.arnoldMotionVectorFromMesh(nodes[i])
-			if type == 'lightning':
-				outMeshLight = fxar.arnoldCreateMeshLightFromMesh(nodes[i],'1')
-				cmds.connectAttr(nodes[i]+'.visibility',outMeshLight+'.visibility')
-				outMeshLights.append(outMeshLight)
-				fxar.assignShader(shadingNetwork2[0],outMeshLight)
-				fxar.arnoldMotionVectorFromMesh(nodes[i],0)
-				
+				shadingNetworks.append(shadingNetwork)
+				print ('[release.assignShadersToNodes] - assignShader OK')
 				
 	print ('[release.assignShadersToNodes] - END')
 
-	if outMeshLights:
-		return outMeshLights
-	else:
-		return 1
+	return shadingNetworks
 
 
 def prepareFluid(nodes):
@@ -185,8 +177,8 @@ def prepareParticles(nodes):
 
 def release(nodes):
 
-	''' 
-		release nodes
+	'''
+		Release les nodes
 	'''
 	for node in nodes:
 		shotconformation.releaseShotAsset(gui = True ,toReleaseL = [node], astPrefix = "fx3", dryRun=False)

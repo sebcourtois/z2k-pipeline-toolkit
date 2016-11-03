@@ -2,15 +2,6 @@ import os, sys
 import maya.cmds as cmds
 import maya.mel as mel
 
-paths = ['//zombiwalk/ZOMBIWALK/Z2K/06_PARTAGE/sebastienr/TOOLS/libs']
-
-for path in paths:
-    if path not in sys.path:
-        sys.path.insert(0,path)
-
-import fxMeshLib as fxm
-reload(fxm)
-
 def generateCachePath(node):
     from davos_maya.tool.general import infosFromScene
     from dminutes import maya_scene_operations as mop
@@ -31,7 +22,7 @@ def generateCachePath(node):
     mel.eval('warning("'+message+'")')
     return message
 
-def generatePrivateCachePath():
+def generatePrivateCachePath(node=''):
    
     fullFileName = cmds.file(q=True,exn=True)
     print ('[generateCachePath.generatePrivateCachePath] - file full name = ' + fullFileName)
@@ -42,6 +33,11 @@ def generatePrivateCachePath():
     localPath = ['/'.join(fullFileName.split('/')[:-1]),'fxCache',fileVersion]
     print ('[generateCachePath.generatePrivateCachePath] - localPath = ' + str(localPath))
     outPath = '/'.join(localPath)
+    node='pkg_'+node
+
+    if node:
+        outPath = '/'.join([outPath,node])
+
     print ('[generateCachePath.generatePrivateCachePath] - outPath = ' + outPath)
 
     if not os.path.isdir(outPath):
