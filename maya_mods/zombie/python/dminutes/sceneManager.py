@@ -527,15 +527,26 @@ class SceneManager():
 
             if not pc.listReferences(loaded=True, unloaded=False):
 
+                sRes = pc.confirmDialog(title="DO YOU WANT ME TO...",
+                                         message="Load references ?",
+                                         button=["Yes", "No"],
+                                         defaultButton="Yes",
+                                         cancelButton="No",
+                                         dismissString="No",
+                                         icon="question")
+
+                bLoadedRefs = (sRes == "Yes")
+
                 sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution")
                 removeRefEditByAttr(attr=sAttrList, GUI=False)
 
-                oAstRefList = myaref.loadAssetRefsToDefaultFile(project=proj, selected=False)
+                if bLoadedRefs:
+                    oAstRefList = myaref.loadAssetRefsToDefaultFile(project=proj, selected=False)
 
-                for oFileRef in pc.listReferences(loaded=False, unloaded=True):
-                    if oFileRef in oAstRefList:
-                        continue
-                    oFileRef.load()
+                    for oFileRef in pc.listReferences(loaded=False, unloaded=True):
+                        if oFileRef in oAstRefList:
+                            continue
+                        oFileRef.load()
 
         elif sStepName == "charfx":
 
@@ -632,7 +643,7 @@ class SceneManager():
 
         _, oAnimaticCam = mop.setupAnimatic(mop.getAnimaticInfos(damShot, sStepName))
 
-        mop.reArrangeAssets()
+        mop.reArrangeAssets(oShotCam)
         mop.arrangeViews(oShotCam.getShape(), oAnimaticCam, oStereoCam, stereoDisplay="interlace")
 
     @mop.undoAtOnce

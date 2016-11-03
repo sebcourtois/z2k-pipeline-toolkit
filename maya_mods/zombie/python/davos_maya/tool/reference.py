@@ -94,11 +94,13 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
             print sMsg
             continue
 
-        if not oFileRef.isLoaded():
-            sMsg = "Reference not loaded"
-            nonSwitchedRefList.append((oFileRef, sMsg))
-            print sMsg
-            continue
+        bRefLoaded = oFileRef.isLoaded()
+
+#        if not bRefLoaded:
+#            sMsg = "Reference not loaded"
+#            nonSwitchedRefList.append((oFileRef, sMsg))
+#            print sMsg
+#            continue
 
         sRcPath = rcDct.get(sChosenRcName)
         if not sRcPath:
@@ -108,10 +110,11 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
             continue
 
         if pathEqual(sRcPath, sRefPath):
-            sMsg = "Reference already switched to '{}'".format(sChosenRcName)
+            sMsg = "Reference already loaded as '{}'".format(sChosenRcName)
             nonSwitchedRefList.append((oFileRef, sMsg))
             print sMsg
-            continue
+            if bRefLoaded:
+                continue
 
         mrcFile = proj.entryFromPath(sRcPath, library=asset.getLibrary(), dbNode=False)
         if not mrcFile:

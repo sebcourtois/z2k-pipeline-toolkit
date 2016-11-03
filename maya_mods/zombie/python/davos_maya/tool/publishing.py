@@ -1,5 +1,6 @@
 
 import os
+import re
 import subprocess
 from tempfile import NamedTemporaryFile
 from itertools import izip
@@ -24,6 +25,7 @@ from davos_maya.tool import dependency_scan
 from davos.core.drctypes import DrcPack
 
 osp = os.path
+FILE_PATH_ATTRS = dependency_scan.FILE_PATH_ATTRS
 
 _DRY_RUN = False
 
@@ -77,7 +79,7 @@ def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishIn
 
     if not sAllSrcPathList:
         pm.displayInfo("No dependencies to publish.")
-        return (not bDryRun)
+        return
 
     if sDependPathList:
 
@@ -164,7 +166,6 @@ def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishIn
         sMsgFiles = sSep.join(sUpdatedList)
         print sSep + sSep.join((sMsgTag, sMsgFiles, sMsgTag))
 
-    return (not bDryRun)
 
 def publishDependencies(depConfDct, sDepPathList, dependDataDct, sComment, **kwargs):
 
@@ -237,7 +238,7 @@ def linkDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
 
         sPubEnvPath = pubFile.envPath(sEnvVarName)
         bIsPack = isinstance(pubFile, DrcPack)
-        sPackSep = "/{}/".format(pubFile.name)
+        sPackSep = "/{}(/|$)".format(pubFile.name)
 
         fileNodeList = depData["file_nodes"]
         for fileNode in fileNodeList:
@@ -246,16 +247,17 @@ def linkDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
             if sNodeName in sLinkedList:
                 continue
 
-            fileAttr = fileNode.listAttr(usedAsFilename=True)[0]
+            fileAttr = fileNode.attr(FILE_PATH_ATTRS[fileNode.type()])
 
-            sPrivFilePath = pathNorm(pathResolve(fileAttr.get()))
+            sSrcFilePath = pathNorm(pathResolve(fileAttr.get()))
             if bIsPack:
-                _, sEndPath = sPrivFilePath.rsplit(sPackSep, 1)
+                #print fileNode, sSrcFilePath, sPackSep
+                sEndPath = re.split(sPackSep, sSrcFilePath)[-1]
                 sPubFilePath = pathJoin(sPubEnvPath, sEndPath)
             else:
                 sPubFilePath = sPubEnvPath
 
-            sMsg = (sMsgFmt.format(sNodeName, sPrivFilePath, sPubFilePath))
+            sMsg = (sMsgFmt.format(sNodeName, sSrcFilePath, sPubFilePath))
             print sMsg
 
             if not bDryRun:
@@ -295,6 +297,7 @@ def publishCurrentScene(*args, **kwargs):
     prePublishFunc = kwargs.pop("prePublishFunc", None)
     postPublishFunc = kwargs.pop("postPublishFunc", None)
     scnInfos = kwargs.pop("sceneInfos", None)
+    bDryRun = kwargs.pop("dryRun", False if not inDevMode() else _DRY_RUN)
 
     sCurScnPath = pm.sceneName()
     if not sCurScnPath:
@@ -353,9 +356,9 @@ def publishCurrentScene(*args, **kwargs):
 
     if damEntity and depScanDct:
         for sDepType, scanResults in depScanDct.iteritems():
-            if not publishSceneDependencies(scnInfos, sDepType,
-                                            scanResults, prePublishInfos):
-                return
+            publishSceneDependencies(scnInfos, sDepType, scanResults, prePublishInfos, dryRun=bDryRun)
+        if bDryRun:
+            return
 
     sSavedScnPath = myasys.saveScene(prompt=False, checkError=False)
     if not sSavedScnPath:
