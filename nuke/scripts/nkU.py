@@ -561,8 +561,9 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
             
 
         if not dryRun:
-            try: 
-                shutil.move(layerPathS, versionDirS+"/"+layerNameNextVerS)
+            try:
+                os.rename(layerPathS, versionDirS+"/"+layerNameNextVerS)
+                #shutil.move(layerPathS, versionDirS+"/"+layerNameNextVerS)
             except Exception,err:
                 raise err
 
@@ -650,6 +651,10 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
     publishedNodeL = []
     publishedNodeNameL = []
     skippedNodeNameL = []
+
+    allViewerL = nuke.allNodes('Viewer')
+    for each in allViewerL:
+        nuke.delete(each)
 
     for each in readNodeL:
         eachNameS = each['name'].getValue()
@@ -917,23 +922,24 @@ def isStereo():
 
 
 def createWriteDir():
-  file = nuke.filename(nuke.thisNode())
-  dir = os.path.dirname( file )
-  osdir = nuke.callbacks.filenameFilter( dir )
+    initNukeShot()
+    file = nuke.filename(nuke.thisNode())
+    dir = os.path.dirname( file )
+    osdir = nuke.callbacks.filenameFilter( dir )
 
-  if "%V" in osdir:
-    try:                        
-        os.makedirs( osdir.replace("%V","left") )        
-        os.makedirs( osdir.replace("%V","right") )
-    except OSError, e:
-        if e.errno != errno.EEXIST:
-            raise
-  else:
-    try:
-        os.makedirs( osdir )
-    except OSError, e:
-        if e.errno != errno.EEXIST:
-            raise
+    if "%V" in osdir:
+        try:                        
+            os.makedirs( osdir.replace("%V","left") )        
+            os.makedirs( osdir.replace("%V","right") )
+        except OSError, e:
+            if e.errno != errno.EEXIST:
+                raise
+    else:
+        try:
+            os.makedirs( osdir )
+        except OSError, e:
+            if e.errno != errno.EEXIST:
+                raise
 
 
 
