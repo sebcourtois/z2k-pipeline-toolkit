@@ -313,7 +313,7 @@ GRP_FOR_ASSET_TYPE = {
 'cwp':'grp_crowd',
 }
 
-def reArrangeAssets():
+def reArrangeAssets(oShotCam=None):
     #this is the template, it lacks grp_prop, grp_crowd, grp_vehicle, grp_fx, grp_light (and eventually grp_extra_rig, grp_trash)
     structure = GRP_FOR_ASSET_TYPE
 
@@ -335,16 +335,26 @@ def reArrangeAssets():
                 if (not rootParent) or (rootParent.name() != structParent):
                     pc.parent(root, structParent)
 
-    #We could also have local cameras (cam_animatic and/or cam_sq####_sh####)
-    cams = pc.ls('*_cam_*:*', type='camera')
-    for cam in cams:
-        #print "cam " + str(cam)
-        camRoot = getRoot(cam)
-        #print "camRoot " + str(camRoot)
-        camParent = camRoot.getParent()
-        if camParent is None or camParent.name() != structure['cam']:
-            #print camRoot, structure['cam']
-            pc.parent(camRoot, structure['cam'])
+    if oShotCam:
+        bWasLocked = oShotCam.isLocked()
+        if bWasLocked:
+            setShotCamLocked(oShotCam, False)
+
+    try:
+        #We could also have local cameras (cam_animatic and/or cam_sq####_sh####)
+        cams = pc.ls('*_cam_*:*', type='camera')
+        cams.extend(pc.ls('cam_*:*', type='camera'))
+        for cam in cams:
+            #print "cam " + str(cam)
+            camRoot = getRoot(cam)
+            #print "camRoot " + str(camRoot)
+            camParent = camRoot.getParent()
+            if (camParent is None) or (camParent.name() != structure['cam']):
+                #print camRoot, structure['cam']
+                pc.parent(camRoot, structure['cam'])
+    finally:
+        if oShotCam and bWasLocked:
+            setShotCamLocked(oShotCam, True)
 
 def getCameraRig():
     camInfo = {}
