@@ -22,7 +22,7 @@ def generateCachePath(node):
     mel.eval('warning("'+message+'")')
     return message
 
-def generatePrivateCachePath():
+def generatePrivateCachePath(node=''):
    
     fullFileName = cmds.file(q=True,exn=True)
     print ('[generateCachePath.generatePrivateCachePath] - file full name = ' + fullFileName)
@@ -33,6 +33,11 @@ def generatePrivateCachePath():
     localPath = ['/'.join(fullFileName.split('/')[:-1]),'fxCache',fileVersion]
     print ('[generateCachePath.generatePrivateCachePath] - localPath = ' + str(localPath))
     outPath = '/'.join(localPath)
+    node='pkg_'+node
+
+    if node:
+        outPath = '/'.join([outPath,node])
+
     print ('[generateCachePath.generatePrivateCachePath] - outPath = ' + outPath)
 
     if not os.path.isdir(outPath):
