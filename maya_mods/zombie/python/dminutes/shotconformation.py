@@ -75,10 +75,19 @@ def finalLayoutToLighting(gui=True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="finalLayoutToLighting")
     deletedNodeL=[]
 
-    mc.editRenderLayerGlobals( currentRenderLayer='defaultRenderLayer' )
+    pm.editRenderLayerGlobals(currentRenderLayer='lay_finalLayout_00')
+    testVisibilityL = mc.ls('*:grp_*', type='transform') + mc.ls('*:chr_*', type='transform') + mc.ls('*:geo_*', type='transform')
+    visibilityL = []
+    if not testVisibilityL == None:
+        for each in testVisibilityL:
+            visibilityL += pm.ls(each + '.visibility')
+
+    [pm.select(each.split('.')[0], add=True) for each in visibilityL if each.get() == False]
+    pm.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
+    pm.hide()
 
     mc.ls("cam_animatic:asset*")
-    toDeleteNodeL=mc.ls("mat_arelequin_*")+mc.ls("aiAOV_arlequin*")+mc.ls("lay_finalLayout_*")+mc.ls("cam_animatic:asset*")
+    toDeleteNodeL = mc.ls("mat_arelequin_*") + mc.ls("mat_arlequin_*") + mc.ls("aiAOV_arlequin*") + mc.ls("cam_animatic:asset*") + mc.ls("lay_finalLayout_*")
     for each in toDeleteNodeL: 
         try: 
             mc.delete(each)

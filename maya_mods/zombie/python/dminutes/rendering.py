@@ -81,7 +81,8 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
             if eachCam != myCamName:
                 mc.setAttr (eachCam + ".renderable", 0)
             else:
-                mc.setAttr (myCamName + ".renderable", 1)
+                #mc.setAttr (myCamName + ".renderable", 1)
+                pass
 
     else:
         print "#### error: no '*:cam_*' camera could be found in the scene"
@@ -151,15 +152,19 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
         mc.setAttr("defaultArnoldDriver.aiTranslator", "jpeg", type="string")
         mc.setAttr("defaultArnoldDysplayDriver.aiTranslator", "jpeg", type="string")
         mc.setAttr("defaultArnoldRenderOptions.aovMode", 0)
+    elif  outputFormat == "exr":
+        mc.setAttr("defaultArnoldDriver.aiTranslator", "exr", type="string")
+        mc.setAttr("defaultArnoldDysplayDriver.aiTranslator", "exr", type="string")
+        mc.setAttr("defaultArnoldRenderOptions.aovMode", 1)
 
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseSamples", 0)
-    mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples", 3)
+    mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples", 5)
     mc.setAttr("defaultArnoldRenderOptions.GIRefractionSamples", 0)
     mc.setAttr("defaultArnoldRenderOptions.GISssSamples", 0)
     mc.setAttr("defaultArnoldRenderOptions.GIVolumeSamples", 3)
-    mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp", 1)
-    mc.setAttr("defaultArnoldRenderOptions.AASampleClamp", 1)
-    mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp_AOVs", 1)
+    mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp", 0)
+    mc.setAttr("defaultArnoldRenderOptions.AASampleClamp", 0)
+    mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp_AOVs", 0)
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures", 1)
     mc.setAttr("defaultArnoldRenderOptions.skipLicenseCheck", 1)
     mc.setAttr("defaultArnoldRenderOptions.log_verbosity", 1)#warnig + info
@@ -172,7 +177,11 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
     elif renderMode == 'render':
         mc.setAttr("defaultArnoldRenderOptions.AASamples", 8)
         mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 1)
-        mc.setAttr("defaultArnoldRenderOptions.motion_frames", 0.25)
+        if mc.getAttr("defaultArnoldRenderOptions.motion_frames") > 0.25 :
+            pass
+        else:
+            mc.setAttr("defaultArnoldRenderOptions.motion_frames", 0.25)
+
     elif renderMode == 'finalLayout':
         mc.setAttr("defaultArnoldRenderOptions.ignoreBump", 1)
         mc.setAttr("defaultArnoldRenderOptions.AASamples", 2)
@@ -180,7 +189,6 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
         mc.setAttr("defaultArnoldRenderOptions.motion_frames", 0.25)
         mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples", 2)
         mc.setAttr("defaultArnoldRenderOptions.aovMode", 1)
-
 
     mc.setAttr("defaultArnoldRenderOptions.GITotalDepth", 4)
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseDepth", 0)
@@ -251,6 +259,13 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         miscUtils.setAttrC("defaultArnoldDriver.aiTranslator", "jpeg", type="string")
         miscUtils.setAttrC("defaultArnoldDisplayDriver.aiTranslator", "jpeg", type="string")
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 0)
+    if outputFormat == "png":
+        miscUtils.setAttrC("defaultArnoldDriver.aiTranslator", "png", type="string")
+        mc.setAttr("defaultArnoldDriver.mergeAOVs", 0)
+    elif  outputFormat == "exr":
+        miscUtils.setAttrC("defaultArnoldDriver.aiTranslator", "exr", type="string")
+        miscUtils.setAttrC("defaultArnoldDisplayDriver.aiTranslator", "exr", type="string")
+        mc.setAttr("defaultArnoldDriver.mergeAOVs", 1)
 
 
     mainFilePath = mc.file(q=True, list=True)[0]
@@ -261,18 +276,22 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         mc.setAttr("defaultRenderGlobals.imageFilePrefix", imageNameS, type="string")
 
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIDiffuseSamples", 0)
-    miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples", 3)
+    miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples", 5)
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIRefractionSamples", 0)
     miscUtils.setAttrC("defaultArnoldRenderOptions.GISssSamples", 0)
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIVolumeSamples", 3)
-    miscUtils.setAttrC("defaultArnoldRenderOptions.use_sample_clamp", 1)
-    miscUtils.setAttrC("defaultArnoldRenderOptions.AASampleClamp", 1)
-    miscUtils.setAttrC("defaultArnoldRenderOptions.use_sample_clamp_AOVs", 1)
+    miscUtils.setAttrC("defaultArnoldRenderOptions.use_sample_clamp", 0)
+    miscUtils.setAttrC("defaultArnoldRenderOptions.AASampleClamp", 0)
+    miscUtils.setAttrC("defaultArnoldRenderOptions.use_sample_clamp_AOVs", 0)
     miscUtils.setAttrC("defaultArnoldRenderOptions.use_existing_tiled_textures", 1)
     miscUtils.setAttrC("defaultArnoldRenderOptions.skipLicenseCheck", 1)
     miscUtils.setAttrC("defaultArnoldRenderOptions.log_verbosity", 1)#warnig + info
     miscUtils.setAttrC("defaultArnoldRenderOptions.motion_blur_enable", 1)
-    miscUtils.setAttrC("defaultArnoldRenderOptions.motion_frames", 0.25)
+    if mc.getAttr("defaultArnoldRenderOptions.motion_frames") > 0.25 :
+        pass
+    else:
+        miscUtils.setAttrC("defaultArnoldRenderOptions.motion_frames", 0.25)
+
 
     if renderMode == 'render':
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 8)
@@ -354,7 +373,7 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
 
         if leftCam:
             if leftCamS: 
-                mc.setAttr (leftCamS + ".renderable", 1)
+                mc.setAttr (leftCamS + ".renderable", 0)
                 mc.setAttr (stereoCam + ".renderable", 0)
                 mc.renderSettings(camera=stereoCam)
                 if defaultCamS:
@@ -363,31 +382,31 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
             else:
                 log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_reft'")
                 try:
-                    mc.setAttr (leftCamS + ".renderable", 1)
+                    mc.setAttr (leftCamS + ".renderable", 0)
                 except:
                     pass
 
                 if defaultCamS:
                     log.printL("i", "render camera: '{}'".format(defaultCamS))
-                    mc.setAttr (defaultCamS + ".renderable", 1)
+                    mc.setAttr (defaultCamS + ".renderable", 0)
                 else:
                     log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
-                    mc.setAttr (defaultCamS + ".renderable", 1)
+                    mc.setAttr (defaultCamS + ".renderable", 0)
         else:
             try:
-                mc.setAttr (leftCamS + ".renderable", 1)
+                mc.setAttr (leftCamS + ".renderable", 0)
             except:
                 pass
 
         if rightCam:
             if rightCamS: 
-                mc.setAttr (rightCamS + ".renderable", 1)
+                mc.setAttr (rightCamS + ".renderable", 0)
                 mc.setAttr (stereoCam + ".renderable", 0)
                 mc.renderSettings(camera=stereoCam)
                 log.printL("i", "render camera: '{}'".format(rightCamS))
             else:
                 try:
-                    mc.setAttr (rightCamS + ".renderable", 1)
+                    mc.setAttr (rightCamS + ".renderable", 0)
                     log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_right'")
                 except:
                     pass
@@ -395,10 +414,10 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
         if not rightCam and not leftCam:
             if defaultCamS:
                 log.printL("i", "render camera: '{}'".format(defaultCamS))
-                mc.setAttr (defaultCamS + ".renderable", 1)
+                mc.setAttr (defaultCamS + ".renderable", 0)
             else:
                 log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
-                mc.setAttr (defaultCamS + ".renderable", 1)
+                mc.setAttr (defaultCamS + ".renderable", 0)
     else:
         log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
 
