@@ -143,7 +143,7 @@ def writeStereoInfos(sFilePath):
     if not osp.exists(sDirPath):
         os.makedirs(sDirPath)
 
-    jsonWrite(sFilePath, STEREO_INFOS)
+    jsonWrite(sFilePath, STEREO_INFOS, sort_keys=True)
 
     return True
 
