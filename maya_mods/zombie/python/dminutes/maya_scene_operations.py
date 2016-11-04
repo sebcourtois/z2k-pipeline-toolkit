@@ -107,6 +107,9 @@ def recStereoInfos(frame, **kwargs):
 
 def getStereoInfosRecorder(sStereoCam):
 
+    global STEREO_INFOS
+    STEREO_INFOS = {}
+
     import sys
     m = sys.modules["__main__"]
     m.mop = sys.modules[__name__]
