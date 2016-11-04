@@ -42,7 +42,7 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
     aspectRatio = 1.85
 
     if renderMode == "":
-        if mc.ls("|shot") and (mc.file(q=True, list=True)[0].split("/")[-4]) == "shot":
+        if mc.ls("|shot") and (mc.file(q=True, sn=True).split("/")[-4]) == "shot":
             renderMode = "render"
 
             print "#### info: Lighting mode render options"
@@ -134,7 +134,7 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
     mc.setAttr("defaultArnoldRenderOptions.threads_autodetect", 0)
     mc.setAttr("defaultArnoldRenderOptions.threads", -1)
 
-    mainFilePath = mc.file(q=True, list=True)[0]
+    mainFilePath = mc.file(q=True, sn=True)
     mainFilePathElem = mainFilePath.split("/")
     if mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "shot":
         fileRadical = os.path.basename(mainFilePath).split("-")[0]
@@ -454,7 +454,7 @@ def getRenderOutput(gui=True):
     #creates a workspace named as the davos user en the maya project path and set it
     #miscUtils.createUserWorkspace()
 
-    mainFilePath = mc.file(q=True, list=True)[0]
+    mainFilePath = mc.file(q=True, sn=True)
     mainFilePathElem = mainFilePath.split("/")
 
     try:
@@ -524,7 +524,7 @@ def createBatchRender(arnoldLic="on"):
         raise ValueError("#### Error: DAVOS_USER environement variable is not defined, please log to davos")
 
 
-    workingFile = mc.file(q=True, list=True)[0]
+    workingFile = mc.file(q=True, sn=True)
     workingDir = os.path.dirname(workingFile)
     renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"], "z2k-pipeline-toolkit", "maya_mods", "zombie", "python", "dminutes", "renderBatch_help.txt"))
     renderBatchHelp_trg = miscUtils.normPath(os.path.join(workingDir, "renderBatch_help.txt"))
@@ -737,7 +737,7 @@ def createCustomShader(shaderName="arlequin", gui=True):
 def renderLeftCam():
     shotName = ''
     if not pm.sceneName() == '' :
-        mainFilePathS = mc.file(q=True, list=True)[0]
+        mainFilePathS = mc.file(q=True, sn=True)
         shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
     imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
@@ -758,7 +758,7 @@ def renderLeftCam():
 def renderRightCam():
     shotName = ''
     if not pm.sceneName() == '' :
-        mainFilePathS = mc.file(q=True, list=True)[0]
+        mainFilePathS = mc.file(q=True, sn=True)
         shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
     imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
