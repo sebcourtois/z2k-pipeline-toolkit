@@ -20,7 +20,7 @@ reload (miscUtils)
 from dminutes import layerManager
 reload (layerManager)
 
-createOptions()
+#createOptions()
 
 if pm.window("unifiedRenderGlobalsWindow", exists=True):
     pm.deleteUI("unifiedRenderGlobalsWindow")
@@ -268,7 +268,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 1)
 
 
-    mainFilePath = mc.file(q=True, list=True)[0]
+    mainFilePath = mc.file(q=True, sn=True)
     mainFilePathElem = mainFilePath.split("/")
     if mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "shot":
         fileRadical = os.path.basename(mainFilePath).split("-")[0]
@@ -414,10 +414,10 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
         if not rightCam and not leftCam:
             if defaultCamS:
                 log.printL("i", "render camera: '{}'".format(defaultCamS))
-                mc.setAttr (defaultCamS + ".renderable", 0)
+                mc.setAttr (defaultCamS + ".renderable", 1)
             else:
                 log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
-                mc.setAttr (defaultCamS + ".renderable", 0)
+                mc.setAttr (defaultCamS + ".renderable", 1)
     else:
         log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
 
@@ -734,13 +734,12 @@ def createCustomShader(shaderName="arlequin", gui=True):
 
     return dict(resultB=log.resultB, logL=log.logL, rootNodeOutputS=rootNodeOutput)
 
-shotName = ''
-if not pm.sceneName() == '' :
-    mainFilePathS = mc.file(q=True, list=True)[0]
-    shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
-imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
-
 def renderLeftCam():
+    shotName = ''
+    if not pm.sceneName() == '' :
+        mainFilePathS = mc.file(q=True, list=True)[0]
+        shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
+    imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
         pm.deleteUI("unifiedRenderGlobalsWindow")
     if not '/left/<RenderLayer>/' in imageFileName or '/right/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
@@ -757,6 +756,11 @@ def renderLeftCam():
         pass
 
 def renderRightCam():
+    shotName = ''
+    if not pm.sceneName() == '' :
+        mainFilePathS = mc.file(q=True, list=True)[0]
+        shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
+    imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
         pm.deleteUI("unifiedRenderGlobalsWindow")
     if not '/right/<RenderLayer>/' in imageFileName or '/left/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
