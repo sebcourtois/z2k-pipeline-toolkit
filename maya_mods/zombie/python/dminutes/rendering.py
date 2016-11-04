@@ -734,13 +734,12 @@ def createCustomShader(shaderName="arlequin", gui=True):
 
     return dict(resultB=log.resultB, logL=log.logL, rootNodeOutputS=rootNodeOutput)
 
-shotName = ''
-if not pm.sceneName() == '' :
-    mainFilePathS = mc.file(q=True, list=True)[0]
-    shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
-imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
-
 def renderLeftCam():
+    shotName = ''
+    if not pm.sceneName() == '' :
+        mainFilePathS = mc.file(q=True, list=True)[0]
+        shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
+    imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
         pm.deleteUI("unifiedRenderGlobalsWindow")
     if not '/left/<RenderLayer>/' in imageFileName or '/right/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
@@ -757,6 +756,11 @@ def renderLeftCam():
         pass
 
 def renderRightCam():
+    shotName = ''
+    if not pm.sceneName() == '' :
+        mainFilePathS = mc.file(q=True, list=True)[0]
+        shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
+    imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
         pm.deleteUI("unifiedRenderGlobalsWindow")
     if not '/right/<RenderLayer>/' in imageFileName or '/left/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
