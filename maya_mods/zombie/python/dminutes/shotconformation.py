@@ -5,16 +5,37 @@ import os
 import re
 from datetime import datetime
 
-from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
+from davos_maya.tool.general import infosFromScene
 from davos.core.damproject import DamProject
-
-from dminutes import maya_scene_operations as mso
 
 from dminutes import miscUtils
 reload (miscUtils)
 
 
+def promptToContinue(exception):
 
+    res = pm.confirmDialog(title='WARNING !',
+                           message=exception.message,
+                           button=['Continue', 'Abort'],
+                           defaultButton='Abort',
+                           cancelButton='Abort',
+                           dismissString='Abort',
+                           icon="warning")
+    if res == "Abort":
+        raise RuntimeWarning("Aborted !")
+
+def assertTaskIsFinal(damShot, sTask, step="", sgEntity=None, critical=True):
+
+    sgTask = damShot.getSgTask(sTask, step, sgEntity=sgEntity, fail=True)
+    if sgTask["sg_status_list"] == "fin":
+        return True
+
+    err = AssertionError("Status of the {} task is not final yet."
+                         .format("|".join(s for s in (step, sTask) if s)))
+    if critical:
+        raise err
+
+    promptToContinue(err)
 
 def removeRefEditByAttr(inRefNodeL=[], attr="smoothDrawType", cmd="setAttr",failedRefEdit =False, GUI=True):
     log = miscUtils.LogBuilder(gui=GUI, funcName ="removeRefEditByAttr")
@@ -162,7 +183,8 @@ def releaseShotAsset(gui = True ,toReleaseL = [], dryRun=True, astPrefix = "fx3"
 
 def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3", critical= True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="referenceShotAsset")
-    proj = DamProject("zombillenium")
+
+    #proj = DamProject("zombillenium")
     #shotNameS = mc.file(q=True, list = True)[0].split('shot/')[-1].split("/")[1]
     #damShot = proj.getShot(shotNameS)
 
@@ -180,7 +202,7 @@ def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3", critical= T
 
     if astPrefix == "fx3":
         sTask = "fx_precomp"
-        mso.assertTaskIsFinal(damShot, sTask, step="", sgEntity=None, critical=critical)
+        assertTaskIsFinal(damShot, sTask, step="", sgEntity=None, critical=critical)
 
 
     # dir scan

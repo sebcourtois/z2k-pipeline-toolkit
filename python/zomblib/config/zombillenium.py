@@ -297,7 +297,7 @@ class shot_lib(object):
                       },
     "finalLayout_dir":{"default_sync_rules":["all_sites"], },
     "finalLayout_cache_dir":{"default_sync_rules":["online", "dmn_paris",
-                                                  "dream_wall", "dmn_angouleme"], },
+                                                   "dream_wall", "dmn_angouleme"], },
 
     #===========================================================================
     # FX3D RESOURCES
@@ -318,7 +318,10 @@ class shot_lib(object):
                          "fxCache_dep":
                             {"dep_public_loc":"fx3d_fxCache_dir",
                              "checksum":True},
-                        }
+                         "texture_dep":
+                            {"dep_public_loc":"fx3d_texture_dir",
+                            "checksum":True},
+                            }
                   },
     "fx3d_precomp_movie":{"create_sg_version":True,
                           "sg_uploaded_movie":True,

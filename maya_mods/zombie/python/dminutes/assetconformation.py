@@ -1738,6 +1738,26 @@ def rigSetRemove(gui = True, inRoot = "asset"):
 
 
 
+def optimizeSetforAnim(gui = True, deteteXgen =True, deleteAnimSetContent = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="optimizeSetforAnim")
+
+    try:
+        if mc.ls("asset|grp_xgen", type = 'transform') and deteteXgen:
+            mc.delete("asset|grp_xgen")
+            log.printL("i", "grp_xgen removed")
+        if mc.ls("set_delForAnim", type = 'objectSet') and deleteAnimSetContent:
+            toDeleteL = mc.ls(mc.sets("set_delForAnim",q=1),l=1)
+            mc.delete(toDeleteL)
+            log.printL("i", "deteted {} object from 'set_delForAnim': {}".format(len(toDeleteL),toDeleteL))
+        if mc.ls("set_delForAnim", type = 'objectSet'):
+            mc.delete("set_delForAnim")
+    except Exception,err:
+        log.printL("e", err)
+
+
+    return dict(resultB=log.resultB, logL=log.logL)
+
+
 
 
 

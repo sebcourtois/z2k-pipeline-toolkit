@@ -313,7 +313,7 @@ GRP_FOR_ASSET_TYPE = {
 'cwp':'grp_crowd',
 }
 
-def reArrangeAssets():
+def reArrangeAssets(oShotCam=None):
     #this is the template, it lacks grp_prop, grp_crowd, grp_vehicle, grp_fx, grp_light (and eventually grp_extra_rig, grp_trash)
     structure = GRP_FOR_ASSET_TYPE
 
@@ -335,16 +335,26 @@ def reArrangeAssets():
                 if (not rootParent) or (rootParent.name() != structParent):
                     pc.parent(root, structParent)
 
-    #We could also have local cameras (cam_animatic and/or cam_sq####_sh####)
-    cams = pc.ls('*_cam_*:*', type='camera')
-    for cam in cams:
-        #print "cam " + str(cam)
-        camRoot = getRoot(cam)
-        #print "camRoot " + str(camRoot)
-        camParent = camRoot.getParent()
-        if camParent is None or camParent.name() != structure['cam']:
-            #print camRoot, structure['cam']
-            pc.parent(camRoot, structure['cam'])
+    if oShotCam:
+        bWasLocked = oShotCam.isLocked()
+        if bWasLocked:
+            setShotCamLocked(oShotCam, False)
+
+    try:
+        #We could also have local cameras (cam_animatic and/or cam_sq####_sh####)
+        cams = pc.ls('*_cam_*:*', type='camera')
+        cams.extend(pc.ls('cam_*:*', type='camera'))
+        for cam in cams:
+            #print "cam " + str(cam)
+            camRoot = getRoot(cam)
+            #print "camRoot " + str(camRoot)
+            camParent = camRoot.getParent()
+            if (camParent is None) or (camParent.name() != structure['cam']):
+                #print camRoot, structure['cam']
+                pc.parent(camRoot, structure['cam'])
+    finally:
+        if oShotCam and bWasLocked:
+            setShotCamLocked(oShotCam, True)
 
 def getCameraRig():
     camInfo = {}
@@ -897,19 +907,6 @@ def initShotSceneFrom(damShot, sCurScnRc, sSrcScnRc, **kwargs):
         pc.displayInfo(e)
 
     pc.refresh()
-
-def assertTaskIsFinal(damShot, sTask, step="", sgEntity=None, critical=True):
-
-    sgTask = damShot.getSgTask(sTask, step, sgEntity=sgEntity, fail=True)
-    if sgTask["sg_status_list"] == "fin":
-        return True
-
-    err = AssertionError("Status of the {} task is not final yet."
-                         .format("|".join(s for s in (step, sTask) if s)))
-    if critical:
-        raise err
-
-    promptToContinue(err)
 
 def loadRenderRefsFromCaches(damShot, sSpace):
 

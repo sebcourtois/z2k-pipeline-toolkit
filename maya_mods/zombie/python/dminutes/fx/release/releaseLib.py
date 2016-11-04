@@ -6,6 +6,7 @@ print '[FXLIBS] - Loading Lib : releaseLib'
 def createReleaseGroup(type,variant):
 	'''
 		create standard release group
+		TODO : add all selected to group and name the group
 	'''
 	fx3 = cmds.group(em=True,n='fx3_'+type+'_'+variant)
 	geo = cmds.group(em=True,n='geo_grp')
