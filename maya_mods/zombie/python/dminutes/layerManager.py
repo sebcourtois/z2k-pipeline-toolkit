@@ -44,7 +44,8 @@ class LayerManager:
     def initRndItem(self, rndItemL = None):
         self.log.funcName ="'initRndItem' "
 
-        self.allRndObjL = mc.ls("geo_*", type="transform") + mc.ls("*:geo_*", type="transform") + mc.ls("*:*:geo_*", type="transform") + mc.ls("vol_*", type="transform") + mc.ls("*:vol_*", type="transform") + mc.ls("*:*:vol_*", type="transform")
+        self.allRndObjL = mc.ls("geo_*", type="transform") + mc.ls("*:geo_*", type="transform") + mc.ls("*:*:geo_*", type="transform") + mc.ls("vol_*", type="transform") + mc.ls("*:vol_*", type="transform") + mc.ls("*:*:vol_*", type="transform")+ mc.ls("col_*", type="transform") + mc.ls("*:col_*", type="transform") + mc.ls("*:*:col_*", type="transform")
+        for each in self.allRndObjL:
         for each in self.allRndObjL:
             if "env_" in each:
                 self.envRndObjL.append(each)
