@@ -70,7 +70,7 @@ def importFinalLayoutLight( gui=True, lgtRig="lgt_finalLayout_directional01"):
     log = miscUtils.LogBuilder(gui=gui, funcName ="createFinalLayoutLight")
 
     if mc.ls("|shot"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = mc.file(q=True, sn=True)
         mainFilePathElem = mainFilePath.split("/")
         assetName = mainFilePathElem[-2]
         assetType = mainFilePathElem[-3]
