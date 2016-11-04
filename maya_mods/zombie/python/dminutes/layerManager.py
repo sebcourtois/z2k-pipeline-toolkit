@@ -527,7 +527,6 @@ def setUtlAovs() :
         pass
 
     pm.connectAttr('alUtls.outColor', 'aiAOV_uvs.defaultValue', force=True)
-    pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
 
     if not pm.objExists('aiAOVDriverP32') == True:
         pm.createNode('aiAOVDriver', n='aiAOVDriverP32', skipSelect=True)
@@ -536,8 +535,8 @@ def setUtlAovs() :
     else:
         pass
 
-    pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_P.outputs[0].filter', f=True)
     pm.connectAttr('aiAOVDriverP32.aiTranslator', 'aiAOV_P.outputs[0].driver', f=True)
+    pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
 
 def setUtl32Aovs() :
     aovs.AOVInterface()
@@ -550,13 +549,16 @@ def setUtl32Aovs() :
     else:
         pass
 
+    pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
     aovsL = defRenderOpt.aovs.get()
+
     [aov.attr('enabled').set(False) for aov in aovsL if aov.attr('name').get() == 'crypto_object' and aov.attr('enabled').get() == 1]
     #[aov.attr('enabled').set(False) for aov in aovsL if aov.attr('name').get() == 'P' and aov.attr('enabled').get() == 1]
     pm.editRenderLayerAdjustment('aiAOV_*.enabled')
     [aov.attr('enabled').set(False) for aov in aovsL]
     [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'P']
     pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_P.outputs[0].filter', f=True)
+
     #[aov.attr('enabled').set(False) for aov in aovsL if aov.attr('name').get() == 'crypto_object']
     #pm.editRenderLayerAdjustment('defaultArnoldDriver.halfPrecision')
     #pm.setAttr('defaultArnoldDriver.halfPrecision', 0)
