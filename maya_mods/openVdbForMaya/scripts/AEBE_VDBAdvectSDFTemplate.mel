@@ -1,0 +1,157 @@
+
+
+global proc
+AEBE_VDBAdvectSDFTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Advect SDF" -collapse 0;
+          //  editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBAdvectSDFGridSelectionSource" "replaceBE_VDBAdvectSDFGridSelectionSource" "VdbAllGridNamesSource";
+			editorTemplate -callCustom "newBE_VDBAdvectSDFGridSelectionVelocity" "replaceBE_VDBAdvectSDFGridSelectionVelocity" "VdbAllGridNamesVelocity";
+
+
+            editorTemplate -addSeparator;
+
+            editorTemplate -beginLayout "Advection" -collapse 0;
+			editorTemplate -addControl "TimeStep";
+			editorTemplate -addControl "SpatialScheme";
+			editorTemplate -addControl "TemporalScheme";
+			editorTemplate -endLayout;
+
+			editorTemplate -beginLayout "Renormalization" -collapse 0;
+			editorTemplate -addControl "Steps";
+			editorTemplate -label "SpatialScheme" -addControl "TrackerSpatialScheme";
+			editorTemplate -label "TemporalScheme" -addControl "TrackerTemporalScheme";
+			editorTemplate -endLayout;
+
+            }
+       // editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBAdvectSDFGridSelectionSource(string $attr)
+{
+    optionMenu
+        -label "Source "
+        -width 300
+        -changeCommand ("updateBE_VDBAdvectSDFGridSelectionSource( \""+$attr+"\" )")
+        vdbGridNameMenuSource;
+
+    replaceBE_VDBAdvectSDFGridSelectionSource($attr);
+}
+
+global proc replaceBE_VDBAdvectSDFGridSelectionSource(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBAdvectSDFGridSelectionSource( \""+$attr+"\" )") vdbGridNameMenuSource;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesSource"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuSource`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuSource;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuSource;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBAdvectSDFGridSelectionSource(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuSource`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesSource"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+//////////////////////////////////////////////////////////////////////////////// Target
+global proc newBE_VDBAdvectSDFGridSelectionVelocity(string $attr)
+{
+    optionMenu
+        -label "Velocity"
+        -width 300
+        -changeCommand ("updateBE_VDBAdvectSDFGridSelectionVelocity( \""+$attr+"\" )")
+        vdbGridNameMenuVelocity;
+
+    replaceBE_VDBAdvectSDFGridSelectionVelocity($attr);
+}
+
+global proc replaceBE_VDBAdvectSDFGridSelectionVelocity(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBAdvectSDFGridSelectionVelocity( \""+$attr+"\" )") vdbGridNameMenuVelocity;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesVelocity"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuVelocity`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuVelocity;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuVelocity;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBAdvectSDFGridSelectionVelocity(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuVelocity`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesVelocity"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+

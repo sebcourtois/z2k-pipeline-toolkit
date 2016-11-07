@@ -1,0 +1,207 @@
+
+
+global proc
+AEBE_VDBVectorMergeTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Vector Merge" -collapse 0;
+          //  editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBVectorMergeGridSelectionX" "replaceBE_VDBVectorMergeGridSelectionX" "VdbAllGridNamesX";
+			editorTemplate -callCustom "newBE_VDBVectorMergeGridSelectionY" "replaceBE_VDBVectorMergeGridSelectionY" "VdbAllGridNamesY";
+            editorTemplate -callCustom "newBE_VDBVectorMergeGridSelectionZ" "replaceBE_VDBVectorMergeGridSelectionZ" "VdbAllGridNamesZ";
+
+            editorTemplate -addSeparator;
+
+			editorTemplate -addControl "UseBaseNameXVDB";
+			editorTemplate -addControl "MergedVDBName";
+			editorTemplate -addControl "VectorType";
+			editorTemplate -addControl "RemoveSourceVDBs";
+			editorTemplate -addControl "CopyInactiveValues";
+
+            }
+       // editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBVectorMergeGridSelectionX(string $attr)
+{
+    optionMenu
+        -label "X Group"
+        -width 300
+        -changeCommand ("updateBE_VDBVectorMergeGridSelectionX( \""+$attr+"\" )")
+        vdbGridNameMenuX;
+
+    replaceBE_VDBVectorMergeGridSelectionX($attr);
+}
+
+global proc replaceBE_VDBVectorMergeGridSelectionX(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBVectorMergeGridSelectionX( \""+$attr+"\" )") vdbGridNameMenuX;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesX"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuX`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuX;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuX;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBVectorMergeGridSelectionX(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuX`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesX"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+//////////////////////////////////////////////////////////////////////////////// Target
+global proc newBE_VDBVectorMergeGridSelectionY(string $attr)
+{
+    optionMenu
+        -label "Y Group"
+        -width 300
+        -changeCommand ("updateBE_VDBVectorMergeGridSelectionY( \""+$attr+"\" )")
+        vdbGridNameMenuY;
+
+    replaceBE_VDBVectorMergeGridSelectionY($attr);
+}
+
+global proc replaceBE_VDBVectorMergeGridSelectionY(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBVectorMergeGridSelectionY( \""+$attr+"\" )") vdbGridNameMenuY;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesY"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuY`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuY;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuY;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBVectorMergeGridSelectionY(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuY`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesY"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+//////////////////////////////////////////////////////////////////////////////// AlphaMask
+global proc newBE_VDBVectorMergeGridSelectionZ(string $attr)
+{
+    optionMenu
+        -label "Z Group"
+        -width 300
+        -changeCommand ("updateBE_VDBVectorMergeGridSelectionZ( \""+$attr+"\" )")
+        vdbGridNameMenuZ;
+
+    replaceBE_VDBVectorMergeGridSelectionZ($attr);
+}
+
+global proc replaceBE_VDBVectorMergeGridSelectionZ(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBVectorMergeGridSelectionZ( \""+$attr+"\" )") vdbGridNameMenuZ;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesZ"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuZ`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuZ;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuZ;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBVectorMergeGridSelectionZ(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuZ`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesZ"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}

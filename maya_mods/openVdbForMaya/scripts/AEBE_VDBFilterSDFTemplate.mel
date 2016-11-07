@@ -1,0 +1,184 @@
+global proc AEBE_VDBFilterSDFTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+
+        editorTemplate -beginLayout "BE_VDB FilterSDF" -collapse 0;
+
+        editorTemplate -callCustom "newBE_VDBFilterSDFGridSelectionSource" "replaceBE_VDBFilterSDFGridSelectionSource" "VdbAllGridNames";
+		editorTemplate -callCustom "newBE_VDBFilterSDFGridSelectionMask" "replaceBE_VDBFilterSDFGridSelectionMask" "VdbAllGridNamesMask";
+
+        editorTemplate -addSeparator;
+
+        editorTemplate -addControl "Filter" "AEAT_BE_VDBFilterSDFUpdateEnabled";
+        editorTemplate -addControl "FilterVoxelRadius";
+        editorTemplate -addControl "Iterations";
+        editorTemplate -addControl "Offset";
+        editorTemplate -addControl "RenormAccuracy";
+        editorTemplate -addControl "Mask" "AEAT_BE_VDBMaskUpdateEnabled";
+        editorTemplate -addControl "InvertAlphaMask" "AEAT_BE_VDBMaskUpdateEnabled";
+        editorTemplate -addControl "MinMaskCutoff" "AEAT_BE_VDBMaskUpdateEnabled";
+		editorTemplate -addControl "MaxMaskCutoff" "AEAT_BE_VDBMaskUpdateEnabled";
+        editorTemplate -endLayout;
+	    editorTemplate -addExtraControls;
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc
+AEAT_BE_VDBFilterSDFUpdateEnabled( string $node )
+{
+    int $operation = `getAttr ($node+".Filter")`;
+
+    if ($operation == 3 || $operation == 4 ) {
+        editorTemplate -dimControl $node "FilterVoxelRadius" 1;
+
+    } else {
+        editorTemplate -dimControl $node "FilterVoxelRadius" 0;
+    }
+
+    if ($operation < 5) {
+//        editorTemplate -dimControl $node "FilterVoxelRadius" 0;
+        editorTemplate -dimControl $node "Iterations" 0;
+        editorTemplate -dimControl $node "Offset" 1;
+    } else {
+        editorTemplate -dimControl $node "FilterVoxelRadius" 1;
+        editorTemplate -dimControl $node "Iterations" 1;
+        editorTemplate -dimControl $node "Offset" 0;
+    }
+}
+global proc
+AEAT_BE_VDBMaskUpdateEnabled( string $node )
+{
+    int $operation = `getAttr ($node+".Mask")`;
+          
+    if ($operation == 0) {
+        editorTemplate -dimControl $node "InvertAlphaMask" 1;
+        editorTemplate -dimControl $node "MinMaskCutoff" 1;
+        editorTemplate -dimControl $node "MaxMaskCutoff" 1;
+    } else {
+        editorTemplate -dimControl $node "InvertAlphaMask" 0;
+        editorTemplate -dimControl $node "MinMaskCutoff" 0;
+        editorTemplate -dimControl $node "MaxMaskCutoff" 0;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBFilterSDFGridSelectionSource(string $attr)
+{
+    optionMenu
+        -label "Source"
+        -width 300
+        -changeCommand ("updateBE_VDBFilterSDFGridSelectionSource( \""+$attr+"\" )")
+        vdbGridNameMenuSourceFilterSDF;
+
+    replaceBE_VDBFilterSDFGridSelectionSource($attr);
+}
+
+global proc replaceBE_VDBFilterSDFGridSelectionSource(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBFilterSDFGridSelectionSource( \""+$attr+"\" )") vdbGridNameMenuSourceFilterSDF;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNames"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuSourceFilterSDF`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuSourceFilterSDF;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuSourceFilterSDF;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBFilterSDFGridSelectionSource(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuSourceFilterSDF`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNames"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+
+//////////////////////////////////////////////////////////////////////////////// AlphaMask
+global proc newBE_VDBFilterSDFGridSelectionMask(string $attr)
+{
+    optionMenu
+        -label "Mask   "
+        -width 300
+        -changeCommand ("updateBE_VDBFilterSDFGridSelectionMask( \""+$attr+"\" )")
+        vdbGridNameMenuMaskFilterSDF;
+
+    replaceBE_VDBFilterSDFGridSelectionMask($attr);
+}
+
+global proc replaceBE_VDBFilterSDFGridSelectionMask(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBFilterSDFGridSelectionMask( \""+$attr+"\" )") vdbGridNameMenuMaskFilterSDF;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesMask"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuMaskFilterSDF`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuMaskFilterSDF;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuMaskFilterSDF;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBFilterSDFGridSelectionMask(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuMaskFilterSDF`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesMask"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+

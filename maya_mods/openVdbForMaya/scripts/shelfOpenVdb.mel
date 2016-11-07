@@ -1,0 +1,366 @@
+
+global proc shelfOpenVdb() {
+	
+global string $gShelfTopLevel;	
+string $currentShelf = `tabLayout -q -st $gShelfTopLevel`;	
+if(`shelfButton -p OpenVdb -exists shelfButton1`&& $currentShelf == "OpenVdb") 
+deleteUI  -control shelfButton1;
+shelfTabRefresh;
+
+if(`shelfButton -exists sh1`) deleteUI -control sh1;
+shelfTabRefresh;
+
+if (!`shelfLayout -q -ex OpenVdb`) return;
+
+shelfButton -p OpenVdb -image1 "OpenVdbNode.xpm" -command "shelfOpenVdb" sh1;
+// add popup menu
+popupMenu -button 1 OpenVdbMenu;
+menuItem -divider true;
+
+menuItem -p OpenVdbMenu -l "BE_VDBRead" -command "BE_VDBRead";
+menuItem -p OpenVdbMenu -l "BE_VDBWrite" -command "BE_VDBWrite";
+menuItem -p OpenVdbMenu -l "BE_VDBCopy" -command "BE_VDBCopy";
+menuItem -p OpenVdbMenu -l "BE_VDBSwitch" -command "BE_VDBSwitch";
+menuItem -p OpenVdbMenu -l "BE_VDBActivate" -command "BE_VDBActivate";
+menuItem -p OpenVdbMenu -l "BE_VDBAdvect" -command "BE_VDBAdvect";
+menuItem -p OpenVdbMenu -l "BE_VDBAdvectSDF" -command "BE_VDBAdvectSDF";
+menuItem -p OpenVdbMenu -l "BE_VDBAdvectPoints" -command "BE_VDBAdvectPoints";
+menuItem -p OpenVdbMenu -l "BE_VDBAnalysis" -command "BE_VDBAnalysis";
+menuItem -p OpenVdbMenu -l "BE_VDBClip" -command "BE_VDBClip";
+menuItem -p OpenVdbMenu -l "BE_VDBCombine" -command "BE_VDBCombine";
+menuItem -p OpenVdbMenu -l "BE_VDBConvertVDB" -command "BE_VDBConvertVDB";
+menuItem -p OpenVdbMenu -l "BE_VDBFill" -command "BE_VDBFill";
+menuItem -p OpenVdbMenu -l "BE_VDBFilter" -command "BE_VDBFilter";
+menuItem -p OpenVdbMenu -l "BE_VDBFilterSDF" -command "BE_VDBFilterSDF";
+menuItem -p OpenVdbMenu -l "BE_VDBFlowNoise" -command "BE_VDBFlowNoise";
+menuItem -p OpenVdbMenu -l "BE_VDBFracture" -command "BE_VDBFracture";
+menuItem -p OpenVdbMenu -l "BE_VDBFromMask" -command "BE_VDBFromMask";
+menuItem -p OpenVdbMenu -l "BE_VDBFromMayaFluid" -command "BE_VDBFromMayaFluid";
+menuItem -p OpenVdbMenu -l "BE_VDBFromParticles" -command "BE_VDBFromParticles";
+menuItem -p OpenVdbMenu -l "BE_VDBFromPolygons" -command "BE_VDBFromPolygons";
+menuItem -p OpenVdbMenu -l "BE_VDBGetData" -command "BE_VDBGetData";
+menuItem -p OpenVdbMenu -l "BE_VDBMorphSDF" -command "BE_VDBMorphSDF";
+menuItem -p OpenVdbMenu -l "BE_VDBRay" -command "BE_VDBRay";
+menuItem -p OpenVdbMenu -l "BE_VDBRename" -command "BE_VDBRename";
+menuItem -p OpenVdbMenu -l "BE_VDBResample" -command "BE_VDBResample";
+menuItem -p OpenVdbMenu -l "BE_VDBRemap" -command "BE_VDBRemap";
+menuItem -p OpenVdbMenu -l "BE_VDBRebuildLevelSet" -command "BE_VDBRebuildLevelSet";
+menuItem -p OpenVdbMenu -l "BE_VDBRemoveDivergence" -command "BE_VDBRemoveDivergence";
+menuItem -p OpenVdbMenu -l "BE_VDBScatter" -command "BE_VDBScatter";
+menuItem -p OpenVdbMenu -l "BE_VDBSetData" -command "BE_VDBSetData";
+menuItem -p OpenVdbMenu -l "BE_VDBAttributeFromVDB" -command "BE_VDBAttributeFromVDB";
+menuItem -p OpenVdbMenu -l "BE_VDBTopologyMask" -command "BE_VDBTopologyMask";
+menuItem -p OpenVdbMenu -l "BE_VDBTransform" -command "BE_VDBTransform";
+menuItem -p OpenVdbMenu -l "BE_VDBLOD" -command "BE_VDBLOD";
+menuItem -p OpenVdbMenu -l "BE_VDBVectorMerge" -command "BE_VDBVectorMerge";
+menuItem -p OpenVdbMenu -l "BE_VDBVectorSplit" -command "BE_VDBVectorSplit";
+menuItem -p OpenVdbMenu -l "BE_VDBVisualize" -command "BE_VDBVisualize";
+menuItem -p OpenVdbMenu -l "BE_VDBArnoldRender" -command "BE_VDBArnoldRender";
+
+menuItem -p OpenVdbMenu -l "BE_MathFlt" -command "BE_MathFlt";
+menuItem -p OpenVdbMenu -l "BE_MathVec" -command "BE_MathVec";
+menuItem -p OpenVdbMenu -l "BE_Fit" -command "BE_Fit";
+menuItem -p OpenVdbMenu -l "BE_Ramp" -command "BE_Ramp";
+menuItem -p OpenVdbMenu -l "BE_Switch" -command "BE_Switch";
+menuItem -p OpenVdbMenu -l "BE_FloatToVector" -command "BE_FloatToVector";
+menuItem -p OpenVdbMenu -l "BE_VectorToFloat" -command "BE_VectorToFloat";
+menuItem -p OpenVdbMenu -l "BE_SetPoints" -command "BE_SetPoints";
+menuItem -p OpenVdbMenu -l "BE_TurbulenceNoise" -command "BE_TurbulenceNoise";
+menuItem -p OpenVdbMenu -l "BE_AntiAliasedFlowNoise" -command "BE_AntiAliasedFlowNoise";
+menuItem -p OpenVdbMenu -l "BE_WorleyNoise" -command "BE_WorleyNoise";
+
+menuItem -p OpenVdbMenu -l "InsertFracture" -command "InsertFracture";
+
+setParent..;
+}
+
+
+global proc BE_VDBRead()
+{
+createNode  BE_VDBRead;
+}
+
+global proc BE_VDBWrite()
+{
+createNode  BE_VDBWrite;
+}
+
+global proc BE_VDBCopy()
+{
+createNode  BE_VDBCopy;
+}
+
+global proc BE_VDBSwitch()
+{
+createNode  BE_VDBSwitch;
+}
+
+global proc BE_VDBActivate()
+{
+createNode  BE_VDBActivate;
+}
+
+global proc BE_VDBAdvect()
+{
+createNode  BE_VDBAdvect;
+}
+
+global proc BE_VDBAdvectSDF()
+{
+createNode  BE_VDBAdvectSDF;
+}
+
+global proc BE_VDBAdvectPoints()
+{
+createNode  BE_VDBAdvectPoints;
+}
+
+global proc BE_VDBAnalysis()
+{
+createNode  BE_VDBAnalysis;
+}
+
+global proc BE_VDBClip()
+{
+createNode  BE_VDBClip;
+}
+
+global proc BE_VDBCombine()
+{
+createNode  BE_VDBCombine;
+}
+
+global proc BE_VDBConvertVDB()
+{
+createNode  BE_VDBConvertVDB;
+}
+
+global proc BE_VDBFill()
+{
+createNode  BE_VDBFill;
+}
+
+global proc BE_VDBFilter()
+{
+createNode  BE_VDBFilter;
+}
+
+global proc BE_VDBFilterSDF()
+{
+createNode  BE_VDBFilterSDF;
+}
+
+global proc BE_VDBFlowNoise()
+{
+createNode  BE_VDBFlowNoise;
+}
+
+global proc BE_VDBFracture()
+{
+createNode  BE_VDBFracture;
+}
+
+global proc BE_VDBFromMask()
+{
+createNode  BE_VDBFromMask;
+}
+
+global proc BE_VDBFromMayaFluid()
+{
+createNode  BE_VDBFromMayaFluid;
+}
+
+global proc BE_VDBFromParticles()
+{
+createNode  BE_VDBFromParticles;
+}
+
+global proc BE_VDBFromPolygons()
+{
+createNode  BE_VDBFromPolygons;
+}
+
+global proc BE_VDBGetData()
+{
+createNode  BE_VDBGetData;
+}
+
+global proc BE_VDBMorphSDF()
+{
+createNode  BE_VDBMorphSDF;
+}
+
+global proc BE_VDBRay()
+{
+createNode  BE_VDBRay;
+}
+
+global proc BE_VDBRename()
+{
+createNode  BE_VDBRename;
+}
+
+global proc BE_VDBResample()
+{
+createNode  BE_VDBResample;
+}
+
+global proc BE_VDBRemap()
+{
+createNode  BE_VDBRemap;
+}
+
+global proc BE_VDBRebuildLevelSet()
+{
+createNode  BE_VDBRebuildLevelSet;
+}
+
+global proc BE_VDBRemoveDivergence()
+{
+createNode  BE_VDBRemoveDivergence;
+}
+
+global proc BE_VDBScatter()
+{
+createNode  BE_VDBScatter;
+}
+
+global proc BE_VDBSetData()
+{
+createNode  BE_VDBSetData;
+}
+
+global proc BE_VDBAttributeFromVDB()
+{
+createNode  BE_VDBAttributeFromVDB;
+}
+
+global proc BE_VDBTopologyMask()
+{
+createNode  BE_VDBTopologyMask;
+}
+
+global proc BE_VDBTransform()
+{
+createNode  BE_VDBTransform;
+}
+
+global proc BE_VDBLOD()
+{
+createNode  BE_VDBLOD;
+}
+
+global proc BE_VDBVectorMerge()
+{
+createNode  BE_VDBVectorMerge;
+}
+
+global proc BE_VDBVectorSplit()
+{
+createNode  BE_VDBVectorSplit;
+}
+
+global proc BE_VDBVisualize()
+{
+string $visNode = `createNode -n "BE_VDBVisualizeShape#" BE_VDBVisualize`;
+string $VDBRead = `createNode  BE_VDBRead`;
+connectAttr ($VDBRead+".vdb") ($visNode+".input");
+select $VDBRead;
+}
+
+global proc BE_VDBArnoldRender()
+{
+BE_VDBArnoldRenderCreate;
+}
+
+global proc BE_MathFlt()
+{
+createNode  BE_MathFlt;
+}
+
+global proc BE_MathVec()
+{
+createNode  BE_MathVec;
+}
+
+global proc BE_Fit()
+{
+createNode  BE_Fit;
+}
+
+global proc BE_Ramp()
+{
+createNode  BE_Ramp;
+}
+
+global proc BE_Switch()
+{
+createNode  BE_Switch;
+}
+
+global proc BE_FloatToVector()
+{
+createNode  BE_FloatToVector;
+}
+
+global proc BE_VectorToFloat()
+{
+createNode  BE_VectorToFloat;
+}
+
+global proc BE_SetPoints()
+{
+createNode  BE_SetPoints;
+}
+
+global proc BE_TurbulenceNoise()
+{
+createNode  BE_TurbulenceNoise;
+}
+
+global proc BE_AntiAliasedFlowNoise()
+{
+createNode  BE_AntiAliasedFlowNoise;
+}
+
+global proc BE_WorleyNoise()
+{
+createNode  BE_WorleyNoise;
+}
+
+///////////////////////////////////////////////
+global proc InsertFracture()
+{
+string $selFracture[]=`ls -sl`;
+int $lastSelect = size($selFracture[0]);
+string $tipe;
+int $frgCount;
+if($lastSelect > 0)
+$tipe = `nodeType $selFracture[0]`;
+$frgCount = getAttr($selFracture[0]+".FragmentCount");
+
+if($tipe == "BE_VDBFracture")
+{
+  string $Convert = `createNode  BE_VDBConvertVDB`;
+  connectAttr -force ($selFracture[0]+".VdbOutput") ($Convert+".vdbInput");
+  setAttr ($Convert+".ConvertTo") 1;
+  setAttr ($Convert+".InvertNormal") 1;
+  print( $selFracture[0]);
+  for($i = 0;$i < $frgCount;++$i)
+  {
+    string $Mesh = `createNode  mesh`;
+    sets -e -forceElement initialShadingGroup;
+    connectAttr -force BE_VDBConvertVDB1.meshOutput[$i] ($Mesh+".inMesh");
+    
+  }
+}
+else
+{
+  warning "No BE_VDBFracture selected";
+}
+}
+
+
+shelfOpenVdb;
+
+

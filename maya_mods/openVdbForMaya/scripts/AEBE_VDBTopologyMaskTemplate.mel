@@ -1,0 +1,86 @@
+
+
+global proc
+AEBE_VDBTopologyMaskTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB TopologyMask" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBTopologyMaskGridSelection" "replaceBE_VDBTopologyMaskGridSelection" "VdbAllGridNamesTopologyMask";
+            
+            editorTemplate -addSeparator;
+
+            editorTemplate -addControl "Mode";
+            editorTemplate -addControl "VoxelSize";
+
+            }
+            
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc newBE_VDBTopologyMaskGridSelection(string $attr)
+{
+    optionMenu
+        -label "VDB Grid Name:"
+        -width 300
+        -changeCommand ("updateBE_VDBTopologyMaskGridSelection( \""+$attr+"\" )")
+        vdbGridNameMenuTopologyMask;
+
+    replaceBE_VDBTopologyMaskGridSelection($attr);
+}
+
+global proc replaceBE_VDBTopologyMaskGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBTopologyMaskGridSelection( \""+$attr+"\" )") vdbGridNameMenuTopologyMask;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesTopologyMask"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuTopologyMask`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuTopologyMask;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuTopologyMask;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBTopologyMaskGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuTopologyMask`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesTopologyMask"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}

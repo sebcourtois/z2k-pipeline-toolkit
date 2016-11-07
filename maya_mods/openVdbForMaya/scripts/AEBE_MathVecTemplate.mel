@@ -1,0 +1,22 @@
+
+
+global proc
+AEBE_MathVecTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_MathVec" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+              editorTemplate -addControl "Mode";
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+

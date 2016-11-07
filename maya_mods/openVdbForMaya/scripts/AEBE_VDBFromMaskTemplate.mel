@@ -1,0 +1,89 @@
+
+
+global proc
+AEBE_VDBFromMaskTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB FromMask" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBFromMaskGridSelection" "replaceBE_VDBFromMaskGridSelection" "VdbAllGridNamesFromMask";
+            
+            editorTemplate -addSeparator;
+
+            editorTemplate -addControl "DistanceVDB";
+            editorTemplate -addControl "DensityVDB";
+            editorTemplate -addControl "HalfBand";
+            editorTemplate -addControl "VoxelDilation";
+            editorTemplate -addControl "ClosingWidth";
+            editorTemplate -addControl "SmoothingSteps";
+
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc newBE_VDBFromMaskGridSelection(string $attr)
+{
+    optionMenu
+        -label "VDB Grid Name:"
+        -width 300
+        -changeCommand ("updateBE_VDBFromMaskGridSelection( \""+$attr+"\" )")
+        vdbGridNameMenuFromMask;
+
+    replaceBE_VDBFromMaskGridSelection($attr);
+}
+
+global proc replaceBE_VDBFromMaskGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBFromMaskGridSelection( \""+$attr+"\" )") vdbGridNameMenuFromMask;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesFromMask"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuFromMask`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuFromMask;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuFromMask;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBFromMaskGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuFromMask`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesFromMask"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}

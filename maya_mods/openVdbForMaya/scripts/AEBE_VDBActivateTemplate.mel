@@ -1,0 +1,236 @@
+
+
+global proc
+AEBE_VDBActivateTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Activate" -collapse 0;
+            {
+
+            editorTemplate -callCustom "newBE_VDBActivateGridSelectionSource" "replaceBE_VDBActivateGridSelectionSource" "VdbAllGridNamesSourceActivate";
+            editorTemplate -addSeparator;
+            editorTemplate -label "Operation" -addControl "Operations";
+	    editorTemplate -addControl "Value";
+	    editorTemplate -addControl "Dense";
+	    editorTemplate -addSeparator;
+	    editorTemplate -addControl "Mode" "AEAT_ActivateUpdateEnabled";
+
+	    editorTemplate -beginLayout "Position" -collapse 0;
+            editorTemplate -addControl "Center" "AEAT_ActivateUpdateEnabled";
+	    editorTemplate -addControl "Size" "AEAT_ActivateUpdateEnabled";
+	    editorTemplate -endLayout;
+
+	    editorTemplate -beginLayout "Voxel" -collapse 0;
+            editorTemplate -addControl "Min" "AEAT_ActivateUpdateEnabled";
+	    editorTemplate -addControl "Max" "AEAT_ActivateUpdateEnabled";
+	    editorTemplate -endLayout;
+
+	    editorTemplate -beginLayout "Expand" -collapse 0;
+            editorTemplate -addControl "VoxelsToExpand" "AEAT_ActivateUpdateEnabled";
+	    editorTemplate -endLayout;
+
+	    editorTemplate -beginLayout "Reference" -collapse 0;
+            editorTemplate -label "Activate Using VDBs" -addControl "ReferenceVDB" "AEAT_ActivateUpdateEnabled";
+            editorTemplate -callCustom "newBE_VDBActivateGridSelectionReference" "replaceBE_VDBActivateGridSelectionReference" "VdbAllGridNamesReferenceActivate";
+	    editorTemplate -addSeparator;
+	    editorTemplate -addControl "BBoxMin" "AEAT_ActivateUpdateEnabled";
+	    editorTemplate -addControl "BBoxMax" "AEAT_ActivateUpdateEnabled";
+	    editorTemplate -endLayout;
+
+	    editorTemplate -beginLayout "Deactivate" -collapse 0;
+	    editorTemplate -endLayout;
+
+            editorTemplate -label "Prune" -addControl "PruneTolerance";
+	    editorTemplate -label "PruneTolerance" -addControl "Tolerance";
+
+	    editorTemplate -endLayout;
+
+            }
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+global proc
+AEAT_ActivateUpdateEnabled( string $node )
+{
+
+    int $Mode = `getAttr ($node+".Mode")`;
+
+    if ($Mode == 0) 
+	{
+        editorTemplate -dimControl $node "Center" 0;
+	editorTemplate -dimControl $node "Size" 0;	
+        editorTemplate -dimControl $node "Min" 1;
+	editorTemplate -dimControl $node "Max" 1;
+        editorTemplate -dimControl $node "VoxelsToExpand" 1;
+        editorTemplate -dimControl $node "ReferenceVDB" 1;
+	editorTemplate -dimControl $node "BBoxMin" 1;
+	editorTemplate -dimControl $node "BBoxMax" 1;
+	}
+    if ($Mode == 1) 
+	{
+        editorTemplate -dimControl $node "Center" 1;
+	editorTemplate -dimControl $node "Size" 1;
+        editorTemplate -dimControl $node "Min" 0;
+	editorTemplate -dimControl $node "Max" 0;	
+        editorTemplate -dimControl $node "VoxelsToExpand" 1;
+        editorTemplate -dimControl $node "ReferenceVDB" 1;
+	editorTemplate -dimControl $node "BBoxMin" 1;
+	editorTemplate -dimControl $node "BBoxMax" 1;	
+	}
+    if ($Mode == 2) 
+	{
+        editorTemplate -dimControl $node "Center" 1;
+	editorTemplate -dimControl $node "Size" 1;
+        editorTemplate -dimControl $node "Min" 1;
+	editorTemplate -dimControl $node "Max" 1;	
+        editorTemplate -dimControl $node "VoxelsToExpand" 0;
+        editorTemplate -dimControl $node "ReferenceVDB" 1;
+	editorTemplate -dimControl $node "BBoxMin" 1;
+	editorTemplate -dimControl $node "BBoxMax" 1;	
+	}
+    if ($Mode == 3) 
+	{
+        editorTemplate -dimControl $node "Center" 1;
+	editorTemplate -dimControl $node "Size" 1;
+        editorTemplate -dimControl $node "Min" 1;
+	editorTemplate -dimControl $node "Max" 1;	
+        editorTemplate -dimControl $node "VoxelsToExpand" 1;
+        editorTemplate -dimControl $node "ReferenceVDB" 0;
+	editorTemplate -dimControl $node "BBoxMin" 0;
+	editorTemplate -dimControl $node "BBoxMax" 0;	
+	}
+    if ($Mode == 4) 
+	{
+        editorTemplate -dimControl $node "Center" 1;
+	editorTemplate -dimControl $node "Size" 1;
+        editorTemplate -dimControl $node "Min" 1;
+	editorTemplate -dimControl $node "Max" 1;	
+        editorTemplate -dimControl $node "VoxelsToExpand" 1;
+        editorTemplate -dimControl $node "ReferenceVDB" 1;
+	editorTemplate -dimControl $node "BBoxMin" 1;
+	editorTemplate -dimControl $node "BBoxMax" 1;	
+	}	
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBActivateGridSelectionSource(string $attr)
+{
+    optionMenu
+        -label "Source "
+        -width 300
+        -changeCommand ("updateBE_VDBActivateGridSelectionSource( \""+$attr+"\" )")
+        vdbGridNameMenuSourceActivate;
+
+    replaceBE_VDBActivateGridSelectionSource($attr);
+}
+
+global proc replaceBE_VDBActivateGridSelectionSource(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBActivateGridSelectionSource( \""+$attr+"\" )") vdbGridNameMenuSourceActivate;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesSourceActivate"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuSourceActivate`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuSourceActivate;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuSourceActivate;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBActivateGridSelectionSource(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuSourceActivate`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesSourceActivate"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+//////////////////////////////////////////////////////////////////////////////// Reference
+global proc newBE_VDBActivateGridSelectionReference(string $attr)
+{
+    optionMenu
+        -label "Reference"
+        -width 300
+        -changeCommand ("updateBE_VDBActivateGridSelectionReference( \""+$attr+"\" )")
+        vdbGridNameMenuReferenceActivate;
+
+    replaceBE_VDBActivateGridSelectionReference($attr);
+}
+
+global proc replaceBE_VDBActivateGridSelectionReference(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBActivateGridSelectionReference( \""+$attr+"\" )") vdbGridNameMenuReferenceActivate;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesReferenceActivate"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuReferenceActivate`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuReferenceActivate;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuReferenceActivate;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBActivateGridSelectionReference(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuReferenceActivate`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesReferenceActivate"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}

@@ -1,0 +1,139 @@
+
+
+global proc
+AEBE_VDBScatterTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Scatter" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBScatterGridSelection" "replaceBE_VDBScatterGridSelection" "vdbAllGridNamesScatr";
+            
+            editorTemplate -addSeparator;
+
+            editorTemplate -addControl "Generate" "AEAT_ScatterUpdateEnabled";
+
+            editorTemplate -addControl "DensityScale" "AEAT_ScatterUpdateEnabled";                
+
+            editorTemplate -addControl "ForseTotalCount" "AEAT_ScatterUpdateEnabled";
+
+            editorTemplate -addControl "PerVoxelScale" "AEAT_ScatterUpdateEnabled";
+
+            editorTemplate -addControl "MaxPoints";				
+
+            editorTemplate -addControl "GlobalSeed";
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+
+global proc
+AEAT_ScatterUpdateEnabled( string $node )
+{
+
+    int $Generate = `getAttr ($node+".Generate")`;
+
+    if ($Generate == 0) 
+	{
+        editorTemplate -dimControl $node "DensityScale" 1;
+		editorTemplate -dimControl $node "PerVoxelScale" 1;
+		editorTemplate -dimControl $node "ForseTotalCount" 0;
+	}
+	else
+	{
+	    editorTemplate -dimControl $node "DensityScale" 0;
+        editorTemplate -dimControl $node "PerVoxelScale" 1;
+        editorTemplate -dimControl $node "ForseTotalCount" 1;
+	}		
+
+    if ($Generate == 1) 
+	{
+        editorTemplate -dimControl $node "ForseTotalCount" 1;
+		editorTemplate -dimControl $node "PerVoxelScale" 1;
+		editorTemplate -dimControl $node "DensityScale" 0;
+	}
+	else
+	{
+	    editorTemplate -dimControl $node "ForseTotalCount" 0;
+        editorTemplate -dimControl $node "PerVoxelScale" 0;
+        editorTemplate -dimControl $node "DensityScale" 1;
+	}	
+
+    if ($Generate == 2) 
+	{
+        editorTemplate -dimControl $node "ForseTotalCount" 1;
+		editorTemplate -dimControl $node "DensityScale" 1;
+		editorTemplate -dimControl $node "PerVoxelScale" 0;
+	}	
+	else
+	{
+	editorTemplate -dimControl $node "PerVoxelScale" 1;
+    }
+		
+}
+
+global proc newBE_VDBScatterGridSelection(string $attr)
+{
+    optionMenu
+        -label "VDB Grid Name:"
+        -width 300
+        -changeCommand ("updateBE_VDBScatterGridSelection( \""+$attr+"\" )")
+        vdbGridNameMenuScatr;
+
+    replaceBE_VDBScatterGridSelection($attr);
+}
+
+global proc replaceBE_VDBScatterGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBScatterGridSelection( \""+$attr+"\" )") vdbGridNameMenuScatr;
+
+    // save current item
+    string $citem = getAttr ($node+".vdbSelectedGridNamesScatr"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuScatr`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuScatr;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuScatr;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBScatterGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuScatr`;
+    string $selectionAttr = plugNode($attr) + ".vdbSelectedGridNamesScatr"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
