@@ -2,6 +2,7 @@
 import os
 import re
 import glob
+import functools
 from itertools import groupby
 from pprint import pprint
 #import filecmp
@@ -32,6 +33,7 @@ from pytaya.core.system import iterNodeAttrFiles
 
 from .general import infosFromScene
 from davos.core.utils import isPack
+from davos.core.damtypes import DamShot
 
 osp = os.path
 pilimage = PIL.Image
@@ -475,15 +477,6 @@ def scanTextureFiles(scnInfos, depConfDct=None):
                          "public_file":None,
                          }
 
-            if bPublicFile:
-                scanLogDct.setdefault("info", []).append(('PublicFile',
-                                                          sTexAbsPath))
-                if pathEqual(sTexDirPath, sPubDepDirPath):
-                    privFile = rcFile.getPrivateFile(weak=True)
-                    sPrivFileList.append(normCase(privFile.absPath()))
-
-                scanResults.append(resultDct); continue
-
             if not bExists:
                 scanLogDct.setdefault("error", []).append(('FileNotFound',
                                                            sTexAbsPath))
@@ -506,12 +499,20 @@ def scanTextureFiles(scnInfos, depConfDct=None):
                     scanResults.append(resultDct); continue
                 else:
                     resultDct["pack_path"] = sTexDirPath
-
             elif (not sFrameExt) and bInPack:
                 sMsg = ("Single texture file found in a package folder: '{}'.\n"
                         .format(osp.basename(sTexDirPath)))
                 sMsg += "Package is intended to publish image sequence."
                 scanLogDct.setdefault("error", []).append(('BadLocation', sMsg))
+
+            if bPublicFile:
+                scanLogDct.setdefault("info", []).append(('PublicFile',
+                                                          sTexAbsPath))
+                if pathEqual(sTexDirPath, sPubDepDirPath):
+                    privFile = rcFile.getPrivateFile(weak=True)
+                    sPrivFileList.append(normCase(privFile.absPath()))
+
+                scanResults.append(resultDct); continue
 
             if bInPack:
                 sTexDirPath = osp.dirname(sTexDirPath)
@@ -750,6 +751,11 @@ def scanGeoCacheFiles(scnInfos, depConfDct=None):
 
     def iterAlembicPaths():
 
+        sIgnorePathList = []
+        if isinstance(damEntity, DamShot):
+            sIgnorePathList.append(damEntity.getPath("public", "camera_abc"))
+            sIgnorePathList.append(damEntity.getPath("private", "camera_abc"))
+
         allFileNodes = lsNodes("*", type='AlembicNode', not_rn=True)
 
         for fileNode in allFileNodes:
@@ -760,6 +766,9 @@ def scanGeoCacheFiles(scnInfos, depConfDct=None):
 
             sDepAbsPath = pathNorm(pathResolve(sAbcPath))
             sDepNormPath = pathNormAll(sDepAbsPath)
+
+            if sIgnorePathList and sDepNormPath in sIgnorePathList:
+                continue
 
             sFileName = osp.basename(sDepNormPath)
             if firstPrefix(sFileName) not in sGeoAstTypeList:
@@ -867,10 +876,14 @@ def scanFxCacheFiles(scnInfos, depConfDct=None):
         scanResults.append(res)
         #sAllSeveritySet.update(res["scan_log"].iterkeys())
 
-    def iterCachePaths(sNodeType, pathFromNodeFnc=None):
+    def iterCachePaths(sNodeType, pathFromNodeFnc=None, ignorePaths=None):
 
         sFileAttrName = FILE_PATH_ATTRS[sNodeType]
         allFileNodes = lsNodes("*", type=sNodeType, not_rn=True)
+
+        sIgnorePathList = None
+        if ignorePaths:
+            sIgnorePathList = tuple(pathNormAll(p) for p in ignorePaths)
 
         for fileNode in allFileNodes:
 
@@ -890,6 +903,9 @@ def scanFxCacheFiles(scnInfos, depConfDct=None):
 
             sDepAbsPath = pathNorm(pathResolve(sDepPath))
             sDepNormPath = pathNormAll(sDepAbsPath)
+
+            if sIgnorePathList and (sDepNormPath in sIgnorePathList):
+                continue
 
             sFileName = osp.basename(sDepNormPath)
             if firstPrefix(sFileName) in sGeoAstTypeList:
@@ -929,13 +945,13 @@ def scanFxCacheFiles(scnInfos, depConfDct=None):
                             bExists = True
 
             bPublicFile = False
-            #sHighSeverity = "error"
+            sHighSeverity = "error"
             rcFile = proj.entryFromPath(sDepAbsPath, dbNode=False)
             if rcFile:
                 bExists = True
                 if rcFile.isPublic():
                     bPublicFile = True
-                    #sHighSeverity = "warning"
+                    sHighSeverity = "warning"
             elif not bExists:
                 bExists = osp.isfile(sDepAbsPath)
 
@@ -954,7 +970,7 @@ def scanFxCacheFiles(scnInfos, depConfDct=None):
 
             if bPublicFile:
                 scanLogDct.setdefault("info", []).append(('PublicFile', sDepAbsPath))
-                addResult(resultDct); continue
+                #addResult(resultDct); continue
 
             if not bExists:
                 scanLogDct.setdefault("error", []).append(('FileNotFound', sDepAbsPath))
@@ -966,7 +982,7 @@ def scanFxCacheFiles(scnInfos, depConfDct=None):
                     sMsg = "Cache sequence is NOT in a package.\n"
                     sMsg += "Rename '{}' folder so it starts with 'pkg_'"
                     sMsg = sMsg.format(osp.basename(sDepDirPath))
-                    scanLogDct.setdefault("error", []).append(('BadLocation', sMsg))
+                    scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
                     scanResults.append(resultDct); continue
                 else:
                     resultDct["pack_path"] = sDepDirPath
@@ -974,17 +990,22 @@ def scanFxCacheFiles(scnInfos, depConfDct=None):
                 sMsg = ("Single cache file found in a package folder: '{}'.\n"
                         .format(osp.basename(sDepDirPath)))
                 sMsg += "Package is intended to publish image sequence."
-                scanLogDct.setdefault("error", []).append(('BadLocation', sMsg))
+                scanLogDct.setdefault(sHighSeverity, []).append(('BadLocation', sMsg))
 
-            pubDepFile = proj.entryFromPath(sDepAbsPath, dbNode=False)
-            resultDct["drc_file"] = pubDepFile
+#            pubDepFile = proj.entryFromPath(sDepAbsPath, dbNode=False)
+#            resultDct["drc_file"] = pubDepFile
 
 #            print "\n", sDepNormPath
 #            print sPubDepDirPath
 
             addResult(resultDct)
 
-    doScan(iterCachePaths("AlembicNode"))
+    sIgnorePathList = []
+    if isinstance(damEntity, DamShot):
+        sIgnorePathList.append(damEntity.getPath("public", "camera_abc"))
+        sIgnorePathList.append(damEntity.getPath("private", "camera_abc"))
+
+    doScan(iterCachePaths("AlembicNode", ignorePaths=sIgnorePathList))
 
     def pathFromCacheNode(cacheNode):
         cacheNode.useFileSequence = False
@@ -1137,15 +1158,21 @@ Wait for the next synchro and retry publishing."""
 
     return bPublishable
 
-def scanAllDependencyTypes(scnInfos):
+def scanAllDependencyTypes(scnInfos, exclude=None):
 
     proj = scnInfos["project"]
     sSection = scnInfos["section"]
     sRcName = scnInfos["resource"]
 
+    sExcDepList = argToTuple(exclude)
+
     depScanDct = {}
     for sDepType in proj.getDependencyTypes(sSection, sRcName).iterkeys():
         scanResults = None
+        
+        if sExcDepList and sDepType in sExcDepList:
+            continue
+        
         if sDepType == "texture_dep":
             scanResults = scanTextureFiles(scnInfos)
         elif sDepType == "geoCache_dep":
@@ -1163,7 +1190,7 @@ def scanAllDependencyTypes(scnInfos):
 dialog = None
 
 def launch(scnInfos=None, scanFunc=None, modal=False, okLabel="OK",
-           expandTree=False, forceDialog=False):
+           expandTree=False, forceDialog=False, exclude=None):
 
     global dialog
 
@@ -1174,7 +1201,7 @@ def launch(scnInfos=None, scanFunc=None, modal=False, okLabel="OK",
     proj = scnInfos["project"]
 
     if scanFunc is None:
-        scanFunc = scanAllDependencyTypes
+        scanFunc = functools.partial(scanAllDependencyTypes, exclude=exclude)
 
     depScanDct = scanFunc(scnInfos)
     if not depScanDct:
