@@ -266,7 +266,16 @@ def repathDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
 
             sLinkedList.append(sNodeName)
 
-def repathDependenciesToCurrentVersion(proj, depScanResults, **kwargs):
+
+def lockSceneDependenciesToCurrentVersion(dryRun=False):
+
+    scnInfos = infosFromScene()
+
+    allDepScanResults = dependency_scan.scanAllDependencyTypes(scnInfos)
+    for depScanResults in allDepScanResults.itervalues():
+        lockDependenciesToCurrentVersion(scnInfos["project"], depScanResults, dryRun=dryRun)
+
+def lockDependenciesToCurrentVersion(proj, depScanResults, **kwargs):
 
     bDryRun = kwargs.pop("dryRun", False)
 
