@@ -528,6 +528,10 @@ def setUtlAovs() :
 
     pm.connectAttr('alUtls.outColor', 'aiAOV_uvs.defaultValue', force=True)
 
+    if pm.objExists('aiAOVDriverP32') == True:
+        pm.delete('aiAOVDriverP32')
+        print 'Delete aiAOVDriverP32 !'
+
     if not pm.objExists('aiAOVDriverP32') == True:
         pm.createNode('aiAOVDriver', n='aiAOVDriverP32', skipSelect=True)
         pm.setAttr('aiAOVDriverP32.autocrop', 1)

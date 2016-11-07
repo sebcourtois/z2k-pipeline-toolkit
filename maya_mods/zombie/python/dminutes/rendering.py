@@ -20,7 +20,7 @@ reload (miscUtils)
 from dminutes import layerManager
 reload (layerManager)
 
-#createOptions()
+createOptions()
 
 if pm.window("unifiedRenderGlobalsWindow", exists=True):
     pm.deleteUI("unifiedRenderGlobalsWindow")
@@ -287,7 +287,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     miscUtils.setAttrC("defaultArnoldRenderOptions.skipLicenseCheck", 1)
     miscUtils.setAttrC("defaultArnoldRenderOptions.log_verbosity", 1)#warnig + info
     miscUtils.setAttrC("defaultArnoldRenderOptions.motion_blur_enable", 1)
-    if mc.getAttr("defaultArnoldRenderOptions.motion_frames") > 0.25 :
+    if not mc.getAttr("defaultArnoldRenderOptions.motion_frames") == 0.25 :
         pass
     else:
         miscUtils.setAttrC("defaultArnoldRenderOptions.motion_frames", 0.25)
@@ -754,6 +754,9 @@ def renderLeftCam():
     else :
         print (u'Merci, cam gauche already set, nothing to do !!')
         pass
+    shotNameL = mainFilePathS.split('/')[2:-1]
+    aiAovPOutName = '//' + '/'.join(shotNameL) + '/render/left/<RenderLayer>_P32/' + shotName
+    pm.setAttr('aiAOVDriverP32.prefix', aiAovPOutName, type='string')
 
 def renderRightCam():
     shotName = ''
@@ -775,3 +778,7 @@ def renderRightCam():
     else :
         print (u'Merci, ok pour le rendu cam droite')
         pass
+    shotNameL = mainFilePathS.split('/')[2:-1]
+    aiAovPOutName = '//' + '/'.join(shotNameL) + '/render/right/<RenderLayer>_P32/' + shotName
+    pm.setAttr('aiAOVDriverP32.prefix', aiAovPOutName, type='string')
+
