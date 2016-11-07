@@ -691,7 +691,8 @@ def loadStereoCam(damShot, withAnim=True):
         oStereoCam = getStereoCam(fail=True)
         withAnim = True
         if sShotCode[-1] != "a":
-            damShot = proj.getShot(sShotCode[:-1] + "a")
+            sShotCode = sShotCode[:-1] + "a"
+            damShot = proj.getShot(sShotCode)
 
     oStereoCamShape = oStereoCam.getShape()
     sStereoGrp = getObject(sStereoNs + ":grp_stereo", fail=True)
