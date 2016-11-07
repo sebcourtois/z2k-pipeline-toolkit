@@ -499,7 +499,12 @@ def getRenderOutput(gui=True):
     elif mc.ls("|shot"):
         if  mainFilePathElem[-5] == "shot":
             vertionNumber = mainFilePathElem[-1].split("-")[1].split(".")[0]
-            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render-" + vertionNumber)
+            if '06_finalLayout' in mainFilePath:
+                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render-" + vertionNumber)
+            if '07_fx3d' in mainFilePath:
+                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "/work/render/render-" + vertionNumber)
+            if '08_render' in mainFilePath:
+                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render")
             outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
             outputImageName = mainFilePathElem[-3]
             print "#### Info: Set render path: {}".format(outputFilePath_exp)
