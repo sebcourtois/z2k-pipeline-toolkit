@@ -46,7 +46,6 @@ class LayerManager:
 
         self.allRndObjL = mc.ls("geo_*", type="transform") + mc.ls("*:geo_*", type="transform") + mc.ls("*:*:geo_*", type="transform") + mc.ls("vol_*", type="transform") + mc.ls("*:vol_*", type="transform") + mc.ls("*:*:vol_*", type="transform")+ mc.ls("col_*", type="transform") + mc.ls("*:col_*", type="transform") + mc.ls("*:*:col_*", type="transform")
         for each in self.allRndObjL:
-        for each in self.allRndObjL:
             if "env_" in each:
                 self.envRndObjL.append(each)
             else:
@@ -528,6 +527,10 @@ def setUtlAovs() :
         pass
 
     pm.connectAttr('alUtls.outColor', 'aiAOV_uvs.defaultValue', force=True)
+
+    if pm.objExists('aiAOVDriverP32') == True:
+        pm.delete('aiAOVDriverP32')
+        print 'Delete aiAOVDriverP32 !'
 
     if not pm.objExists('aiAOVDriverP32') == True:
         pm.createNode('aiAOVDriver', n='aiAOVDriverP32', skipSelect=True)
