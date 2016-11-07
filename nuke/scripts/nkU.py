@@ -9,7 +9,6 @@ import errno
 from pprint import pprint
 import shutil
 
-from pytd.util.fsutils import jsonWrite, jsonRead
 
 # rappel
 # os.environ["ZOMB_ASSET_PATH"] = zombRootPath+"/zomb/asset"
@@ -952,6 +951,7 @@ def inportOutTemplate(template = "compo"):
 
 
 def getStereoInfo(gui = True):
+    from pytd.util.fsutils import jsonWrite, jsonRead
     log = LogBuilder(gui=gui, funcName ="getStereoInfo")
 
     jsonStereoFileS = os.environ["ZOMB_SHOT_PATH"]+"/"+os.environ["SEQ"]+"/"+os.environ["SHOT"]+"/01_stereo/"+os.environ["SHOT"]+"_stereoInfo.json"
