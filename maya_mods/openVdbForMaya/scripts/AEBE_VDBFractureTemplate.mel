@@ -1,0 +1,85 @@
+global proc
+AEBE_VDBFractureTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Fracture" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBFractureGridSelection" "replaceBE_VDBFractureGridSelection" "VdbAllGridNamesFracture";
+            
+            editorTemplate -addSeparator;
+            editorTemplate -addControl "Type";
+            editorTemplate -addControl "AllowCutterOverlap";
+            editorTemplate -addControl "CenterCutterGeometry";
+            editorTemplate -addControl "RandomizeCutterRotation";
+            editorTemplate -addControl "RandomSeed";
+            editorTemplate -addControl "SplitInputFragmentsintoPrimitives";
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc newBE_VDBFractureGridSelection(string $attr)
+{
+    optionMenu
+        -label "VDB Grid Name:"
+        -width 300
+        -changeCommand ("updateBE_VDBFractureGridSelection( \""+$attr+"\" )")
+        vdbGridNameMenuFracture;
+
+    replaceBE_VDBFractureGridSelection($attr);
+}
+
+global proc replaceBE_VDBFractureGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBFractureGridSelection( \""+$attr+"\" )") vdbGridNameMenuFracture;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesFracture"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuFracture`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuFracture;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuFracture;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBFractureGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuFracture`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesFracture"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}

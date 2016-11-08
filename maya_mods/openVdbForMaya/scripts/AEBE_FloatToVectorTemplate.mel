@@ -1,0 +1,22 @@
+
+
+global proc
+AEBE_FloatToVectorTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_FloatToVector" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+

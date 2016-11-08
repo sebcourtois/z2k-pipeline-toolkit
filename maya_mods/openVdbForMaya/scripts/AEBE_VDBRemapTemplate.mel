@@ -1,0 +1,91 @@
+
+
+global proc
+AEBE_VDBRemapTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Remap" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBRemapGridSelection" "replaceBE_VDBRemapGridSelection" "VdbAllGridNamesRemap";
+            
+            editorTemplate -addSeparator;
+            AEaddRampControl( $nodeAttr + ".Ramp" );
+            editorTemplate -addControl "BelowMinimum";
+            editorTemplate -addControl "InputRangeMin";
+            editorTemplate -addControl "InputRangeMax";
+            editorTemplate -addControl "AboveMaximum";
+            editorTemplate -addControl "OutputRangeMin";
+            editorTemplate -addControl "OutputRangeMax";
+            editorTemplate -addControl "DeactivateBackgroundVoxels";
+            editorTemplate -addControl "Log";
+
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc newBE_VDBRemapGridSelection(string $attr)
+{
+    optionMenu
+        -label "VDB Grid Name:"
+        -width 300
+        -changeCommand ("updateBE_VDBRemapGridSelection( \""+$attr+"\" )")
+        vdbGridNameMenuRemap;
+
+    replaceBE_VDBRemapGridSelection($attr);
+}
+
+global proc replaceBE_VDBRemapGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBRemapGridSelection( \""+$attr+"\" )") vdbGridNameMenuRemap;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesRemap"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuRemap`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuRemap;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuRemap;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBRemapGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuRemap`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesRemap"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
