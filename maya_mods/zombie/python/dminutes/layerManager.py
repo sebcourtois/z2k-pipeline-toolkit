@@ -470,10 +470,17 @@ class LayerManager:
 
 
 def createCryptomatteLayer():
+    if pm.window("unifiedRenderGlobalsWindow", exists=True):
+        pm.deleteUI("unifiedRenderGlobalsWindow")
     ## Add assets ##
-    pm.select('|shot|grp_character', '|shot|grp_prop', '|shot|grp_set', '|shot|grp_prop')
+    pm.select('|shot|grp_character', '|shot|grp_prop', '|shot|grp_set', '|shot|grp_prop', '|shot|grp_vehicle')
 
     ## Create custom layer and make current ##
+    if pm.objExists('lyr_utl0_bty_16') == True:
+        mc.editRenderLayerAdjustment('aiAOV_*.enabled', r=True)
+        mc.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
+        pm.delete('lyr_utl0_bty_16')
+
     pm.createRenderLayer(n='lyr_utl0_bty_16')
     pm.editRenderLayerGlobals(currentRenderLayer='lyr_utl0_bty_16')
 
@@ -487,6 +494,7 @@ def setCryptoAov():
 
     ## Create and set the Cryptomatte aov ##
     defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
+
     if pm.objExists('alCryptoShader') == True:
         pm.delete('alCryptoShader')
         print 'Delete alCryptoShader !'
