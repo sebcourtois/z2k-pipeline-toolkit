@@ -1,0 +1,331 @@
+
+
+global proc
+AEBE_VDBFromParticlesTemplate( string $nodeAttr )
+{
+
+
+
+    editorTemplate -beginScrollLayout;
+    {
+        editorTemplate -beginLayout "Settings" -collapse 0;
+        editorTemplate -beginNoOptimize;
+        {
+            editorTemplate -callCustom "AEAT_FromParticlesOutputsNew"
+                "AEAT_FromParticlesOutputsReplace" "DistanceGridName";
+
+            editorTemplate -addSeparator;
+
+            editorTemplate -addControl "EstimatedGridResolution";
+
+            editorTemplate 
+                -annotation "Uniform voxel size in world units."
+                -addControl "VoxelSize";
+
+            editorTemplate
+                -annotation ("Multiply the particle size.")
+                -addControl "PointRadiusScale";                
+
+            editorTemplate
+                -annotation ("Points with radius less than this number of voxels are ignored. Points with radius smaller than 1.5 voxels will likely cause aliasing artifacts, so you should not set this lower than 1.5.")
+                -addControl "MinimumRadiusInVoxels";
+
+            editorTemplate
+                -annotation ("After building the VDB grid there may be undetected constant tiles. Eneble this to detect constant regions and colapse them. This option only has an effect if the particles are larger then the leaf nodes so it is normally recommended to leave it disabled.")
+                -addControl "PruneLevelSet";
+
+            editorTemplate
+                -annotation ("Use this scaling parameter to adjust the width of the generated mask VDB.")
+                -addControl "MaskWidthScale";				
+
+            editorTemplate
+                -annotation ("How many voxels outside the point sphere to fill in the generated VDB.")
+                -addControl "HalfBandVoxels";
+
+            editorTemplate
+                -annotation ("Number of morphological dilation iterations.")
+                -addControl "Dilation" "AEAT_FromParticlesUpdateEnabled";
+
+            editorTemplate
+                -annotation ("Number of morphological closing iterations.")
+                -addControl "Closing" "AEAT_FromParticlesUpdateEnabled"; 
+
+            editorTemplate
+                -annotation ("Number of smoothing interations.")
+                -addControl "Smoothing" "AEAT_FromParticlesUpdateEnabled";                                                  
+
+            editorTemplate
+                -annotation ("The shape of the densities created from points when VDB.")
+                -addControl "ParticleFootprint" "AEAT_FromParticlesUpdateEnabled";
+
+            editorTemplate
+                -annotation ("When Particle footprint is Velocity trail,this scales the length of the trail relative to the point velocity.")
+                -addControl "VelocityMultiplier" "AEAT_FromParticlesUpdateEnabled";
+
+            editorTemplate
+                -annotation ("When Particle footprint is Velocity trail,how far apart to space the spheres in the trail.")
+
+                -addControl "VelocitySpancing" "AEAT_FromParticlesUpdateEnabled";		
+
+        }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+
+        editorTemplate -beginLayout "Extra Grids" -collapse 1;   
+        
+            editorTemplate -addControl "ExportPointVDB";
+            editorTemplate -addControl "PointGridName";
+            editorTemplate -label "VectorType" -addControl "PointVectorType";
+
+            editorTemplate -addControl "ExportVelocityVDB";
+            editorTemplate -addControl "VelocityGridName";
+            editorTemplate -label "VectorType" -addControl "VelocityVectorType";
+
+            editorTemplate -addControl "ExportRGBVDB";
+            editorTemplate -addControl "RGBGridName";
+            editorTemplate -label "VectorType" -addControl "RGBVectorType";
+
+            editorTemplate -addControl "ExportIncandescenceVDB";
+            editorTemplate -addControl "IncandescenceGridName";
+            editorTemplate -label "VectorType" -addControl "IncandescenceVectorType";
+
+            editorTemplate -addControl "ExportAccelerationVDB";
+            editorTemplate -addControl "AccelerationGridName";
+            editorTemplate -label "VectorType" -addControl "AccelerationVectorType";
+
+            editorTemplate -addControl "ExportForceVDB";
+            editorTemplate -addControl "ForceGridName";
+            editorTemplate -label "VectorType" -addControl "ForceVectorType";
+
+            editorTemplate -addControl "ExportRotationVDB";
+            editorTemplate -addControl "RotationGridName";
+            editorTemplate -label "VectorType" -addControl "RotationVectorType";
+
+            editorTemplate -addControl "ExportVecAttributesVDB";
+            editorTemplate -addControl "VecAttributesGridName";
+            editorTemplate -label "VectorType" -addControl "VecAttributesVectorType";
+
+            editorTemplate -addControl "ExportAgeVDB";
+            editorTemplate -addControl "AgeGridName";
+
+            editorTemplate -addControl "ExportLifespanVDB";
+            editorTemplate -addControl "LifespanGridName";
+
+            editorTemplate -addControl "ExportOpacityVDB";
+            editorTemplate -addControl "OpacityGridName";
+
+            editorTemplate -addControl "ExportFloatAttributesVDB";
+            editorTemplate -addControl "FloatAttributesGridName";  
+
+
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        
+        editorTemplate -beginLayout "Information" -collapse 0;
+        editorTemplate -beginNoOptimize;
+        {
+             editorTemplate -callCustom "AEAT_FromParticlesInfoNew"
+                "AEAT_FromParticlesInfoReplace" "NodeInfo";
+                
+
+        }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+
+	    editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+
+global proc
+AEAT_FromParticlesUpdateEnabled( string $node )
+{
+
+    int $ParticleFootprint = `getAttr ($node+".ParticleFootprint")`;
+
+    if ($ParticleFootprint == 0) 
+	{
+        editorTemplate -dimControl $node "VelocityMultiplier" 1;
+		editorTemplate -dimControl $node "VelocitySpancing" 1;
+        editorTemplate -dimControl $node "Dilation" 1;
+		editorTemplate -dimControl $node "Closing" 1;
+		editorTemplate -dimControl $node "Smoothing" 1;			
+	}
+    if ($ParticleFootprint == 1) 
+	{
+        editorTemplate -dimControl $node "VelocityMultiplier" 0;
+		editorTemplate -dimControl $node "VelocitySpancing" 0;
+        editorTemplate -dimControl $node "Dilation" 1;
+		editorTemplate -dimControl $node "Closing" 1;
+		editorTemplate -dimControl $node "Smoothing" 1;			
+	}
+    if ($ParticleFootprint == 2) 
+	{
+        editorTemplate -dimControl $node "VelocityMultiplier" 1;
+		editorTemplate -dimControl $node "VelocitySpancing" 1;
+        editorTemplate -dimControl $node "Dilation" 0;
+		editorTemplate -dimControl $node "Closing" 0;
+		editorTemplate -dimControl $node "Smoothing" 0;		
+	}			
+//	else
+//	{
+ //       editorTemplate -dimControl $node "VelocityMultiplier" 0;
+//		editorTemplate -dimControl $node "VelocitySpancing" 0;
+//	}
+}
+
+
+global proc
+AEAT_FromParticlesOutputsUpdateGridEnables( string $parentUI, string $attr )
+{
+    int $exportDistance = `getAttr $attr`;
+    textField -e -enable $exportDistance $parentUI;
+}
+
+
+global proc
+AEAT_FromParticlesOutputsNew( string $attr )
+{
+    string $parent = `setParent -q` + "|fromParticlesOutputsLayout|";
+    string $node = plugNode($attr); 
+
+ 
+    global int $gAttributeEditorTemplateLabelWidth;
+    rowColumnLayout
+        -numberOfColumns 2
+        -columnWidth 1 $gAttributeEditorTemplateLabelWidth
+        -columnWidth 2 175
+        fromParticlesOutputsLayout;
+    {
+        checkBox
+            -label "Distance VDB"
+            -annotation "Enable / disable the distance VDB output."
+            fromParticlesDistanceVDBCheckBox;
+
+        textField
+            -fileName ""
+            -insertionPosition 0
+            -editable true
+            -annotation "Distance VDB name"
+            fromParticlesDistanceVDBName;
+
+        checkBox
+            -label "Density VDB"
+            -annotation "Enable / disable the density VDB output."
+            fromParticlesDensityVDBCheckBox;
+
+        textField
+            -fileName ""
+            -insertionPosition 0
+            -editable true
+            -annotation "Density VDB name"
+            fromParticlesDensityVDBName;
+
+        checkBox
+            -label "Mask VDB"
+            -annotation "Enable / disable the mask VDB output."
+            fromParticlesMaskVDBCheckBox;
+
+        textField
+            -fileName ""
+            -insertionPosition 0
+            -editable true
+            -annotation "Mask VDB name"
+            fromParticlesMaskVDBName;			
+
+        setParent ..;
+    }
+
+    AEAT_FromParticlesOutputsReplace( $attr );
+}
+
+
+global proc
+AEAT_FromParticlesOutputsReplace( string $attr )
+{
+    string $parent = `setParent -q`;
+    string $parentLayout = $parent + "|fromParticlesOutputsLayout|";
+    string $nodeName = plugNode($attr);
+    
+    if( `text -exists ($parent+"|fromParticlesScriptJobParent")` == 1 ) {
+        deleteUI fromParticlesScriptJobParent;
+    }
+
+    string $scriptParent = `text -manage 0 fromParticlesScriptJobParent`;
+
+    scriptJob -parent $scriptParent
+        -attributeChange ($nodeName+".ExportDistanceVDB")
+        ("AEAT_FromParticlesOutputsUpdateGridEnables(\""+$parentLayout+
+        "fromParticlesDistanceVDBName\",\""+($nodeName+".ExportDistanceVDB")+"\")");
+
+    scriptJob -parent $scriptParent
+        -attributeChange ($nodeName+".ExportDensityVDB")
+        ("AEAT_FromParticlesOutputsUpdateGridEnables(\""+$parentLayout+
+        "fromParticlesDensityVDBName\",\""+($nodeName+".ExportDensityVDB")+"\")");
+
+    scriptJob -parent $scriptParent
+        -attributeChange ($nodeName+".ExportMaskVDB")
+        ("AEAT_FromParticlesOutputsUpdateGridEnables(\""+$parentLayout+
+        "fromParticlesMaskVDBName\",\""+($nodeName+".ExportMaskVDB")+"\")");
+
+    setParent fromParticlesOutputsLayout;
+
+    connectControl fromParticlesDistanceVDBCheckBox ($nodeName + ".ExportDistanceVDB");
+    connectControl fromParticlesDistanceVDBName ($nodeName + ".DistanceGridName");
+    connectControl fromParticlesDensityVDBCheckBox ($nodeName + ".ExportDensityVDB");
+    connectControl fromParticlesDensityVDBName ($nodeName + ".DensityGridName");
+    connectControl fromParticlesMaskVDBCheckBox ($nodeName + ".ExportMaskVDB");
+    connectControl fromParticlesMaskVDBName ($nodeName + ".MaskGridName");
+
+    AEAT_FromParticlesOutputsUpdateGridEnables($parentLayout+
+        "fromParticlesDistanceVDBName", $nodeName+".ExportDistanceVDB");
+
+    AEAT_FromParticlesOutputsUpdateGridEnables($parentLayout+
+        "fromParticlesDensityVDBName", $nodeName+".ExportDensityVDB");
+
+    AEAT_FromParticlesOutputsUpdateGridEnables($parentLayout+
+        "fromParticlesMaskVDBName", $nodeName+".ExportMaskVDB");		
+
+   setParent $parent;
+}
+
+global proc
+AEAT_FromParticlesInfoUpdate( string $nodeName )
+{
+    string $info = `getAttr ($nodeName + ".NodeInfo")`;
+    scrollField -e -text $info fromParticlesInfoField;
+}
+
+global proc
+AEAT_FromParticlesInfoNew( string $attr )
+{    
+    scrollField
+        -editable 0
+        fromParticlesInfoField;
+    AEAT_FromParticlesInfoReplace($attr);
+}
+
+global proc
+AEAT_FromParticlesInfoReplace( string $attr )
+{
+    string $parent = `setParent -q`;
+    string $nodeName = plugNode($attr);
+    
+    if( `text -exists ($parent+"|fromParticlesInfoScriptJobParent")` == 1 ) {
+        deleteUI fromParticlesInfoScriptJobParent;
+    }
+
+    string $scriptParent = `text -manage 0 fromParticlesInfoScriptJobParent`;
+    
+    scriptJob -parent $scriptParent
+        -attributeChange ($nodeName+".NodeInfo")
+        ("AEAT_FromParticlesInfoUpdate(\""+$nodeName+"\")");
+
+    AEAT_FromParticlesInfoUpdate($nodeName);
+}
+
+
+
+

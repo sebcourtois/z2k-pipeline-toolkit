@@ -1,0 +1,62 @@
+
+
+global proc
+AEBE_FitTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_Fit" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+              editorTemplate -addControl "Signature" "AEAT_UpdateEnabled";
+              editorTemplate -label "SourceMin" -addControl "SourceMinf" "AEAT_UpdateEnabled";
+              editorTemplate -label "SourceMax" -addControl "SourceMaxf" "AEAT_UpdateEnabled";
+              editorTemplate -label "DestinationMin" -addControl "DestinationMinf" "AEAT_UpdateEnabled";
+              editorTemplate -label "DestinationMax" -addControl "DestinationMaxf" "AEAT_UpdateEnabled";
+              editorTemplate -label "SourceMin" -addControl "SourceMinv" "AEAT_UpdateEnabled";
+              editorTemplate -label "SourceMax" -addControl "SourceMaxv" "AEAT_UpdateEnabled";
+              editorTemplate -label "DestinationMin" -addControl "DestinationMinv" "AEAT_UpdateEnabled";
+              editorTemplate -label "DestinationMax" -addControl "DestinationMaxv" "AEAT_UpdateEnabled";
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc
+AEAT_UpdateEnabled( string $node )
+{
+
+    int $Signature = `getAttr ($node+".Signature")`;
+
+    if ($Signature == 0) 
+	{
+        editorTemplate -dimControl $node "SourceMinf" 0;
+		editorTemplate -dimControl $node "SourceMaxf" 0;
+        editorTemplate -dimControl $node "DestinationMinf" 0;
+		editorTemplate -dimControl $node "DestinationMaxf" 0;
+
+        editorTemplate -dimControl $node "SourceMinv" 1;
+		editorTemplate -dimControl $node "SourceMaxv" 1;
+        editorTemplate -dimControl $node "DestinationMinv" 1;
+		editorTemplate -dimControl $node "DestinationMaxv" 1;		
+		
+	}
+    if ($Signature == 1) 
+	{
+        editorTemplate -dimControl $node "SourceMinf" 1;
+		editorTemplate -dimControl $node "SourceMaxf" 1;
+        editorTemplate -dimControl $node "DestinationMinf" 1;
+		editorTemplate -dimControl $node "DestinationMaxf" 1;
+
+        editorTemplate -dimControl $node "SourceMinv" 0;
+		editorTemplate -dimControl $node "SourceMaxv" 0;
+        editorTemplate -dimControl $node "DestinationMinv" 0;
+		editorTemplate -dimControl $node "DestinationMaxv" 0;		
+	}
+}
+

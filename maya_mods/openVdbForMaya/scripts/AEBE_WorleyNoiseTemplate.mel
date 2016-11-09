@@ -1,0 +1,27 @@
+global proc
+AEBE_WorleyNoiseTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+       editorTemplate -beginLayout "BE_WorleyNoise" -collapse 0;
+       {
+
+	    editorTemplate -addControl "Frequency";
+        editorTemplate -addControl "Offset";
+	    editorTemplate -addControl "Amplitude";
+        editorTemplate -addControl "DistanceMetric";
+	    editorTemplate -addControl "Jitter";
+        editorTemplate -addControl "C1";
+	    editorTemplate -addControl "C2";	
+        editorTemplate -addControl "MinkowskiExponent";
+	 	editorTemplate -addControl "Shape";
+	 	editorTemplate -addControl "Clamp";
+	 	editorTemplate -addControl "Invert";        	    
+       }
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}

@@ -1,0 +1,39 @@
+
+global proc string BE_VDBArnoldRenderCreate()
+{
+string $BE_VDBArnoldRenderSG =  `createNode -n ("BE_VDBArnoldRender"+"SG") shadingEngine` ;
+string $BE_VDBArnoldRenderMat =  `createNode -n ("aiVolumeCollector#") aiVolumeCollector` ;
+string $BE_VDBArnoldRenderMatAssing = `connectAttr -f ($BE_VDBArnoldRenderMat + ".outColor") ($BE_VDBArnoldRenderSG + ".volumeShader")`;
+   
+string $BE_VDBArnoldRenderTransform = `createNode -n "BE_VDBArnoldRenderShape#" BE_VDBArnoldRender`;
+
+string $nodeName ;
+string $BE_VDBArnoldRenderSGAssing = `connectAttr -force ($BE_VDBArnoldRenderTransform + ".instObjGroups[0]") ($BE_VDBArnoldRenderSG + ".dagSetMembers[0]")`;
+string $BE_VDBArnoldRenderSelect = `select -r $BE_VDBArnoldRenderTransform`;
+
+setAttr ($nodeName + ".DensityRamp[1].DensityRamp_FloatValue") 1.0;
+setAttr ($nodeName + ".DensityRamp[1].DensityRamp_Position") 1.0;
+setAttr ($nodeName + ".DensityRamp[1].DensityRamp_Interp") 1;
+
+setAttr ($nodeName + ".DiffuseScatteringRamp[1].DiffuseScatteringRamp_Color") -type double3 1 1 1;
+setAttr ($nodeName + ".DiffuseScatteringRamp[1].DiffuseScatteringRamp_Position") 1.0;
+setAttr ($nodeName + ".DiffuseScatteringRamp[1].DiffuseScatteringRamp_Interp") 1;
+
+setAttr ($nodeName + ".DiffuseAbsorptionRamp[1].DiffuseAbsorptionRamp_Color") -type double3 1 1 1;
+setAttr ($nodeName + ".DiffuseAbsorptionRamp[1].DiffuseAbsorptionRamp_Position") 1.0;
+setAttr ($nodeName + ".DiffuseAbsorptionRamp[1].DiffuseAbsorptionRamp_Interp") 1;
+
+setAttr ($nodeName + ".EmissionRamp[1].EmissionRamp_FloatValue") 1.0;
+setAttr ($nodeName + ".EmissionRamp[1].EmissionRamp_Position") 1.0;
+setAttr ($nodeName + ".EmissionRamp[1].EmissionRamp_Interp") 1;
+
+setAttr ($nodeName + ".EmissionColorRamp[1].EmissionColorRamp_Color") -type double3 1 1 1;
+setAttr ($nodeName + ".EmissionColorRamp[1].EmissionColorRamp_Position") 1.0;
+setAttr ($nodeName + ".EmissionColorRamp[1].EmissionColorRamp_Interp") 1;
+
+
+return $BE_VDBArnoldRenderTransform;
+
+}
+
+

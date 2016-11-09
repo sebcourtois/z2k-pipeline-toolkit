@@ -1,0 +1,86 @@
+
+
+global proc
+AEBE_VDBRebuildLevelSetTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Rebuild Level Set" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBRLSGridSelection" "replaceBE_VDBRLSGridSelection" "VdbAllGridNamesRLS";
+            
+            editorTemplate -addSeparator;
+
+            editorTemplate -addControl "IsoValue";
+            editorTemplate -addControl "ExteriorBandWidth";
+            editorTemplate -addControl "InteriorBandWidth";
+            editorTemplate -addControl "FillInterior";
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc newBE_VDBRLSGridSelection(string $attr)
+{
+    optionMenu
+        -label "VDB Grid Name:"
+        -width 300
+        -changeCommand ("updateBE_VDBRLSGridSelection( \""+$attr+"\" )")
+        vdbGridNameMenuRLS;
+
+    replaceBE_VDBRLSGridSelection($attr);
+}
+
+global proc replaceBE_VDBRLSGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBRLSGridSelection( \""+$attr+"\" )") vdbGridNameMenuRLS;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesRLS"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuRLS`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuRLS;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuRLS;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBRLSGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuRLS`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesRLS"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}

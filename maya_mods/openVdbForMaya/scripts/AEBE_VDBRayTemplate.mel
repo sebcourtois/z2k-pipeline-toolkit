@@ -1,0 +1,91 @@
+
+
+global proc
+AEBE_VDBRayTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Ray" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBRayGridSelection" "replaceBE_VDBRayGridSelection" "VdbAllGridNamesRay";
+            
+            editorTemplate -addSeparator;
+            
+            editorTemplate -addControl "Method";
+            editorTemplate -addControl "Isovalue";
+            editorTemplate -addControl "Transform";
+            editorTemplate -addControl "Scale";
+            editorTemplate -addControl "StoreDistances";
+            editorTemplate -addControl "IntersectFarthestSurface";
+            editorTemplate -addControl "ReverseRays";
+            editorTemplate -addControl "Bias";
+
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc newBE_VDBRayGridSelection(string $attr)
+{
+    optionMenu
+        -label "VDB Grid Name:"
+        -width 300
+        -changeCommand ("updateBE_VDBRayGridSelection( \""+$attr+"\" )")
+        vdbGridNameMenuRay;
+
+    replaceBE_VDBRayGridSelection($attr);
+}
+
+global proc replaceBE_VDBRayGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBRayGridSelection( \""+$attr+"\" )") vdbGridNameMenuRay;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesRay"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuRay`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuRay;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuRay;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBRayGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuRay`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesRay"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}

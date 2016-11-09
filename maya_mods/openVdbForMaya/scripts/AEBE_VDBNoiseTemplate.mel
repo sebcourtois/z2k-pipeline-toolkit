@@ -1,0 +1,187 @@
+global proc AEBE_VDBNoiseTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+
+        editorTemplate -beginLayout "BE_VDB Noise" -collapse 0;
+
+        editorTemplate -callCustom "newBE_VDBNoiseGridSelectionSource" "replaceBE_VDBNoiseGridSelectionSource" "VdbAllGridNames";
+		editorTemplate -callCustom "newBE_VDBNoiseGridSelectionMask" "replaceBE_VDBNoiseGridSelectionMask" "VdbAllGridNamesMask";
+
+        editorTemplate -addSeparator;
+        editorTemplate -addControl "NoiseMode";
+        editorTemplate -addControl "Mode";
+        editorTemplate -addControl "Amplitude";
+        editorTemplate -addControl "Frequency";
+        editorTemplate -addControl "Octaves";
+        editorTemplate -addControl "Lacunarity";
+        editorTemplate -addControl "Gain";
+        editorTemplate -addControl "Roughness";
+        editorTemplate -addControl "SurfaceOffset";
+		editorTemplate -addControl "NoiseOffset";
+
+        editorTemplate -beginLayout "Mask" -collapse 0;
+
+		editorTemplate -addControl "UseMask";
+        editorTemplate -addControl "MaskMode";
+		editorTemplate -addControl "MaskThreshold";
+		editorTemplate -addControl "FallOff";		
+        editorTemplate -endLayout;
+		editorTemplate -endLayout;
+
+	    editorTemplate -addExtraControls;
+    }
+    editorTemplate -endScrollLayout;
+}
+/*
+global proc
+AEAT_BE_VDBFilterUpdateEnabled( string $node )
+{
+    int $operation = `getAttr ($node+".Filter")`;
+          
+    if ($operation < 3) {
+        editorTemplate -dimControl $node "FilterVoxelRadius" 0;
+        editorTemplate -dimControl $node "Iterations" 0;
+        editorTemplate -dimControl $node "Offset" 1;
+    } else {
+        editorTemplate -dimControl $node "FilterVoxelRadius" 1;
+        editorTemplate -dimControl $node "Iterations" 1;
+        editorTemplate -dimControl $node "Offset" 0;
+    }
+}*/
+/*
+global proc
+AEAT_BE_VDBMaskUpdateEnabled( string $node )
+{
+    int $operation = `getAttr ($node+".Mask")`;
+          
+    if ($operation == 0) {
+        editorTemplate -dimControl $node "InvertAlphaMask" 1;
+        editorTemplate -dimControl $node "MinMaskCutoff" 1;
+        editorTemplate -dimControl $node "MaxMaskCutoff" 1;
+    } else {
+        editorTemplate -dimControl $node "InvertAlphaMask" 0;
+        editorTemplate -dimControl $node "MinMaskCutoff" 0;
+        editorTemplate -dimControl $node "MaxMaskCutoff" 0;
+    }
+}
+*/
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBNoiseGridSelectionSource(string $attr)
+{
+    optionMenu
+        -label "Source"
+        -width 300
+        -changeCommand ("updateBE_VDBNoiseGridSelectionSource( \""+$attr+"\" )")
+        vdbGridNameMenuSource;
+
+    replaceBE_VDBNoiseGridSelectionSource($attr);
+}
+
+global proc replaceBE_VDBNoiseGridSelectionSource(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBNoiseGridSelectionSource( \""+$attr+"\" )") vdbGridNameMenuSource;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNames"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuSource`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuSource;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuSource;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBNoiseGridSelectionSource(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuSource`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNames"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+
+//////////////////////////////////////////////////////////////////////////////// AlphaMask
+global proc newBE_VDBNoiseGridSelectionMask(string $attr)
+{
+    optionMenu
+        -label "Mask   "
+        -width 300
+        -changeCommand ("updateBE_VDBNoiseGridSelectionMask( \""+$attr+"\" )")
+        vdbGridNameMenuMask;
+
+    replaceBE_VDBNoiseGridSelectionMask($attr);
+}
+
+global proc replaceBE_VDBNoiseGridSelectionMask(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBNoiseGridSelectionMask( \""+$attr+"\" )") vdbGridNameMenuMask;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesMask"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuMask`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuMask;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuMask;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBNoiseGridSelectionMask(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuMask`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesMask"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+

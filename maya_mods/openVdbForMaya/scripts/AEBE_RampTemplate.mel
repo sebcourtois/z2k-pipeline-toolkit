@@ -1,0 +1,26 @@
+
+
+global proc
+AEBE_RampTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_Ramp" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+              editorTemplate -addControl "Mode";
+              editorTemplate -addControl "RampMode";
+              AEaddRampControl( $nodeAttr + ".SplineRamp" );
+              AEaddRampControl( $nodeAttr + ".ColorRamp" );
+
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+

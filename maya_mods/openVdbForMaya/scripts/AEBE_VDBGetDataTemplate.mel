@@ -1,0 +1,84 @@
+
+
+global proc
+AEBE_VDBGetDataTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB GetData" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBGetDataGridSelection" "replaceBE_VDBGetDataGridSelection" "VdbAllGridNamesGetData";
+            
+            editorTemplate -addSeparator;
+            
+            editorTemplate -addControl "IndexSpace";
+
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc newBE_VDBGetDataGridSelection(string $attr)
+{
+    optionMenu
+        -label "VDB Grid Name:"
+        -width 300
+        -changeCommand ("updateBE_VDBGetDataGridSelection( \""+$attr+"\" )")
+        vdbGridNameMenuGetData;
+
+    replaceBE_VDBGetDataGridSelection($attr);
+}
+
+global proc replaceBE_VDBGetDataGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBGetDataGridSelection( \""+$attr+"\" )") vdbGridNameMenuGetData;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesGetData"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuGetData`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuGetData;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuGetData;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBGetDataGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuGetData`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesGetData"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}

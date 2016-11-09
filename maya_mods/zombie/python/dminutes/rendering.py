@@ -424,6 +424,13 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
     return dict(resultB=log.resultB, logL=log.logL)
 
 
+def updateStereoCam(gui = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName="updateStereoCam")
+
+    damShot = entityFromScene()
+    oShotCam = mop.getShotCamera(damShot.name)
+    mop.loadStereoCam(infosFromScene()["dam_entity"])
+
 
 def UVSetCount(gui = True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="UVSetCount")

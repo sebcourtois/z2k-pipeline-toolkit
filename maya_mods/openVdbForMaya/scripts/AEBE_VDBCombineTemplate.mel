@@ -1,0 +1,155 @@
+
+
+global proc
+AEBE_VDBCombineTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Combine" -collapse 0;
+          //  editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBCombineGridSelectionA" "replaceBE_VDBCombineGridSelectionA" "VdbAllGridNamesA";
+			editorTemplate -callCustom "newBE_VDBCombineGridSelectionB" "replaceBE_VDBCombineGridSelectionB" "VdbAllGridNamesB";
+
+
+            editorTemplate -addSeparator;
+
+			editorTemplate -addControl "Operation";
+			editorTemplate -label "A Multiplier" -addControl "AMultiplier";
+			editorTemplate -label "B Multiplier" -addControl "BMultiplier";
+            editorTemplate -addControl "Resample";
+            editorTemplate -addControl "Interpolation";
+
+			editorTemplate -addControl "Prune";
+			editorTemplate -addControl "PruneTolerance";
+			editorTemplate -addControl "SignedFloodFillOutput";
+
+            }
+       // editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBCombineGridSelectionA(string $attr)
+{
+    optionMenu
+        -label "Group A"
+        -width 300
+        -changeCommand ("updateBE_VDBCombineGridSelectionA( \""+$attr+"\" )")
+        vdbGridNameMenuA;
+
+    replaceBE_VDBCombineGridSelectionA($attr);
+}
+
+global proc replaceBE_VDBCombineGridSelectionA(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBCombineGridSelectionA( \""+$attr+"\" )") vdbGridNameMenuA;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesA"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuA`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuA;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuA;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBCombineGridSelectionA(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuA`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesA"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+//////////////////////////////////////////////////////////////////////////////// Target
+global proc newBE_VDBCombineGridSelectionB(string $attr)
+{
+    optionMenu
+        -label "Group B"
+        -width 300
+        -changeCommand ("updateBE_VDBCombineGridSelectionB( \""+$attr+"\" )")
+        vdbGridNameMenuB;
+
+    replaceBE_VDBCombineGridSelectionB($attr);
+}
+
+global proc replaceBE_VDBCombineGridSelectionB(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBCombineGridSelectionB( \""+$attr+"\" )") vdbGridNameMenuB;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesB"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuB`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuB;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuB;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBCombineGridSelectionB(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuB`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesB"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+
+

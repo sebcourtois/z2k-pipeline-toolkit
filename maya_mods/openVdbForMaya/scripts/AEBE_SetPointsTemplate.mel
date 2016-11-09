@@ -1,0 +1,20 @@
+global proc
+AEBE_SetPointsTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_SetPoints" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+

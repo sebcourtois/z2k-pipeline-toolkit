@@ -1,0 +1,83 @@
+global proc AEBE_VDBRenameTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+
+        editorTemplate -beginLayout "BE_VDB Rename" -collapse 0;
+
+        editorTemplate -callCustom "newBE_VDBRenameGridSelectionSource" "replaceBE_VDBRenameGridSelectionSource" "VdbAllGridNamesRename";
+
+        editorTemplate -addSeparator;
+
+        editorTemplate -addControl "CustormName";
+        editorTemplate -addSeparator;
+
+        editorTemplate -endLayout;
+	    editorTemplate -addExtraControls;
+    }
+    editorTemplate -endScrollLayout;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBRenameGridSelectionSource(string $attr)
+{
+    optionMenu
+        -label "Source"
+        -width 300
+        -changeCommand ("updateBE_VDBRenameGridSelectionSource( \""+$attr+"\" )")
+        vdbGridNameMenuSourceRename;
+
+    replaceBE_VDBRenameGridSelectionSource($attr);
+}
+
+global proc replaceBE_VDBRenameGridSelectionSource(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBRenameGridSelectionSource( \""+$attr+"\" )") vdbGridNameMenuSourceRename;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesRename"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuSourceRename`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuSourceRename;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuSourceRename;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBRenameGridSelectionSource(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuSourceRename`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesRename"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+
+
+
+
