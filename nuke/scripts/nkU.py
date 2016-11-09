@@ -598,16 +598,17 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
 
     publishHeadDir = publishDir.absPath()
 
+    newVersion = None
     if destination != "output":
         _ , newVersion = publishDir.publishFile(layerPathS, autoLock=True, autoUnlock=True, comment=comment, dryRun=dryRun, saveChecksum=False, version=int(os.environ["VER"]))
-        publishLastVersDir = publishDir.absPath()+"/_version/"+newVersion.name
+        publishLastVersDir = newVersion.absPath() #publishDir.absPath()+"/_version/"+newVersion.name
     else:
         newVersionNameS = moveLayer2output(layerPathS, publishDirS)
         publishLastVersDir = publishDir.absPath()+"/_version/"+newVersionNameS
 
 
     log.printL("i","Published layer: '{}'".format(publishHeadDir)) 
-    return dict(resultB=log.resultB, logL=log.logL, publishHeadDir = publishHeadDir, publishLastVersDir= publishLastVersDir)
+    return dict(resultB=log.resultB, logL=log.logL, publishHeadDir = publishHeadDir, publishLastVersDir= publishLastVersDir, publishedVersion=newVersion)
 
 
 
@@ -735,7 +736,7 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
             filePathLeftS = layerPathS.replace("%V","left")
             filePathRightS = layerPathS.replace("%V","right")
             resultD = publishLayer(layerPathS = filePathLeftS,comment=commentS,dryRun=dryRun,destination=destination, gui = True)
-            resultD = publishLayer(layerPathS = filePathRightS,comment=commentS,dryRun=dryRun,destination=destination, gui = True)
+            publishLayer(layerPathS = filePathRightS,comment=commentS,dryRun=dryRun,destination=destination, gui = True)
             log.printL("i","Publishing stereo layers: '{}', '{}'".format(eachNameS,filePathExpS))
         else:
             resultD = publishLayer(layerPathS = layerPathS,comment=commentS,dryRun=dryRun,destination=destination, gui = True)
@@ -768,7 +769,7 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
     if guiPopUp:
         nuke.message("Info:\n"+publishedMsg+"\n"+skippedMsg+"\nPlease read the log for more details")
 
-    return dict(resultB=log.resultB, logL=log.logL)
+    return dict(resultB=log.resultB, logL=log.logL, publishedVersion=resultD.get("publishedVersion"))
 
 
 
@@ -888,8 +889,10 @@ def publishCompo(dryRun=False, gui = True):
         log.printL("i","Pubish canceled")
         raise RuntimeError("Publish canceled")
 
+    sgVersionD = None
     try:
         resultD =  proj.publishEditedVersion(nKFilePathS, comment=commentS, returnDict=True, uploadApart=False)
+        sgVersionD = resultD["sg_version"]
     except Exception as err:
         log.printL("e","Nuke file publish failed: '{}'".format(err),guiPopUp = True)
         raise
@@ -899,6 +902,12 @@ def publishCompo(dryRun=False, gui = True):
             resultD = publishNode(readNodeL=readExrL,dryRun=False, destination = "shot", gui = True, guiPopUp = False, commentS = commentS)
             if not resultD["resultB"]:
                 raise RuntimeError("Publish failed, please read the log for more info")
+
+            pubVersion = resultD["publishedVersion"]
+            if sgVersionD and pubVersion:
+                p = pubVersion.envPath()+"/"+os.environ["SHOT"]+".@@@@.exr"
+                proj.updateSgEntity(sgVersionD, sg_path_to_frames=p)
+
 
         except Exception as err:
             log.printL("e","Seq output node publish failed: '{}'".format(err),guiPopUp = True)
