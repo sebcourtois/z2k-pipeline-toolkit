@@ -64,12 +64,9 @@ def buttonCreateFxsPass(*args):
 	lm.createFxsPass()
 
 def buttonUtilsPass(*args):
-	layerManager.setUtl16Aovs()
-	layerManager.createPLayer()
-	layerManager.setUtl32Aovs()
+	layerManager.setUtlAovs()
 	layerManager.createCryptomatteLayer()
 	layerManager.setCryptoAov()
-
 
 #layer member
 def buttonAddSelectionToLayer(*args):

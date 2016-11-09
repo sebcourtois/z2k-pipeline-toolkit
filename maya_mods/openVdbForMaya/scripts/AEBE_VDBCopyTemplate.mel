@@ -1,0 +1,16 @@
+global proc AEBE_VDBCopyTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+        editorTemplate -beginLayout "BE_VDB Copy" -collapse 0;
+        editorTemplate
+            -annotation "Shallow copy selected grids form the A input."
+            -addControl "GridsFromA";
+        editorTemplate
+            -annotation "Shallow copy selected grids form the B input."
+            -addControl "GridsFromB";
+        editorTemplate -endLayout;
+	    editorTemplate -addExtraControls;
+    }
+    editorTemplate -endScrollLayout;
+}

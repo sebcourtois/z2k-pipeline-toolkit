@@ -70,7 +70,7 @@ def importFinalLayoutLight( gui=True, lgtRig="lgt_finalLayout_directional01"):
     log = miscUtils.LogBuilder(gui=gui, funcName ="createFinalLayoutLight")
 
     if mc.ls("|shot"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = mc.file(q=True, sn=True)
         mainFilePathElem = mainFilePath.split("/")
         assetName = mainFilePathElem[-2]
         assetType = mainFilePathElem[-3]
@@ -178,7 +178,7 @@ def createNukeBatch(gui=True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="createNukeBatch")
 
     zombToolsPath = os.environ["ZOMB_TOOL_PATH"]
-    workingFile = mc.file(q=True, list = True)[0]
+    workingFile = mc.file(q=True, sn=True)
     workingDir = os.path.dirname(workingFile)
     renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"],"z2k-pipeline-toolkit","maya_mods","zombie","python","dminutes","nukeBatch_help.txt"))
     renderBatchHelp_trg = miscUtils.normPath(os.path.join(workingDir,"nukeBatch_help.txt"))

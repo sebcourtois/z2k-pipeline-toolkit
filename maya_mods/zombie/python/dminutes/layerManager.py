@@ -44,7 +44,7 @@ class LayerManager:
     def initRndItem(self, rndItemL = None):
         self.log.funcName ="'initRndItem' "
 
-        self.allRndObjL = mc.ls("geo_*",type="transform")+mc.ls("*:geo_*",type="transform")+mc.ls("*:*:geo_*",type="transform")+mc.ls("vol_*",type="transform")+mc.ls("*:vol_*",type="transform")+mc.ls("*:*:vol_*",type="transform")+mc.ls("col_*",type="transform")+mc.ls("*:col_*",type="transform")+mc.ls("*:*:col_*",type="transform")
+        self.allRndObjL = mc.ls("geo_*", type="transform") + mc.ls("*:geo_*", type="transform") + mc.ls("*:*:geo_*", type="transform") + mc.ls("vol_*", type="transform") + mc.ls("*:vol_*", type="transform") + mc.ls("*:*:vol_*", type="transform")+ mc.ls("col_*", type="transform") + mc.ls("*:col_*", type="transform") + mc.ls("*:*:col_*", type="transform")
         for each in self.allRndObjL:
             if "env_" in each:
                 self.envRndObjL.append(each)
@@ -470,20 +470,19 @@ class LayerManager:
 
 
 def createCryptomatteLayer():
+    if pm.window("unifiedRenderGlobalsWindow", exists=True):
+        pm.deleteUI("unifiedRenderGlobalsWindow")
     ## Add assets ##
-    pm.select('|shot|grp_character', '|shot|grp_prop', '|shot|grp_set', '|shot|grp_prop')
+    pm.select('|shot|grp_character', '|shot|grp_prop', '|shot|grp_set', '|shot|grp_prop', '|shot|grp_vehicle')
 
     ## Create custom layer and make current ##
+    if pm.objExists('lyr_utl0_bty_16') == True:
+        mc.editRenderLayerAdjustment('aiAOV_*.enabled', r=True)
+        mc.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
+        pm.delete('lyr_utl0_bty_16')
+
     pm.createRenderLayer(n='lyr_utl0_bty_16')
     pm.editRenderLayerGlobals(currentRenderLayer='lyr_utl0_bty_16')
-
-def createPLayer():
-    ## Add assets ##
-    pm.select('|shot|grp_character', '|shot|grp_prop', '|shot|grp_set', '|shot|grp_prop')
-
-    ## Create custom layer and make current ##
-    pm.createRenderLayer(n='lyr_utl1_bty_32')
-    pm.editRenderLayerGlobals(currentRenderLayer='lyr_utl1_bty_32')
 
 def setCryptoAov():
     ''''
@@ -495,6 +494,7 @@ def setCryptoAov():
 
     ## Create and set the Cryptomatte aov ##
     defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
+
     if pm.objExists('alCryptoShader') == True:
         pm.delete('alCryptoShader')
         print 'Delete alCryptoShader !'
@@ -511,12 +511,13 @@ def setCryptoAov():
     aovs.AOVInterface()
     #myAovs.addAOV("crypto_object", aovType='rgb')
     aovsL = defRenderOpt.aovs.get()
+    [aov.attr('enabled').set(False) for aov in aovsL if aov.attr('name').get() == 'crypto_object']
     pm.editRenderLayerAdjustment('aiAOV_*.enabled')
     [aov.attr('enabled').set(False) for aov in aovsL]
     [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'crypto_object']
 
 
-def setUtl16Aovs() :
+def setUtlAovs() :
     aovs.AOVInterface()
     defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
     aovsL = defRenderOpt.aovs.get()
@@ -534,21 +535,44 @@ def setUtl16Aovs() :
         pass
 
     pm.connectAttr('alUtls.outColor', 'aiAOV_uvs.defaultValue', force=True)
-    pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
 
+    if pm.objExists('aiAOVDriverP32') == True:
+        pm.delete('aiAOVDriverP32')
+        print 'Delete aiAOVDriverP32 !'
+
+    if not pm.objExists('aiAOVDriverP32') == True:
+        pm.createNode('aiAOVDriver', n='aiAOVDriverP32', skipSelect=True)
+        pm.setAttr('aiAOVDriverP32.autocrop', 1)
+
+    else:
+        pass
+
+    pm.connectAttr('aiAOVDriverP32.aiTranslator', 'aiAOV_P.outputs[0].driver', f=True)
+    pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
 
 def setUtl32Aovs() :
     aovs.AOVInterface()
     defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
     #pm.editRenderLayerAdjustment('aiAOV_*.enabled')
+    if not pm.objExists('aiAOVDriverP32') == True:
+        pm.createNode('aiAOVDriver', n='aiAOVDriverP32', skipSelect=True)
+        pm.setAttr('aiAOVDriverP32.autocrop', 1)
+
+    else:
+        pass
+
+    pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
     aovsL = defRenderOpt.aovs.get()
+
     [aov.attr('enabled').set(False) for aov in aovsL if aov.attr('name').get() == 'crypto_object' and aov.attr('enabled').get() == 1]
-    [aov.attr('enabled').set(False) for aov in aovsL if aov.attr('name').get() == 'P' and aov.attr('enabled').get() == 1]
+    #[aov.attr('enabled').set(False) for aov in aovsL if aov.attr('name').get() == 'P' and aov.attr('enabled').get() == 1]
     pm.editRenderLayerAdjustment('aiAOV_*.enabled')
     [aov.attr('enabled').set(False) for aov in aovsL]
     [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'P']
+    pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_P.outputs[0].filter', f=True)
+
     #[aov.attr('enabled').set(False) for aov in aovsL if aov.attr('name').get() == 'crypto_object']
-    pm.editRenderLayerAdjustment('defaultArnoldDriver.halfPrecision')
-    pm.setAttr('defaultArnoldDriver.halfPrecision', 0)
+    #pm.editRenderLayerAdjustment('defaultArnoldDriver.halfPrecision')
+    #pm.setAttr('defaultArnoldDriver.halfPrecision', 0)
 
 

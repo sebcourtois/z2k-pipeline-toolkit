@@ -1,0 +1,138 @@
+global proc AEBE_VDBClipTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+
+        editorTemplate -beginLayout "BE_VDB Clip" -collapse 0;
+
+        editorTemplate -callCustom "newBE_VDBClipGridSelectionSource" "replaceBE_VDBClipGridSelectionSource" "VdbAllGridNamesClip";
+		editorTemplate -callCustom "newBE_VDBClipGridSelectionMask" "replaceBE_VDBClipGridSelectionMask" "VdbAllGridNamesMaskClip";
+        editorTemplate -addControl "MaskVDB";
+        editorTemplate -addSeparator;
+        editorTemplate -addControl "BBoxMin";
+        editorTemplate -addControl "BBoxMax";
+        editorTemplate -endLayout;
+	    editorTemplate -addExtraControls;
+    }
+    editorTemplate -endScrollLayout;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBClipGridSelectionSource(string $attr)
+{
+    optionMenu
+        -label "Source"
+        -width 300
+        -changeCommand ("updateBE_VDBClipGridSelectionSource( \""+$attr+"\" )")
+        vdbGridNameMenuSourceClip;
+
+    replaceBE_VDBClipGridSelectionSource($attr);
+}
+
+global proc replaceBE_VDBClipGridSelectionSource(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBClipGridSelectionSource( \""+$attr+"\" )") vdbGridNameMenuSourceClip;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesClip"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuSourceClip`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuSourceClip;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuSourceClip;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBClipGridSelectionSource(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuSourceClip`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesClip"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+
+//////////////////////////////////////////////////////////////////////////////// AlphaMask
+global proc newBE_VDBClipGridSelectionMask(string $attr)
+{
+    optionMenu
+        -label "Mask   "
+        -width 300
+        -changeCommand ("updateBE_VDBClipGridSelectionMask( \""+$attr+"\" )")
+        vdbGridNameMenuMaskClip;
+
+    replaceBE_VDBClipGridSelectionMask($attr);
+}
+
+global proc replaceBE_VDBClipGridSelectionMask(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBClipGridSelectionMask( \""+$attr+"\" )") vdbGridNameMenuMaskClip;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesMaskClip"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuMaskClip`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuMaskClip;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuMaskClip;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBClipGridSelectionMask(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuMaskClip`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesMaskClip"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+

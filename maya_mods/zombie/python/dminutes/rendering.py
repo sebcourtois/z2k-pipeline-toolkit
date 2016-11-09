@@ -42,7 +42,7 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
     aspectRatio = 1.85
 
     if renderMode == "":
-        if mc.ls("|shot") and (mc.file(q=True, list=True)[0].split("/")[-4]) == "shot":
+        if mc.ls("|shot") and (mc.file(q=True, sn=True).split("/")[-4]) == "shot":
             renderMode = "render"
 
             print "#### info: Lighting mode render options"
@@ -81,7 +81,8 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
             if eachCam != myCamName:
                 mc.setAttr (eachCam + ".renderable", 0)
             else:
-                mc.setAttr (myCamName + ".renderable", 1)
+                #mc.setAttr (myCamName + ".renderable", 1)
+                pass
 
     else:
         print "#### error: no '*:cam_*' camera could be found in the scene"
@@ -133,7 +134,7 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
     mc.setAttr("defaultArnoldRenderOptions.threads_autodetect", 0)
     mc.setAttr("defaultArnoldRenderOptions.threads", -1)
 
-    mainFilePath = mc.file(q=True, list=True)[0]
+    mainFilePath = mc.file(q=True, sn=True)
     mainFilePathElem = mainFilePath.split("/")
     if mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "shot":
         fileRadical = os.path.basename(mainFilePath).split("-")[0]
@@ -151,15 +152,19 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
         mc.setAttr("defaultArnoldDriver.aiTranslator", "jpeg", type="string")
         mc.setAttr("defaultArnoldDysplayDriver.aiTranslator", "jpeg", type="string")
         mc.setAttr("defaultArnoldRenderOptions.aovMode", 0)
+    elif  outputFormat == "exr":
+        mc.setAttr("defaultArnoldDriver.aiTranslator", "exr", type="string")
+        mc.setAttr("defaultArnoldDysplayDriver.aiTranslator", "exr", type="string")
+        mc.setAttr("defaultArnoldRenderOptions.aovMode", 1)
 
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseSamples", 0)
-    mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples", 3)
+    mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples", 5)
     mc.setAttr("defaultArnoldRenderOptions.GIRefractionSamples", 0)
     mc.setAttr("defaultArnoldRenderOptions.GISssSamples", 0)
     mc.setAttr("defaultArnoldRenderOptions.GIVolumeSamples", 3)
-    mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp", 1)
-    mc.setAttr("defaultArnoldRenderOptions.AASampleClamp", 1)
-    mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp_AOVs", 1)
+    mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp", 0)
+    mc.setAttr("defaultArnoldRenderOptions.AASampleClamp", 0)
+    mc.setAttr("defaultArnoldRenderOptions.use_sample_clamp_AOVs", 0)
     mc.setAttr("defaultArnoldRenderOptions.use_existing_tiled_textures", 1)
     mc.setAttr("defaultArnoldRenderOptions.skipLicenseCheck", 1)
     mc.setAttr("defaultArnoldRenderOptions.log_verbosity", 1)#warnig + info
@@ -172,7 +177,11 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
     elif renderMode == 'render':
         mc.setAttr("defaultArnoldRenderOptions.AASamples", 8)
         mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 1)
-        mc.setAttr("defaultArnoldRenderOptions.motion_frames", 0.25)
+        if mc.getAttr("defaultArnoldRenderOptions.motion_frames") > 0.25 :
+            pass
+        else:
+            mc.setAttr("defaultArnoldRenderOptions.motion_frames", 0.25)
+
     elif renderMode == 'finalLayout':
         mc.setAttr("defaultArnoldRenderOptions.ignoreBump", 1)
         mc.setAttr("defaultArnoldRenderOptions.AASamples", 2)
@@ -180,7 +189,6 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
         mc.setAttr("defaultArnoldRenderOptions.motion_frames", 0.25)
         mc.setAttr("defaultArnoldRenderOptions.GIGlossySamples", 2)
         mc.setAttr("defaultArnoldRenderOptions.aovMode", 1)
-
 
     mc.setAttr("defaultArnoldRenderOptions.GITotalDepth", 4)
     mc.setAttr("defaultArnoldRenderOptions.GIDiffuseDepth", 0)
@@ -251,9 +259,16 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         miscUtils.setAttrC("defaultArnoldDriver.aiTranslator", "jpeg", type="string")
         miscUtils.setAttrC("defaultArnoldDisplayDriver.aiTranslator", "jpeg", type="string")
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 0)
+    if outputFormat == "png":
+        miscUtils.setAttrC("defaultArnoldDriver.aiTranslator", "png", type="string")
+        mc.setAttr("defaultArnoldDriver.mergeAOVs", 0)
+    elif  outputFormat == "exr":
+        miscUtils.setAttrC("defaultArnoldDriver.aiTranslator", "exr", type="string")
+        miscUtils.setAttrC("defaultArnoldDisplayDriver.aiTranslator", "exr", type="string")
+        mc.setAttr("defaultArnoldDriver.mergeAOVs", 1)
 
 
-    mainFilePath = mc.file(q=True, list=True)[0]
+    mainFilePath = mc.file(q=True, sn=True)
     mainFilePathElem = mainFilePath.split("/")
     if mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "shot":
         fileRadical = os.path.basename(mainFilePath).split("-")[0]
@@ -261,18 +276,22 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         mc.setAttr("defaultRenderGlobals.imageFilePrefix", imageNameS, type="string")
 
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIDiffuseSamples", 0)
-    miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples", 3)
+    miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples", 5)
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIRefractionSamples", 0)
     miscUtils.setAttrC("defaultArnoldRenderOptions.GISssSamples", 0)
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIVolumeSamples", 3)
-    miscUtils.setAttrC("defaultArnoldRenderOptions.use_sample_clamp", 1)
-    miscUtils.setAttrC("defaultArnoldRenderOptions.AASampleClamp", 1)
-    miscUtils.setAttrC("defaultArnoldRenderOptions.use_sample_clamp_AOVs", 1)
+    miscUtils.setAttrC("defaultArnoldRenderOptions.use_sample_clamp", 0)
+    miscUtils.setAttrC("defaultArnoldRenderOptions.AASampleClamp", 0)
+    miscUtils.setAttrC("defaultArnoldRenderOptions.use_sample_clamp_AOVs", 0)
     miscUtils.setAttrC("defaultArnoldRenderOptions.use_existing_tiled_textures", 1)
     miscUtils.setAttrC("defaultArnoldRenderOptions.skipLicenseCheck", 1)
     miscUtils.setAttrC("defaultArnoldRenderOptions.log_verbosity", 1)#warnig + info
     miscUtils.setAttrC("defaultArnoldRenderOptions.motion_blur_enable", 1)
-    miscUtils.setAttrC("defaultArnoldRenderOptions.motion_frames", 0.25)
+    if not mc.getAttr("defaultArnoldRenderOptions.motion_frames") == 0.25 :
+        pass
+    else:
+        miscUtils.setAttrC("defaultArnoldRenderOptions.motion_frames", 0.25)
+
 
     if renderMode == 'render':
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 8)
@@ -354,7 +373,7 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
 
         if leftCam:
             if leftCamS: 
-                mc.setAttr (leftCamS + ".renderable", 1)
+                mc.setAttr (leftCamS + ".renderable", 0)
                 mc.setAttr (stereoCam + ".renderable", 0)
                 mc.renderSettings(camera=stereoCam)
                 if defaultCamS:
@@ -363,31 +382,31 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
             else:
                 log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_reft'")
                 try:
-                    mc.setAttr (leftCamS + ".renderable", 1)
+                    mc.setAttr (leftCamS + ".renderable", 0)
                 except:
                     pass
 
                 if defaultCamS:
                     log.printL("i", "render camera: '{}'".format(defaultCamS))
-                    mc.setAttr (defaultCamS + ".renderable", 1)
+                    mc.setAttr (defaultCamS + ".renderable", 0)
                 else:
                     log.printL("e", "could not found 'cam_sqxxxx_shxxxxa:cam_shot_default'")
-                    mc.setAttr (defaultCamS + ".renderable", 1)
+                    mc.setAttr (defaultCamS + ".renderable", 0)
         else:
             try:
-                mc.setAttr (leftCamS + ".renderable", 1)
+                mc.setAttr (leftCamS + ".renderable", 0)
             except:
                 pass
 
         if rightCam:
             if rightCamS: 
-                mc.setAttr (rightCamS + ".renderable", 1)
+                mc.setAttr (rightCamS + ".renderable", 0)
                 mc.setAttr (stereoCam + ".renderable", 0)
                 mc.renderSettings(camera=stereoCam)
                 log.printL("i", "render camera: '{}'".format(rightCamS))
             else:
                 try:
-                    mc.setAttr (rightCamS + ".renderable", 1)
+                    mc.setAttr (rightCamS + ".renderable", 0)
                     log.printL("e", "could not found 'stereo_cam_sqxxxx_shxxxxa:cam_right'")
                 except:
                     pass
@@ -404,6 +423,13 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
 
     return dict(resultB=log.resultB, logL=log.logL)
 
+
+def updateStereoCam(gui = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName="updateStereoCam")
+
+    damShot = entityFromScene()
+    oShotCam = mop.getShotCamera(damShot.name)
+    mop.loadStereoCam(infosFromScene()["dam_entity"])
 
 
 def UVSetCount(gui = True):
@@ -435,7 +461,7 @@ def getRenderOutput(gui=True):
     #creates a workspace named as the davos user en the maya project path and set it
     #miscUtils.createUserWorkspace()
 
-    mainFilePath = mc.file(q=True, list=True)[0]
+    mainFilePath = mc.file(q=True, sn=True)
     mainFilePathElem = mainFilePath.split("/")
 
     try:
@@ -480,7 +506,12 @@ def getRenderOutput(gui=True):
     elif mc.ls("|shot"):
         if  mainFilePathElem[-5] == "shot":
             vertionNumber = mainFilePathElem[-1].split("-")[1].split(".")[0]
-            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render-" + vertionNumber)
+            if '06_finalLayout' in mainFilePath:
+                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render-" + vertionNumber)
+            if '07_fx3d' in mainFilePath:
+                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "/work/render/render-" + vertionNumber)
+            if '08_render' in mainFilePath:
+                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render")
             outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
             outputImageName = mainFilePathElem[-3]
             print "#### Info: Set render path: {}".format(outputFilePath_exp)
@@ -505,7 +536,7 @@ def createBatchRender(arnoldLic="on"):
         raise ValueError("#### Error: DAVOS_USER environement variable is not defined, please log to davos")
 
 
-    workingFile = mc.file(q=True, list=True)[0]
+    workingFile = mc.file(q=True, sn=True)
     workingDir = os.path.dirname(workingFile)
     renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"], "z2k-pipeline-toolkit", "maya_mods", "zombie", "python", "dminutes", "renderBatch_help.txt"))
     renderBatchHelp_trg = miscUtils.normPath(os.path.join(workingDir, "renderBatch_help.txt"))
@@ -715,13 +746,12 @@ def createCustomShader(shaderName="arlequin", gui=True):
 
     return dict(resultB=log.resultB, logL=log.logL, rootNodeOutputS=rootNodeOutput)
 
-shotName = ''
-if not pm.sceneName() == '' :
-    mainFilePathS = mc.file(q=True, list=True)[0]
-    shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
-imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
-
 def renderLeftCam():
+    shotName = ''
+    if not pm.sceneName() == '' :
+        mainFilePathS = mc.file(q=True, sn=True)
+        shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
+    imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
         pm.deleteUI("unifiedRenderGlobalsWindow")
     if not '/left/<RenderLayer>/' in imageFileName or '/right/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
@@ -736,8 +766,16 @@ def renderLeftCam():
     else :
         print (u'Merci, cam gauche already set, nothing to do !!')
         pass
+    shotNameL = mainFilePathS.split('/')[2:-1]
+    aiAovPOutName = '//' + '/'.join(shotNameL) + '/render/left/<RenderLayer>_P32/' + shotName
+    pm.setAttr('aiAOVDriverP32.prefix', aiAovPOutName, type='string')
 
 def renderRightCam():
+    shotName = ''
+    if not pm.sceneName() == '' :
+        mainFilePathS = mc.file(q=True, sn=True)
+        shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
+    imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
         pm.deleteUI("unifiedRenderGlobalsWindow")
     if not '/right/<RenderLayer>/' in imageFileName or '/left/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
@@ -752,3 +790,7 @@ def renderRightCam():
     else :
         print (u'Merci, ok pour le rendu cam droite')
         pass
+    shotNameL = mainFilePathS.split('/')[2:-1]
+    aiAovPOutName = '//' + '/'.join(shotNameL) + '/render/right/<RenderLayer>_P32/' + shotName
+    pm.setAttr('aiAOVDriverP32.prefix', aiAovPOutName, type='string')
+

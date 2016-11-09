@@ -1,0 +1,131 @@
+global proc AEBE_VDBConvertVDBTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+        editorTemplate -beginLayout "BE_VDB Convert VDB" -collapse 0;
+        editorTemplate -beginNoOptimize;
+        {
+            editorTemplate -callCustom "newBE_VDBConvertVDBGridSelection" "replaceBE_VDBConvertVDBGridSelection" "vdbAllGridNam";
+            
+            editorTemplate -addSeparator;
+			editorTemplate -addControl "ConvertTo" "AEAT_BE_VDBPolyUpdateEnabled";
+            editorTemplate -addControl "VDBClass" "AEAT_BE_VDBPolyUpdateEnabled";
+
+
+            editorTemplate -addControl "isovalue" "AEAT_BE_VDBPolyUpdateEnabled";
+            editorTemplate -addControl "adaptivity" "AEAT_BE_VDBPolyUpdateEnabled";
+
+            editorTemplate -addControl "UseRefmesh" "AEAT_BE_VDBPolyUpdateEnabled";
+            editorTemplate -addControl "SharpenFeatures" "AEAT_BE_VDBPolyUpdateEnabled";
+            editorTemplate -addControl "EdgeTolerance" "AEAT_BE_VDBPolyUpdateEnabled";
+            editorTemplate -addControl "InvertNormal" "AEAT_BE_VDBPolyUpdateEnabled";
+        }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc
+AEAT_BE_VDBPolyUpdateEnabled( string $node )
+{
+    int $operation = `getAttr ($node+".ConvertTo")`;
+          
+    if ($operation == 1) {
+        editorTemplate -dimControl $node "VDBClass" 1;
+		editorTemplate -dimControl $node "adaptivity" 0;
+
+        editorTemplate -dimControl $node "UseRefmesh" 0;
+		editorTemplate -dimControl $node "InvertNormal" 0;		
+
+    } else {
+        editorTemplate -dimControl $node "VDBClass" 0;
+		editorTemplate -dimControl $node "adaptivity" 1;
+
+        editorTemplate -dimControl $node "UseRefmesh" 1;
+		editorTemplate -dimControl $node "InvertNormal" 1;		
+    }
+
+   int $op = `getAttr ($node+".UseRefmesh")`;
+   if ($operation == 1 && $op == 1)
+   {
+        editorTemplate -dimControl $node "SharpenFeatures" 0;
+        editorTemplate -dimControl $node "EdgeTolerance" 0;
+
+    } else 
+	{
+        editorTemplate -dimControl $node "SharpenFeatures" 1;
+        editorTemplate -dimControl $node "EdgeTolerance" 1;
+    }
+
+   int $operat = `getAttr ($node+".VDBClass")`;
+   if ($operation == 0 && $operat == 2)
+   {
+        editorTemplate -dimControl $node "isovalue" 1;
+
+    } else 
+	{
+        editorTemplate -dimControl $node "isovalue" 0;
+
+    }
+}
+global proc newBE_VDBConvertVDBGridSelection(string $attr)
+{
+    optionMenu
+        -label "VDB Grid Name:"
+        -width 300
+        -changeCommand ("updateBE_VDBConvertVDBGridSelection( \""+$attr+"\" )")
+        vdbGridNamMenu;
+
+    replaceBE_VDBConvertVDBGridSelection($attr);
+}
+
+global proc replaceBE_VDBConvertVDBGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBConvertVDBGridSelection( \""+$attr+"\" )") vdbGridNamMenu;
+
+    // save current item
+    string $citem = getAttr ($node+".vdbSelectedGridNam"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNamMenu`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNamMenu;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNamMenu;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBConvertVDBGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNamMenu`;
+    string $selectionAttr = plugNode($attr) + ".vdbSelectedGridNam"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+
+

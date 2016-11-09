@@ -10,7 +10,6 @@ from pprint import pprint
 import shutil
 
 
-
 # rappel
 # os.environ["ZOMB_ASSET_PATH"] = zombRootPath+"/zomb/asset"
 # os.environ["ZOMB_SHOT_PATH"] = zombRootPath+"/zomb/shot"
@@ -613,9 +612,6 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
 
 
 
-
-
-
 def publishFile(fileNameS = "", comment="test",dryRun=False, gui = True):
     log = LogBuilder(gui=gui, funcName ="publishFile")
     from davos.core.damproject import DamProject
@@ -950,3 +946,52 @@ def inportOutTemplate(template = "compo"):
         nuke.scriptReadFile(os.environ["ZOMB_TOOL_PATH"]+"/template/nuke/renderPreCompTemplate.nk")
     elif template == "stereo":
         nuke.scriptReadFile(os.environ["ZOMB_TOOL_PATH"]+"/template/nuke/stereoTemplate.nk")
+
+
+
+
+def getStereoInfo(gui = True):
+    from pytd.util.fsutils import jsonWrite, jsonRead
+    log = LogBuilder(gui=gui, funcName ="getStereoInfo")
+
+    jsonStereoFileS = os.environ["ZOMB_SHOT_PATH"]+"/"+os.environ["SEQ"]+"/"+os.environ["SHOT"]+"/01_stereo/"+os.environ["SHOT"]+"_stereoInfo.json"
+    if not os.path.isfile(jsonStereoFileS):
+        txt = "missig file : '{}'".format(jsonStereoFileS)
+        log.printL("e",txt, guiPopUp = False)
+        raise RuntimeError(txt)
+
+    jsonStereoD = jsonRead(jsonStereoFileS)
+    txt = "reading : '{}'".format(jsonStereoFileS)
+    log.printL("i",txt, guiPopUp = False)
+
+    pprint (jsonStereoD)
+
+    oNode = nuke.nodes.StickyNote(name="stereoInfo", label ="stereo info",tile_color = 3372271103)
+
+    camConv = nuke.Array_Knob("camConv", "convergence")
+    camZeroPar = nuke.Array_Knob("camZeroPar", "zeroParallax")
+    camSep = nuke.Array_Knob("camSep", "separation")
+    camInter = nuke.Array_Knob("camInter", "interaxial")
+    oNode.addKnob(camInter)
+    oNode.addKnob(camSep)
+    oNode.addKnob(camZeroPar)
+    oNode.addKnob(camConv)
+
+
+    camInter.setAnimated()
+    camConv.setAnimated()
+    camZeroPar.setAnimated()
+    camSep.setAnimated()
+
+
+    for k, v in jsonStereoD.items():
+        #print k,v["convergence"], v["zeroParallax"], v["separation"]
+        camConv.setValueAt( float(v["convergence"]), float(k) )
+        camZeroPar.setValueAt( float(v["zeroParallax"]), float(k) )
+        camSep.setValueAt( float(v["separation"]), float(k) )
+        camInter.setValueAt( float(v["separation"])*2, float(k) )
+
+    txt = "created node : '{}'".format(oNode['name'].getValue())
+    log.printL("i",txt)
+
+    return dict(resultB=log.resultB, logL=log.logL)

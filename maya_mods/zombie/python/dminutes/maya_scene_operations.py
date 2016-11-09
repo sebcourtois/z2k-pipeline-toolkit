@@ -107,6 +107,9 @@ def recStereoInfos(frame, **kwargs):
 
 def getStereoInfosRecorder(sStereoCam):
 
+    global STEREO_INFOS
+    STEREO_INFOS = {}
+
     import sys
     m = sys.modules["__main__"]
     m.mop = sys.modules[__name__]
@@ -140,7 +143,7 @@ def writeStereoInfos(sFilePath):
     if not osp.exists(sDirPath):
         os.makedirs(sDirPath)
 
-    jsonWrite(sFilePath, STEREO_INFOS)
+    jsonWrite(sFilePath, STEREO_INFOS, sort_keys=True)
 
     return True
 
@@ -688,7 +691,8 @@ def loadStereoCam(damShot, withAnim=True):
         oStereoCam = getStereoCam(fail=True)
         withAnim = True
         if sShotCode[-1] != "a":
-            damShot = proj.getShot(sShotCode[:-1] + "a")
+            sShotCode = sShotCode[:-1] + "a"
+            damShot = proj.getShot(sShotCode)
 
     oStereoCamShape = oStereoCam.getShape()
     sStereoGrp = getObject(sStereoNs + ":grp_stereo", fail=True)

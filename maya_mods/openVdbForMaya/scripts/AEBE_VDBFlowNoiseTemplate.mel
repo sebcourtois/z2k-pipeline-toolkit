@@ -1,0 +1,88 @@
+global proc AEBE_VDBFlowNoiseTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+
+        editorTemplate -beginLayout "BE_VDB Flow Noise" -collapse 0;
+
+        editorTemplate -callCustom "newBE_VDBFlowNoiseGridSelectionSource" "replaceBE_VDBFlowNoiseGridSelectionSource" "VdbAllGridNames";
+
+        editorTemplate -addSeparator;
+        editorTemplate -addControl "Amplitude";
+        editorTemplate -addControl "Octaves";
+        editorTemplate -addControl "Lacunarity";
+        editorTemplate -addControl "Gain";
+		editorTemplate -addControl "Angle";
+		editorTemplate -addControl "Advect";	
+        editorTemplate -addControl "Frequency";
+		editorTemplate -addControl "Offset";
+
+		editorTemplate -endLayout;
+
+	    editorTemplate -addExtraControls;
+    }
+    editorTemplate -endScrollLayout;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBFlowNoiseGridSelectionSource(string $attr)
+{
+    optionMenu
+        -label "Source"
+        -width 300
+        -changeCommand ("updateBE_VDBFlowNoiseGridSelectionSource( \""+$attr+"\" )")
+        vdbGridNameMenuSource;
+
+    replaceBE_VDBFlowNoiseGridSelectionSource($attr);
+}
+
+global proc replaceBE_VDBFlowNoiseGridSelectionSource(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBFlowNoiseGridSelectionSource( \""+$attr+"\" )") vdbGridNameMenuSource;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNames"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuSource`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuSource;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuSource;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBFlowNoiseGridSelectionSource(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuSource`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNames"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+
+
+

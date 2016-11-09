@@ -1,0 +1,495 @@
+//      Common utilities for map file attributes
+//
+global proc 
+AEVolumeOpenVdbNode_fileBrowser( string $nodeAttr )
+{
+string $attr     = `match "[^.]+$" $nodeAttr`;
+string $uiAttr   = `interToUI $attr`;
+string $imgFilters = "VDB (*.vdb)";
+
+string $result[] = `fileDialog2 -caption ("Choose "+$uiAttr)
+                                    -fileMode 1
+                                    -fileFilter $imgFilters
+                                    -selectFileFilter "All files"
+                                    `;
+
+string $filename = "";
+if (size($result) > 0)
+{
+$filename = $result[0];
+setAttr $nodeAttr -type "string" $filename;
+}
+string $nodeName = plugNode($nodeAttr);
+string $citems = `select -r $nodeName` ;
+}
+
+proc
+buildMapRow( string $nodeAttr )
+{
+string $attr     = `match "[^.]+$" $nodeAttr`;
+string $fileField = ($attr+"_fileField");
+string $browserBtn = ($attr+"_browserBtn");
+
+setUITemplate -pst attributeEditorTemplate;
+rowLayout -nc 3 -h 25;
+text -label `interToUI $attr`;
+textField $fileField;
+symbolButton -image "navButtonBrowse.png" $browserBtn;
+setParent ..;
+setUITemplate -ppt;
+}
+
+
+//
+//      Custom controls for adding file browser to map attributes
+//
+
+//
+//      Filename
+//
+global proc 
+AEVolumeOpenVdbNode_colorFileNew( string $nodeAttr )
+{
+    // build row with text field and file browser button
+buildMapRow( $nodeAttr );
+AEVolumeOpenVdbNode_colorFileReplace $nodeAttr;
+}
+
+global proc 
+AEVolumeOpenVdbNode_colorFileReplace (string $nodeAttr)
+{
+string $attr     = `match "[^.]+$" $nodeAttr`;
+string $fileField = ($attr+"_fileField");
+string $browserBtn = ($attr+"_browserBtn");
+
+connectControl -fileName $fileField $nodeAttr;
+button -e -c
+("AEVolumeOpenVdbNode_fileBrowser \"" + $nodeAttr + "\"" ) $browserBtn;
+}
+
+///////////////////////////////////////////////////////////
+global proc importVDBFilePathNew( string $attr )
+{
+    global int $gAttributeEditorTemplateLabelWidth;
+    rowLayout
+        -numberOfColumns 3
+        -columnWidth3 $gAttributeEditorTemplateLabelWidth 175 35
+        -columnAttach3 "right" "both" "both"
+        -columnAlign3 "left" "left" "center"
+        -rowAttach 1 "both" 0
+        -rowAttach 2 "both" 0
+        -rowAttach 3 "both" 0
+        importVDBFilePathLayout;
+    {
+        text
+            -label "Volume Path"
+            -annotation "This is the VDB file."
+            importVDBFilePathLabel;
+
+        textField
+            -fileName ""
+            -insertionPosition 0
+            -editable true
+            -annotation "The VDB file path."
+            importVDBFilePathField;
+
+        button
+            -label "..."
+            -align "center"
+            -command ""
+            -annotation "Browse for the VDB file."
+            importVDBFilePathButton;
+
+        setParent ..;
+    }
+
+    importVDBFilePathReplace( $attr );
+}
+
+global proc importVDBFilePathReplace( string $attr )
+{
+    setParent importVDBFilePathLayout;
+    connectControl importVDBFilePathField $attr;
+    button -e
+        -command ("browseForVDBFile( \""+$attr+"\" )")
+        importVDBFilePathButton;
+    setParent ..;
+}
+
+global proc browseForVDBFile( string $filePathAttr )
+{
+    string $currentFilePath = `getAttr $filePathAttr`;
+    string $currentFilePathDir = dirname( $currentFilePath );
+
+    if( $currentFilePath != "" )
+    {
+        if( filetest( "-d", $currentFilePath ) == 1 )
+        {
+            $currentFilePathDir = $currentFilePath;
+        }
+    }
+    
+    string $singleFilter = "VDB Files (*.vdb)";
+    
+    string $path[] = `fileDialog2 -ds 2 -cap "VDB File" -dir $currentFilePathDir -ff $singleFilter -fm 1`;
+
+    if (size($path) > 0)
+    {
+        setAttr -type "string" $filePathAttr $path[0];
+    }
+}
+
+
+///////////////////////////////////////////////////////////
+global proc AEBE_VDBArnoldRenderTemplate(string $nodeName)
+{
+editorTemplate -beginScrollLayout;
+editorTemplate -beginLayout "Preview Settings" -collapse 0;
+editorTemplate -beginNoOptimize;
+
+editorTemplate -addControl "FromFile" "AEAT_UpdateEnabled";
+//editorTemplate -callCustom "AEVolumeOpenVdbNode_colorFileNew" "AEVolumeOpenVdbNode_colorFileReplace""volumePath";
+editorTemplate -callCustom "importVDBFilePathNew" "importVDBFilePathReplace" "volumePath";
+
+editorTemplate -addControl "previewStyle";
+editorTemplate -callCustom "newOpenVDBVisualizeGridSelectionA" "replaceOpenVDBVisualizeGridSelectionA" "VdbAllGridNamesA";
+editorTemplate -callCustom "newOpenVDBVisualizeGridSelectionB" "replaceOpenVDBVisualizeGridSelectionB" "VdbAllGridNamesB";
+editorTemplate -addSeparator;
+editorTemplate -addControl "ActiveValueBoundingBox"; 
+editorTemplate -addControl "InternalNodes";
+editorTemplate -addControl "LeafNodes";
+editorTemplate -addControl "ActiveTiles";
+editorTemplate -addControl "ActiveVoxels";
+
+editorTemplate -addSeparator;
+
+editorTemplate -annotation "Surface the selected VDB volume." -addControl "Surface";
+editorTemplate -addControl "Isovalue";
+
+editorTemplate -endNoOptimize;
+editorTemplate -endLayout;
+
+editorTemplate -beginLayout "Procedural Settings" -collapse 1;
+
+editorTemplate -label "Velocity Scale" -addControl "VelocityScale";
+editorTemplate -label "Padding" -addControl "Padding";
+
+editorTemplate -label "UseVolumeStep" -addControl "UseStep";
+editorTemplate -label "Step Size" -addControl "stepSize";
+
+editorTemplate -label "Step Scale" -addControl "StepScale";
+editorTemplate -label "Disable Ray Extents" -addControl "DisableRayExtents";
+editorTemplate -label "Load at Init" -addControl "LoadatInit";
+editorTemplate -label "Compress" -addControl "Compress";
+editorTemplate -label "Shutter Start" -addControl "ShutterStart";
+editorTemplate -label "Shutter End" -addControl "ShutterEnd";
+editorTemplate -label "Grids" -addControl "Grids";
+editorTemplate -label "Velocity Grids" -addControl "velocity_grids";
+editorTemplate -endLayout;
+
+
+
+//editorTemplate -addControl "g";
+
+//////////////////////////////////////////////////////////////////
+editorTemplate -beginLayout "Smoke" -collapse 1;
+
+editorTemplate -label "Density Field" -addControl "DensityField";
+editorTemplate -label "Remap" -addControl "densityRemap";
+editorTemplate -label "Anisotropy" -addControl "g";
+AEaddRampControl( $nodeName + ".DensityRamp" );
+editorTemplate -beginLayout "Advanced" -collapse 1;
+editorTemplate -label "Input Min" -addControl "DensityRampinputMin";
+editorTemplate -label "Input Max" -addControl "DensityRampinputMax";
+editorTemplate -label "Output Min" -addControl "DensityRampoutputMin";
+editorTemplate -label "Output Max" -addControl "DensityRampoutputMax";
+editorTemplate -endLayout;
+
+
+editorTemplate -label "Scattering Color" -addControl "ScatteringColor" ;
+editorTemplate -label "Use Scattering Ramp" -addControl "UseDiffuseScatteringRamp";
+
+editorTemplate -label "Diffuse Field" -addControl "DiffuseField" ;
+AEaddRampControl( $nodeName + ".DiffuseScatteringRamp" ) ;
+editorTemplate -beginLayout "Advanced" -collapse 1;
+editorTemplate -label "Gamma" -addControl "GammaScater" ;
+editorTemplate -label "Input Min" -addControl "SCinputMin" ;
+editorTemplate -label "Input Max" -addControl "SCinputMax" ;
+editorTemplate -label "Output Min" -addControl "SCoutputMin" ;
+editorTemplate -label "Output Max" -addControl "SCoutputMax" ;
+editorTemplate -endLayout;
+
+editorTemplate -label "Absorption Color" -addControl "AbsorptionColor";
+editorTemplate -label "Use Absorption Ramp" -addControl "UseDiffuseAbsorptionRamp";
+
+AEaddRampControl( $nodeName + ".DiffuseAbsorptionRamp" );
+editorTemplate -label "Attenuation Mode" -addControl "AttenuationMode";
+editorTemplate -beginLayout "Advanced" -collapse 1;
+editorTemplate -label "Gamma" -addControl "GammaAttenuation";
+editorTemplate -label "Input Min" -addControl "ABinputMin";
+editorTemplate -label "Input Max" -addControl "ABinputMax";
+editorTemplate -label "Output Min" -addControl "ABoutputMin";
+editorTemplate -label "Output Max" -addControl "ABoutputMax";
+editorTemplate -endLayout;
+
+editorTemplate -endLayout;
+
+    
+    
+editorTemplate -beginLayout "Emission" -collapse 1;
+editorTemplate -addControl "emissionStrength";
+
+editorTemplate -label "Emission Field" -addControl "EmissionField";
+editorTemplate -label "Remap" -addControl "emissionRemap";
+AEaddRampControl( $nodeName + ".EmissionRamp" );
+editorTemplate -beginLayout "Advanced" -collapse 1;
+editorTemplate -label "Input Min" -addControl "EmissionRampinputMin";
+editorTemplate -label "Input Max" -addControl "EmissionRampinputMax";
+editorTemplate -label "Output Min" -addControl "EmissionRampoutputMin";
+editorTemplate -label "Output Max" -addControl "EmissionRampoutputMax";
+editorTemplate -endLayout;
+
+editorTemplate -label "Emission Color" -addControl "EmissionColor";
+editorTemplate -label "Use Emission Ramp" -addControl "UseEmissionColorRamp";
+
+editorTemplate -label "Emission Color Field" -addControl "EmissionColorField";
+AEaddRampControl( $nodeName + ".EmissionColorRamp" );
+editorTemplate -beginLayout "Advanced" -collapse 1;
+editorTemplate -label "Gamma" -addControl "GammaEmission";
+editorTemplate -label "Input Min" -addControl "EMinputMin";
+editorTemplate -label "Input Max" -addControl "EMinputMax";
+editorTemplate -label "Output Min" -addControl "EMoutputMin";
+editorTemplate -label "Output Max" -addControl "EMoutputMax";
+editorTemplate -endLayout;
+
+editorTemplate -beginLayout "BlackbodySpectrum" -collapse 1;
+editorTemplate -label "Blackbody Spectrum" -addControl "BlackbodySpectrum";
+editorTemplate -label "Strength" -addControl "strength";
+editorTemplate -label "Gamma" -addControl "GammaBlackbody";
+
+
+editorTemplate -endLayout;
+editorTemplate -endLayout;
+
+editorTemplate -beginLayout "Time" -collapse 1;
+editorTemplate -addControl "Retime";
+editorTemplate -addControl "Frame";
+editorTemplate -label "Time" -addControl "time";
+
+editorTemplate -endLayout;
+
+editorTemplate -beginLayout "Render Stats" -collapse 1;
+editorTemplate -beginNoOptimize;
+editorTemplate -label "Casts Shadows" -addControl "castsShadows";
+editorTemplate -label "Receive Shadows" -addControl "receiveShadows";
+
+editorTemplate -label "Primary Visibility" -addControl "primaryVisibility";
+editorTemplate -label "Visible In Reflections" -addControl "visibleInReflections";
+editorTemplate -label "Visible In Refractions" -addControl "visibleInRefractions";
+
+editorTemplate -label "Visible In Diffuse" -addControl "aiVisibleInDiffuse";
+editorTemplate -label "Visible In Glossy" -addControl "aiVisibleInGlossy";
+editorTemplate -label "Motion blur" -addControl "motionBlur";
+editorTemplate -label "Matte" -addControl "aiMatte";
+editorTemplate -label "Use Custom Shader" -addControl "UseCustomShader";
+editorTemplate -endNoOptimize;
+editorTemplate -endLayout;
+
+editorTemplate -beginLayout "Information" -collapse 0;
+editorTemplate -beginNoOptimize;
+{
+editorTemplate -callCustom "AEAT_InfoNew" "AEAT_InfoReplace" "NodeInfo";
+}
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+
+
+editorTemplate -addExtraControls;
+
+editorTemplate -endScrollLayout;
+
+}
+///////////////////////////////////
+
+
+///////////////////////////////////
+global proc
+AEAT_InfoUpdate( string $nodeName )
+{
+    string $info = `getAttr ($nodeName + ".NodeInfo")`;
+    scrollField -e -text $info InfoField;
+
+replaceOpenVDBVisualizeGridSelectionA( $nodeName + ".VdbAllGridNamesA");
+replaceOpenVDBVisualizeGridSelectionB( $nodeName + ".VdbAllGridNamesB");
+}
+global proc
+AEAT_InfoNew( string $attr )
+{    
+    scrollField
+        -editable 0
+        InfoField;
+    AEAT_InfoReplace($attr);
+
+}
+global proc
+AEAT_InfoReplace( string $attr )
+{
+    string $parent = `setParent -q`;
+    string $nodeName = plugNode($attr);
+    
+    if( `text -exists ($parent+"|InfoScriptJobParent")` == 1 ) {
+        deleteUI InfoScriptJobParent;
+    }
+
+    string $scriptParent = `text -manage 0 InfoScriptJobParent`;
+    
+    scriptJob -parent $scriptParent
+        -attributeChange ($nodeName+".NodeInfo")
+        ("AEAT_InfoUpdate(\""+$nodeName+"\")");
+
+    AEAT_InfoUpdate($nodeName);
+    
+}
+
+///////////////////////
+global proc newOpenVDBVisualizeGridSelectionA(string $attr)
+{
+    optionMenu
+        -label "Density   Layer"
+        -width 300
+        -changeCommand ("updateOpenVDBVisualizeGridSelectionA( \""+$attr+"\" )")
+        vdbGridNameMenuA;
+
+    replaceOpenVDBVisualizeGridSelectionA($attr);
+}
+
+global proc replaceOpenVDBVisualizeGridSelectionA(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+
+	$node = plugNode($attr);
+
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateOpenVDBVisualizeGridSelectionA( \""+$attr+"\" )") vdbGridNameMenuA;
+
+    // save current item
+    
+    string $citem = getAttr ($node+".DensityLayer");
+
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuA`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuA;
+    }
+
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuA;
+	}
+
+   /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+}
+
+global proc updateOpenVDBVisualizeGridSelectionA(string $attr)
+{
+
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuA`;
+    string $selectionAttr = plugNode($attr) + ".DensityLayer"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+
+    string $selectionAttrA = plugNode($attr) + ".Grids[0]"; 
+    setAttr -type "string" $selectionAttrA $selectedGrid;
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+global proc newOpenVDBVisualizeGridSelectionB(string $attr)
+{
+    optionMenu
+        -label "Emission Layer"
+        -width 300
+        -changeCommand ("updateOpenVDBVisualizeGridSelectionB( \""+$attr+"\" )")
+        vdbGridNameMenuB;
+        
+    replaceOpenVDBVisualizeGridSelectionB($attr);
+}
+
+global proc replaceOpenVDBVisualizeGridSelectionB(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateOpenVDBVisualizeGridSelectionB( \""+$attr+"\" )") vdbGridNameMenuB;
+
+    // save current item
+    
+    string $citem = getAttr ($node+".EmissionLayer");
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuB`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuB;
+    }
+
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuB;
+	}
+
+   /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+}
+
+global proc updateOpenVDBVisualizeGridSelectionB(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuB`;
+    string $selectionAttr = plugNode($attr) + ".EmissionLayer"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+
+    string $selectionAttrB = plugNode($attr) + ".Grids[1]"; 
+    setAttr -type "string" $selectionAttrB $selectedGrid;
+}
+
+global proc
+AEAT_UpdateEnabled( string $node )
+{
+
+    int $Signature = `getAttr ($node+".FromFile")`;
+
+    if ($Signature == 0) 
+	{
+        editorTemplate -dimControl $node "volumePath" 1;
+	}
+    if ($Signature == 1) 
+	{
+        editorTemplate -dimControl $node "volumePath" 0;
+	}
+}

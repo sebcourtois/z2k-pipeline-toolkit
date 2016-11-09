@@ -13,7 +13,7 @@ for sOtherShotCam in lsNodes("cam_shot_default", r=True, nodeNames=True, not_rn=
     if sOtherShotCam in sCurShotCamList:
         continue
 
-    sNmspc = sOtherShotCam.rsplit(":", 1)
+    sNmspc = sOtherShotCam.rsplit(":", 1)[0]
     sCamRoot = sNmspc + ":asset"
     mc.lockNode(mc.ls(sCamRoot, dag=True), lock=False)
     print "deleting", sCamRoot
