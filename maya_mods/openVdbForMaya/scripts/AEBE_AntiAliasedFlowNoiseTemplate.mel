@@ -1,0 +1,26 @@
+global proc
+AEBE_AntiAliasedFlowNoiseTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+       editorTemplate -beginLayout "BE_AntiAliasedFlowNoise" -collapse 0;
+       {
+
+        editorTemplate -addControl "Mode";
+	    editorTemplate -addControl "Frequency";
+        editorTemplate -addControl "Offset";
+	    editorTemplate -addControl "Amplitude";
+        editorTemplate -addControl "Roughness";
+	    editorTemplate -addControl "MaxOctaves";
+        editorTemplate -addControl "Flow";
+	    editorTemplate -addControl "FlowRate";	
+        editorTemplate -addControl "SelfAdvection";
+	 	        	    
+       }
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}

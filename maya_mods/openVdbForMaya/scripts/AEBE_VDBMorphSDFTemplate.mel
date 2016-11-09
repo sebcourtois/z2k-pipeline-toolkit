@@ -1,0 +1,240 @@
+
+
+global proc
+AEBE_VDBMorphSDFTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Morph SDF" -collapse 0;
+          //  editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBMorphSDFGridSelectionSource" "replaceBE_VDBMorphSDFGridSelectionSource" "VdbAllGridNamesSource";
+			editorTemplate -callCustom "newBE_VDBMorphSDFGridSelectionTarget" "replaceBE_VDBMorphSDFGridSelectionTarget" "VdbAllGridNamesTarget";
+            editorTemplate -callCustom "newBE_VDBMorphSDFGridSelectionAlphaMask" "replaceBE_VDBMorphSDFGridSelectionAlphaMask" "VdbAllGridNamesAlphaMask";
+
+			editorTemplate -addControl "Mask" "AEAT_MorphSDFUpdateEnabled";
+            editorTemplate -addSeparator;
+
+            editorTemplate -beginLayout "Morphing" -collapse 0;
+			editorTemplate -addControl "TimeStep";
+			editorTemplate -addControl "SpatialScheme";
+			editorTemplate -addControl "TemporalScheme";
+			editorTemplate -endLayout;
+
+			editorTemplate -beginLayout "Renormalization" -collapse 0;
+			editorTemplate -addControl "Steps";
+			editorTemplate -label "SpatialScheme" -addControl "TrackerSpatialScheme";
+			editorTemplate -label "TemporalScheme" -addControl "TrackerTemporalScheme";
+			editorTemplate -endLayout;
+
+			editorTemplate -beginLayout "AlphaMask" -collapse 0;
+			editorTemplate -addControl "InvertAlphaMask" "AEAT_MorphSDFUpdateEnabled";
+			editorTemplate -addControl "MinMaskCutoff" "AEAT_MorphSDFUpdateEnabled";
+			editorTemplate -addControl "MaxMaskCutoff" "AEAT_MorphSDFUpdateEnabled";
+			editorTemplate -endLayout;
+            }
+       // editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc
+AEAT_MorphSDFUpdateEnabled( string $node )
+{
+
+    int $Mask = `getAttr ($node+".Mask")`;
+
+    if ($Mask == 0) 
+	{
+        editorTemplate -dimControl $node "InvertAlphaMask" 1;
+		editorTemplate -dimControl $node "MinMaskCutoff" 1;
+		editorTemplate -dimControl $node "MaxMaskCutoff" 1;
+	}
+	else
+	{
+        editorTemplate -dimControl $node "InvertAlphaMask" 0;
+		editorTemplate -dimControl $node "MinMaskCutoff" 0;
+		editorTemplate -dimControl $node "MaxMaskCutoff" 0;
+	}	
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBMorphSDFGridSelectionSource(string $attr)
+{
+    optionMenu
+        -label "Source"
+        -width 300
+        -changeCommand ("updateBE_VDBMorphSDFGridSelectionSource( \""+$attr+"\" )")
+        vdbGridNameMenuSource;
+
+    replaceBE_VDBMorphSDFGridSelectionSource($attr);
+}
+
+global proc replaceBE_VDBMorphSDFGridSelectionSource(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBMorphSDFGridSelectionSource( \""+$attr+"\" )") vdbGridNameMenuSource;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesSource"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuSource`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuSource;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuSource;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBMorphSDFGridSelectionSource(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuSource`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesSource"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+//////////////////////////////////////////////////////////////////////////////// Target
+global proc newBE_VDBMorphSDFGridSelectionTarget(string $attr)
+{
+    optionMenu
+        -label "Target "
+        -width 300
+        -changeCommand ("updateBE_VDBMorphSDFGridSelectionTarget( \""+$attr+"\" )")
+        vdbGridNameMenuTarget;
+
+    replaceBE_VDBMorphSDFGridSelectionTarget($attr);
+}
+
+global proc replaceBE_VDBMorphSDFGridSelectionTarget(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBMorphSDFGridSelectionTarget( \""+$attr+"\" )") vdbGridNameMenuTarget;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesTarget"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuTarget`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuTarget;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuTarget;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBMorphSDFGridSelectionTarget(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuTarget`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesTarget"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+//////////////////////////////////////////////////////////////////////////////// AlphaMask
+global proc newBE_VDBMorphSDFGridSelectionAlphaMask(string $attr)
+{
+    optionMenu
+        -label "Mask   "
+        -width 300
+        -changeCommand ("updateBE_VDBMorphSDFGridSelectionAlphaMask( \""+$attr+"\" )")
+        vdbGridNameMenuAlphaMask;
+
+    replaceBE_VDBMorphSDFGridSelectionAlphaMask($attr);
+}
+
+global proc replaceBE_VDBMorphSDFGridSelectionAlphaMask(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBMorphSDFGridSelectionAlphaMask( \""+$attr+"\" )") vdbGridNameMenuAlphaMask;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesAlphaMask"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuAlphaMask`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuAlphaMask;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuAlphaMask;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBMorphSDFGridSelectionAlphaMask(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuAlphaMask`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesAlphaMask"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}

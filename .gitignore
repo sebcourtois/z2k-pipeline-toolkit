@@ -27,6 +27,8 @@ debug
 /RV/SupportFiles
 /maya_mods/zombie/python/dminutes/ToonKit_Fix
 /maya_mods/third_party/plug-ins/2016_win
-/maya_mods/openVdbForMaya
 /release.bat
 /maya_mods/soup
+/maya_mods/openVdbForMaya/shelves
+/maya_mods/openVdbForMaya/arnold
+/maya_mods/openVdbForMaya/icons

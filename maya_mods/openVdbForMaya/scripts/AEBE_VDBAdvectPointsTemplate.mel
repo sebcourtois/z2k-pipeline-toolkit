@@ -1,0 +1,181 @@
+
+
+global proc
+AEBE_VDBAdvectPointsTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Advect Points" -collapse 0;
+          //  editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBAdvectPointsGridSelectionVelocity" "replaceBE_VDBAdvectPointsGridSelectionVelocity" "VdbAllGridNamesVelocity";
+            editorTemplate -callCustom "newBE_VDBAdvectPointsGridSelectionClosestPoint" "replaceBE_VDBAdvectPointsGridSelectionClosestPoint" "VdbAllGridNamesClosestPoint";
+			
+            editorTemplate -addSeparator;
+
+            editorTemplate -beginLayout "Advection" -collapse 0;
+			editorTemplate -addControl "Operation" "AEAT_UpdatesEnabled";
+			editorTemplate -addControl "Integration" "AEAT_UpdatesEnabled";
+			editorTemplate -addControl "Iterations" "AEAT_UpdatesEnabled";
+			editorTemplate -addControl "TimeStep" "AEAT_UpdatesEnabled";
+			editorTemplate -addControl "Substeps" "AEAT_UpdatesEnabled";
+			editorTemplate -endLayout;
+
+            }
+       // editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+//////////////////////////////////////////////////////////////////////////////// Vel
+global proc newBE_VDBAdvectPointsGridSelectionVelocity(string $attr)
+{
+    optionMenu
+        -label "Velocity          "
+        -width 300
+        -changeCommand ("updateBE_VDBAdvectPointsGridSelectionVelocity( \""+$attr+"\" )")
+        vdbGridNameMenuVelocity;
+
+    replaceBE_VDBAdvectPointsGridSelectionVelocity($attr);
+}
+
+global proc replaceBE_VDBAdvectPointsGridSelectionVelocity(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBAdvectPointsGridSelectionVelocity( \""+$attr+"\" )") vdbGridNameMenuVelocity;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesVelocity"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuVelocity`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuVelocity;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuVelocity;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBAdvectPointsGridSelectionVelocity(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuVelocity`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesVelocity"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+////////////////////////////////////////////////////////////////////////////////////////////// Closest
+global proc newBE_VDBAdvectPointsGridSelectionClosestPoint(string $attr)
+{
+    optionMenu
+        -label "Closest Point "
+        -width 300
+        -changeCommand ("updateBE_VDBAdvectPointsGridSelectionClosestPoint( \""+$attr+"\" )")
+        vdbGridNameMenuClosestPoint;
+
+    replaceBE_VDBAdvectPointsGridSelectionClosestPoint($attr);
+}
+
+global proc replaceBE_VDBAdvectPointsGridSelectionClosestPoint(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBAdvectPointsGridSelectionClosestPoint( \""+$attr+"\" )") vdbGridNameMenuClosestPoint;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesClosestPoint"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuClosestPoint`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuClosestPoint;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuClosestPoint;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBAdvectPointsGridSelectionClosestPoint(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuClosestPoint`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesClosestPoint"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+
+
+global proc
+AEAT_UpdatesEnabled( string $node )
+{
+
+    int $Operation = `getAttr ($node+".Operation")`;
+
+    if ($Operation == 0) 
+	{
+        editorTemplate -dimControl $node "Integration" 0;
+        editorTemplate -dimControl $node "Iterations" 1;
+        editorTemplate -dimControl $node "TimeStep" 0;
+		editorTemplate -dimControl $node "Substeps" 0;			
+		
+	}
+    if ($Operation == 1) 
+	{
+        editorTemplate -dimControl $node "Integration" 1;
+		editorTemplate -dimControl $node "Iterations" 0;
+        editorTemplate -dimControl $node "TimeStep" 1;
+		editorTemplate -dimControl $node "Substeps" 1;	
+	}
+    if ($Operation == 2) 
+	{
+        editorTemplate -dimControl $node "Integration" 0;
+        editorTemplate -dimControl $node "Iterations" 0;
+        editorTemplate -dimControl $node "TimeStep" 0;
+		editorTemplate -dimControl $node "Substeps" 0;
+	}	
+}

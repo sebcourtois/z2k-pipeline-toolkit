@@ -1,0 +1,87 @@
+
+
+global proc
+AEBE_VDBVectorSplitTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Vector Split" -collapse 0;
+          //  editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBVectorSplitGridSelection" "replaceBE_VDBVectorSplitGridSelection" "VdbAllGridNamesV";
+
+            editorTemplate -addSeparator;
+
+			editorTemplate -addControl "RemoveSourceVDBs";
+			editorTemplate -addControl "CopyInactiveValues";
+
+            }
+       // editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBVectorSplitGridSelection(string $attr)
+{
+    optionMenu
+        -label "Group"
+        -width 300
+        -changeCommand ("updateBE_VDBVectorSplitGridSelection( \""+$attr+"\" )")
+        vdbGridNameMenuV;
+
+    replaceBE_VDBVectorSplitGridSelection($attr);
+}
+
+global proc replaceBE_VDBVectorSplitGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBVectorSplitGridSelection( \""+$attr+"\" )") vdbGridNameMenuV;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesV"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuV`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuV;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuV;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBVectorSplitGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuV`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesV"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+

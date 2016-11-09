@@ -46,7 +46,6 @@ class LayerManager:
 
         self.allRndObjL = mc.ls("geo_*", type="transform") + mc.ls("*:geo_*", type="transform") + mc.ls("*:*:geo_*", type="transform") + mc.ls("vol_*", type="transform") + mc.ls("*:vol_*", type="transform") + mc.ls("*:*:vol_*", type="transform")+ mc.ls("col_*", type="transform") + mc.ls("*:col_*", type="transform") + mc.ls("*:*:col_*", type="transform")
         for each in self.allRndObjL:
-        for each in self.allRndObjL:
             if "env_" in each:
                 self.envRndObjL.append(each)
             else:
@@ -471,10 +470,17 @@ class LayerManager:
 
 
 def createCryptomatteLayer():
+    if pm.window("unifiedRenderGlobalsWindow", exists=True):
+        pm.deleteUI("unifiedRenderGlobalsWindow")
     ## Add assets ##
-    pm.select('|shot|grp_character', '|shot|grp_prop', '|shot|grp_set', '|shot|grp_prop')
+    pm.select('|shot|grp_character', '|shot|grp_prop', '|shot|grp_set', '|shot|grp_prop', '|shot|grp_vehicle')
 
     ## Create custom layer and make current ##
+    if pm.objExists('lyr_utl0_bty_16') == True:
+        mc.editRenderLayerAdjustment('aiAOV_*.enabled', r=True)
+        mc.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
+        pm.delete('lyr_utl0_bty_16')
+
     pm.createRenderLayer(n='lyr_utl0_bty_16')
     pm.editRenderLayerGlobals(currentRenderLayer='lyr_utl0_bty_16')
 
@@ -488,6 +494,7 @@ def setCryptoAov():
 
     ## Create and set the Cryptomatte aov ##
     defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
+
     if pm.objExists('alCryptoShader') == True:
         pm.delete('alCryptoShader')
         print 'Delete alCryptoShader !'
@@ -528,6 +535,10 @@ def setUtlAovs() :
         pass
 
     pm.connectAttr('alUtls.outColor', 'aiAOV_uvs.defaultValue', force=True)
+
+    if pm.objExists('aiAOVDriverP32') == True:
+        pm.delete('aiAOVDriverP32')
+        print 'Delete aiAOVDriverP32 !'
 
     if not pm.objExists('aiAOVDriverP32') == True:
         pm.createNode('aiAOVDriver', n='aiAOVDriverP32', skipSelect=True)

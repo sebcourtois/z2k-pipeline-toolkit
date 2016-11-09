@@ -1,6 +1,7 @@
 
 import os
 import re
+import glob
 import subprocess
 from tempfile import NamedTemporaryFile
 from itertools import izip
@@ -23,6 +24,7 @@ from davos_maya.tool.general import infosFromScene, projectFromScene
 from davos_maya.tool.general import listRelatedAssets
 from davos_maya.tool import dependency_scan
 from davos.core.drctypes import DrcPack
+from pytd.util.logutils import logMsg
 
 osp = os.path
 FILE_PATH_ATTRS = dependency_scan.FILE_PATH_ATTRS
@@ -143,8 +145,8 @@ def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishIn
 
             subprocess.Popen(sCmdArgs)
 
-    linkDependenciesToPublic(proj, depConfDct, sDependPathList,
-                             publishedDependItems, dependDataDct, dryRun=bDryRun)
+    repathDependenciesToPublic(proj, depConfDct, sDependPathList,
+                               publishedDependItems, dependDataDct, dryRun=bDryRun)
 
     total = len(sAllSrcPathList)
     sSep = "\n"
@@ -202,8 +204,8 @@ def publishDependencies(depConfDct, sDepPathList, dependDataDct, sComment, **kwa
 
     return publishItems
 
-def linkDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
-                             dependDataDct, **kwargs):
+def repathDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
+                               dependDataDct, **kwargs):
 
     bDryRun = kwargs.pop("dryRun", False if not inDevMode() else _DRY_RUN)
 
@@ -235,7 +237,6 @@ def linkDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
         if pubFile is None:
             pubFile = pubItems[0]
 
-
         sPubEnvPath = pubFile.envPath(sEnvVarName)
         bIsPack = isinstance(pubFile, DrcPack)
         sPackSep = "/{}(/|$)".format(pubFile.name)
@@ -264,6 +265,99 @@ def linkDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
                 fileAttr.set(sPubFilePath)
 
             sLinkedList.append(sNodeName)
+
+
+def lockSceneDependenciesToCurrentVersion(dryRun=False):
+
+    scnInfos = infosFromScene()
+
+    allDepScanResults = dependency_scan.scanAllDependencyTypes(scnInfos)
+    for depScanResults in allDepScanResults.itervalues():
+        lockDependenciesToCurrentVersion(scnInfos["project"], depScanResults, dryRun=dryRun)
+
+def lockDependenciesToCurrentVersion(proj, depScanResults, **kwargs):
+
+    bDryRun = kwargs.pop("dryRun", False)
+
+    depDataList = []
+    headFileList = []
+    for depData in depScanResults:
+
+        rcFile = depData["drc_file"]
+        if not rcFile:
+            continue
+
+        if (not rcFile.isPublic()) or rcFile.isVersionFile():
+            continue
+
+        if not depData["file_nodes"]:
+            continue
+
+        depDataList.append(depData)
+        headFileList.append(rcFile)
+
+    proj.dbNodesFromEntries(headFileList)
+
+    sMsgFmt = "\nRelinking '{}' node: \n    from '{}'\n      to '{}'"
+
+    sLinkedList = []
+    sNotFoundList = []
+    for depData in depDataList:
+
+        headFile = depData["drc_file"]
+
+        try:
+            versFile = headFile.assertLatestFile(refresh=False, returnVersion=True)
+        except EnvironmentError as e:
+            logMsg(e.message, warning=True)
+            continue
+
+        depData["version_file"] = versFile
+
+        if not versFile:
+            continue
+
+        sHeadPath = "/" + headFile.relPath()
+        sVersPath = "/" + versFile.relPath()
+
+        fileNodeList = depData["file_nodes"]
+        for fileNode in fileNodeList:
+
+            sNodeName = fileNode.name()
+            if sNodeName in sLinkedList:
+                continue
+
+            fileAttr = fileNode.attr(FILE_PATH_ATTRS[fileNode.type()])
+            sCurPath = pathNorm(fileAttr.get())
+            sNewPath = pathNorm(sCurPath.replace(sHeadPath, sVersPath))
+
+            bExists = False
+            sAbsPath = pathResolve(sNewPath)
+            if "#" in osp.basename(sAbsPath):
+                if glob.glob(sAbsPath.replace("#", "?")):
+                    bExists = True
+            else:
+                bExists = osp.exists(sAbsPath)
+
+            if bExists:
+                sMsg = (sMsgFmt.format(sNodeName, sCurPath, sNewPath))
+                print sMsg
+                #print "\n".join((sCurPath, sHeadPath, sVersPath))
+                if not bDryRun:
+                    fileAttr.set(sNewPath)
+            else:
+                sNotFoundList.append((sNodeName, sAbsPath))
+
+            sLinkedList.append(sNodeName)
+
+    if sNotFoundList:
+        sMsg = "No such files or directories:"
+        for sNodeName, sAbsPath in sNotFoundList:
+            sMsg += "\n   - {}: '{}'".format(sNodeName, sAbsPath)
+    
+        raise EnvironmentError(sMsg)
+
+    return depDataList
 
 def _filterNotPublishedPaths(sSrcPathList, publishedItems):
     for sSrcPath, pubItems in izip(sSrcPathList, publishedItems):
@@ -321,17 +415,32 @@ def publishCurrentScene(*args, **kwargs):
     except Exception as e:
         sConfirm = confirmDialog(title='INFO !',
                                  message="Quick cleanup failed !\n\n{0}".format(toStr(e)),
-                                 button=['Continue', 'Cancel'],
+                                 button=['Continue', 'Abort'],
                                  defaultButton='Continue',
-                                 cancelButton='Cancel',
+                                 cancelButton='Abort',
                                  dismissString='Continue',
                                  icon="information")
-        if sConfirm == 'Cancel':
+        if sConfirm == 'Abort':
             raise
 
     depScanDct = {}
     if damEntity and bWithDeps:
-        depScanDct = dependency_scan.launch(scnInfos, modal=True, okLabel="Publish")
+
+        sExcDepList = None
+
+        sScnRcName = scnInfos.get("resource")
+        if sScnRcName == "fx3d_scene":
+            sRes = confirmDialog(title='DO YOU WANT TO...',
+                                 message="Publish FX caches and textures ?",
+                                 button=["Yes", "No"],
+                                 dismissString="No",
+                                 icon="question")
+
+            if sRes == "No":
+                sExcDepList = ["texture_dep", "fxCache_dep"]
+
+        depScanDct = dependency_scan.launch(scnInfos, modal=True, okLabel="Publish",
+                                            exclude=sExcDepList)
         if depScanDct is None:
             pm.displayInfo("Canceled !")
             return
@@ -470,5 +579,7 @@ def linkAssetVersionsInShotgun(sgVersion, scnInfos, dryRun=False):
         sgVersion.update(sg_locked_asset_versions=lockedSgVersList,
                          sg_related_asset_versions=sgVersList)
     return sgVersion
+
+
 
 

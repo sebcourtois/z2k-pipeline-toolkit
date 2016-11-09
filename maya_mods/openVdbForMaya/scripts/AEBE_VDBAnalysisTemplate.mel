@@ -1,0 +1,157 @@
+global proc AEBE_VDBAnalysisTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+
+        editorTemplate -beginLayout "BE_VDB Analysis" -collapse 0;
+
+        editorTemplate -callCustom "newBE_VDBAnalysisGridSelectionSource" "replaceBE_VDBAnalysisGridSelectionSource" "VdbAllGridNamesAnalysis";
+        editorTemplate -addControl "Operator";
+        editorTemplate -addSeparator;
+        editorTemplate -addControl "Mask";
+		editorTemplate -callCustom "newBE_VDBAnalysisGridSelectionMask" "replaceBE_VDBAnalysisGridSelectionMask" "VdbAllGridNamesMaskAnalysis";
+        editorTemplate -addControl "OutputName" "AEAT_BE_VDBAnalysisUpdateEnabled";
+        editorTemplate -addControl "CustormName" "AEAT_BE_VDBAnalysisUpdateEnabled";
+        editorTemplate -addSeparator;
+
+        editorTemplate -endLayout;
+	    editorTemplate -addExtraControls;
+    }
+    editorTemplate -endScrollLayout;
+}
+
+
+global proc
+AEAT_BE_VDBAnalysisUpdateEnabled( string $node )
+{
+    int $operation = `getAttr ($node+".OutputName")`;
+          
+    if ($operation == 2) 
+    {
+        editorTemplate -dimControl $node "CustormName" 0;
+    }
+    else
+    {
+        editorTemplate -dimControl $node "CustormName" 1;
+    }   
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBAnalysisGridSelectionSource(string $attr)
+{
+    optionMenu
+        -label "Source"
+        -width 300
+        -changeCommand ("updateBE_VDBAnalysisGridSelectionSource( \""+$attr+"\" )")
+        vdbGridNameMenuSourceAnalysis;
+
+    replaceBE_VDBAnalysisGridSelectionSource($attr);
+}
+
+global proc replaceBE_VDBAnalysisGridSelectionSource(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBAnalysisGridSelectionSource( \""+$attr+"\" )") vdbGridNameMenuSourceAnalysis;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesAnalysis"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuSourceAnalysis`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuSourceAnalysis;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuSourceAnalysis;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBAnalysisGridSelectionSource(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuSourceAnalysis`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesAnalysis"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+
+//////////////////////////////////////////////////////////////////////////////// AlphaMask
+global proc newBE_VDBAnalysisGridSelectionMask(string $attr)
+{
+    optionMenu
+        -label "Mask   "
+        -width 300
+        -changeCommand ("updateBE_VDBAnalysisGridSelectionMask( \""+$attr+"\" )")
+        vdbGridNameMenuMaskAnalysis;
+
+    replaceBE_VDBAnalysisGridSelectionMask($attr);
+}
+
+global proc replaceBE_VDBAnalysisGridSelectionMask(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBAnalysisGridSelectionMask( \""+$attr+"\" )") vdbGridNameMenuMaskAnalysis;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesMaskAnalysis"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuMaskAnalysis`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuMaskAnalysis;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuMaskAnalysis;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBAnalysisGridSelectionMask(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuMaskAnalysis`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesMaskAnalysis"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+

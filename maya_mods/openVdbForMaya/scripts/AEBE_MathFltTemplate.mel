@@ -1,0 +1,22 @@
+
+
+global proc
+AEBE_MathFltTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_MathFlt" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+              editorTemplate -addControl "Mode";
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+

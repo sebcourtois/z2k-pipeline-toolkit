@@ -4,6 +4,7 @@ import maya.cmds as cmds
 import pymel.core as pm
 import maya.OpenMayaUI as omui
 import sys
+import subprocess
 
 import shiboken
 from PySide import QtCore 
@@ -13,16 +14,18 @@ from shiboken import wrapInstance
 from dminutes import gpucaching
 from davos_maya.tool.general import infosFromScene
 from davos.core.damproject import DamProject
+from dminutes import miscUtils
+from pytd.util.fsutils import pathJoin
 
 ## TODO
 
 # add context menu to choice all asset, only char, only prop, ....
 
-DIALOG_ERROR_COLOR = [0.8,0.2,0.2]
+DIALOG_ERROR_COLOR = [0.8,0.5,0.5]
 DIALOG_WARNING_COLOR = [0.8,0.5,0.2]
-DIALOG_INFO_COLOR = [0.2,0.3,0.8]
-DIALOG_ASKING_COLOR = [0.3,0.3,0.3]
-DIALOG_SUCCESS_COLOR = [0.2,0.9,0.2]
+DIALOG_INFO_COLOR = [0.5,0.5,0.8]
+DIALOG_ASKING_COLOR = [0.5,0.5,0.5]
+DIALOG_SUCCESS_COLOR = [0.5,0.9,0.5]
 
 ATTR_ANIM_SPLIT="animSplit"  # attribute boolean "animSplit" = True if maya scene has already be splitted.
 ATTR_ANIM_SPLIT_A="animSplitA" # attribute string "animSplitA", contains list of assets needed in this split.
@@ -31,35 +34,37 @@ ATTR_ANIM_SPLIT_C="animSplitC" # attribute string "animSplitC", contains list of
 ATTR_START_TIME="startTime"
 ATTR_END_TIME="endTime"
 
-TEST_EXPORT_PATH=r"C:\Users\STEPH\Documents\ZOMBILLENIUM\TEST_SPLIT_ANIM"
+PATH_CACHES=os.path.expandvars(miscUtils.normPath("$ZOMB_PRIVATE_LOC\private\AnimSplit"))
+
+##TEST_EXPORT_PATH=r"C:\Users\STEPH\Documents\ZOMBILLENIUM\TEST_SPLIT_ANIM"
 
 
 class SplitAnimMgr(QtGui.QWidget):
 #	def __init__(self, parent=None):
 #		QtGui.QWidget.__init__(self, shiboken.wrapInstance(long(mui.MQtUtil.mainWindow()), QtGui.QWidget))
-		
+
 	def __init__(self, *args, **kwargs):
 		super(SplitAnimMgr, self).__init__(*args, **kwargs)
 		mayaMainWindowPtr = omui.MQtUtil.mainWindow()
 		mayaMainWindow = wrapInstance(long(mayaMainWindowPtr), QtGui.QWidget)
 		self.setParent(mayaMainWindow)        
 		self.setWindowFlags(QtCore.Qt.Window) # Make this widget a standalone window even though it is parented 
-		
+
 		#QtGui.QWidget.__init__(self, shiboken.wrapInstance(long(mui.MQtUtil.mainWindow()), QtGui.QWidget))
-		
+
 		self.resize(600,500)
 		#self.setFont(QtGui.QFont("Verdana"))
 		try:
 			self.setWindowIcon(QtGui.Icon("icon.jpg"))
 		except:pass
-		
+
 		self.palette = QtGui.QPalette()
 		self.setWindowTitle("Split Anim Manager")
 		self.palette.setColor(QtGui.QPalette.Background, QtGui.QColor(75, 95, 116)) # blue
 		self.setPalette(self.palette)
 
 		self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-		
+
 		# list of different assets in Maya scene.
 		self.listChr = []
 		self.listC2d = []
@@ -69,31 +74,29 @@ class SplitAnimMgr(QtGui.QWidget):
 		self.listCam = []
 		self.listSet = []
 		self.listEnv = []
-		
+
 		# list assets
 		self.listAssetM = []
 		self.listAssetA = []
 		self.listAssetB = []
 		self.listAssetC = []
-		
+
 		# display asset filter
 		self.assetFilterM = "ALL"
 		self.assetFilterA = "ALL"
 		self.assetFilterB = "ALL"
 		self.assetFilterC = "ALL"
-		
+
 		# UI
 		self.assetListWidgetM = None
 		self.assetListWidgetA = None
 		self.assetListWidgetB = None
 		self.assetListWidgetC = None
-		
+
 		# Check Maya scene (shot group, list assets not empty, ...)
 		if not cmds.objExists("shot"):
 			print("ERROR: missing group 'shot'")
 			return -1
-
-		self.exportPath = TEST_EXPORT_PATH
 
 		# update from Maya scene
 		if not cmds.attributeQuery(ATTR_ANIM_SPLIT, node="shot", exists=True): # if attribute SPLIT_ANIM doesnt exists
@@ -225,7 +228,7 @@ class SplitAnimMgr(QtGui.QWidget):
 
 
 		## ANIMATOR A
-		animGroupBoxA = QtGui.QGroupBox("Animator A")
+		animGroupBoxA = QtGui.QGroupBox("Anim Split A")
 		animLayoutA = QtGui.QVBoxLayout()
 
 		topButtonsLayoutA = QtGui.QHBoxLayout() # layout list buttons "filter, add, remove"
@@ -241,7 +244,7 @@ class SplitAnimMgr(QtGui.QWidget):
 		mainLayout.addWidget(animGroupBoxA)
 
 		## ANIMATOR B
-		animGroupBoxB = QtGui.QGroupBox("Animator B")
+		animGroupBoxB = QtGui.QGroupBox("Anim Split B")
 		animLayoutB = QtGui.QVBoxLayout()
 
 		topButtonsLayoutB = QtGui.QHBoxLayout() # layout list buttons "filter, add, remove"
@@ -257,7 +260,7 @@ class SplitAnimMgr(QtGui.QWidget):
 		mainLayout.addWidget(animGroupBoxB)
 
 		## ANIMATOR C
-		animGroupBoxC = QtGui.QGroupBox("Animator C")
+		animGroupBoxC = QtGui.QGroupBox("Anim Split C")
 		animLayoutC = QtGui.QVBoxLayout()
 
 		topButtonsLayoutC = QtGui.QHBoxLayout() # layout list buttons "filter, add, remove"
@@ -325,24 +328,31 @@ class SplitAnimMgr(QtGui.QWidget):
 		if (self.assetFilterM == "ALL" or self.assetFilterM == "CHARACTER") and self.listChr:
 			for char in self.listChr:
 				self.assetListWidgetM.addItem(char)
+				self.listAssetM.append(char)
 		if (self.assetFilterM == "ALL" or self.assetFilterM == "PROP") and self.listPrp:
 			for prop in self.listPrp:
 				self.assetListWidgetM.addItem(prop)
+				self.listAssetM.append(prop)
 		if (self.assetFilterM == "ALL" or self.assetFilterM == "SET") and self.listSet:
 			for set in self.listSet:
 				self.assetListWidgetM.addItem(set)
+				self.listAssetM.append(set)
 		if (self.assetFilterM == "ALL" or self.assetFilterM == "VEHICLE") and self.listVhl:
 			for vhl in self.listVhl:
 				self.assetListWidgetM.addItem(vhl)
+				self.listAssetM.append(vhl)
 		if (self.assetFilterM == "ALL" or self.assetFilterM == "ENV") and self.listEnv:
 			for env in self.listEnv:
 				self.assetListWidgetM.addItem(env)
+				self.listAssetM.append(env)
 		if (self.assetFilterM == "ALL" or self.assetFilterM == "CHAR2D") and self.listC2d:
 			for c2d in self.listC2d:
-				self.assetListWidgetM.addItem(env)
+				self.assetListWidgetM.addItem(c2d)
+				self.listAssetM.append(c2d)
 		if (self.assetFilterM == "ALL" or self.assetFilterM == "CROWD") and self.listCrw:
 			for crw in self.listCrw:
 				self.assetListWidgetM.addItem(crw)
+				self.listAssetM.append(crw)
 		# add c2d, crw, cam, env ?
 
 		#self.assetListWidgetM.repaint()
@@ -538,16 +548,20 @@ class SplitAnimMgr(QtGui.QWidget):
 		mainMenu = QtGui.QMenu()
 
 		selectMenu = mainMenu.addMenu("&Select")
-		selectMenu.addAction(self.tr("AnimatorA"), self.selectAssetsAnimA)
-		selectMenu.addAction(self.tr("AnimatorB"), self.selectAssetsAnimB)
-		selectMenu.addAction(self.tr("AnimatorC"), self.selectAssetsAnimC)
+		selectMenu.addAction(self.tr("animSplitA"), self.selectAssetsAnimA)
+		selectMenu.addAction(self.tr("animSplitB"), self.selectAssetsAnimB)
+		selectMenu.addAction(self.tr("animSplitC"), self.selectAssetsAnimC)
 		selectAllAnimator = selectMenu.addAction(self.tr("All animators"), self.selectAssetsAllAnim)
 
 		generateMenu = mainMenu.addMenu("&Generate Scene")
-		generateAnimatorA = generateMenu.addAction(self.tr("AnimatorA"), self.generateSceneAnimA)
-		generateAnimatorA = generateMenu.addAction(self.tr("AnimatorB"), self.generateSceneAnimB)
-		generateAnimatorA = generateMenu.addAction(self.tr("AnimatorC"), self.generateSceneAnimC)
-		generateAllAnimator = generateMenu.addAction(self.tr("All animators"), self.generateAllSceneAnim)
+		generateAnimatorA = generateMenu.addAction(self.tr("animSplitA"), self.generateSceneAnimA)
+		generateAnimatorA = generateMenu.addAction(self.tr("animSplitB"), self.generateSceneAnimB)
+		generateAnimatorA = generateMenu.addAction(self.tr("animSplitC"), self.generateSceneAnimC)
+		generateAllAnimator = generateMenu.addAction(self.tr("All anims split"), self.generateAllSceneAnim)
+		generateAllGPUs = generateMenu.addAction(self.tr("GPU's caches"), self.generateAllGpuCaches)
+
+		displayMenu = mainMenu.addMenu("&Display")
+		displayMissingAsset = displayMenu.addAction(self.tr("Missing Assets in split anims"), self.displayMissingAssetsInSplitAnim)
 
 		mainMenu.exec_(QtGui.QCursor.pos())
 
@@ -572,7 +586,7 @@ class SplitAnimMgr(QtGui.QWidget):
 
 	def about(self):
 		print("About")
-		
+
 	def selectAssetsAnimABC(self, listAsset):
 		cmds.select(cl=True) # clear selection.
 		cmds.select(listAsset, add=True) # Select objects in list
@@ -590,7 +604,23 @@ class SplitAnimMgr(QtGui.QWidget):
 		self.selectAssetsAnimA()
 		self.selectAssetsAnimB()
 		self.selectAssetsAnimC()
-		
+
+	def displayMissingAssetsInSplitAnim(self):
+		#print("displayMissingAssetsInSplitAnim")
+		listMissingAssets = self.getMissingAssetInSplit()
+		#print("listMissingAssets = " + str(listMissingAssets))
+		if len(listMissingAssets) > 0:
+			cmds.select(listMissingAssets, replace=True) # Select all missing assets in Maya
+			# Select all missing assets in the UI list widget master.
+			for missingAsset in listMissingAssets:
+				#print("\tmissingAsset = " + str(missingAsset))
+				items = self.assetListWidgetM.findItems(missingAsset,QtCore.Qt.MatchExactly)
+				#print("\titems = " + str(items))
+				if len(items) > 0:
+					items[0].setSelected(True)
+		else:
+			viewMessage("All assets are in Splits Anims")
+
 	def createDavosPublicSplitAnim(self, type="animSplitA_scene"): # create the shot animSplit(A,B,C)_scene as 'public' thru Davos
 		scnInfos = infosFromScene()
 		#print("scnInfos = " + str(scnInfos))
@@ -617,14 +647,55 @@ class SplitAnimMgr(QtGui.QWidget):
 			
 		return sPubScnPath # return absolute path of the split scene created
 
+	def filterListAssetCharAndProps(self, listAssets): # filter list asset by keeping only characters and props.
+		#print("filterListAssetCharAndProps")
+		filterListAssets = []
+		if listAssets:
+			for asset in listAssets:
+				if asset[0:4] == "chr_" or asset[0:4] == "prp_":
+					filterListAssets.append(asset)
+		return filterListAssets
+
+	def getMissingAssetInSplit(self) : # check if all animated assets (chars and props) in master have been splitted in scenes A,B or C
+		listMissingAssets = []
+		#print("self.listAssetM: " + str(self.listAssetM))
+		if self.listAssetM:
+			filterListAssets = self.filterListAssetCharAndProps(self.listAssetM)
+			for asset in self.listAssetM:
+				#print("\tasset: " + str(asset))
+				if not ((asset in self.listAssetA) or (asset in self.listAssetB) or (asset in self.listAssetC)):
+					listMissingAssets.append(asset)
+		#print("listMissingAssets = " + str(listMissingAssets))
+		return listMissingAssets
+
+	def checkMissingAssetAndAsk(self):
+		listMissingAssets = self.getMissingAssetInSplit()
+		if listMissingAssets:
+			message = " The asset are missing in split anim: "
+			for missingAsset in listMissingAssets:
+				message = message + "\n\t" + missingAsset
+			message = message + "\nDo you want to continue"
+			result = cmds.confirmDialog(title='Missing assets in split anim', backgroundColor=DIALOG_INFO_COLOR, message=message, button=['Yes', 'No'], defaultButton='Yes', cancelButton='No')
+			if result == "No":
+				return False
+
+		return True
+
 	def generateSceneAnimABC(self, type, listAsset, listAssetWidget):
 		#print("generateSceneAnimABC: type = " + str(type) + " listAsset = " + str(listAsset) + " listAssetWidget = " + str(listAssetWidget))
+
+		if not self.checkMissingAssetAndAsk():
+			return
+
 		cmds.select(cl=True) # clear selection.
 		cmds.select("grp_camera", add=True) # add always camera
 		cmds.select(listAsset, add=True) # Select objects in list
 
+		# Sebastien s'en occupe de son cote !
+		#cmds.select("audio", add=True) # Select sound node
+
 		filename = self.createDavosPublicSplitAnim(type=type) # create the splitAnim scene thru Davos. Return full path filename
-		
+
 		if filename:
 			##cmds.file(filename, pr=True, exportSelected=True, type='mayaAscii')
 			try:
@@ -637,63 +708,179 @@ class SplitAnimMgr(QtGui.QWidget):
 		cmds.select(cl=True) # clear selection.
 
 	def generateSceneAnimA(self):
+		#if not self.checkMissingAssetAndAsk():
+		#	return
+
 		if len(self.listAssetA) != 0:
 			cmds.waitCursor(state=True)
-			#filenameA = self.exportPath + "/splitAnimA.ma"
 			self.generateSceneAnimABC("animSplitA_scene", self.listAssetA, self.assetListWidgetA)
 			viewMessage("Split anim A generated")
-			cmds.waitCursor(state=False)
+			resetCursor()
 
 	def generateSceneAnimB(self):
+		#if not self.checkMissingAssetAndAsk():
+		#	return
+
 		if len(self.listAssetB) != 0:
 			cmds.waitCursor(state=True)
-			#filenameB = self.exportPath + "/splitAnimB.ma"
 			self.generateSceneAnimABC("animSplitB_scene", self.listAssetB, self.assetListWidgetB)
 			viewMessage("Split anim B generated")
-			cmds.waitCursor(state=False)
+			resetCursor()
 
 	def generateSceneAnimC(self):
+		#if not self.checkMissingAssetAndAsk():
+		#	return
+
 		if len(self.listAssetC) != 0:
 			cmds.waitCursor(state=True)
-			#filenameC = self.exportPath + "/splitAnimC.ma"
 			self.generateSceneAnimABC("animSplitC_scene", self.listAssetC, self.assetListWidgetC)
 			viewMessage("Split anim C generated")
-			cmds.waitCursor(state=False)
-		
+			resetCursor()
+
 	def generateAllSceneAnim(self):
+		if not self.checkMissingAssetAndAsk():
+			return
+
 		cmds.waitCursor(state=True)
 		self.generateSceneAnimA()
 		self.generateSceneAnimB()
 		self.generateSceneAnimC()
-		viewMessage("All split anim scenes generated")
-		cmds.waitCursor(state=False)
-		
-	def getGpuAnimListAsset(self, listAsset):
-		print("getGpuAnimListAsset")
-		for asset in listAsset:
-			print ("asset = " + asset)
-			
-	def getGpuAnimFromAllSplitAnims(self):
-		if self.listAssetA:
-			self.getGpuAnimListAsset(self.listAssetA)
+		##viewMessage("All split anim scenes generated")
+		displayInfoAndStop("All split anim scenes generated")
+		resetCursor()
 
-	def mergeAllAnimatorScene(self):
-		# TODO: for each list asset, get ATOM files
-		pass
+	def getGpuCachePath(self): # Get path where the GPU caches of the current scene are saved
+		print("getAssetGpuCachePath")
+		curMayaFullPathScene = cmds.file(q = True, sceneName = True) # get full path scene name loaded.
+		curSceneName = os.path.basename(curMayaFullPathScene) # current Maya scene name.
+		seqShot = (curSceneName.split("_anim")[0]) # isolate 'sq6660_sh0080a'
+		path = PATH_CACHES + "/" + seqShot
+		if not os.path.exists(path): # if path is not existing yet
+			os.makedirs(path) # create it
+		return path
+
+	def exportGpuCache(self, listAssets, gpuPath): # export assets as GPU caches in a subprocess
+		print("exportGpuCache: listAssets = " + str(listAssets) + " gpuPath = " + str(gpuPath))
+		cameras = cmds.ls("*:cam_shot_default*", cameras=1) # Get Camera
+		if len(cameras) == 1:
+			self.exportFromAssets(listAssets = listAssets, outputDir=gpuPath, shotCamera = cameras[0]) # make a subprocess to export the gpu caches of assets
+		else:
+			print("ERROR: exportGpuCache: cameras = " + str(cameras))
+
+	## From gpucaching
+	# export GPU caches for list of assets
+	def exportFromAssets(self, listAssets=None, outputDir="", shotCamera=None):
+		print("listAssets= " + str(listAssets) + " outputDir= " + str(outputDir) + " shotCamera= " + str(shotCamera))
+
+		if not listAssets:
+			print("ERROR: No asset to export")
+			return
+
+		sGeoGrpList = () # tuple initialization.
+		geoList = []
+
+		for asset in listAssets:
+			ns = asset.split(":")[0] # isolate namespace.
+			geoName = ns + ":grp_geo"
+			if cmds.objExists(geoName):
+				geoList.append(geoName)
+		if geoList:
+			sGeoGrpList = tuple(geoList) # Convert list to tuple
+		else:
+			sMsg = "No geo groups found{}".format(" from selection.")
+			raise RuntimeError(sMsg)
+
+		print("sGeoGrpList = " + str(sGeoGrpList))
+
+		##sShotCam = mop.getShotCamera(damShot.name, fail=True).name()
+		sShotCam = shotCamera
+
+		sOutDirPath = outputDir
+
+		sSelList = list(s.replace(":grp_geo", ":asset") for s in sGeoGrpList)
+		cmds.select(sSelList + [sShotCam], r=True)
+		curTime = cmds.currentTime(q=True)
+		cmds.currentTime(101)
+		cmds.refresh()
+		try:
+			sFilePath = pm.exportSelected(pathJoin(sOutDirPath, "export_gpuCache_" + "animMaster" + "_tmp.ma"),
+										  type="mayaAscii",
+										  preserveReferences=False,
+										  shader=True,
+										  channels=True,
+										  constraints=True,
+										  expressions=True,
+										  constructionHistory=True,
+										  force=True)
+		finally:
+			cmds.currentTime(curTime)
+
+		sPython27Path = r"C:\Python27\python.exe"
+		sZ2kEnvScript = os.environ["Z2K_LAUNCH_SCRIPT"]
+		sAppPath = os.path.join(os.environ["MAYA_LOCATION"], "bin", "mayabatch.exe")
+
+		timeRange = (pm.playbackOptions(q=True, animationStartTime=True),
+					pm.playbackOptions(q=True, animationEndTime=True))
+
+#    timeRange = (pm.playbackOptions(q=True, minTime=True),
+#                 pm.playbackOptions(q=True, maxTime=True))
+
+		sPyCmd = "from dminutes import gpucaching;reload(gpucaching);"
+		sPyCmd += "gpucaching._doExportGpuCaches('{}',{},{},'{}');".format(sOutDirPath,
+																		   timeRange[0],
+																		   timeRange[1],
+																		   sShotCam)
+		sMelCmd = "python(\"{}\"); quit -f;".format(sPyCmd)
+
+		sCmdArgs = [sPython27Path,
+					os.path.normpath(sZ2kEnvScript),
+					"launch", "--update", "0", "--renew", "1",
+					os.path.normpath(sAppPath),
+					"-file", os.path.normpath(sFilePath),
+					"-command", sMelCmd, "-prompt"
+					]
+
+		print("sMelCmd: " + str(sMelCmd))
+		print("sCmdArgs: " + str(sCmdArgs))
+
+		SW_MINIMIZE = 6
+		info = subprocess.STARTUPINFO()
+		info.dwFlags = subprocess.STARTF_USESHOWWINDOW
+		info.wShowWindow = SW_MINIMIZE
+
+		subprocess.Popen(sCmdArgs, startupinfo=info)
+
+		pm.displayInfo("GPU caches are being exported from another maya process...")
+
+	def generateAllGpuCaches(self):
+		cmds.waitCursor(state=True)
+		filterListAssets = self.filterListAssetCharAndProps(self.listAssetM) # get all assets char and props.
+		if len(filterListAssets) > 0:
+			self.exportGpuCache(filterListAssets, self.getGpuCachePath())
+		displayInfoAndStop("Generating GPU's caches in another process ...")
+		resetCursor()
+
+#	def mergeAllAnimatorScene(self):
+#		# TODO: for each list asset, get ATOM files
+#		pass
 
 
-def dialogInfo(self, message):
+def dialogInfo(message):
 	result = cmds.confirmDialog( title='Info', backgroundColor=DIALOG_INFO_COLOR, message=message, button=['Yes', 'No', 'Cancel'], defaultButton='Yes', cancelButton='No', dismissString='No' )
 	return result
 
-def dialogError(self, message):
+def displayInfoAndStop(message):
+	result = cmds.confirmDialog( title='Info', backgroundColor=DIALOG_INFO_COLOR, message=message, button=['Ok'], defaultButton='Ok' )
+	return result
+
+def dialogError(message):
 	cmds.confirmDialog( title='Error', backgroundColor=DIALOG_ERROR_COLOR, message=message, button=['OK'], defaultButton='OK')
 
-def dialogWarning(self, message):
+def dialogWarning(message):
 	cmds.confirmDialog( title='Warning', backgroundColor=DIALOG_WARNING_COLOR, message=message, button=['OK'], defaultButton='OK')
 
-def dialogAsk(self, message, text):
-	result = cmds.promptDialog(title='Rename Object', backgroundColor=DIALOG_ASKING_COLOR, message=message, text=text, button=['OK', 'Cancel'], defaultButton='OK', cancelButton='Cancel', dismissString='Cancel')
+def dialogAsk(message, text):
+	result = cmds.promptDialog(title='Dialog', backgroundColor=DIALOG_ASKING_COLOR, message=message, text=text, button=['OK', 'Cancel'], defaultButton='OK', cancelButton='Cancel', dismissString='Cancel')
 	if result == 'OK':
 		response = cmds.promptDialog(query=True, text=True)
 		return response
@@ -702,6 +889,10 @@ def dialogAsk(self, message, text):
 
 def viewMessage(text):
 	cmds.inViewMessage( amg='<hl>' + text + '</hl>.', pos='midCenter', fade=True )
+	
+def resetCursor(): # to avoid cursor in wait state (the waitCursor has a pile of state and when it crash the cursor can stay in the wrong state)
+	while cmds.waitCursor(q=1, state=0):
+		cmds.waitCursor(state=0)
 
 
 # Launch splitAnimManager

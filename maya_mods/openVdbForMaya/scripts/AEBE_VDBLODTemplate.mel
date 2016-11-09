@@ -1,0 +1,125 @@
+
+
+global proc
+AEBE_VDBLODTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB LOD" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBLODGridSelection" "replaceBE_VDBLODGridSelection" "VdbAllGridNamesLOD";
+            
+            editorTemplate -addSeparator;
+            
+            editorTemplate -addControl "LODMode" "AEAT_LODUpdateEnabled";
+            editorTemplate -addControl "Level" "AEAT_LODUpdateEnabled";
+            editorTemplate -addControl "Start" "AEAT_LODUpdateEnabled";
+            editorTemplate -addControl "End" "AEAT_LODUpdateEnabled";
+            editorTemplate -addControl "Step" "AEAT_LODUpdateEnabled";
+            editorTemplate -addControl "Count" "AEAT_LODUpdateEnabled";
+            editorTemplate -addControl "PreserveGridNames" "AEAT_LODUpdateEnabled";
+
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc
+AEAT_LODUpdateEnabled( string $node )
+{
+
+    int $LODMode = `getAttr ($node+".LODMode")`;
+
+    if ($LODMode == 0) 
+	{
+        editorTemplate -dimControl $node "Level" 0;
+		editorTemplate -dimControl $node "Start" 1;
+        editorTemplate -dimControl $node "End" 1;
+		editorTemplate -dimControl $node "Step" 1;
+		editorTemplate -dimControl $node "Count" 1;	
+		editorTemplate -dimControl $node "PreserveGridNames" 0;			
+	}
+    if ($LODMode == 1) 
+	{
+        editorTemplate -dimControl $node "Level" 1;
+		editorTemplate -dimControl $node "Start" 0;
+        editorTemplate -dimControl $node "End" 0;
+		editorTemplate -dimControl $node "Step" 0;
+		editorTemplate -dimControl $node "Count" 1;	
+		editorTemplate -dimControl $node "PreserveGridNames" 1;			
+	}
+    if ($LODMode == 2) 
+	{
+        editorTemplate -dimControl $node "Level" 1;
+		editorTemplate -dimControl $node "Start" 1;
+        editorTemplate -dimControl $node "End" 1;
+		editorTemplate -dimControl $node "Step" 1;
+		editorTemplate -dimControl $node "Count" 0;	
+		editorTemplate -dimControl $node "PreserveGridNames" 1;		
+	}			
+}
+
+global proc newBE_VDBLODGridSelection(string $attr)
+{
+    optionMenu
+        -label "VDB Grid Name:"
+        -width 300
+        -changeCommand ("updateBE_VDBLODGridSelection( \""+$attr+"\" )")
+        vdbGridNameMenuLOD;
+
+    replaceBE_VDBLODGridSelection($attr);
+}
+
+global proc replaceBE_VDBLODGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBLODGridSelection( \""+$attr+"\" )") vdbGridNameMenuLOD;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesLOD"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuLOD`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuLOD;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuLOD;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBLODGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuLOD`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesLOD"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}

@@ -1,0 +1,151 @@
+
+
+global proc
+AEBE_VDBResampleTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Resample" -collapse 0;
+          //  editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -callCustom "newBE_VDBResampleGridSelectionSource" "replaceBE_VDBResampleGridSelectionSource" "VdbAllGridNamesSource";
+			editorTemplate -callCustom "newBE_VDBResampleGridSelectionReference" "replaceBE_VDBResampleGridSelectionReference" "VdbAllGridNamesReference";
+
+            editorTemplate -addSeparator;
+
+			editorTemplate -addControl "Interpolation";
+			editorTemplate -addControl "DefineTransform";
+			editorTemplate -addControl "VoxelScale";
+			editorTemplate -addControl "RebuildSDF";
+			editorTemplate -addControl "UsePrune";
+			editorTemplate -addControl "PruneTolerance";
+
+            }
+       // editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////// Source
+global proc newBE_VDBResampleGridSelectionSource(string $attr)
+{
+    optionMenu
+        -label "Source     "
+        -width 300
+        -changeCommand ("updateBE_VDBResampleGridSelectionSource( \""+$attr+"\" )")
+        vdbGridNameMenuSource;
+
+    replaceBE_VDBResampleGridSelectionSource($attr);
+}
+
+global proc replaceBE_VDBResampleGridSelectionSource(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBResampleGridSelectionSource( \""+$attr+"\" )") vdbGridNameMenuSource;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesSource"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuSource`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuSource;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuSource;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBResampleGridSelectionSource(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuSource`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesSource"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+//////////////////////////////////////////////////////////////////////////////// Reference
+global proc newBE_VDBResampleGridSelectionReference(string $attr)
+{
+    optionMenu
+        -label "Reference"
+        -width 300
+        -changeCommand ("updateBE_VDBResampleGridSelectionReference( \""+$attr+"\" )")
+        vdbGridNameMenuReference;
+
+    replaceBE_VDBResampleGridSelectionReference($attr);
+}
+
+global proc replaceBE_VDBResampleGridSelectionReference(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBResampleGridSelectionReference( \""+$attr+"\" )") vdbGridNameMenuReference;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesReference"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuReference`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuReference;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuReference;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBResampleGridSelectionReference(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuReference`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesReference"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+

@@ -1,0 +1,110 @@
+
+
+global proc
+AEBE_VDBFillTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB Fill" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            editorTemplate -addControl "BoundsMode";
+            editorTemplate -addSeparator;	
+            editorTemplate -callCustom "newBE_VDBFillGridSelection" "replaceBE_VDBFillGridSelection" "VdbAllGridNamesFill";
+            editorTemplate -addControl "BBoxMin";
+            editorTemplate -addControl "BBoxMax";
+            editorTemplate -addSeparator;
+            editorTemplate -addControl "Dense";
+			editorTemplate -addControl "UsePrune";
+			editorTemplate -addControl "Tolerance";
+
+            editorTemplate -beginLayout "Float Grid" -collapse 0;
+            {
+            editorTemplate -label "Export" -addControl "ExportFloatGrid";
+            editorTemplate -label "GridName" -addControl "FloatGridName";
+            editorTemplate -label "VoxelSize" -addControl "FloatVoxelSize";
+            editorTemplate -label "Value" -addControl "FloatValue";
+            editorTemplate -label "Background" -addControl "FloatBackground";
+            editorTemplate -label "Active" -addControl "FloatActive";
+            }
+            editorTemplate -endLayout;
+
+            editorTemplate -beginLayout "Vector Grid" -collapse 0;
+            {
+            editorTemplate -label "Export" -addControl "ExportVectorGrid";
+            editorTemplate -label "GridName" -addControl "VectorGridName";
+            editorTemplate -label "VoxelSize" -addControl "VectorVoxelSize";
+            editorTemplate -label "Value" -addControl "VectorValue";
+            editorTemplate -label "Background" -addControl "VectorBackground";
+            editorTemplate -label "Active" -addControl "VectorActive";
+            }
+            editorTemplate -endLayout;
+
+            }
+            editorTemplate -endNoOptimize;
+            editorTemplate -endLayout;
+            editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+global proc newBE_VDBFillGridSelection(string $attr)
+{
+    optionMenu
+        -label "Reference Grid Name:"
+        -width 300
+        -changeCommand ("updateBE_VDBFillGridSelection( \""+$attr+"\" )")
+        vdbGridNameMenuFill;
+
+    replaceBE_VDBFillGridSelection($attr);
+}
+
+global proc replaceBE_VDBFillGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBFillGridSelection( \""+$attr+"\" )") vdbGridNameMenuFill;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbSelectedGridNamesFill"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill vdbGridNameMenuFill`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent vdbGridNameMenuFill;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem vdbGridNameMenuFill;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBFillGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value vdbGridNameMenuFill`;
+    string $selectionAttr = plugNode($attr) + ".VdbSelectedGridNamesFill"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}

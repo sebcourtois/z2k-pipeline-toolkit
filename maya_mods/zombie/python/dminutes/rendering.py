@@ -20,7 +20,7 @@ reload (miscUtils)
 from dminutes import layerManager
 reload (layerManager)
 
-#createOptions()
+createOptions()
 
 if pm.window("unifiedRenderGlobalsWindow", exists=True):
     pm.deleteUI("unifiedRenderGlobalsWindow")
@@ -287,7 +287,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     miscUtils.setAttrC("defaultArnoldRenderOptions.skipLicenseCheck", 1)
     miscUtils.setAttrC("defaultArnoldRenderOptions.log_verbosity", 1)#warnig + info
     miscUtils.setAttrC("defaultArnoldRenderOptions.motion_blur_enable", 1)
-    if mc.getAttr("defaultArnoldRenderOptions.motion_frames") > 0.25 :
+    if not mc.getAttr("defaultArnoldRenderOptions.motion_frames") == 0.25 :
         pass
     else:
         miscUtils.setAttrC("defaultArnoldRenderOptions.motion_frames", 0.25)
@@ -424,6 +424,13 @@ def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , g
     return dict(resultB=log.resultB, logL=log.logL)
 
 
+def updateStereoCam(gui = True):
+    log = miscUtils.LogBuilder(gui=gui, funcName="updateStereoCam")
+
+    damShot = entityFromScene()
+    oShotCam = mop.getShotCamera(damShot.name)
+    mop.loadStereoCam(infosFromScene()["dam_entity"])
+
 
 def UVSetCount(gui = True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="UVSetCount")
@@ -499,7 +506,12 @@ def getRenderOutput(gui=True):
     elif mc.ls("|shot"):
         if  mainFilePathElem[-5] == "shot":
             vertionNumber = mainFilePathElem[-1].split("-")[1].split(".")[0]
-            outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render-" + vertionNumber)
+            if '06_finalLayout' in mainFilePath:
+                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render-" + vertionNumber)
+            if '07_fx3d' in mainFilePath:
+                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "/work/render/render-" + vertionNumber)
+            if '08_render' in mainFilePath:
+                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render")
             outputFilePath_exp = miscUtils.normPath(os.path.expandvars(os.path.expandvars(outputFilePath)))
             outputImageName = mainFilePathElem[-3]
             print "#### Info: Set render path: {}".format(outputFilePath_exp)
@@ -754,6 +766,9 @@ def renderLeftCam():
     else :
         print (u'Merci, cam gauche already set, nothing to do !!')
         pass
+    shotNameL = mainFilePathS.split('/')[2:-1]
+    aiAovPOutName = '//' + '/'.join(shotNameL) + '/render/left/<RenderLayer>_P32/' + shotName
+    pm.setAttr('aiAOVDriverP32.prefix', aiAovPOutName, type='string')
 
 def renderRightCam():
     shotName = ''
@@ -775,3 +790,7 @@ def renderRightCam():
     else :
         print (u'Merci, ok pour le rendu cam droite')
         pass
+    shotNameL = mainFilePathS.split('/')[2:-1]
+    aiAovPOutName = '//' + '/'.join(shotNameL) + '/render/right/<RenderLayer>_P32/' + shotName
+    pm.setAttr('aiAOVDriverP32.prefix', aiAovPOutName, type='string')
+

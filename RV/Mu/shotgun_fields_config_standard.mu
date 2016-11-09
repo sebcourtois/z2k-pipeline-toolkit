@@ -125,20 +125,20 @@ function: fieldsCompute (void; StringMap data, bool incremental)
     if (sShotPath neq nil)
     {
 		sShotPath = regex.replace("\\\\", sShotPath, "/");
-		//print (sShotPath+"\n");
-		//print ("******************2\n");
+		//print(sShotPath+"\n");
+		//print("******************2\n");
 		let frames = data.find("mt_Frames"),
 			movie = data.find("mt_Movie");
 
 		if (frames neq nil && regex.match("^\$ZOMB_SHOT_PATH", frames))
 		{
-			//print ("$ZOMB_SHOT_PATH found in frames path\n");
-			frames = regex.replace("^\$ZOMB_SHOT_PATH", sShotPath, frames);
+			//print("$ZOMB_SHOT_PATH found in frames path\n");
+			frames = regex.replace("^\$ZOMB_SHOT_PATH", frames, sShotPath);
 			data.add("mt_Frames", frames);
 		}
 		if (movie neq nil && regex.match("^\$ZOMB_SHOT_PATH", movie))
 		{
-			//print ("$ZOMB_SHOT_PATH found in movies path\n");
+			//print("$ZOMB_SHOT_PATH found in movies path\n");
 			movie = regex.replace("^\$ZOMB_SHOT_PATH", movie, sShotPath);
 			data.add("mt_Movie", movie);
 		}
@@ -146,9 +146,9 @@ function: fieldsCompute (void; StringMap data, bool incremental)
     /* -----------------------------------------*/
     // DEBUGGING
     /* -----------------------------------------*/
-    //print ("***************************************\n");
-    //print ("%s" % data.toString());
-    //print ("***************************************\n");
+    //print("***************************************\n");
+    //print("%s" % data.toString());
+    //print("***************************************\n");
 }
 
 }
