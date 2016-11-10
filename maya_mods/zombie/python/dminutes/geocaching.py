@@ -18,7 +18,7 @@ from pytd.util.fsutils import pathJoin, pathRelativeTo, pathEqual
 from pytd.util.sysutils import grouper, argToSet
 
 from pytaya.util import apiutils as myapi
-from pytaya.core.general import lsNodes
+from pytaya.core.general import lsNodes, copyAttrs
 #from pytaya.core import system as myasys
 from davos_maya.tool import reference as myaref, dependency_scan
 from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
@@ -160,7 +160,7 @@ def _confirmProcessing(sProcessLabel, **kwargs):
         bSelected = True
         sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
 
-        sMsg = "{} caches for which assets ?".format(sProcessLabel)
+        sMsg = "{} for which assets ?".format(sProcessLabel)
 
         sButtonList = ['All', 'Cancel']
         if sGeoGrpList:
@@ -312,11 +312,33 @@ def abcProgress(iCurFrame, iEndFrame):
     ABC_PROGRESS_LINE += sMsg
     sys.stdout.write(sMsg)
 
+FRAME_RANGE_OPTS_ATTR = "ABC_frameRangeOpts"
+
+def setMotionBlurFixEnabled(bEnable):
+
+    sGeoGrpList, bSelected = _confirmProcessing("{} motion blur fix"
+                                                .format("Enable" if bEnable else "Disable"))
+    if not sGeoGrpList:
+        sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
+        raise RuntimeError(sMsg)
+
+    sOpts = "-frs -0.25 -frs -0.125 -frs 0 -frs 0.125 -frs 0.25" if bEnable else ""
+    for sGeoGrp in sGeoGrpList:
+        sObjAttr = sGeoGrp + "." + FRAME_RANGE_OPTS_ATTR
+        if mc.objExists(sObjAttr):
+            mc.setAttr(sObjAttr, sOpts, type="string")
+        elif sOpts:
+            mc.addAttr(sGeoGrp, ln=FRAME_RANGE_OPTS_ATTR, dt="string")
+            mc.setAttr(sObjAttr, sOpts, type="string")
+
+    mc.select(sGeoGrpList)
+
 @withParallelEval
 def exportCaches(**kwargs):
 
-    sProcessLabel = kwargs.pop("processLabel", "Export")
+    sProcessLabel = kwargs.pop("processLabel", "Export caches")
     bDryRun = kwargs.pop("dryRun", False)
+    bVerbose = kwargs.pop("verbose", True)
     frameRange = kwargs.pop("frameRange", None)
     if frameRange:
         frameRange = tuple(int(f) for f in frameRange)
@@ -339,12 +361,12 @@ def exportCaches(**kwargs):
     if not osp.exists(sCacheDirPath):
         os.makedirs(sCacheDirPath)
 
-    scnFrmRange = (int(pm.playbackOptions(q=True, animationStartTime=True)),
+    scnFrmRange = (int(pm.playbackOptions(q=True, animationStartTime=True) - 1),
                    int(pm.playbackOptions(q=True, animationEndTime=True)))
 
     if not frameRange:
-        pm.displayWarning("No frame range was given so, retreived from scene: {}"
-                          .format(scnFrmRange))
+        pm.displayInfo("No frame range was given so, retreived from scene: {}"
+                       .format(scnFrmRange))
         frameRange = scnFrmRange
     elif frameRange != scnFrmRange:
         sMsg = "Frame ranges differ:"
@@ -366,20 +388,21 @@ def exportCaches(**kwargs):
     else:
         prevExportInfos = {}
 
-    sJobOpts = "-dataFormat ogawa -noNormals -uvWrite -writeVisibility -writeColorSets -attr dynamicTopology"
-
+    sJobOpts = "-dataFormat ogawa -noNormals -uvWrite -writeVisibility -writeColorSets"
+    sJobOpts += " -attr dynamicTopology"
     sJobParts = [
     r"-root {root} -file {file}",
     r"-frameRange {frameRange[0]} {frameRange[1]}",
+    "{frameRangeOpts}",
     r"-frameRange {preRollRange[0]} {preRollRange[1]} -preRoll",
-    "{options}"
+    "{options}",
     ]
-
-    if mc.about(batch=True):
-        sJobParts.extend([
-                          r"-pythonPerFrameCallback '_abcProgress(int(\"#FRAME#\"),{frameRange[1]})'",
+    if mc.about(batch=True) and bVerbose:
+        sJobParts.extend([r"-pythonPerFrameCallback '_abcProgress(int(\"#FRAME#\"),{frameRange[1]})'",
                           r"-pythonPostJobCallback 'print(\"Exported \'{root}\' >> \'{file}\'\")'",
-                          ])
+                        ])
+        bVerbose = False
+
     sJobFmt = " ".join(sJobParts)
 
     if (not bRaw) and sScnRcName in ("anim_scene", "charFx_scene"):
@@ -401,12 +424,18 @@ def exportCaches(**kwargs):
         sAstNmspc = getNamespace(sGeoGrp)
         sAbcFilePath = pathJoin(sCacheDirPath, sAstNmspc + "_cache.abc")
 
-        jobInfos = dict(root=sGeoGrp, file=sAbcFilePath, options=sJobOpts,
-                        frameRange=frameRange, preRollRange=preRollRange,)
+        sFrameRangeOpts = ""
+        sRangeOptsAttr = sGeoGrp + "." + FRAME_RANGE_OPTS_ATTR
+        if mc.objExists(sRangeOptsAttr):
+            sFrameRangeOpts = mc.getAttr(sRangeOptsAttr)
 
-        sJobCmd = sJobFmt.format(**jobInfos)
+        jobInfos = dict(root=sGeoGrp, file=sAbcFilePath,
+                        frameRange=frameRange, frameRangeOpts=sFrameRangeOpts,
+                        preRollRange=preRollRange, options=sJobOpts,)
+
+        sJobCmd = sJobFmt.format(**jobInfos).replace("  ", " ")
         sJobCmdList.append(sJobCmd)
-        if bDryRun:
+        if bVerbose:
             print "AbcExport: ", sJobCmd
 
         jobInfos["file"] = pathRelativeTo(sAbcFilePath, sCacheDirPath)
@@ -420,7 +449,7 @@ def exportCaches(**kwargs):
         if not bJsonOnly:
             m = sys.modules["__main__"]
             m._abcProgress = abcProgress
-            mc.AbcExport(v=False, j=sJobCmdList)
+            mc.AbcExport(v=bVerbose, j=sJobCmdList)
 
         jsonWrite(sJsonPath, exportInfos)
 
@@ -981,7 +1010,7 @@ def importCaches(sSpace, **kwargs):
     exportInfos = jsonRead(pathJoin(sCacheDirPath, "abcExport.json"))
     exportJobList = exportInfos["jobs"]
 
-    sProcessLabel = kwargs.pop("processLabel", "Import")
+    sProcessLabel = kwargs.pop("processLabel", "Import caches")
     bCheckAstExists = False
     sGeoGrpList, bSelected = _confirmProcessing(sProcessLabel, **kwargs)
     if not bSelected:
@@ -1127,6 +1156,14 @@ def importCaches(sSpace, **kwargs):
 
         astToAbcMeshItems = getMeshMapping(astToAbcXfmItems, longName=True,
                                            consider=sCacheObjList)
+
+        if (not bDryRun):
+            sAbcGeoGrp = sAstGeoGrp.replace(sAstNmspc + ":", sAbcNmspc + ":")
+            if mc.objExists(sAbcGeoGrp):
+                sAbcAttrList = mc.listAttr(sAbcGeoGrp, string="ABC_*")
+                if sAbcAttrList:
+                    copyAttrs(sAbcGeoGrp, sAstGeoGrp, *sAbcAttrList,
+                              values=True, create=True)
 
         transferXfmAttrs(astToAbcXfmItems, only=sCacheObjList, dryRun=bDryRun,
                          discardAttrs="visibility")
