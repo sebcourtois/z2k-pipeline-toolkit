@@ -37,9 +37,10 @@ def generatePrivateCachePath(node=''):
 
     nodeShape = cmds.listRelatives(node,s=True)
 
-    if node and nodeShape and (cmds.nodeType(nodeShape) == 'nParticle' or cmds.nodeType(nodeShape) == 'fluidShape'):
+    if node and nodeShape and (cmds.nodeType(nodeShape) == 'nParticle' or cmds.nodeType(nodeShape) == 'fluidShape' or cmds.nodeType(nodeShape) == 'BE_VDBArnoldRender'):
         node='pkg_'+node
-        outPath = '/'.join([outPath,node])
+
+    outPath = '/'.join([outPath,node])
 
     if node:
         pm.warning('[generateCachePath.generatePrivateCachePath] - outPath for ' + node + ' = ' + outPath)
