@@ -95,7 +95,7 @@ class DavosSetup(ToolSetup):
                        "pointOnMeshInfo.mll",# bonus tools for stickyDeformer
                        "closestPointOnCurve.mll", # bonus tools for stickyDeformer
                        "mtoa.mll", # arnold
-
+                       "gpuCache.mll",
                        )
 
         for sPlugin in sPluginList:
