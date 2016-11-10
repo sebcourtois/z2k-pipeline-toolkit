@@ -2,6 +2,7 @@
 import os
 import os.path as osp
 import subprocess
+import ctypes
 
 import maya.cmds as mc
 import pymel.core as pm
@@ -21,6 +22,23 @@ reload(modeling)
 reload(rendering)
 reload(mop)
 
+
+def notifyBatchEnd(func):
+    def doIt(*args, **kwargs):
+
+        if mc.about(batch=True):
+            try:
+                ret = func(*args, **kwargs)
+            except:
+                ctypes.windll.user32.MessageBoxA(0, 'EXPORT FAILED !', 'GPU CACHE', 0x10 | 0x0 | 0x1000)
+                raise
+            else:
+                ctypes.windll.user32.MessageBoxA(0, 'EXPORT DONE !', 'GPU CACHE', 0x40 | 0x0 | 0x1000)
+        else:
+            ret = func(*args, **kwargs)
+
+        return ret
+    return doIt
 
 @withSelectionRestored
 def exportFromAssets(selected=False, namespaces=None, outputDir=""):
@@ -280,6 +298,7 @@ def _refreshOne(sGpuNode, force=False):
 
     return True
 
+@notifyBatchEnd
 def _doExportGpuCaches(sOutDirPath, startTime, endTime, sCamForBaking):
 
     if mc.about(batch=True):

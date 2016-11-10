@@ -14,7 +14,7 @@ def createReleaseGroup(type,variant):
 	cmds.parent(geo,fx3)
 	#cmds.parent(fx3,fxGroup)
 
-	return fx3
+	return fx3, fx3+'|'+geo
 
 def addReleaseAttribut(node):
 	

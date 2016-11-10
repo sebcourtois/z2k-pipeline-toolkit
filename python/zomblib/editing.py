@@ -201,6 +201,70 @@ def h264ToProres(inSeqList, shotStep='01_previz'):
 
     subprocess.call("explorer /select, {}".format(sTmpBatPath))
 
+
+def getFinalImgSeq(inSeqList, bStereo=False, ):
+
+    shotDir = osp.normpath(osp.join(os.environ["ZOMB_SHOT_LOC"], "zomb", "shot"))
+    outputDir = os.environ["ZOMB_OUTPUT_PATH"]
+    sSeqShotDict = OrderedDict()
+
+
+    for eachSeq in os.listdir(shotDir):
+        if re.match('^sq[0-9]{4}$', eachSeq) and (eachSeq in inSeqList or not inSeqList):
+            for eachShot in os.listdir(osp.normpath(osp.join(shotDir, eachSeq))):
+                if re.match('^sq[0-9]{4}_sh[0-9]{4}a$', eachShot):
+                    #sSeqShotDict[eachSeq].append(eachShot)
+                    sSeqShotDict.setdefault(eachSeq, []).append(eachShot)
+
+    for each in inSeqList:
+        if each not in sSeqShotDict.keys():
+            raise ValueError("'{}' sequence could not be found".format(each))
+
+    sTmpBatPath = osp.normpath(osp.join(os.environ["temp"], "conv2prores.bat"))
+    print "#### {:>7}: writing temp batch file: '{}'".format("Info", sTmpBatPath)
+
+    oDate = datetime.today()
+
+    with open(sTmpBatPath, "w") as tmpBatFile:
+
+        for seqName, shotNameList in sSeqShotDict.items():
+
+            sDate = str(oDate.year) + "-" + str(oDate.month) + "-" + str(oDate.day)
+            if bStereo:
+                outDir = osp.normpath(osp.join(outputDir, 'final_stereo', seqName, sDate))
+            else:
+                outDir = osp.normpath(osp.join(outputDir, 'final_mono', seqName, sDate))
+
+            tmpBatFile.write("\n")
+
+            if not osp.isdir(outDir):
+                #print "#### {:>7}: Create directory: '{}'".format("Info",outDir )
+                os.makedirs(outDir)
+
+            for shotName in shotNameList:
+                inDir = osp.normpath(osp.join(shotDir, seqName, shotName, '10_compo', "_version"))
+                if  not osp.isdir(inDir):
+                    print "#### {:>7}: Directory could not be found: '{}'".format("Error", inDir)
+                    continue
+                videoList = []
+                for each in os.listdir(inDir):
+                    if re.match('^sq[0-9]{4}_sh[0-9]{4}[a-z]{1}_[a-zA-Z0-9\-]{1,24}.mov$', each):
+                        videoList.append(each)
+                if len (videoList) < 2:
+                    print "#### {:>7}: no video found in directory: '{}'".format("Warning", inDir)
+                    continue
+                videoList.sort()
+                inFile = osp.normpath(osp.join(inDir, videoList[-1]))
+                outFile = osp.normpath(osp.join(outDir, videoList[-1]))
+                finalCommand = ("{0} -i {1} -c:v prores_ks -profile:v {2} {3}"
+                                .format(sFfmpegPath, inFile, profile, outFile))
+                tmpBatFile.write(finalCommand + "\n")
+
+        tmpBatFile.write("\n")
+        tmpBatFile.write("pause\n")
+
+    subprocess.call("explorer /select, {}".format(sTmpBatPath))
+
 def makeFilePath(sDirPath, sBaseFileName, sExt, frame=None, padding=4):
 
     sFrameExt = ""

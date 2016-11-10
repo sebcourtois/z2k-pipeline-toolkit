@@ -120,7 +120,6 @@ def prepareMesh(nodes,types,variants,blurOffset,releaseGroups,MLGroup):
 
 	print ('[release.prepareMesh] - END')
 
-
 def assignShadersToNodes(nodes,type,variant):
 
 	print ('[release.assignShadersToNodes] - START')
@@ -166,7 +165,9 @@ def assignShadersToNodes(nodes,type,variant):
 
 
 def prepareFluid(nodes):
-	print ('[release.prepareFluid] - START') 
+	print ('[release.prepareFluid] - START')
+	'''
+	'''
 	print ('[release.prepareFluid] - END')
 
 
@@ -180,5 +181,7 @@ def release(nodes):
 	'''
 		Release les nodes
 	'''
+	from davos_maya.tool import lockSceneDependenciesToCurrentVersion
+	lockSceneDependenciesToCurrentVersion()
 	for node in nodes:
 		shotconformation.releaseShotAsset(gui = True ,toReleaseL = [node], astPrefix = "fx3", dryRun=False)

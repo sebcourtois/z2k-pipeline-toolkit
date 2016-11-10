@@ -159,7 +159,7 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
         sgShot = sgShotDct[damShot.name]
         times = playbackTimesFromShot(sgShot)
         #print damShot, sgShot, times
-        frameRange = (int(times["animationStartTime"]), int(times["animationEndTime"]))
+        frameRange = (int(times["animationStartTime"]) - 1, int(times["animationEndTime"]))
         frameRangeList[i] = frameRange
 
     if sErrorList:
