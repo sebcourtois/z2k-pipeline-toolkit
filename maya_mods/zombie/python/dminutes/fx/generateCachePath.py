@@ -3,6 +3,8 @@ import maya.cmds as cmds
 import maya.mel as mel
 import pymel.core as pm
 
+print 'ok'
+
 def generateCachePath(node):
     from davos_maya.tool.general import infosFromScene
     from dminutes import maya_scene_operations as mop
@@ -51,4 +53,6 @@ def generatePrivateCachePath(node=''):
         #print 'is not dir'
         os.makedirs(outPath)
         #print 'created'
+
+    outPath = os.path.normpath(outPath)
     return outPath
