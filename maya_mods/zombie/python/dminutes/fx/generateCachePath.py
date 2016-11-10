@@ -44,15 +44,18 @@ def generatePrivateCachePath(node=''):
 
     outPath = '/'.join([outPath,node])
 
-    if node:
-        pm.warning('[generateCachePath.generatePrivateCachePath] - outPath for ' + node + ' = ' + outPath)
-    else:
-        pm.warning('[generateCachePath.generatePrivateCachePath] - outPath for current scene = ' + outPath)
-
     if not os.path.isdir(outPath):
         #print 'is not dir'
         os.makedirs(outPath)
         #print 'created'
 
-    outPath = os.path.normpath(outPath)
-    return outPath
+    normPath = os.path.normpath(outPath)
+
+    if node:
+        pm.warning('[generateCachePath.generatePrivateCachePath] - outPath for ' + node + ' = ' + outPath)
+        pm.warning('[generateCachePath.generatePrivateCachePath] - normPath for ' + node + ' = ' + normPath)
+    else:
+        pm.warning('[generateCachePath.generatePrivateCachePath] - outPath for current scene = ' + outPath)
+        pm.warning('[generateCachePath.generatePrivateCachePath] - normPath for current scene = ' + normPath)
+
+    return outPath, normPath
