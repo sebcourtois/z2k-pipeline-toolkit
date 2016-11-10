@@ -1,6 +1,7 @@
 import os, sys
 import maya.cmds as cmds
 import maya.mel as mel
+import pymel.core as pm
 
 def generateCachePath(node):
     from davos_maya.tool.general import infosFromScene
@@ -33,12 +34,17 @@ def generatePrivateCachePath(node=''):
     localPath = ['/'.join(fullFileName.split('/')[:-1]),'fxCache',fileVersion]
     print ('[generateCachePath.generatePrivateCachePath] - localPath = ' + str(localPath))
     outPath = '/'.join(localPath)
-    node='pkg_'+node
 
-    if node:
+    nodeShape = cmds.listRelatives(node,s=True)
+
+    if node and nodeShape and (cmds.nodeType(nodeShape) == 'nParticle' or cmds.nodeType(nodeShape) == 'fluidShape'):
+        node='pkg_'+node
         outPath = '/'.join([outPath,node])
 
-    print ('[generateCachePath.generatePrivateCachePath] - outPath = ' + outPath)
+    if node:
+        pm.warning('[generateCachePath.generatePrivateCachePath] - outPath for ' + node + ' = ' + outPath)
+    else:
+        pm.warning('[generateCachePath.generatePrivateCachePath] - outPath for current scene = ' + outPath)
 
     if not os.path.isdir(outPath):
         #print 'is not dir'

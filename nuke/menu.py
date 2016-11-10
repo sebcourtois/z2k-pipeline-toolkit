@@ -45,3 +45,6 @@ nuke.menu( 'Nuke' ).addCommand( 'Zombi/import stereo Info', lambda: nkU.getStere
 # myMenu = myToolbar.addMenu( 'zomb Tools' )
 # myToolbar.addCommand( 'init nuke shot', lambda: nkU.initNukeShot() )
 
+m =  menubar.addMenu("RRender");
+m.addCommand("Submit Comp", "nuke.load('rrSubmit_Nuke_5'), rrSubmit_Nuke()")
+m.addCommand("Submit Shotgun Nodes", "nuke.load('rrSubmit_Nuke_5'), rrSubmit_Nuke_Shotgun()")
