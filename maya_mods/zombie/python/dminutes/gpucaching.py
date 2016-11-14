@@ -24,6 +24,7 @@ reload(mop)
 
 
 def notifyBatchEnd(func):
+
     def doIt(*args, **kwargs):
 
         if mc.about(batch=True):
@@ -33,7 +34,12 @@ def notifyBatchEnd(func):
                 ctypes.windll.user32.MessageBoxA(0, 'EXPORT FAILED !', 'GPU CACHE', 0x10 | 0x0 | 0x1000)
                 raise
             else:
-                ctypes.windll.user32.MessageBoxA(0, 'EXPORT DONE !', 'GPU CACHE', 0x40 | 0x0 | 0x1000)
+                sMsg = """GPU CACHES EXPORTED !
+
+You can now display GPU CACHED VERSIONS of exported assets
+using "Show All" or "Toggle Selected".
+"""
+                ctypes.windll.user32.MessageBoxA(0, sMsg, 'GPU CACHE', 0x40 | 0x0 | 0x1000)
         else:
             ret = func(*args, **kwargs)
 
@@ -104,8 +110,8 @@ def exportFromAssets(selected=False, namespaces=None, outputDir=""):
                 ]
 
     if inDevMode():
-        print sMelCmd
         print sCmdArgs
+        print sMelCmd
 
     SW_MINIMIZE = 6
     info = subprocess.STARTUPINFO()
