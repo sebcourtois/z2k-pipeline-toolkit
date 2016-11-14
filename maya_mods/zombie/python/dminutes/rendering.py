@@ -268,7 +268,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 1)
 
 
-    mainFilePath = mc.file(q=True, sn=True)
+    mainFilePath = mc.file(q=True, list=True)[0]
     mainFilePathElem = mainFilePath.split("/")
     if mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "shot":
         fileRadical = os.path.basename(mainFilePath).split("-")[0]
