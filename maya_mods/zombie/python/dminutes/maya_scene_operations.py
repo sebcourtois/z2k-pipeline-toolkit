@@ -467,6 +467,7 @@ def makeCapture(sOutputPath, start, end, width, height, displaymode="",
             sNodeAttr = sCamShape + "." + sAttr
             savedSettings[sAttr] = mc.getAttr(sNodeAttr)
             pc.setAttr(sNodeAttr, value)
+        mc.refresh()
 
     try:
         if format == "iff":
