@@ -509,7 +509,7 @@ def getRenderOutput(gui=True):
             if '06_finalLayout' in mainFilePath:
                 outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render-" + vertionNumber)
             if '07_fx3d' in mainFilePath:
-                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "/work/render/render-" + vertionNumber)
+                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "work", "render", "render-" + vertionNumber)
             if '08_render' in mainFilePath:
                 if 'left' in mc.getAttr('defaultRenderGlobals.imageFilePrefix'):
                     outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render" + "/left")
