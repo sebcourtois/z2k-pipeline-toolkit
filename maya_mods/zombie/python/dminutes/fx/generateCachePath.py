@@ -1,6 +1,9 @@
 import os, sys
 import maya.cmds as cmds
 import maya.mel as mel
+import pymel.core as pm
+
+print 'ok'
 
 def generateCachePath(node):
     from davos_maya.tool.general import infosFromScene
@@ -33,15 +36,26 @@ def generatePrivateCachePath(node=''):
     localPath = ['/'.join(fullFileName.split('/')[:-1]),'fxCache',fileVersion]
     print ('[generateCachePath.generatePrivateCachePath] - localPath = ' + str(localPath))
     outPath = '/'.join(localPath)
-    node='pkg_'+node
 
-    if node:
-        outPath = '/'.join([outPath,node])
+    nodeShape = cmds.listRelatives(node,s=True)
 
-    print ('[generateCachePath.generatePrivateCachePath] - outPath = ' + outPath)
+    if node and nodeShape and (cmds.nodeType(nodeShape) == 'nParticle' or cmds.nodeType(nodeShape) == 'fluidShape' or cmds.nodeType(nodeShape) == 'BE_VDBArnoldRender'):
+        node='pkg_'+node
+
+    outPath = '/'.join([outPath,node])
 
     if not os.path.isdir(outPath):
         #print 'is not dir'
         os.makedirs(outPath)
         #print 'created'
-    return outPath
+
+    normPath = os.path.normpath(outPath)
+
+    if node:
+        pm.warning('[generateCachePath.generatePrivateCachePath] - outPath for ' + node + ' = ' + outPath)
+        pm.warning('[generateCachePath.generatePrivateCachePath] - normPath for ' + node + ' = ' + normPath)
+    else:
+        pm.warning('[generateCachePath.generatePrivateCachePath] - outPath for current scene = ' + outPath)
+        pm.warning('[generateCachePath.generatePrivateCachePath] - normPath for current scene = ' + normPath)
+
+    return outPath, normPath

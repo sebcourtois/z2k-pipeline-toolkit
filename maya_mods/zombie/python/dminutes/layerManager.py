@@ -549,6 +549,8 @@ def setUtlAovs() :
 
     pm.connectAttr('aiAOVDriverP32.aiTranslator', 'aiAOV_P.outputs[0].driver', f=True)
     pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
+    if pm.objExists('aiAOV_dmn_specular') == True:
+        pm.delete('aiAOV_dmn_specular')
 
 def setUtl32Aovs() :
     aovs.AOVInterface()
