@@ -18,7 +18,7 @@ def createLightRigFromShot():
     print characterList
     for each in characterList : # Acces to character asset list
         if each.split('_')[0] == 'chr' :
-            chrName = each.split('_')[1]
+            chrName = each.split(':')[0]
             pm.createReference(os.environ['ZOMB_MISC_PATH'] + '/shading/lightRigs/lgt_rig_character.ma', namespace='lgt_' + chrName)
             vertexLoc = []
             locatorPerso = pm.spaceLocator(n=chrName + '_pos')
