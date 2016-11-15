@@ -2,7 +2,7 @@
 PYTHONPATH+:=python
 
 
-+ Oscar	  any		./Toonkit_module/Maya2016
++ MAYAVERSION:2016 PLATFORM:win64 Oscar	any ./Toonkit_module/Maya2016
 PATH+:=bin
 MAYA_CUSTOM_TEMPLATE_PATH+:=AETemplates
 
@@ -17,8 +17,8 @@ plug-ins: plug-ins/2016_win
 
 + openVdb any ./openVdbForMaya
 
-
-
 + MAYAVERSION:2016 PLATFORM:win64 soup any ./soup
 plug-ins: plug-ins/maya2016_win
 MAYA_PLUG_IN_PATH +:= plug-ins/pyExpression
+
++ MAYAVERSION:2016 PLATFORM:win64 wobble 0.9.6 ./wobble/2016

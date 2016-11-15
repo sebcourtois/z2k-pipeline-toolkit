@@ -268,7 +268,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 1)
 
 
-    mainFilePath = mc.file(q=True, sn=True)
+    mainFilePath = mc.file(q=True, list=True)[0]
     mainFilePathElem = mainFilePath.split("/")
     if mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "shot":
         fileRadical = os.path.basename(mainFilePath).split("-")[0]
@@ -509,7 +509,7 @@ def getRenderOutput(gui=True):
             if '06_finalLayout' in mainFilePath:
                 outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render-" + vertionNumber)
             if '07_fx3d' in mainFilePath:
-                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "/work/render/render-" + vertionNumber)
+                outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "work", "render", "render-" + vertionNumber)
             if '08_render' in mainFilePath:
                 if 'left' in mc.getAttr('defaultRenderGlobals.imageFilePrefix'):
                     outputFilePath = miscUtils.pathJoin("$PRIV_ZOMB_SHOT_PATH", mainFilePathElem[-4], mainFilePathElem[-3], mainFilePathElem[-2], "render" + "/left")
