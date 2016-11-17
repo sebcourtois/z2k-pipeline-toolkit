@@ -27,6 +27,7 @@ from davos_maya.tool.general import iterGeoGroups
 from dminutes import maya_scene_operations as mop
 from pytaya.util.sysutils import argsToPyNode
 from pytaya.core.transform import matchTransform
+from pytaya.core.cleaning import deleteAllJunkShapes
 
 LOGGING_SETS = []
 USE_LOGGING_SETS = True
@@ -139,10 +140,10 @@ def breakConnections(sSide, sNodeAttr):
     if not sConnectList:
         return
 
-    sNode = sNodeAttr.split(".", 1)[0]
+    sNodePath = sNodeAttr.split(".", 1)[0]
 
     sConnectList = list((cur, oth) for cur, oth in grouper(2, sConnectList)
-                         if oth.split(".", 1)[0] != sNode)
+                         if oth.split(".", 1)[0] != sNodePath)
     for sNodePlug, sOtherPlug in sConnectList:
         if bSrc:
             mc.disconnectAttr(sOtherPlug, sNodePlug)
@@ -782,7 +783,8 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
 
         sConnecList = mc.listHistory(sAstMeshShape, il=2, pdo=True)
         if sConnecList:
-            sNotTypeList = ("displayLayer", "renderLayer", "renderLayerManager", "displayLayerManager")
+            sNotTypeList = ("displayLayer", "renderLayer", "renderLayerManager",
+                            "displayLayerManager")
             sConnecList = lsNodes(sConnecList, nodeNames=True, not_rn=True, not_type=sNotTypeList)
             if sConnecList:
                 sHasHistoryList.append(sAstMeshShape)
@@ -1059,6 +1061,7 @@ def importCaches(sSpace, **kwargs):
 
             sAstMeshList = mc.ls(sAstNmspc + ":*", type="mesh", ni=True)
             sToDelList = []
+            sBreakConnList = []
             for sAstMesh in sAstMeshList:
                 sHistList = listForNone(mc.listHistory(sAstMesh, il=2, pdo=True))
                 if not sHistList:
@@ -1066,15 +1069,26 @@ def importCaches(sSpace, **kwargs):
                 sHistList = mc.ls(sHistList, type="polyTransfer")
                 if sHistList:
                     sToDelList.extend(sHistList)
+                    sBreakConnList.append(sAstMesh + ".inMesh")
 
             if sToDelList:
                 print ("delete {} 'polyTransfer' nodes on '{}'"
                        .format(len(sToDelList), sAstNmspc))
                 mc.delete(sToDelList)
+#                mc.refresh()
+#
+#            if sBreakConnList:
+#                print ("broke {} 'inMesh' connections nodes on '{}'"
+#                       .format(len(sBreakConnList), sAstNmspc))
+#                for sNodeAttr in sBreakConnList:
+#                    breakConnections("input", sNodeAttr)
+#                mc.refresh()
 
             sScnAbcNode = getNode(sScnAbcNodeName)
             if sScnAbcNode:
                 mc.delete(sScnAbcNode)
+
+#            deleteAllJunkShapes()
 
     sNmspcList = None
     if bSelected:
@@ -1245,7 +1259,12 @@ def scanCachesToImport(sSrcFilePathList, scnInfos=None, depConfDct=None):
 
     sDepType = "geoCache_dep"
     if not depConfDct:
-        depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
+        sScnRcName = scnInfos["resource"]
+        if sScnRcName == "fx3d_scene":
+            depConfDct = damEntity.getDependencyConf(sDepType, sScnRcName)
+        else:
+            depConfDct = damEntity.getDependencyConf(sDepType, "finalLayout_scene")
+
     pubDepDir = depConfDct["dep_public_loc"]
 
 #    sPubDepDirPath = pubDepDir.absPath()
@@ -1253,7 +1272,6 @@ def scanCachesToImport(sSrcFilePathList, scnInfos=None, depConfDct=None):
 #        pubDepDir.loadChildDbNodes(noVersions=True)
 
     scanResults = []
-
     sAllSeveritySet = set()
 
     def addResult(res):
