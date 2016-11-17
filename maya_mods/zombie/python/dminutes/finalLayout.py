@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import maya.mel
+import pymel.core as pm
 
 from dminutes import rendering
 reload (rendering)
@@ -70,7 +71,7 @@ def importFinalLayoutLight( gui=True, lgtRig="lgt_finalLayout_directional01"):
     log = miscUtils.LogBuilder(gui=gui, funcName ="createFinalLayoutLight")
 
     if mc.ls("|shot"):        
-        mainFilePath = mc.file(q=True, list=True)[0]
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         assetName = mainFilePathElem[-2]
         assetType = mainFilePathElem[-3]

@@ -27,7 +27,7 @@ from dminutes import assetconformation
 import tkRig as tk
 reload (tk)
 
-
+import pymel
 
 
 
@@ -407,13 +407,13 @@ def tkMirror(*args, **kwargs):
                 key = i
                 oppositeSide = customAllSymD[i]
 
-            print "*",i,"<>",oppositeSide
+            # print "*",i,"<>",oppositeSide
 
             
             
             # get the values
             oppositeValD[oppositeSide]={}
-            print i,"<>", oppositeSide
+            # print i,"<>", oppositeSide
             
             
             for attr,fact in attrTableD.iteritems():
@@ -421,13 +421,13 @@ def tkMirror(*args, **kwargs):
 
                 # upperBrow case ---------------------------------
                 if i.split(":",1)[-1] in upperBrowD.keys():
-                    print "upperBrow case"
+                    # print "upperBrow case"
                     curVal = cmds.getAttr(i+"."+attr)
                     oppositeValD[oppositeSide][attr]=fact*curVal
                 
                 # realSym case  ---------------------------------
                 elif  i.split(":",1)[-1] in realSymD.keys():
-                    print "realSym case"
+                    # print "realSym case"
 
                     curVal = cmds.getAttr(i+"."+attr)
                     oppositeValD[oppositeSide][attr]=curVal
@@ -437,7 +437,7 @@ def tkMirror(*args, **kwargs):
 
         # set attr
         for obj,attrD in oppositeValD.iteritems():
-            print "->",obj
+            # print "->",obj
             for attr,val in attrD.iteritems():
                 # print "   ",attr,val
                 if cmds.objExists(obj+"."+attr):
@@ -859,7 +859,8 @@ def getShotName(*args, **kwargs):
 
     print "getShotName()"
     # get shot name
-    currentSceneP = cmds.file(q=1, l=1)[0]
+    #currentSceneP = cmds.file(q=1, l=1)[0]
+    currentSceneP = pymel.core.sceneName()
     currentScene = os.path.basename(currentSceneP)
     shotName = currentScene.rsplit("_", 1)[0]
     print "shotName=", shotName
@@ -1857,7 +1858,8 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig", "grp_geo"],
         print "checkAssetStructure()"
         extendedL = expectedL[:]
         # switch expeted list depending on the name of the scene
-        sceneName = os.path.basename(cmds.file(q=1, l=1)[0])
+        # sceneName = os.path.basename(cmds.file(q=1, l=1)[0])
+        sceneName = os.path.basename(pymel.core.sceneName() )
         if sceneName[:3] in ["set",]:
             print "it's a set"
             extendedL.extend(additionalL)
@@ -3977,7 +3979,8 @@ def chr_fix_mirror_parameters(*args, **kwargs):
 
     for i in outFalseL:
         if cmds.objExists( i + theAttr):
-            cmds.setAttr( i + theAttr,False)
+            print "i+theAttr=", i+theAttr
+            cmds.setAttr( i + theAttr, False)
             print i,"set to FALSE"
 
     return [True,debugL]

@@ -227,7 +227,7 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
     toReturn =True
     debugS =""
     if mc.ls("|asset"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset" or remove == True or mainFilePathElem[-5] == "asset":
             privateMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
@@ -255,7 +255,7 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
     shading_cam_filename =  os.path.join("$ZOMB_ASSET_PATH", "cam",cameraName,cameraName+fileType)
     
     if remove == False:
-        if "cam_shading_" in  str(mc.file(query=True, list=True, reference = True)):
+        if "cam_shading_" in  str(mc.file(query=True, reference=True)):
             print "#### info 'referenceShadingCamera': a camera 'cam_shading_*' is already referenced in this scene, operation canceled"
         else:
             mc.currentTime(1)
@@ -289,7 +289,7 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
 
     else:
 
-        if "cam_shading_" in  str(mc.file(query=True, list=True, reference = True)):
+        if "cam_shading_" in  str(mc.file(query=True, reference=True)):
             mc.currentTime(1)
             removedCameraI = 0
             if GUI == True:
@@ -297,7 +297,7 @@ def referenceShadingCamera(cameraName = "cam_shading_default", fileType=".ma", r
                     if "cam_shading_" in  str(mc.modelPanel(eachPanel, q=True, camera=True)):
                         mc.modelPanel(eachPanel, edit=True, camera='persp')
                         mc.refresh()
-            for each in  mc.file(query=True, list=True, reference = True):
+            for each in  mc.file(query=True, reference=True):
                 if "cam_shading_" in each:
                     mc.file(each, removeReference = True)
                     print "#### info 'referenceShadingCamera': remove camera '"+each+""
@@ -340,7 +340,7 @@ def conformTexturePath(inVerbose = True, inConform = False, inCopy =False, inAut
     if inVerbose == True: print "#### info: runing shading.conformTexturePath( inVerbose = {}, inConform = {}, inCopy = {}, inAuthorizedFormat = {} , returnMapPath = {})".format(inVerbose , inConform , inCopy, inAuthorizedFormat, returnMapPath)
 
     if mc.ls("|asset"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "asset":
             privateMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))
@@ -817,7 +817,7 @@ def generateJpgForPreview( fileNodeList = "all", verbose = True, preShadNodeType
     print ""
     print "#### {:>7}: runing shading.lowResJpgForPreview( fileNodeList = {}, verbose = {}, preShadNodeType = {}, updateOnly={} )".format("Info", fileNodeList, verbose, preShadNodeType, updateOnly)
     if mc.ls("|asset"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "asset":
             privateMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
@@ -997,7 +997,7 @@ def generateTxForRender(fileNodeList = "selection", verbose = True, updateOnly=F
     print ""
     print "#### {:>7}: runing shading.mipMapForRender( fileNodeList = {}, verbose = {}, updateOnly={})".format("Info", fileNodeList, verbose, updateOnly)
     if mc.ls("|asset"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "asset":
             privateMapdir = miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture")
@@ -1371,7 +1371,7 @@ def dmnToonMode (mode = ""):
 
     dmnToonNodeList = mc.ls( type ="dmnToon")
 
-    mainFilePath = mc.file(q=True, list = True)[0]
+    mainFilePath = pm.sceneName()
     mainFilePathElem = mainFilePath.split("/")
     assetType =  mainFilePathElem [-3]
 
@@ -1512,7 +1512,7 @@ def dmnToonMode (mode = ""):
 def importLightRig(lgtRig = "lgtRig_outdoor"):
 
     if mc.ls("|asset"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         assetName = mainFilePathElem[-2]
         assetType = mainFilePathElem[-3]

@@ -1743,7 +1743,7 @@ def groupEachMesh():
 def assGeoExport(objectL=[], gui=True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="assGeoExport")
     initSelL=cmds.ls(selection=True, l=True)
-    mainFilePath = cmds.file(q=True, list = True)[0]
+    mainFilePath = pm.sceneName()
     mainFile = mainFilePath.split("/")[-1]
     geometryDir = miscUtils.pathJoin(mainFilePath.replace("/"+mainFile,""),"geometry")
     if not os.path.isdir(geometryDir):
