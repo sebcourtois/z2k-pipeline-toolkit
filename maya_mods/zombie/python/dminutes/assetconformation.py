@@ -82,7 +82,7 @@ def createSubdivSets(GUI = True, defaultSetSubdiv = "set_subdiv_init"):
     assetType = ""
 
     if mc.ls("|asset"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         assetType = mainFilePathElem[-3]
 
@@ -381,7 +381,7 @@ def setShadingMask(selectFailingNodes = False, gui = True):
     lockedNodes = []
 
     if mc.ls("|asset"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] != "asset" and mainFilePathElem[-5] != "asset":
                 txt= "You are not working in an 'asset' structure directory"
@@ -508,7 +508,7 @@ def setShadingMask(selectFailingNodes = False, gui = True):
 class Asset_File_Conformer:
     def __init__(self, gui = True):
         if mc.ls("|asset"):        
-            self.mainFilePath = mc.file(q=True, list = True)[0]
+            self.mainFilePath = pm.sceneName()
             self.mainFilePathElem = self.mainFilePath.split("/")
             self.gui=gui
             self.log = miscUtils.LogBuilder(gui=gui, logL = [], resultB = True)
@@ -1355,7 +1355,7 @@ def importGrpLgt(lgtRig = "lgtRig_character", gui=True, hideLgt = False):
     log = miscUtils.LogBuilder(gui=gui, funcName ="importGrpLgt")
 
     if mc.ls("|asset"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         assetName = mainFilePathElem[-2]
         assetType = mainFilePathElem[-3]
@@ -1447,7 +1447,7 @@ def assetGrpClean( clean = True, GUI = True):
         if GUI == True : print logMessage
         return dict(returnB = returnB, logL = logL)
     else:
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         assetType = mainFilePathElem[-3]
 

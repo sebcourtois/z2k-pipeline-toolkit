@@ -28,7 +28,7 @@ def createFxBatchRender(arnoldLic="on"):
         raise ValueError("#### Error: DAVOS_USER environement variable is not defined, please log to davos")
 
 
-    workingFile = mc.file(q=True, list=True)[0]
+    workingFile = pm.sceneName()
     workingDir = os.path.dirname(workingFile)
     renderBatchHelp_src = miscUtils.normPath(os.path.join(os.environ["ZOMB_TOOL_PATH"], "z2k-pipeline-toolkit", "maya_mods", "zombie", "python", "dminutes", "renderBatch_help.txt"))
     renderBatchHelp_trg = miscUtils.normPath(os.path.join(workingDir, "renderBatch_help.txt"))

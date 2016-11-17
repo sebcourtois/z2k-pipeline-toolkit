@@ -268,7 +268,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 1)
 
 
-    mainFilePath = mc.file(q=True, list=True)[0]
+    mainFilePath = pm.sceneName()
     mainFilePathElem = mainFilePath.split("/")
     if mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "shot":
         fileRadical = os.path.basename(mainFilePath).split("-")[0]
@@ -297,6 +297,13 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 8)
         miscUtils.setAttrC("defaultArnoldFilter.width",4)
         miscUtils.setAttrC("defaultArnoldFilter.aiTranslator","blackman_harris",type="string")
+
+    if renderMode == 'fx3d':
+        miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 4)
+        miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples", 2)
+        miscUtils.setAttrC("defaultArnoldFilter.width", 4)
+        miscUtils.setAttrC("defaultArnoldFilter.aiTranslator", "blackman_harris", type="string")
+
 
         resolution = 1998
     elif renderMode == 'finalLayout':

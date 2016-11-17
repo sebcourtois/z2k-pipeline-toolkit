@@ -3,6 +3,7 @@ import os
 import re
 
 import maya.cmds as mc
+import pymel.core as pm
 
 from dminutes import miscUtils
 reload(miscUtils)
@@ -45,7 +46,7 @@ def importGrpLgt(assetL=[], lgtRig = "lgtRig_character", gui=True, hideLgt = Fal
     log = miscUtils.LogBuilder(gui=gui, funcName ="importGrpLgt")
 
     if mc.ls("|shot"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         assetFileType = mainFilePathElem[-1].split("-")[0].split("_")[-1]
         if  mainFilePathElem[-5] == "shot"or mainFilePathElem[-6] == "shot":
