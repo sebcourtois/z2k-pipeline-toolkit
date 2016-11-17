@@ -90,7 +90,7 @@ class Create_Third_FacialUI(object):
         return theColor
 
     def replaceConnectAttr(self,theObj, attrHolder, theAttr):
-        # print "replaceConnectAttr()"
+        print "replaceConnectAttr()",theObj,attrHolder,theAttr
         
         # delete oldAttr if found
         if  cmds.objExists(attrHolder+"."+theAttr):
@@ -204,7 +204,7 @@ class Create_Third_FacialUI(object):
 
 
     def cleaningBeaver (self,*args, **kwargs):
-        print "connectToDisplLevel()"
+        print "cleaningBeaver()"
         # visholder connect
         jpZ.chr_applyVisLevel(objL=[self.CADRE_NAME,self.MOUTH_HOLDER,self.BROWS_HOLDER,self.EYES_HOLDER],curLvl=self.THEVISLVL,GUI=False,)
         # add ctrs to ctr set
@@ -214,6 +214,8 @@ class Create_Third_FacialUI(object):
 
         # parent the rigFolder inside the char
         cmds.parent(self.UI_DADDY,self.THEPARENTFOLDER)
+
+        print "end cleaning"
 
     def generate(self,*args, **kwargs):
         print 'generate()'
@@ -302,8 +304,11 @@ class Create_Third_FacialUI(object):
             self.cleaningBeaver()
 
             # end
-        return True,debug
+        return True, debug
 
 # launch
 # Ctf= Create_Third_FacialUI()
 # Ctf.generate()
+
+# thirdC= Create_Third_FacialUI()
+# result,debug = thirdC.generate()
