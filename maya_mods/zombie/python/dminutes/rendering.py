@@ -298,6 +298,13 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         miscUtils.setAttrC("defaultArnoldFilter.width",4)
         miscUtils.setAttrC("defaultArnoldFilter.aiTranslator","blackman_harris",type="string")
 
+    if renderMode == 'fx3d':
+        miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 4)
+        miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples", 2)
+        miscUtils.setAttrC("defaultArnoldFilter.width", 4)
+        miscUtils.setAttrC("defaultArnoldFilter.aiTranslator", "blackman_harris", type="string")
+
+
         resolution = 1998
     elif renderMode == 'finalLayout':
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 2)
