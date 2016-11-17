@@ -35,7 +35,7 @@ from davos.core.damtypes import DamShot
 
 import maya.cmds as cmds
 from functools import partial
-
+import pymel
 
 class infoSetExp(object):
     def __init__(self, *args, **kwargs):

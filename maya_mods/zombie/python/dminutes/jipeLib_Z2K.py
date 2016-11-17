@@ -27,7 +27,7 @@ from dminutes import assetconformation
 import tkRig as tk
 reload (tk)
 
-
+import pymel
 
 
 
