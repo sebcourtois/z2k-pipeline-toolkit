@@ -84,6 +84,12 @@ class dataFile():
             if "finalLayoutTemplate.nk" in fileNameS:
                 fileNameS=  nuke.root()["argv0"].getValue()
 
+        from zomblib import damutils
+        from davos.core.damproject import DamProject
+        proj = DamProject("zombillenium")
+
+
+
         self.fileNameS=normPath(fileNameS)
         self.gui = gui
 
@@ -136,6 +142,11 @@ class dataFile():
                 elif "precomp-v" in fileDataL[6]:
                     self.ver = fileDataL[6].split("precomp-v")[-1].split(".")[0]
                     self.increment = fileDataL[6].split("precomp-v")[-1].split(".")[1]
+            damShot = proj.getShot(self.shot)
+            sgShot = damShot.getSgInfo()
+            duration = damutils.getShotDuration(sgShot)
+            self.timeIn = 101
+            self.timeOut = self.timeIn + (duration-1)
         else:
             txt = "is not a file: '{}'".format(self.fileNameS)
             self.log.printL("e", txt)
@@ -152,6 +163,8 @@ class dataFile():
         self.log.printL("i","seq: '{}'".format(self.seq))
         self.log.printL("i","shot: '{}'".format(self.shot))
         self.log.printL("i","depDir: '{}'".format(self.depDir))
+        self.log.printL("i","in: '{}'".format(self.timeIn))
+        self.log.printL("i","out: '{}'".format(self.timeOut))
 
         if "render-v"in self.depDirSub:
             self.log.printL("i","passName: '{}'".format(self.passName))
@@ -166,10 +179,12 @@ class dataFile():
 
     def initNukeEnvVar(self):
         if self.seq and self.shot and self.user and self.depDir:
+
             departementS =self.depDir
             outputDirS = os.environ["ZOMB_OUTPUT_PATH"]+"/"+self.seq+"/"+self.shot
             shotDirS = os.environ["ZOMB_SHOT_PATH"]+"/"+self.seq+"/"+self.shot
             #privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].split("/$DAVOS_USER/")[0]
+
             try:
                 privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot
             except:
@@ -188,6 +203,8 @@ class dataFile():
             self.log.printL("i","PRIV_DIR: "+privateDirS)
             self.log.printL("i","MISC_DIR: "+miscDirS)
             self.log.printL("i","STEP: "+self.stepS)
+            self.log.printL("i","TIMEIN: '{}'".format(self.timeIn))
+            self.log.printL("i","TIMEOUT: '{}'".format(self.timeOut))
             os.environ["SEQ"] = self.seq
             os.environ["VER"] = self.ver
             os.environ["INC"] = self.increment
@@ -199,6 +216,15 @@ class dataFile():
             os.environ["PRIV_DIR"] = privateDirS
             os.environ["MISC_DIR"] = miscDirS
             os.environ["STEP"] = self.stepS
+            os.environ["TIMEIN"] = str(self.timeIn)
+            os.environ["TIMEOUT"] = str(self.timeOut)
+
+            nuke.Root()['first_frame'].setValue(self.timeIn)
+            nuke.Root()['last_frame'].setValue(self.timeOut)
+
+            self.log.printL("i","setting 'first_frame={}', 'first_frame={}' : ".format(self.timeIn,self.timeOut))
+
+
 
         else:
             txt = "one of the variable 'seq', 'shot', 'user' or 'dep' is undefined, could not set nuke proj environment var".format(self.fileNameS)
@@ -215,6 +241,7 @@ def initNukeShot(fileNameS= ""):
         df.initNukeEnvVar()
     except:
         pass
+
 
 
 
@@ -956,6 +983,13 @@ def inportOutTemplate(template = "compo"):
     elif template == "stereo":
         nuke.scriptReadFile(os.environ["ZOMB_TOOL_PATH"]+"/template/nuke/stereoTemplate.nk")
 
+    for each in nuke.allNodes('Read'):
+        eachNameS = each['name'].value()
+        if 'read_exr' in eachNameS or 'read_comp'in eachNameS:
+            each['first'].setValue(int(os.environ["TIMEIN"]))
+            each['last'].setValue(int(os.environ["TIMEOUT"]))
+            each['origfirst'].setValue(int(os.environ["TIMEIN"]))
+            each['origlast'].setValue(int(os.environ["TIMEOUT"]))
 
 
 
