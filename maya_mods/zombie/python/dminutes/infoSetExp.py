@@ -116,7 +116,8 @@ class infoSetExp(object):
             f.write(str(self.constructDico()))
 
         # get shot version
-        scnFilename = os.path.basename(cmds.file(q=1, l=1)[0])
+        # scnFilename = os.path.basename(cmds.file(q=1, l=1)[0])
+        scnFilename = pymel.core.sceneName() 
         shotVersion = scnFilename.split("-", 1)[1][:4]
         fromTxt = scnFilename.split(".", 1)[0].rsplit("_", 1)[-1]
         if shotVersion[0]  in ["v"] and not len(shotVersion)in [4]:

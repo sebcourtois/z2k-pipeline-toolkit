@@ -859,7 +859,8 @@ def getShotName(*args, **kwargs):
 
     print "getShotName()"
     # get shot name
-    currentSceneP = cmds.file(q=1, l=1)[0]
+    #currentSceneP = cmds.file(q=1, l=1)[0]
+    currentSceneP = pymel.core.sceneName()
     currentScene = os.path.basename(currentSceneP)
     shotName = currentScene.rsplit("_", 1)[0]
     print "shotName=", shotName
@@ -1857,7 +1858,8 @@ def checkAssetStructure(assetgpN="asset", expectedL=["grp_rig", "grp_geo"],
         print "checkAssetStructure()"
         extendedL = expectedL[:]
         # switch expeted list depending on the name of the scene
-        sceneName = os.path.basename(cmds.file(q=1, l=1)[0])
+        # sceneName = os.path.basename(cmds.file(q=1, l=1)[0])
+        sceneName = os.path.basename(pymel.core.sceneName() )
         if sceneName[:3] in ["set",]:
             print "it's a set"
             extendedL.extend(additionalL)
