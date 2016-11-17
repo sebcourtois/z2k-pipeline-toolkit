@@ -361,7 +361,7 @@ def exportCaches(**kwargs):
     if not osp.exists(sCacheDirPath):
         os.makedirs(sCacheDirPath)
 
-    scnFrmRange = (int(pm.playbackOptions(q=True, animationStartTime=True) - 1),
+    scnFrmRange = (int(pm.playbackOptions(q=True, animationStartTime=True)),
                    int(pm.playbackOptions(q=True, animationEndTime=True)))
 
     if not frameRange:
