@@ -84,9 +84,10 @@ class dataFile():
             if "finalLayoutTemplate.nk" in fileNameS:
                 fileNameS=  nuke.root()["argv0"].getValue()
 
-        from zomblib import damutils
-        from davos.core.damproject import DamProject
-        proj = DamProject("zombillenium")
+        if nuke.GUI:
+            from zomblib import damutils
+            from davos.core.damproject import DamProject
+            proj = DamProject("zombillenium")
 
 
 
@@ -142,11 +143,15 @@ class dataFile():
                 elif "precomp-v" in fileDataL[6]:
                     self.ver = fileDataL[6].split("precomp-v")[-1].split(".")[0]
                     self.increment = fileDataL[6].split("precomp-v")[-1].split(".")[1]
-            damShot = proj.getShot(self.shot)
-            sgShot = damShot.getSgInfo()
-            duration = damutils.getShotDuration(sgShot)
-            self.timeIn = 101
-            self.timeOut = self.timeIn + (duration-1)
+            if nuke.GUI:
+                damShot = proj.getShot(self.shot)
+                sgShot = damShot.getSgInfo()
+                duration = damutils.getShotDuration(sgShot)
+                self.timeIn = 101
+                self.timeOut = self.timeIn + (duration-1)
+            else:
+                self.timeIn = 0
+                self.timeOut = 0
         else:
             txt = "is not a file: '{}'".format(self.fileNameS)
             self.log.printL("e", txt)
