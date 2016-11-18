@@ -173,11 +173,8 @@ class dataFile():
                 elif "precomp-v" in fileDataL[6]:
                     self.ver = fileDataL[6].split("precomp-v")[-1].split(".")[0]
                     self.increment = fileDataL[6].split("precomp-v")[-1].split(".")[1]
-            damShot = proj.getShot(self.shot)
-            sgShot = damShot.getSgInfo()
-            duration = damutils.getShotDuration(sgShot)
             self.timeIn = 101
-            self.timeOut = self.timeIn + (duration-1)
+            self.timeOut = 101
         else:
             txt = "is not a file: '{}'".format(self.fileNameS)
             self.log.printL("e", txt)
