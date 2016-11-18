@@ -289,6 +289,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     miscUtils.setAttrC("defaultArnoldRenderOptions.skipLicenseCheck", 1)
     miscUtils.setAttrC("defaultArnoldRenderOptions.log_verbosity", 1)#warnig + info
     miscUtils.setAttrC("defaultArnoldRenderOptions.motion_blur_enable", 1)
+
     if not mc.getAttr("defaultArnoldRenderOptions.motion_frames") == 0.25 :
         pass
     else:
@@ -299,6 +300,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 8)
         miscUtils.setAttrC("defaultArnoldFilter.width",4)
         miscUtils.setAttrC("defaultArnoldFilter.aiTranslator","blackman_harris",type="string")
+        resolution = 1998
 
     if renderMode == 'fx3d':
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 4)
@@ -306,8 +308,9 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         miscUtils.setAttrC("defaultArnoldFilter.width", 4)
         miscUtils.setAttrC("defaultArnoldFilter.aiTranslator", "blackman_harris", type="string")
         miscUtils.setAttrC("defaultArnoldRenderOptions.motion_frames", 0.25)
-
         resolution = 1998
+        pm.setAttr('defaultRenderGlobals.imageFilePrefix', '<Scene>_<RenderLayer>', type='string')
+
     elif renderMode == 'finalLayout':
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 2)
         miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples", 2)
