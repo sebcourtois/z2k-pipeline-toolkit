@@ -121,7 +121,7 @@ class dataFile():
                 fileNameS=  nuke.root()["argv0"].getValue()
 
 
-        self.fileNameS=normPath(fileNameS)
+        self.fileNameS=nkU.normPath(fileNameS)
         self.gui = gui
 
         self.location = ""
