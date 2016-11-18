@@ -84,11 +84,11 @@ class dataFile():
             if "finalLayoutTemplate.nk" in fileNameS:
                 fileNameS=  nuke.root()["argv0"].getValue()
 
-        if nuke.GUI:
-            from zomblib import damutils
-            from davos.core.damproject import DamProject
-            proj = DamProject("zombillenium")
-
+        #if nuke.GUI:
+        from zomblib import damutils
+        from davos.core.damproject import DamProject
+        proj = DamProject("zombillenium", empty=(not nuke.GUI))
+        proj.loadEnviron()
 
 
         self.fileNameS=normPath(fileNameS)
@@ -190,11 +190,8 @@ class dataFile():
             shotDirS = os.environ["ZOMB_SHOT_PATH"]+"/"+self.seq+"/"+self.shot
             #privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].split("/$DAVOS_USER/")[0]
 
-            try:
-                privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot
-            except Exception,err:
-                privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot
-                print err
+            privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot
+    
 
             miscDirS = os.environ["ZOMB_MISC_PATH"]
             self.log.printL("i","initialising environnement variables")
