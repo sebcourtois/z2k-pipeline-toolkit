@@ -956,22 +956,26 @@ def isStereo():
 def createWriteDir():
     initNukeShot()
     myFile = nuke.filename(nuke.thisNode())
+    print 'myFile',myFile
     myDir = os.path.dirname( myFile )
+    print 'myDir', myDir
     osdir = nuke.callbacks.filenameFilter( myDir )
+    print 'osdir', osdir
 
-    if "%V" in osdir:
-        try:                        
-            os.makedirs( osdir.replace("%V","left") )        
-            os.makedirs( osdir.replace("%V","right") )
-        except OSError, e:
-            if e.errno != errno.EEXIST:
-                raise
-    else:
-        try:
-            os.makedirs( osdir )
-        except OSError, e:
-            if e.errno != errno.EEXIST:
-                raise
+    if osdir:
+        if "%V" in osdir:
+            try:                        
+                os.makedirs( osdir.replace("%V","left") )        
+                os.makedirs( osdir.replace("%V","right") )
+            except OSError, e:
+                if e.errno != errno.EEXIST:
+                    raise
+        else:
+            try:
+                os.makedirs( osdir )
+            except OSError, e:
+                if e.errno != errno.EEXIST:
+                    raise
 
 
 
