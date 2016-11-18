@@ -955,9 +955,9 @@ def isStereo():
 
 def createWriteDir():
     initNukeShot()
-    file = nuke.filename(nuke.thisNode())
-    dir = os.path.dirname( file )
-    osdir = nuke.callbacks.filenameFilter( dir )
+    myFile = nuke.filename(nuke.thisNode())
+    myDir = os.path.dirname( myFile )
+    osdir = nuke.callbacks.filenameFilter( myDir )
 
     if "%V" in osdir:
         try:                        
