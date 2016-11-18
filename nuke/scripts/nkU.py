@@ -192,8 +192,9 @@ class dataFile():
 
             try:
                 privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot
-            except:
-                privateDirS = ""
+            except Exception,err:
+                privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot
+                print err
 
             miscDirS = os.environ["ZOMB_MISC_PATH"]
             self.log.printL("i","initialising environnement variables")
