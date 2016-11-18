@@ -228,7 +228,7 @@ def createNukeBatch(gui=True):
     renderBatch_obj.write("set argv0="+renderDir+"\n")
 
     #finalCommand = r'"C:\Python27\python.exe" "C:\users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\setup_env_tools.py" launch %nuke% -x %nkscript% %argva% %argv0%'
-    finalCommand = r'"%nuke% -x %nkscript% %argva% %argv0%'
+    finalCommand = r'%nuke% -x %nkscript% %argva% %argv0%'
     renderBatch_obj.write(finalCommand+"\n")
     renderBatch_obj.write("\n")
     #renderBatch_obj.write("pause\n")
