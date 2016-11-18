@@ -113,8 +113,8 @@ def compileLayerQuickTime(renderDirS="", passNameL= ["lay_finalLayout_00"], aovN
 
 
 class dataFile():
-    def __init__(self, fileNameS= "", gui = True):
-        self.log = LogBuilder(gui=gui, logL = [])
+    def __init__(self, fileNameS= "", gui = False):
+        self.log = nkU.LogBuilder(gui=gui, logL = [])
         if not fileNameS:
             fileNameS = nuke.root().knob('name').value()
             if "finalLayoutTemplate.nk" in fileNameS:
