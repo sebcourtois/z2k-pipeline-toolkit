@@ -84,11 +84,11 @@ class dataFile():
             if "finalLayoutTemplate.nk" in fileNameS:
                 fileNameS=  nuke.root()["argv0"].getValue()
 
-        #if nuke.GUI:
-        from zomblib import damutils
-        from davos.core.damproject import DamProject
-        proj = DamProject("zombillenium", empty=(not nuke.GUI))
-        proj.loadEnviron()
+        if nuke.GUI:
+			from zomblib import damutils
+			from davos.core.damproject import DamProject
+			proj = DamProject("zombillenium", empty=(not nuke.GUI))
+			proj.loadEnviron()
 
 
         self.fileNameS=normPath(fileNameS)
