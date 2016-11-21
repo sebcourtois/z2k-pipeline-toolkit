@@ -190,7 +190,7 @@ class dataFile():
             shotDirS = os.environ["ZOMB_SHOT_PATH"]+"/"+self.seq+"/"+self.shot
 
             #privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot #PRIV_ZOMB_SHOT_PATH introuvable en batch
-            privateDirS = normPath(os.environ["ZOMB_PRIVATE_LOC"])+"/private/"+os.environ["USER"]+"/zomb/shot/"+os.environ["SEQ"]+"/"+os.environ["SHOT"]
+            privateDirS = normPath(os.environ["ZOMB_PRIVATE_LOC"])+"/private/"+self.user+"/zomb/shot/"+self.seq+"/"+self.shot
     
 
             miscDirS = os.environ["ZOMB_MISC_PATH"]
