@@ -214,6 +214,8 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
 
     if renderMode == 'finalLayout':
         setRenderCamera(leftCam = False, rightCam = False)
+    elif renderMode == 'fx3d':
+        setRenderCamera(leftCam=False, rightCam=False)
     else:
         setRenderCamera(leftCam=True, rightCam=True)  #temprairement off on fait pour le moment encore les rendus avec la defaut cam
         #setRenderCamera(leftCam = False, rightCam = False)
@@ -287,6 +289,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     miscUtils.setAttrC("defaultArnoldRenderOptions.skipLicenseCheck", 1)
     miscUtils.setAttrC("defaultArnoldRenderOptions.log_verbosity", 1)#warnig + info
     miscUtils.setAttrC("defaultArnoldRenderOptions.motion_blur_enable", 1)
+
     if not mc.getAttr("defaultArnoldRenderOptions.motion_frames") == 0.25 :
         pass
     else:
@@ -297,15 +300,17 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 8)
         miscUtils.setAttrC("defaultArnoldFilter.width",4)
         miscUtils.setAttrC("defaultArnoldFilter.aiTranslator","blackman_harris",type="string")
+        resolution = 1998
 
     if renderMode == 'fx3d':
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 4)
         miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples", 2)
         miscUtils.setAttrC("defaultArnoldFilter.width", 4)
         miscUtils.setAttrC("defaultArnoldFilter.aiTranslator", "blackman_harris", type="string")
-
-
+        miscUtils.setAttrC("defaultArnoldRenderOptions.motion_frames", 0.25)
         resolution = 1998
+        pm.setAttr('defaultRenderGlobals.imageFilePrefix', '<Scene>_<RenderLayer>', type='string')
+
     elif renderMode == 'finalLayout':
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 2)
         miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples", 2)
@@ -672,6 +677,9 @@ def createAovs(renderMode="render"):
         if renderMode == "finalLayout":
             aovDmnNameL = []
             aovCustomNameL = ["aiAOV_arlequin"]
+        elif renderMode == "fx3d":
+            aovDmnNameL = ["dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05"]
+            aovCustomNameL = []
         else:
             aovDmnNameL = ["dmn_ambient", "dmn_diffuse", "dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon", "dmn_mask_transp", "dmn_lgtMask01", "dmn_lgtMask02"]
             aovCustomNameL = ["aiAOV_depth_aa", "aiAOV_Z", "aiAOV_P", "aiAOV_Pref", "aiAOV_crypto_object", "aiAOV_uvs"]

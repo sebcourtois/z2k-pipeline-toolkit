@@ -40,6 +40,26 @@ def orientAssetLightAsCam(shotCamL=[],gui=True):
     return dict(resultB=log.resultB, logL=log.logL)
 
 
+def importFxLights(lgtRig='lgt_rig_fx.ma'):
+
+    if mc.ls("|shot"):
+        mainFilePath = pm.sceneName()
+        mainFilePathElem = mainFilePath.split("/")
+        assetFileType = mainFilePathElem[-1].split("-")[0].split("_")[-1]
+        if mainFilePathElem[-5] == "shot" or mainFilePathElem[-6] == "shot":
+            refL = pm.ls(type='directionalLight') + pm.ls(type='aiSkyDomeLight')
+            if not refL == None:
+                if not 'lgt_rig_fx' in str(refL):
+                    pm.createReference(os.environ['ZOMB_MISC_PATH'] + '/shading/lightRigs/' + lgtRig, namespace=lgtRig.split('.')[0])
+                    pm.select('*lgt_rig_fx:*')
+                    pm.group(n='lgt_fx_lights')
+        else:
+            txt = "You are not working in a 'shot' structure directory"
+            raise ValueError(txt)
+    else :
+        raise ValueError(txt)
+
+
 #---WIP
 def importGrpLgt(assetL=[], lgtRig = "lgtRig_character", gui=True, hideLgt = False):
 
