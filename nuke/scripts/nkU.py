@@ -188,9 +188,9 @@ class dataFile():
             departementS =self.depDir
             outputDirS = os.environ["ZOMB_OUTPUT_PATH"]+"/"+self.seq+"/"+self.shot
             shotDirS = os.environ["ZOMB_SHOT_PATH"]+"/"+self.seq+"/"+self.shot
-            #privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].split("/$DAVOS_USER/")[0]
 
-            privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot
+            #privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot #PRIV_ZOMB_SHOT_PATH introuvable en batch
+            privateDirS = normPath(os.environ["ZOMB_PRIVATE_LOC"])+"/private/"+os.environ["USER"]+"/zomb/shot/"+os.environ["SEQ"]+"/"+os.environ["SHOT"]
     
 
             miscDirS = os.environ["ZOMB_MISC_PATH"]
@@ -238,12 +238,11 @@ class dataFile():
 
 
 def initNukeShot(fileNameS= ""):
-    try:
-        df=dataFile(fileNameS)
-        df.printData()
-        df.initNukeEnvVar()
-    except:
-        pass
+    print "runing: 'initNukeShot()'"
+    df=dataFile(fileNameS)
+    df.printData()
+    df.initNukeEnvVar()
+
 
 
 
