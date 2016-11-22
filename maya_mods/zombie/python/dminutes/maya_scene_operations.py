@@ -64,7 +64,7 @@ def withErrorDialog(func):
             raise
         except Exception as e:
             pc.confirmDialog(title='SORRY !',
-                             message=e.message,
+                             message=toStr(e.args[-1]),
                              button=["OK"],
                              defaultButton="OK",
                              cancelButton="OK",
