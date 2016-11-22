@@ -512,8 +512,6 @@ def scanTextureFiles(scnInfos, depConfDct=None):
                     privFile = rcFile.getPrivateFile(weak=True)
                     sPrivFileList.append(normCase(privFile.absPath()))
 
-                scanResults.append(resultDct); continue
-
             if bInPack:
                 sTexDirPath = osp.dirname(sTexDirPath)
 

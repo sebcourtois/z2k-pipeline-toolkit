@@ -72,8 +72,8 @@ def exportFromAssets(selected=False, namespaces=None, outputDir=""):
     mc.currentTime(101)
     mc.refresh()
     try:
-        sFilePath = pm.exportSelected(pathJoin(sOutDirPath, "export_gpuCache_tmp.mb"),
-                                      type="mayaBinary",
+        sFilePath = pm.exportSelected(pathJoin(sOutDirPath, "export_gpuCache_tmp.ma"),
+                                      type="mayaAscii",
                                       preserveReferences=False,
                                       shader=True,
                                       channels=True,

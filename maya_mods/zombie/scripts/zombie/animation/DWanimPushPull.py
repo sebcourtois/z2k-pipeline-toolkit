@@ -20,6 +20,7 @@ from shiboken import wrapInstance
 from pytd.util.fsutils import pathJoin
 from davos_maya.tool.general import infosFromScene, iterGeoGroups
 from dminutes import gpucaching
+reload(gpucaching)
 from pytaya.core import system as myasys
 from dminutes import miscUtils
 
@@ -48,7 +49,7 @@ ATTR_END_TIME="endTime"
 #PATH_CACHES="P:/ZOMB/SPLIT_ANIM/TESTS"
 # PROD
 #PATH_CACHES="P:/AnimSplit"
-PATH_CACHES=os.path.expandvars(miscUtils.normPath("$ZOMB_PRIVATE_LOC\private\AnimSplit"))
+PATH_CACHES=miscUtils.normPath(os.path.expandvars("$ZOMB_PRIVATE_LOC/private/AnimSplit"))
 
 
 class DWanimPushPull(QtGui.QWidget):
@@ -130,20 +131,20 @@ class DWanimPushPull(QtGui.QWidget):
 			return
 
 		# Get start startTime and endTime
-		if not self.isMasterShot:
-			self.startTime = 101
-			if not cmds.attributeQuery(ATTR_START_TIME, node="shot", exists=True):
-				cmds.error("ERROR: missing shot attribute: " + ATTR_START_TIME)
-			else:
-				self.startTime = cmds.getAttr("shot."+ ATTR_START_TIME)
+		#if not self.isMasterShot:
+		self.startTime = 101
+		if not cmds.attributeQuery(ATTR_START_TIME, node="shot", exists=True):
+			cmds.error("ERROR: missing shot attribute: " + ATTR_START_TIME)
+		else:
+			self.startTime = cmds.getAttr("shot."+ ATTR_START_TIME)
 
-			self.endTime = 102
-			if not cmds.attributeQuery(ATTR_END_TIME, node="shot", exists=True):
-				cmds.error("ERROR: missing shot attribute: " + ATTR_END_TIME)
-			else:
-				self.endTime = cmds.getAttr("shot."+ ATTR_END_TIME)
+		self.endTime = 102
+		if not cmds.attributeQuery(ATTR_END_TIME, node="shot", exists=True):
+			cmds.error("ERROR: missing shot attribute: " + ATTR_END_TIME)
+		else:
+			self.endTime = cmds.getAttr("shot."+ ATTR_END_TIME)
 
-			cmds.playbackOptions(animationStartTime=self.startTime, animationEndTime=self.endTime) # set start end timeline
+		cmds.playbackOptions(animationStartTime=self.startTime, animationEndTime=self.endTime) # set start end timeline
 
 		# Audio (Sebastien s'occupe de l'audio !)
 		##if not self.isMasterShot:
@@ -299,7 +300,7 @@ class DWanimPushPull(QtGui.QWidget):
 			print("\tfilterListAssets = " + str(filterListAssets))
 			if filterListAssets:
 				self.exportAtomFile(filterListAssets, atomPath) # export all assets in one ATOM file.
-				cmds.waitCursor(state=False)
+				resetCursor()
 				viewMessage("All ATOM's animation files exported")
 			else:
 				resetCursor()
@@ -357,12 +358,11 @@ class DWanimPushPull(QtGui.QWidget):
 
 	def exportGpuCache(self, listAssets, gpuPath): # export assets as GPU caches in a subprocess
 		print("exportGpuCache: listAssets = " + str(listAssets) + " gpuPath = " + str(gpuPath))
-		##cmds.select(listAssets, replace=True)
-		##gpucaching.exportFromAssets(selected=True, namespaces=None, outputDir=gpuPath) # make a subprocess to export the gpu caches of assets
-		# Get Camera
-		cameras = cmds.ls("*:cam_shot_default*", cameras=1)
+		cameras = cmds.ls("*:cam_shot_default*", cameras=1) # Get Camera
 		if len(cameras) == 1:
-			self.exportFromAssets(listAssets = listAssets, outputDir=gpuPath, shotCamera = cameras[0]) # make a subprocess to export the gpu caches of assets
+			namespaces = tuple(s.rsplit(":", 1)[0] for s in listAssets)
+			gpucaching.exportFromAssets(selected=False, namespaces=namespaces, outputDir=gpuPath)
+			#self.exportFromAssets(listAssets = listAssets, outputDir=gpuPath, shotCamera = cameras[0]) # make a subprocess to export the gpu caches of assets
 		else:
 			print("ERROR: exportGpuCache: cameras = " + str(cameras))
 
@@ -405,17 +405,20 @@ class DWanimPushPull(QtGui.QWidget):
 							  SDK=False,
 							  constraints=False, # do we need True ?
 							  animLayers=True,
-							  statics=True,
-							  baked=True,
+							  statics=False,
+							  baked=False,
 							  points=False,
 							  hierarchy="below", # "selected":1, "below":2
 							  channels="all_keyable", # "all_keyable":1, "from_channel_box":2
-							  timeRange="time_slider" # "all":1, "time_slider":2, "single_frame":3, "start_end":4
+							  timeRange="start_end", # "all":1, "time_slider":2, "single_frame":3, "start_end":4
+							  startTime=self.startTime,
+							  endTime=self.endTime
 							 )
 
 	# Import Atom file (one ATOM file may contain multiple assets)
 	def importAtomFile(self, path, listAsset):
 		print("importAtomfile: path = " + str(path))
+		print("\tself.startTime = " + str(self.startTime) + " self.endTime = " + str(self.endTime))
 		filterListAsset = self.filterListAssetCharAndProps(listAsset) # filter assets to keep only characters and props
 		cmds.select(filterListAsset, replace=True)
 		#if not os.path.exists(path): # check if path exists
@@ -424,14 +427,19 @@ class DWanimPushPull(QtGui.QWidget):
 		# find the last file in the 'path'
 		files = filter(os.path.isfile, glob.glob(path + "*.atom"))
 		files.sort(key=lambda x: os.path.getmtime(x)) # sort by time
+		print("files = " + str(files))
 		if files:
 			lastFile = files[-1]
 			print("\tlastFile = " + str(lastFile))
+			viewMessage("Importing ATOM cache: " + str(lastFile))
 			# Select first the asset(s) root before (like "chr_francis_default_01:asset")            
 			myasys.importAtomFile(lastFile,
-								 targetTime="from_file",
+								 #targetTime="start_end",
+								 targetTime="time_slider",
+								 #srcTime=self.startTime, # _toTimeRange doesnt work with float or int,
+								 #dstTime=self.endTime),
 								 option="replace", # replace existing animation
-								 match="string",
+								 match="hierarchy",
 								 selected="childrenToo")
 
 	## From gpucaching
