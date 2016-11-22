@@ -60,7 +60,7 @@ def compileLayerQuickTime(renderDirS="", passNameL= ["lay_finalLayout_00"], aovN
             txt = "'{}', range to compile: '{}'".format(rangeL,firstFrameS)
             log.printL("i", txt)
 
-            fileO =  dataFile(fileNameS = firstFrameS)
+            fileO =  nkU.dataFile(fileNameS = firstFrameS)
 
             wavFileName = nkU.pathJoin("//ZOMBIWALK/Projects/zomb/shot",fileO.seq,fileO.shot,"00_data",fileO.shot+"_sound.wav")
             if not os.path.isfile(wavFileName):
