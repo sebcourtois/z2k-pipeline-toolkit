@@ -5,6 +5,7 @@ import pymel.core as pm
 import maya.OpenMayaUI as omui
 import sys
 import subprocess
+import os
 
 import shiboken
 from PySide import QtCore 
@@ -12,6 +13,7 @@ from PySide import QtGui
 from shiboken import wrapInstance 
 
 from dminutes import gpucaching
+reload(gpucaching)
 from davos_maya.tool.general import infosFromScene
 from davos.core.damproject import DamProject
 from dminutes import miscUtils
@@ -34,7 +36,7 @@ ATTR_ANIM_SPLIT_C="animSplitC" # attribute string "animSplitC", contains list of
 ATTR_START_TIME="startTime"
 ATTR_END_TIME="endTime"
 
-PATH_CACHES=os.path.expandvars(miscUtils.normPath("$ZOMB_PRIVATE_LOC\private\AnimSplit"))
+PATH_CACHES = miscUtils.normPath(os.path.expandvars("$ZOMB_PRIVATE_LOC/private/AnimSplit"))
 
 ##TEST_EXPORT_PATH=r"C:\Users\STEPH\Documents\ZOMBILLENIUM\TEST_SPLIT_ANIM"
 
@@ -47,7 +49,7 @@ class SplitAnimMgr(QtGui.QWidget):
 		super(SplitAnimMgr, self).__init__(*args, **kwargs)
 		mayaMainWindowPtr = omui.MQtUtil.mainWindow()
 		mayaMainWindow = wrapInstance(long(mayaMainWindowPtr), QtGui.QWidget)
-		self.setParent(mayaMainWindow)        
+		self.setParent(mayaMainWindow)
 		self.setWindowFlags(QtCore.Qt.Window) # Make this widget a standalone window even though it is parented 
 
 		#QtGui.QWidget.__init__(self, shiboken.wrapInstance(long(mui.MQtUtil.mainWindow()), QtGui.QWidget))
@@ -619,6 +621,7 @@ class SplitAnimMgr(QtGui.QWidget):
 				if len(items) > 0:
 					items[0].setSelected(True)
 		else:
+			cmds.select(cl=1)
 			viewMessage("All assets are in Splits Anims")
 
 	def createDavosPublicSplitAnim(self, type="animSplitA_scene"): # create the shot animSplit(A,B,C)_scene as 'public' thru Davos
@@ -641,11 +644,22 @@ class SplitAnimMgr(QtGui.QWidget):
 		if pubScn.currentVersion == 0: 
 			# no version published yet
 			print("\tNo version published yet, we can overwrite the public scene")
+			return sPubScnPath, False # return absolute path of the split scene created
 		else:
 			print("\tAlready published, create a private scene")
-			# ERROR si on veut re-publier une scene split anim existante comment on fait ?
+			# here we need to first edit the public scene and get a private scene
+			privScn = pubScn.edit(openFile=False) # if inside Maya, "openFile" will open the scene
+			print privScn, privScn.library # >> MrcFile('sq6660_sh0050a_animSplitA-v001.000.ma') Library('private|shot_lib')
+			sPrivScnPath = privScn.absPath()
+
+			#
+			# do what you have to do with the edited scene
+			#
+
+			# now let's publish the edited scene
+			#res = proj.publishEditedVersion(sPrivScnPath, comment="re-generate split anim", returnDict=True)
 			
-		return sPubScnPath # return absolute path of the split scene created
+			return sPrivScnPath, True # return absolute path of the split scene created
 
 	def filterListAssetCharAndProps(self, listAssets): # filter list asset by keeping only characters and props.
 		#print("filterListAssetCharAndProps")
@@ -686,15 +700,30 @@ class SplitAnimMgr(QtGui.QWidget):
 
 		if not self.checkMissingAssetAndAsk():
 			return
+			
+		scnInfos = infosFromScene()
+		privCurScn = scnInfos["rc_entry"]
+		damShot = scnInfos["dam_entity"]
+		pubSplitScn = damShot.getRcFile("public", type, create=True) # public scene created if missing
 
+		bEdited = False
+		if pubSplitScn.currentVersion == 0:# no version published yet
+			filename = pubSplitScn.absPath()# we can directly overwrite the public scene
+		else:
+			# here we need to first edit the public scene and get a private scene
+			privSplitScn = pubSplitScn.edit(openFile=False) # if inside Maya, "openFile" will open the scene
+			filename = privSplitScn.absPath()
+			bEdited = True
+	
 		cmds.select(cl=True) # clear selection.
 		cmds.select("grp_camera", add=True) # add always camera
 		cmds.select(listAsset, add=True) # Select objects in list
-
+		##pubSplitScn = damShot.getRcFile("public", type, create=True) # public scene created if missing
+			
 		# Sebastien s'en occupe de son cote !
 		#cmds.select("audio", add=True) # Select sound node
 
-		filename = self.createDavosPublicSplitAnim(type=type) # create the splitAnim scene thru Davos. Return full path filename
+		##filename, isPublish = self.createDavosPublicSplitAnim(type=type) # create the splitAnim scene thru Davos. Return full path filename
 
 		if filename:
 			##cmds.file(filename, pr=True, exportSelected=True, type='mayaAscii')
@@ -704,6 +733,15 @@ class SplitAnimMgr(QtGui.QWidget):
 			except:
 				dialogError("Can't export " + filename)
 				#print(\t"ERROR: export " + filename)
+				
+			else:
+				if bEdited: # publish the edited scene
+					sComment = "from {}".format(privCurScn.name)
+					damShot.project.publishEditedVersion(sFilePath, comment=sComment,returnDict=True)
+
+		##if isPublish:
+			# now let's publish the edited scene
+			##res = proj.publishEditedVersion(filename, comment="re-generate split anim", returnDict=True)
 
 		cmds.select(cl=True) # clear selection.
 
@@ -763,94 +801,12 @@ class SplitAnimMgr(QtGui.QWidget):
 		print("exportGpuCache: listAssets = " + str(listAssets) + " gpuPath = " + str(gpuPath))
 		cameras = cmds.ls("*:cam_shot_default*", cameras=1) # Get Camera
 		if len(cameras) == 1:
-			self.exportFromAssets(listAssets = listAssets, outputDir=gpuPath, shotCamera = cameras[0]) # make a subprocess to export the gpu caches of assets
+			namespaces = tuple(s.rsplit(":", 1)[0] for s in listAssets)
+			gpucaching.exportFromAssets(selected=False, namespaces=namespaces, outputDir=gpuPath)
+			#self.exportFromAssets(listAssets = listAssets, outputDir=gpuPath, shotCamera = cameras[0]) # make a subprocess to export the gpu caches of assets
 		else:
 			print("ERROR: exportGpuCache: cameras = " + str(cameras))
 
-	## From gpucaching
-	# export GPU caches for list of assets
-	def exportFromAssets(self, listAssets=None, outputDir="", shotCamera=None):
-		print("listAssets= " + str(listAssets) + " outputDir= " + str(outputDir) + " shotCamera= " + str(shotCamera))
-
-		if not listAssets:
-			print("ERROR: No asset to export")
-			return
-
-		sGeoGrpList = () # tuple initialization.
-		geoList = []
-
-		for asset in listAssets:
-			ns = asset.split(":")[0] # isolate namespace.
-			geoName = ns + ":grp_geo"
-			if cmds.objExists(geoName):
-				geoList.append(geoName)
-		if geoList:
-			sGeoGrpList = tuple(geoList) # Convert list to tuple
-		else:
-			sMsg = "No geo groups found{}".format(" from selection.")
-			raise RuntimeError(sMsg)
-
-		print("sGeoGrpList = " + str(sGeoGrpList))
-
-		##sShotCam = mop.getShotCamera(damShot.name, fail=True).name()
-		sShotCam = shotCamera
-
-		sOutDirPath = outputDir
-
-		sSelList = list(s.replace(":grp_geo", ":asset") for s in sGeoGrpList)
-		cmds.select(sSelList + [sShotCam], r=True)
-		curTime = cmds.currentTime(q=True)
-		cmds.currentTime(101)
-		cmds.refresh()
-		try:
-			sFilePath = pm.exportSelected(pathJoin(sOutDirPath, "export_gpuCache_" + "animMaster" + "_tmp.ma"),
-										  type="mayaAscii",
-										  preserveReferences=False,
-										  shader=True,
-										  channels=True,
-										  constraints=True,
-										  expressions=True,
-										  constructionHistory=True,
-										  force=True)
-		finally:
-			cmds.currentTime(curTime)
-
-		sPython27Path = r"C:\Python27\python.exe"
-		sZ2kEnvScript = os.environ["Z2K_LAUNCH_SCRIPT"]
-		sAppPath = os.path.join(os.environ["MAYA_LOCATION"], "bin", "mayabatch.exe")
-
-		timeRange = (pm.playbackOptions(q=True, animationStartTime=True),
-					pm.playbackOptions(q=True, animationEndTime=True))
-
-#    timeRange = (pm.playbackOptions(q=True, minTime=True),
-#                 pm.playbackOptions(q=True, maxTime=True))
-
-		sPyCmd = "from dminutes import gpucaching;reload(gpucaching);"
-		sPyCmd += "gpucaching._doExportGpuCaches('{}',{},{},'{}');".format(sOutDirPath,
-																		   timeRange[0],
-																		   timeRange[1],
-																		   sShotCam)
-		sMelCmd = "python(\"{}\"); quit -f;".format(sPyCmd)
-
-		sCmdArgs = [sPython27Path,
-					os.path.normpath(sZ2kEnvScript),
-					"launch", "--update", "0", "--renew", "1",
-					os.path.normpath(sAppPath),
-					"-file", os.path.normpath(sFilePath),
-					"-command", sMelCmd, "-prompt"
-					]
-
-		print("sMelCmd: " + str(sMelCmd))
-		print("sCmdArgs: " + str(sCmdArgs))
-
-		SW_MINIMIZE = 6
-		info = subprocess.STARTUPINFO()
-		info.dwFlags = subprocess.STARTF_USESHOWWINDOW
-		info.wShowWindow = SW_MINIMIZE
-
-		subprocess.Popen(sCmdArgs, startupinfo=info)
-
-		pm.displayInfo("GPU caches are being exported from another maya process...")
 
 	def generateAllGpuCaches(self):
 		cmds.waitCursor(state=True)
@@ -863,7 +819,6 @@ class SplitAnimMgr(QtGui.QWidget):
 #	def mergeAllAnimatorScene(self):
 #		# TODO: for each list asset, get ATOM files
 #		pass
-
 
 def dialogInfo(message):
 	result = cmds.confirmDialog( title='Info', backgroundColor=DIALOG_INFO_COLOR, message=message, button=['Yes', 'No', 'Cancel'], defaultButton='Yes', cancelButton='No', dismissString='No' )
@@ -897,8 +852,8 @@ def resetCursor(): # to avoid cursor in wait state (the waitCursor has a pile of
 
 # Launch splitAnimManager
 try :
-    uiSplitAnim.close()
+	uiSplitAnim.close()
 except :
-    pass
+	pass
 uiSplitAnim = SplitAnimMgr()
 uiSplitAnim.show()
