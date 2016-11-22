@@ -231,8 +231,7 @@ class dataFile():
             self.log.printL("i","PRIV_DIR: "+privateDirS)
             self.log.printL("i","MISC_DIR: "+miscDirS)
             self.log.printL("i","STEP: "+self.stepS)
-            self.log.printL("i","TIMEIN: '{}'".format(self.timeIn))
-            self.log.printL("i","TIMEOUT: '{}'".format(self.timeOut))
+
             os.environ["SEQ"] = self.seq
             os.environ["VER"] = self.ver
             os.environ["INC"] = self.increment
@@ -244,13 +243,6 @@ class dataFile():
             os.environ["PRIV_DIR"] = privateDirS
             os.environ["MISC_DIR"] = miscDirS
             os.environ["STEP"] = self.stepS
-            os.environ["TIMEIN"] = str(self.timeIn)
-            os.environ["TIMEOUT"] = str(self.timeOut)
-
-            nuke.Root()['first_frame'].setValue(self.timeIn)
-            nuke.Root()['last_frame'].setValue(self.timeOut)
-
-            self.log.printL("i","setting 'first_frame={}', 'first_frame={}' : ".format(self.timeIn,self.timeOut))
 
 
 
