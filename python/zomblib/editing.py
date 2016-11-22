@@ -192,7 +192,7 @@ def h264ToProres(inSeqList, shotStep='01_previz'):
     montageDir = "//Zombiwalk/z2k/11_EXCHANGE_MONTAGE"
     sSeqShotDict = OrderedDict()
 
-    if shotStep in ("01_previz", "02_layout", "04_anim", "10_compo"):
+    if shotStep in ("01_previz", "02_layout", "04_anim", "06_finalLayout", "10_compo"):
         profile = 0
         shotExt = shotStep.split("_")[-1]
     else:
