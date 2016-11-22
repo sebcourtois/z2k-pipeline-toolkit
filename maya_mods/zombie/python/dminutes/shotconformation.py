@@ -194,7 +194,7 @@ def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3", critical= T
     log = miscUtils.LogBuilder(gui=gui, funcName ="referenceShotAsset")
 
     #proj = DamProject("zombillenium")
-    #shotNameS = mc.file(q=True, list = True)[0].split('shot/')[-1].split("/")[1]
+    #shotNameS = pm.sceneName().split('shot/')[-1].split("/")[1]
     #damShot = proj.getShot(shotNameS)
 
     lPublicReleaseFilePath = []

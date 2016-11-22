@@ -110,4 +110,3 @@ def compileLayerQuickTime(renderDirS="", passNameL= ["lay_finalLayout_00"], aovN
 
     return dict(resultB=log.resultB, logL=log.logL )
 
-

@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import maya.mel
+import pymel.core as pm
 
 from dminutes import rendering
 reload (rendering)
@@ -70,7 +71,7 @@ def importFinalLayoutLight( gui=True, lgtRig="lgt_finalLayout_directional01"):
     log = miscUtils.LogBuilder(gui=gui, funcName ="createFinalLayoutLight")
 
     if mc.ls("|shot"):        
-        mainFilePath = mc.file(q=True, sn=True)
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         assetName = mainFilePathElem[-2]
         assetType = mainFilePathElem[-3]
@@ -226,6 +227,7 @@ def createNukeBatch(gui=True):
     renderBatch_obj.write("set nkscript="+nukeScript+"\n")
     renderBatch_obj.write("set argv0="+renderDir+"\n")
 
+    #finalCommand = r'"C:\Python27\python.exe" "C:\users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\setup_env_tools.py" launch %nuke% -x %nkscript% %argva% %argv0%'
     finalCommand = r'%nuke% -x %nkscript% %argva% %argv0%'
     renderBatch_obj.write(finalCommand+"\n")
     renderBatch_obj.write("\n")

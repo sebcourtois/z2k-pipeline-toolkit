@@ -1,4 +1,5 @@
 import maya.cmds as mc
+import pymel.core as pm
 import os
 
 from dminutes import miscUtils
@@ -24,7 +25,7 @@ def cleanAsset (GUI = True):
     logL = []
 
     if mc.ls("|asset"):        
-        mainFilePath = mc.file(q=True, list = True)[0]
+        mainFilePath = pm.sceneName()
         mainFilePathElem = mainFilePath.split("/")
         if  mainFilePathElem[-4] == "asset" or mainFilePathElem[-5] == "asset":
             privateMapdir = miscUtils.normPath(miscUtils.pathJoin("$PRIV_ZOMB_TEXTURE_PATH",mainFilePathElem[-3],mainFilePathElem[-2],"texture"))

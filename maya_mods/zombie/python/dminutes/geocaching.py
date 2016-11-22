@@ -5,6 +5,7 @@ import os.path as osp
 from collections import OrderedDict
 from datetime import datetime
 from functools import partial
+from pprint import pprint
 
 #import maya.api.OpenMaya as om
 import maya.cmds as mc
@@ -27,6 +28,7 @@ from davos_maya.tool.general import iterGeoGroups
 from dminutes import maya_scene_operations as mop
 from pytaya.util.sysutils import argsToPyNode
 from pytaya.core.transform import matchTransform
+from pytaya.core.cleaning import _yieldChildJunkShapes
 
 LOGGING_SETS = []
 USE_LOGGING_SETS = True
@@ -139,10 +141,10 @@ def breakConnections(sSide, sNodeAttr):
     if not sConnectList:
         return
 
-    sNode = sNodeAttr.split(".", 1)[0]
+    sNodePath = sNodeAttr.split(".", 1)[0]
 
     sConnectList = list((cur, oth) for cur, oth in grouper(2, sConnectList)
-                         if oth.split(".", 1)[0] != sNode)
+                         if oth.split(".", 1)[0] != sNodePath)
     for sNodePlug, sOtherPlug in sConnectList:
         if bSrc:
             mc.disconnectAttr(sOtherPlug, sNodePlug)
@@ -361,7 +363,7 @@ def exportCaches(**kwargs):
     if not osp.exists(sCacheDirPath):
         os.makedirs(sCacheDirPath)
 
-    scnFrmRange = (int(pm.playbackOptions(q=True, animationStartTime=True) - 1),
+    scnFrmRange = (int(pm.playbackOptions(q=True, animationStartTime=True)),
                    int(pm.playbackOptions(q=True, animationEndTime=True)))
 
     if not frameRange:
@@ -782,7 +784,8 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
 
         sConnecList = mc.listHistory(sAstMeshShape, il=2, pdo=True)
         if sConnecList:
-            sNotTypeList = ("displayLayer", "renderLayer", "renderLayerManager", "displayLayerManager")
+            sNotTypeList = ("displayLayer", "renderLayer", "renderLayerManager",
+                            "displayLayerManager")
             sConnecList = lsNodes(sConnecList, nodeNames=True, not_rn=True, not_type=sNotTypeList)
             if sConnecList:
                 sHasHistoryList.append(sAstMeshShape)
@@ -867,6 +870,10 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
             if bAnimatedMesh:
                 if not dryRun:
                     mc.connectAttr(sAbcOutAttr, sPolyTrans + ".otherPoly", f=True)
+
+        junkShapeList = tuple(_yieldChildJunkShapes(sAstMeshXfm))
+        if junkShapeList:
+            mc.delete(junkShapeList)
 
     if sHasHistoryList:
         sNmspc = getNamespace(sHasHistoryList[0])
@@ -977,6 +984,91 @@ def cleanImportContext(func):
         return res
     return doIt
 
+def clearConnectedCaches(sGeoGrpList=None, quick=True):
+
+    if sGeoGrpList is None:
+        sGeoGrpList, bSelected = _confirmProcessing("Clean previous caches")
+        if not sGeoGrpList:
+            sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
+            raise RuntimeError(sMsg)
+
+    pm.mel.ScriptEditor()
+    pm.mel.handleScriptEditorAction("maximizeHistory")
+
+    for sAstGeoGrp in sGeoGrpList:
+        
+        sAstNmspc = getNamespace(sAstGeoGrp)
+        sAbcNmspc = sAstNmspc + "_cache"
+        sScnAbcNodeName = sAbcNmspc + "_AlembicNode"
+
+        sAllEditList = []
+#        sRefEditAttr = sAstGeoGrp+".abcImportRefEdits"
+#        if mc.objExists(sRefEditAttr):
+#            sEditList = mc.getAttr(sRefEditAttr).split("\n")
+#            sEditList.reverse()
+
+        sAstMeshList = mc.ls(sAstNmspc + ":*", type="mesh", ni=True)
+        oAstRef = pm.PyNode(sAstGeoGrp).referenceFile()
+        
+        if (not quick) and oAstRef:
+
+            for sAstMesh in sAstMeshList:
+                sEditList = mc.referenceQuery(sAstMesh, editStrings=True,
+                                              editNodes=False, editAttrs=False,
+                                              editCommand="connectAttr",
+                                              successfulEdits=True, failedEdits=True)
+                sInMeshAttr = sAstMesh + ".inMesh"
+                sAllEditList.extend(s for s  in sEditList if sInMeshAttr in s)
+
+            if sAllEditList:
+
+#                sEditList = mc.referenceQuery(oAstRef.refNode.name(), editStrings=True,
+#                                              editNodes=False, editAttrs=False,
+#                                              editCommand="disconnectAttr",
+#                                              successfulEdits=True, failedEdits=False)
+#                sAllEditList.extend(sEditList)
+                #pprint(sAllEditList)
+
+                oAstRef.unload()
+                try:
+                    for sEdit in sAllEditList:
+                        sArgList = sEdit.replace('"', '').strip().split(" ")
+                        sEditCmd = sArgList[0]
+                        target = sArgList[1:3] if sEditCmd == "connectAttr" else sArgList[-2]
+                        print "delete Edit:", sEditCmd, target
+                        mc.referenceEdit(target, editCommand=sEditCmd, removeEdits=True,
+                                         successfulEdits=True, failedEdits=True)
+                finally:
+                    oAstRef.load()
+        else:
+            sToDelList = []
+            for sAstMesh in sAstMeshList:
+
+                sHistList = listForNone(mc.listHistory(sAstMesh, il=2, pdo=True))
+                if not sHistList:
+                    continue
+
+                sHistList = mc.ls(sHistList, type="polyTransfer")
+                if sHistList:
+                    sToDelList.extend(sHistList)
+
+            if sToDelList:
+                print ("delete {} 'polyTransfer' nodes on '{}'"
+                       .format(len(sToDelList), sAstNmspc))
+                mc.delete(sToDelList)
+
+            if oAstRef:
+                for sAstMesh in sAstMeshList:
+                    sInMeshAttr = sAstMesh + ".inMesh"
+                    mc.referenceEdit(sInMeshAttr, removeEdits=True, editCommand="connectAttr",
+                                     successfulEdits=False, failedEdits=True)
+
+        sScnAbcNode = getNode(sScnAbcNodeName)
+        if sScnAbcNode:
+            mc.delete(sScnAbcNode)
+
+    return
+
 @autoKeyDisabled
 def importCaches(sSpace, **kwargs):
 
@@ -1048,33 +1140,7 @@ def importCaches(sSpace, **kwargs):
     bRefOnly = (sProcessLabel.lower() == "reference")
 
     if (not bRefOnly) and (not bDryRun):
-
-        for jobInfos in exportJobList:
-
-            sAstGeoGrp = jobInfos["root"]
-
-            sAstNmspc = getNamespace(sAstGeoGrp)
-            sAbcNmspc = sAstNmspc + "_cache"
-            sScnAbcNodeName = sAbcNmspc + "_AlembicNode"
-
-            sAstMeshList = mc.ls(sAstNmspc + ":*", type="mesh", ni=True)
-            sToDelList = []
-            for sAstMesh in sAstMeshList:
-                sHistList = listForNone(mc.listHistory(sAstMesh, il=2, pdo=True))
-                if not sHistList:
-                    continue
-                sHistList = mc.ls(sHistList, type="polyTransfer")
-                if sHistList:
-                    sToDelList.extend(sHistList)
-
-            if sToDelList:
-                print ("delete {} 'polyTransfer' nodes on '{}'"
-                       .format(len(sToDelList), sAstNmspc))
-                mc.delete(sToDelList)
-
-            sScnAbcNode = getNode(sScnAbcNodeName)
-            if sScnAbcNode:
-                mc.delete(sScnAbcNode)
+        clearConnectedCaches(sGeoGrpList)
 
     sNmspcList = None
     if bSelected:
@@ -1157,6 +1223,14 @@ def importCaches(sSpace, **kwargs):
         astToAbcMeshItems = getMeshMapping(astToAbcXfmItems, longName=True,
                                            consider=sCacheObjList)
 
+        oAstRef = None #pm.PyNode(sAstGeoGrp).referenceFile()
+        bStoreEdits = (oAstRef is not None) and (not bRefOnly) and (not bDryRun)
+
+        if bStoreEdits:
+            sPreEditList = []
+            for sEditCmd in ("disconnectAttr", "connectAttr"):
+                sPreEditList.extend(pm.referenceQuery(oAstRef, editStrings=True, editCommand=sEditCmd))
+
         if (not bDryRun):
             sAbcGeoGrp = sAstGeoGrp.replace(sAstNmspc + ":", sAbcNmspc + ":")
             if mc.objExists(sAbcGeoGrp):
@@ -1177,7 +1251,7 @@ def importCaches(sSpace, **kwargs):
         transferVisibilities(astToAbcXfmItems, dryRun=bDryRun)
         transferVisibilities(astToAbcMeshItems, dryRun=bDryRun)
 
-        if not bDryRun:
+        if (not bDryRun):
             sFoundList = mc.ls(sAbcNodeList, type="AlembicNode")
             if sFoundList:
                 sRefAbcNode = sFoundList[0]
@@ -1199,6 +1273,30 @@ def importCaches(sSpace, **kwargs):
                     mc.setAttr(sScnAbcNode + ".abc_File", abcFile.envPath(), type="string")
 
         doneWith(oAbcRef, bRemRef)
+
+        if bStoreEdits:
+            sPostEditList = []
+            for sEditCmd in ("disconnectAttr", "connectAttr"):
+                sEditList = mc.referenceQuery(oAstRef.refNode.name(), editStrings=True,
+                                               editCommand=sEditCmd,
+                                               successfulEdits=True,
+                                               failedEdits=False)
+                sPostEditList.extend(sEditList)
+
+            if sPreEditList:
+                sDiffEditList = list(s for s in sPostEditList if s not in sPreEditList)
+            else:
+                sDiffEditList = sPostEditList
+
+            sRefEditAttr = sAstGeoGrp + ".abcImportRefEdits"
+            sEdits = ""
+            if sDiffEditList:
+                if not mc.objExists(sRefEditAttr):
+                    mc.addAttr(sAstGeoGrp, ln="abcImportRefEdits", dt="string")
+                sEdits = "\n".join(sDiffEditList)
+
+            if mc.objExists(sRefEditAttr):
+                mc.setAttr(sRefEditAttr, sEdits, type='string')
 
     print r"""
    ______           __            ____                           __     ____                 
@@ -1245,7 +1343,12 @@ def scanCachesToImport(sSrcFilePathList, scnInfos=None, depConfDct=None):
 
     sDepType = "geoCache_dep"
     if not depConfDct:
-        depConfDct = damEntity.getDependencyConf(sDepType, scnInfos["resource"])
+        sScnRcName = scnInfos["resource"]
+        if sScnRcName == "fx3d_scene":
+            depConfDct = damEntity.getDependencyConf(sDepType, sScnRcName)
+        else:
+            depConfDct = damEntity.getDependencyConf(sDepType, "finalLayout_scene")
+
     pubDepDir = depConfDct["dep_public_loc"]
 
 #    sPubDepDirPath = pubDepDir.absPath()
@@ -1253,7 +1356,6 @@ def scanCachesToImport(sSrcFilePathList, scnInfos=None, depConfDct=None):
 #        pubDepDir.loadChildDbNodes(noVersions=True)
 
     scanResults = []
-
     sAllSeveritySet = set()
 
     def addResult(res):

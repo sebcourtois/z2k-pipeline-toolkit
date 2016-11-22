@@ -84,6 +84,13 @@ class dataFile():
             if "finalLayoutTemplate.nk" in fileNameS:
                 fileNameS=  nuke.root()["argv0"].getValue()
 
+        if nuke.GUI:
+			from zomblib import damutils
+			from davos.core.damproject import DamProject
+			proj = DamProject("zombillenium", empty=(not nuke.GUI))
+			proj.loadEnviron()
+
+
         self.fileNameS=normPath(fileNameS)
         self.gui = gui
 
@@ -136,6 +143,15 @@ class dataFile():
                 elif "precomp-v" in fileDataL[6]:
                     self.ver = fileDataL[6].split("precomp-v")[-1].split(".")[0]
                     self.increment = fileDataL[6].split("precomp-v")[-1].split(".")[1]
+            if nuke.GUI:
+                damShot = proj.getShot(self.shot)
+                sgShot = damShot.getSgInfo()
+                duration = damutils.getShotDuration(sgShot)
+                self.timeIn = 101
+                self.timeOut = self.timeIn + (duration-1)
+            else:
+                self.timeIn = 0
+                self.timeOut = 0
         else:
             txt = "is not a file: '{}'".format(self.fileNameS)
             self.log.printL("e", txt)
@@ -152,6 +168,8 @@ class dataFile():
         self.log.printL("i","seq: '{}'".format(self.seq))
         self.log.printL("i","shot: '{}'".format(self.shot))
         self.log.printL("i","depDir: '{}'".format(self.depDir))
+        self.log.printL("i","in: '{}'".format(self.timeIn))
+        self.log.printL("i","out: '{}'".format(self.timeOut))
 
         if "render-v"in self.depDirSub:
             self.log.printL("i","passName: '{}'".format(self.passName))
@@ -166,14 +184,14 @@ class dataFile():
 
     def initNukeEnvVar(self):
         if self.seq and self.shot and self.user and self.depDir:
+
             departementS =self.depDir
             outputDirS = os.environ["ZOMB_OUTPUT_PATH"]+"/"+self.seq+"/"+self.shot
             shotDirS = os.environ["ZOMB_SHOT_PATH"]+"/"+self.seq+"/"+self.shot
-            #privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].split("/$DAVOS_USER/")[0]
-            try:
-                privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot
-            except:
-                privateDirS = ""
+
+            #privateDirS = os.environ["PRIV_ZOMB_SHOT_PATH"].replace("/$DAVOS_USER/","/"+self.user+"/")+"/"+self.seq+"/"+self.shot #PRIV_ZOMB_SHOT_PATH introuvable en batch
+            privateDirS = normPath(os.environ["ZOMB_PRIVATE_LOC"])+"/private/"+self.user+"/zomb/shot/"+self.seq+"/"+self.shot
+    
 
             miscDirS = os.environ["ZOMB_MISC_PATH"]
             self.log.printL("i","initialising environnement variables")
@@ -188,6 +206,8 @@ class dataFile():
             self.log.printL("i","PRIV_DIR: "+privateDirS)
             self.log.printL("i","MISC_DIR: "+miscDirS)
             self.log.printL("i","STEP: "+self.stepS)
+            self.log.printL("i","TIMEIN: '{}'".format(self.timeIn))
+            self.log.printL("i","TIMEOUT: '{}'".format(self.timeOut))
             os.environ["SEQ"] = self.seq
             os.environ["VER"] = self.ver
             os.environ["INC"] = self.increment
@@ -199,6 +219,16 @@ class dataFile():
             os.environ["PRIV_DIR"] = privateDirS
             os.environ["MISC_DIR"] = miscDirS
             os.environ["STEP"] = self.stepS
+            os.environ["TIMEIN"] = str(self.timeIn)
+            os.environ["TIMEOUT"] = str(self.timeOut)
+
+            if nuke.GUI:
+                nuke.Root()['first_frame'].setValue(self.timeIn)
+                nuke.Root()['last_frame'].setValue(self.timeOut)
+
+                self.log.printL("i","setting 'first_frame={}', 'first_frame={}' : ".format(self.timeIn,self.timeOut))
+
+
 
         else:
             txt = "one of the variable 'seq', 'shot', 'user' or 'dep' is undefined, could not set nuke proj environment var".format(self.fileNameS)
@@ -210,11 +240,15 @@ class dataFile():
 
 def initNukeShot(fileNameS= ""):
     try:
+        print "runing: 'initNukeShot()'"
         df=dataFile(fileNameS)
         df.printData()
         df.initNukeEnvVar()
     except:
-        pass
+        print "warning: error while running 'initNukeShot()'"
+
+
+
 
 
 
@@ -928,23 +962,27 @@ def isStereo():
 
 def createWriteDir():
     initNukeShot()
-    file = nuke.filename(nuke.thisNode())
-    dir = os.path.dirname( file )
-    osdir = nuke.callbacks.filenameFilter( dir )
+    myFile = nuke.filename(nuke.thisNode())
+    print 'myFile',myFile
+    myDir = os.path.dirname( myFile )
+    print 'myDir', myDir
+    osdir = nuke.callbacks.filenameFilter( myDir )
+    print 'osdir', osdir
 
-    if "%V" in osdir:
-        try:                        
-            os.makedirs( osdir.replace("%V","left") )        
-            os.makedirs( osdir.replace("%V","right") )
-        except OSError, e:
-            if e.errno != errno.EEXIST:
-                raise
-    else:
-        try:
-            os.makedirs( osdir )
-        except OSError, e:
-            if e.errno != errno.EEXIST:
-                raise
+    if osdir:
+        if "%V" in osdir:
+            try:                        
+                os.makedirs( osdir.replace("%V","left") )        
+                os.makedirs( osdir.replace("%V","right") )
+            except OSError, e:
+                if e.errno != errno.EEXIST:
+                    raise
+        else:
+            try:
+                os.makedirs( osdir )
+            except OSError, e:
+                if e.errno != errno.EEXIST:
+                    raise
 
 
 
@@ -956,6 +994,13 @@ def inportOutTemplate(template = "compo"):
     elif template == "stereo":
         nuke.scriptReadFile(os.environ["ZOMB_TOOL_PATH"]+"/template/nuke/stereoTemplate.nk")
 
+    for each in nuke.allNodes('Read'):
+        eachNameS = each['name'].value()
+        if 'read_exr' in eachNameS or 'read_comp'in eachNameS:
+            each['first'].setValue(int(os.environ["TIMEIN"]))
+            each['last'].setValue(int(os.environ["TIMEOUT"]))
+            each['origfirst'].setValue(int(os.environ["TIMEIN"]))
+            each['origlast'].setValue(int(os.environ["TIMEOUT"]))
 
 
 
