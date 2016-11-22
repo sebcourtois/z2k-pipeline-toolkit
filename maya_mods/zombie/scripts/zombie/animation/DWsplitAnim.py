@@ -36,7 +36,7 @@ ATTR_ANIM_SPLIT_C="animSplitC" # attribute string "animSplitC", contains list of
 ATTR_START_TIME="startTime"
 ATTR_END_TIME="endTime"
 
-PATH_CACHES=os.path.expandvars(miscUtils.normPath("$ZOMB_PRIVATE_LOC\private\AnimSplit"))
+PATH_CACHES = miscUtils.normPath(os.path.expandvars("$ZOMB_PRIVATE_LOC/private/AnimSplit"))
 
 ##TEST_EXPORT_PATH=r"C:\Users\STEPH\Documents\ZOMBILLENIUM\TEST_SPLIT_ANIM"
 

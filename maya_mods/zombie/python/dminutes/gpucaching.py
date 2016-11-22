@@ -22,7 +22,6 @@ reload(modeling)
 reload(rendering)
 reload(mop)
 
-
 def notifyBatchEnd(func):
 
     def doIt(*args, **kwargs):
@@ -34,11 +33,7 @@ def notifyBatchEnd(func):
                 ctypes.windll.user32.MessageBoxA(0, 'EXPORT FAILED !', 'GPU CACHE', 0x10 | 0x0 | 0x1000)
                 raise
             else:
-                sMsg = """GPU CACHES EXPORTED !
-
-You can now display GPU CACHED VERSIONS of exported assets
-using "Show All" or "Toggle Selected".
-"""
+                sMsg = os.environ.get("GPU_ABC_DONE_MSG", "EXPORT DONE !")
                 ctypes.windll.user32.MessageBoxA(0, sMsg, 'GPU CACHE', 0x40 | 0x0 | 0x1000)
         else:
             ret = func(*args, **kwargs)
@@ -47,10 +42,15 @@ using "Show All" or "Toggle Selected".
     return doIt
 
 @withSelectionRestored
-def exportFromAssets(selected=False, namespaces=None, outputDir=""):
+def exportFromAssets(selected=False, namespaces=None, outputDir="", **kwargs):
+
+    global EXPORT_DONE_MSG
 
     scnInfos = infosFromScene()
     damShot = scnInfos.get("dam_entity")
+
+    sExpDoneMsg = kwargs.pop("message", "GPU CACHES EXPORTED !")
+    os.environ["GPU_ABC_DONE_MSG"] = sExpDoneMsg
 
     sGeoGrpList = tuple(iterGeoGroups(sl=selected, namespaces=namespaces))
     if not sGeoGrpList:
@@ -61,6 +61,8 @@ def exportFromAssets(selected=False, namespaces=None, outputDir=""):
 
     if outputDir:
         sOutDirPath = outputDir
+        if not osp.isdir(sOutDirPath):
+            raise EnvironmentError("No such directory: {}".format(sOutDirPath))
     else:
         sOutDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
         if not osp.exists(sOutDirPath):
@@ -95,10 +97,8 @@ def exportFromAssets(selected=False, namespaces=None, outputDir=""):
 #                 pm.playbackOptions(q=True, maxTime=True))
 
     sPyCmd = "from dminutes import gpucaching;reload(gpucaching);"
-    sPyCmd += "gpucaching._doExportGpuCaches('{}',{},{},'{}');".format(sOutDirPath,
-                                                                    timeRange[0],
-                                                                    timeRange[1],
-                                                                    sShotCam)
+    sPyCmd += ("gpucaching._doExportGpuCaches('{}',{},{},'{}');"
+               .format(sOutDirPath, timeRange[0], timeRange[1], sShotCam))
     sMelCmd = "python(\"{}\"); quit -f;".format(sPyCmd)
 
     sCmdArgs = [sPython27Path,
@@ -305,7 +305,7 @@ def _refreshOne(sGpuNode, force=False):
     return True
 
 @notifyBatchEnd
-def _doExportGpuCaches(sOutDirPath, startTime, endTime, sCamForBaking):
+def _doExportGpuCaches(sOutDirPath, startTime, endTime, sCamForBaking, **kwargs):
 
     if mc.about(batch=True):
         if mc.evaluationManager(q=True, mode=True) != "parallel":
