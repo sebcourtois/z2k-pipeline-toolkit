@@ -181,7 +181,7 @@ def release(nodes):
 	'''
 		Release les nodes
 	'''
-	from davos_maya.tool import lockSceneDependenciesToCurrentVersion
+	from davos_maya.tool.publishing import lockSceneDependenciesToCurrentVersion
 	lockSceneDependenciesToCurrentVersion()
 	for node in nodes:
 		shotconformation.releaseShotAsset(gui = True ,toReleaseL = [node], astPrefix = "fx3", dryRun=False)

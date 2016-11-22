@@ -222,10 +222,11 @@ class dataFile():
             os.environ["TIMEIN"] = str(self.timeIn)
             os.environ["TIMEOUT"] = str(self.timeOut)
 
-            nuke.Root()['first_frame'].setValue(self.timeIn)
-            nuke.Root()['last_frame'].setValue(self.timeOut)
+            if nuke.GUI:
+                nuke.Root()['first_frame'].setValue(self.timeIn)
+                nuke.Root()['last_frame'].setValue(self.timeOut)
 
-            self.log.printL("i","setting 'first_frame={}', 'first_frame={}' : ".format(self.timeIn,self.timeOut))
+                self.log.printL("i","setting 'first_frame={}', 'first_frame={}' : ".format(self.timeIn,self.timeOut))
 
 
 
@@ -238,10 +239,14 @@ class dataFile():
 
 
 def initNukeShot(fileNameS= ""):
-    print "runing: 'initNukeShot()'"
-    df=dataFile(fileNameS)
-    df.printData()
-    df.initNukeEnvVar()
+    try:
+        print "runing: 'initNukeShot()'"
+        df=dataFile(fileNameS)
+        df.printData()
+        df.initNukeEnvVar()
+    except:
+        print "warning: error while running 'initNukeShot()'"
+
 
 
 
