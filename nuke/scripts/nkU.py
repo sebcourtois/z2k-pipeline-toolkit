@@ -238,10 +238,14 @@ class dataFile():
 
 
 def initNukeShot(fileNameS= ""):
-    print "runing: 'initNukeShot()'"
-    df=dataFile(fileNameS)
-    df.printData()
-    df.initNukeEnvVar()
+    try:
+        print "runing: 'initNukeShot()'"
+        df=dataFile(fileNameS)
+        df.printData()
+        df.initNukeEnvVar()
+    except:
+        print "warning: error while running 'initNukeShot()'"
+
 
 
 
