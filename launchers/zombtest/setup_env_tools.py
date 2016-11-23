@@ -15,8 +15,10 @@ ENVS = {
         "ZOMB_PRIVATE_LOC":"\\\\ZOMBIWALK\\Projects",
 
         "ZOMB_TOOL_PATH":"\\\\ZOMBIWALK\\Z2K_RnD\\tool_testing",
+
         "DAVOS_INIT_PROJECT":"zombtest",
         "DAVOS_SITE":"dmn_paris",
+        "ZTK_RELEASE_ALLOWED":"1",
 
         "MAYA_MODULE_PATH":r"\\ZOMBIWALK\Z2K_RnD\maya_mods"
         }

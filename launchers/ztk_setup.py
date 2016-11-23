@@ -8,6 +8,7 @@ import argparse
 from shutil import make_archive, ignore_patterns
 from datetime import datetime
 import traceback
+import webbrowser
 
 BASE_NAME = "z2k-pipeline-toolkit"
 
@@ -221,6 +222,11 @@ class Z2kToolkit(object):
 
         sDistroPath = self.releasePath(location)
 
+        bReleaseOk = True if os.environ.get("ZTK_RELEASE_ALLOWED") else False
+        if (not location) and (not bReleaseOk):
+            raise EnvironmentError("Release of '{}' NOT allowed."
+                                   .format(BASE_NAME))
+
         if osp.exists(sDistroPath):
             bUpdating = True
             sAction = "Updating"
@@ -275,7 +281,11 @@ class Z2kToolkit(object):
         if not os.path.exists(sOscarPath):
             os.makedirs(sOscarPath)
 
-        return self.makeCopy(self.rootPath, sDistroPath)
+        res = self.makeCopy(self.rootPath, sDistroPath)
+
+        enableToolSync()
+
+        return res
 
     def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
 
@@ -604,10 +614,34 @@ def cleanUpPyc(sRootPath):
 
     print "Deleted {} '.pyc' files".format(n)
 
-#if __name__ == "__main__":
-#    try:
-#        Z2kToolkit().runFromCmd()
-#    except:
-#        os.environ["PYTHONINSPECT"] = "1"
-#        raise
+def enableToolSync(dryRun=False):
+
+    sToolDbPath = "/zomb/tool"
+
+    if not dryRun:
+        sToolPath = os.environ["ZOMB_TOOL_PATH"]
+        sNormToolPath = osp.normcase(osp.normpath(sToolPath))
+        if not (os.environ.get("ZTK_RELEASE_ALLOWED") and sNormToolPath.endswith(sToolDbPath)):
+            print "\n", "Sync can NOT be enabled on {}".format(sToolPath)
+            return False
+
+    from davos.core.damproject import DamProject
+    proj = DamProject("zombillenium")
+    
+    dbnode = proj._db.findOne("file:{}".format(sToolDbPath))
+    data = {}#dict(("synced_" + sSite, None) for sSite in proj.listAllSites())
+
+    tmpNode = proj._db.createNode({"temp_node":1})
+    try:
+        data.update(tmpNode.getData("time", "author"))
+        print data
+        if not dryRun:
+            dbnode.setData(data)
+    finally:
+        tmpNode.delete()
+
+    sUrl = ("https://zombi.damas.io:8444/console#search={}".format(sToolDbPath))
+    webbrowser.open(sUrl, new=2)#2 = new tab
+
+    return True
 
