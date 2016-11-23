@@ -637,9 +637,9 @@ def enableToolSync(dryRun=False):
     tmpNode = proj._db.createNode({"temp_node":1})
     try:
         data.update(tmpNode.getData("time", "author"))
-        print data
         if not dryRun:
             dbnode.setData(data)
+            print dbnode.dataRepr()
     finally:
         tmpNode.delete()
 
