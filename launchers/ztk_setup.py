@@ -542,6 +542,9 @@ def normPath(p):
 def normCase(p):
     return osp.normcase(p).replace("\\", "/")
 
+def normAll(p):
+    return osp.normcase(osp.normpath(p).replace("\\", "/"))
+
 def pathJoin(*args):
     return normPath(osp.join(*args))
 
@@ -620,8 +623,8 @@ def enableToolSync(dryRun=False):
 
     if not dryRun:
         sToolPath = os.environ["ZOMB_TOOL_PATH"]
-        sNormToolPath = osp.normcase(osp.normpath(sToolPath))
-        if not (os.environ.get("ZTK_RELEASE_ALLOWED") and sNormToolPath.endswith(sToolDbPath)):
+        if not (os.environ.get("ZTK_RELEASE_ALLOWED") and 
+                normAll(sToolPath).endswith(sToolDbPath)):
             print "\n", "Sync can NOT be enabled on {}".format(sToolPath)
             return False
 
