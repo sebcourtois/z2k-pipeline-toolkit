@@ -729,8 +729,8 @@ def loadStereoCam(damShot, withAnim=True):
     finally:
         matchTransform(oStereoCam, oShotCam, atm="tr")
         pc.parentConstraint(oShotCam, oStereoCam, maintainOffset=True)
-        oShotCam.attr("focalLength") >> oStereoCam.attr("focalLength")
-        oShotCam.attr("cameraAperture") >> oStereoCam.attr("cameraAperture")
+        oShotCam.getShape().attr("focalLength") >> oStereoCam.getShape().attr("focalLength")
+        oShotCam.getShape().attr("cameraAperture") >> oStereoCam.getShape().attr("cameraAperture")
 
     return oStereoCam
 
