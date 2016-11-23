@@ -543,7 +543,7 @@ def normCase(p):
     return osp.normcase(p).replace("\\", "/")
 
 def normAll(p):
-    return osp.normcase(osp.normpath(p).replace("\\", "/"))
+    return osp.normcase(osp.normpath(p)).replace("\\", "/")
 
 def pathJoin(*args):
     return normPath(osp.join(*args))
