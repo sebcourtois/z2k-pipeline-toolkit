@@ -1,0 +1,172 @@
+#! /Applications/Nuke7.0v8/NukeX7.0v8.app/../Nuke7.0v8.app/Contents/MacOS/Nuke7.0v8 -nx
+version 7.0 v8
+Gizmo {
+ tile_color 0xffff
+ label "Inf disp = \[python round(\[value DisparityCalculator.dispMax],2)] pix\n"
+ addUserKnob {20 User}
+ addUserKnob {41 in l "zDepth channel" t "Choose zDepth channel. Value = distance to camera" T ShuffleInDepth.in}
+ addUserKnob {20 Camera n 1}
+ addUserKnob {41 focal l Focal T DisparityCalculator.focal}
+ addUserKnob {41 capteur l Haperture t "Sensor width" T DisparityCalculator.capteur}
+ addUserKnob {41 res l Resolution t "Image width (ex: 1920, 2048, 4096...)" T DisparityCalculator.res}
+ addUserKnob {20 endGroup n -1}
+ addUserKnob {26 unamed l "" +STARTLINE}
+ addUserKnob {20 stereo l Stereo n 1}
+ addUserKnob {41 zeroP l "Zero Parallax" T DisparityCalculator.zeroP}
+ addUserKnob {41 ia l Interaxial T DisparityCalculator.ia}
+ addUserKnob {20 endGroup_1 l endGroup n -1}
+}
+ BackdropNode {
+  inputs 0
+  name BackdropNode1
+  tile_color 0xaaaaaa00
+  label "CREATE\nDISPARITY MAP"
+  note_font_size 42
+  xpos 336
+  ypos -483
+  bdwidth 316
+  bdheight 293
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode2
+  tile_color 0x7171c600
+  label "CREATE\nDISPLACE MAP"
+  note_font_size 42
+  xpos 336
+  ypos -155
+  bdwidth 305
+  bdheight 415
+ }
+ Input {
+  inputs 0
+  name Input1
+  xpos 346
+  ypos -566
+ }
+ Dot {
+  name Dot40
+  xpos 380
+  ypos -379
+ }
+set N2401bfc0 [stack 0]
+ Dot {
+  name Dot1
+  xpos 559
+  ypos -379
+ }
+ Shuffle {
+  in depth
+  out depth
+  name ShuffleInDepth
+  xpos 525
+  ypos -314
+ }
+set N24001260 [stack 0]
+ Expression {
+  temp_expr0 DisparityCalculator.dispMax.left
+  channel0 depth
+  expr0 DisparityCalculator.dispMax-((DisparityCalculator.ia*DisparityCalculator.focal*DisparityCalculator.res)/(DisparityCalculator.capteur*depth.Z))
+  channel1 none
+  channel2 none
+  name Expression1
+  xpos 525
+  ypos -246
+ }
+push $N2401bfc0
+add_layer {DisparityMap DisparityMap.u}
+ ShuffleCopy {
+  inputs 2
+  in depth
+  red red
+  green black
+  blue black
+  alpha black
+  out DisparityMap
+  name ShuffleCopyOutDisparity
+  xpos 346
+  ypos -246
+ }
+ Dot {
+  name Dot2
+  xpos 380
+  ypos -35
+ }
+set N240344c0 [stack 0]
+ Dot {
+  name Dot5
+  xpos 554
+  ypos -35
+ }
+ ShuffleViews {
+  views {left right right left}
+  name ShuffleViews1
+  xpos 520
+  ypos 36
+ }
+ Expression {
+  expr0 "\vdefault\v(x+.5)+DisparityMap.u\vleft\v(x+.5)-DisparityMap.u"
+  expr1 y+.5
+  channel2 none
+  name Expression2
+  xpos 520
+  ypos 120
+ }
+ Expression {
+  expr0 r/width
+  expr1 g/height
+  channel2 none
+  expr2 0
+  name Expression3
+  xpos 520
+  ypos 194
+ }
+push $N240344c0
+add_layer {DisplaceSTmap DisplaceSTmap.u DisplaceSTmap.v}
+ ShuffleCopy {
+  inputs 2
+  red red
+  green green
+  blue black
+  alpha black
+  out DisplaceSTmap
+  name ShuffleCopy4
+  xpos 346
+  ypos 194
+ }
+ Output {
+  name Output1
+  xpos 346
+  ypos 402
+ }
+push $N24001260
+ NoOp {
+  name DisparityCalculator
+  selected true
+  xpos 415
+  ypos -314
+  addUserKnob {20 User}
+  addUserKnob {20 Camera n 1}
+  addUserKnob {7 dispMax}
+  dispMax {{(ia*focal*res)/(capteur*zeroP)}}
+  addUserKnob {7 focal}
+  addUserKnob {7 capteur}
+  capteur 35
+  addUserKnob {7 res}
+  res {{input.width}}
+  addUserKnob {26 ""}
+  addUserKnob {7 zeroP R 0 20}
+  zeroP {{parent.parent.stereoInfo.camZeroPar.left}}
+  addUserKnob {7 ia l interaxial}
+  ia {{parent.parent.stereoInfo.camInter.left}}
+  addUserKnob {20 endGroup n -1}
+  addUserKnob {20 DispGroup l Disparity n 1}
+  addUserKnob {7 disparity R -16 16}
+  disparity {{dispMax-((ia*focal*res)/(capteur*color.r))}}
+  addUserKnob {20 endGroup_1 l endGroup n -1}
+  addUserKnob {26 ""}
+  addUserKnob {18 color}
+  color {7.1 9.063311 10.063311}
+  addUserKnob {6 color_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+ }
+end_group

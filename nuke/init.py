@@ -7,30 +7,16 @@ import cryptomatte_utilities
 cryptomatte_utilities.setup_cryptomatte()
 
 
-
 userName = os.environ["USERNAME"] #windows user name
 
-if "DEVSPACE" in os.environ["NUKE_PATH"]:
-	print  "devmode", os.environ["NUKE_PATH"]
-	gizmosPath = 'C:/Users/' + userName + '/DEVSPACE/git/z2k-pipeline-toolkit/nuke/gizmos'
-	if os.path.isdir( gizmosPath ):
-	    nuke.pluginAddPath( gizmosPath )
+sNukePath = os.environ["ZOMB_NUKE_PATH"]
+gizmosPath = os.path.join(sNukePath, "gizmos").replace("\\", "/")
+if os.path.isdir(gizmosPath):
+    nuke.pluginAddPath(gizmosPath)
 
-	scriptsPath = 'C:/Users/' + userName + '/DEVSPACE/git/z2k-pipeline-toolkit/nuke/scripts'
-	print scriptsPath
-	if os.path.isdir( scriptsPath ):
-	    nuke.pluginAddPath( scriptsPath )
-
-else:
-	gizmosPath = 'C:/Users/' + userName + '/zombillenium/z2k-pipeline-toolkit/nuke/gizmos'
-	if os.path.isdir( gizmosPath ):
-	    nuke.pluginAddPath( gizmosPath )
-
-	scriptsPath = 'C:/Users/' + userName + '/zombillenium/z2k-pipeline-toolkit/nuke/scripts'
-	print scriptsPath
-	if os.path.isdir( scriptsPath ):
-	    nuke.pluginAddPath( scriptsPath )
-
+scriptsPath = os.path.join(sNukePath, "scripts").replace("\\", "/")
+if os.path.isdir(scriptsPath):
+    nuke.pluginAddPath(scriptsPath)
 
 import nkFinalLayout as nkFinalLayout
 reload(nkFinalLayout)

@@ -127,6 +127,9 @@ class Z2kToolkit(object):
         sPy27SitePath = pathJoin(self.thirdPartyPath, "_python27_site")
         site.addsitedir(sPy27SitePath)
 
+        updEnv("ZOMB_NUKE_PATH", pathJoin(self.rootPath, "nuke"),
+               conflict=sConflictMode)
+        #updEnv("ZTK_ROOT_PATH", self.rootPath, conflict=sConflictMode)
         updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict=sConflictMode)
         updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict=sConflictMode)
 
@@ -169,6 +172,13 @@ class Z2kToolkit(object):
             print "\nLoading {} environment:".format(sAppName.capitalize())
 
             updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
+                   conflict="add")
+
+        elif sAppName.lower().startswith("nuke"):
+
+            print "\nLoading {} environment:".format(sAppName.capitalize())
+
+            updEnv("NUKE_PATH", pathJoin(self.rootPath, "nuke"),
                    conflict="add")
 
 #        if bNeedPy27Site:
