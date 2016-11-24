@@ -1,0 +1,134 @@
+#! /Applications/Nuke7.0v8/NukeX7.0v8.app/../Nuke7.0v8.app/Contents/MacOS/Nuke7.0v8 -nx
+version 7.0 v8
+add_layer {DisplaceSTmap DisplaceSTmap.u DisplaceSTmap.v}
+Gizmo {
+ inputs 2
+ tile_color 0xff00ffff
+ label "\[value displaceFrom]\nExternal DispMap = \[value OutDispMap]"
+ note_font_color 0xffffffff
+ addUserKnob {20 User}
+ addUserKnob {4 displaceFrom l "Displace method" M {"Left to Right" "Right to Left" ""}}
+ addUserKnob {26 ""}
+ addUserKnob {41 channels T STMap1.channels}
+ addUserKnob {41 uv l "UV channels" T STMap1.uv}
+ addUserKnob {6 OutDispMap l "Use external DisplaceMap" +STARTLINE}
+ OutDispMap true
+ addUserKnob {26 ""}
+ addUserKnob {41 size l "DispMap filter" T Blur1.size}
+}
+ Input {
+  inputs 0
+  name src
+  xpos 582
+  ypos 304
+ }
+ Dot {
+  name Dot1
+  xpos 616
+  ypos 365
+ }
+set N24042850 [stack 0]
+ OneView {
+  view right
+  name OneView1
+  label "\[value view]"
+  xpos 678
+  ypos 454
+ }
+push $N24042850
+ OneView {
+  name OneView3
+  label "\[value view]"
+  xpos 582
+  ypos 456
+ }
+ set C6694b20 [stack 0]
+ Switch {
+  inputs 2
+  which {{displaceFrom}}
+  name Switch2
+  xpos 583
+  ypos 669
+ }
+ set C6696270 [stack 0]
+set N6696270 [stack 0]
+ Input {
+  inputs 0
+  name DisplaceMap
+  selected true
+  xpos 836
+  ypos 302
+  number 1
+ }
+push $N24042850
+ Switch {
+  inputs 2
+  which {{parent.OutDispMap.left}}
+  name Switch1
+  xpos 836
+  ypos 362
+ }
+set N66ae880 [stack 0]
+ OneView {
+  view right
+  name OneView2
+  label "\[value view]"
+  xpos 958
+  ypos 452
+ }
+push $N66ae880
+clone $C6694b20 {
+  xpos 836
+  ypos 452
+  selected false
+ }
+clone $C6696270 {
+  inputs 2
+  xpos 836
+  ypos 515
+  selected false
+ }
+ Blur {
+  size 10
+  name Blur1
+  xpos 836
+  ypos 571
+ }
+push $N6696270
+ STMap {
+  inputs 2
+  channels rgba
+  uv DisplaceSTmap
+  name STMap1
+  xpos 837
+  ypos 669
+ }
+set N66a5790 [stack 0]
+ JoinViews {
+  inputs 2
+  name JoinViews2
+  xpos 836
+  ypos 824
+  viewassoc "left\nright"
+ }
+push $N66a5790
+push $N6696270
+ JoinViews {
+  inputs 2
+  name JoinViews1
+  xpos 583
+  ypos 822
+  viewassoc "left\nright"
+ }
+clone $C6696270 {
+  inputs 2
+  xpos 583
+  ypos 950
+  selected false
+ }
+ Output {
+  name Output1
+  xpos 583
+  ypos 1037
+ }
+end_group
