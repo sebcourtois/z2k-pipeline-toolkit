@@ -997,6 +997,9 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
 
     for sAstGeoGrp in sGeoGrpList:
         
+        if not mc.objExists(sAstGeoGrp):
+            continue
+
         sAstNmspc = getNamespace(sAstGeoGrp)
         sAbcNmspc = sAstNmspc + "_cache"
         sScnAbcNodeName = sAbcNmspc + "_AlembicNode"
