@@ -12,5 +12,6 @@
 <path>/${PROJECT_DIR_NAME}/launchers</path>
 <path>/${PROJECT_DIR_NAME}/movSplitter</path>
 <path>/${PROJECT_DIR_NAME}/scripts</path>
+<path>/${PROJECT_DIR_NAME}/nuke/scripts</path>
 </pydev_pathproperty>
 </pydev_project>
