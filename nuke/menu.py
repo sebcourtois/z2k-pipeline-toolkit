@@ -22,6 +22,12 @@ nuke.menu('Nodes').addCommand('Z2K/MaskAovs', lambda: nuke.createNode('MaskAovs'
 ## P Matte Gizmos
 nuke.menu('Nodes').addCommand('Z2K/P_Matte', lambda: nuke.createNode('P_Matte'))
 
+## stero Gizmo
+toolbar = nuke.menu("Nodes")
+menu_3D = toolbar.addMenu('Tools_3D', 'menu_3d.png')
+menu_3D.addCommand('StereoDisparityGenerator', 'nuke.createNode(\"StereoDisparityGenerator\")')
+menu_3D.addCommand('StereoDisplaceTool', 'nuke.createNode(\"StereoDisplaceTool\")')
+
 ## Scripts
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/init nuke shot', lambda: nkU.initNukeShot() )
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform/all/read nodes', lambda: nkU.conformReadNode(readNodeL=nuke.allNodes('Read'), gui=True, conformPathB = True) )
@@ -45,6 +51,6 @@ nuke.menu( 'Nuke' ).addCommand( 'Zombi/import stereo Info', lambda: nkU.getStere
 # myMenu = myToolbar.addMenu( 'zomb Tools' )
 # myToolbar.addCommand( 'init nuke shot', lambda: nkU.initNukeShot() )
 
-m =  menubar.addMenu("RRender");
+m=menubar.addMenu("RRender");
 m.addCommand("Submit Comp", "nuke.load('rrSubmit_Nuke_5'), rrSubmit_Nuke()")
 m.addCommand("Submit Shotgun Nodes", "nuke.load('rrSubmit_Nuke_5'), rrSubmit_Nuke_Shotgun()")
