@@ -221,6 +221,7 @@ def createNukeBatch(gui=True):
     renderBatch_obj = open(renderBatch_trg, "w")
     renderBatch_obj.write("set foundry_LICENSE="+licenceLocation+"\n")
     renderBatch_obj.write(r'''set "NUKE_PATH=C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\nuke"'''+"\n")
+    renderBatch_obj.write(r'''set "ZOMB_NUKE_PATH=C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\nuke"''' + "\n")
 
     renderBatch_obj.write("set nuke="+nukePath+"\n")
     renderBatch_obj.write("rem set nuke="+nukePathLoc+"\n")
