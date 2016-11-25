@@ -486,7 +486,32 @@ class SplitAnimMgr(QtGui.QWidget):
 
 	def buildListAssetsM(self):
 		# Get list of assets from Master. Sometimes asset can be out of groups in Maya scene ...
-		assets = cmds.ls("*:asset")
+		##assets = cmds.ls("*:asset") # old fashion, but some shot has 2 times the same assets
+
+		assets = []
+		nodes = cmds.ls(type='reference')
+		print nodes
+		for node in nodes:
+			print node
+			isRef = True
+			try:
+				filename = cmds.referenceQuery(node, filename=1)
+				print("\t"+filename)
+			except:
+				isRef = False
+     
+			if isRef:   
+				if node.startswith("chr_") \
+				or node.startswith("prp_") \
+				or node.startswith("set_") \
+				or node.startswith("env_") \
+				or node.startswith("vhl_") \
+				or node.startswith("c2d_") \
+				or node.startswith("crw_"):
+					assets.append(cmds.referenceQuery(node, n=1)[0])
+                    
+		#print assets
+
 		self.listChr = []
 		self.listPrp = []
 		self.listSet = []
