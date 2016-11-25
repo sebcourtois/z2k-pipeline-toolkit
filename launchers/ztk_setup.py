@@ -639,7 +639,7 @@ def enableToolSync(dryRun=False):
             return False
 
     from davos.core.damproject import DamProject
-    proj = DamProject("zombillenium")
+    proj = DamProject("zombillenium", shotgun=False, checkTemplates=False)
     
     dbnode = proj._db.findOne("file:{}".format(sToolDbPath))
     data = {}#dict(("synced_" + sSite, None) for sSite in proj.listAllSites())
