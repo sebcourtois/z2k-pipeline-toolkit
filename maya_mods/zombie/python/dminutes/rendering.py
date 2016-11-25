@@ -309,7 +309,8 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         miscUtils.setAttrC("defaultArnoldFilter.aiTranslator", "blackman_harris", type="string")
         miscUtils.setAttrC("defaultArnoldRenderOptions.motion_frames", 0.25)
         resolution = 1998
-        pm.setAttr('defaultRenderGlobals.imageFilePrefix', '<Scene>/<RenderLayer>', type='string')
+        imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
+        pm.setAttr('defaultRenderGlobals.imageFilePrefix', '<Scene>/<RenderLayer>/' + imageFileName, type='string')
 
     elif renderMode == 'finalLayout':
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 2)
