@@ -58,7 +58,7 @@ class DWanimPushPull(QtGui.QWidget):
 		super(DWanimPushPull, self).__init__(*args, **kwargs)
 		mayaMainWindowPtr = omui.MQtUtil.mainWindow()
 		mayaMainWindow = wrapInstance(long(mayaMainWindowPtr), QtGui.QWidget)
-		self.setParent(mayaMainWindow)        
+		self.setParent(mayaMainWindow)
 		self.setWindowFlags(QtCore.Qt.Window) # Make this widget a standalone window even though it is parented 
 
 		#QtGui.QWidget.__init__(self, shiboken.wrapInstance(long(mui.MQtUtil.mainWindow()), QtGui.QWidget))
@@ -66,7 +66,7 @@ class DWanimPushPull(QtGui.QWidget):
 		self.resize(300,200)
 		#self.setFont(QtGui.QFont("Verdana"))
 		try:
-			self.setWindowIcon(QtGui.Icon("icon.jpg"))
+			self.setWindowIcon(QtGui.QIcon("icon.jpg"))
 		except:pass
 
 		self.palette = QtGui.QPalette()
@@ -279,6 +279,28 @@ class DWanimPushPull(QtGui.QWidget):
 					filterListAssets.append(asset)
 		return filterListAssets
 
+	# check if all controlers (set_control) of a list of assets have a key, or set one at current frame.
+	def checkAndSetKeyAllCtls(self, listAssets):
+		print("checkAndSetKeyAllCtls: listAssets = " + str(listAssets))
+		if len(listAssets) == 0:
+			return
+
+		cmds.currentTime(101, update=True) # set current frame 101 and update animation.
+
+		for asset in listAssets:
+			#print asset
+			set = cmds.ls(asset.replace("asset", "set_control"), type='objectSet')
+			cmds.select(set) # Select RenderSet content
+			sels = cmds.ls(sl=True) # get selection
+			print("sels = " + str(sels))
+			for item in sels:
+				print item
+				#if cmds.keyframe(item, q=True, kc=True ) == 0:
+					#print("\t"+item+" has no key")
+				cmds.setKeyframe(item)
+					#if cmds.keyframe(item, q=True, kc=True ) == 0:
+					#	print("\t\t" + item + " has still not key")
+
 	def doPushAnimSplitGPU(self): # Export GPU caches files from the current animSplit scene.
 		print("doPushAnimSplitGPU")
 		cmds.waitCursor(state=True)
@@ -296,15 +318,16 @@ class DWanimPushPull(QtGui.QWidget):
 		if self.curListAsset:
 			filterListAssets = self.filterListAssetCharAndProps(self.curListAsset) # filter assets to keep only characters and props
 			atomPath = self.getAtomPath(animSplit=self.attrAnimSplit) # get path where to export ATOM file
+			self.checkAndSetKeyAllCtls(filterListAssets)
 			print("\tatomPath = " + str(atomPath))
 			print("\tfilterListAssets = " + str(filterListAssets))
 			if filterListAssets:
 				self.exportAtomFile(filterListAssets, atomPath) # export all assets in one ATOM file.
 				resetCursor()
-				viewMessage("All ATOM's animation files exported")
+				displayInfoAndStop("All ATOM's animation files exported")
 			else:
 				resetCursor()
-				viewMessage("No asset to export")
+				displayInfoAndStop("No asset to export")
 
 	def doGetAnimSplitGPU(self): # Get GPU caches in the current animSplit scene.
 		print("doGetAnimSplitGPU")
@@ -410,7 +433,7 @@ class DWanimPushPull(QtGui.QWidget):
 							  points=False,
 							  hierarchy="below", # "selected":1, "below":2
 							  channels="all_keyable", # "all_keyable":1, "from_channel_box":2
-							  timeRange="start_end", # "all":1, "time_slider":2, "single_frame":3, "start_end":4
+							  timeRange="all", # "all":1, "time_slider":2, "single_frame":3, "start_end":4
 							  startTime=self.startTime,
 							  endTime=self.endTime
 							 )
@@ -432,10 +455,10 @@ class DWanimPushPull(QtGui.QWidget):
 			lastFile = files[-1]
 			print("\tlastFile = " + str(lastFile))
 			viewMessage("Importing ATOM cache: " + str(lastFile))
-			# Select first the asset(s) root before (like "chr_francis_default_01:asset")            
+			# Select first the asset(s) root before (like "chr_francis_default_01:asset")
 			myasys.importAtomFile(lastFile,
 								 #targetTime="start_end",
-								 targetTime="time_slider",
+								 targetTime="from_file", # "start_end":1, "time_slider":2, "from_file":3
 								 #srcTime=self.startTime, # _toTimeRange doesnt work with float or int,
 								 #dstTime=self.endTime),
 								 option="replace", # replace existing animation
@@ -497,8 +520,8 @@ class DWanimPushPull(QtGui.QWidget):
 		timeRange = (pm.playbackOptions(q=True, animationStartTime=True),
 					pm.playbackOptions(q=True, animationEndTime=True))
 
-#    timeRange = (pm.playbackOptions(q=True, minTime=True),
-#                 pm.playbackOptions(q=True, maxTime=True))
+#	timeRange = (pm.playbackOptions(q=True, minTime=True),
+#				 pm.playbackOptions(q=True, maxTime=True))
 
 		sPyCmd = "from dminutes import gpucaching;reload(gpucaching);"
 		sPyCmd += "gpucaching._doExportGpuCaches('{}',{},{},'{}');".format(sOutDirPath,
@@ -553,8 +576,8 @@ def displayInfoAndStop(message):
 
 # Launch DWanimPushPull
 try :
-    uiDWanimPushPull.close()
+	uiDWanimPushPull.close()
 except :
-    pass
+	pass
 uiDWanimPushPull = DWanimPushPull()
 uiDWanimPushPull.show()
