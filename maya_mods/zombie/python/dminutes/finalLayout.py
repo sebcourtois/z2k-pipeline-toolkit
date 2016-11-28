@@ -176,6 +176,8 @@ def createNukeBatch(gui=True):
     a 'renderBatch_help.txt' is also created to help on addind render options to the render command
 
     """
+#    sgTaskList = damShot.listSgTasks(moreFilters=[["content", "in", ("FL_Art", "Anim_MeshCache")]])
+#    pprint(sgTaskList)
     log = miscUtils.LogBuilder(gui=gui, funcName ="createNukeBatch")
 
     zombToolsPath = os.environ["ZOMB_TOOL_PATH"]
