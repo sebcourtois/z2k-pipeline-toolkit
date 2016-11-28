@@ -379,6 +379,8 @@ class Z2kToolkit(object):
 #        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 #        subprocess.call(appArgs, startupinfo=startupinfo)
 
+        appArgs = tuple(osp.expandvars(a) for a in appArgs)
+
         if self.isDev:
             print appArgs
 
