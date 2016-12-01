@@ -30,6 +30,25 @@ flartMovie = damShot.getRcFile("public", "finalLayout_movie")
 #print flartMovie.absPath()
 arleqMovie = damShot.getRcFile("public", "arlequin_movie")
 #print arleqMovie.absPath()
+if arleqMovie:
+    sSrcMovPath = pathJoin(sRenderDirPath, sShotName + '_arlequin.mov')
+    print sSrcMovPath
+
+    sgVersData = {"sg_status_list":"rev"}
+    newVersFile, sgVersion = arleqMovie.publishVersion(sSrcMovPath, autoLock=True, autoUnlock=True,
+                                                       sgVersionData=sgVersData,
+                                                       comment="from " + osp.basename(sRenderDirPath))
+    #print "*****", newVersFile.absPath()
+    sgTask = sgVersion["sg_task"]
+    #pprint(sgTask)
+    sCurStatus = sgVersion["sg_task.Task.sg_status_list"]
+    sNewStatus = ""
+    if sCurStatus == "clc":
+        sNewStatus = "rev"
+
+    if sNewStatus:
+        proj.updateSgEntity(sgTask, sg_status_list=sNewStatus)
+
 if flartMovie:
     sSrcMovPath = pathJoin(sRenderDirPath, sShotName + '_beauty.mov')
     print sSrcMovPath
@@ -49,24 +68,6 @@ if flartMovie:
     if sNewStatus:
         proj.updateSgEntity(sgTask, sg_status_list=sNewStatus)
 
-if arleqMovie:
-    sSrcMovPath = pathJoin(sRenderDirPath, sShotName + '_arlequin.mov')
-    print sSrcMovPath
-
-    sgVersData = {"sg_status_list":"rev"}
-    newVersFile, sgVersion = arleqMovie.publishVersion(sSrcMovPath, autoLock=True, autoUnlock=True,
-                                                       sgVersionData=sgVersData,
-                                                       comment="from " + osp.basename(sRenderDirPath))
-    #print "*****", newVersFile.absPath()
-    sgTask = sgVersion["sg_task"]
-    #pprint(sgTask)
-    sCurStatus = sgVersion["sg_task.Task.sg_status_list"]
-    sNewStatus = ""
-    if sCurStatus == "clc":
-        sNewStatus = "rev"
-
-    if sNewStatus:
-        proj.updateSgEntity(sgTask, sg_status_list=sNewStatus)
 
 
 
