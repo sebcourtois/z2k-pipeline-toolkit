@@ -185,7 +185,7 @@ def createNukeBatch(gui=True):
     damShot = proj.getShot(sShotName)
     sgTaskList = damShot.listSgTasks(moreFilters=[["content", "in", ("FL_Art", "Anim_MeshCache")]])
     pprint(sgTaskList[0])
-    if sgTaskList[0]['sg_status_list'] == "vwd" or "rtk" and not "fin":
+    if sgTaskList[0]['sg_status_list'] == "vwd" or sgTaskList[0]['sg_status_list'] == "rtk" :
         #print sgTaskList[1]['sg_status_list']
         sNewStatus = "clc"
         proj.updateSgEntity(sgTaskList[1], sg_status_list=sNewStatus)
