@@ -6,6 +6,7 @@ import shutil
 from collections import namedtuple
 #from itertools import izip
 import traceback
+from subprocess import CalledProcessError
 
 import pymel.core as pc
 #import pymel.util as pmu
@@ -64,7 +65,7 @@ def withErrorDialog(func):
             raise
         except Exception as e:
             pc.confirmDialog(title='SORRY !',
-                             message=toStr(e.args[-1]),
+                             message=toStr(e.args[-1] if e.args else e),
                              button=["OK"],
                              defaultButton="OK",
                              cancelButton="OK",
@@ -835,7 +836,11 @@ def setupAnimatic(animaticInfos, create=True):
             sImgSeqDirPath = osp.dirname(sAnimaticImgPath)
             if not osp.exists(sImgSeqDirPath):
                 os.makedirs(sImgSeqDirPath)
-            movieToJpegSequence(sLocMoviePath, sImgSeqDirPath, "animatic")
+            try:
+                movieToJpegSequence(sLocMoviePath, sImgSeqDirPath, "animatic")
+            except CalledProcessError:
+                sMsg = ("Failed to convert movie to image sequence: {}".format(sLocMoviePath))
+                sErrorList.append(sMsg)
     else:
         sErrorList.append("Animatic movie not found: '{}'.".format(sPubMoviePath))
 
