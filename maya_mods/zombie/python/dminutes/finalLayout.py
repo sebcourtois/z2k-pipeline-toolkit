@@ -11,7 +11,9 @@ import pymel.core as pm
 
 from dminutes import rendering
 reload (rendering)
+from davos.core.damproject import DamProject
 
+from pprint import pprint
 
 def layerOverrideFLCustomShader(dmnToonList=[], dmnInput = "dmnMask08", layerName = "lay_finalLayout_00",gui= True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="layerOverrideFLCustomShader")
@@ -176,9 +178,22 @@ def createNukeBatch(gui=True):
     a 'renderBatch_help.txt' is also created to help on addind render options to the render command
 
     """
-#    sgTaskList = damShot.listSgTasks(moreFilters=[["content", "in", ("FL_Art", "Anim_MeshCache")]])
-#    pprint(sgTaskList)
-    log = miscUtils.LogBuilder(gui=gui, funcName ="createNukeBatch")
+    #sShotName = "sq6660_sh0050a"
+    sShotName = mc.getAttr('defaultRenderGlobals.imageFilePrefix')
+    proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal")
+    #shotgundb = proj._shotgundb
+    damShot = proj.getShot(sShotName)
+    sgTaskList = damShot.listSgTasks(moreFilters=[["content", "in", ("FL_Art", "Anim_MeshCache")]])
+    pprint(sgTaskList[0])
+    if sgTaskList[0]['sg_status_list'] == "vwd" or "rtk" and not "fin":
+        #print sgTaskList[1]['sg_status_list']
+        sNewStatus = "clc"
+        proj.updateSgEntity(sgTaskList[1], sg_status_list=sNewStatus)
+    else:
+        sNewStatus = "clc"
+        proj.updateSgEntity(sgTaskList[0], sg_status_list=sNewStatus)
+
+    log = miscUtils.LogBuilder(gui=gui, funcName="createNukeBatch")
 
     zombToolsPath = os.environ["ZOMB_TOOL_PATH"]
     workingFile = mc.file(q=True, sn=True)
@@ -232,7 +247,9 @@ def createNukeBatch(gui=True):
 
     #finalCommand = r'"C:\Python27\python.exe" "C:\users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\setup_env_tools.py" launch %nuke% -x %nkscript% %argva% %argv0%'
     finalCommand = r'%nuke% -x %nkscript% %argva% %argv0%'
+    publish_movies = r'"C:\Python27\python.exe" "%USERPROFILE%\zombillenium\z2k-pipeline-toolkit\launchers\paris\setup_env_tools.py" launch "C:\Python27\python.exe" "%USERPROFILE%\zombillenium\z2k-pipeline-toolkit\scripts\FL_post_render.py" %argv0%'
     renderBatch_obj.write(finalCommand+"\n")
+    renderBatch_obj.write(publish_movies + "\n")
     renderBatch_obj.write("\n")
     #renderBatch_obj.write("pause\n")
     renderBatch_obj.close()
