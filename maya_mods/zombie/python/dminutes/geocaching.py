@@ -156,6 +156,7 @@ def breakConnections(sSide, sNodeAttr):
 def _confirmProcessing(sProcessLabel, **kwargs):
 
     bSelected = kwargs.pop("selected", None)
+    bConfirm = kwargs.pop("confirm", True)
 
     if bSelected is None:
 
@@ -168,10 +169,15 @@ def _confirmProcessing(sProcessLabel, **kwargs):
         if sGeoGrpList:
             sButtonList.insert(0, '{} Selected'.format(len(sGeoGrpList)))
 
-        sRes = pm.confirmDialog(title='DO YOU WANT TO...',
-                                message=sMsg,
-                                button=sButtonList,
-                                icon="question")
+        sRes = ""
+        if bConfirm:
+            sRes = pm.confirmDialog(title='DO YOU WANT TO...',
+                                    message=sMsg,
+                                    button=sButtonList,
+                                    icon="question")
+        elif not sGeoGrpList:
+            sRes = "All"
+
         if sRes == "Cancel":
             #pm.displayInfo("Canceled !")
             raise RuntimeWarning("Canceled !")
@@ -502,7 +508,11 @@ def getTransformMapping(sSrcDagRoot, sTrgtNamespace, consider=None, longName=Fal
     if sSrcNamespace == sTrgtNamespace:
         raise ValueError("Same source and target namespaces given.")
 
-    sTrgtDagRoot = oSrcDagRoot.nodeName().replace(sSrcNamespace, sTrgtNamespace)
+    if sSrcNamespace:
+        sTrgtDagRoot = oSrcDagRoot.nodeName().replace(sSrcNamespace, sTrgtNamespace)
+    else:
+        sTrgtDagRoot = sTrgtNamespace + oSrcDagRoot.nodeName()
+
     oTrgtDagRoot = pm.PyNode(sTrgtDagRoot)
     sTrgtDagRoot = oTrgtDagRoot.longName()
 
@@ -536,10 +546,16 @@ def getTransformMapping(sSrcDagRoot, sTrgtNamespace, consider=None, longName=Fal
                 continue
 
         if longName:
-            sTrgtDagPath = sSrcDagPath.split(sSrcDagRoot, 1)[-1].replace(sSrcNamespace, sTrgtNamespace)
+            if sSrcNamespace:
+                sTrgtDagPath = sSrcDagPath.split(sSrcDagRoot, 1)[-1].replace(sSrcNamespace, sTrgtNamespace)
+            else:
+                sTrgtDagPath = sSrcDagPath.split(sSrcDagRoot, 1)[-1].replace("|", "|" + sTrgtNamespace)
             sTrgtDagPath = sTrgtDagRoot + sTrgtDagPath
         else:
-            sTrgtDagPath = sSrcDagPath.replace(sSrcNamespace, sTrgtNamespace)
+            if sSrcNamespace:
+                sTrgtDagPath = sSrcDagPath.replace(sSrcNamespace, sTrgtNamespace)
+            else:
+                sTrgtDagPath = sTrgtNamespace + sSrcDagPath.replace("|", "|" + sTrgtNamespace)
 
         #print "\n", sSrcDagPath, "\n", sTrgtDagPath, "\n", sTrgtDagRoot
 
@@ -756,7 +772,11 @@ def transferVisibilities(astToAbcObjMap, dryRun=False):
         sNmspc = getNamespace(sShowedList[0])
         addLoggingSet("showed_" + sNmspc, sShowedList)
 
-def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
+MESH_INPUT_FILTER = ("displayLayer", "renderLayer", "renderLayerManager",
+                    "displayLayerManager", "dagNode", "objectSet")
+
+def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False,
+                       beforeHistory=False, choiceIndex=None):
 
     global UNUSED_TRANSFER_NODES
 
@@ -768,6 +788,10 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
     sVertsDifferList = []
     sTopoDifferList = []
     sHasHistoryList = []
+    sChoiceNodeList = []
+
+    iChoiceIdx = choiceIndex
+    bChoiceNode = False if iChoiceIdx is None else True
 
     sOnlyList = mc.ls(only, long=True, ni=True) if only else None
 
@@ -777,20 +801,45 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
         sAstMeshXfm = astMeshPath.fullPathName().rsplit("|", 1)[0]
         sAstMeshShapeName = astMeshPath.partialPathName()
 
+        sIntermedMesh = ""
+        sPolyTrans = ""
+        sHistList = []
+
         if sOnlyList and (sAstMeshXfm not in sOnlyList):
             continue
 
         #print sAstMeshShape, sAbcMeshShape
 
-        sConnecList = mc.listHistory(sAstMeshShape, il=2, pdo=True)
-        if sConnecList:
-            sNotTypeList = ("displayLayer", "renderLayer", "renderLayerManager",
-                            "displayLayerManager")
-            sConnecList = lsNodes(sConnecList, nodeNames=True, not_rn=True, not_type=sNotTypeList)
-            if sConnecList:
-                sHasHistoryList.append(sAstMeshShape)
-                pm.displayWarning("Mesh with history ignored: '{}'".format(sAstMeshShapeName))
-                continue
+        sFullHistList = mc.listHistory(sAstMeshShape, il=2)
+        if sFullHistList:
+            sHistList = lsNodes(sFullHistList, nodeNames=True,
+                                not_rn=True, not_type=MESH_INPUT_FILTER)
+            if sHistList:
+                if (not beforeHistory):
+                    sHasHistoryList.append(sAstMeshShape)
+                    pm.displayWarning("Mesh with history ignored: '{}' - {}"
+                                      .format(sAstMeshShapeName, sHistList))
+                    continue
+
+                sFoundList = lsNodes(sFullHistList, type="mesh", io=True,
+                                     not_rn=True, nodeNames=True)
+                if sFoundList:
+                    sIntermedMesh = sFoundList[0]
+
+                sFoundList = lsNodes(sHistList, type="polyTransfer",
+                                     not_rn=True, nodeNames=True)
+                numPolyTrans = len(sFoundList)
+                if numPolyTrans > 1:
+                    pm.displayWarning("Multiple 'polyTransfer' nodes found on '{}'."
+                                      .format(sAstMeshShapeName))
+                    continue
+                elif numPolyTrans == 1:
+                    if not bChoiceNode:
+                        pm.displayWarning("'polyTransfer' node found on '{}'."
+                                          .format(sAstMeshShapeName))
+                        continue
+
+                    sPolyTrans = sFoundList[0]
 
         bDynTopo = False
         abcMeshPath = myapi.getDagPath(sAbcMeshShape)
@@ -863,13 +912,47 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
                 mc.connectAttr(sAbcCopiedShape + ".outMesh", sAstMeshShape + ".inMesh", f=True)
                 mc.setAttr(sAbcCopiedShape + ".intermediateObject", True)
         else:
-            if bAnimatedMesh or (not bSameVtxPos):
-                if not dryRun:
+
+            bPolyTransCreated = False
+            if (bAnimatedMesh or (not bSameVtxPos)) and (not sPolyTrans) and (not dryRun):
                     sPolyTrans = mc.polyTransfer(sAstMeshShape, ao=sAbcMeshShape,
                                                  uv=False, v=True, vc=False, ch=True)[0]
-            if bAnimatedMesh:
-                if not dryRun:
+                    bPolyTransCreated = True
+
+            if bAnimatedMesh and (not dryRun):
+                if bChoiceNode:
+                    sInNode = mc.listConnections(sPolyTrans + ".otherPoly", s=True, d=False)[0]
+                    if mc.nodeType(sInNode) == "choice":
+                        sChoiceNode = sInNode
+                    else:
+                        sChoiceNode = mc.createNode("choice")
+                        sChoiceNodeList.append(sChoiceNode)
+
+                        mc.connectAttr(sChoiceNode + ".output", sPolyTrans + ".otherPoly", f=True)
+                        mc.setAttr(sChoiceNode + ".selector", iChoiceIdx)
+
+                    mc.connectAttr(sAbcOutAttr, sChoiceNode + ".input[{}]"
+                                   .format(iChoiceIdx))
+                else:
                     mc.connectAttr(sAbcOutAttr, sPolyTrans + ".otherPoly", f=True)
+
+            if bPolyTransCreated and beforeHistory and sHistList and (not dryRun):
+
+                for sOutMeshAttr in (".outMesh", ".worldMesh"):
+                    sOutMeshAttr = sIntermedMesh + sOutMeshAttr
+                    sAttrList = mc.listConnections(sOutMeshAttr, plugs=True, s=False, d=True)
+                    if sAttrList:
+                        sInMeshAttr = sAttrList[0]
+                        break
+
+                sPolyTransOutAttr = sPolyTrans + ".output"
+                sPolyTransInAttr = sPolyTrans + ".inputPolymesh"
+                sOutAttr = mc.listConnections(sPolyTransInAttr, plugs=True, s=True, d=False)[0]
+                sInAttr = mc.listConnections(sPolyTransOutAttr, plugs=True, s=False, d=True)[0]
+                mc.connectAttr(sOutAttr, sInAttr, f=True)
+
+                mc.connectAttr(sOutMeshAttr, sPolyTransInAttr, f=True)
+                mc.connectAttr(sPolyTransOutAttr, sInMeshAttr, f=True)
 
         junkShapeList = tuple(_yieldChildJunkShapes(sAstMeshXfm))
         if junkShapeList:
@@ -884,6 +967,8 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False):
 
     if sTopoDifferList:
         addLoggingSet("TOPOLOGY_MISMATCH", sTopoDifferList)
+
+    return sChoiceNodeList
 
 def transferOutConnections(sSrcNode, sDstNode, useNamespace=True):
 
@@ -992,8 +1077,9 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
             sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
             raise RuntimeError(sMsg)
 
-    pm.mel.ScriptEditor()
-    pm.mel.handleScriptEditorAction("maximizeHistory")
+    if not quick:
+        pm.mel.ScriptEditor()
+        pm.mel.handleScriptEditorAction("maximizeHistory")
 
     for sAstGeoGrp in sGeoGrpList:
         
@@ -1051,7 +1137,7 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
                 if not sHistList:
                     continue
 
-                sHistList = mc.ls(sHistList, type="polyTransfer")
+                sHistList = lsNodes(sHistList, type="polyTransfer", not_rn=True, nodeNames=True)
                 if sHistList:
                     sToDelList.extend(sHistList)
 
@@ -1073,7 +1159,7 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
     return
 
 @autoKeyDisabled
-def importCaches(sSpace, **kwargs):
+def importCaches(sSpace=None, **kwargs):
 
     global LOGGING_SETS, USE_LOGGING_SETS, LAUNCH_TIME
 
@@ -1081,6 +1167,10 @@ def importCaches(sSpace, **kwargs):
     bRemoveRefs = kwargs.pop("removeRefs", True)
     bUseCacheObjset = kwargs.pop("useCacheSet", True)
     bLayoutViz = kwargs.pop("layoutViz", True)
+    sProcessLabel = kwargs.pop("processLabel", "Import caches")
+    bBeforeHist = kwargs.pop("beforeHistory", False)
+    jobList = kwargs.pop("jobs", None)
+    bScriptEd = kwargs.pop("showScriptEditor", True)
 
     sepWidth = 120
     def doneWith(oAbcRef, remove=True, container=None):
@@ -1091,68 +1181,74 @@ def importCaches(sSpace, **kwargs):
     damShot = scnInfos.get("dam_entity")
     shotLib = damShot.getLibrary("public")
 
-    if sSpace == "local":
-        sCacheDirPath = mop.getMayaCacheDir(damShot)
-    elif sSpace in ("public", "private"):
-        sCacheDirPath = damShot.getPath(sSpace, "finalLayout_cache_dir")
-    else:
-        raise ValueError("Invalid space argument: '{}'".format(sSpace))
-
-    if not osp.isdir(sCacheDirPath):
-        raise EnvironmentError("Could not found {} caches directory: '{}'"
-                               .format(sSpace, sCacheDirPath))
-
-    exportInfos = jsonRead(pathJoin(sCacheDirPath, "abcExport.json"))
-    exportJobList = exportInfos["jobs"]
-
-    sProcessLabel = kwargs.pop("processLabel", "Import caches")
     bCheckAstExists = False
-    sGeoGrpList, bSelected = _confirmProcessing(sProcessLabel, **kwargs)
-    if not bSelected:
-        sGeoGrpList = tuple(j["root"] for j in exportJobList)
-        bCheckAstExists = True
-    elif not sGeoGrpList:
-        sMsg = "No geo groups found{}".format(" from selection.")
-        raise RuntimeError(sMsg)
+    if jobList is not None:
+        sGeoGrpList = tuple(j["root"] for j in jobList)
     else:
-        exportJobList = tuple(j for j in exportJobList if j["root"] in sGeoGrpList)
+        if sSpace == "local":
+            sCacheDirPath = mop.getMayaCacheDir(damShot)
+        elif sSpace in ("public", "private"):
+            sCacheDirPath = damShot.getPath(sSpace, "finalLayout_cache_dir")
+        else:
+            raise ValueError("Invalid space argument: '{}'".format(sSpace))
 
-    for jobInfos in exportJobList:
-        sFilePath = jobInfos["file"]
-        if not osp.isabs(sFilePath):
-            jobInfos["file"] = pathJoin(sCacheDirPath, sFilePath)
+        if not osp.isdir(sCacheDirPath):
+            raise EnvironmentError("Could not found {} caches directory: '{}'"
+                                   .format(sSpace, sCacheDirPath))
 
-#    if not exportJobList:
-#        return False
+        exportInfos = jsonRead(pathJoin(sCacheDirPath, "abcExport.json"))
+        jobList = exportInfos["jobs"]
 
-    sAbcPathList = list(j["file"] for j in exportJobList)
-    scanFunc = partial(scanCachesToImport, sAbcPathList)
-    scanDct = dependency_scan.launch(scnInfos, scanFunc=scanFunc,
-                                     modal=True, okLabel=sProcessLabel,
-                                     expandTree=True, forceDialog=False)
-    if scanDct is None:
-        pm.displayInfo("Canceled !")
-        return
+        sGeoGrpList, bSelected = _confirmProcessing(sProcessLabel, **kwargs)
+        if not bSelected:
+            sGeoGrpList = tuple(j["root"] for j in jobList)
+            bCheckAstExists = True
+        elif not sGeoGrpList:
+            sMsg = "No geo groups found{}".format(" from selection.")
+            raise RuntimeError(sMsg)
+        else:
+            jobList = tuple(j for j in jobList if j["root"] in sGeoGrpList)
+
+        for jobInfos in jobList:
+            sFilePath = jobInfos["file"]
+            if not osp.isabs(sFilePath):
+                jobInfos["file"] = pathJoin(sCacheDirPath, sFilePath)
+
+    #    if not jobList:
+    #        return False
+
+        sAbcPathList = list(j["file"] for j in jobList)
+        scanFunc = partial(scanCachesToImport, sAbcPathList)
+        scanDct = dependency_scan.launch(scnInfos, scanFunc=scanFunc,
+                                         modal=True, okLabel=sProcessLabel,
+                                         expandTree=True, forceDialog=False)
+        if scanDct is None:
+            pm.displayInfo("Canceled !")
+            return
 
     oFileRefDct = dict(pm.listReferences(namespaces=True, references=True))
     sScnNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
 
-    pm.mel.ScriptEditor()
-    pm.mel.handleScriptEditorAction("maximizeHistory")
+    if bScriptEd:
+        pm.mel.ScriptEditor()
+        pm.mel.handleScriptEditorAction("maximizeHistory")
 
     bRefOnly = (sProcessLabel.lower() == "reference")
 
     if (not bRefOnly) and (not bDryRun):
         clearConnectedCaches(sGeoGrpList)
 
-    sNmspcList = None
-    if bSelected:
-        sNmspcList = tuple(getNamespace(s) for s in sGeoGrpList)
-
     if bLayoutViz:
+
+        sNmspcList = None
+        if bSelected:
+            sNmspcList = tuple(getNamespace(s) for s in sGeoGrpList)
+
         importLayoutVisibilities(damShot, onNamespaces=sNmspcList, dryRun=bDryRun)
 
     mc.refresh()
+
+    outData = {}
 
     print  r"""
    ______           __            ____                           __     _____ __             __           __
@@ -1163,19 +1259,19 @@ def importCaches(sSpace, **kwargs):
                                            /_/                                                                                                                                                                               
 """.rstrip()
 
-    for jobInfos in exportJobList:
+    for jobInfos in jobList:
 
         sAstGeoGrp = jobInfos["root"]
         sAbcFilePath = jobInfos["file"]
 
         sAstNmspc = getNamespace(sAstGeoGrp)
-        sAbcNmspc = sAstNmspc + "_cache"
-        sScnAbcNodeName = sAbcNmspc + "_AlembicNode"
+        sAbcNmspc = osp.splitext(osp.basename(sAbcFilePath))[0]
+        sScnAbcNodeName = jobInfos.get("choice_label", sAbcNmspc) + "_AlembicNode"
 
         print ("\n" + (" " + sAstNmspc + " ").center(sepWidth, "-"))
 
         if not osp.isfile(sAbcFilePath):
-            pm.displayWarning("No such alembic file: '{}'".format(sAbcFilePath))
+            pm.displayError("No such alembic file: '{}'".format(sAbcFilePath))
             continue
 
         oAbcRef = None
@@ -1222,9 +1318,12 @@ def importCaches(sSpace, **kwargs):
 
         astToAbcXfmItems = getTransformMapping(sAstGeoGrp, sAbcNmspc, longName=True,
                                                consider=sCacheObjList)
+        #pprint(astToAbcXfmItems)
 
         astToAbcMeshItems = getMeshMapping(astToAbcXfmItems, longName=True,
                                            consider=sCacheObjList)
+
+        #pprint(astToAbcMeshItems)
 
         oAstRef = None #pm.PyNode(sAstGeoGrp).referenceFile()
         bStoreEdits = (oAstRef is not None) and (not bRefOnly) and (not bDryRun)
@@ -1245,7 +1344,12 @@ def importCaches(sSpace, **kwargs):
         transferXfmAttrs(astToAbcXfmItems, only=sCacheObjList, dryRun=bDryRun,
                          discardAttrs="visibility")
         try:
-            transferMeshShapes(astToAbcMeshItems, only=sCacheObjList, dryRun=bDryRun)
+            iChoiceIdx = jobInfos.get("choice_index")
+            print iChoiceIdx
+            res = transferMeshShapes(astToAbcMeshItems, only=sCacheObjList,
+                                     beforeHistory=bBeforeHist, choiceIndex=iChoiceIdx,
+                                     dryRun=bDryRun)
+            outData.setdefault(sAstGeoGrp, {}).setdefault("choice_nodes", []).extend(res)
         finally:
             if sAstNmspc in oFileRefDct:
                 for sNodeName in lsNodes(sAstNmspc + ":*", not_rn=True, nodeNames=True):
@@ -1258,8 +1362,9 @@ def importCaches(sSpace, **kwargs):
             sFoundList = mc.ls(sAbcNodeList, type="AlembicNode")
             if sFoundList:
                 sRefAbcNode = sFoundList[0]
-                sScnAbcNode = mc.duplicate(sRefAbcNode, ic=True)[0]
+                sScnAbcNode = mc.duplicate(sRefAbcNode, ic=True, n=sScnAbcNodeName)[0]
                 transferOutConnections(sRefAbcNode, sScnAbcNode)
+                outData.setdefault(sAstGeoGrp, {}).setdefault("alembic_nodes", []).append(sScnAbcNode)
             else:
                 sScnAbcNode = mc.createNode("AlembicNode", n=sScnAbcNodeName)
                 mc.setAttr(sScnAbcNode + ".abc_File", sAbcFilePath, type="string")
@@ -1315,7 +1420,7 @@ def importCaches(sSpace, **kwargs):
     if LOGGING_SETS:
         addLoggingSet("CACHE_IMPORT", LOGGING_SETS)
 
-    return True
+    return outData
 
 def removeCacheReferences():
 
