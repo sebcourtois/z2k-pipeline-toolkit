@@ -3,6 +3,8 @@
 import os
 import sys
 import argparse
+import time
+from urllib2 import URLError
 
 if __name__ == "__main__":
     os.environ["PYTHONINSPECT"] = "1"
@@ -27,7 +29,26 @@ def run():
 
     print "\nDO NOT CLOSE THIS WINDOW ! It will close by itself once the upload succeeded.."
 
-    sgEngine.sg.upload(ns.entityType, int(ns.entityId), ns.filePath, ns.fieldName)
+    attempt = -1
+    maxAttempts = 5
+    delay = 3
+    while (attempt < maxAttempts):
+        attempt += 1
+        try:
+            sgEngine.sg.upload(ns.entityType, int(ns.entityId), ns.filePath, ns.fieldName)
+        except URLError as e:
+            print e
+
+            if attempt == maxAttempts:
+                raise
+
+            print ("{}/{} retry in {} seconds...\n"
+                    .format(attempt + 1, maxAttempts, delay))
+            time.sleep(delay)
+        else:
+            print "Upload succeeded !"
+            break
+
     sys.exit()
 
 if __name__ == "__main__":
