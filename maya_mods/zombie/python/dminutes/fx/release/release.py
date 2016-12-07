@@ -30,7 +30,7 @@ def prepare(nodes,types,variants,blurOffset='0'):
 			releaseGroups.append(releaseGroup)
 
 		if 'lightning' in types:
-			MLGroup = releaseLib.createReleaseGroup('lightning',variants[i]+'MeshLights')
+			MLGroup = releaseLib.createReleaseGroup('lightning','meshlight')
 
 		#nodeType = findPrepareType(nodes)
 		nodeType = 'mesh'
