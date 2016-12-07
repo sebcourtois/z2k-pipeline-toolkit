@@ -321,6 +321,7 @@ def abcProgress(iCurFrame, iEndFrame):
     sys.stdout.write(sMsg)
 
 FRAME_RANGE_OPTS_ATTR = "ABC_frameRangeOpts"
+DEFAULT_FRAME_RANGE_OPTS = "-frs -0.25 -frs -0.125 -frs 0 -frs 0.125 -frs 0.25"
 
 def setMotionBlurFixEnabled(bEnable):
 
@@ -330,7 +331,7 @@ def setMotionBlurFixEnabled(bEnable):
         sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
         raise RuntimeError(sMsg)
 
-    sOpts = "-frs -0.25 -frs -0.125 -frs 0 -frs 0.125 -frs 0.25" if bEnable else ""
+    sOpts = DEFAULT_FRAME_RANGE_OPTS if bEnable else ""
     for sGeoGrp in sGeoGrpList:
         sObjAttr = sGeoGrp + "." + FRAME_RANGE_OPTS_ATTR
         if mc.objExists(sObjAttr):
@@ -436,6 +437,8 @@ def exportCaches(**kwargs):
         sRangeOptsAttr = sGeoGrp + "." + FRAME_RANGE_OPTS_ATTR
         if mc.objExists(sRangeOptsAttr):
             sFrameRangeOpts = mc.getAttr(sRangeOptsAttr)
+            if sFrameRangeOpts and sFrameRangeOpts.strip() == "-frs":
+                sFrameRangeOpts = DEFAULT_FRAME_RANGE_OPTS
 
         jobInfos = dict(root=sGeoGrp, file=sAbcFilePath,
                         frameRange=frameRange, frameRangeOpts=sFrameRangeOpts,
