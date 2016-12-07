@@ -30,7 +30,7 @@ def prepare(nodes,types,variants,blurOffset='0'):
 			releaseGroups.append(releaseGroup)
 
 		if 'lightning' in types:
-			MLGroup = releaseLib.createReleaseGroup('lightning','meshLights')
+			MLGroup = releaseLib.createReleaseGroup('lightning',variants[i]+'MeshLights')
 
 		#nodeType = findPrepareType(nodes)
 		nodeType = 'mesh'
@@ -81,7 +81,8 @@ def prepareMesh(nodes,types,variants,blurOffset,releaseGroups,MLGroup):
 	print ('[release.prepareMesh] - variants = ' + str(variants))
 	startFrame = str(cmds.playbackOptions(q=True,min=True)-1)
 	endFrame = str(cmds.playbackOptions(q=True,max=True)+1)
-	path = gcp.generatePrivateCachePath()
+	path = gcp.generatePrivateCachePath()[0]
+	print ('[release.prepareMesh] - path = ' + str(path))
 
 	fxgen.exportAlembic(nodes,startFrame,endFrame,path,types,variants,blurOffset,dataFormat='ogawa')
 
