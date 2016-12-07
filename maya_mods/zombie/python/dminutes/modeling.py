@@ -1944,3 +1944,27 @@ def rigProps(inRoot):
 
 
 
+
+
+
+def duplicateOnTargetList(sourceS="",targetL=[], instanciateB = True):
+    #exemple
+    #sourceS = "|source1|srcCube"
+    #targetL = mc.ls(type="transform", selection=True,l=True)
+    #duplicateOnTargetList(sourceS=sourceS,targetL=targetL)
+    oldObjL=[]
+    for each in targetL:
+        eachParentS = cmds.listRelatives (each, parent=True, f =True)
+        mtx = cmds.xform( each, q = True, ws = True, matrix = True )
+        eachOldS = cmds.rename (each,each.split("|")[-1]+"_old")
+        dupliS = cmds.duplicate(sourceS,rr= True, instanceLeaf=instanciateB, ic=True, name = each.split("|")[-1])
+        eachNew = cmds.ls(cmds.parent(dupliS,eachParentS),l=True)
+        cmds.xform( eachNew,  ws = True, matrix = mtx )
+        oldObjL.append(eachOldS)
+    cmds.select(oldObjL, r=True)
+
+
+
+
+
+

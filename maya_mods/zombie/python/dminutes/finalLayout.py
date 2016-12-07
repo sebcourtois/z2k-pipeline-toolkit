@@ -178,14 +178,14 @@ def createNukeBatch(gui=True):
     a 'renderBatch_help.txt' is also created to help on addind render options to the render command
 
     """
-    #sShotName = "sq6660_sh0050a"
+#    sShotName = "sq6660_sh0050a"
     sShotName = mc.getAttr('defaultRenderGlobals.imageFilePrefix')
     proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal")
     #shotgundb = proj._shotgundb
     damShot = proj.getShot(sShotName)
     sgTaskList = damShot.listSgTasks(moreFilters=[["content", "in", ("FL_Art", "Anim_MeshCache")]])
     pprint(sgTaskList[0])
-    if sgTaskList[0]['sg_status_list'] == "vwd" or sgTaskList[0]['sg_status_list'] == "rtk" :
+    if sgTaskList[0]['sg_status_list'] == "vwd" or sgTaskList[0]['sg_status_list'] == "rtk" or sgTaskList[0]['sg_status_list'] == "fin" :
         #print sgTaskList[1]['sg_status_list']
         sNewStatus = "clc"
         proj.updateSgEntity(sgTaskList[1], sg_status_list=sNewStatus)
