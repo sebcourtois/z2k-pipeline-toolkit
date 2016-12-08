@@ -49,6 +49,7 @@ def createSetFromSelection(items,name=None,type=None):
 
 def exportAlembic(itemLists,start,end,path,types,variants,frameRelativeSample='0',dataFormat='ogawa'):
 
+    print path
     print ('[fxGeneralLib.exportAlembic] - START')
     command=[None] * len(itemLists)
 

@@ -1717,6 +1717,8 @@ def rigSetRemove(gui = True, inRoot = "asset"):
 
     try:
         if mc.ls("asset|grp_rig", type = 'transform'):
+            toDeleteL = mc.ls("*_sCns",type='scaleConstraint')+mc.ls("*_prCns",type='parentConstraint')
+            mc.delete(toDeleteL)
             mc.delete("asset|grp_rig")
             log.printL("i", "rig removed")
         if mc.ls("set_meshCache", type = 'objectSet'):
