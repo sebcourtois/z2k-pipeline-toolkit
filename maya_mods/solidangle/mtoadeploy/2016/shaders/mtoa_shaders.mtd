@@ -238,3 +238,57 @@ linkable BOOL True
 softmin FLOAT 0
 softmax FLOAT 3
 desc STRING "Apply a gamma correction to the color."
+
+
+[node curvature]
+maya.id                 INT     0x00118F91
+maya.name               STRING  "aiCurvature"
+maya.classification     STRING  "shader/surface"
+maya.swatch             BOOL    True
+
+[attr output]
+desc STRING "Whether to output the convex (positive) curvature or concave (negative) curvature only as grayscale,"
+ "or output both with the convex curvature in the red channel and concave curvature in the green channel."
+
+[attr samples]
+desc STRING "Controls the number of rays that will be fired to compute the curvature. Increasing the number of samples "
+ "will reduce noise and give a better quality result. The actual number of rays is the square of this value."
+softmin INT 1
+softmin INT 10
+linkable BOOL True
+
+[attr radius]
+desc STRING "The radius of the sphere around the shading point within which the curvature will be estimated. "
+  "Smaller values show finer details, while larger values give a smoother result."
+softmin FLOAT 0
+softmax FLOAT 5
+linkable BOOL True
+
+[attr spread]
+linkable BOOL True
+softmin FLOAT 0
+softmax FLOAT 1
+min     FLOAT 0
+max     FLOAT 1
+desc STRING "Lower values of spread will shoot rays more vertically with respect to the surface, "
+"and the default value of 1 means that rays are shot in all directions."
+
+[attr threshold]
+linkable BOOL True
+softmin FLOAT 0
+softmax FLOAT 1
+min FLOAT 0
+max FLOAT 1
+
+[attr bias]
+linkable BOOL True
+softmin FLOAT 0
+softmax FLOAT 1
+desc STRING "The bias will affect the falloff of the curvature. With the default of 0.5, the curvature sample "
+"importance decreases linearly with the distance to the shading point."
+
+[attr multiply]
+linkable BOOL True
+softmin FLOAT 0
+softmax FLOAT 10
+desc STRING "Multiplies the curvature by this factor."

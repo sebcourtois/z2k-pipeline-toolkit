@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <using package='maya'/>
+    <template name='NEBE_TurbulenceNoise'>
+        <attribute name='inPosition' type='maya.vectorArray'>
+            <label>inPosition</label>
+        </attribute>
+        <attribute name='outPosition' type='maya.vectorArray'>
+            <label>outPosition</label>
+        </attribute>
+        <attribute name='outValue' type='maya.doubleArray'>
+            <label>outValue</label>
+        </attribute>
+    </template>
+    <view name='NEDefault' template='NEBE_TurbulenceNoise'>
+        <property name='inPosition'/>
+        <property name='outPosition'/>
+        <property name='outValue'/>
+    </view>
+</templates>

@@ -13,7 +13,7 @@ AEBE_VDBGetDataTemplate( string $nodeAttr )
             editorTemplate -callCustom "newBE_VDBGetDataGridSelection" "replaceBE_VDBGetDataGridSelection" "VdbAllGridNamesGetData";
             
             editorTemplate -addSeparator;
-            
+            editorTemplate -addControl "Dense";
             editorTemplate -addControl "IndexSpace";
 
             }

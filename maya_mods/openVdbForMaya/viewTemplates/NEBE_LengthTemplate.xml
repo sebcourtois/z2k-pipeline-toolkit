@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <using package='maya'/>
+    <template name='NEBE_Length'>
+        <attribute name='VectorInput' type='maya.vectorArray'>
+            <label>VectorInput</label>
+        </attribute>
+        <attribute name='Out' type='maya.doubleArray'>
+            <label>Out</label>
+        </attribute>        
+    </template>
+    <view name='NEDefault' template='NEBE_Length'>
+        <property name='VectorInput'/>
+        <property name='Out'/>
+    </view>
+</templates>

@@ -19,9 +19,13 @@ def doCreateStandInFile():
     node = createStandIn()
     LoadStandInButtonPush(node.name())
 
+
 def doExportStandIn():
     #Save the defaultType
+    core.createOptions()
     default = cmds.optionVar(q='defaultFileExportActiveType')
+    defaultBounds = cmds.getAttr('defaultArnoldRenderOptions.outputAssBoundingBox')
+    cmds.setAttr('defaultArnoldRenderOptions.outputAssBoundingBox', 1)
     try:
         #Change it to ASS
         cmds.optionVar(sv=('defaultFileExportActiveType', "ASS Export"))
@@ -29,11 +33,38 @@ def doExportStandIn():
     finally:
         cmds.optionVar(sv=('defaultFileExportActiveType', default))
 
+    cmds.setAttr('defaultArnoldRenderOptions.outputAssBoundingBox', defaultBounds)
+
 def doExportOptionsStandIn():
+    core.createOptions()
+    defaultBounds = cmds.getAttr('defaultArnoldRenderOptions.outputAssBoundingBox')
+    cmds.setAttr('defaultArnoldRenderOptions.outputAssBoundingBox', 1)
+
     pm.mel.eval('ExportSelectionOptions')
     pm.mel.eval('setCurrentFileTypeOption ExportActive "" "ASS Export"')
-    
-def doCreateMeshLight():
+
+    cmds.setAttr('defaultArnoldRenderOptions.outputAssBoundingBox', defaultBounds)
+
+def doCreateCurveCollector():
+    # Get selection and group the curves ?
+    sls = cmds.ls(sl=True, et='transform')
+    curveNode = mutils.createLocator('aiCurveCollector')
+
+    if len(sls) > 0:
+        for slsElem in sls:
+            print slsElem
+            shs = cmds.listRelatives(slsElem, type='nurbsCurve', allDescendents=True)
+            if shs is None:
+                continue
+            if len(shs):
+                for shsElem in shs:
+                    sts = cmds.listRelatives(shsElem, fullPath=True, parent=True)
+                    if len(sts) > 0:
+                        cmds.parent(sts, curveNode[1])
+                
+    cmds.select(curveNode, replace=True)
+
+def doCreateOldMeshLight():
     sls = cmds.ls(sl=True, et='transform')
     if len(sls) == 0:
         cmds.confirmDialog(title='Error', message='No transform is selected!', button='Ok')
@@ -46,8 +77,29 @@ def doCreateMeshLight():
         cmds.confirmDialog(title='Error', message='The selected transform has no meshes', button='Ok')
         return
     cmds.setAttr('%s.aiTranslator' % shs[0], 'mesh_light', type='string')
+ 
+def doCreateLightPortal():
 
-    
+    sls = cmds.ls(sl=False, et='aiSkyDomeLight')
+    if len(sls) == 0:
+        msg = "Light Portals need a "
+        msg += "SkyDome light in the scene"
+
+        result = cmds.confirmDialog(
+            title='No SkyDome Light found',
+            message=msg
+            #button=['OK', 'Cancel'],
+            #defaultButton='OK',
+            #cancelButton='Cancel',
+            #dismissString='Cancel'
+            )
+
+        return
+
+    mutils.createLocator('aiLightPortal', asLight=True)
+
+
+
 def arnoldAboutDialog():
     legaltext = "All use of this Software is subject to the terms and conditions of the software license agreement accepted upon installation of this Software and/or packaged with the Software.\n\
 \n\
@@ -100,9 +152,9 @@ Portions related to argparse that is part of OpenColorIO Copyright 2008 Larry Gr
     
     arnoldAboutText =  u"Arnold for Maya\n\n"
     arnoldAboutText += "MtoA " + cmds.pluginInfo( 'mtoa', query=True, version=True)
-    arnoldMercurialID = cmds.arnoldPlugins(getMercurialID=True)
-    if not '(Master)' in arnoldMercurialID:
-        arnoldAboutText += " - " + arnoldMercurialID
+    arnoldBuildID = cmds.arnoldPlugins(getBuildID=True)
+    if not '(Master)' in arnoldBuildID:
+        arnoldAboutText += " - " + arnoldBuildID
     arnoldAboutText += "\nArnold Core "+".".join(ai.AiGetVersion())+"\n\n"
     arnoldAboutText += u"Copyright (c) 2001-2009 Marcos Fajardo and\nCopyright (c) 2009-2016 Solid Angle  S.L.\nAll rights reserved\n\n"
     arnoldAboutText += u"Developed by: Ángel Jimenez, Olivier Renouard, Yannick Puech,\nBorja Morales, Nicolas Dumay, Pedro Fernando Gomez,\nPál Mezei, Sebastien Ortega\n\n"
@@ -266,6 +318,11 @@ def arnoldTxManager():
     win = mtoa.txManager.MtoATxManager()
     win.create()
     win.refreshList()
+
+def arnoldUpdateTx():
+    core.createOptions()
+    cmds.arnoldUpdateTx()
+    
     
 def arnoldLightManager():
     win = mtoa.lightManager.MtoALightManager()
@@ -286,12 +343,15 @@ def arnoldRenderToTexture():
     win = mtoa.renderToTexture.MtoARenderToTexture()
     win.create()
 
+def arnoldOpenMtoARenderView():
+    core.createOptions()
+    cmds.arnoldRenderView(mode ="open")
+
 def arnoldMtoARenderView():
     # core.ACTIVE_CAMERA is not set, anything we could do here ?
     #if core.ACTIVE_CAMERA != None:
     #    cmds.arnoldRenderView(cam=core.ACTIVE_CAMERA)
     # so instead we're calling it without any argument
-
     core.createOptions()
     cmds.arnoldRenderView()
 
@@ -304,8 +364,11 @@ def createArnoldMenu():
         else:
             pm.menu('ArnoldMenu', label='Arnold', parent='MayaWindow', tearOff=True, version="2017" )
 
-        pm.menuItem('ArnoldMtoARenderView', label='Arnold RenderView', parent='ArnoldMenu',
+        pm.menuItem('ArnoldRender', label='Render', parent='ArnoldMenu',
                     c=lambda *args: arnoldMtoARenderView())
+        
+        pm.menuItem('ArnoldMtoARenderView', label='Arnold RenderView', parent='ArnoldMenu',
+                    c=lambda *args: arnoldOpenMtoARenderView())
         pm.menuItem(parent='ArnoldMenu', divider=True)
 
         pm.menuItem('ArnoldStandIn', label='StandIn', parent='ArnoldMenu', subMenu=True, tearOff=True)
@@ -325,10 +388,11 @@ def createArnoldMenu():
         pm.menuItem('SkydomeLight', parent='ArnoldLights', label="Skydome Light",
                     c=lambda *args: mutils.createLocator('aiSkyDomeLight', asLight=True))
         pm.menuItem('ArnoldMeshLight', parent='ArnoldLights', label='Mesh Light',
-                    c=lambda *args: doCreateMeshLight())
+                    c=lambda *args: mutils.createMeshLight())
         pm.menuItem('PhotometricLights', parent='ArnoldLights', label="Photometric Light",
                     c=lambda *args: mutils.createLocator('aiPhotometricLight', asLight=True))
-
+        pm.menuItem('LightPortal', parent='ArnoldLights', label="Light Portal",
+                    c=lambda *args: doCreateLightPortal())
         pm.menuItem(parent='ArnoldLights', divider=True)
 
         pm.menuItem('MayaDirectionalLight', parent='ArnoldLights', label="Maya Directional Light",
@@ -339,13 +403,17 @@ def createArnoldMenu():
                     c=lambda *args: cmds.CreateSpotLight())
         pm.menuItem('MayaQuadLight', parent='ArnoldLights', label="Maya Quad Light",
                     c=lambda *args: cmds.CreateAreaLight())
-                    
+        
+        pm.menuItem('CurveCollector', label='Curve Collector', parent='ArnoldMenu',
+                    c=lambda *args: doCreateCurveCollector())
         pm.menuItem('ArnoldVolume', label='Volume', parent='ArnoldMenu',
                     c=lambda *args: createVolume())
                     
         pm.menuItem('ArnoldFlush', label='Flush Caches', parent='ArnoldMenu', subMenu=True, tearOff=True)
         pm.menuItem('ArnoldFlushTexture', parent='ArnoldFlush', label="Textures",
                     c=lambda *args: cmds.arnoldFlushCache(textures=True))
+        pm.menuItem('ArnoldFlushSelectedTextures', parent='ArnoldFlush', label="Selected Textures",
+                    c=lambda *args: cmds.arnoldFlushCache(selected_textures=True))
         pm.menuItem('ArnoldFlushBackground', parent='ArnoldFlush', label="Skydome Lights",
                     c=lambda *args: cmds.arnoldFlushCache(skydome=True))
         pm.menuItem('ArnoldFlushQuads', parent='ArnoldFlush', label="Quad Lights",
@@ -358,8 +426,10 @@ def createArnoldMenu():
                     c=lambda *args: arnoldBakeGeo())
         pm.menuItem('ArnoldRenderToTexture', label='Render Selection To Texture', parent='ArnoldUtilities',
                     c=lambda *args: arnoldRenderToTexture())
-        pm.menuItem('ArnoldTxManager', label='Tx Manager', parent='ArnoldUtilities',
+        pm.menuItem('ArnoldTxManager', label='TX Manager', parent='ArnoldUtilities',
                     c=lambda *args: arnoldTxManager())                    
+        pm.menuItem('ArnoldUpdateTx', label='Update TX Files', parent='ArnoldUtilities',
+                    c=lambda *args: arnoldUpdateTx())                    
         pm.menuItem('ArnoldLightManager', label='Light Manager', parent='ArnoldUtilities',
                     c=lambda *args: arnoldLightManager())
 

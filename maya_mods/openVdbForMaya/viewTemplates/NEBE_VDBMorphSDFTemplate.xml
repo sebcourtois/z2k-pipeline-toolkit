@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <using package='maya'/>
+    <template name='NEBE_VDBMorphSDF'>
+        <attribute name='VdbInputSource' type='maya.OpenVDBData'>
+            <label>VdbInputSource</label>
+        </attribute>
+        <attribute name='VdbInputTarget' type='maya.OpenVDBData'>
+            <label>VdbInputTarget</label>
+        </attribute> 
+        <attribute name='VdbInputAlphaMask' type='maya.OpenVDBData'>
+            <label>VdbInputAlphaMask</label>
+        </attribute>                
+        <attribute name='VdbOutput' type='maya.OpenVDBData'>
+            <label>VdbOutput</label>
+        </attribute>
+    </template>
+    <view name='NEDefault' template='NEBE_VDBMorphSDF'>
+        <property name='VdbInputSource'/>
+        <property name='VdbInputTarget'/>
+        <property name='VdbInputAlphaMask'/>
+        <property name='VdbOutput'/>
+    </view>
+</templates>

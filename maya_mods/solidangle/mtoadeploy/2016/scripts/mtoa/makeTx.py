@@ -6,6 +6,7 @@ import subprocess
 import maya.cmds as cmds
 import shlex
 from arnold import *
+import os.path
 import pymel.versions as versions
 
 # FIXME As of Arnold 4.2.13.6 the texture API functions have no binding yet
@@ -48,8 +49,12 @@ _token_generic_rx = re.compile('<[^>]*>')
 def expandFilename(filename):
 
     if filename.find('<') < 0:
-        #no tokens, let's just return the filename in a single-element array
-        return [filename]
+        #no tokens, let's just return the filename in a single-element array if this file exists
+        #(otherwise an empty array)
+        if os.path.isfile(filename):
+            return [filename]
+
+        return []
 
 
     '''Return a list of image filenames with all tokens expanded.
@@ -58,20 +63,27 @@ def expandFilename(filename):
     '''
     expand_glob = re.sub(_token_generic_rx, '*', filename)
     
-#    expand_glob = re.sub(_token_udim_rx, '[1-9][0-9][0-9][0-9]', filename)
-#    expand_glob = re.sub(_token_tile_rx, '_u[0-9]*_v[0-9]*', expand_glob)
-#    expand_glob = re.sub(_token_attr_rx, '*', expand_glob)
+    expanded_list =  glob.glob(expand_glob)
+    for expanded_img in expanded_list:
+        if os.path.splitext(expanded_img)[1] != '.tx':
+            # don't invalidate .tx files
+            AiTextureInvalidate(expanded_img)
+    
+    return expanded_list
+
+    # FIXME : we're skipping the code below that used to filter only the image files
+    # because of the AiTextureGetFormat bug explained in #2675 .
+    # However, most of the time the extension is still explicitely written in the filename
+    # (e.g. image<token>.tif) so it might not be a big problem to skip the filter
     
     # testing AiTextureGetFormat to make sure the file is a valid image causes an image load.
-    # Either we discard it after calling this function, or we simply don't do the check.
-    # let's try the first option for now....
-    filteredList = filter(lambda p: AiTextureGetFormat(p), glob.glob(expand_glob))
-    for filteredImg in filteredList:
-        if os.path.splitext(filteredImg)[1] != '.tx':
-            # don't invalidate .tx files
-            AiTextureInvalidate(filteredImg)
+    #filteredList = filter(lambda p: AiTextureGetFormat(p), glob.glob(expand_glob))
+    #for filteredImg in filteredList:
+    #    if os.path.splitext(filteredImg)[1] != '.tx':
+    #        # don't invalidate .tx files
+    #        AiTextureInvalidate(filteredImg)
 
-    return filteredList
+    #return filteredList
 
 
 def guessColorspace(filename):

@@ -7,8 +7,8 @@
   </property>
   <property name="geometry">
    <rect>
-    <x>0</x>
-    <y>0</y>
+    <x>100</x>
+    <y>100</y>
     <width>682</width>
     <height>508</height>
    </rect>
@@ -38,7 +38,7 @@
      <x>10</x>
      <y>30</y>
      <width>351</width>
-     <height>421</height>
+     <height>431</height>
     </rect>
    </property>
    <property name="title">
@@ -122,11 +122,33 @@
      <string>mtoa.txManager.MtoATxManager.use.selectNonTx</string>
     </property>
    </widget>
+   <widget class="QRadioButton" name="radioButton_3">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>385</y>
+      <width>141</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Show Full Paths</string>
+    </property>
+    <property name="+onCommand" stdset="0">
+     <string>mtoa.txManager.MtoATxManager.use.showFullPathChange</string>
+    </property>
+    <property name="+offCommand" stdset="0">
+     <string>mtoa.txManager.MtoATxManager.use.showFullPathChange</string>
+    </property>
+    <attribute name="buttonGroup2">
+     <string notr="true">buttonGroup2</string>
+    </attribute>
+   </widget>
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>390</y>
+      <y>405</y>
       <width>151</width>
       <height>20</height>
      </rect>

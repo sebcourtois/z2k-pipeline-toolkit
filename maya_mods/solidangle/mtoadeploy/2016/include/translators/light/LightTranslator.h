@@ -5,23 +5,29 @@
 class DLLEXPORT CLightTranslator
    :   public CDagTranslator
 {
-public:
 
-   virtual AtNode* Init(CArnoldSession* session, MDagPath& dagPath, MString outputAttr="")
-   {
-      CDagTranslator::Init(session, dagPath, outputAttr);
-      return m_atNode;
-   }
-   virtual bool RequiresMotionData()
-   {
-      return m_session->IsMotionBlurEnabled(MTOA_MBLUR_LIGHT);
-   }
-   static AtRGB ConvertKelvinToRGB(float kelvin);
+/** \class CLightTranslator
+ A Translator class that exports Maya Light nodes
+
+ \see CDagTranslator
+*/
+public:
+   virtual bool RequiresMotionData();
 protected:
-   virtual bool IsMayaTypeLight() { return true; }
    virtual void Export(AtNode* light);
-   virtual void ExportMotion(AtNode* light, unsigned int step);
-   virtual void Delete();
-   virtual bool IsFinite() const { return true; } // to decide if scaling is required or not
-   static void MakeCommonAttributes(CBaseAttrHelper& helper);   
+   virtual void ExportMotion(AtNode* light);
+   virtual void NodeChanged(MObject& node, MPlug& plug);
+
+//--------
+
+   /// Infinite / Directional lights must return false. This determines if scaling is taken into account
+   virtual bool IsFinite() const { return true; } 
+
+   /// static function that adds the attributes that are common to all Lights in arnold
+   static void MakeCommonAttributes(CBaseAttrHelper& helper);
+
+
+public:
+   /// handles the color temperature conversion to RGB
+   static AtRGB ConvertKelvinToRGB(float kelvin);
 };

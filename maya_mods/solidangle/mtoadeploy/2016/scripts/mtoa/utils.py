@@ -397,6 +397,11 @@ def getFileName(pathType, tokens, path='<Scene>', frame=None, fileType='images',
             if res is not None:
                 path = res
 
+    # Use display name for render layer
+    layerName = tokens.get('RenderLayer', None)
+    if layerName and mel.eval('exists renderLayerDisplayName'):
+        tokens['RenderLayer'] = mel.eval('renderLayerDisplayName ' + layerName)
+
     #print path, tokens
     partialPath = expandFileTokens(path, tokens, leaveUnmatchedTokens=leaveUnmatchedTokens)
     if pathType in [pm.api.MCommonRenderSettingsData.kRelativePath, 'relative']:
@@ -491,6 +496,70 @@ def createLocator(locatorType, asLight=False):
         pm.createNode(locatorType, name=shapeName, parent=lNode)       
     return (shapeName, lName)
 
+# in theory we could merge this function with the one above easily,
+# but we need to make sure first it's not breaking other calls
+def createLocatorWithName(locatorType, nodeName, asLight=False):
+    
+    lNode = pm.createNode('transform', name='%s' % nodeName)
+    lName = lNode.name()
+    lId = lName[len(locatorType):]
+    shapeName = '%sShape' % nodeName
+    if asLight:
+        cmds.shadingNode(locatorType, name=shapeName, parent=lName, asLight=True)
+    else:
+        pm.createNode(locatorType, name=shapeName, parent=lNode)       
+    return (shapeName, lName)
+
+
+def createMeshLight(legacy=False, centerPivot=True):
+    sls = cmds.ls(sl=True, et='transform')
+    if len(sls) == 0:
+        cmds.confirmDialog(title='Error', message='No transform is selected!', button='Ok')
+        return
+    meshTransform = sls[0]
+    shs = cmds.listRelatives(meshTransform, type='mesh')
+    if shs is None or len(shs) == 0:
+        cmds.confirmDialog(title='Error', message='The selected transform has no meshes', button='Ok')
+        return
+    meshShape = shs[0]
+    if legacy:
+        cmds.setAttr('%s.aiTranslator' % meshShape, 'mesh_light', type='string')
+    else:
+        # Make sure the shape has not been converted already
+        existing = cmds.listConnections('%s.outMesh' % meshShape, shapes=True, type='aiMeshLight')
+        if existing and len(existing) > 0:
+            cmds.confirmDialog(title='Error', message='Mesh light already created!', button='Ok')
+            return
+
+        # Make sure the shape has only a single parent
+        # Multiple light instances are not supported
+        allPaths = cmds.listRelatives(meshShape, allParents=True, fullPath=True)
+        if len(allPaths) != 1:
+            cmds.confirmDialog(title='Error', message='The mesh has multiple instances. Light instances are not supported!', button='Ok')
+            return
+
+        lightName = 'light_%s' % meshTransform
+        (lightShape,lightTransform) = createLocatorWithName('aiMeshLight', nodeName=lightName, asLight=True)
+
+        cmds.connectAttr('%s.outMesh' % meshShape, '%s.inMesh' % lightShape)
+
+        cmds.parent(lightTransform, meshTransform, relative=True)
+        
+        # Hide the original mesh using the visibility attribute
+        # We previously used lodVisibility to keep the dirtiness propagation enabled,
+        # but I can't manage to find a situation that fails. So we're now using visibility
+
+        #cmds.connectAttr('%s.showOriginalMesh' % lightShape, '%s.lodVisibility' % meshShape)
+        cmds.connectAttr('%s.showOriginalMesh' % lightShape, '%s.visibility' % meshShape)
+
+        # FIXME : we shouldn't have to do this, but otherwise it takes a couple of tweaks on
+        # showOriginalMesh before seeing its effect
+        cmds.setAttr('%s.showOriginalMesh' % lightShape, 1)
+        cmds.setAttr('%s.showOriginalMesh' % lightShape, 0)
+
+
+        cmds.select(lightTransform)
+
 def getSourceImagesDir():
     sourceImagesRule = cmds.workspace(fileRuleEntry='sourceImages')
     if sourceImagesRule != None:
@@ -503,6 +572,9 @@ def getSourceImagesDir():
         return [cmds.workspace(expandName='sourceimages')]
 
 def getActiveRenderLayerName():
+    if not cmds.objExists('renderLayerManager.renderLayerId'):
+        return ''
+        
     renderLayers = cmds.listConnections('renderLayerManager.renderLayerId')
     if (len(renderLayers) > 1):
         layer = cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)

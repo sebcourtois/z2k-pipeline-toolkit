@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <using package='maya'/>
+    <template name='NEBE_MathFlt'>
+        <attribute name='Out' type='maya.doubleArray'>
+            <label>Out</label>
+        </attribute>
+        <attribute name='InA' type='maya.doubleArray'>
+            <label>InA</label>
+        </attribute>
+        <attribute name='InB' type='maya.doubleArray'>
+            <label>InB</label>
+        </attribute>
+    </template>
+    <view name='NEDefault' template='NEBE_MathFlt'>
+        <property name='Out'/>
+        <property name='InA'/>
+        <property name='InB'/>
+    </view>
+</templates>

@@ -1,0 +1,22 @@
+
+
+global proc
+AEBE_FloatToDoubleTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_FloatToDouble" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+
+

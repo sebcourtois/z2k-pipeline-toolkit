@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <using package='maya'/>
+    <template name='NEBE_VDBConvertVDB'>
+        <attribute name='vdbInput' type='maya.OpenVDBData'>
+            <label>vdbInput</label>
+        </attribute>
+        <attribute name='VdbOutput' type='maya.OpenVDBData'>
+            <label>VdbOutput</label>
+        </attribute>        
+        <attribute name='meshOutput' type='maya.mesh'>
+            <label>meshOutput</label>
+        </attribute>
+    </template>
+    <view name='NEDefault' template='NEBE_VDBConvertVDB'>
+        <property name='vdbInput'/>
+        <property name='VdbOutput'/>
+        <property name='meshOutput'/>
+    </view>
+</templates>

@@ -139,7 +139,26 @@ global proc browseForVDBFile( string $filePathAttr )
     }
 }
 
+global proc
+AEAT_ArnoldRenderUpdateEnabled( string $node )
+{
 
+    int $ProceduralType = `getAttr ($node+".ProceduralType")`;
+
+    if ($ProceduralType == 0) 
+	{
+        editorTemplate -dimControl $node "Solver" 1;
+		editorTemplate -dimControl $node "Threshold" 1;
+        editorTemplate -dimControl $node "Samples" 1;
+	}
+    if ($ProceduralType == 1) 
+	{
+        editorTemplate -dimControl $node "Solver" 0;
+		editorTemplate -dimControl $node "Threshold" 0;
+        editorTemplate -dimControl $node "Samples" 0;
+	}
+
+}
 ///////////////////////////////////////////////////////////
 global proc AEBE_VDBArnoldRenderTemplate(string $nodeName)
 {
@@ -170,8 +189,13 @@ editorTemplate -endNoOptimize;
 editorTemplate -endLayout;
 
 editorTemplate -beginLayout "Procedural Settings" -collapse 1;
+editorTemplate -label "Procedural Type" -addControl "ProceduralType" "AEAT_ArnoldRenderUpdateEnabled";
+editorTemplate -label "Solver" -addControl "Solver" "AEAT_ArnoldRenderUpdateEnabled";
+editorTemplate -label "Threshold" -addControl "Threshold" "AEAT_ArnoldRenderUpdateEnabled";
+editorTemplate -label "Samples" -addControl "Samples" "AEAT_ArnoldRenderUpdateEnabled";
 
 editorTemplate -label "Velocity Scale" -addControl "VelocityScale";
+editorTemplate -label "Velocity Threshold " -addControl "VelocityThreshold";
 editorTemplate -label "Padding" -addControl "Padding";
 
 editorTemplate -label "UseVolumeStep" -addControl "UseStep";

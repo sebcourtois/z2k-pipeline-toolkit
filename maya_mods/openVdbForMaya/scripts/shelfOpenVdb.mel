@@ -10,8 +10,6 @@ shelfTabRefresh;
 if(`shelfButton -exists sh1`) deleteUI -control sh1;
 shelfTabRefresh;
 
-if (!`shelfLayout -q -ex OpenVdb`) return;
-
 shelfButton -p OpenVdb -image1 "OpenVdbNode.xpm" -command "shelfOpenVdb" sh1;
 // add popup menu
 popupMenu -button 1 OpenVdbMenu;
@@ -32,12 +30,14 @@ menuItem -p OpenVdbMenu -l "BE_VDBConvertVDB" -command "BE_VDBConvertVDB";
 menuItem -p OpenVdbMenu -l "BE_VDBFill" -command "BE_VDBFill";
 menuItem -p OpenVdbMenu -l "BE_VDBFilter" -command "BE_VDBFilter";
 menuItem -p OpenVdbMenu -l "BE_VDBFilterSDF" -command "BE_VDBFilterSDF";
+menuItem -p OpenVdbMenu -l "BE_VDBNoise" -command "BE_VDBNoise";
 menuItem -p OpenVdbMenu -l "BE_VDBFlowNoise" -command "BE_VDBFlowNoise";
 menuItem -p OpenVdbMenu -l "BE_VDBFracture" -command "BE_VDBFracture";
 menuItem -p OpenVdbMenu -l "BE_VDBFromMask" -command "BE_VDBFromMask";
 menuItem -p OpenVdbMenu -l "BE_VDBFromMayaFluid" -command "BE_VDBFromMayaFluid";
 menuItem -p OpenVdbMenu -l "BE_VDBFromParticles" -command "BE_VDBFromParticles";
 menuItem -p OpenVdbMenu -l "BE_VDBFromPolygons" -command "BE_VDBFromPolygons";
+menuItem -p OpenVdbMenu -l "BE_VDBToMayaFluid" -command "BE_VDBToMayaFluid";
 menuItem -p OpenVdbMenu -l "BE_VDBGetData" -command "BE_VDBGetData";
 menuItem -p OpenVdbMenu -l "BE_VDBMorphSDF" -command "BE_VDBMorphSDF";
 menuItem -p OpenVdbMenu -l "BE_VDBRay" -command "BE_VDBRay";
@@ -57,9 +57,12 @@ menuItem -p OpenVdbMenu -l "BE_VDBVectorSplit" -command "BE_VDBVectorSplit";
 menuItem -p OpenVdbMenu -l "BE_VDBVisualize" -command "BE_VDBVisualize";
 menuItem -p OpenVdbMenu -l "BE_VDBArnoldRender" -command "BE_VDBArnoldRender";
 
+
+menuItem -p OpenVdbMenu -l "BE_BifrostToArray" -command "BE_BifrostToArray";
 menuItem -p OpenVdbMenu -l "BE_MathFlt" -command "BE_MathFlt";
 menuItem -p OpenVdbMenu -l "BE_MathVec" -command "BE_MathVec";
 menuItem -p OpenVdbMenu -l "BE_Fit" -command "BE_Fit";
+menuItem -p OpenVdbMenu -l "BE_Length" -command "BE_Length";
 menuItem -p OpenVdbMenu -l "BE_Ramp" -command "BE_Ramp";
 menuItem -p OpenVdbMenu -l "BE_Switch" -command "BE_Switch";
 menuItem -p OpenVdbMenu -l "BE_FloatToVector" -command "BE_FloatToVector";
@@ -150,6 +153,11 @@ global proc BE_VDBFilterSDF()
 createNode  BE_VDBFilterSDF;
 }
 
+global proc BE_VDBNoise()
+{
+createNode  BE_VDBNoise;
+}
+
 global proc BE_VDBFlowNoise()
 {
 createNode  BE_VDBFlowNoise;
@@ -178,6 +186,24 @@ createNode  BE_VDBFromParticles;
 global proc BE_VDBFromPolygons()
 {
 createNode  BE_VDBFromPolygons;
+}
+
+global proc BE_VDBToMayaFluid()
+{
+
+string $fluidNode = `createNode -n "fluidShape#" fluidShape`;
+select $fluidNode;
+string $obj[] = `ls -sl`;
+string $parents[] = `listRelatives -fullPath -parent $obj[0]`;
+
+string $VDBToMayaFluid = `createNode  BE_VDBToMayaFluid`;
+connectAttr ($VDBToMayaFluid+".PlayFromCashe") ($fluidNode+".playFromCache");
+setAttr -type "string" ($VDBToMayaFluid+".FluidNodeName") $obj[0];
+
+connectAttr ($VDBToMayaFluid+".Scale") ($parents[0]+".scale");
+connectAttr ($VDBToMayaFluid+".Translate") ($parents[0]+".translate");
+connectAttr ($VDBToMayaFluid+".Rotate") ($parents[0]+".rotate");
+
 }
 
 global proc BE_VDBGetData()
@@ -273,6 +299,11 @@ global proc BE_VDBArnoldRender()
 BE_VDBArnoldRenderCreate;
 }
 
+global proc BE_BifrostToArray()
+{
+createNode  BE_BifrostToArray;
+}
+
 global proc BE_MathFlt()
 {
 createNode  BE_MathFlt;
@@ -286,6 +317,11 @@ createNode  BE_MathVec;
 global proc BE_Fit()
 {
 createNode  BE_Fit;
+}
+
+global proc BE_Length()
+{
+createNode  BE_Length;
 }
 
 global proc BE_Ramp()
