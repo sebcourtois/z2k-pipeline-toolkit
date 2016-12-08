@@ -29,6 +29,7 @@ class MtoALightManager(object):
             callbacks.addNodeAddedCallback(callbacks.Callback(self.refreshUI), 'aiAreaLight', applyToExisting=False)
             callbacks.addNodeAddedCallback(callbacks.Callback(self.refreshUI), 'aiSkyDomeLight', applyToExisting=False)
             callbacks.addNodeAddedCallback(callbacks.Callback(self.refreshUI), 'aiPhotometricLight', applyToExisting=False)
+            callbacks.addNodeAddedCallback(callbacks.Callback(self.refreshUI), 'aiMeshLight', applyToExisting=False)
             callbacks.addAttributeChangedCallback(self.meshTranslatorChanged, 'mesh', 'aiTranslator', applyToExisting=True)
             
             callbacks.addNodeRemovedCallback(self.deleteLight, 'directionalLight', applyToExisting=False)
@@ -38,6 +39,7 @@ class MtoALightManager(object):
             callbacks.addNodeRemovedCallback(self.deleteLight, 'aiAreaLight', applyToExisting=False)
             callbacks.addNodeRemovedCallback(self.deleteLight, 'aiSkyDomeLight', applyToExisting=False)
             callbacks.addNodeRemovedCallback(self.deleteLight, 'aiPhotometricLight', applyToExisting=False)
+            callbacks.addNodeRemovedCallback(self.deleteLight, 'aiMeshLight', applyToExisting=False)
             callbacks.addNodeRemovedCallback(self.deleteMeshLight, 'mesh', applyToExisting=False)
             
             callbacks.addNameChangedCallback(callbacks.Callback(self.refreshUI), 'directionalLight', applyToExisting=True)
@@ -47,23 +49,9 @@ class MtoALightManager(object):
             callbacks.addNameChangedCallback(callbacks.Callback(self.refreshUI), 'aiAreaLight', applyToExisting=True)
             callbacks.addNameChangedCallback(callbacks.Callback(self.refreshUI), 'aiSkyDomeLight', applyToExisting=True)
             callbacks.addNameChangedCallback(callbacks.Callback(self.refreshUI), 'aiPhotometricLight', applyToExisting=True)
+            callbacks.addNameChangedCallback(callbacks.Callback(self.refreshUI), 'aiMeshLight', applyToExisting=True)
             callbacks.addNameChangedCallback(callbacks.Callback(self.refreshUI), 'mesh', applyToExisting=True)
-        
-        
-    def doCreateMeshLight(self):
-        sls = cmds.ls(sl=True, et='transform')
-        if len(sls) == 0:
-            cmds.confirmDialog(title='Error', message='No transform is selected!', button='Ok')
-            return
-        shs = cmds.listRelatives(sls[0], type='mesh')
-        if shs is None:
-            cmds.confirmDialog(title='Error', message='The selected transform has no meshes', button='Ok')
-            return
-        elif len(shs) == 0:
-            cmds.confirmDialog(title='Error', message='The selected transform has no meshes', button='Ok')
-            return
-        cmds.setAttr('%s.aiTranslator' % shs[0], 'mesh_light', type='string')
-        
+
     def create(self):
         if cmds.window(self.window, exists=True):
             cmds.deleteUI(self.window);
@@ -120,6 +108,10 @@ class MtoALightManager(object):
         for light in list:
             self.listElements.append(['PhotometricLightShelf',light])
             
+        list = cmds.ls(type='aiMeshLight')
+        for light in list:
+            self.listElements.append(['MeshLightShelf',light])
+            
         list = cmds.ls(type='mesh')
         for mesh in list:
             if cmds.getAttr(mesh+'.aiTranslator') == 'mesh_light':
@@ -143,7 +135,7 @@ class MtoALightManager(object):
         cmds.nodeIconButton( style='iconOnly', command=lambda *args: mutils.createLocator('aiAreaLight', asLight=True), image1='AreaLightShelf.png' )
         cmds.nodeIconButton( style='iconOnly', command=lambda *args: mutils.createLocator('aiSkyDomeLight', asLight=True), image1='SkydomeLightShelf.png' )
         cmds.nodeIconButton( style='iconOnly', command=lambda *args: mutils.createLocator('aiPhotometricLight', asLight=True), image1='PhotometricLightShelf.png' )
-        cmds.nodeIconButton( style='iconOnly', command=lambda *args: self.doCreateMeshLight(), image1='MeshLightShelf.png' )
+        cmds.nodeIconButton( style='iconOnly', command=lambda *args: mutils.createMeshLight(), image1='MeshLightShelf.png' )
         cmds.setParent('..')
         cmds.separator()
         cmds.setParent('..')

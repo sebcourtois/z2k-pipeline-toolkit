@@ -300,10 +300,11 @@ try:
             else:
                 # The first item in the returned list of connections should be the attached aiAOV node.
                 aiAOVNode = cmds.listConnections(aovNode)[0]
+                nodeType = cmds.nodeType(aiAOVNode)
                 if nodeType == "aiAOV":
                     return self.getAOVName(aiAOVNode)
                 else:
-                    raise ValueError(_L10N(kAiAOVNodeNotFound, 'The attached item is not an aiAOV node as required.'))
+                    raise ValueError('The attached item is not an aiAOV node as required.')
 
         # Creates a selector for the AOV Collection that selects all aovNodes (aiAOV, aiAOVDriver, aiAOVFilter nodes)
         def getCollectionSelector(self, selectorName):

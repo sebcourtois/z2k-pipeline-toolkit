@@ -7,7 +7,7 @@
 #endif
 
 #include <sys/timeb.h>
-
+#include <stdio.h>
 #include <ai_types.h>
 #include <ai_nodes.h>
 #include <ai_node_entry.h>

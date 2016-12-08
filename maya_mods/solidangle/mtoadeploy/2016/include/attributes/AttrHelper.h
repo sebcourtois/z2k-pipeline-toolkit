@@ -1,6 +1,8 @@
 #pragma once
 
 #include "platform/Platform.h"
+#include "common/UnorderedContainer.h"
+
 #include <ai_node_entry.h>
 #include <ai_params.h>
 #include <ai_metadata.h>
@@ -243,7 +245,7 @@ protected:
    const AtNodeEntry* m_nodeEntry;
    int m_attrNum;
    MString m_prefix;
-   std::map<std::string, MObject> m_attributes;
+   unordered_map<std::string, MObject> m_attributes;
    virtual MStatus addAttribute(MObject& attrib){return MStatus::kFailure;};
 
 };
@@ -361,11 +363,13 @@ public:
          AiMsgWarning("[mtoa.attr] CExtensionAttrHelper was passed an unknown Maya node type \"%s\"",
                       mayaNodeClassName.asChar());
       }
+      /*
+      FIXME : commenting out because of light portals which dump a warning here. Verify what has to be done !
       if (m_nodeEntry == NULL)
       {
          AiMsgWarning("[mtoa.attr] CExtensionAttrHelper was passed an unknown Arnold node type \"%s\" for Maya node type \"%s\"",
                       arnoldNodeEntryName.asChar(), mayaNodeClassName.asChar());
-      }
+      }*/
       if (addCommonAttributes)
          AddCommonAttributes();
    }

@@ -1,0 +1,269 @@
+
+
+global proc
+AEBE_VDBToMayaFluidTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+            editorTemplate -beginLayout "BE_VDB To Maya Fluid" -collapse 0;
+            editorTemplate -beginNoOptimize;
+            {
+            editorTemplate -addControl "FluidNodeName";
+            editorTemplate -addControl "ReduseResolution";
+            editorTemplate -addControl "UseDensity";
+            editorTemplate -callCustom "newBE_VDBDenseGridSelection" "replaceBE_VDBDenseGridSelection" "VdbDenseGridNames";
+            editorTemplate -addControl "UseTemperature";
+            editorTemplate -callCustom "newBE_VDBTemperGridSelection" "replaceBE_VDBTemperGridSelection" "VdbTemperGridNames";
+            editorTemplate -addControl "UseVelocity";
+            editorTemplate -callCustom "newBE_VDBVelGridSelection" "replaceBE_VDBVelGridSelection" "VdbVelGridNames";
+            editorTemplate -addControl "UseColor";
+            editorTemplate -callCustom "newBE_VDBColorGridSelection" "replaceBE_VDBColorGridSelection" "VdbColorGridNames";
+            editorTemplate -addControl "PlayFromCashe";
+
+            editorTemplate -addSeparator;
+            
+            //editorTemplate -addControl "NearestNeighbor";
+
+            }
+        editorTemplate -endNoOptimize;
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}
+///////////////////////////////////////////////////////////////Dense
+global proc newBE_VDBDenseGridSelection(string $attr)
+{
+    optionMenu
+        -label "Density Grid:        "
+        -width 300
+        -changeCommand ("updateBE_VDBDenseGridSelection( \""+$attr+"\" )")
+        VdbDenseGridNamesMenu;
+
+    replaceBE_VDBDenseGridSelection($attr);
+}
+
+global proc replaceBE_VDBDenseGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBDenseGridSelection( \""+$attr+"\" )") VdbDenseGridNamesMenu;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbDenseSelectedGridNames"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill VdbDenseGridNamesMenu`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent VdbDenseGridNamesMenu;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem VdbDenseGridNamesMenu;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBDenseGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value VdbDenseGridNamesMenu`;
+    string $selectionAttr = plugNode($attr) + ".VdbDenseSelectedGridNames"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+
+///////////////////////////////////////////////////////////////Temper
+global proc newBE_VDBTemperGridSelection(string $attr)
+{
+    optionMenu
+        -label "Temperature Grid:"
+        -width 300
+        -changeCommand ("updateBE_VDBTemperGridSelection( \""+$attr+"\" )")
+        VdbTemperGridNamesMenu;
+
+    replaceBE_VDBTemperGridSelection($attr);
+}
+
+global proc replaceBE_VDBTemperGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBTemperGridSelection( \""+$attr+"\" )") VdbTemperGridNamesMenu;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbTemperSelectedGridNames"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill VdbTemperGridNamesMenu`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent VdbTemperGridNamesMenu;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem VdbTemperGridNamesMenu;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBTemperGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value VdbTemperGridNamesMenu`;
+    string $selectionAttr = plugNode($attr) + ".VdbTemperSelectedGridNames"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+///////////////////////////////////////////////////////////////Vel
+global proc newBE_VDBVelGridSelection(string $attr)
+{
+    optionMenu
+        -label "Velocity Grid:        "
+        -width 300
+        -changeCommand ("updateBE_VDBVelGridSelection( \""+$attr+"\" )")
+        VdbVelGridNamesMenu;
+
+    replaceBE_VDBVelGridSelection($attr);
+}
+
+global proc replaceBE_VDBVelGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBVelGridSelection( \""+$attr+"\" )") VdbVelGridNamesMenu;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbVelSelectedGridNames"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill VdbVelGridNamesMenu`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent VdbVelGridNamesMenu;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem VdbVelGridNamesMenu;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBVelGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value VdbVelGridNamesMenu`;
+    string $selectionAttr = plugNode($attr) + ".VdbVelSelectedGridNames"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}
+
+///////////////////////////////////////////////////////////////Color
+global proc newBE_VDBColorGridSelection(string $attr)
+{
+    optionMenu
+        -label "Color Grid:            "
+        -width 300
+        -changeCommand ("updateBE_VDBColorGridSelection( \""+$attr+"\" )")
+        VdbColorGridNamesMenu;
+
+    replaceBE_VDBColorGridSelection($attr);
+}
+
+global proc replaceBE_VDBColorGridSelection(string $attr)
+{
+    //connectControl vdbGridNameMenu $attr;
+    
+	$node = plugNode($attr);
+    // fix changeCommand
+    optionMenu -e -changeCommand ("updateBE_VDBColorGridSelection( \""+$attr+"\" )") VdbColorGridNamesMenu;
+
+    // save current item
+    string $citem = getAttr ($node+".VdbColorSelectedGridNames"); 
+    
+    // Clear old items
+    {
+        string $items[] = `optionMenu -q -ill VdbColorGridNamesMenu`;
+        string $item;
+        for ($item in $items) deleteUI $item;
+    }
+
+    // Add new items
+    {
+        string $currentGridNames = `getAttr $attr`;
+        $currentGridNames = "* " + $currentGridNames;
+
+        string $gridNames[];
+        tokenize $currentGridNames " " $gridNames;
+
+        string $name;
+        for ($name in $gridNames) menuItem -l $name -parent VdbColorGridNamesMenu;
+    }
+    
+    // restore current item
+	if(`size($citem)` > 0)
+    {
+     optionMenu -e -value $citem VdbColorGridNamesMenu;
+	}   
+	
+    /// @todo re-select previous item if it exists, don't update VdbSelectedGridNames if the same item is selectd.
+
+}
+
+global proc updateBE_VDBColorGridSelection(string $attr)
+{
+    string $selectedGrid = `optionMenu -q -value VdbColorGridNamesMenu`;
+    string $selectionAttr = plugNode($attr) + ".VdbColorSelectedGridNames"; 
+    setAttr -type "string" $selectionAttr $selectedGrid;
+}

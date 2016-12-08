@@ -1,0 +1,29 @@
+
+
+global proc
+AEBE_TurbulenceTemplate( string $nodeAttr )
+{
+    editorTemplate -beginScrollLayout;
+    {
+
+       editorTemplate -beginLayout "BE_Turbulence" -collapse 0;
+       {
+
+        editorTemplate -addControl "Mode";
+	    editorTemplate -addControl "Scale";
+        editorTemplate -addControl "Frequency";
+	    editorTemplate -addControl "Offset";
+        editorTemplate -addControl "Roughness";
+	    editorTemplate -addControl "Lacunarity";
+        editorTemplate -addControl "Octaves";
+	    editorTemplate -addControl "Distortion";	
+        editorTemplate -addControl "FourthDimension";
+        editorTemplate -addControl "Exponent";        
+	    editorTemplate -addControl "Invert";	 	        	    
+       }
+        editorTemplate -endLayout;
+        editorTemplate -addExtraControls;
+		
+    }
+    editorTemplate -endScrollLayout;
+}

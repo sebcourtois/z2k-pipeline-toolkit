@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <using package='maya'/>
+    <template name='NEBE_VDBSwitch'>
+        <attribute name='VdbInput0' type='maya.OpenVDBData'>
+            <label>VdbInput0</label>
+        </attribute>
+        <attribute name='VdbInput1' type='maya.OpenVDBData'>
+            <label>VdbInput1</label>
+        </attribute>
+        <attribute name='VdbInput2' type='maya.OpenVDBData'>
+            <label>VdbInput2</label>
+        </attribute>
+        <attribute name='VdbInput3' type='maya.OpenVDBData'>
+            <label>VdbInput3</label>
+        </attribute>                        
+        <attribute name='VdbOutput' type='maya.OpenVDBData'>
+            <label>VdbOutput</label>
+        </attribute>
+    </template>
+    <view name='NEDefault' template='NEBE_VDBSwitch'>
+        <property name='VdbInput0'/>
+        <property name='VdbInput1'/>
+        <property name='VdbInput2'/>
+        <property name='VdbInput3'/>                        
+        <property name='VdbOutput'/>
+    </view>
+</templates>
+
