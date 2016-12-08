@@ -90,6 +90,7 @@ class QuadAreaLightTemplate(BaseAreaLightTemplate):
     def setup(self):
         self.addControl("aiSpread")
         self.addControl("aiResolution")
+        #self.addControl("aiPortal")  hiding it as we now have a dedicated light portal node
         self.addSeparator()
         self.addCommonParameters()
 

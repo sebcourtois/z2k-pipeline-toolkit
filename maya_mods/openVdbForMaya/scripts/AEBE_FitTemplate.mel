@@ -9,15 +9,15 @@ AEBE_FitTemplate( string $nodeAttr )
             editorTemplate -beginLayout "BE_Fit" -collapse 0;
             editorTemplate -beginNoOptimize;
             {
-              editorTemplate -addControl "Signature" "AEAT_UpdateEnabled";
-              editorTemplate -label "SourceMin" -addControl "SourceMinf" "AEAT_UpdateEnabled";
-              editorTemplate -label "SourceMax" -addControl "SourceMaxf" "AEAT_UpdateEnabled";
-              editorTemplate -label "DestinationMin" -addControl "DestinationMinf" "AEAT_UpdateEnabled";
-              editorTemplate -label "DestinationMax" -addControl "DestinationMaxf" "AEAT_UpdateEnabled";
-              editorTemplate -label "SourceMin" -addControl "SourceMinv" "AEAT_UpdateEnabled";
-              editorTemplate -label "SourceMax" -addControl "SourceMaxv" "AEAT_UpdateEnabled";
-              editorTemplate -label "DestinationMin" -addControl "DestinationMinv" "AEAT_UpdateEnabled";
-              editorTemplate -label "DestinationMax" -addControl "DestinationMaxv" "AEAT_UpdateEnabled";
+              editorTemplate -addControl "Signature" "AEAT_FitUpdateEnabled";
+              editorTemplate -label "SourceMin" -addControl "SourceMinf" "AEAT_FitUpdateEnabled";
+              editorTemplate -label "SourceMax" -addControl "SourceMaxf" "AEAT_FitUpdateEnabled";
+              editorTemplate -label "DestinationMin" -addControl "DestinationMinf" "AEAT_FitUpdateEnabled";
+              editorTemplate -label "DestinationMax" -addControl "DestinationMaxf" "AEAT_FitUpdateEnabled";
+              editorTemplate -label "SourceMin" -addControl "SourceMinv" "AEAT_FitUpdateEnabled";
+              editorTemplate -label "SourceMax" -addControl "SourceMaxv" "AEAT_FitUpdateEnabled";
+              editorTemplate -label "DestinationMin" -addControl "DestinationMinv" "AEAT_FitUpdateEnabled";
+              editorTemplate -label "DestinationMax" -addControl "DestinationMaxv" "AEAT_FitUpdateEnabled";
             }
         editorTemplate -endNoOptimize;
         editorTemplate -endLayout;
@@ -28,7 +28,7 @@ AEBE_FitTemplate( string $nodeAttr )
 }
 
 global proc
-AEAT_UpdateEnabled( string $node )
+AEAT_FitUpdateEnabled( string $node )
 {
 
     int $Signature = `getAttr ($node+".Signature")`;

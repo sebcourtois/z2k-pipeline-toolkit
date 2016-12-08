@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <using package='maya'/>
+    <template name='NEBE_VDBAttributeFromVDB'>
+        <attribute name='ValueOut' type='maya.vectorArray'>
+            <label>ValueOut</label>
+        </attribute>
+        <attribute name='VdbInput' type='maya.OpenVDBData'>
+            <label>VdbInput</label>
+        </attribute>
+        <attribute name='PositionInput' type='maya.vectorArray'>
+            <label>PositionInput</label>
+        </attribute>                
+    </template>
+    <view name='NEDefault' template='NEBE_VDBAttributeFromVDB'>
+        <property name='ValueOut'/>
+        <property name='VdbInput'/>
+        <property name='PositionInput'/>
+    </view>
+</templates>

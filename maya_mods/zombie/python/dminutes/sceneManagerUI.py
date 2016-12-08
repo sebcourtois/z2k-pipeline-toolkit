@@ -239,8 +239,13 @@ def refreshContextUI():
 
     pc.control('sm_updateThumb_bt', edit=True, enable=bRcsMatchUp)
 
-    bEnabled = (sCtxStep not in ("previz 3d", "stereo")) and bPublishable
-    pc.control('sm_editCam_bt', edit=True, enable=bEnabled)
+    bCamEditable = (sCtxStep not in ("previz 3d", "stereo")) and bPublishable
+    if bCamEditable and sCtxStep == "animation":
+        sScnRcName = sceneInfos["path_ctx"]["resource"]
+        if sScnRcName != "anim_scene":
+            bCamEditable = False
+
+    pc.control('sm_editCam_bt', edit=True, enable=bCamEditable)
 
     _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
     bEnabled = True if (bRcsMatchUp and oImgPlaneCam) else False

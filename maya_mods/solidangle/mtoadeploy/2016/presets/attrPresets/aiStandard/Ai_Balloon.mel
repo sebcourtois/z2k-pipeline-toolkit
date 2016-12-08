@@ -29,7 +29,7 @@ blendAttr "KsColorB" 0.926832974;
 blendAttr "specularRoughness" 0.4529914558; 
 blendAttr "specularAnisotropy" 0.5; 
 blendAttr "specularRotation" 0; 
-blendAttr "specularDistribution" 0; 
+blendAttr "specularDistribution" 1; 
 blendAttr "Kr" 0; 
 blendAttr "KrColorR" 1; 
 blendAttr "KrColorG" 1; 

@@ -15,16 +15,16 @@ def createPhysicalSky():
       cmds.confirmDialog(message='The Arnold Render Options node does not exists!')
 
 def createArnoldShelf():
-   mtoaMercurialID = cmds.arnoldPlugins(getMercurialID=True)
+   mtoaBuildID = cmds.arnoldPlugins(getBuildID=True)
    try:
-      if cmds.optionVar(exists='mtoaMercurialID'):
-         mercurialID = cmds.optionVar(query='mtoaMercurialID')
-         if mtoaMercurialID == mercurialID:
+      if cmds.optionVar(exists='mtoaBuildID'):
+         buildID = cmds.optionVar(query='mtoaBuildID')
+         if mtoaBuildID == buildID:
             return
          else:
-            cmds.optionVar(sv=('mtoaMercurialID', mtoaMercurialID))
+            cmds.optionVar(sv=('mtoaBuildID', mtoaBuildID))
       else:
-         cmds.optionVar(sv=('mtoaMercurialID', mtoaMercurialID))
+         cmds.optionVar(sv=('mtoaBuildID', mtoaBuildID))
    except:
       pass
    removeArnoldShelf()
@@ -44,6 +44,9 @@ def createArnoldShelf():
    cmds.shelfButton(label='Create Area Light', command='import mtoa.utils as mutils;mutils.createLocator("aiAreaLight", asLight=True)', sourceType='python', annotation='Create Area Light', image='AreaLightShelf.png', style='iconOnly')
    cmds.shelfButton(label='Create SkyDome Light', command='import mtoa.utils as mutils; mutils.createLocator("aiSkyDomeLight", asLight=True)', sourceType='python', annotation='Create SkyDome Light', image='SkydomeLightShelf.png', style='iconOnly')
    cmds.shelfButton(label='Create Physical Sky', command='import mtoa.cmds.arnoldShelf as arnoldShelf; arnoldShelf.createPhysicalSky()', sourceType='python', annotation='Create Physical Sky', image='PhysicalSkyShelf.png', style='iconOnly')
-   cmds.shelfButton(label='Create Mesh Light', command='import mtoa.ui.arnoldmenu as arnoldmenu; arnoldmenu.doCreateMeshLight()', sourceType='python', annotation='Create Mesh Light', image='MeshLightShelf.png', style='iconOnly')
+   cmds.shelfButton(label='Create Mesh Light', command='import mtoa.utils as mutils; mutils.createMeshLight()', sourceType='python', annotation='Create Mesh Light', image='MeshLightShelf.png', style='iconOnly')
    cmds.shelfButton(label='Create Photometric Light', command='import mtoa.utils as mutils; mutils.createLocator("aiPhotometricLight", asLight=True)', sourceType='python', annotation='Create Photometric Light', image='PhotometricLightShelf.png', style='iconOnly') 
-   cmds.shelfButton(label='Arnold RenderView', command='import mtoa.ui.arnoldmenu as arnoldmenu; arnoldmenu.arnoldMtoARenderView()', sourceType='python', annotation='Arnold RenderView', image='RenderViewShelf.png', style='iconOnly')    
+   cmds.shelfButton(label='Arnold RenderView', command='import mtoa.ui.arnoldmenu as arnoldmenu; arnoldmenu.arnoldOpenMtoARenderView()', sourceType='python', annotation='Arnold RenderView', image='RenderViewShelf.png', style='iconOnly')
+   cmds.shelfButton(label='Render', command='import mtoa.ui.arnoldmenu as arnoldmenu; arnoldmenu.arnoldMtoARenderView()', sourceType='python', annotation='Render', image='RenderShelf.png', style='iconOnly')    
+
+
