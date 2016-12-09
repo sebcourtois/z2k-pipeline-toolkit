@@ -16,29 +16,24 @@ from dminutes.maya_scene_operations import getMayaCacheDir
 reload(geocaching)
 
 
-import re
-
-import maya.cmds as mc
-import pymel.core as pm
-
-sExprCode = """
-int $sel = .I[0];
-int $viz[];
-for ($i = 0; $i < 10; $i++) $viz[$i] = ($sel == $i) ? 1 : 0;
-
-.O[0] = $viz[0];
-.O[1] = $viz[1];
-.O[2] = $viz[2];
-.O[3] = $viz[3];
-.O[4] = $viz[4];
-.O[5] = $viz[5];
-.O[6] = $viz[6];
-.O[7] = $viz[7];
-.O[8] = $viz[8];
-.O[9] = $viz[9];
-"""
-
 def createPreviewSwitch():
+
+    sSwitchExpr = """
+    int $sel = .I[0];
+    int $viz[];
+    for ($i = 0; $i < 10; $i++) $viz[$i] = ($sel == $i) ? 1 : 0;
+    
+    .O[0] = $viz[0];
+    .O[1] = $viz[1];
+    .O[2] = $viz[2];
+    .O[3] = $viz[3];
+    .O[4] = $viz[4];
+    .O[5] = $viz[5];
+    .O[6] = $viz[6];
+    .O[7] = $viz[7];
+    .O[8] = $viz[8];
+    .O[9] = $viz[9];
+    """
 
     for sSgNode in mc.ls("sgr_*", type="shadingEngine"):
 
@@ -72,9 +67,12 @@ def createPreviewSwitch():
 
         sLyrTexNode = createSharedNode("layeredTexture", "_".join((sBaseName, "layeredTexture")))
         sExprNode = createSharedNode("expression", "_".join((sBaseName, "expression")))
-        mc.expression(sExprNode, e=True, alwaysEvaluate=False, string=sExprCode)
+        mc.expression(sExprNode, e=True, alwaysEvaluate=False, string=sSwitchExpr)
         for i in xrange(10):
             connectAttr(sExprNode + ".output[{}]".format(i), sLyrTexNode + ".inputs[{}].isVisible".format(i), f=True)
+
+        connectAttr("grp_geo.variationChoice", sExprNode + ".input[0]", f=True)
+
 
         for i, sLetter in enumerate("ABCDEFGHIJ"):
             sInList = mc.listConnections(sSwicthNode + ".input" + sLetter, s=True, d=False, p=True)
@@ -82,8 +80,6 @@ def createPreviewSwitch():
                 continue
             sInAttr = sInList[0]
             connectAttr(sInAttr, sLyrTexNode + ".inputs[{}].color".format(i), f=True)
-
-        connectAttr("grp_geo.variationChoice", sExprNode + ".input[0]", f=True)
 
         if sChoiceNode:
             sOutList = mc.listConnections(sChoiceNode + ".output", s=False, d=True, p=True)
