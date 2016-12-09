@@ -126,12 +126,9 @@ def buildSettingsString(settings):
         for key, value in items :
             if value is True:
                 yield '-%s' % key
-            elif key is "exportPrefix":
-                yield '-%s %s' % (key, value)
             elif value is not False:
                 yield '-%s %r' % (key, value)
         
-
     settingsString = ';'.join(flagSyntaxItems(settings.items()))
     return settingsString 
 
@@ -185,8 +182,6 @@ def arnoldAssOpts(parent = '', action = '', initialSettings = '', resultCallback
         cmds.checkBoxGrp('oa_forceTranslateShadingEngines',
                          label1='Force Translate Shading Engines',
                          value1=settings.get('forceTranslateShadingEngines', False))
-        cmds.checkBoxGrp('oa_export_all_shading_groups', label1='Export All Shading Groups', value1=False)
-        
         cmds.text("oa_exportSeparatorOther",label="")
         lightsOn = cmds.checkBoxGrp('oa_export_lights', query=True, value1=True)
         
@@ -204,9 +199,6 @@ def arnoldAssOpts(parent = '', action = '', initialSettings = '', resultCallback
         cmds.optionMenuGrp('oa_export_shadow_links', edit=True, select=1+settings.get('shadowLinks', 0)) 
         cmds.optionMenuGrp('oa_export_shadow_links', edit=True, enable=lightsOn)
         
-        cmds.checkBoxGrp('oa_export_full_path', label1='Full Paths', value1=False)
-        cmds.textFieldGrp("oa_export_prefix", label="Prefix ", text="")
-
         cmds.setParent('..')      
         cmds.setParent('..')
         cmds.separator(style='none')    
@@ -257,8 +249,7 @@ def arnoldAssOpts(parent = '', action = '', initialSettings = '', resultCallback
         settings['compressed'] = cmds.checkBoxGrp('oa_compressed', query=True, value1=True)
         settings['boundingBox'] = cmds.checkBoxGrp('oa_write_bbox', query=True, value1=True)
         settings['asciiAss'] = not cmds.checkBoxGrp('oa_binary_ass', query=True, value1=True)      
-        settings['exportAllShadingGroups'] = cmds.checkBoxGrp('oa_export_all_shading_groups', query=True, value1=True)      
-
+        
         # export mask and options
         settings['mask'] = getMaskValues()
         
@@ -280,12 +271,7 @@ def arnoldAssOpts(parent = '', action = '', initialSettings = '', resultCallback
          
         settings['expandProcedurals'] = cmds.checkBoxGrp('oa_expandProcedurals', query=True, value1=True)
         settings['forceTranslateShadingEngines'] = cmds.checkBoxGrp('oa_forceTranslateShadingEngines', query=True, value1=True)
-
-        settings['fullPath'] = cmds.checkBoxGrp('oa_export_full_path', query=True, value1=True)
-        prefix = cmds.textFieldGrp('oa_export_prefix', query=True, text=True)
-        if len(prefix) > 0:
-            settings['exportPrefix'] =  prefix
-
+        
         currentOptions = buildSettingsString(settings)
         # print 'callback: %(c)s, options: %(o)s\n' % {"c": resultCallback, "o": currentOptions}
         mel.eval(resultCallback+'("'+currentOptions+'")')

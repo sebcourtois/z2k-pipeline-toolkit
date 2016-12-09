@@ -21,10 +21,6 @@ BUILTIN_AOVS = (
                 ('volume_opacity',      'rgb'),
                 ('volume_direct',       'rgb'),
                 ('volume_indirect',     'rgb'),
-                ('diffuse_albedo',      'rgb'),
-                ('shadow_matte',        'rgb')
-
-
 #                ('A',       'float'),
 #                ('OBJECT',  'node'),
 #                ('SHADER',  'node'),
