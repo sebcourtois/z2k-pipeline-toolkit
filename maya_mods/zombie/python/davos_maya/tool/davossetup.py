@@ -45,10 +45,6 @@ def doEditTextures(*args):
     from davos_maya.tool import dependency_edit
     dependency_edit.editTextureFiles()
 
-def doSwitchReferences(*args):
-    from davos_maya.tool.reference import switchSelectedReferences
-    switchSelectedReferences(filter="*_ref")
-
 def doPublish(*args):
 
     scnInfos = infosFromScene(fail=False)

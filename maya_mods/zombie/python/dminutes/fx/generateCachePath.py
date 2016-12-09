@@ -48,7 +48,7 @@ def generatePrivateCachePath(node=''):
         print nodeShape
 
         if nodeShape and (cmds.nodeType(nodeShape) == 'nParticle' or cmds.nodeType(nodeShape) == 'fluidShape' or cmds.nodeType(nodeShape) == 'BE_VDBArnoldRender'):
-            node='pkg_'+nodeSplit
+            nodeSplit='pkg_'+nodeSplit
 
         outPath = '/'.join([outPath,nodeSplit])
 
