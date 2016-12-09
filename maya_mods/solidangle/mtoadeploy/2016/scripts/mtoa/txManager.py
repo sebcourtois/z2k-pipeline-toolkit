@@ -56,11 +56,9 @@ class MakeTxThread (threading.Thread):
             
         ctrlPath = '|'.join([self.txManager.window, 'groupBox_2', 'pushButton_7']);
         utils.executeDeferred(cmds.button,ctrlPath, edit=True, enable=True);
-        maya_version = versions.shortName()
-    
+            
         for textureLine in self.txManager.selectedItems:
             texture = textureLine[0]
-            print texture
             
             # we could use textureLine[2] for the colorSpace
             # but in case it hasn't been updated correctly
@@ -68,19 +66,15 @@ class MakeTxThread (threading.Thread):
             nodes = textureLine[3]
             colorSpace = 'auto'
             conflictSpace = False
+            for node in nodes:
+                nodeColorSpace = cmds.getAttr(node+'.colorSpace')
+                if colorSpace != 'auto' and colorSpace != nodeColorSpace:
+                    conflictSpace=True
+                    
+                colorSpace = nodeColorSpace
 
-            # color spaces are ignored for maya versions < 2017
-            if int(float(maya_version)) >= 2017:
-                for node in nodes:
-                    nodeColorSpace = cmds.getAttr(node+'.colorSpace')
-                    if colorSpace != 'auto' and colorSpace != nodeColorSpace:
-                        conflictSpace=True
-                        
-                    colorSpace = nodeColorSpace
-
-                if colorSpace == 'auto' and textureLine[2] != '':
-                    colorSpace = textureLine[2]
-
+            if colorSpace == 'auto' and textureLine[2] != '':
+                colorSpace = textureLine[2]
             if not texture:
                 continue;
             # stopCreation has been called   
@@ -128,111 +122,6 @@ class MakeTxThread (threading.Thread):
         utils.executeDeferred(self.txManager.updateList)
 
 
-def GetTxList(txItems, filesCount):
-    
-    texturesList = []
-    colorSpaces = []
-    nodes = []
-
-    list = cmds.ls(type='file')
-    for node in list:
-        texture = ''
-        # regarding tiling, porting the code from CFileTranslator
-        tilingMode = int(float(cmds.getAttr(node+'.uvTilingMode')))
-        if tilingMode == 0:
-            texture = cmds.getAttr(node+'.fileTextureName')
-        else:
-            # in CfileTranslator we first check fileTextureNamePattern, then 
-            # if it's empty we check computedFileTextureNamePattern
-            # not sure why...
-            texture = cmds.getAttr(node+'.fileTextureNamePattern')
-            if not texture:
-                texture = cmds.getAttr(node+'.computedFileTextureNamePattern')
-        if texture:
-            texturesList.append(texture)
-            colorSpace = cmds.getAttr(node+'.colorSpace')
-            colorSpaces.append(colorSpace)
-            nodes.append(node)
-                                
-    list = cmds.ls(type='aiImage')
-    for node in list:
-        texture = cmds.getAttr(node+'.filename')
-        if texture:
-            texturesList.append(texture)
-            colorSpace = cmds.getAttr(node+'.colorSpace')
-            colorSpaces.append(colorSpace)
-            nodes.append(node)
-    
-    list = cmds.ls(type='imagePlane')
-    for node in list:
-        texture = cmds.getAttr(node+'.imageName')
-        if texture:
-            texturesList.append(texture)
-            colorSpace = cmds.getAttr(node+'.colorSpace')
-            colorSpaces.append(colorSpace)
-            nodes.append(node)
-        
-    textureSearchPaths = cmds.getAttr('defaultArnoldRenderOptions.texture_searchpath')
-    searchPaths = []
-
-    if platform.system().lower() == 'windows':
-        searchPaths = textureSearchPaths.split(';')    
-    else:
-        searchPaths = textureSearchPaths.split(':')
-    
-    for i in range(len(texturesList)):
-
-        inputFiles = makeTx.expandFilename(texturesList[i])
-        
-        if len(inputFiles) == 0:
-            # file not found, need to search in the Texture Search Paths
-            for searchPath in searchPaths:
-                if searchPath.endswith('/'):
-                    currentSearchTexture = searchPath + texturesList[i]
-                else:
-                    currentSearchTexture = searchPath + '/'+texturesList[i]
-            
-                inputFiles = makeTx.expandFilename(currentSearchTexture)
-                if len(inputFiles) > 0:
-                    break
-        
-        filesCount[0] += len(inputFiles)
-        
-        txFlag = 0
-
-        if len(inputFiles) == 0:
-            # missing input file
-            txFlag = -1
-            filesCount[1] += 1
-        else:
-            ext = os.path.splitext(texturesList[i])[1]
-            # A .tx texture
-            if(ext == '.tx'):
-                txFlag = 0
-            else:
-                # Not a .tx texture
-                # loop over files since we need to make sure each expanded texture has its .tx version
-                txFlag = 1
-                for inputFile in inputFiles:
-                    # note that inputFile is already expanded here
-                    outputTx = os.path.splitext(inputFile)[0]+'.tx'
-                    outputTxFiles = makeTx.expandFilename(outputTx)
-
-                    if len(outputTxFiles) == 0:
-                        # un-processed File
-                        txFlag = 2
-                        break
-
-        nodesList = [nodes[i]]
-        baseFilename = os.path.basename(texturesList[i])
-
-
-        txItems.append([texturesList[i], txFlag, colorSpaces[i], nodesList, inputFiles, baseFilename])
-
-
-
-
-
 class MtoATxManager(object):
     use=None;
     def __init__(self):
@@ -253,12 +142,9 @@ class MtoATxManager(object):
         self.filesCreated = 0
         self.createdErrors = 0
         self.deletedFiles = 0
-        self.totalFiles = 0
-        self.missingFiles = 0
         
         self.thread = []
         self.process = True
-        self.showFullPaths = False
         self.lineIndex = {}
         
     def create(self):
@@ -288,17 +174,109 @@ class MtoATxManager(object):
         
         ctrlPath = '|'.join([self.window, 'groupBox_2', 'lineEdit']);
         cmds.textField(ctrlPath, edit=True, text="-v -u --unpremult --oiio");
-    
-    def displayList(self):
+        
+    # Update the Scroll List with the texture files in the scene and check its status
+    def updateList(self):
+        self.txItems = []
+        
+        texturesList = []
+        colorSpaces = []
+        nodes = []
+
+        list = cmds.ls(type='file')
+        for node in list:
+            texture = cmds.getAttr(node+'.fileTextureName')
+            if texture:
+                texturesList.append(texture)
+                colorSpace = cmds.getAttr(node+'.colorSpace')
+                colorSpaces.append(colorSpace)
+                nodes.append(node)
+                                    
+        list = cmds.ls(type='aiImage')
+        for node in list:
+            texture = cmds.getAttr(node+'.filename')
+            if texture:
+                texturesList.append(texture)
+                colorSpace = cmds.getAttr(node+'.colorSpace')
+                colorSpaces.append(colorSpace)
+                nodes.append(node)
+        
+        list = cmds.ls(type='imagePlane')
+        for node in list:
+            texture = cmds.getAttr(node+'.imageName')
+            if texture:
+                texturesList.append(texture)
+                colorSpace = cmds.getAttr(node+'.colorSpace')
+                colorSpaces.append(colorSpace)
+                nodes.append(node)
+            
+        totalFiles = 0
+        missingFiles = 0
+
+        textureSearchPaths = cmds.getAttr('defaultArnoldRenderOptions.texture_searchpath')
+        searchPaths = []
+
+        if platform.system().lower() == 'windows':
+            searchPaths = textureSearchPaths.split(';')    
+        else:
+            searchPaths = textureSearchPaths.split(':')
+        
+        for i in range(len(texturesList)):
+
+            inputFiles = makeTx.expandFilename(texturesList[i])
+            
+            if len(inputFiles) == 0:
+                # file not found, need to search in the Texture Search Paths
+                for searchPath in searchPaths:
+                    if searchPath.endswith('/'):
+                        currentSearchTexture = searchPath + texturesList[i]
+                    else:
+                        currentSearchTexture = searchPath + '/'+texturesList[i]
+                
+                    inputFiles = makeTx.expandFilename(currentSearchTexture)
+                    if len(inputFiles) > 0:
+                        break
+            
+            totalFiles += len(inputFiles)
+            
+            txFlag = 0
+
+            if len(inputFiles) == 0:
+                # missing input file
+                txFlag = -1
+                missingFiles += 1
+            else:
+                ext = os.path.splitext(texturesList[i])[1]
+                # A .tx texture
+                if(ext == '.tx'):
+                    txFlag = 0
+                else:
+                    # Not a .tx texture
+                    # loop over files since we need to make sure each expanded texture has its .tx version
+                    txFlag = 1
+                    for inputFile in inputFiles:
+                        # note that inputFile is already expanded here
+                        outputTx = os.path.splitext(inputFile)[0]+'.tx'
+                        outputTxFiles = makeTx.expandFilename(outputTx)
+
+                        if len(outputTxFiles) == 0:
+                            # un-processed File
+                            txFlag = 2
+                            break
+
+            # set textures element as a list : [filename, txFlag, textureColorSpace, node]
+            nodesList = [nodes[i]]
+            self.txItems.append([texturesList[i], txFlag, colorSpaces[i], nodesList, inputFiles])
+
+
         ctrlPath = '|'.join([self.window, 'groupBox', 'listWidget']);
 
         listSize = cmds.textScrollList(ctrlPath, query=True, numberOfItems=True);
         for x in range(listSize,0,-1):
             cmds.textScrollList(ctrlPath, edit=True, removeIndexedItem=x);
         
+        textureIndex = 0
         self.lineIndex = {}
-
-        txIndex = 0
 
         for txItem in self.txItems:
 
@@ -313,77 +291,32 @@ class MtoATxManager(object):
             elif(txItem[1] == -1):
                 texturePrefix = '~~  '
 
-            textureSuffix = ''
+            textureLine = texturePrefix+txItem[0] 
+
             maya_version = versions.shortName()
             if int(float(maya_version)) >= 2017:
-                textureSuffix =' ('+txItem[2]+')'
-
-
-            if self.showFullPaths:
-                textureLine = texturePrefix+txItem[0]+textureSuffix 
-                if textureLine not in self.lineIndex:
-                    cmds.textScrollList(ctrlPath, edit=True, append=[textureLine]);
-                    self.lineIndex[textureLine] = txIndex
-                    
-                else:
-                    prevIndex = self.lineIndex[textureLine]
-                    if prevIndex < len(self.txItems):
-                        self.txItems[prevIndex][3].append(txItem[3][0])
-
-            else:
-                #partial paths
-                textureLine = texturePrefix+txItem[5]+textureSuffix
-                foundFullName = False
-
-                while textureLine in self.lineIndex:
-                    #basename already found, let's check the full names
-                    prevIndex = self.lineIndex[textureLine]
-                    if prevIndex < len(self.txItems):
-                        if txItem[0] == self.txItems[prevIndex][0]:
-                            # same fullname, just append the list of nodes
-                            self.txItems[prevIndex][3].append(txItem[3][0])
-                            foundFullName = True
-                            break
-                    
-                    textureLine = textureLine + ' '
-
-                if not foundFullName:
-                    # this fullname wasn't found yet, need to add it
-                    cmds.textScrollList(ctrlPath, edit=True, append=[textureLine]);
-                    self.lineIndex[textureLine] = txIndex
+                textureLine +=' ('+txItem[2]+')'
                 
-
-            txIndex = txIndex+1
-
+            if textureLine not in self.lineIndex:
+                cmds.textScrollList(ctrlPath, edit=True, append=[textureLine]);
+                self.lineIndex[textureLine] = textureIndex
+                textureIndex += 1    
+            else:
+                prevIndex = self.lineIndex[textureLine]
+                if prevIndex < len(self.txItems):
+                    self.txItems[prevIndex][3].append(txItem[3][0])
 
         self.listElements = cmds.textScrollList(ctrlPath, query=True, ai=True);
                 
         ctrlPath = '|'.join([self.window, 'groupBox', 'label_5']);
-        cmds.text(ctrlPath, edit=True, label="Total Files: {0}".format(self.totalFiles));
+        cmds.text(ctrlPath, edit=True, label="Total Files: {0}".format(totalFiles));
         
         ctrlPath = '|'.join([self.window, 'groupBox', 'label_6']);
-        if(self.missingFiles > 0):
-            cmds.text(ctrlPath, edit=True, label="<font color=#FE6565>Missing Files: {0}</font>".format(self.missingFiles));
+        if(missingFiles > 0):
+            cmds.text(ctrlPath, edit=True, label="<font color=#FE6565>Missing Files: {0}</font>".format(missingFiles));
         else:
             cmds.text(ctrlPath, edit=True, label="");
     
-    # Update the Scroll List with the texture files in the scene and check its status
-    def updateList(self):
-        
-        self.txItems = []
-        filesCount = []
-        #total files
-        filesCount.append(0)
-        #missing files
-        filesCount.append(0)
-         
-        GetTxList(self.txItems, filesCount)
-        self.totalFiles = filesCount[0]
-        self.missingFiles = filesCount[1]
-
-        self.displayList()
-
-
     def stopCreation(self, *args):
         self.process = False
     
@@ -527,11 +460,6 @@ class MtoATxManager(object):
         cmds.text(ctrlPath, edit=True, label="");
 
 
-    def showFullPathChange(self, *args):
-        self.showFullPaths = args[0]
-        self.displayList()
-
-
     # Open a dialog to select a folder and update the information about it
     def selectFolder(self, *args):
         ctrlPath = '|'.join([self.window, 'groupBox_4', 'lineEdit_2']);
@@ -584,67 +512,3 @@ class MtoATxManager(object):
             self.thread = MakeTxThread(self)
             self.thread.start()
 
-
-
-def UpdateAllTx():
-    txItems = []
-    filesCount = []
-    filesCount.append(0)
-    filesCount.append(0)
-
-    GetTxList(txItems, filesCount)
-    self.totalFiles = filesCount[0]
-    self.missingFiles = filesCount[1]
-
-    print 'Updating TX textures :'
-    filesCreated = 0
-    createdErrors = 0
-    arg_options = "-v -u --unpremult --oiio"
-    maya_version = versions.shortName()
-
-    for textureLine in txItems:
-        texture = textureLine[0]
-        print '-filename ' + texture
-        # we could use textureLine[2] for the colorSpace
-        # but in case it hasn't been updated correctly
-        # it's still better to ask maya again what is the color space
-        nodes = textureLine[3]
-        colorSpace = 'auto'
-        conflictSpace = False
-
-        # just check  the color space conflicts for maya 2017 and above
-        if int(float(maya_version)) >= 2017:
-            for node in nodes:
-                nodeColorSpace = cmds.getAttr(node+'.colorSpace')
-                if colorSpace != 'auto' and colorSpace != nodeColorSpace:
-                    conflictSpace=True
-                    
-                colorSpace = nodeColorSpace
-
-            if colorSpace == 'auto' and textureLine[2] != '':
-                colorSpace = textureLine[2]
-        
-
-        if not texture:
-            continue;
-        if conflictSpace:
-            print ' Error : Conflicting color spaces'
-
-        # Process all the files that were found previously for this texture (eventually multiple tokens)
-        for inputFile in textureLine[4]:
-            # here inputFile is already expanded, and only corresponds to existing files
-
-            if len(textureLine[4]) > 1:
-                print '  -'+inputFile
-
-            status = utils.executeInMainThreadWithResult( makeTx.makeTx, inputFile, colorspace=colorSpace, arguments=arg_options)
-            if status[1] > 0:
-                print 'TX file up-to-date'
-            
-
-            filesCreated += status[0]
-            createdErrors += status[2]
-            
-
-
-            

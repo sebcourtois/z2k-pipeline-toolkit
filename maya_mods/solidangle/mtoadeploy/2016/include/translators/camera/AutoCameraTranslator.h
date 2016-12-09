@@ -13,12 +13,10 @@ public:
    {
       return new CAutoCameraTranslator();
    }
-
-   //---- virtual functions derived from CNodeTranslator
    virtual AtNode* CreateArnoldNodes();
+   
    virtual void Export(AtNode* camera);
-   virtual void ExportMotion(AtNode* camera);
-
+   virtual void ExportMotion(AtNode* camera, unsigned int step);
 protected:
    float GetFOV(AtNode* camera);
    bool m_exportFOV;

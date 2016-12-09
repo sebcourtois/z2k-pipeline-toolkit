@@ -40,8 +40,6 @@ class AEaiSkyDomeLightTemplate(lightTemplate.LightTemplate):
         self.addControl('aiCastShadows', label='Cast Shadows')
         self.addControl('aiShadowColor', label='Shadow Color')
         self.addSeparator()
-        self.addControl('portal_mode', label='Portal Mode')
-        self.addSeparator()
         self.commonLightAttributes()
         self.endLayout()
         

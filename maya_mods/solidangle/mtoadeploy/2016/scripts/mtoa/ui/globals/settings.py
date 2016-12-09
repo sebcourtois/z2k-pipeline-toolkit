@@ -793,13 +793,6 @@ def createArnoldLightSettings():
                         label="Shadow Linking",
                         attribute='defaultArnoldRenderOptions.shadowLinking')
 
-
-    pm.separator()
-    pm.attrControlGrp('legacyLightTemperature',
-                    label="Legacy Temperature",
-                    attribute='defaultArnoldRenderOptions.legacyLightTemperature')
-
-
     pm.setParent('..')
 
     pm.setUITemplate(popTemplate=True)

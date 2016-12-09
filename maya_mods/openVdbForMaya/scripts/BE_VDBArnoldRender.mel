@@ -2,11 +2,9 @@
 global proc string BE_VDBArnoldRenderCreate()
 {
 string $BE_VDBArnoldRenderSG =  `createNode -n ("BE_VDBArnoldRender"+"SG") shadingEngine` ;
-string $BE_VDBArnoldRenderVolMat =  `createNode -n ("aiVolumeCollector#") aiVolumeCollector` ;
-string $BE_VDBArnoldRenderSurfMat =  `createNode -n ("aiStandard#") aiStandard` ;
-string $BE_VDBArnoldRenderVolMatAssing = `connectAttr -f ($BE_VDBArnoldRenderVolMat + ".outColor") ($BE_VDBArnoldRenderSG + ".volumeShader")`;
- string $BE_VDBArnoldRenderSurfMatAssing = `connectAttr -f ($BE_VDBArnoldRenderSurfMat + ".outColor") ($BE_VDBArnoldRenderSG + ".surfaceShader")`;
-
+string $BE_VDBArnoldRenderMat =  `createNode -n ("aiVolumeCollector#") aiVolumeCollector` ;
+string $BE_VDBArnoldRenderMatAssing = `connectAttr -f ($BE_VDBArnoldRenderMat + ".outColor") ($BE_VDBArnoldRenderSG + ".volumeShader")`;
+   
 string $BE_VDBArnoldRenderTransform = `createNode -n "BE_VDBArnoldRenderShape#" BE_VDBArnoldRender`;
 
 string $nodeName ;
