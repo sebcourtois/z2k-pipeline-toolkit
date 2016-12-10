@@ -11,25 +11,30 @@ from pytd.util.fsutils import pathJoin
 
 #def run(sShotName, sRenderDirPath):
 parser = argparse.ArgumentParser(description='Parse the shot name and directory of the private movies to publish',
-                                 usage='pyrhon FL_post_render.py dirname')
+                                 usage='python FL_post_render.py absolute_dir_path')
 
 #parser.add_argument('aShotName', help='Shot name should be in form of "sqxxxx_shxxxxa"')
 parser.add_argument('aRenderDirPath', help='Directory that point to the private root of the shot"')
 args = parser.parse_args()
 
 # Get shot and output path from argv
-sTempRenderDirPath = '//ZOMBIWALK/Projects/private/dominiquec/zomb/shot/sq6660/sq6660_sh0050a/06_finalLayout/render-v021'
+#sTempRenderDirPath = '//ZOMBIWALK/Projects/private/dominiquec/zomb/shot/sq6660/sq6660_sh0050a/06_finalLayout/render-v021'
+sUserName = args.aRenderDirPath.split('/')[5]
 sShotName = args.aRenderDirPath.split('/')[9]
+
 sRenderDirPath = args.aRenderDirPath
+
 
 proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal")
 shotgundb = proj._shotgundb
 damShot = proj.getShot(sShotName)
 
+sgOpe = shotgundb.sg.find_one("CustomNonProjectEntity01", [["sg_login", "is", sUserName]])
+
 flartMovie = damShot.getRcFile("public", "finalLayout_movie")
-#print flartMovie.absPath()
+
 arleqMovie = damShot.getRcFile("public", "arlequin_movie")
-#print arleqMovie.absPath()
+
 if arleqMovie:
     sSrcMovPath = pathJoin(sRenderDirPath, sShotName + '_arlequin.mov')
     print sSrcMovPath
@@ -47,7 +52,7 @@ if arleqMovie:
         sNewStatus = "rev"
 
     if sNewStatus:
-        proj.updateSgEntity(sgTask, sg_status_list=sNewStatus)
+        proj.updateSgEntity(sgTask, sg_status_list=sNewStatus, sg_operator=sgOpe)
 
 if flartMovie:
     sSrcMovPath = pathJoin(sRenderDirPath, sShotName + '_beauty.mov')
@@ -66,7 +71,7 @@ if flartMovie:
         sNewStatus = "rev"
 
     if sNewStatus:
-        proj.updateSgEntity(sgTask, sg_status_list=sNewStatus)
+        proj.updateSgEntity(sgTask, sg_status_list=sNewStatus, sg_operator=sgOpe)
 
 
 
