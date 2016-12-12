@@ -66,6 +66,24 @@ def getAppPath(sAppName):
 
     return sAppPath
 
+def getLocalPath():
+    return pathJoin(os.environ["USERPROFILE"], "zombillenium", BASE_NAME)
+
+def getReleasePath(location="", fail=True):
+
+    if location:
+        sReleaseLoc = location
+    else:
+        sReleaseLoc = os.environ["ZOMB_TOOL_PATH"]
+
+    if not osp.isdir(sReleaseLoc):
+        if fail:
+            raise EnvironmentError("No such release location: '{}'".format(sReleaseLoc))
+        else:
+            print "WARNING:", "No such release location: '{}'".format(sReleaseLoc)
+
+    return pathJoin(sReleaseLoc, BASE_NAME)
+
 class Z2kToolkit(object):
 
     def __init__(self, customEnvs=None):
@@ -191,12 +209,12 @@ class Z2kToolkit(object):
         bBeenUpdated = False
 
         # tools update
-        sReleasePath = self.releasePath()
+        sReleasePath = getReleasePath()
         if self.isDev:
             print "Tools update from development environment !"
             sReleasePath = self.rootPath
 
-        sInstallPath = pathJoin(os.environ["USERPROFILE"], "zombillenium", BASE_NAME)
+        sInstallPath = getLocalPath()
 
         if sReleasePath == sInstallPath:
             print "Source == Destination !"
@@ -230,7 +248,7 @@ class Z2kToolkit(object):
         if not self.isDev:
             raise EnvironmentError("Sorry, you are not in DEV mode !")
 
-        sDistroPath = self.releasePath(location)
+        sDistroPath = getReleasePath(location)
 
         bReleaseOk = True if os.environ.get("ZTK_RELEASE_ALLOWED") else False
         if (not location) and (not bReleaseOk):
@@ -334,21 +352,6 @@ class Z2kToolkit(object):
 
         return callCmd(cmdLine, catchStdout=dryRun)
 
-    def releasePath(self, location="", fail=True):
-
-        if location:
-            sReleaseLoc = location
-        else:
-            sReleaseLoc = os.environ["ZOMB_TOOL_PATH"]
-
-        if not osp.isdir(sReleaseLoc):
-            if fail:
-                raise EnvironmentError("No such release location: '{}'".format(sReleaseLoc))
-            else:
-                print "WARNING:", "No such release location: '{}'".format(sReleaseLoc)
-
-        return pathJoin(sReleaseLoc, BASE_NAME)
-
     def launchApp(self, appArgs, launch=True):
 
         if (not launch) and not appArgs:
@@ -416,17 +419,25 @@ class Z2kToolkit(object):
         ns = parser.parse_args(cmdArgs if not sAction else [sAction])
 
         sAction = ns.action
+        bLaunchOrLoadEnv = (sAction in ("launch", "loadenv"))
+        sNormRootPath = normAll(self.rootPath)
+        if (not self.isDev) and bLaunchOrLoadEnv:
+            if sNormRootPath != normAll(getLocalPath()):
+                raise EnvironmentError("Apps can ONLY be LAUNCHED from '{}' !"
+                                       .format(osp.normpath(getLocalPath())))
 
-        if self.dirName.endswith("_master"):
+        if osp.normcase(self.dirName) == osp.normcase(BASE_NAME + "_master"):
             if sAction != "release":
-                raise EnvironmentError("You can't {} from location: '{}'. Only 'release' action allowed."
-                                       .format(sAction, self.rootPath))
-        elif osp.normcase(self.rootPath) == osp.normcase(self.releasePath(fail=False)):
-            if sAction != "install":
-                raise EnvironmentError("You can't {} from location: '{}'. Only 'install' action allowed."
+                raise EnvironmentError("You can NOT {} from '{}'. Only 'release' action allowed."
                                        .format(sAction, self.rootPath))
 
-        if sAction in ("launch", "loadenv"):
+        elif (sNormRootPath == normAll(getReleasePath(fail=False)) or
+              normAll("/zomb/tool/" + BASE_NAME) in sNormRootPath):
+            if sAction != "install":
+                raise EnvironmentError("You can NOT {} from '{}'. Only 'install' action allowed."
+                                       .format(sAction, self.rootPath))
+
+        if bLaunchOrLoadEnv:
             parser.add_argument("--update", "-u", type=int, default=1)
             parser.add_argument("--renew", "-r", type=int, default=0)
             ns = parser.parse_args(cmdArgs, ns)

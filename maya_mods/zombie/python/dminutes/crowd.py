@@ -73,7 +73,6 @@ def createPreviewSwitch():
 
         connectAttr("grp_geo.variationChoice", sExprNode + ".input[0]", f=True)
 
-
         for i, sLetter in enumerate("ABCDEFGHIJ"):
             sInList = mc.listConnections(sSwicthNode + ".input" + sLetter, s=True, d=False, p=True)
             if not sInList:

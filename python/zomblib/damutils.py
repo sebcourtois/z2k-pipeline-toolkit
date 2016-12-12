@@ -9,7 +9,7 @@ from PySide.QtCore import Qt
 
 #from pytd.util.qtutils import setWaitCursor
 from pytd.util.fsutils import pathJoin
-from pytd.util.sysutils import  qtGuiApp, inDevMode
+from pytd.util.sysutils import qtGuiApp, inDevMode
 from pytd.gui.dialogs import QuickTreeDialog
 
 from davos.core.damproject import DamProject
