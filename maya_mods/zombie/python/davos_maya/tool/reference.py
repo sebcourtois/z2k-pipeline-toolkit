@@ -9,7 +9,7 @@ import maya.cmds as mc
 import pymel.core as pm
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 
-from pytd.util.fsutils import pathResolve, pathEqual
+from pytd.util.fsutils import pathResolve, pathEqual, pathReSub
 from pytd.util.sysutils import toStr
 #from pytd.gui.dialogs import confirmDialog
 
@@ -39,12 +39,17 @@ def listMayaRcForSelectedRefs(oFileRef, proj, **kwargs):
     resultList.append(res)
 
 @withSelectionRestored
-def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
+def switchSelectedAssetFiles(dryRun=False, cleanEdits=False, **kwargs):
 
     scnEntity = entityFromScene()
     proj = scnEntity.project
 
-    kwargs.update(confirm=False, allIfNoSelection=True, topReference=True)
+    preSwitchCall = kwargs.pop("preSwitchCall", None)
+    postSwitchCall = kwargs.pop("postSwitchCall", None)
+
+    kwargs.update(confirm=False,
+                  allIfNoSelection=kwargs.pop("allIfNoSelection", True),
+                  topReference=True)
     oSelRefList, assetRcList = listMayaRcForSelectedRefs(proj, **kwargs)
 
     assetList = tuple(ast for ast, _ in assetRcList if ast)
@@ -75,7 +80,7 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
         pm.warning("Canceled !")
         return
 
-    i = 0
+#    i = 0
     swicthItems = []
     nonSwitchedRefList = []
     for oFileRef, assetRc in izip(oSelRefList, assetRcList):
@@ -85,8 +90,8 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
 
         sRefPath = pathResolve(oFileRef.path)
 
-        i += 1
-        print "Checking {}/{}: '{}' ...".format(i, numRefs, oFileRef.refNode.name())
+#        i += 1
+#        print "Checking {}/{}: '{}' ...".format(i, numRefs, oFileRef.refNode.name())
 
         if not asset:
             sMsg = "Unknown asset: '{}'".format(oFileRef.path)
@@ -123,11 +128,19 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
             print sMsg
             continue
 
-        cachedDbNode = mrcFile.loadDbNode(fromDb=False)
-        if cachedDbNode:
-            mrcFile.refresh(simple=True)
-        else:
+        swicthItems.append((oFileRef, mrcFile))
+
+
+    dbNodeList = proj.dbNodesFromEntries(tuple(f for _, f in swicthItems))
+    zippedList = zip(swicthItems, dbNodeList)
+    print len(dbNodeList), len(swicthItems)
+    swicthItems = []
+    for (oFileRef, mrcFile), dbNode in zippedList:
+
+        if not dbNode:
             mrcFile.loadDbNode(fromCache=False)
+
+        sRcPath = mrcFile.absPath()
 
         if not mrcFile.currentVersion:
             sMsg = "No version created yet: '{}'".format(sRcPath)
@@ -149,7 +162,10 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
     numOkRefs = len(swicthItems)
     if not dryRun:
 
+        preCallResList = numOkRefs*[None]
         for i, oFileRef in enumerate(oFileRefList):
+            if preSwitchCall:
+                preCallResList[i] = preSwitchCall(oFileRef)
             print "Unloading {}/{}: '{}' ...".format(i + 1, numOkRefs, oFileRef.refNode.name())
             oFileRef.unload()
 
@@ -174,6 +190,9 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
                 print sMsg
                 continue
 
+            if postSwitchCall:
+                postSwitchCall(oFileRef, preCallResList[i])
+
     if nonSwitchedRefList:
 
         w = len(max((r.refNode.name() for r, _ in nonSwitchedRefList), key=len))
@@ -195,6 +214,32 @@ def switchSelectedReferences(dryRun=False, cleanEdits=False, **kwargs):
         pm.displayInfo("Successfully switched {} references as '{}'"
                           .format(numRefs, sChosenRcName))
 
+
+@processSelectedReferences
+def switchAssets(oFileRef, newAst, **kwargs):
+
+    sCurRefPath = oFileRef.path
+    sCurNmspc = oFileRef.namespace
+
+    astLib = newAst.getLibrary()
+
+    astFile = astLib._weakFile(pathResolve(sCurRefPath), dbNode=False)
+
+    curAst = astFile.getEntity()
+    if not curAst:
+        return
+
+    if newAst.assetType != curAst.assetType:
+        return
+    
+    sPatrn = r"(?<=[^a-zA-Z0-9]){}(?=[^a-zA-Z0-9])".format(curAst.name)
+    sNewRefPath = pathReSub(sPatrn, newAst.name, sCurRefPath)
+    astFile = astLib._weakFile(pathResolve(sNewRefPath), dbNode=False)
+    if not astFile.exists():
+        return
+
+    oFileRef.replaceWith(sNewRefPath)
+    oFileRef.namespace = sCurNmspc.replace(curAst.name, newAst.name)
 
 DEFAULT_FILE_ATTR = "defaultAssetFile"
 

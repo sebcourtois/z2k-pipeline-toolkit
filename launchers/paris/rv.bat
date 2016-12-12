@@ -1,1 +1,1 @@
-"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch @rv %*
+"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch -u 0 @rv %*

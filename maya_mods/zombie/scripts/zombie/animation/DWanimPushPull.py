@@ -368,14 +368,17 @@ class DWanimPushPull(QtGui.QWidget):
 		print("importGpuCachesFromListAssets")
 		filterListAsset = self.filterListAssetCharAndProps(listAsset)
 		if len(filterListAsset) > 0:
+			sScnGpuCacheList = tuple(gpucaching.iterGpuCacheNamesFromSceneAssets())
 			for asset in filterListAsset:
 				namespace = asset.split(":")[0]
-				filename = "gpu_" + namespace + "_grp_geo.abc"
+				sGpuXfm = "gpu_" + namespace + "_grp_geo"
+				if sScnGpuCacheList and (sGpuXfm + "Shape") in sScnGpuCacheList:
+					continue
+				filename = sGpuXfm + ".abc"
 				fullPathName = gpuCachesPath + "/" + filename
 				if os.path.isfile(fullPathName):
 					print("\timport GPU cache: " + fullPathName)
-					self.importGpuCache(fullPathName) # corrected function from gpucaching.py
-					# gpucaching.importGpuCache(fullPathName)
+					gpucaching.importGpuCache(fullPathName)
 				else:
 					print("\tWARNING: gpu cache " + str(fullPathName) + " does not exist")
 
