@@ -1,10 +1,11 @@
 
-
 import os
 import sys
 import argparse
 import time
+import ctypes
 from urllib2 import URLError
+import traceback
 
 if __name__ == "__main__":
     os.environ["PYTHONINSPECT"] = "1"
@@ -12,6 +13,20 @@ if __name__ == "__main__":
 from zomblib.shotgunengine import ShotgunEngine
 
 
+def reportErrorOrExit(func):
+
+    def doIt(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except:
+            ctypes.windll.user32.MessageBoxA(0, traceback.format_exc(),
+                                             'SHOTGUN UPLOAD FAILED',
+                                             (0x10 | 0x0 | 0x1000))
+            raise
+        sys.exit(0)
+    return doIt
+
+@reportErrorOrExit
 def run():
 
     parser = argparse.ArgumentParser()
@@ -27,7 +42,7 @@ def run():
     print ("\n\nUploading '{}'...\n          ...onto '{}' field of {}(id={})."
            .format(ns.filePath, ns.fieldName , ns.entityType, ns.entityId))
 
-    print "\nDO NOT CLOSE THIS WINDOW ! It will close by itself once the upload succeeded.."
+    print "\nDO NOT CLOSE THIS WINDOW ! It will be closed once the upload succeeded..."
 
     attempt = -1
     maxAttempts = 5
@@ -48,8 +63,6 @@ def run():
         else:
             print "Upload succeeded !"
             break
-
-    sys.exit()
 
 if __name__ == "__main__":
     run()

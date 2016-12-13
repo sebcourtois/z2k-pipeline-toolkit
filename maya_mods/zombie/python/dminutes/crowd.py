@@ -15,6 +15,81 @@ from dminutes.maya_scene_operations import getMayaCacheDir
 
 reload(geocaching)
 
+
+def createPreviewSwitch():
+
+    sSwitchExpr = """
+    int $sel = .I[0];
+    int $viz[];
+    for ($i = 0; $i < 10; $i++) $viz[$i] = ($sel == $i) ? 1 : 0;
+    
+    .O[0] = $viz[0];
+    .O[1] = $viz[1];
+    .O[2] = $viz[2];
+    .O[3] = $viz[3];
+    .O[4] = $viz[4];
+    .O[5] = $viz[5];
+    .O[6] = $viz[6];
+    .O[7] = $viz[7];
+    .O[8] = $viz[8];
+    .O[9] = $viz[9];
+    """
+
+    for sSgNode in mc.ls("sgr_*", type="shadingEngine"):
+
+        sHistList = mc.listHistory(sSgNode, ac=True, pdo=True)
+        if sHistList:
+            sHistList = mc.ls(sHistList, type=("choice", "alSwitchColor", "lambert"))
+
+        if not sHistList:
+            continue
+
+        #print sSgNode, sHistList
+
+        try:
+            sLamberNode = mc.ls(sHistList, type="lambert")[0]
+        except IndexError:
+            pm.displayInfo("preview 'lambert' node not found for '{}'".format(sSgNode))
+            continue
+
+        try:
+            sSwicthNode = mc.ls(sHistList, type="alSwitchColor")[0]
+        except IndexError:
+            pm.displayInfo("'alSwitchColor' node not found for '{}'".format(sSgNode))
+            continue
+
+        try:
+            sChoiceNode = mc.ls(sHistList, type="choice")[0]
+        except IndexError:
+            sChoiceNode = ""
+
+        sBaseName = re.sub("^sgr_", "pre_", sSgNode)
+
+        sLyrTexNode = createSharedNode("layeredTexture", "_".join((sBaseName, "layeredTexture")))
+        sExprNode = createSharedNode("expression", "_".join((sBaseName, "expression")))
+        mc.expression(sExprNode, e=True, alwaysEvaluate=False, string=sSwitchExpr)
+        for i in xrange(10):
+            connectAttr(sExprNode + ".output[{}]".format(i), sLyrTexNode + ".inputs[{}].isVisible".format(i), f=True)
+
+        connectAttr("grp_geo.variationChoice", sExprNode + ".input[0]", f=True)
+
+        for i, sLetter in enumerate("ABCDEFGHIJ"):
+            sInList = mc.listConnections(sSwicthNode + ".input" + sLetter, s=True, d=False, p=True)
+            if not sInList:
+                continue
+            sInAttr = sInList[0]
+            connectAttr(sInAttr, sLyrTexNode + ".inputs[{}].color".format(i), f=True)
+
+        if sChoiceNode:
+            sOutList = mc.listConnections(sChoiceNode + ".output", s=False, d=True, p=True)
+            for sOutAttr in sOutList:
+                connectAttr(sLyrTexNode + ".outColor", sOutAttr, f=True)
+
+            mc.delete(sChoiceNode)
+        else:
+            connectAttr(sLyrTexNode + ".outColor", sLamberNode + ".color", f=True)
+
+
 def loadAssetAnimations(space="public"):
 
     scnInfos = infosFromScene()
@@ -168,3 +243,11 @@ def listCacheImportJobs(proj, sSpace, sAstName):
         jobList.append(jobData)
 
     return jobList
+
+def createSharedNode(sNodeType, sNodeName):
+    sNewNode = mc.createNode(sNodeType, n=sNodeName, shared=True)
+    return sNewNode if sNewNode else sNodeName
+
+def connectAttr(*args, **kwargs):
+    if not mc.isConnected(*args, ignoreUnitConversion=True):
+        return mc.connectAttr(*args, **kwargs)

@@ -36,13 +36,22 @@ def generatePrivateCachePath(node=''):
     localPath = ['/'.join(fullFileName.split('/')[:-1]),'fxCache',fileVersion]
     print ('[generateCachePath.generatePrivateCachePath] - localPath = ' + str(localPath))
     outPath = '/'.join(localPath)
+    print ('[generateCachePath.generatePrivateCachePath] - outPath = ' + str(outPath))
 
-    nodeShape = cmds.listRelatives(node,s=True)
+    if node:
+        print node
+        nodeSplit=node
+        if ':' in node:
+            nodeSplit = node.split(':')[1]
+            print nodeSplit
+        nodeShape = cmds.listRelatives(node,s=True)[0]
+        print nodeShape
 
-    if node and nodeShape and (cmds.nodeType(nodeShape) == 'nParticle' or cmds.nodeType(nodeShape) == 'fluidShape' or cmds.nodeType(nodeShape) == 'BE_VDBArnoldRender'):
-        node='pkg_'+node
+        if nodeShape and (cmds.nodeType(nodeShape) == 'nParticle' or cmds.nodeType(nodeShape) == 'fluidShape' or cmds.nodeType(nodeShape) == 'BE_VDBArnoldRender'):
+            nodeSplit='pkg_'+nodeSplit
 
-    outPath = '/'.join([outPath,node])
+        outPath = '/'.join([outPath,nodeSplit])
+
 
     if not os.path.isdir(outPath):
         #print 'is not dir'
