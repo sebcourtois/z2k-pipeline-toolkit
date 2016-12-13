@@ -1,8 +1,23 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+################################################################
+# Name    : BATZ_COULD_TO_PATH
+# Version : 001
+# Description :
+# Author : Jean-Philippe Descoins
+# Date : 2016-01-12
+# Comment : First release
+################################################################
+#    ! Toute utilisation de ce se script sans autorisation     #
+#                         est interdite !                      #
+#    ! All use of this script without authorization is         #
+#                           forbidden !                        #
+#                                                              #
+#                                                              #
+#                 © Jean-Philippe Descoins                     #
+################################################################
 
 
-# checker que la selection comporte bien ce qu il faut.
-# add scaling
-# fix bug curve size
 import maya.cmds as cmds
 import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
