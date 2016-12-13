@@ -1,26 +1,8 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-################################################################
-# Name    : BATZ_COULD_TO_PATH
-# Version : 001
-# Description :
-# Author : Jean-Philippe Descoins
-# Date : 2016-01-12
-# Comment : First release
-################################################################
-#    ! Toute utilisation de ce se script sans autorisation     #
-#                         est interdite !                      #
-#    ! All use of this script without authorization is         #
-#                           forbidden !                        #
-#                                                              #
-#                                                              #
-#                 © Jean-Philippe Descoins                     #
-################################################################
 
 
-
-
-
+# checker que la selection comporte bien ce qu il faut.
+# add scaling
+# fix bug curve size
 import maya.cmds as cmds
 import dminutes.jipeLib_Z2K as jpZ
 reload(jpZ)
@@ -157,6 +139,18 @@ class connectToPathGUI (object):
                 createdNodeL.append (stretchOnPathAttrPDiv)
                 cmds.setAttr (stretchOnPathAttrPDiv + ".operation",2)
                 cmds.setAttr (stretchOnPathAttrPDiv + ".input2X",maxVal/5) #10
+
+                # add a connection to replace the fied val on input 2 of stretchOnPathAttrPDiv
+                stretchOnPathAttrPDivinput2 = cmds.createNode("multiplyDivide", name= "stretchOnPathAttrPDiv_{0}".format(objA) )
+                createdNodeL.append (stretchOnPathAttrPDivinput2)
+                cmds.setAttr (stretchOnPathAttrPDivinput2 + ".operation",1)
+                cmds.setAttr (stretchOnPathAttrPDivinput2 + ".input1X",distL[i]) #maxVal
+                cmds.connectAttr( drivingAttrP, stretchOnPathAttrPDivinput2 + ".input2X",f=1)
+                cmds.connectAttr(  stretchOnPathAttrPDivinput2 + ".outputX",stretchOnPathAttrPDiv + ".input2X", f=1)
+
+                print "stretchOnPathAttrPDivinput2=", stretchOnPathAttrPDivinput2
+                # ---------------------------------------------------
+
                 cmds.connectAttr( stretchOnPathAttrP, stretchOnPathAttrPDiv +".input1X",f=1)
 
                 multiN_Stretch = cmds.createNode("multiplyDivide", name= "multiN_StretchedRealDist_{0}".format(objA) )
@@ -344,7 +338,10 @@ class connectToPathGUI (object):
         return outL
 
 
+    # ------------------------------------------- UI FONCTIONS -----------------------------------------------------------
 
+    def getUIV (self,*args, **kwargs):
+        print "getUIV()"
     def btn_connectToPath(self,*args, **kwargs):
 
         if not len(cmds.ls(sl=1) )>=2:
@@ -393,6 +390,5 @@ class connectToPathGUI (object):
         cmds.showWindow()
 
 
-# launch
 ctpI=connectToPathGUI()
 ctpI.createWindow()
