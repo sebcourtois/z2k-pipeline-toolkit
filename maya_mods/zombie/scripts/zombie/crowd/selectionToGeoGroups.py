@@ -9,5 +9,3 @@ if sGeoGrpList:
 else:
     mc.warning("No 'grp_geo' to select.")
 
-
-

@@ -65,8 +65,8 @@ def createPreviewSwitch():
 
         sBaseName = re.sub("^sgr_", "pre_", sSgNode)
 
-        sLyrTexNode = createSharedNode("layeredTexture", "_".join((sBaseName, "layeredTexture")))
-        sExprNode = createSharedNode("expression", "_".join((sBaseName, "expression")))
+        sLyrTexNode = getOrCreateNode("layeredTexture", "_".join((sBaseName, "layeredTexture")))
+        sExprNode = getOrCreateNode("expression", "_".join((sBaseName, "expression")))
         mc.expression(sExprNode, e=True, alwaysEvaluate=False, string=sSwitchExpr)
         for i in xrange(10):
             connectAttr(sExprNode + ".output[{}]".format(i), sLyrTexNode + ".inputs[{}].isVisible".format(i), f=True)
@@ -244,9 +244,13 @@ def listCacheImportJobs(proj, sSpace, sAstName):
 
     return jobList
 
-def createSharedNode(sNodeType, sNodeName):
-    sNewNode = mc.createNode(sNodeType, n=sNodeName, shared=True)
-    return sNewNode if sNewNode else sNodeName
+def getOrCreateNode(sNodeType, sNodeName):
+
+    if mc.objExists(sNodeName):
+        #mc.delete(sNodeName)
+        return sNodeName
+
+    return mc.createNode(sNodeType, n=sNodeName)
 
 def connectAttr(*args, **kwargs):
     if not mc.isConnected(*args, ignoreUnitConversion=True):
