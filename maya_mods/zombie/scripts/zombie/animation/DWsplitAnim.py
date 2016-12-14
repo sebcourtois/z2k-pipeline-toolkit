@@ -25,8 +25,8 @@ from pytd.util.fsutils import pathJoin
 
 DIALOG_ERROR_COLOR = [0.8,0.5,0.5]
 DIALOG_WARNING_COLOR = [0.8,0.5,0.2]
-DIALOG_INFO_COLOR = [0.5,0.5,0.8]
-DIALOG_ASKING_COLOR = [0.5,0.5,0.5]
+DIALOG_INFO_COLOR = [0.4,0.6,0.8]
+DIALOG_ASKING_COLOR = [0.4,0.4,0.4]
 DIALOG_SUCCESS_COLOR = [0.5,0.9,0.5]
 
 ATTR_ANIM_SPLIT="animSplit"  # attribute boolean "animSplit" = True if maya scene has already be splitted.
@@ -94,6 +94,9 @@ class SplitAnimMgr(QtGui.QWidget):
 		self.assetListWidgetA = None
 		self.assetListWidgetB = None
 		self.assetListWidgetC = None
+		
+		# flag check missing asset
+		self.isCheckMissingAssets = True
 
 		# Check Maya scene (shot group, list assets not empty, ...)
 		if not cmds.objExists("shot"):
@@ -584,7 +587,7 @@ class SplitAnimMgr(QtGui.QWidget):
 		generateAnimatorA = generateMenu.addAction(self.tr("animSplitA"), self.generateSceneAnimA)
 		generateAnimatorA = generateMenu.addAction(self.tr("animSplitB"), self.generateSceneAnimB)
 		generateAnimatorA = generateMenu.addAction(self.tr("animSplitC"), self.generateSceneAnimC)
-		generateAllAnimator = generateMenu.addAction(self.tr("All anims split"), self.generateAllSceneAnim)
+		generateAllAnimator = generateMenu.addAction(self.tr("All animSplits"), self.generateAllSceneAnim)
 		generateAllGPUs = generateMenu.addAction(self.tr("GPU's caches"), self.generateAllGpuCaches)
 
 		displayMenu = mainMenu.addMenu("&Display")
@@ -708,24 +711,25 @@ class SplitAnimMgr(QtGui.QWidget):
 		return listMissingAssets
 
 	def checkMissingAssetAndAsk(self):
-		listMissingAssets = self.getMissingAssetInSplit()
-		if listMissingAssets:
-			message = " The asset are missing in split anim: "
-			for missingAsset in listMissingAssets:
-				message = message + "\n\t" + missingAsset
-			message = message + "\nDo you want to continue"
-			result = cmds.confirmDialog(title='Missing assets in split anim', backgroundColor=DIALOG_INFO_COLOR, message=message, button=['Yes', 'No'], defaultButton='Yes', cancelButton='No')
-			if result == "No":
-				return False
+		if self.isCheckMissingAssets:
+			listMissingAssets = self.getMissingAssetInSplit()
+			if listMissingAssets:
+				message = " The asset are missing in split anim: "
+				for missingAsset in listMissingAssets:
+					message = message + "\n\t" + missingAsset
+				message = message + "\nDo you want to continue"
+				result = cmds.confirmDialog(title='Missing assets in split anim', backgroundColor=DIALOG_INFO_COLOR, message=message, button=['Yes', 'No'], defaultButton='Yes', cancelButton='No')
+				if result == "No":
+					return False
 
 		return True
 
 	def generateSceneAnimABC(self, type, listAsset, listAssetWidget):
 		#print("generateSceneAnimABC: type = " + str(type) + " listAsset = " + str(listAsset) + " listAssetWidget = " + str(listAssetWidget))
 
-		if not self.checkMissingAssetAndAsk():
-			return
-			
+		#if not self.checkMissingAssetAndAsk():
+		#	return
+
 		scnInfos = infosFromScene()
 		privCurScn = scnInfos["rc_entry"]
 		damShot = scnInfos["dam_entity"]
@@ -771,46 +775,87 @@ class SplitAnimMgr(QtGui.QWidget):
 		cmds.select(cl=True) # clear selection.
 
 	def generateSceneAnimA(self):
-		#if not self.checkMissingAssetAndAsk():
-		#	return
+		print("generateSceneAnimSplitA ...")
+		cmds.waitCursor(state=True)
+		result = self._generateSceneAnimA()
+		resetCursor()
+		if result:
+			displayWarningAndStop("animSplitA scene generated. Don't forget to save this scene if you want to keep the current lists of assets in animSplit")
+		else:
+			displayWarningAndStop("animSplitA has no asset")
+		print("generateSceneAnimSplitA done")
 
-		if len(self.listAssetA) != 0:
-			cmds.waitCursor(state=True)
-			self.generateSceneAnimABC("animSplitA_scene", self.listAssetA, self.assetListWidgetA)
-			viewMessage("Split anim A generated")
-			resetCursor()
-
-	def generateSceneAnimB(self):
-		#if not self.checkMissingAssetAndAsk():
-		#	return
-
-		if len(self.listAssetB) != 0:
-			cmds.waitCursor(state=True)
-			self.generateSceneAnimABC("animSplitB_scene", self.listAssetB, self.assetListWidgetB)
-			viewMessage("Split anim B generated")
-			resetCursor()
-
-	def generateSceneAnimC(self):
-		#if not self.checkMissingAssetAndAsk():
-		#	return
-
-		if len(self.listAssetC) != 0:
-			cmds.waitCursor(state=True)
-			self.generateSceneAnimABC("animSplitC_scene", self.listAssetC, self.assetListWidgetC)
-			viewMessage("Split anim C generated")
-			resetCursor()
-
-	def generateAllSceneAnim(self):
+	def _generateSceneAnimA(self):
 		if not self.checkMissingAssetAndAsk():
 			return
 
+		if len(self.listAssetA) != 0:
+			self.generateSceneAnimABC("animSplitA_scene", self.listAssetA, self.assetListWidgetA)
+			return True
+		else:
+			print("\tno asset in animSplitA")
+			return False
+
+	def generateSceneAnimB(self):
+		print("generateSceneAnimSplitB ...")
 		cmds.waitCursor(state=True)
-		self.generateSceneAnimA()
-		self.generateSceneAnimB()
-		self.generateSceneAnimC()
-		##viewMessage("All split anim scenes generated")
-		displayInfoAndStop("All split anim scenes generated")
+		result = self._generateSceneAnimB()
 		resetCursor()
+		if result:
+			displayWarningAndStop("animSplitB scene generated. Don't forget to save this scene if you want to keep the current lists of assets in animSplit")
+		else:
+			displayWarningAndStop("animSplitB has no asset")
+		print("generateSceneAnimSplitB done")
+
+	def _generateSceneAnimB(self):
+		if not self.checkMissingAssetAndAsk():
+			return
+
+		if len(self.listAssetB) != 0:
+			self.generateSceneAnimABC("animSplitB_scene", self.listAssetB, self.assetListWidgetB)
+			return True
+		else:
+			print("\tno asset in animSplitB")
+			return False
+
+	def generateSceneAnimC(self):
+		print("generateSceneAnimSplitC ...")
+		cmds.waitCursor(state=True)
+		result = self._generateSceneAnimC()
+		resetCursor()
+		if result:
+			displayWarningAndStop("animSplitC scene generated. Don't forget to save this scene if you want to keep the current lists of assets in animSplit")
+		else:
+			displayWarningAndStop("animSplitC has no asset")
+		print("generateSceneAnimSplitC done")
+
+	def _generateSceneAnimC(self):
+		if not self.checkMissingAssetAndAsk():
+			return
+
+		if len(self.listAssetC) != 0:
+			self.generateSceneAnimABC("animSplitC_scene", self.listAssetC, self.assetListWidgetC)
+			return True
+		else:
+			print("\tno asset in animSplitC")
+			return False
+
+	def generateAllSceneAnim(self):
+		print("generateAllSceneAnimSplit ...")
+		self.isCheckMissingAssets = True
+		if not self.checkMissingAssetAndAsk():
+			return
+		self.isCheckMissingAssets = False
+
+		cmds.waitCursor(state=True)
+		self._generateSceneAnimA()
+		self._generateSceneAnimB()
+		self._generateSceneAnimC()
+		##viewMessage("All split anim scenes generated")
+		displayWarningAndStop("All animSplit scenes generated. Don't forget to save this scene if you want to keep the current lists of assets in animSplit")
+		resetCursor()
+		self.isCheckMissingAssets = True
+		print("generateAllSceneAnimSplit done")
 
 	def getGpuCachePath(self): # Get path where the GPU caches of the current scene are saved
 		print("getAssetGpuCachePath")
@@ -858,6 +903,10 @@ def dialogError(message):
 
 def dialogWarning(message):
 	cmds.confirmDialog( title='Warning', backgroundColor=DIALOG_WARNING_COLOR, message=message, button=['OK'], defaultButton='OK')
+	
+def displayWarningAndStop(message):
+	result = cmds.confirmDialog( title='Warning', backgroundColor=DIALOG_WARNING_COLOR, message=message, button=['Ok'], defaultButton='Ok' )
+	return result
 
 def dialogAsk(message, text):
 	result = cmds.promptDialog(title='Dialog', backgroundColor=DIALOG_ASKING_COLOR, message=message, text=text, button=['OK', 'Cancel'], defaultButton='OK', cancelButton='Cancel', dismissString='Cancel')
