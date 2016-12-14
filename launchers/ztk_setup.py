@@ -204,7 +204,7 @@ class Z2kToolkit(object):
 #                   conflict="add")
         print ""
 
-    def install(self):
+    def install(self, sInstallPath):
 
         bBeenUpdated = False
 
@@ -214,32 +214,30 @@ class Z2kToolkit(object):
             print "Tools update from development environment !"
             sReleasePath = self.rootPath
 
-        sInstallPath = getLocalPath()
-
         if sReleasePath == sInstallPath:
             print "Source == Destination !"
+            return bBeenUpdated
+
+        sAction = "Installing"
+        if osp.exists(sInstallPath):
+            sAction = "Updating"
+            bBeenUpdated = True
         else:
-            sAction = "Installing"
-            if osp.exists(sInstallPath):
-                sAction = "Updating"
-                bBeenUpdated = True
-            else:
-                os.makedirs(sInstallPath)
+            os.makedirs(sInstallPath)
 
-            print "\n{} Z2K Toolkit:\n'{}' -> '{}'".format(sAction, sReleasePath, sInstallPath)
+        print "\n{} Z2K Toolkit:\n'{}' -> '{}'".format(sAction, sReleasePath, sInstallPath)
 
-            sOutput = self.makeCopy(sReleasePath, sInstallPath,
-                                    dryRun=True, summary=False)
-            if not sOutput.strip():
-                print "\nNo changes !"
-                return False
+        sOutput = self.makeCopy(sReleasePath, sInstallPath,
+                                dryRun=True, summary=False)
+        if not sOutput.strip():
+            print "\nNo changes !"
+            return False
 
-            self.makeCopy(sReleasePath, sInstallPath)
+        self.makeCopy(sReleasePath, sInstallPath)
 
-            cleanUpPyc(sInstallPath)
+        cleanUpPyc(sInstallPath)
 
-            print ("Zombie toolkit updated, use your local to launch applications ! ({0})"
-                   .format(pathJoin(sInstallPath, "launchers")))
+        print ("{} '{}'".format(sAction.replace("ing", "ed"), sInstallPath))
 
         return bBeenUpdated
 
@@ -394,6 +392,7 @@ class Z2kToolkit(object):
 
         launcherArgs = [sys.executable] + sys.argv
         updEnv("Z2K_LAUNCHER_CMD", subprocess.list2cmdline(launcherArgs))
+        sSetupEnvToolPath = osp.normpath(sys.argv[0])
         updEnv("Z2K_LAUNCH_SCRIPT", osp.normpath(sys.argv[0]))
 
         cmdArgs = sys.argv[1:]
@@ -446,7 +445,7 @@ class Z2kToolkit(object):
                 bBeenUpdated = False
                 try:
                     if (not self.isDev):
-                        bBeenUpdated = self.install()
+                        bBeenUpdated = self.install(getLocalPath())
                 except Exception as err:
                     print ("\n\n!!!!!!! Failed updating toolkit: {}".format(err))
                     if raw_input("\nPress enter to continue...") == "raise": raise
@@ -474,7 +473,11 @@ class Z2kToolkit(object):
             return self.launchApp(launchArgs, launch=(sAction == "launch"))
 
         if sAction == "install":
-            self.install()
+            p = getLocalPath()
+            self.install(p)
+            print normPath(p + sSetupEnvToolPath.split(BASE_NAME, 1)[1])
+            showPathInExplorer(normPath(p + sSetupEnvToolPath.split(BASE_NAME, 1)[1]),
+                               isFile=True, select=True)
 
         elif sAction == "release":
             parser.add_argument("--archive", "-a", type=int, default=None)
@@ -671,3 +674,16 @@ def enableToolSync(dryRun=False):
 
     return True
 
+def showPathInExplorer(p, isFile=False, select=False):
+
+    p = osp.normpath(p)
+
+    if not osp.exists(p):
+        sPathType = "file" if isFile else "directory"
+        raise EnvironmentError("No such {} found: {}".format(sPathType, p))
+
+    sCmd = "explorer /select, {}" if isFile or select else "explorer {}"
+    sCmd = sCmd.format(p)
+    subprocess.Popen(sCmd, shell=True)
+
+    return True
