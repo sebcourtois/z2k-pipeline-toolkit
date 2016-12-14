@@ -1905,10 +1905,13 @@ def deleteUVs(meshL=[], doNotDeleteL=["map1","uvSet_display","uv_preview"], inPa
         sDeletedUvList = []
         for each in reversed(sUvSetList):
             if each not in doNotDeleteL:
-                mc.polyUVSet(meshS,d=1, uvSet=each)
-                sDeletedUvList.append(each)
-                if meshS not in cleanedMeshL:
-                    cleanedMeshL.append(meshS)    
+                try:
+                    mc.polyUVSet(meshS,d=1, uvSet=each)
+                    sDeletedUvList.append(each)
+                    if meshS not in cleanedMeshL:
+                        cleanedMeshL.append(meshS)
+                except Exception,err:
+                    print err, meshS, each   
         
         for i in pm.getAttr(meshS+".uvSet", mi=True):
             if i >= len(mc.polyUVSet(meshS,q=1,auv=1)):
