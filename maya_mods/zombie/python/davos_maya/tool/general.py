@@ -2,6 +2,7 @@
 
 import os
 import os.path as osp
+import re
 from itertools import izip
 from collections import OrderedDict
 from pprint import pprint
@@ -350,6 +351,7 @@ def iterGeoGroups(**kwargs):
     bSelected = kwargs.get("selected", kwargs.get("sl", False))
     sObjList = kwargs.get("among", None)
     sNmspcList = kwargs.get("namespaces", None)
+    sPatrn = kwargs.get("regexp", "")
 
     if sObjList:
         bSelected = False
@@ -359,6 +361,9 @@ def iterGeoGroups(**kwargs):
         sNmspcList = set(o.rsplit("|", 1)[-1].rsplit(":", 1)[0] for o in sObjList)
     elif sNmspcList is None:
         sNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
+
+    if sPatrn:
+        sNmspcList = (ns for ns in sNmspcList if re.match(sPatrn, ns))
 
     for sNmspc in sNmspcList:
 

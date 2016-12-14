@@ -3,7 +3,8 @@ import maya.cmds as mc
 from dminutes import geocaching
 reload(geocaching)
 
-sGeoGrpList, _ = geocaching._confirmProcessing("Select 'grp_geo'", confirm=False)
+sGeoGrpList, _ = geocaching._confirmProcessing("Select 'grp_geo'", confirm=False,
+                                               regexp="^cwp_", selected=True)
 if sGeoGrpList:
     mc.select(sGeoGrpList)
 else:

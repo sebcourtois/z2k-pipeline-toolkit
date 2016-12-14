@@ -8,8 +8,8 @@ reload(geocaching)
 #if sSelList:
 #    sGeoGrpSet = set((s + ":grp_geo").strip(":")  for i, s in enumerate(sSelList) if (i + 1) % 2 == 0)
 
-sGeoGrpList, _ = geocaching._confirmProcessing("Select active cache", confirm=False)
-
+sGeoGrpList, _ = geocaching._confirmProcessing("Select active cache", confirm=False,
+                                               regexp="^cwp_", selected=True)
 sAbcNodeList = []
 for sGeoGrp in sGeoGrpList:
 
