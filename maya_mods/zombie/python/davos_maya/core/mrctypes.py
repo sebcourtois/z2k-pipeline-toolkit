@@ -120,7 +120,7 @@ class MrcFile(DrcFile):
             if not sNamespace:
                 damEntity = self.getEntity()
                 if damEntity:
-                    refDir = damEntity.getResource("public", "ref_dir", fail=False)
+                    refDir = damEntity.getResource("public", "ref_dir", fail=False, dbNode=False)
                     if refDir and pathEqual(self.parentDir().absPath(), refDir.absPath()):
                         sNamespace = underJoin((damEntity.name, padded(1, 2)))
         else:

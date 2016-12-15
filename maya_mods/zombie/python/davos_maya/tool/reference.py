@@ -14,7 +14,7 @@ from pytd.util.sysutils import toStr
 #from pytd.gui.dialogs import confirmDialog
 
 from pytaya.util.sysutils import withSelectionRestored
-from pytaya.core.reference import processSelectedReferences
+from pytaya.core.reference import processSceneReferences
 from pytaya.core.reference import listReferences
 
 from davos_maya.tool.general import entityFromScene, projectFromScene
@@ -23,7 +23,7 @@ from davos_maya.tool.general import entityFromScene, projectFromScene
 from dminutes.shotconformation import removeRefEditByAttr
 from davos.core.drctypes import DrcEntry
 
-@processSelectedReferences
+@processSceneReferences
 def listMayaRcForSelectedRefs(oFileRef, proj, **kwargs):
 
     sRefPath = pathResolve(oFileRef.path)
@@ -39,7 +39,7 @@ def listMayaRcForSelectedRefs(oFileRef, proj, **kwargs):
     resultList.append(res)
 
 @withSelectionRestored
-def switchSelectedAssetFiles(dryRun=False, cleanEdits=False, **kwargs):
+def switchAssetFiles(dryRun=False, cleanEdits=False, **kwargs):
 
     scnEntity = entityFromScene()
     proj = scnEntity.project
@@ -215,7 +215,7 @@ def switchSelectedAssetFiles(dryRun=False, cleanEdits=False, **kwargs):
                           .format(numRefs, sChosenRcName))
 
 
-@processSelectedReferences
+@processSceneReferences
 def switchAssets(oFileRef, newAst, **kwargs):
 
     sCurRefPath = oFileRef.path
@@ -324,7 +324,7 @@ def setDefaultAssetFileForSelectedRefs(assetFile="NoInput", **kwargs):
             print "set {}.{} to '{}'".format(oRefNode, DEFAULT_FILE_ATTR, sAstRcName)
             oRefNode.setAttr(DEFAULT_FILE_ATTR, sAstRcName)
 
-@processSelectedReferences
+@processSceneReferences
 def _loadAssetRefsToDefaultFile(oFileRef, astLib, logData, dryRun=False, **kwargs):
 
     oAstFileRefList = kwargs.pop("processResults")
@@ -448,7 +448,7 @@ def loadAssetRefsToDefaultFile(project=None, dryRun=False, selected=False):
 
     return oAstFileRefList
 
-@processSelectedReferences
+@processSceneReferences
 def _loadAssetsAsResource(oFileRef, sRcName, astLib, logData,
                           dryRun=False, checkSyncState=False, **kwargs):
 
@@ -534,8 +534,8 @@ def _loadAssetsAsResource(oFileRef, sRcName, astLib, logData,
     loadRef(rcFile.envPath())
 
 
-def loadAssetsAsResource(sRcName, fail=False, checkSyncState=False,
-                         selected=False, project=None, dryRun=False):
+def loadAssetsAsResource(sRcName, fail=False, checkSyncState=False, selected=False,
+                         project=None, dryRun=False, **kwargs):
     proj = project
     if not proj:
         proj = projectFromScene()
@@ -553,11 +553,12 @@ def loadAssetsAsResource(sRcName, fail=False, checkSyncState=False,
         sRefPathSet = set(pathResolve(oFileRef.path) for oFileRef in pm.iterReferences())
         for sRefPath in sRefPathSet:
             damAst = proj.entityFromPath(sRefPath, fail=False, library=astLib)
+            sAstName = damAst.name
             if not damAst:
                 continue
-            elif damAst.name in sAstList:
+            elif sAstName in sAstList:
                 continue
-            sAstList.append(damAst.name)
+            sAstList.append(sAstName)
             rcFile = damAst.getRcFile("public", sRcName, dbNode=False, weak=True, fail=False)
             if rcFile:
                 rcFileList.append(rcFile)
@@ -575,7 +576,8 @@ def loadAssetsAsResource(sRcName, fail=False, checkSyncState=False,
                                                selected=selected,
                                                logErrorOnly=bBatchMode,
                                                dryRun=dryRun,
-                                               checkSyncState=checkSyncState,)
+                                               checkSyncState=checkSyncState,
+                                               **kwargs)
     numFailure = logData["failed"]
     numLoaded = logData["loaded"]
 

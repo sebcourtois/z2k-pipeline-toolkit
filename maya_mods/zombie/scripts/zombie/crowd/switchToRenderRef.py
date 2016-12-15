@@ -20,5 +20,8 @@ def postSwitch(oFileRef, mtx):
 
     mc.xform(sGeoGrp, m=mtx, ws=True)
 
-myaref.switchSelectedAssetFiles(allIfNoSelection=False, filter="render_ref",
-                                preSwitchCall=preSwitch, postSwitchCall=postSwitch)
+def excludeRef(oFileRef):
+    return (not oFileRef.namespace.lower().startswith("cwp_"))
+
+myaref.switchAssetFiles(allIfNoSelection=False, filter="render_ref", exclude=excludeRef,
+                        preSwitchCall=preSwitch, postSwitchCall=postSwitch)
