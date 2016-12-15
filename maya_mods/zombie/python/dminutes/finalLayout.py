@@ -183,23 +183,16 @@ def createNukeBatch(gui=True):
     proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal")
     #shotgundb = proj._shotgundb
     damShot = proj.getShot(sShotName)
-    sgTaskList = damShot.listSgTasks(moreFilters=[["content", "in", ("final layout", "FL_Art", "Anim_MeshCache")]])
-    pprint(sgTaskList[0])
+    sgTaskList = damShot.listSgTasks(moreFilters=[["content", "in", ("FL_Art", "Anim_MeshCache")]])
+    #pprint(sgTaskList[0])
 
-    # Check if is a first time we render the task "final layout" so change the status to "in progress"
-    if sgTaskList[0]['sg_status_list'] == "rdy" :
-        sNewStatus = "ip"
-        proj.updateSgEntity(sgTaskList[0], sg_status_list=sNewStatus)
-    else:
-        pass
-
-    if sgTaskList[1]['sg_status_list'] == "vwd" or sgTaskList[0]['sg_status_list'] == "rtk" or sgTaskList[0]['sg_status_list'] == "fin" :
+    if sgTaskList[0]['sg_status_list'] == "wtg" or sgTaskList[0]['sg_status_list'] == "vwd" or sgTaskList[0]['sg_status_list'] == "rtk" or sgTaskList[0]['sg_status_list'] == "fin" :
         #print sgTaskList[1]['sg_status_list']
         sNewStatus = "clc"
-        proj.updateSgEntity(sgTaskList[2], sg_status_list=sNewStatus)
+        proj.updateSgEntity(sgTaskList[1], sg_status_list=sNewStatus)
     else:
         sNewStatus = "clc"
-        proj.updateSgEntity(sgTaskList[1], sg_status_list=sNewStatus)
+        proj.updateSgEntity(sgTaskList[0], sg_status_list=sNewStatus)
 
     log = miscUtils.LogBuilder(gui=gui, funcName="createNukeBatch")
 
