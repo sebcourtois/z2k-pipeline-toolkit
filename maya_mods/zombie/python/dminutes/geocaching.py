@@ -21,7 +21,8 @@ from pytd.util.sysutils import grouper, argToSet
 from pytaya.util import apiutils as myapi
 from pytaya.core.general import lsNodes, copyAttrs
 #from pytaya.core import system as myasys
-from davos_maya.tool import reference as myaref, dependency_scan
+from davos_maya.tool import reference as myaref
+from davos_maya.tool import dependency_scan
 from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
 from davos_maya.tool.general import iterGeoGroups
 
@@ -359,7 +360,10 @@ def exportCaches(**kwargs):
 
     sScnRcName = scnInfos.get("resource")
     if (not bRaw) and sScnRcName in ("anim_scene", "charFx_scene"):
-        myaref.loadAssetsAsResource("anim_ref", checkSyncState=True, selected=False, fail=True)
+        def excludeRef(oFileRef):
+            return oFileRef.namespace.lower().startswith("cwp_")
+        myaref.loadAssetsAsResource("anim_ref", checkSyncState=True, selected=False,
+                                    exclude=excludeRef, fail=True)
 
     sGeoGrpList, bSelected = _confirmProcessing(sProcessLabel, **kwargs)
     if not sGeoGrpList:
@@ -1174,6 +1178,8 @@ def importCaches(sSpace=None, **kwargs):
     bBeforeHist = kwargs.pop("beforeHistory", False)
     jobList = kwargs.pop("jobs", None)
     bScriptEd = kwargs.pop("showScriptEditor", True)
+    bOnXfms = kwargs.pop("onTransforms", True)
+    bOnMeshes = kwargs.pop("onMeshes", True)
 
     sepWidth = 120
     def doneWith(oAbcRef, remove=True, container=None):
@@ -1323,8 +1329,11 @@ def importCaches(sSpace=None, **kwargs):
                                                consider=sCacheObjList)
         #pprint(astToAbcXfmItems)
 
-        astToAbcMeshItems = getMeshMapping(astToAbcXfmItems, longName=True,
-                                           consider=sCacheObjList)
+        if bOnMeshes:
+            astToAbcMeshItems = getMeshMapping(astToAbcXfmItems, longName=True,
+                                               consider=sCacheObjList)
+        else:
+            astToAbcMeshItems = None
 
         #pprint(astToAbcMeshItems)
 
@@ -1334,32 +1343,36 @@ def importCaches(sSpace=None, **kwargs):
         if bStoreEdits:
             sPreEditList = []
             for sEditCmd in ("disconnectAttr", "connectAttr"):
-                sPreEditList.extend(pm.referenceQuery(oAstRef, editStrings=True, editCommand=sEditCmd))
+                sPreEditList.extend(pm.referenceQuery(oAstRef, editStrings=True,
+                                                      editCommand=sEditCmd))
 
         if (not bDryRun):
             sAbcGeoGrp = sAstGeoGrp.replace(sAstNmspc + ":", sAbcNmspc + ":")
             if mc.objExists(sAbcGeoGrp):
                 sAbcAttrList = mc.listAttr(sAbcGeoGrp, string="ABC_*")
                 if sAbcAttrList:
-                    copyAttrs(sAbcGeoGrp, sAstGeoGrp, *sAbcAttrList,
-                              values=True, create=True)
+                    copyAttrs(sAbcGeoGrp, sAstGeoGrp, *sAbcAttrList, values=True, create=True)
 
-        transferXfmAttrs(astToAbcXfmItems, only=sCacheObjList, dryRun=bDryRun,
-                         discardAttrs="visibility")
-        try:
-            iChoiceIdx = jobInfos.get("choice_index")
-            print iChoiceIdx
-            res = transferMeshShapes(astToAbcMeshItems, only=sCacheObjList,
-                                     beforeHistory=bBeforeHist, choiceIndex=iChoiceIdx,
-                                     dryRun=bDryRun)
-            outData.setdefault(sAstGeoGrp, {}).setdefault("choice_nodes", []).extend(res)
-        finally:
-            if sAstNmspc in oFileRefDct:
-                for sNodeName in lsNodes(sAstNmspc + ":*", not_rn=True, nodeNames=True):
-                    mc.rename(sNodeName, sNodeName.rsplit(":", 1)[-1])
+        if bOnXfms:
+            transferXfmAttrs(astToAbcXfmItems, only=sCacheObjList, dryRun=bDryRun,
+                             discardAttrs="visibility")
+
+        if astToAbcMeshItems:
+            try:
+                iChoiceIdx = jobInfos.get("choice_index")
+                res = transferMeshShapes(astToAbcMeshItems, only=sCacheObjList,
+                                         beforeHistory=bBeforeHist, choiceIndex=iChoiceIdx,
+                                         dryRun=bDryRun)
+                outData.setdefault(sAstGeoGrp, {}).setdefault("choice_nodes", []).extend(res)
+            finally:
+                if sAstNmspc in oFileRefDct:
+                    for sNodeName in lsNodes(sAstNmspc + ":*", not_rn=True, nodeNames=True):
+                        mc.rename(sNodeName, sNodeName.rsplit(":", 1)[-1])
 
         transferVisibilities(astToAbcXfmItems, dryRun=bDryRun)
-        transferVisibilities(astToAbcMeshItems, dryRun=bDryRun)
+
+        if astToAbcMeshItems:
+            transferVisibilities(astToAbcMeshItems, dryRun=bDryRun)
 
         if (not bDryRun):
             sFoundList = mc.ls(sAbcNodeList, type="AlembicNode")

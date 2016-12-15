@@ -30,11 +30,11 @@ from dminutes import miscUtils
 # add a button to refresh with the new scene (listAsset, attrAnimSplit, ..)
 
 
-DIALOG_ERROR_COLOR = [0.8,0.2,0.2]
+DIALOG_ERROR_COLOR = [0.8,0.5,0.5]
 DIALOG_WARNING_COLOR = [0.8,0.5,0.2]
-DIALOG_INFO_COLOR = [0.2,0.3,0.8]
-DIALOG_ASKING_COLOR = [0.3,0.3,0.3]
-DIALOG_SUCCESS_COLOR = [0.2,0.9,0.2]
+DIALOG_INFO_COLOR = [0.4,0.6,0.8]
+DIALOG_ASKING_COLOR = [0.4,0.4,0.4]
+DIALOG_SUCCESS_COLOR = [0.5,0.9,0.5]
 
 ## Atributes in 'shot'
 ATTR_ANIM_SPLIT="animSplit"  # attribute boolean "animSplit" = True if maya scene has already be splitted.
@@ -58,7 +58,7 @@ class DWanimPushPull(QtGui.QWidget):
 		super(DWanimPushPull, self).__init__(*args, **kwargs)
 		mayaMainWindowPtr = omui.MQtUtil.mainWindow()
 		mayaMainWindow = wrapInstance(long(mayaMainWindowPtr), QtGui.QWidget)
-		self.setParent(mayaMainWindow)
+		self.setParent(mayaMainWindow)        
 		self.setWindowFlags(QtCore.Qt.Window) # Make this widget a standalone window even though it is parented 
 
 		#QtGui.QWidget.__init__(self, shiboken.wrapInstance(long(mui.MQtUtil.mainWindow()), QtGui.QWidget))
@@ -66,11 +66,11 @@ class DWanimPushPull(QtGui.QWidget):
 		self.resize(300,200)
 		#self.setFont(QtGui.QFont("Verdana"))
 		try:
-			self.setWindowIcon(QtGui.QIcon("icon.jpg"))
+			self.setWindowIcon(QtGui.Icon("icon.jpg"))
 		except:pass
 
 		self.palette = QtGui.QPalette()
-		self.setWindowTitle("Anim Exchange Manager")
+		self.setWindowTitle("Anim Export Import Manager")
 		self.palette.setColor(QtGui.QPalette.Background, QtGui.QColor(75, 116, 75)) # green
 		self.setPalette(self.palette)
 
@@ -91,6 +91,7 @@ class DWanimPushPull(QtGui.QWidget):
 		self.listAssetA = []
 		self.listAssetB = []
 		self.listAssetC = []
+		self.listAssetM = []
 		self.curListAsset = None
 
 		# get list of assets for each split anim.
@@ -122,6 +123,26 @@ class DWanimPushPull(QtGui.QWidget):
 				print("ERROR: this is not a splitAnim shot !")
 				self.attrAnimSplit = ATTR_ANIM_SPLIT_A # for testing only
 				self.curListAsset = self.listAssetA
+		else: # it's the master shot, so get all the asset in this scene and build "self.listAssetM"
+			nodes = cmds.ls(type='reference')
+			#print nodes
+			for node in nodes:
+				isRef = True
+				try:
+					filename = cmds.referenceQuery(node, filename=1) # get filename
+				except:
+					isRef = False
+     
+				if isRef:   
+					if node.startswith("chr_") \
+					or node.startswith("prp_") \
+					or node.startswith("set_") \
+					or node.startswith("env_") \
+					or node.startswith("vhl_") \
+					or node.startswith("c2d_") \
+					or node.startswith("crw_"):
+						self.listAssetM.append(cmds.referenceQuery(node, n=1)[0])
+						self.curListAsset = self.listAssetM
 
 		print("self.curListAsset = " + str(self.curListAsset))
 
@@ -177,13 +198,18 @@ class DWanimPushPull(QtGui.QWidget):
 
 		if self.isMasterShot: # if scene is a master shot
 			self.getMasterAnimGpuButton = self.addButtonWidget("Get anim GPU", mainLayout, self.doMasterGetAnimGPU)
-			self.getMasterAnimAtomButton = self.addButtonWidget("Get anim ATOM", mainLayout, self.doMasterGetAnimATOM)
-			self.getMasterAnimAtomButton = self.addButtonWidget("Delete GPU caches", mainLayout, self.doMasterCleanGpuCaches)
+			self.getMasterAnimAtomButton = self.addButtonWidget("Delete all GPU caches", mainLayout, self.doMasterCleanGpuCaches)
+			#self.getMasterAnimAtomButton = self.addButtonWidget("Get anim ATOM", mainLayout, self.doMasterGetAnimATOM) # old one for ATOM files
+			self.getCharAndPropsAnimFromAnimSplits = self.addButtonWidget("Get characters and props anim", mainLayout, self.doGetCharsAndPropsAnimFromAnimSplits)
+			self.getSetsAnim = self.addButtonWidget("Get sets anim", mainLayout, self.doGetSetsAnim)
 			#button to hide GPU or ATOM anim
-		else: # its a split anim shot
+		else: # its a animSplit shot
 			self.pushSplitAnimGpuButton = self.addButtonWidget("Push anim GPU", mainLayout, self.doPushAnimSplitGPU)
-			self.pushSplitAtomButton = self.addButtonWidget("Publish To Master", mainLayout, self.doPushAnimSplitATOM)
 			self.getSplitGpuButton = self.addButtonWidget("Get anim GPU", mainLayout, self.doGetAnimSplitGPU)
+			#self.pushSplitAtomButton = self.addButtonWidget("Publish To Master", mainLayout, self.doPushAnimSplitATOM) # old one for ATOM files
+			self.publishCharAndPropsAnimToMaster = self.addButtonWidget("Publish characters and props anim", mainLayout, self.doPublishCharsAndPropsAnimToMaster)
+			self.publishSetsAnim = self.addButtonWidget("Publish sets anim", mainLayout, self.doPublishSetsAnim)
+			self.getSetsAnim = self.addButtonWidget("Get sets anim", mainLayout, self.doGetSetsAnim)
 
 		self.setLayout(mainLayout)
 
@@ -234,9 +260,9 @@ class DWanimPushPull(QtGui.QWidget):
 			isGpuCache = True
 		resetCursor()
 		if isGpuCache:
-			viewMessage("All GPU's animation loaded")
+			displayInfoAndStop("All GPU's animation loaded")
 		else:
-			viewMessage("No asset in split anim lists")
+			displayInfoAndStop("No asset in split anim lists")
 
 
 	# Build full path 'PATH_CACHES/sq6660_sh0080a/sq6660_sh0080a_animSplitA.atom' of Atom file
@@ -257,18 +283,26 @@ class DWanimPushPull(QtGui.QWidget):
 	def doMasterGetAnimATOM(self): # Import all ATOM animation from animSplit A, B and C
 		print("doMasterGetAnimATOM")
 		cmds.waitCursor(state=True)
+		isOk = True
 		if self.listAssetA:
 			animSplitAatomPath = self.getAtomPath(animSplit="animSplitA") 
-			self.importAtomFile(animSplitAatomPath, self.listAssetA) # read anim ATOM file for this asset
+			if not self.importAtomFile(animSplitAatomPath, self.listAssetA): # read anim ATOM file for this asset
+				displayInfoAndStop("Can't find ATOM file for splitAnimA")
+				isOk = False
 		if self.listAssetB:
 			animSplitBatomPath = self.getAtomPath(animSplit="animSplitB") 
-			self.importAtomFile(animSplitBatomPath, self.listAssetB) # read anim ATOM file for this asset
+			if not self.importAtomFile(animSplitBatomPath, self.listAssetB): # read anim ATOM file for this asset
+				displayInfoAndStop("Can't find ATOM file for splitAnimB")
+				isOk = False
 		if self.listAssetC:
 			animSplitCatomPath = self.getAtomPath(animSplit="animSplitC") 
-			self.importAtomFile(animSplitCatomPath, self.listAssetC) # read anim ATOM file for this asset
+			if not self.importAtomFile(animSplitCatomPath, self.listAssetC): # read anim ATOM file for this asset
+				displayInfoAndStop("Can't find ATOM file for splitAnimC")
+				isOk = False
 		resetCursor()
 		#viewMessage("All ATOM's animation loaded")
-		displayInfoAndStop("All ATOM's animation loaded")
+		if isOk:
+			displayInfoAndStop("All ATOM's animation loaded")
 
 	def filterListAssetCharAndProps(self, listAssets): # filter list asset by keeping only characters and props.
 		#print("filterListAssetCharAndProps")
@@ -279,6 +313,15 @@ class DWanimPushPull(QtGui.QWidget):
 					filterListAssets.append(asset)
 		return filterListAssets
 
+	def filterListAssetSets(self, listAssets): # filter list asset by keeping only sets.
+		#print("filterListAssetSets")
+		filterListAssets = []
+		if listAssets:
+			for asset in listAssets:
+				if asset[0:4] == "set_":
+					filterListAssets.append(asset)
+		return filterListAssets
+		
 	# check if all controlers (set_control) of a list of assets have a key, or set one at current frame.
 	def checkAndSetKeyAllCtls(self, listAssets):
 		print("checkAndSetKeyAllCtls: listAssets = " + str(listAssets))
@@ -286,10 +329,10 @@ class DWanimPushPull(QtGui.QWidget):
 			return
 
 		cmds.currentTime(101, update=True) # set current frame 101 and update animation.
-
+        
 		for asset in listAssets:
 			#print asset
-			set = cmds.ls(asset.replace("asset", "set_control"), type='objectSet')
+			set = cmds.ls(asset.replace("asset", "set_control"), type='objectSet')		
 			cmds.select(set) # Select RenderSet content
 			sels = cmds.ls(sl=True) # get selection
 			print("sels = " + str(sels))
@@ -302,6 +345,10 @@ class DWanimPushPull(QtGui.QWidget):
 					#	print("\t\t" + item + " has still not key")
 
 	def doPushAnimSplitGPU(self): # Export GPU caches files from the current animSplit scene.
+		result = dialogConfirm("Are you sure you want to publish your characters and props anim GPU files ?")
+		if not result == "YES":
+			return
+			
 		print("doPushAnimSplitGPU")
 		cmds.waitCursor(state=True)
 		print("\texport GPU caches for assets: " + str(self.curListAsset))
@@ -310,7 +357,7 @@ class DWanimPushPull(QtGui.QWidget):
 			assetsGpuPath = self.getGpuCachePath() # get path to export
 			self.exportGpuCache(filterListAssets, assetsGpuPath) # export all assets as GPU caches in subprocess
 		resetCursor()
-		viewMessage("GPU caches are being exported from another maya process...")
+		displayInfoAndStop("GPU caches are being exported from another maya process...")
 
 	def doPushAnimSplitATOM(self): # Export ATOM animation files from the current animSplit scene.
 		print("doPushAnimSplitATOM")
@@ -329,7 +376,212 @@ class DWanimPushPull(QtGui.QWidget):
 				resetCursor()
 				displayInfoAndStop("No asset to export")
 
+	# Build full path 'PATH_CACHES/sq6660_sh0080a/sq6660_sh0080a_animSplitA_charsPropsAnim.ma' of maya file
+	def getCharsPropsFilePath(self, animSplit=None): # get full path for the maya file containing the animation of characters and props for this splitAnim.
+		#print("getCharsPropsFilePath")
+		# curSceneName has sq6660_sh0080a_anim.ma for the master or sq6660_sh0080a_animSplitA.ma for the animSplit shots.
+		seqShot = (self.curSceneName.split("_anim")[0]) # isolate 'sq6660_sh0080a'
+		path = PATH_CACHES + "/" + seqShot
+		if not os.path.exists(path): # if path is not existing yet
+			os.makedirs(path) # create it
+		fullCharsPropsAnimPath = ""
+		if not animSplit: # if no animSplit argument, take the current scene
+			fullCharsPropsAnimPath = path + "/" + self.curSceneName.split(".")[0] # remove extension to build 'sq6660_sh0080a_animSplitA(.atom)'
+		else:
+			fullCharsPropsAnimPath = path + "/" + seqShot + "_" + animSplit + "_charsPropsAnim.ma"
+		return fullCharsPropsAnimPath
+
+	def doPublishCharsAndPropsAnimToMaster(self): # Export characters and props animation in a maya scene for master scene.
+		
+		result = dialogConfirm("Did you have baked the constraints and apply an Euleur filter before exporting ?")
+		if not result == "YES":
+			return
+		
+		print("doPublishCharsAndPropsAnimToMaster ...")
+		cmds.waitCursor(state=True)
+		if self.curListAsset:
+			filterListAssets = self.filterListAssetCharAndProps(self.curListAsset) # filter assets to keep only characters and props
+			filePath = self.getCharsPropsFilePath(animSplit=self.attrAnimSplit) # get path where to export maya scene file
+			cmds.select(cl=True) # clear selection.
+			cmds.select(filterListAssets, add=True) # Select objects in list
+			try:
+				returnFilePath = pm.exportSelected(filePath,type="mayaAscii",preserveReferences=True,shader=True,channels=True,constraints=True,expressions=True,constructionHistory=True,force=True)
+				displayInfoAndStop("animSplit chars and props " + str(returnFilePath) + " successfully generated")
+			except:
+				displayErrorAndStop("Can't export anim " + filePath)
+		else:
+			displayErrorAndStop("No current list assets")
+
+		cmds.select(cl=True) # clear selection.
+		resetCursor()
+		print("doPublishCharsAndPropsAnimToMaster done")
+
+	def doGetCharsAndPropsAnimFromAnimSplits(self): # Import all animSplit animation file (maya scene)
+		print("doGetCharsAndPropsAnimFromAnimSplits ...")
+		cmds.waitCursor(state=True)
+		
+		isOk = True
+		if self.listAssetA:
+			animSplitAanimationFilePath = self.getCharsPropsFilePath(animSplit="animSplitA") 
+			if not os.path.isfile(animSplitAanimationFilePath):
+				displayInfoAndStop("Warning file missing: " + str(animSplitAanimationFilePath) + " needed but not existing yet ? ")
+			else:
+				if not self.importAnimationFile(animSplitAanimationFilePath, self.listAssetA):
+					displayErrorAndStop("Error while importing animation file for splitAnimA")
+					isOk = False
+		if self.listAssetB:
+			animSplitBanimationFilePath = self.getCharsPropsFilePath(animSplit="animSplitB") 
+			if not os.path.isfile(animSplitBanimationFilePath):
+				displayInfoAndStop("Warning file missing: " + str(animSplitBanimationFilePath) + " needed but not existing yet ? ")
+			else:
+				if not self.importAnimationFile(animSplitBanimationFilePath, self.listAssetB):
+					displayErrorAndStop("Error while importing animation file for splitAnimB")
+					isOk = False
+		if self.listAssetC:
+			animSplitCanimationFilePath = self.getCharsPropsFilePath(animSplit="animSplitC") 
+			if not os.path.isfile(animSplitCanimationFilePath):
+				displayInfoAndStop("Warning file missing: " + str(animSplitCanimationFilePath) + " needed but not existing yet ? ")
+			else:
+				if not self.importAnimationFile(animSplitCanimationFilePath, self.listAssetC):
+					displayErrorAndStop("Error while importing animation file for splitAnimC")
+					isOk = False
+		
+		resetCursor()
+		if isOk:
+			displayInfoAndStop("All animSplit animation files loaded")
+		
+		resetCursor()
+		print("doGetCharsAndPropsAnimFromAnimSplits done")
+		
+	def importAnimationFile(self, animSplitAnimationFilePath, animSplitListAsset):
+		# filter list assets, only chars and props
+		filterListAssets = self.filterListAssetCharAndProps(animSplitListAsset)
+		
+		# delete references from these animSplit
+		for ref in cmds.ls(references=True): # Get all references
+			#print ref
+			filename = cmds.referenceQuery(ref, filename=True) # get reference filename
+			ns = cmds.file(filename, q=True, namespace=True) # get reference namespace
+			if ns+":asset" in filterListAssets: # if ref in list asset
+				#print ns, ref
+				try:
+					cmds.file(referenceNode=ref, removeReference=True) # remove this reference
+				except:
+					displayErrorAndStop("Can't remove reference asset: " + str(ns+":asset"))
+                
+		# import animSplit assets and animation from maya scene
+		try:
+			newNodes = cmds.file(animSplitAnimationFilePath, i=True, force=True, preserveReferences=True, mergeNamespacesOnClash=False, type='mayaAscii', ignoreVersion=True, returnNewNodes=True) 
+			#print newNodes
+			# Remove nodes like "sq6660_sh0090a_animSplitA_charsPropsAnim_shot*"
+			nodes = cmds.ls("*_charsPropsAnim_shot*")
+			for node in nodes:
+				cmds.delete(node)
+		except:
+			displayErrorAndStop("Can't read animSplit animation file: " + str(animSplitAnimationFilePath))
+			return False
+		
+		return True
+		
+	# Build full path 'PATH_CACHES/sq6660_sh0080a/sq6660_sh0080a_animSplitA_set_XXXX_Anim.ma' of maya file
+	def getSetFilePath(self, animSplit=None, set="setXXXX"): # get full path for the maya file containing the animation of characters and props for this splitAnim.
+		# curSceneName has sq6660_sh0080a_anim.ma for the master or sq6660_sh0080a_animSplitA.ma for the animSplit shots.
+		seqShot = (self.curSceneName.split("_anim")[0]) # isolate 'sq6660_sh0080a'
+		path = PATH_CACHES + "/" + seqShot
+		if not os.path.exists(path): # if path is not existing yet
+			os.makedirs(path) # create it
+		fullSetAnimPath = ""
+		setStripped = set.split(":")[0]
+		if not animSplit: # if no animSplit argument, take the current scene
+			fullSetAnimPath = path + "/" + seqShot + "_" + str(setStripped) + ".ma" # remove extension to build 'sq6660_sh0080a_animSplitA(.atom)'
+		else:
+			fullSetAnimPath = path + "/" + seqShot + "_" + str(setStripped) + ".ma"
+		return fullSetAnimPath
+		
+	def doPublishSetsAnim(self): # Export sets animation in a maya scene for master scene.
+		
+		result = dialogConfirm("Are you sure to have the last Sets animations, and want to overwrite the general one ?")
+		if not result == "YES":
+			return
+		
+		print("doPublishSetsAnim ...")
+		cmds.waitCursor(state=True)
+		if self.curListAsset:
+			filterListAssets = self.filterListAssetSets(self.curListAsset) # filter assets to keep only sets
+			for set in filterListAssets:
+				filePath = self.getSetFilePath(animSplit=self.attrAnimSplit, set=set) # get path where to export maya scene file
+				cmds.select(cl=True) # clear selection.
+				cmds.select(set, add=True) # Select objects in list
+				try:
+					returnFilePath = pm.exportSelected(filePath,type="mayaAscii",preserveReferences=True,shader=True,channels=True,constraints=True,expressions=True,constructionHistory=True,force=True)
+					displayInfoAndStop("animSplit sets anim " + str(returnFilePath) + " successfully generated")
+				except:
+					displayErrorAndStop("Can't export " + filePath)
+		else:
+			displayErrorAndStop("No current list assets")
+
+		cmds.select(cl=True) # clear selection.
+		resetCursor()
+		print("doPublishSetsAnim done")
+		
+
+	def doGetSetsAnim(self): # Import all sets animation file (maya scene)
+		result = dialogConfirm("Are you sure to overwrite your sets animation ?")
+		if not result == "YES":
+			return
+			
+		print("doGetSetsAnim ...")
+		cmds.waitCursor(state=True)
+		
+		if self.curListAsset:
+			animSetList = []
+			filterListAssets = self.filterListAssetSets(self.curListAsset) # filter assets to keep only sets
+			for set in filterListAssets:
+				filePath = self.getSetFilePath(animSplit=self.attrAnimSplit, set=set) # get path where maya scene file should be
+				#print("filePath = " + str(filePath))
+				if os.path.isfile(filePath): # if file exists
+				
+					# delete the one existing in the current scene
+					for ref in cmds.ls(references=True): # Get all references
+						#print ref
+						filename = cmds.referenceQuery(ref, filename=True) # get reference filename
+						ns = cmds.file(filename, q=True, namespace=True) # get reference namespace
+						if ns+":asset" in filterListAssets: # if ref in list asset
+							#print ns, ref
+							try:
+								cmds.file(referenceNode=ref, removeReference=True) # remove this reference
+							except:
+								displayErrorAndStop("Can't remove reference asset: " + str(ns+":asset"))
+								break;
+								
+					# import animSplit assets and animation from maya scene
+					try:
+						print("\timporting: " + str(filePath))
+						cmds.file(filePath, i=True, force=True, preserveReferences=True, mergeNamespacesOnClash=False, type='mayaAscii', ignoreVersion=True) 
+						animSetList.append(set)
+						#print newNodes
+						# Remove nodes like "sq6660_sh0090a_set_*_shot"
+						nodes = cmds.ls("sq????_sh?????_set*")
+						for node in nodes:
+							cmds.delete(node)
+					except:
+						displayErrorAndStop("\tCan't read set animation file: " + str(filePath))
+				else:
+					print("\tWarning: no animation file for set: " + str(set))
+		
+		resetCursor()
+		if len(animSetList) > 0:
+			displayInfoAndStop("All sets animation files loaded")
+		else:
+			displayWarningAndStop("NO set animation file loaded")
+		
+		print("doGetSetsAnim done")
+
 	def doGetAnimSplitGPU(self): # Get GPU caches in the current animSplit scene.
+		result = dialogConfirm("Are you sure you want update the characters and props anim GPU from others animSplit ?")
+		if not result == "YES":
+			return
+			
 		print("doGetAnimSplitGPU")
 		cmds.waitCursor(state=True)
 		gpuCachesPath = self.getGpuCachePath()
@@ -352,12 +604,12 @@ class DWanimPushPull(QtGui.QWidget):
 
 		resetCursor()
 
-		if self.curListAsset:
-			cmds.waitCursor(state=True)
-			gpuCachesPath = self.getGpuCachePath()
-			self.importGpuCachesFromListAssets(gpuCachesPath, self.curListAsset)
-			cmds.waitCursor(state=False)
-		viewMessage("All GPU's animation caches imported")
+##		if self.curListAsset:
+##			cmds.waitCursor(state=True)
+##			gpuCachesPath = self.getGpuCachePath()
+##			self.importGpuCachesFromListAssets(gpuCachesPath, self.curListAsset)
+##			cmds.waitCursor(state=False)
+		displayInfoAndStop("All GPU's animation caches imported")
 
 ##	def doExportAtom(self, **kwargs):
 ##		cmds.loadPlugin('atomImportExport.mll', quiet=True) # load plugins
@@ -458,7 +710,7 @@ class DWanimPushPull(QtGui.QWidget):
 			lastFile = files[-1]
 			print("\tlastFile = " + str(lastFile))
 			viewMessage("Importing ATOM cache: " + str(lastFile))
-			# Select first the asset(s) root before (like "chr_francis_default_01:asset")
+			# Select first the asset(s) root before (like "chr_francis_default_01:asset")            
 			myasys.importAtomFile(lastFile,
 								 #targetTime="start_end",
 								 targetTime="from_file", # "start_end":1, "time_slider":2, "from_file":3
@@ -467,6 +719,9 @@ class DWanimPushPull(QtGui.QWidget):
 								 option="replace", # replace existing animation
 								 match="hierarchy",
 								 selected="childrenToo")
+			return True
+		else:
+			return False
 
 	## From gpucaching
 	# export GPU caches for list of assets
@@ -523,8 +778,8 @@ class DWanimPushPull(QtGui.QWidget):
 		timeRange = (pm.playbackOptions(q=True, animationStartTime=True),
 					pm.playbackOptions(q=True, animationEndTime=True))
 
-#	timeRange = (pm.playbackOptions(q=True, minTime=True),
-#				 pm.playbackOptions(q=True, maxTime=True))
+#    timeRange = (pm.playbackOptions(q=True, minTime=True),
+#                 pm.playbackOptions(q=True, maxTime=True))
 
 		sPyCmd = "from dminutes import gpucaching;reload(gpucaching);"
 		sPyCmd += "gpucaching._doExportGpuCaches('{}',{},{},'{}');".format(sOutDirPath,
@@ -555,12 +810,16 @@ class DWanimPushPull(QtGui.QWidget):
 
 
 	def doMasterCleanGpuCaches(self):
+		result = dialogConfirm("Are you sure you want to delete all the GPU caches ?")
+		if not result == "YES":
+			return
+			
 		#print("doMasterCleanGpuCaches")
 		if cmds.objExists("grp_gpuCache"):
 			cmds.delete("grp_gpuCache")
-			viewMessage("All GPU caches deleted")
+			displayInfoAndStop("All GPU caches deleted")
 		else:
-			viewMessage("No more GPU caches")
+			displayInfoAndStop("Already no more GPU caches")
 
 
 def resetCursor(): # to avoid cursor in wait state (the waitCursor has a pile of state and when it crash the cursor can stay in the wrong state)
@@ -573,14 +832,30 @@ def viewMessage(text):
 	cmds.inViewMessage( amg='<hl>' + text + '</hl>.', pos='midCenter', fade=True )
 	
 def displayInfoAndStop(message):
+	print("INFO: " + message)
 	result = cmds.confirmDialog( title='Info', backgroundColor=DIALOG_INFO_COLOR, message=message, button=['Ok'], defaultButton='Ok' )
 	return result
+
+def displayErrorAndStop(message):
+	print("ERROR: " + message)
+	result = cmds.confirmDialog( title='Error', backgroundColor=DIALOG_ERROR_COLOR, message=message, button=['Ok'], defaultButton='Ok' )
+	return result
+	
+def displayWarningAndStop(message):
+	print("WARNING: " + message)
+	result = cmds.confirmDialog( title='Warning', backgroundColor=DIALOG_WARNING_COLOR, message=message, button=['Ok'], defaultButton='Ok' )
+	return result
+	
+def dialogConfirm(message):
+	result = cmds.confirmDialog(title='Dialog', backgroundColor=DIALOG_ASKING_COLOR, message=message, button=['YES', 'NO'], defaultButton='YES', cancelButton='NO', dismissString='NO')
+	return result
+
 
 
 # Launch DWanimPushPull
 try :
-	uiDWanimPushPull.close()
+    uiDWanimPushPull.close()
 except :
-	pass
+    pass
 uiDWanimPushPull = DWanimPushPull()
 uiDWanimPushPull.show()
