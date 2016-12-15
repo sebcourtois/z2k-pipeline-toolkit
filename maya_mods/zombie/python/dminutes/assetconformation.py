@@ -1836,6 +1836,8 @@ def UVSetCount(gui = True):
 
     for each in meshList:
         uvMapList = mc.polyUVSet(each, query=True, allUVSets=True )
+        if not uvMapList:
+            uvMapList = []
         if "uvSet_display" in uvMapList:
             uvMapList.remove("uvSet_display")
         if len(uvMapList)>1:
