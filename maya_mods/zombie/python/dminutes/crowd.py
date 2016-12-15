@@ -1,17 +1,31 @@
 
 import os.path as osp
 import re
+from functools import partial
 from pprint import pprint
+
+from PySide import QtGui
+from PySide.QtCore import Qt
 
 import maya.cmds as mc
 import pymel.core as pm
 
-from pytd.util.fsutils import pathJoin
+from pytd.util.fsutils import pathJoin, pathEqual
 
 from davos_maya.tool.general import infosFromScene
 
+from davos.core.damproject import DamProject
+
 from dminutes import geocaching
 from dminutes.maya_scene_operations import getMayaCacheDir
+from random import randint
+from pytaya.core.transform import matchTransform
+
+from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
+from pytd.gui.widgets import QuickTree
+from pytd.util.strutils import labelify
+from pytaya.util.sysutils import withSelectionRestored
+from PySide.QtGui import QTreeWidgetItemIterator
 
 reload(geocaching)
 
@@ -244,6 +258,192 @@ def listCacheImportJobs(proj, sSpace, sAstName):
 
     return jobList
 
+def switchColors(sGeoGrpList):
+
+    for sGeoGrp in sGeoGrpList:
+
+        sVariaAttr = sGeoGrp + ".variationChoice"
+
+        sVariaList = mc.addAttr(sVariaAttr, q=True, en=True)
+        if not sVariaList:
+            continue
+
+        iCurVaria = mc.getAttr(sVariaAttr, asString=True)
+        sCurVaria = mc.getAttr(sVariaAttr, asString=True)
+        sCurFamily = sCurVaria.split("_", 1)[0]
+
+        iVariaList = tuple(i for i, s in enumerate(sVariaList.split(":"))
+                           if s.split("_", 1)[0] == sCurFamily)
+        if not iVariaList:
+            continue
+
+        count = len(iVariaList)
+        if count == 1:
+            pm.displayWarning("Only one color available on '{}'".format(sCurFamily))
+            continue
+
+        v = iCurVaria
+        while v == iCurVaria:
+            v = iVariaList[randint(0, count - 1)]
+
+        mc.setAttr(sVariaAttr, v)
+
+def importAssignedVariations(assignedItems):
+
+    proj = DamProject("zombillenium")
+
+    sGeoGrpList = []
+    count = len(assignedItems)
+    for i, (target, astVariation) in enumerate(assignedItems):
+
+        sAstName, sVariaName = astVariation
+        damAst = proj.getAsset(sAstName)
+        astFile = damAst.getResource("public", "render_ref", dbNode=False)
+
+        bSwitchRef = isinstance(target, pm.FileReference)
+
+        if not bSwitchRef:
+
+            print "\nImporting {}/{} crowds: {}".format(i + 1, count, astFile.dbPath())
+
+            res = astFile.mayaImportScene(deferReference=False, returnNewNodes=True)
+
+            oFileRef = res[0].referenceFile()
+            sGeoGrp = oFileRef.namespace + ":grp_geo"
+            matchTransform(sGeoGrp, target)
+
+        else:
+            print "\nChanging {}/{} crowds: {}".format(i + 1, count, astFile.dbPath())
+
+            mtx = None
+            if not pathEqual(target.path, astFile.absPath()):
+
+                sTrgtNmspc = target.namespace
+                sGeoGrp = sTrgtNmspc + ":grp_geo"
+                mtx = mc.xform(sGeoGrp, q=True, m=True, ws=True)
+
+                target.replaceWith(astFile.envPath())
+
+                sPrevAstName = "_".join(sTrgtNmspc.split("_")[:3])
+
+                sRefNode = target.refNode.name()
+                mc.lockNode(sRefNode, lock=False)
+                try:
+                    sRefNode = mc.rename(sRefNode, sRefNode.replace(sPrevAstName, sAstName))
+                finally:
+                    mc.lockNode(sRefNode, lock=True)
+
+                sNewNmspc = sTrgtNmspc.replace(sPrevAstName, sAstName)
+                target.namespace = sNewNmspc
+
+            sGeoGrp = target.namespace + ":grp_geo"
+            if mtx:
+                mc.xform(sGeoGrp, m=mtx, ws=True)
+
+        sVariaList = mc.addAttr(sGeoGrp + ".variationChoice", q=True, en=True)
+        sVariaList = sVariaList.split(":")
+        mc.setAttr(sGeoGrp + ".variationChoice", sVariaList.index(sVariaName))
+
+        sGeoGrpList.append(sGeoGrp)
+
+    return sGeoGrpList
+
+def assignVariations(variaList, sObjList):
+
+    if not sObjList:
+        raise ValueError("Empty target object list: {}".format(sObjList))
+
+    sRefNodeList = []
+    targetList = []
+    for sObj in mc.ls(sObjList, type="transform"):
+        if mc.referenceQuery(sObj, isNodeReferenced=True):
+            sRefNode = mc.referenceQuery(sObj, referenceNode=True, topReference=True)
+            if sRefNode not in sRefNodeList:
+                targetList.append(pm.FileReference(sRefNode))
+                sRefNodeList.append(sRefNode)
+        else:
+            targetList.append(sObj)
+
+    numVaria = len(variaList)
+    mappedItems = tuple((target, variaList[randint(0, numVaria - 1)]) for target in targetList)
+
+    return mappedItems
+
+def iterVariations(variaDct, families=None, assets=None):
+
+    if not families:
+        mainIter = variaDct.iteritems()
+    else:
+        mainIter = (itm for itm in variaDct.iteritems() if itm[0] in families)
+
+    if assets:
+        _cwped = lambda s: (("cwp_" + s) if not s.startswith("cwp_") else s)
+        sAstList = tuple(_cwped(s.rsplit("_", 1)[0]) for s in assets)
+    else:
+        sAstList = None
+
+    for _, astVariaDct in mainIter:
+
+        for sAstName, sVariaList in astVariaDct.iteritems():
+
+            if sAstList and sAstName.rsplit("_", 1)[0] not in sAstList:
+                continue
+
+            for sVaria in sVariaList:
+                yield (sAstName, sVaria)
+
+@withSelectionRestored
+def variationsFromLineUp(keepLineUp=False):
+
+    proj = DamProject("zombillenium")
+
+    lineUpScn = proj.getLibrary("public", "misc_lib").getEntry("layout/crowd_lineup.ma", dbNode=False)
+    lineUpScn.mayaImportScene()
+    oLineUpRef = pm.FileReference(lineUpScn.absPath())
+
+    variationDct = {}
+    try:
+        for oAstRef in pm.listReferences(parentReference=oLineUpRef):
+    
+            sGeoGrp = oAstRef.fullNamespace + ":grp_geo"
+            sVariaList = mc.addAttr(sGeoGrp + ".variationChoice", q=True, en=True)
+            if not sVariaList:
+                continue
+            sAstName = "_".join(oAstRef.namespace.split("_")[:3])
+            sVariaList = sVariaList.split(":")
+            for sVaria in sVariaList:
+                sFamily = sVaria.split("_", 1)[0]
+                variationDct.setdefault(sFamily, {}).setdefault(sAstName, []).append(sVaria)
+    finally:
+        if not keepLineUp:
+            oLineUpRef.remove()
+
+    return variationDct
+
+
+def importLineUp():
+
+    proj = DamProject("zombillenium")
+
+    sgAstList = proj.listAllSgAssets(moreFilters=[["sg_asset_type", "is", "crowd previz"]])
+
+    spacing = 12
+    lineLen = spacing * len(sgAstList)
+
+    x = lineLen * -.5
+    for i, sgAst in enumerate(sgAstList):
+
+        sAstName = sgAst["code"]
+        damAst = proj.getAsset(sAstName)
+
+        astFile = damAst.getResource("public", "render_ref", dbNode=False)
+        res = astFile.mayaImportScene()
+
+        oFileRef = res[0].referenceFile()
+        sGeoGrp = oFileRef.namespace + ":grp_geo"
+
+        mc.setAttr(sGeoGrp + ".tx", x + (i * spacing))
+
 def getOrCreateNode(sNodeType, sNodeName):
 
     if mc.objExists(sNodeName):
@@ -255,3 +455,85 @@ def getOrCreateNode(sNodeType, sNodeName):
 def connectAttr(*args, **kwargs):
     if not mc.isConnected(*args, ignoreUnitConversion=True):
         return mc.connectAttr(*args, **kwargs)
+
+
+
+class FlavorDialog(MayaQWidgetDockableMixin, QtGui.QDialog):
+
+    def __init__(self, parent=None):
+        super(FlavorDialog, self).__init__(parent=parent)
+
+        self.setObjectName("crowdFlavorSelector")
+        self.setWindowTitle(labelify(self.objectName()))
+        self.setAttribute(Qt.WA_DeleteOnClose, True)
+        self.resize(380, 400)
+
+        layout = QtGui.QVBoxLayout(self)
+
+        treeWdg = QuickTree(self)
+        layout.addWidget(treeWdg)
+        layout.setSpacing(6)
+        layout.setContentsMargins(4, 4, 4, 4)
+
+        buttonBox = QtGui.QDialogButtonBox(self)
+        buttonBox.setOrientation(Qt.Horizontal)
+        buttonBox.setObjectName("buttonBox")
+
+        btn = buttonBox.addButton("Check All", QtGui.QDialogButtonBox.ResetRole)
+        btn.clicked.connect(partial(self.setAllCheckState, Qt.Checked))
+        btn = buttonBox.addButton("Uncheck All", QtGui.QDialogButtonBox.ResetRole)
+        btn.clicked.connect(partial(self.setAllCheckState, Qt.Unchecked))
+        btn = buttonBox.addButton("Assign", QtGui.QDialogButtonBox.AcceptRole)
+        btn.clicked.connect(self.proceed)
+        btn = buttonBox.addButton("Close", QtGui.QDialogButtonBox.RejectRole)
+        btn.clicked.connect(self.reject)
+        layout.addWidget(buttonBox)
+
+        variationDct = variationsFromLineUp()
+
+        treeDataList = []
+        for sFamily, astVariaDct in variationDct.iteritems():
+            for sAstName in astVariaDct.iterkeys():
+                sTreePath = pathJoin(sFamily, sAstName)
+                roleData = {Qt.UserRole:(0, (sFamily, sAstName))}
+                treeDataList.append({"path":sTreePath, "flags":None,
+                                     "roles":roleData})
+
+        treeWdg.headerItem().setHidden(True)
+        treeWdg.itemDelegate().setItemMarginSize(2, 2)
+        treeWdg.defaultFlags |= Qt.ItemIsTristate
+        treeWdg.defaultRoles = {Qt.CheckStateRole:(0, Qt.Checked)}
+        treeWdg.createTree(treeDataList)
+
+        for i in xrange(treeWdg.topLevelItemCount()):
+            treeWdg.topLevelItem(i).setExpanded(True)
+
+        self.treeWdg = treeWdg
+        self.allVariations = variationDct
+
+    def proceed(self):
+
+        flags = (QTreeWidgetItemIterator.Checked | QTreeWidgetItemIterator.Enabled)
+        treeIter = QTreeWidgetItemIterator(self.treeWdg, flags)
+        dataIter = (it.value().data(0, Qt.UserRole) for it in treeIter)
+        dataList = tuple(d for d in dataIter if d)
+
+        if not dataList:
+            pm.displayWarning("No variation selected.")
+            return
+
+        families = tuple(f for f, _ in dataList)
+        assets = tuple(a for _, a in dataList)
+
+        variaList = tuple(iterVariations(self.allVariations, families, assets))
+        assignedItems = assignVariations(variaList, mc.ls(sl=True, dag=False, tr=True))
+        sGeoGrpList = importAssignedVariations(assignedItems)
+        mc.select(sGeoGrpList)
+
+    def setAllCheckState(self, qChecked):
+
+        treeWdg = self.treeWdg
+        for i in xrange(treeWdg.topLevelItemCount()):
+            treeWdg.topLevelItem(i).setCheckState(0, qChecked)
+
+
