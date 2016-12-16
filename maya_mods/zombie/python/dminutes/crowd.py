@@ -6,6 +6,7 @@ from pprint import pprint
 
 from PySide import QtGui
 from PySide.QtCore import Qt
+from PySide.QtGui import QTreeWidgetItemIterator
 
 import maya.cmds as mc
 import pymel.core as pm
@@ -25,7 +26,6 @@ from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 from pytd.gui.widgets import QuickTree
 from pytd.util.strutils import labelify
 from pytaya.util.sysutils import withSelectionRestored
-from PySide.QtGui import QTreeWidgetItemIterator
 
 reload(geocaching)
 
@@ -463,7 +463,7 @@ class FlavorDialog(MayaQWidgetDockableMixin, QtGui.QDialog):
     def __init__(self, parent=None):
         super(FlavorDialog, self).__init__(parent=parent)
 
-        self.setObjectName("crowdFlavorSelector")
+        self.setObjectName("CrowdFlavorSelector")
         self.setWindowTitle(labelify(self.objectName()))
         self.setAttribute(Qt.WA_DeleteOnClose, True)
         self.resize(380, 400)
