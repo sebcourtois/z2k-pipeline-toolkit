@@ -780,7 +780,7 @@ def transferVisibilities(astToAbcObjMap, dryRun=False):
         addLoggingSet("showed_" + sNmspc, sShowedList)
 
 MESH_INPUT_FILTER = ("displayLayer", "renderLayer", "renderLayerManager",
-                    "displayLayerManager", "dagNode", "objectSet")
+                    "displayLayerManager", "dagNode", "objectSet", "time")
 
 def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False,
                        beforeHistory=False, choiceIndex=None):
@@ -1097,67 +1097,75 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
         sAbcNmspc = sAstNmspc + "_cache"
         sScnAbcNodeName = sAbcNmspc + "_AlembicNode"
 
-        sAllEditList = []
-#        sRefEditAttr = sAstGeoGrp+".abcImportRefEdits"
-#        if mc.objExists(sRefEditAttr):
-#            sEditList = mc.getAttr(sRefEditAttr).split("\n")
-#            sEditList.reverse()
-
         sAstMeshList = mc.ls(sAstNmspc + ":*", type="mesh", ni=True)
         oAstRef = pm.PyNode(sAstGeoGrp).referenceFile()
         
-        if (not quick) and oAstRef:
+        sToDelList = []
+        for sAstMesh in sAstMeshList:
 
-            for sAstMesh in sAstMeshList:
-                sEditList = mc.referenceQuery(sAstMesh, editStrings=True,
-                                              editNodes=False, editAttrs=False,
-                                              editCommand="connectAttr",
-                                              successfulEdits=True, failedEdits=True)
-                sInMeshAttr = sAstMesh + ".inMesh"
-                sAllEditList.extend(s for s  in sEditList if sInMeshAttr in s)
+            sHistList = listForNone(mc.listHistory(sAstMesh, il=2, pdo=True))
+            if not sHistList:
+                continue
 
-            if sAllEditList:
+            sHistList = lsNodes(sHistList, type=("polyTransfer", "polyTweak"),
+                                not_rn=True, nodeNames=True)
+            if sHistList:
+                sToDelList.extend(sHistList)
 
-#                sEditList = mc.referenceQuery(oAstRef.refNode.name(), editStrings=True,
-#                                              editNodes=False, editAttrs=False,
-#                                              editCommand="disconnectAttr",
-#                                              successfulEdits=True, failedEdits=False)
-#                sAllEditList.extend(sEditList)
-                #pprint(sAllEditList)
+        if sToDelList:
+            print ("delete {} nodes on '{}' history.".format(len(sToDelList), sAstNmspc))
+            mc.delete(sToDelList)
 
-                oAstRef.unload()
-                try:
-                    for sEdit in sAllEditList:
-                        sArgList = sEdit.replace('"', '').strip().split(" ")
-                        sEditCmd = sArgList[0]
-                        target = sArgList[1:3] if sEditCmd == "connectAttr" else sArgList[-2]
-                        print "delete Edit:", sEditCmd, target
-                        mc.referenceEdit(target, editCommand=sEditCmd, removeEdits=True,
-                                         successfulEdits=True, failedEdits=True)
-                finally:
-                    oAstRef.load()
-        else:
+        if not quick:
             sToDelList = []
             for sAstMesh in sAstMeshList:
 
-                sHistList = listForNone(mc.listHistory(sAstMesh, il=2, pdo=True))
-                if not sHistList:
-                    continue
+                sFullHistList = mc.listHistory(sAstMesh, il=2)
+                if sFullHistList:
+                    sHistList = lsNodes(sFullHistList, nodeNames=True,
+                                        not_rn=True, not_type=MESH_INPUT_FILTER)
 
-                sHistList = lsNodes(sHistList, type="polyTransfer", not_rn=True, nodeNames=True)
-                if sHistList:
-                    sToDelList.extend(sHistList)
+                    if not sHistList:
+                        sFoundList = lsNodes(sFullHistList, type="mesh", io=True,
+                                             not_rn=True, nodeNames=True)
+                        sIntermedMesh = sFoundList[0] if sFoundList else ""
+                        if sIntermedMesh:
+                            sToDelList.append(sIntermedMesh)
 
             if sToDelList:
-                print ("delete {} 'polyTransfer' nodes on '{}'"
-                       .format(len(sToDelList), sAstNmspc))
+                print ("delete {} intermediate meshes on '{}'.".format(len(sToDelList), sAstNmspc))
                 mc.delete(sToDelList)
 
-            if oAstRef:
-                for sAstMesh in sAstMeshList:
-                    sInMeshAttr = sAstMesh + ".inMesh"
-                    mc.referenceEdit(sInMeshAttr, removeEdits=True, editCommand="connectAttr",
-                                     successfulEdits=False, failedEdits=True)
+        if oAstRef:
+
+            for sAstMesh in sAstMeshList:
+                sInMeshAttr = sAstMesh + ".inMesh"
+                mc.referenceEdit(sInMeshAttr, removeEdits=True, editCommand="connectAttr",
+                                 successfulEdits=False, failedEdits=True)
+
+            if quick:
+                continue
+
+            sGrpIdEditList = []
+            sNodeList = lsNodes(sAstNmspc + ":*", type="groupId", nodeNames=True, rn=True)
+            for sNode in sNodeList:
+                sEditList = mc.referenceQuery(sNode, editStrings=True,
+                                              editCommand="disconnectAttr",
+                                              successfulEdits=True,
+                                              failedEdits=True,
+                                              showDagPath=True)
+                if sEditList:
+                    sGrpIdEditList.extend(sEditList)
+
+            if sGrpIdEditList:
+                bUnloadRef = True# if sGrpIdEditList else False
+                if bUnloadRef:
+                    oAstRef.unload()
+                try:
+                    deleteRefEdits(sGrpIdEditList)
+                finally:
+                    if bUnloadRef:
+                        oAstRef.load()
 
         sScnAbcNode = getNode(sScnAbcNodeName)
         if sScnAbcNode:
@@ -1165,6 +1173,17 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
 
     return
 
+def deleteRefEdits(sRefEditList):
+        
+    for sEdit in sRefEditList:
+        sArgList = sEdit.replace('"', '').strip().split(" ")
+        sEditCmd = sArgList[0]
+        target = sArgList[1:3] if sEditCmd == "connectAttr" else sArgList[-2]
+        print "delete Edit:", sEditCmd, target
+        mc.referenceEdit(target, editCommand=sEditCmd, removeEdits=True,
+                         successfulEdits=True, failedEdits=True)
+        
+        
 @autoKeyDisabled
 def importCaches(sSpace=None, **kwargs):
 
