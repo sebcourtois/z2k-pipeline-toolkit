@@ -997,6 +997,9 @@ def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
     if not damShot:
         damShot = infosFromScene().get("dam_entity")
 
+    if damShot.sequence == "sq2000":
+        return
+
     layoutInfoFile = damShot.getRcFile("public", "layoutInfo_file", fail=True)
     layoutData = jsonRead(layoutInfoFile.absPath())
 
@@ -1100,6 +1103,12 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
         sAstMeshList = mc.ls(sAstNmspc + ":*", type="mesh", ni=True)
         oAstRef = pm.PyNode(sAstGeoGrp).referenceFile()
         
+        if oAstRef and (not quick):
+            sPreEditList = []
+            for sEditCmd in ("setAttr",):
+                sPreEditList.extend(pm.referenceQuery(oAstRef, editStrings=True,
+                                                      editCommand=sEditCmd))
+
         sToDelList = []
         for sAstMesh in sAstMeshList:
 
@@ -1146,7 +1155,19 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
             if quick:
                 continue
 
-            sGrpIdEditList = []
+            sPostEditList = []
+            for sEditCmd in ("setAttr",):
+                sEditList = mc.referenceQuery(oAstRef.refNode.name(), editStrings=True,
+                                               editCommand=sEditCmd,
+                                               successfulEdits=True,
+                                               failedEdits=False)
+                sPostEditList.extend(sEditList)
+
+            if sPreEditList:
+                sJunkEditList = list(s for s in sPostEditList if s not in sPreEditList)
+            else:
+                sJunkEditList = sPostEditList
+
             sNodeList = lsNodes(sAstNmspc + ":*", type="groupId", nodeNames=True, rn=True)
             for sNode in sNodeList:
                 sEditList = mc.referenceQuery(sNode, editStrings=True,
@@ -1155,17 +1176,17 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
                                               failedEdits=True,
                                               showDagPath=True)
                 if sEditList:
-                    sGrpIdEditList.extend(sEditList)
+                    sJunkEditList.extend(sEditList)
 
-            if sGrpIdEditList:
-                bUnloadRef = True# if sGrpIdEditList else False
-                if bUnloadRef:
-                    oAstRef.unload()
-                try:
-                    deleteRefEdits(sGrpIdEditList)
-                finally:
-                    if bUnloadRef:
-                        oAstRef.load()
+#            if sJunkEditList:
+#                bUnloadRef = True# if sGrpIdEditList else False
+#                if bUnloadRef:
+#                    oAstRef.unload()
+#                try:
+#                    deleteRefEdits(sJunkEditList)
+#                finally:
+#                    if bUnloadRef:
+#                        oAstRef.load()
 
         sScnAbcNode = getNode(sScnAbcNodeName)
         if sScnAbcNode:
@@ -1175,11 +1196,18 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
 
 def deleteRefEdits(sRefEditList):
         
-    for sEdit in sRefEditList:
-        sArgList = sEdit.replace('"', '').strip().split(" ")
+    for sRefEdit in sRefEditList:
+        sArgList = sRefEdit.replace('"', '').strip().split(" ")
+
         sEditCmd = sArgList[0]
-        target = sArgList[1:3] if sEditCmd == "connectAttr" else sArgList[-2]
-        print "delete Edit:", sEditCmd, target
+        if sEditCmd == "connectAttr":
+            target = sArgList[1:3]
+        elif sEditCmd == "disconnectAttr":
+            target = sArgList[-2]
+        elif sEditCmd == "setAttr":
+            target = sArgList[1]
+
+        print "delete edit:", sEditCmd, target
         mc.referenceEdit(target, editCommand=sEditCmd, removeEdits=True,
                          successfulEdits=True, failedEdits=True)
         

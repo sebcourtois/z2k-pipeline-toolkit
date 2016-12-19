@@ -114,8 +114,12 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
 
     layoutScnList = []
     for i, animShot in enumerate(animShotList):
+
+        if animShot.sequence == "sq2000":
+            continue
+
         layInfoFile = animShot.getRcFile("public", "layoutInfo_file",
-                                        weak=True, dbNode=False)
+                                         weak=True, dbNode=False)
         if not layInfoFile.exists():
             try:
                 layoutScn = animShot.getRcFile("public", "layout_scene",
