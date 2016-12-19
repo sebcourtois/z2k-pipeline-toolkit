@@ -1176,14 +1176,12 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
                 mc.delete(sToDelList)
 
         if oAstRef:
-
             for sAstMesh in sAstMeshList:
                 sInMeshAttr = sAstMesh + ".inMesh"
                 mc.referenceEdit(sInMeshAttr, removeEdits=True, editCommand="connectAttr",
                                  successfulEdits=False, failedEdits=True)
 
-            if quick:
-                continue
+        if oAstRef and (not quick):
 
             sPostEditList = []
             for sEditCmd in ("setAttr",):
@@ -1208,15 +1206,15 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
                 if sEditList:
                     sJunkEditList.extend(sEditList)
 
-#            if sJunkEditList:
-#                bUnloadRef = True# if sGrpIdEditList else False
-#                if bUnloadRef:
-#                    oAstRef.unload()
-#                try:
-#                    deleteRefEdits(sJunkEditList)
-#                finally:
-#                    if bUnloadRef:
-#                        oAstRef.load()
+            if sJunkEditList:
+                bUnloadRef = True# if sGrpIdEditList else False
+                if bUnloadRef:
+                    oAstRef.unload()
+                try:
+                    deleteRefEdits(sJunkEditList)
+                finally:
+                    if bUnloadRef:
+                        oAstRef.load()
 
         sScnAbcNode = getNode(sScnAbcNodeName)
         if sScnAbcNode:
