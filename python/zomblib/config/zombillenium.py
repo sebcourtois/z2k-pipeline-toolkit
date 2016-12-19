@@ -352,7 +352,8 @@ class shot_lib(object):
     # RENDERING RESOURCES
     #===========================================================================
 
-    "rendering_dir":{"default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
+    "rendering_dir":{"default_sync_rules":["online", "dmn_paris", "dmn_angouleme"],
+                     "free_to_publish":True, },
 
     "rendering_scene":{"create_sg_version":True,
                        "sg_tasks":("Rendering|rendering",),
@@ -374,7 +375,8 @@ class shot_lib(object):
     # COMPOSITING RESOURCES
     #===========================================================================
 
-    "compo_dir":{"default_sync_rules":["online", "dmn_paris", "dmn_angouleme"], },
+    "compo_dir":{"default_sync_rules":["online", "dmn_paris", "dmn_angouleme"],
+                 "free_to_publish":True, },
 
     "compo_comp":{"outcomes":("compo_movie",),
                   "create_sg_version":True,
