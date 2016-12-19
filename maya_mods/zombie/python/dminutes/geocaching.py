@@ -354,14 +354,28 @@ def exportCaches(**kwargs):
         frameRange = tuple(int(f) for f in frameRange)
     bRaw = kwargs.pop("raw", False)
     bJsonOnly = kwargs.pop("jsonOnly", False)
+    bPublish = kwargs.pop("publish", False)
 
     scnInfos = infosFromScene()
     damShot = scnInfos.get("dam_entity")
 
+    pubDepDir = None
+    if bPublish:
+        sDepType = "geoCache_dep"
+        sScnRcName = scnInfos["resource"]
+        if sScnRcName == "fx3d_scene":
+            depConfDct = damShot.getDependencyConf(sDepType, sScnRcName)
+        else:
+            depConfDct = damShot.getDependencyConf(sDepType, "finalLayout_scene")
+
+        pubDepDir = depConfDct["dep_public_loc"]
+
     sScnRcName = scnInfos.get("resource")
     if (not bRaw) and sScnRcName in ("anim_scene", "charFx_scene"):
+
         def excludeRef(oFileRef):
             return oFileRef.namespace.lower().startswith("cwp_")
+
         myaref.loadAssetsAsResource("anim_ref", checkSyncState=True, selected=False,
                                     exclude=excludeRef, fail=True)
 
@@ -467,6 +481,25 @@ def exportCaches(**kwargs):
             mc.AbcExport(v=bVerbose, j=sJobCmdList)
 
         jsonWrite(sJsonPath, exportInfos)
+
+    if bPublish:
+
+        sComment = "from {}".format(osp.basename(sCurScnPath))
+
+        publishedList = []
+        for jobInfos in exportInfos["jobs"]:
+
+            sFilePath = jobInfos["file"]
+            if not osp.isabs(sFilePath):
+                sFilePath = pathJoin(sCacheDirPath, sFilePath)
+                if not osp.isfile(sFilePath):
+                    pm.displayWarning("No such file to publish: {}".format(sFilePath))
+        
+            res = pubDepDir.publishFile(sFilePath, autoLock=True, autoUnlock=True,
+                                        comment=sComment, dryRun=bDryRun)
+            publishedList.append(res)
+
+        exportInfos["published"] = publishedList
 
     return exportInfos
 
@@ -997,9 +1030,6 @@ def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
     if not damShot:
         damShot = infosFromScene().get("dam_entity")
 
-    if damShot.sequence == "sq2000":
-        return
-
     layoutInfoFile = damShot.getRcFile("public", "layoutInfo_file", fail=True)
     layoutData = jsonRead(layoutInfoFile.absPath())
 
@@ -1244,7 +1274,19 @@ def importCaches(sSpace=None, **kwargs):
         if sSpace == "local":
             sCacheDirPath = mop.getMayaCacheDir(damShot)
         elif sSpace in ("public", "private"):
-            sCacheDirPath = damShot.getPath(sSpace, "finalLayout_cache_dir")
+            sDepType = "geoCache_dep"
+            sScnRcName = scnInfos["resource"]
+            if sScnRcName == "fx3d_scene":
+                depConfDct = damShot.getDependencyConf(sDepType, sScnRcName)
+            else:
+                depConfDct = damShot.getDependencyConf(sDepType, "finalLayout_scene")
+
+            pubDepDir = depConfDct["dep_public_loc"]
+
+            if sSpace == "public":
+                sCacheDirPath = pubDepDir.absPath()
+            else:
+                sCacheDirPath = pubDepDir.getHomonym(sSpace, weak=True).absPath()
         else:
             raise ValueError("Invalid space argument: '{}'".format(sSpace))
 

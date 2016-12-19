@@ -173,13 +173,17 @@ def setupAnimSwitch(jobList, importData):
     else grp_local.translateZ = 0;"""
 
     if not mc.objExists("grp_geo.animationChoice"):
-        sEnumList = tuple("{}={}".format(j["choice_label"], j["choice_index"]) for j in jobList)
+        sEnumList = list("{}={}".format(j["choice_label"], j["choice_index"]) for j in jobList)
+        sEnumList.insert(0, "None=0")
         mc.addAttr("grp_geo", ln="animationChoice", at="enum",
-                   en=":".join(sEnumList), defaultValue=jobList[0]["choice_index"])
+                   en=":".join(sEnumList), defaultValue=0)
         mc.setAttr("grp_geo.animationChoice", e=True, keyable=True)
 
     for sChoiceNode in importData["grp_geo"]["choice_nodes"]:
         mc.connectAttr("grp_geo.animationChoice", sChoiceNode + ".selector")
+        sPolyTrans = mc.listConnections(sChoiceNode + ".output", s=False, d=True)[0]
+        sMeshOrigAttr = mc.listConnections(sPolyTrans + ".inputPolymesh", s=True, d=False, plugs=True)[0]
+        mc.connectAttr(sMeshOrigAttr, sChoiceNode + ".input[0]")
 
     sAbcNodeList = importData["grp_geo"]["alembic_nodes"]
 
