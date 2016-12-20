@@ -673,7 +673,10 @@ def geoGroupDeleteHistory(GUI=True, freezeVrtxPos = True):
     #now process vertex frezze position in a different loop for instances to avoid precessing the several time
     if freezeVrtxPos:
         for each in geoTransformList:
-            cmds.polyMoveVertex (each, constructionHistory =True, random  = 0)
+            try:
+                cmds.polyMoveVertex (each, constructionHistory =True, random  = 0)
+            except Exception,err:
+                print "#### {:>7}: 'geoGroupDeleteHistory': '{}', '{}'".format("Error",each ,err)
             
 
         processedInstTransL = []
@@ -681,8 +684,11 @@ def geoGroupDeleteHistory(GUI=True, freezeVrtxPos = True):
             eachShapeL = cmds.ls(cmds.listRelatives(each, noIntermediate = True, shapes = True, fullPath = True),l=True)
             parentTransL = cmds.listRelatives(eachShapeL,allParents =True, fullPath = True)
             if each not in processedInstTransL:
-                cmds.polyMoveVertex (each, constructionHistory =True, random  = 0)
-                processedInstTransL.extend(parentTransL)
+                try:
+                    cmds.polyMoveVertex (each, constructionHistory =True, random  = 0)
+                    processedInstTransL.extend(parentTransL)
+                except Exception,err:
+                    print "#### {:>7}: 'geoGroupDeleteHistory': '{}', '{}'".format("Error",each ,err)
        
         logMessage = "#### {:>7}: 'geoGroupDeleteHistory': vertex position freezed on {} geometries and {} instances".format("Info", len(geoTransformList),len(processedInstTransL))
         logL.append(logMessage)
@@ -1952,12 +1958,14 @@ def duplicateOnTargetList(sourceS="",targetL=[], instanciateB = True):
     #sourceS = "|source1|srcCube"
     #targetL = mc.ls(type="transform", selection=True,l=True)
     #duplicateOnTargetList(sourceS=sourceS,targetL=targetL)
+    if sourceS in targetL:
+        targetL.remove(sourceS)
     oldObjL=[]
     for each in targetL:
         eachParentS = cmds.listRelatives (each, parent=True, f =True)
         mtx = cmds.xform( each, q = True, ws = True, matrix = True )
-        eachOldS = cmds.rename (each,each.split("|")[-1]+"_old")
-        dupliS = cmds.duplicate(sourceS,rr= True, instanceLeaf=instanciateB, ic=True, name = each.split("|")[-1])
+        eachOldS = cmds.ls(cmds.rename (each,each.split("|")[-1]+"_old"),l=True)[0]
+        dupliS = cmds.ls(cmds.duplicate(sourceS,rr= True, instanceLeaf=instanciateB, ic=True, name = each.split("|")[-1]),l=True)
         eachNew = cmds.ls(cmds.parent(dupliS,eachParentS),l=True)
         cmds.xform( eachNew,  ws = True, matrix = mtx )
         oldObjL.append(eachOldS)

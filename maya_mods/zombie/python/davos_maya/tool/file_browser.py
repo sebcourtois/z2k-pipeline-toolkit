@@ -7,7 +7,7 @@ from PySide.QtCore import Qt
 from davos.gui.assetbrowserwindow import AssetBrowserWindow
 
 #from pytd.util.sysutils import inDevMode
-from pytaya.util.qtutils import getWindow
+from pytd.util.qtutils import getWidget
 
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 from davos.core.utils import loadPrefs
@@ -37,7 +37,7 @@ def launch(argv):
 
     global MAIN_WIN
 
-    MAIN_WIN = getWindow("AssetBrowserWin")
+    MAIN_WIN = getWidget("AssetBrowserWin")
     if MAIN_WIN:
         MAIN_WIN.showNormal()
         MAIN_WIN.raise_()

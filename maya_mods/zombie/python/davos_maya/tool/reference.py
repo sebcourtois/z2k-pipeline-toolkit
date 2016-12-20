@@ -694,6 +694,11 @@ def listPrevizRefMeshes(project=None):
 
 def lockAssetRefsToRelatedVersion(relatedAssetList, dryRun=False):
 
+    if not dryRun:
+        if mc.editRenderLayerGlobals(q=True, currentRenderLayer=True) != "defaultRenderLayer":
+            mc.editRenderLayerGlobals(currentRenderLayer="defaultRenderLayer")
+            mc.refresh()
+
     for relAstData in relatedAssetList:
 
 #        sAstName = relAstData["name"]
@@ -733,6 +738,11 @@ def lockAssetRefsToRelatedVersion(relatedAssetList, dryRun=False):
                 oFileRef.replaceWith(sRefPath, **cmdFlags)
 
 def switchAssetRefsToHeadFile(relatedAssetList, dryRun=False):
+
+    if not dryRun:
+        if mc.editRenderLayerGlobals(q=True, currentRenderLayer=True) != "defaultRenderLayer":
+            mc.editRenderLayerGlobals(currentRenderLayer="defaultRenderLayer")
+            mc.refresh()
 
     for relAstData in relatedAssetList:
 

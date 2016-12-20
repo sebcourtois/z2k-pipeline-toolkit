@@ -788,6 +788,9 @@ class SceneManager():
                                displaySafeTitle=0, displayGateMask=1,
                                displayGateMaskOpacity=1.0)
 
+            if mc.editRenderLayerGlobals(q=True, currentRenderLayer=True) != "defaultRenderLayer":
+                mc.editRenderLayerGlobals(currentRenderLayer="defaultRenderLayer")
+
             bArrangeViews = True
             if oStereoCam:
                 if (not quick):

@@ -354,14 +354,28 @@ def exportCaches(**kwargs):
         frameRange = tuple(int(f) for f in frameRange)
     bRaw = kwargs.pop("raw", False)
     bJsonOnly = kwargs.pop("jsonOnly", False)
+    bPublish = kwargs.pop("publish", False)
 
     scnInfos = infosFromScene()
     damShot = scnInfos.get("dam_entity")
 
+    pubDepDir = None
+    if bPublish:
+        sDepType = "geoCache_dep"
+        sScnRcName = scnInfos["resource"]
+        if sScnRcName == "fx3d_scene":
+            depConfDct = damShot.getDependencyConf(sDepType, sScnRcName)
+        else:
+            depConfDct = damShot.getDependencyConf(sDepType, "finalLayout_scene")
+
+        pubDepDir = depConfDct["dep_public_loc"]
+
     sScnRcName = scnInfos.get("resource")
     if (not bRaw) and sScnRcName in ("anim_scene", "charFx_scene"):
+
         def excludeRef(oFileRef):
             return oFileRef.namespace.lower().startswith("cwp_")
+
         myaref.loadAssetsAsResource("anim_ref", checkSyncState=True, selected=False,
                                     exclude=excludeRef, fail=True)
 
@@ -467,6 +481,25 @@ def exportCaches(**kwargs):
             mc.AbcExport(v=bVerbose, j=sJobCmdList)
 
         jsonWrite(sJsonPath, exportInfos)
+
+    if bPublish:
+
+        sComment = "from {}".format(osp.basename(sCurScnPath))
+
+        publishedList = []
+        for jobInfos in exportInfos["jobs"]:
+
+            sFilePath = jobInfos["file"]
+            if not osp.isabs(sFilePath):
+                sFilePath = pathJoin(sCacheDirPath, sFilePath)
+                if not osp.isfile(sFilePath):
+                    pm.displayWarning("No such file to publish: {}".format(sFilePath))
+        
+            res = pubDepDir.publishFile(sFilePath, autoLock=True, autoUnlock=True,
+                                        comment=sComment, dryRun=bDryRun)
+            publishedList.append(res)
+
+        exportInfos["published"] = publishedList
 
     return exportInfos
 
@@ -780,7 +813,7 @@ def transferVisibilities(astToAbcObjMap, dryRun=False):
         addLoggingSet("showed_" + sNmspc, sShowedList)
 
 MESH_INPUT_FILTER = ("displayLayer", "renderLayer", "renderLayerManager",
-                    "displayLayerManager", "dagNode", "objectSet")
+                    "displayLayerManager", "dagNode", "objectSet", "time")
 
 def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False,
                        beforeHistory=False, choiceIndex=None):
@@ -1097,67 +1130,91 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
         sAbcNmspc = sAstNmspc + "_cache"
         sScnAbcNodeName = sAbcNmspc + "_AlembicNode"
 
-        sAllEditList = []
-#        sRefEditAttr = sAstGeoGrp+".abcImportRefEdits"
-#        if mc.objExists(sRefEditAttr):
-#            sEditList = mc.getAttr(sRefEditAttr).split("\n")
-#            sEditList.reverse()
-
         sAstMeshList = mc.ls(sAstNmspc + ":*", type="mesh", ni=True)
         oAstRef = pm.PyNode(sAstGeoGrp).referenceFile()
         
-        if (not quick) and oAstRef:
+        if oAstRef and (not quick):
+            sPreEditList = []
+            for sEditCmd in ("setAttr",):
+                sPreEditList.extend(pm.referenceQuery(oAstRef, editStrings=True,
+                                                      editCommand=sEditCmd))
 
-            for sAstMesh in sAstMeshList:
-                sEditList = mc.referenceQuery(sAstMesh, editStrings=True,
-                                              editNodes=False, editAttrs=False,
-                                              editCommand="connectAttr",
-                                              successfulEdits=True, failedEdits=True)
-                sInMeshAttr = sAstMesh + ".inMesh"
-                sAllEditList.extend(s for s  in sEditList if sInMeshAttr in s)
+        sToDelList = []
+        for sAstMesh in sAstMeshList:
 
-            if sAllEditList:
+            sHistList = listForNone(mc.listHistory(sAstMesh, il=2, pdo=True))
+            if not sHistList:
+                continue
 
-#                sEditList = mc.referenceQuery(oAstRef.refNode.name(), editStrings=True,
-#                                              editNodes=False, editAttrs=False,
-#                                              editCommand="disconnectAttr",
-#                                              successfulEdits=True, failedEdits=False)
-#                sAllEditList.extend(sEditList)
-                #pprint(sAllEditList)
+            sHistList = lsNodes(sHistList, type=("polyTransfer", "polyTweak"),
+                                not_rn=True, nodeNames=True)
+            if sHistList:
+                sToDelList.extend(sHistList)
 
-                oAstRef.unload()
-                try:
-                    for sEdit in sAllEditList:
-                        sArgList = sEdit.replace('"', '').strip().split(" ")
-                        sEditCmd = sArgList[0]
-                        target = sArgList[1:3] if sEditCmd == "connectAttr" else sArgList[-2]
-                        print "delete Edit:", sEditCmd, target
-                        mc.referenceEdit(target, editCommand=sEditCmd, removeEdits=True,
-                                         successfulEdits=True, failedEdits=True)
-                finally:
-                    oAstRef.load()
-        else:
+        if sToDelList:
+            print ("delete {} nodes on '{}' history.".format(len(sToDelList), sAstNmspc))
+            mc.delete(sToDelList)
+
+        if not quick:
             sToDelList = []
             for sAstMesh in sAstMeshList:
 
-                sHistList = listForNone(mc.listHistory(sAstMesh, il=2, pdo=True))
-                if not sHistList:
-                    continue
+                sFullHistList = mc.listHistory(sAstMesh, il=2)
+                if sFullHistList:
+                    sHistList = lsNodes(sFullHistList, nodeNames=True,
+                                        not_rn=True, not_type=MESH_INPUT_FILTER)
 
-                sHistList = lsNodes(sHistList, type="polyTransfer", not_rn=True, nodeNames=True)
-                if sHistList:
-                    sToDelList.extend(sHistList)
+                    if not sHistList:
+                        sFoundList = lsNodes(sFullHistList, type="mesh", io=True,
+                                             not_rn=True, nodeNames=True)
+                        sIntermedMesh = sFoundList[0] if sFoundList else ""
+                        if sIntermedMesh:
+                            sToDelList.append(sIntermedMesh)
 
             if sToDelList:
-                print ("delete {} 'polyTransfer' nodes on '{}'"
-                       .format(len(sToDelList), sAstNmspc))
+                print ("delete {} intermediate meshes on '{}'.".format(len(sToDelList), sAstNmspc))
                 mc.delete(sToDelList)
 
-            if oAstRef:
-                for sAstMesh in sAstMeshList:
-                    sInMeshAttr = sAstMesh + ".inMesh"
-                    mc.referenceEdit(sInMeshAttr, removeEdits=True, editCommand="connectAttr",
-                                     successfulEdits=False, failedEdits=True)
+        if oAstRef:
+            for sAstMesh in sAstMeshList:
+                sInMeshAttr = sAstMesh + ".inMesh"
+                mc.referenceEdit(sInMeshAttr, removeEdits=True, editCommand="connectAttr",
+                                 successfulEdits=False, failedEdits=True)
+
+        if oAstRef and (not quick):
+
+            sPostEditList = []
+            for sEditCmd in ("setAttr",):
+                sEditList = mc.referenceQuery(oAstRef.refNode.name(), editStrings=True,
+                                               editCommand=sEditCmd,
+                                               successfulEdits=True,
+                                               failedEdits=False)
+                sPostEditList.extend(sEditList)
+
+            if sPreEditList:
+                sJunkEditList = list(s for s in sPostEditList if s not in sPreEditList)
+            else:
+                sJunkEditList = sPostEditList
+
+            sNodeList = lsNodes(sAstNmspc + ":*", type="groupId", nodeNames=True, rn=True)
+            for sNode in sNodeList:
+                sEditList = mc.referenceQuery(sNode, editStrings=True,
+                                              editCommand="disconnectAttr",
+                                              successfulEdits=True,
+                                              failedEdits=True,
+                                              showDagPath=True)
+                if sEditList:
+                    sJunkEditList.extend(sEditList)
+
+            if sJunkEditList:
+                bUnloadRef = True# if sGrpIdEditList else False
+                if bUnloadRef:
+                    oAstRef.unload()
+                try:
+                    deleteRefEdits(sJunkEditList)
+                finally:
+                    if bUnloadRef:
+                        oAstRef.load()
 
         sScnAbcNode = getNode(sScnAbcNodeName)
         if sScnAbcNode:
@@ -1165,6 +1222,24 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
 
     return
 
+def deleteRefEdits(sRefEditList):
+        
+    for sRefEdit in sRefEditList:
+        sArgList = sRefEdit.replace('"', '').strip().split(" ")
+
+        sEditCmd = sArgList[0]
+        if sEditCmd == "connectAttr":
+            target = sArgList[1:3]
+        elif sEditCmd == "disconnectAttr":
+            target = sArgList[-2]
+        elif sEditCmd == "setAttr":
+            target = sArgList[1]
+
+        print "delete edit:", sEditCmd, target
+        mc.referenceEdit(target, editCommand=sEditCmd, removeEdits=True,
+                         successfulEdits=True, failedEdits=True)
+        
+        
 @autoKeyDisabled
 def importCaches(sSpace=None, **kwargs):
 
@@ -1197,7 +1272,19 @@ def importCaches(sSpace=None, **kwargs):
         if sSpace == "local":
             sCacheDirPath = mop.getMayaCacheDir(damShot)
         elif sSpace in ("public", "private"):
-            sCacheDirPath = damShot.getPath(sSpace, "finalLayout_cache_dir")
+            sDepType = "geoCache_dep"
+            sScnRcName = scnInfos["resource"]
+            if sScnRcName == "fx3d_scene":
+                depConfDct = damShot.getDependencyConf(sDepType, sScnRcName)
+            else:
+                depConfDct = damShot.getDependencyConf(sDepType, "finalLayout_scene")
+
+            pubDepDir = depConfDct["dep_public_loc"]
+
+            if sSpace == "public":
+                sCacheDirPath = pubDepDir.absPath()
+            else:
+                sCacheDirPath = pubDepDir.getHomonym(sSpace, weak=True).absPath()
         else:
             raise ValueError("Invalid space argument: '{}'".format(sSpace))
 
