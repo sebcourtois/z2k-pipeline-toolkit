@@ -86,7 +86,7 @@ def isVisible():
     return mc.dockControl(SCENE_MANAGER_DOCK, q=True, visible=True)
 
 @withSelectionRestored
-def launch():
+def launch(**kwargs):
     """Main UI Creator"""
     global QWIDGETS
 
@@ -94,15 +94,14 @@ def launch():
 
     if isLaunched():
         mc.dockControl(SCENE_MANAGER_DOCK, e=True, visible=True)
+        bUiCreated = False
     else:
-
-        if mc.evaluationManager(q=True, enabled=True):
-            mc.evaluationManager(mode="off")
-
         kill()
+        bUiCreated = True
 
         if not mc.ls(sl=True):
             mc.select("|persp")
+            mc.refresh()
 
         dirname, _ = osp.split(osp.abspath(__file__))
         sLoadedUi = mc.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui", v=False)
@@ -143,7 +142,7 @@ def launch():
 
         connectCallbacks()
 
-    initialize()
+    initialize(**kwargs)
     refreshContextUI()
 
     if states:
@@ -152,7 +151,9 @@ def launch():
     if not mc.dockControl(SCENE_MANAGER_DOCK, q=True, floating=True):
         mc.dockControl(SCENE_MANAGER_DOCK, e=True, r=True)
 
-def initialize():
+    return bUiCreated
+
+def initialize(**kwargs):
     """Initialize default values (Operator AllowedSteps and CurrentStep...), hide forbidden buttons"""
 
     global SCENE_MANAGER, SG_ENGINE
@@ -204,7 +205,7 @@ def initialize():
 
     pc.control("sm_increment_chk", edit=True, visible=False)
 
-    loadContextFromScene()
+    loadContextFromScene(**kwargs)
 
 test_toggle = False
 
@@ -223,7 +224,6 @@ def refreshContextUI():
     bRcsMatchUp = SCENE_MANAGER.resourcesMatchUp(sceneInfos)
     bPublishable = bRcsMatchUp and SCENE_MANAGER.scenePublishable(sceneInfos)
     sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
-
 
     bEnabled = True if (('task' in SCENE_MANAGER.context)
                         and scnFromTask(SCENE_MANAGER.context['task'])
@@ -271,8 +271,8 @@ def refreshContextUI():
     pc.checkBox('sm_blocking_chk', edit=True, value=pc.playbackOptions(q=True, blockingAnim=True))
     pc.checkBox('sm_updAllViews_chk', edit=True, value=(pc.playbackOptions(q=True, view=True) == "all"))
 
-    bListAssets = pc.optionVar.get("Z2K_SM_listAssets",
-                                   False if sCtxStep in ("animation", "charfx") else True)
+    bListAssets = False if sCtxStep in ("animation", "charfx") else True
+    bListAssets = pc.optionVar.get("Z2K_SM_listAssets", bListAssets)
     QWIDGETS["relatedAssetsGroup"].setChecked(bListAssets)
     if bListAssets:
         pc.control('sm_updScene_bt', edit=True, enable=bPublishable)
@@ -283,6 +283,15 @@ def refreshContextUI():
     bEnable = pc.optionVar.get("Z2K_SM_smoothOnCapture", False)
     QWIDGETS["smoothGroup"].setChecked(bEnable)
     updSmoothOnCaptureState(bEnable, warn=False)
+
+    if sCtxStep in ("previz 3d", "animation"):
+        if mc.evaluationManager(q=True, enabled=True):
+            mc.evaluationManager(mode="off")
+    else:
+        evalModes = {1:"off", 2:"serial", 3:"parallel"}
+        sPrefEvalMode = evalModes[pc.optionVar.get("evaluationMode", 3)]
+        if mc.evaluationManager(q=True, mode=True)[0] != sPrefEvalMode:
+            mc.evaluationManager(mode=sPrefEvalMode)
 
 '@forceLog(log="all")'
 def loadContextFromScene(**kwargs):
@@ -470,7 +479,7 @@ def connectCallbacks():
 
     #Related assets
     QWIDGETS["relatedAssetsGroup"].clicked[bool].connect(updRelatedAssetsShown)
-    pc.button('sm_refreshScene_bt', edit=True, c=doRefreshSceneInfo)
+    pc.button('sm_refreshScene_bt', edit=True, c=doRefreshSceneAssets)
     pc.button('sm_selectRefs_bt', edit=True, c=doSelectRefs)
     pc.button('sm_updScene_bt', edit=True, c=doUpdateSceneAssets)
     pc.button('sm_updShotgun_bt', edit=True, c=doUpdateShotgunAssets)
@@ -538,7 +547,7 @@ def setAssetVersionsLocked(bLock, sConfirmMsg, *args):
     else:
         myaref.switchAssetRefsToHeadFile(relAstList, dryRun=False)
 
-    doRefreshSceneInfo()
+    doRefreshSceneAssets()
 
 def chooseSgShotVersion(sgShotVersList):
 
@@ -668,7 +677,7 @@ def updSmoothOnCaptureState(bEnable=None, warn=True):
 
 def updRelatedAssetsShown(bEnable):
     pc.optionVar["Z2K_SM_listAssets"] = bEnable
-    doRefreshSceneInfo()
+    doRefreshSceneAssets()
 
 def doDisconnect(*args):
     SG_ENGINE.logoutUser()
@@ -699,7 +708,7 @@ def doStepChanged(*args, **kwargs):
         refreshStep(*args, runEntityChanged=False)
 
     if kwargs.pop("runEntityChanged", True):
-        doEntityChanged(refreshSceneInfo=False)
+        doEntityChanged(refreshSceneAssets=False)
 
 def doCategChanged(*args, **kwargs):
 
@@ -768,8 +777,8 @@ def doEntityChanged(*args, **kwargs):
     if kwargs.get("runTaskChanged", True):
         doTaskChanged(*args)
 
-    if kwargs.get("refreshSceneInfo", True):
-        doRefreshSceneInfo()
+    if kwargs.get("refreshSceneAssets", True):
+        doRefreshSceneAssets()
 
 def doTaskChanged(*args, **kwargs):
     logMsg(log="all")
@@ -790,7 +799,7 @@ def doTaskChanged(*args, **kwargs):
     if len(versions) > 0:
         pc.textScrollList("sm_versions_lb", edit=True, append=sorted(VERSIONS.keys()))
 
-#    doRefreshSceneInfo(*args)
+#    doRefreshSceneAssets(*args)
     doRefreshFileStatus()
     refreshContextUI()#doVersionChanged()
 
@@ -864,7 +873,7 @@ def doSelectRefs(*args):
     return sSelList
 
 @setWaitCursor
-def doRefreshSceneInfo(*args):
+def doRefreshSceneAssets(*args):
     """Displays the comparison of shotgun and active scene Assets"""
     logMsg(log='all')
 
@@ -971,7 +980,7 @@ def doUpdateSceneAssets(*args):
     """Matches scene Assets with Shotgun Assets"""
     #addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
     if SCENE_MANAGER.updateSceneAssets():
-        doRefreshSceneInfo(args)
+        doRefreshSceneAssets(args)
 
     pc.displayWarning("Done !")
 
@@ -979,7 +988,7 @@ def doUpdateShotgunAssets(*args):
     """Matches Shotgun Assets with scene Assets (NOT IMPLEMENTED)"""
     #addOnly = pc.checkBox("sm_addOnly_bt", query=True, value=True)
     if SCENE_MANAGER.updateShotgunAssets():
-        doRefreshSceneInfo(args)
+        doRefreshSceneAssets(args)
         pc.displayWarning("Done !")
 
 @mop.withErrorDialog
@@ -997,7 +1006,7 @@ def doCapture(*args , **kwargs):
         SCENE_MANAGER.capture(saveScene=(not bQuick), increment=bIncrement, quick=bQuick,
                               sendToRv=bSend, smoothData=smoothData)
 #        if not bQuick:
-#            doRefreshSceneInfo(args)
+#            doRefreshSceneAssets(args)
     else:
         doDetect(args)
 
@@ -1047,7 +1056,6 @@ def doPublish(*args):
 
         res = SCENE_MANAGER.publish()
         doTaskChanged()
-        #doRefreshFileStatus()
 
         if not res:
             return
@@ -1078,7 +1086,7 @@ def doShotSetup(*args):
 
     SCENE_MANAGER.setupScene()
 
-    doRefreshSceneInfo()
+    doRefreshSceneAssets()
     refreshContextUI()
 
 def doEditCam(*args):

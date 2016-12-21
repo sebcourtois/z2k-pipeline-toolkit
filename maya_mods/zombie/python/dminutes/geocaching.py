@@ -9,6 +9,7 @@ from pprint import pprint
 
 #import maya.api.OpenMaya as om
 import maya.cmds as mc
+import maya.utils as mu
 
 from pymel.util.arguments import listForNone
 import pymel.core as pm
@@ -16,7 +17,7 @@ import pymel.core as pm
 from pytd.util.qtutils import setWaitCursor
 from pytd.util.fsutils import jsonWrite, jsonRead
 from pytd.util.fsutils import pathJoin, pathRelativeTo, pathEqual
-from pytd.util.sysutils import grouper, argToSet
+from pytd.util.sysutils import grouper, argToSet, toStr, timer
 
 from pytaya.util import apiutils as myapi
 from pytaya.core.general import lsNodes, copyAttrs
@@ -27,7 +28,7 @@ from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
 from davos_maya.tool.general import iterGeoGroups
 
 from dminutes import maya_scene_operations as mop
-from pytaya.util.sysutils import argsToPyNode
+from pytaya.util.sysutils import argsToPyNode, withSelectionRestored
 from pytaya.core.transform import matchTransform
 from pytaya.core.cleaning import _yieldChildJunkShapes
 
@@ -61,6 +62,21 @@ def autoKeyDisabled(func):
             res = func(*args, **kwargs)
         finally:
             mc.autoKeyframe(e=True, state=bState)
+        return res
+    return doIt
+
+def forceMasterLayer(func):
+    def doIt(*args, **kwargs):
+        sCurRndLyr = mc.editRenderLayerGlobals(q=True, currentRenderLayer=True)
+        if sCurRndLyr != "defaultRenderLayer":
+            mc.editRenderLayerGlobals(currentRenderLayer="defaultRenderLayer")
+            mc.refresh()
+        try:
+            res = func(*args, **kwargs)
+        finally:
+            if sCurRndLyr != "defaultRenderLayer":
+                mc.editRenderLayerGlobals(currentRenderLayer=sCurRndLyr)
+                mc.refresh()
         return res
     return doIt
 
@@ -494,7 +510,7 @@ def exportCaches(**kwargs):
                 sFilePath = pathJoin(sCacheDirPath, sFilePath)
                 if not osp.isfile(sFilePath):
                     pm.displayWarning("No such file to publish: {}".format(sFilePath))
-        
+
             res = pubDepDir.publishFile(sFilePath, autoLock=True, autoUnlock=True,
                                         comment=sComment, dryRun=bDryRun)
             publishedList.append(res)
@@ -971,8 +987,7 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False,
                         mc.connectAttr(sChoiceNode + ".output", sPolyTrans + ".otherPoly", f=True)
                         mc.setAttr(sChoiceNode + ".selector", iChoiceIdx)
 
-                    mc.connectAttr(sAbcOutAttr, sChoiceNode + ".input[{}]"
-                                   .format(iChoiceIdx))
+                    mc.connectAttr(sAbcOutAttr, sChoiceNode + ".input[{}]".format(iChoiceIdx))
                 else:
                     mc.connectAttr(sAbcOutAttr, sPolyTrans + ".otherPoly", f=True)
 
@@ -1109,20 +1124,29 @@ def cleanImportContext(func):
         return res
     return doIt
 
-def clearConnectedCaches(sGeoGrpList=None, quick=True):
+
+@withSelectionRestored
+@forceMasterLayer
+@timer
+def clearConnectedCaches(sGeoGrpList=None, deep=False):
 
     if sGeoGrpList is None:
-        sGeoGrpList, bSelected = _confirmProcessing("Clean previous caches")
+        sGeoGrpList, bSelected = _confirmProcessing("Clean up previous caches")
         if not sGeoGrpList:
             sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
             raise RuntimeError(sMsg)
 
-    if not quick:
+    if deep:
         pm.mel.ScriptEditor()
         pm.mel.handleScriptEditorAction("maximizeHistory")
 
+    unloadedRefList = []
+    restoreEditDct = {}
+    sScnAbcNodeList = []
+    bLoadingDeferred = False
+
     for sAstGeoGrp in sGeoGrpList:
-        
+
         if not mc.objExists(sAstGeoGrp):
             continue
 
@@ -1130,14 +1154,10 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
         sAbcNmspc = sAstNmspc + "_cache"
         sScnAbcNodeName = sAbcNmspc + "_AlembicNode"
 
+        print "\n", " clearing caches on '{}' ".upper().format(sAstNmspc).center(120, "#")
+
         sAstMeshList = mc.ls(sAstNmspc + ":*", type="mesh", ni=True)
         oAstRef = pm.PyNode(sAstGeoGrp).referenceFile()
-        
-        if oAstRef and (not quick):
-            sPreEditList = []
-            for sEditCmd in ("setAttr",):
-                sPreEditList.extend(pm.referenceQuery(oAstRef, editStrings=True,
-                                                      editCommand=sEditCmd))
 
         sToDelList = []
         for sAstMesh in sAstMeshList:
@@ -1155,7 +1175,8 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
             print ("delete {} nodes on '{}' history.".format(len(sToDelList), sAstNmspc))
             mc.delete(sToDelList)
 
-        if not quick:
+        bCleanSetAttrEdits = False
+        if deep:
             sToDelList = []
             for sAstMesh in sAstMeshList:
 
@@ -1171,9 +1192,33 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
                         if sIntermedMesh:
                             sToDelList.append(sIntermedMesh)
 
+            sDisconEditList = []
             if sToDelList:
+                if oAstRef:
+                    sPreClearEditDct = {}
+                    sEditCmd = "setAttr"
+                    sEditList = pm.referenceQuery(oAstRef, editStrings=True, editCommand=sEditCmd,
+                                                  successfulEdits=True, failedEdits=False)
+                    if sEditList:
+#                        print ("before clear: {} '{}' edits on '{}'"
+#                               .format(len(sEditList), sEditCmd, sAstNmspc))
+                        sPreClearEditDct[sEditCmd] = sEditList
+
+                    sNodeList = lsNodes(sAstNmspc + ":*", type="groupId", nodeNames=True, rn=True)
+                    #print "found {} 'groupId' nodes".format(len(sNodeList))
+                    for sNode in sNodeList:
+                        sEditList = mc.referenceQuery(sNode, editStrings=True,
+                                                      editCommand="disconnectAttr",
+                                                      successfulEdits=True,
+                                                      failedEdits=True,
+                                                      showDagPath=True)
+                        if sEditList:
+                            print "found {} 'disconnectAttr' edits on '{}'".format(len(sEditList), sNode)
+                            sDisconEditList.extend(sEditList)
+
                 print ("delete {} intermediate meshes on '{}'.".format(len(sToDelList), sAstNmspc))
                 mc.delete(sToDelList)
+                bCleanSetAttrEdits = True
 
         if oAstRef:
             for sAstMesh in sAstMeshList:
@@ -1181,49 +1226,83 @@ def clearConnectedCaches(sGeoGrpList=None, quick=True):
                 mc.referenceEdit(sInMeshAttr, removeEdits=True, editCommand="connectAttr",
                                  successfulEdits=False, failedEdits=True)
 
-        if oAstRef and (not quick):
+        if oAstRef and deep:
 
-            sPostEditList = []
-            for sEditCmd in ("setAttr",):
-                sEditList = mc.referenceQuery(oAstRef.refNode.name(), editStrings=True,
-                                               editCommand=sEditCmd,
-                                               successfulEdits=True,
-                                               failedEdits=False)
-                sPostEditList.extend(sEditList)
-
-            if sPreEditList:
-                sJunkEditList = list(s for s in sPostEditList if s not in sPreEditList)
-            else:
-                sJunkEditList = sPostEditList
-
-            sNodeList = lsNodes(sAstNmspc + ":*", type="groupId", nodeNames=True, rn=True)
-            for sNode in sNodeList:
-                sEditList = mc.referenceQuery(sNode, editStrings=True,
-                                              editCommand="disconnectAttr",
-                                              successfulEdits=True,
-                                              failedEdits=True,
-                                              showDagPath=True)
-                if sEditList:
-                    sJunkEditList.extend(sEditList)
-
-            if sJunkEditList:
+            if sDisconEditList or bCleanSetAttrEdits:
                 bUnloadRef = True# if sGrpIdEditList else False
                 if bUnloadRef:
+                    print "unload", oAstRef
                     oAstRef.unload()
+                    if bLoadingDeferred:
+                        unloadedRefList.append(oAstRef)
+
                 try:
-                    deleteRefEdits(sJunkEditList)
+                    if bCleanSetAttrEdits:
+                        print "delete all 'setAttr' edits on '{}'".format(sAstNmspc)
+                        mc.referenceEdit(oAstRef.refNode.name(),
+                                         removeEdits=True, editCommand=sEditCmd,
+                                         successfulEdits=True, failedEdits=False)
+                        if bLoadingDeferred:
+                            sPreEditList = sPreClearEditDct["setAttr"]
+                            if sPreEditList:
+                                print ("restore {} 'setAttr' edits on '{}'"
+                                       .format(len(sPreEditList), sAstNmspc))
+                                restoreEditDct[sAstNmspc] = sPreEditList
+
+                    if sDisconEditList:
+                        print ("delete {} 'disconnectAttr' edits on '{}'"
+                               .format(len(sDisconEditList), sAstNmspc))
+                        deleteRefEdits(sDisconEditList)
+
+                except RuntimeError as e:
+                    if bLoadingDeferred:
+                        pm.displayError(toStr(e))
+                    else:
+                        raise
                 finally:
-                    if bUnloadRef:
-                        oAstRef.load()
+                    if not bLoadingDeferred:
+                        if bUnloadRef:
+                            print "load", oAstRef
+                            oAstRef.load()
+
+                        if bCleanSetAttrEdits:
+                            sPreEditList = sPreClearEditDct["setAttr"]
+                            print ("restore {} 'setAttr' edits on '{}'"
+                                   .format(len(sPreEditList), sAstNmspc))
+                            for sSetAttrEdit in sPreEditList:
+                                try:
+                                    pm.mel.eval(sSetAttrEdit)
+                                except pm.MelError as e:
+                                    print toStr(e)
 
         sScnAbcNode = getNode(sScnAbcNodeName)
         if sScnAbcNode:
-            mc.delete(sScnAbcNode)
+            print "delete '{}'".format(sScnAbcNode)
+            if bLoadingDeferred:
+                sScnAbcNodeList.append(sScnAbcNode)
+            else:
+                mc.delete(sScnAbcNode)
 
+    try:
+        if sScnAbcNodeList:
+            mc.delete(sScnAbcNodeList)
+    finally:
+        for oAstRef in unloadedRefList:
+            print "load", oAstRef
+            oAstRef.load()
+
+        if restoreEditDct:
+            for sAstNmspc, sEditList in restoreEditDct.iteritems():
+                print "restore {} 'setAttr' edits on '{}'".format(len(sEditList), sAstNmspc)
+                for sSetAttrEdit in sEditList:
+                    try:
+                        pm.mel.eval(sSetAttrEdit)
+                    except pm.MelError as e:
+                        print toStr(e)
     return
 
 def deleteRefEdits(sRefEditList):
-        
+
     for sRefEdit in sRefEditList:
         sArgList = sRefEdit.replace('"', '').strip().split(" ")
 
@@ -1235,11 +1314,11 @@ def deleteRefEdits(sRefEditList):
         elif sEditCmd == "setAttr":
             target = sArgList[1]
 
-        print "delete edit:", sEditCmd, target
+        #print "delete edit:", sEditCmd, target
         mc.referenceEdit(target, editCommand=sEditCmd, removeEdits=True,
                          successfulEdits=True, failedEdits=True)
-        
-        
+
+
 @autoKeyDisabled
 def importCaches(sSpace=None, **kwargs):
 

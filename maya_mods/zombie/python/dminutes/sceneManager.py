@@ -96,16 +96,16 @@ def scnFromTask(sgTask, fail=False):
     sTask = sgTask['content'].lower()
     sStep = sgTask['step']['name'].lower()
 
-    sName = SCN_FOR_TASK.get(sTask, SCN_FOR_STEP.get(sStep, ""))
+    sScnName = SCN_FOR_TASK.get(sTask, SCN_FOR_STEP.get(sStep, ""))
 
-    if (not sName):
+    if (not sScnName):
         sMsg = ("No resource file associated with task: {}".format(sgTask))
         if fail:
             raise EnvironmentError(sMsg)
         elif inDevMode():
             pc.displayInfo(sMsg)
 
-    return sName
+    return sScnName
 
 def refFromTask(sgTask, fail=False):
 
@@ -1055,6 +1055,7 @@ class SceneManager():
         try:
             oShotCam = self.getShotCamera(fail=True)
         except Exception as e:
+            traceback.print_exc()
             raise AssertionError(toStr(e) + sFixMsg)
 
         return oShotCam
@@ -1070,7 +1071,7 @@ class SceneManager():
                              cancelButton="OK",
                              dismissString="OK",
                              icon="critical")
-            return False
+            raise
 
         res = publishCurrentScene(prePublishFunc=self.prePublishCurrentScene,
                                   postPublishFunc=self.postPublishCurrentScene)
