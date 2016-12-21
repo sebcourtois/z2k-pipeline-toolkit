@@ -9,6 +9,7 @@ rendering.setArnoldRenderOptionShot (outputFormat="jpg", renderMode = 'finalLayo
 finalLayout.importFinalLayoutLight()
 finalLayout.createRenderLayerLegacy(layerName="lay_finalLayout_00",lightL=["lgt_finalLayout_directional"], setMeshCacheL=[])
 finalLayout.layerOverrideToonWeightOff(dmnToonList=[], layerName = "lay_finalLayout_00", gui= True)
+finalLayout.fixDeferLoad()
 #finalLayout.layerOverrideFLCustomShader(dmnToonList=[], dmnInput = "dmnMask08", layerName = "lay_finalLayout_00",gui= True)
 
 
