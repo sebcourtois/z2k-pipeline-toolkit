@@ -336,7 +336,9 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     txt = "#### info: render options are now production ready"
     log.printL("i", txt)
 
-
+def fixDeferLoad():
+    deferGeoL = mc.ls(type='aiStandIn')
+    [mc.setAttr("%s.deferStandinLoad" % geo, 0) for geo in deferGeoL if not deferGeoL == None]
 
 def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , gui = True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="setRenderCamera")
