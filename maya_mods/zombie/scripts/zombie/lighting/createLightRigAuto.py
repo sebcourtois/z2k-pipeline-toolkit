@@ -27,6 +27,14 @@ def createLightRigFromShot():
                     vertexLoc.append(pm.ls(char.getShape().vtx[1561])[0])
                 if char.split(':')[1] == 'geo_Skull':
                     vertexLoc.append(pm.ls(char.getShape().vtx[45])[0])
+                if char.split(':')[1] == 'geo_skeletonSkullDefault':
+                    vertexLoc.append(pm.ls(char.getShape().vtx[42])[0])
+                if char.split(':')[1] == 'geo_yorkHead':
+                    vertexLoc.append(pm.ls(char.getShape().vtx[1])[0])
+                if char.split(':')[1] == 'geo_glassesSupportDefault':
+                    vertexLoc.append(pm.ls(char.getShape().vtx[398])[0])
+                if char == 'chr_golem_default_01:geo_body':
+                    vertexLoc.append(pm.ls(char.getShape().vtx[398])[0])
         else:
             pass
 
