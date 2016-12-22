@@ -287,11 +287,11 @@ def refreshContextUI():
     if sCtxStep in ("previz 3d", "animation"):
         if mc.evaluationManager(q=True, enabled=True):
             mc.evaluationManager(mode="off")
-    else:
-        evalModes = {1:"off", 2:"serial", 3:"parallel"}
-        sPrefEvalMode = evalModes[pc.optionVar.get("evaluationMode", 3)]
-        if mc.evaluationManager(q=True, mode=True)[0] != sPrefEvalMode:
-            mc.evaluationManager(mode=sPrefEvalMode)
+#    else:
+#        evalModes = {1:"off", 2:"serial", 3:"parallel"}
+#        sPrefEvalMode = evalModes[pc.optionVar.get("evaluationMode", 3)]
+#        if mc.evaluationManager(q=True, mode=True)[0] != sPrefEvalMode:
+#            mc.evaluationManager(mode=sPrefEvalMode)
 
 '@forceLog(log="all")'
 def loadContextFromScene(**kwargs):
