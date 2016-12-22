@@ -171,6 +171,9 @@ def layerOverrideToonWeightOff(dmnToonList=[], layerName = "lay_finalLayout_00",
     if overidedDmnToonL:
         log.printL("i", "Toon weight overrided to 0 for layer '{}' on '{}'' dmntoon noded(s): '{}'".format(layerName, len(overidedDmnToonL), overidedDmnToonL))
 
+def fixDeferLoad():
+    deferGeoL = mc.ls(type='aiStandIn')
+    [mc.setAttr("%s.deferStandinLoad" % geo, 0) for geo in deferGeoL if not deferGeoL == None]
 
 def createNukeBatch(gui=True):
     """

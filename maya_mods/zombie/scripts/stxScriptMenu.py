@@ -13,6 +13,7 @@
 #    __END__
 
 import os
+import traceback
 ospath = os.path
 import time
 import re
@@ -41,6 +42,16 @@ DEFAULT_SECTION = {
 #===============================================================================
 #  Utilities
 #===============================================================================
+
+def logArgsOnError(func):
+    def closure(*args, **kwargs):
+        try:
+            ret = func(*args, **kwargs)
+        except:
+            print func, args, kwargs
+            raise
+        return ret
+    return closure
 
 def timer(func):
 
@@ -203,7 +214,7 @@ class StxConfigParser(SafeConfigParser):
 #===============================================================================
 
 
-def remove():
+def clear():
 
     global CREATED_MENUS
 
@@ -272,7 +283,6 @@ def iterBuildMenuArgs():
 
         visitedPathList.append(sScriptsPath)
 
-@timer
 def install(*args):
 
     global MAYA_WIN_NAME, MENU_CMD_FORMAT
@@ -281,13 +291,19 @@ def install(*args):
         pm.displayInfo("Can't install stxScriptMenus in bacth mode !")
         return
 
-    remove()
+    clear()
 
     MAYA_WIN_NAME = pm.mel.eval('$tempMelVar=$gMainWindow')
     MENU_CMD_FORMAT = makeImportString(__name__) + "stxScriptMenu.execScript('{0}', '{1}', '{2}')"
 
     for _, sMenuDirPath, oMenuConf in sorted(iterBuildMenuArgs(), key=lambda x: x[0]):
-        buildMenu(sMenuDirPath, oMenuConf)
+        try:
+            buildMenu(sMenuDirPath, oMenuConf)
+        except Exception as e:
+            traceback.print_exc()
+            sMsg = e.args[-1] if e.args else str(e)
+            pm.displayError(sMsg.strip())
+            break
 
     for uiScriptMenu in CREATED_MENUS:
         #Create the 'Rebuild This Menu' menu item
@@ -353,6 +369,7 @@ def filterScriptsAndDirs(sDirPath, ignoreDirs=None, ignoreScripts=None):
 
     return sMenuItemParamsList, sDirNameList
 
+@logArgsOnError
 def addMenuItems(sItemDirPath, parentMenu, oMenuConf, **kwargs):
 
     global MENU_CMD_FORMAT
@@ -385,7 +402,7 @@ def addMenuItems(sItemDirPath, parentMenu, oMenuConf, **kwargs):
                                          label=sMenuLabel)
         else:
             if not pm.menuItem(sFullName, q=True, exists=True):
-                pm.menuItem(sMenuName, divider=True, parent=parentMenu,
+                pm.menuItem(sMenuName + "_div", divider=True, parent=parentMenu,
                             dividerLabel=sMenuLabel, bld=True, enable=False)
 
     for sScriptName, sScriptPath, sSourceType in sMenuItemParamsList:

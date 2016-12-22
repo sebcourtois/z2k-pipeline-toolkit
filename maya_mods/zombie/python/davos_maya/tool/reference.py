@@ -133,7 +133,6 @@ def switchAssetFiles(dryRun=False, cleanEdits=False, **kwargs):
 
     dbNodeList = proj.dbNodesFromEntries(tuple(f for _, f in swicthItems))
     zippedList = zip(swicthItems, dbNodeList)
-    print len(dbNodeList), len(swicthItems)
     swicthItems = []
     for (oFileRef, mrcFile), dbNode in zippedList:
 
@@ -175,7 +174,11 @@ def switchAssetFiles(dryRun=False, cleanEdits=False, **kwargs):
                     oFileRef.clean()
         else:
             sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution")
-            removeRefEditByAttr(attr=sAttrList, GUI=False)
+            sRefNodeList = tuple(fr.refNode.name() for fr in oFileRefList)
+            try:
+                removeRefEditByAttr(sRefNodeList, attr=sAttrList, GUI=False)
+            except RuntimeError as e:
+                pm.displayError(toStr(e))
 
         mc.refresh()
 
@@ -694,6 +697,11 @@ def listPrevizRefMeshes(project=None):
 
 def lockAssetRefsToRelatedVersion(relatedAssetList, dryRun=False):
 
+    if not dryRun:
+        if mc.editRenderLayerGlobals(q=True, currentRenderLayer=True) != "defaultRenderLayer":
+            mc.editRenderLayerGlobals(currentRenderLayer="defaultRenderLayer")
+            mc.refresh()
+
     for relAstData in relatedAssetList:
 
 #        sAstName = relAstData["name"]
@@ -733,6 +741,11 @@ def lockAssetRefsToRelatedVersion(relatedAssetList, dryRun=False):
                 oFileRef.replaceWith(sRefPath, **cmdFlags)
 
 def switchAssetRefsToHeadFile(relatedAssetList, dryRun=False):
+
+    if not dryRun:
+        if mc.editRenderLayerGlobals(q=True, currentRenderLayer=True) != "defaultRenderLayer":
+            mc.editRenderLayerGlobals(currentRenderLayer="defaultRenderLayer")
+            mc.refresh()
 
     for relAstData in relatedAssetList:
 

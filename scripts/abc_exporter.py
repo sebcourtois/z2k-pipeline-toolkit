@@ -66,6 +66,8 @@ def launch(sSrcRcName, shotNames=None, dryRun=False, timestamp=None, dialogParen
                 f.write(sCmd)
 
     damShotList = list(proj.getShot(s) for s in shotNames)
+    sTitle = "EXPORT FROM " + sSrcRcName.upper()
+    print "\n", sTitle.center(len(sTitle) + 2).center(120, "#")
     export(damShotList, sSrcRcName, dryRun=dryRun, prompt=bPrompt, sgShots=sgShots)
 
 def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
@@ -75,47 +77,48 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
     sgShotDct = {} if sgShots is None else dict((d["code"], d) for d in sgShots)
 
     sErrorList = []
-    animScnList = []
-    animShotList = damShotList[:]
+    srcScnList = []
+    validShotList = damShotList[:]
     for i, damShot in enumerate(damShotList):
-        animScn = None
+        srcScn = None
         try:
-            animScn = damShot.getRcFile("public", sSrcRcName,
+            srcScn = damShot.getRcFile("public", sSrcRcName,
                                           fail=True, dbNode=False)
         except Exception as e:
             sErrorList.append("{} - {}".format(damShot, e.message))
 
-        if animScn:
-            animScnList.append(animScn)
+        if srcScn:
+            srcScnList.append(srcScn)
         else:
-            animShotList[i] = None
+            validShotList[i] = None
 
-    animShotList = list(o for o in animShotList if o)
-    if len(animShotList) != len(animScnList):
+    validShotList = list(o for o in validShotList if o)
+    if len(validShotList) != len(srcScnList):
         raise RuntimeError("number of shots and anim scenes must be the same.")
 
-    loadDbNodes(proj, animScnList)
+    loadDbNodes(proj, srcScnList)
 
-    for i, scnFile in enumerate(animScnList):
+    for i, scnFile in enumerate(srcScnList):
         latestFile = None
         try:
             latestFile = _assertedLatestVersion(scnFile, refresh=False)
         except Exception as e:
             sErrorList.append(e.message)
 
-        animScnList[i] = latestFile
+        srcScnList[i] = latestFile
         if not latestFile:
-            animShotList[i] = None
+            validShotList[i] = None
 
-    animShotList = list(o for o in animShotList if o)
-    animScnList = list(o for o in animScnList if o)
-    if len(animShotList) != len(animScnList):
+    validShotList = list(o for o in validShotList if o)
+    srcScnList = list(o for o in srcScnList if o)
+    if len(validShotList) != len(srcScnList):
         raise RuntimeError("number of shots and anim scenes NOT the same.")
 
     layoutScnList = []
-    for i, animShot in enumerate(animShotList):
+    for i, animShot in enumerate(validShotList):
+
         layInfoFile = animShot.getRcFile("public", "layoutInfo_file",
-                                        weak=True, dbNode=False)
+                                         weak=True, dbNode=False)
         if not layInfoFile.exists():
             try:
                 layoutScn = animShot.getRcFile("public", "layout_scene",
@@ -125,7 +128,8 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
                 continue
 
             print ("{} - layout infos file not found and will be exported first."
-                   .format(animShot))
+                   .format(animShot.name))
+
             layoutScnList.append(layoutScn)
 
     loadDbNodes(proj, layoutScnList)
@@ -140,9 +144,9 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
         layoutScnList[i] = latestFile
 
     if sgShotDct:
-        sNoSgShotList = tuple(sh.name for sh in animShotList if sh.name not in sgShotDct)
+        sNoSgShotList = tuple(sh.name for sh in validShotList if sh.name not in sgShotDct)
     else:
-        sNoSgShotList = tuple(sh.name for sh in animShotList)
+        sNoSgShotList = tuple(sh.name for sh in validShotList)
 
 
     if sNoSgShotList:
@@ -152,23 +156,28 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
 
     #print sNoSgShotList, sgShotDct
 
-    numAnimShots = len(animShotList)
+    numAnimShots = len(validShotList)
 
     frameRangeList = numAnimShots * [None]
-    for i, damShot in enumerate(animShotList):
+    publishArgList = numAnimShots * [False]
+    for i, damShot in enumerate(validShotList):
         sgShot = sgShotDct[damShot.name]
         times = playbackTimesFromShot(sgShot)
         #print damShot, sgShot, times
         frameRange = (int(times["animationStartTime"]), int(times["animationEndTime"]))
         frameRangeList[i] = frameRange
 
+        if damShot.sequence == "sq2000":
+            publishArgList[i] = True
+
     if sErrorList:
         sSep = "\nWARNING: "
         sErrMsg = sSep + sSep.join(sErrorList)
-        print sErrMsg
+        print sErrMsg, '\n'
+        prompt = True
 
     numAllShots = len(damShotList)
-    if not animShotList:
+    if not validShotList:
         sMsg = "None of the {} selected shots can be exported.".format(numAllShots)
         confirmMessage("SORRY !", sMsg, ["OK"])
         return
@@ -180,7 +189,7 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
     else:
         sMsg = "Export these {} shots ?\n\n".format(numAnimShots)
 
-    for grp in grouper(6, (o.name for o in animShotList)):
+    for grp in grouper(6, (o.name for o in validShotList)):
         sMsg += ("\n" + " ".join(s for s in grp if s is not None))
 
     if prompt:
@@ -192,12 +201,12 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
     jobList = [{"title":"Batch initialization", "py_lines":[sCode], "fail":True}]
 
     sExportFunc = "exportLayoutInfo(publish=True,dryRun={dryRun})"
-    jobArgsList = tuple(dict(scene=f.absPath(), dryRun=dryRun) for f in layoutScnList)
+    jobArgsList = tuple(dict(scene=f.absPath(), dryRun=dryRun) for f in layoutScnList if f)
     jobList.extend(generMayaJobs(sExportFunc, jobArgsList))
 
-    sExportFunc = "exportCaches(selected=False, frameRange={frameRange}, dryRun={dryRun})"
-    jobArgsList = tuple(dict(scene=f.absPath(), dryRun=dryRun, frameRange=fr)
-                        for f, fr in izip(animScnList, frameRangeList))
+    sExportFunc = "exportCaches(selected=False, frameRange={frameRange}, dryRun={dryRun}, publish={publish})"
+    jobArgsList = tuple(dict(scene=src.absPath(), dryRun=dryRun, frameRange=frm, publish=pub)
+                        for src, frm, pub in izip(srcScnList, frameRangeList, publishArgList))
     jobList.extend(generMayaJobs(sExportFunc, jobArgsList))
 
     sJobFilePath = makeOutputPath(sSrcRcName, "maya_batch.json", timestamp=LAUNCH_TIME)

@@ -6,6 +6,7 @@ from pprint import pprint
 
 from PySide import QtGui
 from PySide.QtCore import Qt
+from PySide.QtGui import QTreeWidgetItemIterator
 
 import maya.cmds as mc
 import pymel.core as pm
@@ -25,7 +26,6 @@ from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 from pytd.gui.widgets import QuickTree
 from pytd.util.strutils import labelify
 from pytaya.util.sysutils import withSelectionRestored
-from PySide.QtGui import QTreeWidgetItemIterator
 
 reload(geocaching)
 
@@ -173,13 +173,17 @@ def setupAnimSwitch(jobList, importData):
     else grp_local.translateZ = 0;"""
 
     if not mc.objExists("grp_geo.animationChoice"):
-        sEnumList = tuple("{}={}".format(j["choice_label"], j["choice_index"]) for j in jobList)
+        sEnumList = list("{}={}".format(j["choice_label"], j["choice_index"]) for j in jobList)
+        sEnumList.insert(0, "None=0")
         mc.addAttr("grp_geo", ln="animationChoice", at="enum",
-                   en=":".join(sEnumList), defaultValue=jobList[0]["choice_index"])
+                   en=":".join(sEnumList), defaultValue=0)
         mc.setAttr("grp_geo.animationChoice", e=True, keyable=True)
 
     for sChoiceNode in importData["grp_geo"]["choice_nodes"]:
         mc.connectAttr("grp_geo.animationChoice", sChoiceNode + ".selector")
+        sPolyTrans = mc.listConnections(sChoiceNode + ".output", s=False, d=True)[0]
+        sMeshOrigAttr = mc.listConnections(sPolyTrans + ".inputPolymesh", s=True, d=False, plugs=True)[0]
+        mc.connectAttr(sMeshOrigAttr, sChoiceNode + ".input[0]")
 
     sAbcNodeList = importData["grp_geo"]["alembic_nodes"]
 
@@ -463,7 +467,7 @@ class FlavorDialog(MayaQWidgetDockableMixin, QtGui.QDialog):
     def __init__(self, parent=None):
         super(FlavorDialog, self).__init__(parent=parent)
 
-        self.setObjectName("crowdFlavorSelector")
+        self.setObjectName("CrowdFlavorSelector")
         self.setWindowTitle(labelify(self.objectName()))
         self.setAttribute(Qt.WA_DeleteOnClose, True)
         self.resize(380, 400)
