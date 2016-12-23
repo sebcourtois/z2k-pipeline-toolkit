@@ -348,16 +348,20 @@ def getSgRelatedVersionsHistory(scnInfos=None, logInfo=True, limit=0, relatedAss
 
 def iterGeoGroups(**kwargs):
 
-    bSelected = kwargs.get("selected", kwargs.get("sl", False))
-    sObjList = kwargs.get("among", None)
-    sNmspcList = kwargs.get("namespaces", None)
-    sPatrn = kwargs.get("regexp", "")
+    bSelected = kwargs.pop("selected", kwargs.get("sl", False))
+    sObjList = kwargs.pop("among", None)
+    sNmspcList = kwargs.pop("namespaces", None)
+    sPatrn = kwargs.pop("regexp", "")
+    bSelShape = kwargs.pop("fromShapes", True)
 
     if sObjList:
         bSelected = False
 
     if bSelected:
-        sObjList = mc.ls(sl=True, dag=True, type="shape", ni=True)
+        if bSelShape:
+            sObjList = mc.ls(sl=True, dag=True, type="shape", ni=True)
+        else:
+            sObjList = mc.ls(sl=True)
         sNmspcList = set(o.rsplit("|", 1)[-1].rsplit(":", 1)[0] for o in sObjList)
     elif sNmspcList is None:
         sNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)

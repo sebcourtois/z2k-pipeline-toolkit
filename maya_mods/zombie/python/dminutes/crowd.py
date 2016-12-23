@@ -200,6 +200,11 @@ def setupAnimSwitch(jobList, importData):
         sChoiceNode = mc.createNode("choice", n=sNodeName)
         sChoiceNodeDct[sAttr] = sChoiceNode
         for i, sAbcNode in enumerate(sAbcNodeList):
+
+            if i == 0:
+                dv = mc.attributeQuery(sAttr, node=sAbcNode, listDefault=True)[0]
+                mc.setAttr(sChoiceNode + ".input[0]", dv)
+
             sInAttr = sChoiceNode + ".input[{}]".format(jobList[i]["choice_index"])
             mc.connectAttr(sAbcNode + "." + sAttr, sInAttr)
 
@@ -310,11 +315,23 @@ def importAssignedVariations(assignedItems):
 
             print "\nImporting {}/{} crowds: {}".format(i + 1, count, astFile.dbPath())
 
-            res = astFile.mayaImportScene(deferReference=False, returnNewNodes=True)
+            res = astFile.mayaImportScene(deferReference=False, returnNewNodes=True,)
+                                            #sharedNodes=("displayLayers", "shadingNetworks", "renderLayersByName"))
 
             oFileRef = res[0].referenceFile()
             sGeoGrp = oFileRef.namespace + ":grp_geo"
-            matchTransform(sGeoGrp, target)
+
+            if target.startswith("|"):
+                sName = "decomposeMatrix"
+            else:
+                sName = target.replace("|", "_") + "_decomposeMatrix"
+
+            sDecompMtx = mc.createNode("decomposeMatrix", n=sName)
+            mc.connectAttr(target + ".worldMatrix[0]", sDecompMtx + ".inputMatrix")
+            mc.connectAttr(sDecompMtx + ".outputTranslate", sGeoGrp + ".translate")
+            mc.connectAttr(sDecompMtx + ".outputRotate", sGeoGrp + ".rotate")
+            mc.connectAttr(sDecompMtx + ".outputScale", sGeoGrp + ".scale")
+            #matchTransform(sGeoGrp, target)
 
         else:
             print "\nChanging {}/{} crowds: {}".format(i + 1, count, astFile.dbPath())
