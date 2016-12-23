@@ -1905,22 +1905,26 @@ def deleteUVs(meshL=[], doNotDeleteL=["map1","uvSet_display","uv_preview"], inPa
     for meshS in meshL:
         sUvSetList = mc.polyUVSet(meshS,q=1,auv=1)
         sDeletedUvList = []
-        for each in reversed(sUvSetList):
-            if each not in doNotDeleteL:
-                try:
-                    mc.polyUVSet(meshS,d=1, uvSet=each)
-                    sDeletedUvList.append(each)
-                    if meshS not in cleanedMeshL:
-                        cleanedMeshL.append(meshS)
-                except Exception,err:
-                    print err, meshS, each   
-        
-        for i in pm.getAttr(meshS+".uvSet", mi=True):
-            if i >= len(mc.polyUVSet(meshS,q=1,auv=1)):
-                mc.removeMultiInstance(meshS+".uvSet[{}]".format(i))
-        if sDeletedUvList:
-            txt = "{} Uvs deleted on {} : '{}': ".format(len(sDeletedUvList),meshS ,sDeletedUvList)
-            log.printL("i", txt)
+        if sUvSetList:
+            for each in reversed(sUvSetList):
+                if each not in doNotDeleteL:
+                    try:
+                        mc.polyUVSet(meshS,d=1, uvSet=each)
+                        sDeletedUvList.append(each)
+                        if meshS not in cleanedMeshL:
+                            cleanedMeshL.append(meshS)
+                    except Exception,err:
+                        print err, meshS, each
+
+            for i in pm.getAttr(meshS+".uvSet", mi=True):
+                if i >= len(mc.polyUVSet(meshS,q=1,auv=1)):
+                    mc.removeMultiInstance(meshS+".uvSet[{}]".format(i))
+            if sDeletedUvList:
+                txt = "{} Uvs deleted on {} : '{}': ".format(len(sDeletedUvList),meshS ,sDeletedUvList)
+                log.printL("i", txt)
+        else:
+            txt = "'{}'' meshe has an invalid uvset list: '{}': ".format(meshS, sUvSetList)
+            log.printL("e", txt)
 
     txt = "{} meshes have been UV cleaned: '{}': ".format(len(cleanedMeshL), cleanedMeshL)
     log.printL("i", txt)

@@ -52,7 +52,7 @@ if arleqMovie:
         sNewStatus = "rev"
 
     if sNewStatus:
-        proj.updateSgEntity(sgTask, sg_status_list=sNewStatus, sg_operator=sgOpe)
+        proj.updateSgEntity(sgTask, sg_status_list=sNewStatus, sg_operators=sgOpe)
 
 if flartMovie:
     sSrcMovPath = pathJoin(sRenderDirPath, sShotName + '_beauty.mov')
@@ -71,7 +71,7 @@ if flartMovie:
         sNewStatus = "rev"
 
     if sNewStatus:
-        proj.updateSgEntity(sgTask, sg_status_list=sNewStatus, sg_operator=sgOpe)
+        proj.updateSgEntity(sgTask, sg_status_list=sNewStatus, sg_operators=sgOpe)
 
 
 
