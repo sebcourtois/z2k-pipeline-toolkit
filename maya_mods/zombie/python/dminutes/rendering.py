@@ -332,6 +332,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     miscUtils.setAttrC("defaultResolution.deviceAspectRatio", aspectRatio)
     miscUtils.setAttrC("defaultResolution.width", resolution)
     miscUtils.setAttrC("defaultResolution.height", resolution / aspectRatio)
+    mc.setAttr('defaultArnoldRenderOptions.texture_searchpath', '[ZOMB_TEXTURE_PATH]', type='string')
 
     txt = "#### info: render options are now production ready"
     log.printL("i", txt)
@@ -339,6 +340,8 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
 def fixDeferLoad():
     deferGeoL = mc.ls(type='aiStandIn')
     [mc.setAttr("%s.deferStandinLoad" % geo, 0) for geo in deferGeoL if not deferGeoL == None]
+    [mc.setAttr("%s.overridePrimaryVisibility" % geo, 1) for geo in deferGeoL if not deferGeoL == None]
+    [mc.setAttr("%s.overrideMatte" % geo, 1) for geo in deferGeoL if not deferGeoL == None]
 
 def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , gui = True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="setRenderCamera")
