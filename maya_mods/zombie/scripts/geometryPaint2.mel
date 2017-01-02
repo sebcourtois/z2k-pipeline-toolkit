@@ -81,10 +81,10 @@ global int $geometryAttachToSrf = 0;
 global int $geometryAlignToSrf = 1;
 global int $geometryDuplicate = 1;
 global int $geometryGroup = 1;
-global int $geometryProportional = 0;
+global int $geometryProportional = 1;
 global int $geometryIsolate = 0;
 global string $geometryAttrName[] = { ".sx", ".sy", ".sz", ".rx", ".ry", ".rz", ".tx", ".ty", ".tz" };
-global int $geometryModifyAttr[] = { 1, 1, 1, 0, 0, 0, 0, 0, 0 };
+global int $geometryModifyAttr[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 global float $geometryModifyAttrNorm[] = { 1, 1, 1, 360, 360, 360, 1, 1, 1 };
 global int $geometryModifyAttrWrap[] = { 0, 0, 0, 1, 1, 1, 0, 0, 0 };
 global string $geometryIdentifier = "Geom";
@@ -590,6 +590,118 @@ proc setGeometryAttributes(
 	}
 }
 
+proc setGeometryPosition(string $objname, 	string $srfpoint , string $alignGeom, 
+    int $slot,
+	float $u,
+	float $v,
+	float $x,
+	float $y,
+	float $z,
+	float $nx,
+	float $ny,
+	float $nz,
+	float $su,
+	float $sv,
+	float $sw
+)
+{
+	global string $geometryNamePrefix[];
+	global string $geometryParentName[];
+	global string $geometryGroupName[];
+	global int $geometryType[];
+	global int $geometryAttachToSrf;
+	global int $geometryAlignToSrf;
+	global int $geometryDuplicate;
+	global int $geometryGroup;
+	global int $geometryOperation;
+	global int $geometryIsolate;
+  
+	string $outSrfAttr;
+
+	if ( $geometryGroup ) {
+		$outSrfAttr = ".local";
+	} else {
+		$outSrfAttr = ".worldSpace";
+	}
+
+	// attach only works on NURBS surfaces right now
+	//
+	if ( $geometryAttachToSrf && $geometryType[$slot] == 0 ) {
+		// create point on surface node which will be used to
+		// attach the geometry to the surface
+		//
+		createNode pointOnSurfaceInfo -n $srfpoint;
+		setAttr ($srfpoint + ".u") $u;
+		setAttr ($srfpoint + ".v") $v;
+		connectAttr ($geometryParentName[$slot] + $outSrfAttr) ($srfpoint + ".is");
+		connectAttr ($srfpoint + ".position") ($objname + ".translate");
+
+		if ( $geometryAlignToSrf ) {
+			createNode rotateHelper -n $alignGeom;
+
+			connectAttr ($srfpoint + ".normal") ($alignGeom + ".up");
+			connectAttr ($srfpoint + ".tangentU") ($alignGeom + ".forward");
+			connectAttr ($alignGeom + ".rotate") ($objname + ".rotate");				
+		}
+	} else {
+		if ( $geometryGroup ) {
+			move -ls $x $y $z $objname;
+		} else {
+			move -ws $x $y $z $objname;
+		}
+
+		if ( $geometryAlignToSrf ) {
+			string	$helperNode;
+			string	$outSrf;
+
+			switch ( $geometryType[$slot] ) {
+			case 0:	// NURBS surface
+				// use global nodes to calculate required rotation
+				//
+				$outSrf = ($geometryParentName[$slot] + $outSrfAttr);
+				connectAttr $outSrf geometryPaintPOSNode.is;
+				setAttr geometryPaintPOSNode.u $u;
+				setAttr geometryPaintPOSNode.v $v;
+				$helperNode = "geometryPaintBRNode";
+				break;
+			case 1:	// poly mesh
+                setAttr geometryPaintMeshBRNode.up $nx $ny $nz;
+                setAttr geometryPaintMeshBRNode.forward $su $sv $sw;
+				$helperNode = "geometryPaintMeshBRNode";
+				break;
+			case 2:	// subd
+				setAttr geometryPaintSubdBRNode.upX $nx;
+				setAttr geometryPaintSubdBRNode.upY $ny;
+				setAttr geometryPaintSubdBRNode.upZ $nz;
+				$helperNode = "geometryPaintSubdBRNode";
+				break;
+			}
+
+
+			// set rotation of object 
+			// - rotateHelper plugin has a bug where it doesn't recompute
+			//   unless asked for rotate attribute
+			//
+			getAttr ($helperNode + ".rotate");
+			rotate `getAttr ($helperNode + ".rx")`
+				   `getAttr ($helperNode + ".ry")`
+				   `getAttr ($helperNode + ".rz")` $objname;
+
+			switch ( $geometryType[$slot] ) {
+			case 0:	// NURBS surface
+				// disconnect the surface
+				//
+				disconnectAttr $outSrf geometryPaintPOSNode.is;
+				break;
+			case 1:	// poly mesh
+				break;
+			case 2:	// subd
+				break;
+			}
+		}
+	}	
+}
+
 // This is the "Set Value Cmd". It is called everytime a value
 // on the surface is changed. A surface ID, a grid index
 // on the surface and the value associated with that grid index
@@ -674,6 +786,7 @@ global proc setGeometryPaintValue2(
 				// modify geometry attributes
 				//
 				setGeometryAttributes( $objname, $val );
+                setGeometryPosition($objname, $srfpoint,$alignGeom,$slot,$u,$v,$x,$y,$z,$nx,$ny,$nz,$su,$sv,$sw);
 			}
 		} else if ( $val > 0 && $geometryOperation == 1 ) {
 			// the geometry doesn't exist
@@ -720,99 +833,7 @@ global proc setGeometryPaintValue2(
 				parent -r $posname $geometryGroupName[$slot];
 			}
 			setGeometryAttributes( $objname, $val );
-
-			string $outSrfAttr;
-
-			if ( $geometryGroup ) {
-				$outSrfAttr = ".local";
-			} else {
-				$outSrfAttr = ".worldSpace";
-			}
-
-			// attach only works on NURBS surfaces right now
-			//
-			if ( $geometryAttachToSrf && $geometryType[$slot] == 0 ) {
-				// create point on surface node which will be used to
-				// attach the geometry to the surface
-				//
-				createNode pointOnSurfaceInfo -n $srfpoint;
-				setAttr ($srfpoint + ".u") $u;
-				setAttr ($srfpoint + ".v") $v;
-				connectAttr ($geometryParentName[$slot] + $outSrfAttr) ($srfpoint + ".is");
-				connectAttr ($srfpoint + ".position") ($posname + ".translate");
-
-				if ( $geometryAlignToSrf ) {
-					createNode rotateHelper -n $alignGeom;
-
-					connectAttr ($srfpoint + ".normal") ($alignGeom + ".up");
-					connectAttr ($srfpoint + ".tangentU") ($alignGeom + ".forward");
-					connectAttr ($alignGeom + ".rotate") ($posname + ".rotate");				
-				}
-			} else {
-				if ( $geometryGroup ) {
-					move -ls $x $y $z $posname;
-				} else {
-					move -ws $x $y $z $posname;
-				}
-
-				if ( $geometryAlignToSrf ) {
-					string	$helperNode;
-					string	$outSrf;
-
-					switch ( $geometryType[$slot] ) {
-					case 0:	// NURBS surface
-						// use global nodes to calculate required rotation
-						//
-						$outSrf = ($geometryParentName[$slot] + $outSrfAttr);
-						connectAttr $outSrf geometryPaintPOSNode.is;
-						setAttr geometryPaintPOSNode.u $u;
-						setAttr geometryPaintPOSNode.v $v;
-						$helperNode = "geometryPaintBRNode";
-						break;
-					case 1:	// poly mesh
-						setAttr geometryPaintMeshBRNode.upX $nx;
-						setAttr geometryPaintMeshBRNode.upY $ny;
-						setAttr geometryPaintMeshBRNode.upZ $nz;
-                        setAttr geometryPaintMeshBRNode.forwardX $su;
-                        setAttr geometryPaintMeshBRNode.forwardY $sv;
-                        setAttr geometryPaintMeshBRNode.forwardZ $sw;
-                        print $su;
-                        print $sv;
-                        print $sw;
-                        print "\n";
-						$helperNode = "geometryPaintMeshBRNode";
-						break;
-					case 2:	// subd
-						setAttr geometryPaintSubdBRNode.upX $nx;
-						setAttr geometryPaintSubdBRNode.upY $ny;
-						setAttr geometryPaintSubdBRNode.upZ $nz;
-						$helperNode = "geometryPaintSubdBRNode";
-						break;
-					}
-
-
-					// set rotation of object 
-					// - rotateHelper plugin has a bug where it doesn't recompute
-					//   unless asked for rotate attribute
-					//
-					getAttr ($helperNode + ".rotate");
-					rotate `getAttr ($helperNode + ".rx")`
-						   `getAttr ($helperNode + ".ry")`
-						   `getAttr ($helperNode + ".rz")` $posname;
-
-					switch ( $geometryType[$slot] ) {
-					case 0:	// NURBS surface
-						// disconnect the surface
-						//
-						disconnectAttr $outSrf geometryPaintPOSNode.is;
-						break;
-					case 1:	// poly mesh
-						break;
-					case 2:	// subd
-						break;
-					}
-				}
-			}
+            setGeometryPosition($posname, $srfpoint,$alignGeom,$slot,$u,$v,$x,$y,$z,$nx,$ny,$nz,$su,$sv,$sw);
 		}
 	}
 }
