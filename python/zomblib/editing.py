@@ -252,10 +252,11 @@ def h264ToProres(inSeqList, shotStep='01_previz'):
     subprocess.call("explorer /select, {}".format(sTmpBatPath))
 
 
-def getFinalImgSeq(inSeqList, bStereo=False, ):
+def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
     log = LogBuilder(gui=False, funcName ="")
     shotDir = osp.normpath(osp.join(os.environ["ZOMB_SHOT_LOC"], "zomb", "shot"))
-    outputDir = os.environ["ZOMB_OUTPUT_PATH"]
+    if not outputDir:
+        outputDir = os.environ["ZOMB_OUTPUT_PATH"]
     sSeqShotDict = OrderedDict()
     oDate = datetime.today()
     sDate = str(oDate.year) + "-" + str(oDate.month) + "-" + str(oDate.day)
