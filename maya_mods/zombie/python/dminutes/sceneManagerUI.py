@@ -85,8 +85,23 @@ def isLaunched():
 def isVisible():
     return mc.dockControl(SCENE_MANAGER_DOCK, q=True, visible=True)
 
+class DockControlError(RuntimeError):
+    pass
+
 @withSelectionRestored
 def launch(**kwargs):
+    try:
+        _launch(**kwargs)
+    except DockControlError as e:
+        if inDevMode():
+            pc.displayWarning(toStr(e))
+        kill()
+        if not mc.ls(sl=True):
+            mc.select("|persp")
+            mc.refresh()
+        _launch(**kwargs)
+    
+def _launch(**kwargs):
     """Main UI Creator"""
     global QWIDGETS
 
@@ -98,10 +113,6 @@ def launch(**kwargs):
     else:
         kill()
         bUiCreated = True
-
-        if not mc.ls(sl=True):
-            mc.select("|persp")
-            mc.refresh()
 
         dirname, _ = osp.split(osp.abspath(__file__))
         sLoadedUi = mc.loadUI(uiFile=dirname + "/UI/sceneManagerUIC.ui", v=False)
@@ -132,13 +143,13 @@ def launch(**kwargs):
             states.update(state=sState)
         states.update(floating=pc.optionVar.get("Z2K_SM_dockFloating", False))
 
-#        if not mc.window(SCENE_MANAGER_UI, q=True, exists=True):
-#            mc.showWindow(SCENE_MANAGER_UI)
-
         sLabel = mc.window(sLoadedUi, q=True, title=True)
-        mc.dockControl(SCENE_MANAGER_DOCK, area='left', content=sLoadedUi,
-                       allowedArea=['left'], retain=True, label=sLabel,
-                       closeCommand=saveDockState, **states)
+        try:
+            mc.dockControl(SCENE_MANAGER_DOCK, area='left', content=sLoadedUi,
+                           allowedArea=['left'], retain=True, label=sLabel,
+                           closeCommand=saveDockState, **states)
+        except RuntimeError as e:
+            raise DockControlError(e)
 
         connectCallbacks()
 
@@ -287,11 +298,11 @@ def refreshContextUI():
     if sCtxStep in ("previz 3d", "animation"):
         if mc.evaluationManager(q=True, enabled=True):
             mc.evaluationManager(mode="off")
-#    else:
-#        evalModes = {1:"off", 2:"serial", 3:"parallel"}
-#        sPrefEvalMode = evalModes[pc.optionVar.get("evaluationMode", 3)]
-#        if mc.evaluationManager(q=True, mode=True)[0] != sPrefEvalMode:
-#            mc.evaluationManager(mode=sPrefEvalMode)
+    else:
+        evalModes = {1:"off", 2:"serial", 3:"parallel"}
+        sPrefEvalMode = evalModes[pc.optionVar.get("evaluationMode", 3)]
+        if mc.evaluationManager(q=True, mode=True)[0] != sPrefEvalMode:
+            mc.evaluationManager(mode=sPrefEvalMode)
 
 '@forceLog(log="all")'
 def loadContextFromScene(**kwargs):
