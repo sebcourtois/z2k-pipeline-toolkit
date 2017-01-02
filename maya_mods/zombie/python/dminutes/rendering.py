@@ -333,6 +333,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     miscUtils.setAttrC("defaultResolution.width", resolution)
     miscUtils.setAttrC("defaultResolution.height", resolution / aspectRatio)
     mc.setAttr('defaultArnoldRenderOptions.texture_searchpath', '[ZOMB_TEXTURE_PATH]', type='string')
+    mc.setAttr('defaultArnoldRenderOptions.absoluteTexturePaths', 0)
 
     txt = "#### info: render options are now production ready"
     log.printL("i", txt)
