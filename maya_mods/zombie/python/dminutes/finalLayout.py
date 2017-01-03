@@ -251,9 +251,9 @@ def createNukeBatch(gui=True):
 
     #finalCommand = r'"C:\Python27\python.exe" "C:\users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\setup_env_tools.py" launch %nuke% -x %nkscript% %argva% %argv0%'
     finalCommand = r'%nuke% -x %nkscript% %argva% %argv0%'
-    publish_movies = r'"C:\Python27\python.exe" "%USERPROFILE%\zombillenium\z2k-pipeline-toolkit\launchers\paris\setup_env_tools.py" launch "C:\Python27\python.exe" "%USERPROFILE%\zombillenium\z2k-pipeline-toolkit\scripts\FL_post_render.py" %argv0%'
+    #publish_movies = r'"C:\Python27\python.exe" "%USERPROFILE%\zombillenium\z2k-pipeline-toolkit\launchers\paris\setup_env_tools.py" launch "C:\Python27\python.exe" "%USERPROFILE%\zombillenium\z2k-pipeline-toolkit\scripts\FL_post_render.py" %argv0%'
     renderBatch_obj.write(finalCommand+"\n")
-    renderBatch_obj.write(publish_movies + "\n")
+    #renderBatch_obj.write(publish_movies + "\n")
     renderBatch_obj.write("\n")
     #renderBatch_obj.write("pause\n")
     renderBatch_obj.close()
