@@ -22,7 +22,13 @@ nuke.menu('Nodes').addCommand('Z2K/MaskAovs', lambda: nuke.createNode('MaskAovs'
 ## P Matte Gizmos
 nuke.menu('Nodes').addCommand('Z2K/P_Matte', lambda: nuke.createNode('P_Matte'))
 
-## stero Gizmo
+## P Map Gizmos
+nuke.menu('Nodes').addCommand('Z2K/P_Map', lambda: nuke.createNode('P_Map'))
+
+## P Noise Gizmos
+nuke.menu('Nodes').addCommand('Z2K/P_Noise', lambda: nuke.createNode('P_Noise'))
+
+## Stereo Gizmo
 toolbar = nuke.menu("Nodes")
 menu_3D = toolbar.addMenu('Tools_3D', 'menu_3d.png')
 menu_3D.addCommand('StereoDisparityGenerator', 'nuke.createNode(\"StereoDisparityGenerator\")')
