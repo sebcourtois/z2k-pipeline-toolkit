@@ -177,8 +177,8 @@ def mergeShaders(sGeoGrpList):
 @withSelectionRestored
 def freeze():
 
-    sGeoGrpList, _ = geocaching._confirmProcessing("Freeze crowd", confirm=True,
-                                                   regexp="^cwp_", selected=None, fromShapes=False)
+    sGeoGrpList, _ = geocaching._confirmProcessing("Freeze crowd", selected=None, confirm=True,
+                                                   regexp="^cwp_", fromShapes=False)
     #sGeoGrpList = tuple(s for s in sGeoGrpList if mc.referenceQuery(s, isNodeReferenced=True))
 
     if  not sGeoGrpList:

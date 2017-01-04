@@ -18,8 +18,8 @@ reload(crowd)
 @setWaitCursor
 def reImportRef():
 
-    sGeoGrpList, _ = geocaching._confirmProcessing("Re-reference crowd", confirm=True,
-                                                   regexp="^cwp_", selected=True, fromShapes=False)
+    sGeoGrpList, _ = geocaching._confirmProcessing("Re-reference crowd", selected=True, confirm=True,
+                                                   regexp="^cwp_", fromShapes=False)
 
     if  not sGeoGrpList:
         mc.warning("No crowd to re-reference.")

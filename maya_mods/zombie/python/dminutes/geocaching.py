@@ -170,7 +170,7 @@ def breakConnections(sSide, sNodeAttr):
 
     return sConnectList
 
-def _confirmProcessing(sProcessLabel, **kwargs):
+def _confirmProcessing_old(sProcessLabel, **kwargs):
 
     bSelected = kwargs.pop("selected", None)
     bConfirm = kwargs.pop("confirm", True)
@@ -206,10 +206,10 @@ def _confirmProcessing(sProcessLabel, **kwargs):
 
     return sGeoGrpList, bSelected
 
-def _confirmProcessing2(sProcessLabel, **kwargs):
+def _confirmProcessing(sProcessLabel, **kwargs):
 
     in_bSelected = kwargs.pop("selected", None)
-    bConfirm = kwargs.pop("confirm", True)
+    bConfirm = kwargs.pop("confirm", (not mc.about(batch=True)))
 
     bSelected = False
     if in_bSelected is None:
