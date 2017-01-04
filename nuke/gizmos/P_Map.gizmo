@@ -1,0 +1,102 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+Gizmo {
+ inputs 2
+ addUserKnob {20 User}
+ addUserKnob {41 trX l translate_X T ExpressionTranslate_.trX}
+ addUserKnob {41 trY l translate_Y T ExpressionTranslate_.trY}
+ addUserKnob {41 trZ l translate_Z T ExpressionTranslate_.trZ}
+ addUserKnob {26 ""}
+ addUserKnob {41 rotY l rotate_Y T ExpressionRotate_.rotY}
+ addUserKnob {26 ""}
+ addUserKnob {41 scG l scaleGlobal T ExpressionScale_.scG}
+ addUserKnob {41 scX l scale_X T ExpressionScale_.scX}
+ addUserKnob {41 scY l scale_Y T ExpressionScale_.scY}
+ addUserKnob {41 scZ l scale_Z T ExpressionScale_.scZ}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos 505
+  ypos 33
+ }
+ Expression {
+  expr0 "r + trX"
+  expr1 "g + trY"
+  expr2 "b + trZ"
+  name ExpressionTranslate_
+  xpos 505
+  ypos 73
+  addUserKnob {20 User}
+  addUserKnob {7 trX l translate_X R -5e+006 5e+006}
+  trX 5000
+  addUserKnob {7 trY l translate_Y R -5e+006 5e+006}
+  addUserKnob {7 trZ l translate_Z R -5e+006 5e+006}
+  trZ -5000
+ }
+ Expression {
+  temp_name3 rotato
+  temp_expr3 "( 3.14159265359 / 180 ) * rotY"
+  expr0 "(r * cos( rotato )) + (b * sin( rotato ))"
+  expr1 g
+  expr2 "(-1 * r * sin( rotato )) + ( b * cos( rotato ))"
+  name ExpressionRotate_
+  xpos 505
+  ypos 165
+  addUserKnob {20 User}
+  addUserKnob {7 rotY l rotate_Y R -1440 1440}
+  rotY 10
+ }
+ Expression {
+  expr0 "r /( scX * scG )"
+  expr1 "g /( scY * scG )"
+  expr2 "b /( scZ * scG )"
+  name ExpressionScale_
+  xpos 505
+  ypos 191
+  addUserKnob {20 User}
+  addUserKnob {7 scG l scaleGlobal R 0 5000}
+  scG 500
+  addUserKnob {7 scX l scale_X R 0 10000}
+  scX 1
+  addUserKnob {7 scY l scale_Y R 0 10000}
+  scY 1
+  addUserKnob {7 scZ l scale_Z R 0 10000}
+  scZ 1
+ }
+ Expression {
+  expr0 "(abs(r) %1)"
+  expr1 (abs(g)%1)
+  expr2 (abs(b)%1)
+  name Expression1
+  xpos 505
+  ypos 217
+ }
+ Shuffle {
+  green blue
+  blue green
+  alpha black
+  name Shuffle1
+  xpos 505
+  ypos 250
+ }
+ Input {
+  inputs 0
+  name Input2
+  xpos 656
+  ypos 406
+  number 1
+ }
+ STMap {
+  inputs 2
+  uv rgb
+  name STMap1
+  xpos 656
+  ypos 446
+ }
+ Output {
+  name Output1
+  xpos 656
+  ypos 546
+ }
+end_group

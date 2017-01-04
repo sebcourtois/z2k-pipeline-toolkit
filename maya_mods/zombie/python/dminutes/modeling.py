@@ -1953,11 +1953,19 @@ def rigProps(inRoot):
 
 
 
-def duplicateOnTargetList(sourceS="",targetL=[], instanciateB = True):
+def duplicateOnTargetList(sourceS="",targetL=[], instanciateB = True, inputConnectionsB = True):
     #exemple
     #sourceS = "|source1|srcCube"
     #targetL = mc.ls(type="transform", selection=True,l=True)
     #duplicateOnTargetList(sourceS=sourceS,targetL=targetL)
+
+    #ou encore
+    #sourceL = mc.ls(type="transform", selection=True,l=True)
+    #for eachSourceS in sourceL:
+    #    targetL = list(set(mc.ls(eachSourceS.split("|")[-1]+"*", l=True))-set([eachSourceS]))    
+    #    print eachSourceS, targetL
+    #    duplicateOnTargetList(sourceS=eachSourceS,targetL=targetL)
+
     if sourceS in targetL:
         targetL.remove(sourceS)
     oldObjL=[]
@@ -1965,8 +1973,12 @@ def duplicateOnTargetList(sourceS="",targetL=[], instanciateB = True):
         eachParentS = cmds.listRelatives (each, parent=True, f =True)
         mtx = cmds.xform( each, q = True, ws = True, matrix = True )
         eachOldS = cmds.ls(cmds.rename (each,each.split("|")[-1]+"_old"),l=True)[0]
-        dupliS = cmds.ls(cmds.duplicate(sourceS,rr= True, instanceLeaf=instanciateB, ic=True, name = each.split("|")[-1]),l=True)
-        eachNew = cmds.ls(cmds.parent(dupliS,eachParentS),l=True)
+        dupliS = cmds.ls(cmds.duplicate(sourceS,rr= True, instanceLeaf=instanciateB, inputConnections=inputConnectionsB, name = each.split("|")[-1]),l=True)
+        dupliS = cmds.ls(cmds.rename (dupliS,each.split("|")[-1]),l=True)[0]
+        if eachParentS != cmds.listRelatives (dupliS, parent=True, f =True):
+            eachNew = cmds.ls(cmds.parent(dupliS,eachParentS),l=True)
+        else:
+            eachNew = cmds.ls(dupliS,l=True)
         cmds.xform( eachNew,  ws = True, matrix = mtx )
         oldObjL.append(eachOldS)
     cmds.select(oldObjL, r=True)
