@@ -172,6 +172,42 @@ def breakConnections(sSide, sNodeAttr):
 
 def _confirmProcessing(sProcessLabel, **kwargs):
 
+    bSelected = kwargs.pop("selected", None)
+    bConfirm = kwargs.pop("confirm", True)
+
+    if bSelected is None:
+
+        bSelected = True
+        sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
+
+        sMsg = "{} for which assets ?".format(sProcessLabel)
+
+        sButtonList = ['All', 'Cancel']
+        if sGeoGrpList:
+            sButtonList.insert(0, '{} Selected'.format(len(sGeoGrpList)))
+
+        sRes = ""
+        if bConfirm:
+            sRes = pm.confirmDialog(title='DO YOU WANT TO...',
+                                    message=sMsg,
+                                    button=sButtonList,
+                                    icon="question")
+        elif not sGeoGrpList:
+            sRes = "All"
+
+        if sRes == "Cancel":
+            #pm.displayInfo("Canceled !")
+            raise RuntimeWarning("Canceled !")
+        elif sRes == 'All':
+            bSelected = False
+            sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
+    else:
+        sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
+
+    return sGeoGrpList, bSelected
+
+def _confirmProcessing2(sProcessLabel, **kwargs):
+
     in_bSelected = kwargs.pop("selected", None)
     bConfirm = kwargs.pop("confirm", True)
 
