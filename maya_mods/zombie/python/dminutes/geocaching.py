@@ -172,37 +172,56 @@ def breakConnections(sSide, sNodeAttr):
 
 def _confirmProcessing(sProcessLabel, **kwargs):
 
-    bSelected = kwargs.pop("selected", None)
+    in_bSelected = kwargs.pop("selected", None)
     bConfirm = kwargs.pop("confirm", True)
 
-    if bSelected is None:
-
+    bSelected = False
+    if in_bSelected is None:
         bSelected = True
-        sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
+        sGeoGrpList = tuple(iterGeoGroups(selected=True, **kwargs))
+        if not sGeoGrpList:
+            bConfirm = True
+
+    if bConfirm:
 
         sMsg = "{} for which assets ?".format(sProcessLabel)
 
-        sButtonList = ['All', 'Cancel']
-        if sGeoGrpList:
-            sButtonList.insert(0, '{} Selected'.format(len(sGeoGrpList)))
+        if in_bSelected is None:
+            sChoiceList = ['All', 'Cancel']
+            if sGeoGrpList:
+                sChoiceList.insert(0, '{} Selected'.format(len(sGeoGrpList)))
+        else:
+            sGeoGrpList = tuple(iterGeoGroups(selected=in_bSelected, **kwargs))
+            if in_bSelected:
+                if not sGeoGrpList:
+                    return sGeoGrpList, in_bSelected
+                sChoiceList = ['{} Selected'.format(len(sGeoGrpList)), 'Cancel']
+            else:
+                sChoiceList = ['All', 'Cancel']
 
-        sRes = ""
-        if bConfirm:
-            sRes = pm.confirmDialog(title='DO YOU WANT TO...',
-                                    message=sMsg,
-                                    button=sButtonList,
-                                    icon="question")
-        elif not sGeoGrpList:
-            sRes = "All"
+        sChoice = pm.confirmDialog(title='DO YOU WANT TO...',
+                                   message=sMsg,
+                                   button=sChoiceList,
+                                   icon="question")
 
-        if sRes == "Cancel":
+        if sChoice == "Cancel":
             #pm.displayInfo("Canceled !")
             raise RuntimeWarning("Canceled !")
-        elif sRes == 'All':
-            bSelected = False
+
+        bSelected = False if sChoice == 'All' else True
+        if bSelected != in_bSelected:
             sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
+
     else:
-        sGeoGrpList = tuple(iterGeoGroups(selected=bSelected, **kwargs))
+        if in_bSelected is None:
+            bSelected = True
+            sGeoGrpList = tuple(iterGeoGroups(selected=True, **kwargs))
+            if not sGeoGrpList:
+                bSelected = False
+                sGeoGrpList = tuple(iterGeoGroups(selected=False, **kwargs))
+        else:
+            bSelected = in_bSelected
+            sGeoGrpList = tuple(iterGeoGroups(selected=in_bSelected, **kwargs))
 
     return sGeoGrpList, bSelected
 
@@ -211,9 +230,9 @@ def seperatorStr(numLines, width=120, decay=20, reverse=False):
              for i in xrange(numLines))
     return "\n".join(sorted((l.center(width) for l in lines), reverse=reverse))
 
-def relevantXfmAttrs(sXfm):
+def relevantXfmAttrs(sXfm, unlocked=True):
 
-    flags = dict(unlocked=True, connectable=True, scalar=True)
+    flags = dict(unlocked=unlocked, connectable=True, scalar=True)
 
     sAttrSet = set(listForNone(mc.listAttr(sXfm, keyable=True, **flags)))
     sAttrSet.update(listForNone(mc.listAttr(sXfm, userDefined=True, **flags)))
@@ -732,7 +751,8 @@ def getMeshMapping(xfmMappingItems, consider=None, longName=False):
 
     return tuple(itm for itm in mappingItems if itm)
 
-def transferXfmAttrs(astToAbcXfmMap, only=None, attrs=None, discardAttrs=None, dryRun=False):
+def transferXfmAttrs(astToAbcXfmMap, only=None, attrs=None, discardAttrs=None, dryRun=False,
+                     values=True, inConnections=True, keepSourceConnections=True, locked=False):
 
     if isinstance(astToAbcXfmMap, dict):
         astToAbcXfmItems = tuple(astToAbcXfmMap.iteritems())
@@ -751,8 +771,8 @@ def transferXfmAttrs(astToAbcXfmMap, only=None, attrs=None, discardAttrs=None, d
         if sOnlyList and (astDagPath.fullPathName() not in sOnlyList):
             continue
 
-        sAbcAttrSet = relevantXfmAttrs(sAbcXfm)
-        sAstAttrSet = relevantXfmAttrs(sAstXfm)
+        sAbcAttrSet = relevantXfmAttrs(sAbcXfm, unlocked=(not locked))
+        sAstAttrSet = relevantXfmAttrs(sAstXfm, unlocked=(not locked))
 
         if sOnlyAttrSet:
             sSameAttrSet = sAbcAttrSet & sAstAttrSet & sOnlyAttrSet
@@ -764,8 +784,9 @@ def transferXfmAttrs(astToAbcXfmMap, only=None, attrs=None, discardAttrs=None, d
             for sAttr in sSameAttrSet:
                 breakConnections("input", sAstXfm + "." + sAttr)
 
-            mc.copyAttr(sAbcXfm, sAstXfm, values=True, inConnections=True,
-                        keepSourceConnections=True, attribute=tuple(sSameAttrSet))
+            mc.copyAttr(sAbcXfm, sAstXfm, values=values, inConnections=inConnections,
+                        keepSourceConnections=keepSourceConnections,
+                        attribute=tuple(sSameAttrSet))
 
     if sLockedList:
         sNmspc = getNamespace(sLockedList[0])
