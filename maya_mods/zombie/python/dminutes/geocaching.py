@@ -18,19 +18,22 @@ from pytd.util.qtutils import setWaitCursor
 from pytd.util.fsutils import jsonWrite, jsonRead
 from pytd.util.fsutils import pathJoin, pathRelativeTo, pathEqual
 from pytd.util.sysutils import grouper, argToSet, toStr, timer
+from pytd.gui.dialogs import confirmDialog
 
 from pytaya.util import apiutils as myapi
 from pytaya.core.general import lsNodes, copyAttrs
 #from pytaya.core import system as myasys
+from pytaya.util.sysutils import argsToPyNode, withSelectionRestored
+from pytaya.core.transform import matchTransform
+from pytaya.core.cleaning import _yieldChildJunkShapes
+
 from davos_maya.tool import reference as myaref
 from davos_maya.tool import dependency_scan
 from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
 from davos_maya.tool.general import iterGeoGroups
 
 from dminutes import maya_scene_operations as mop
-from pytaya.util.sysutils import argsToPyNode, withSelectionRestored
-from pytaya.core.transform import matchTransform
-from pytaya.core.cleaning import _yieldChildJunkShapes
+
 
 LOGGING_SETS = []
 USE_LOGGING_SETS = True
@@ -208,8 +211,10 @@ def _confirmProcessing_old(sProcessLabel, **kwargs):
 
 def _confirmProcessing(sProcessLabel, **kwargs):
 
+    bBatchMode = mc.about(batch=True)
+
     in_bSelected = kwargs.pop("selected", None)
-    bConfirm = kwargs.pop("confirm", (not mc.about(batch=True)))
+    bConfirm = kwargs.pop("confirm", (not bBatchMode))
 
     bSelected = False
     if in_bSelected is None:
@@ -235,11 +240,12 @@ def _confirmProcessing(sProcessLabel, **kwargs):
             else:
                 sChoiceList = ['All', 'Cancel']
 
-        sChoice = pm.confirmDialog(title='DO YOU WANT TO...',
-                                   message=sMsg,
-                                   button=sChoiceList,
-                                   icon="question")
+        confirmDialogFunc = confirmDialog if bBatchMode else pm.confirmDialog
 
+        sChoice = confirmDialogFunc(title='DO YOU WANT TO...',
+                                    message=sMsg,
+                                    button=sChoiceList,
+                                    icon="question")
         if sChoice == "Cancel":
             #pm.displayInfo("Canceled !")
             raise RuntimeWarning("Canceled !")
