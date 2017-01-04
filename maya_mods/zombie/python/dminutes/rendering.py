@@ -689,7 +689,7 @@ def createAovs(renderMode="render"):
             aovCustomNameL = []
         else:
             aovDmnNameL = ["dmn_ambient", "dmn_diffuse", "dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon", "dmn_mask_transp", "dmn_lgtMask01", "dmn_lgtMask02"]
-            aovCustomNameL = ["aiAOV_depth_aa", "aiAOV_Z", "aiAOV_P", "aiAOV_Pref", "aiAOV_crypto_object", "aiAOV_uvs"]
+            aovCustomNameL = ["aiAOV_depth_aa", "aiAOV_Z", "aiAOV_P", "aiAOV_Pref", "aiAOV_crypto_object", "aiAOV_uvs", "aiAOV_N"]
 
 
         for each in aovDmnNameL:
@@ -716,6 +716,8 @@ def createAovs(renderMode="render"):
                 myAOVs.addAOV("crypto_object", aovType='rgb')
             elif each == "aiAOV_uvs" and not 'aiAOV_uvs' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("uvs", aovType='rgb')
+            elif each == "aiAOV_N" and not 'aiAOV_N' in mc.ls(type="aiAOV"):
+                myAOVs.addAOV("N", aovType='vector')
                 #changeAovFilter(aovName = "Z", filterName = "default")
 
         aovs.refreshAliases()
