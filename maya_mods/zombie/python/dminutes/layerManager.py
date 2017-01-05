@@ -233,10 +233,12 @@ class LayerManager:
             else:
                 self.log.printL("i", "nothing to add to layer'{}'".format(self.layerNameS))
         else:
-            itemToRemoveL = list(set(rndItemL) & set(self.layerMemberL))
+            #itemToRemoveL = list(set(rndItemL) & set(self.layerMemberL))
+            itemToRemoveL = mc.ls(sl=1)
             if itemToRemoveL:
-                mc.editRenderLayerMembers(self.layerNameS, itemToRemoveL, remove= True, noRecurse=True)
+                mc.editRenderLayerMembers(self.layerNameS, itemToRemoveL, remove=True, noRecurse=False)
                 for eachSet in self.layerSetL:
+                    #itemToRemoveGeos = mc.select(hi=1)
                     mc.sets(itemToRemoveL, remove=eachSet)
                 self.log.printL("i", "removed {} items from layer'{}': {}".format(len(itemToRemoveL), self.layerNameS, itemToRemoveL))
             else:
@@ -468,6 +470,34 @@ class LayerManager:
         self.log.printL("i", txt)
         return dict(resultB=self.log.resultB, logL=self.log.logL)
 
+def createTextureRefs():
+    mc.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
+    chrL = mc.ls('shot|grp_character', dag=1, type='transform')
+    chrL.sort(key=len)
+    chrFilterL = list()
+    for each in chrL:
+        if each.split(':')[-1] == 'grp_geo':
+            chrFilterL.append(each)
+
+    alembicNodesL = mc.ls('*chr*Alembic*', l=1)
+
+    for elem in alembicNodesL:
+        polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
+        for each in polyTransfertL:
+            mc.setAttr(each.split('.')[0] + '.vertices', 0)
+
+    for chr in chrFilterL:
+        print chr
+        mc.select(chr)
+        mc.CreateTextureReferenceObject()
+
+    for elem in alembicNodesL:
+        polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
+        for each in polyTransfertL:
+                mc.setAttr(each.split('.')[0] + '.vertices', 1)
+
+    mc.select(['*:*geo_reference*', 'grp_character'])
+    mc.parent()
 
 def createCryptomatteLayer():
     if pm.window("unifiedRenderGlobalsWindow", exists=True):

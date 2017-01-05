@@ -26,9 +26,30 @@ from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 from pytd.gui.widgets import QuickTree
 from pytd.util.strutils import labelify
 from pytaya.util.sysutils import withSelectionRestored
+from pytd.util.sysutils import toStr
 
 reload(geocaching)
 
+
+def delete(sGeoGrpList):
+
+    for sGeoGrp in sGeoGrpList:
+
+        bIsRef = mc.referenceQuery(sGeoGrp, isNodeReferenced=True)
+        if bIsRef:
+            oRef = pm.FileReference(mc.referenceQuery(sGeoGrp, referenceNode=True))
+            oRef.remove()
+#            sNmspc = oRef.fullNamespace
+#            oRef.importContents()
+        else:
+            sNmspc = geocaching.getNamespace(sGeoGrp)
+
+            sDelList = mc.ls(sNmspc + ":*")
+            mc.delete(sDelList)
+            try:
+                mc.namespace(rm=sNmspc)
+            except RuntimeError as e:
+                pm.displayWarning(toStr(e))
 
 def createPreviewSwitch():
 
@@ -471,13 +492,11 @@ def getOrCreateNode(sNodeType, sNodeName):
         #mc.delete(sNodeName)
         return sNodeName
 
-    return mc.createNode(sNodeType, n=sNodeName)
+    return mc.shadingNode(sNodeType, n=sNodeName, asUtility=True)
 
 def connectAttr(*args, **kwargs):
     if not mc.isConnected(*args, ignoreUnitConversion=True):
         return mc.connectAttr(*args, **kwargs)
-
-
 
 class FlavorDialog(MayaQWidgetDockableMixin, QtGui.QDialog):
 
