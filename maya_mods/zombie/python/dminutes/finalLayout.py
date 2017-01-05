@@ -183,7 +183,7 @@ def createNukeBatch(gui=True):
     """
 #    sShotName = "sq6660_sh0050a"
     sShotName = mc.getAttr('defaultRenderGlobals.imageFilePrefix')
-    proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal")
+    proj = DamProject("zombillenium")
     #shotgundb = proj._shotgundb
     damShot = proj.getShot(sShotName)
     sgTaskList = damShot.listSgTasks(moreFilters=[["content", "in", ("FL_Art", "Anim_MeshCache")]])
