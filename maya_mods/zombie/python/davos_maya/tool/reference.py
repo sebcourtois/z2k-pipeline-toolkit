@@ -556,11 +556,13 @@ def loadAssetsAsResource(sRcName, fail=False, checkSyncState=False, selected=Fal
         sRefPathSet = set(pathResolve(oFileRef.path) for oFileRef in pm.iterReferences())
         for sRefPath in sRefPathSet:
             damAst = proj.entityFromPath(sRefPath, fail=False, library=astLib)
-            sAstName = damAst.name
             if not damAst:
                 continue
-            elif sAstName in sAstList:
+
+            sAstName = damAst.name
+            if sAstName in sAstList:
                 continue
+
             sAstList.append(sAstName)
             rcFile = damAst.getRcFile("public", sRcName, dbNode=False, weak=True, fail=False)
             if rcFile:
