@@ -419,12 +419,14 @@ def makeCapture(sOutputPath, start, end, width, height, displaymode="",
             oldCamera = curCam
             pc.modelEditor(pan, edit=True, camera=useCamera)
 
-    app = pc.modelEditor(pan, query=True, displayAppearance=True)
-    tex = pc.modelEditor(pan, query=True, displayTextures=True)
+    displayAppearance = pc.modelEditor(pan, query=True, displayAppearance=True)
+    displayTextures = pc.modelEditor(pan, query=True, displayTextures=True)
     wireOnShaded = pc.modelEditor(pan, query=True, wireframeOnShaded=True)
     xray = pc.modelEditor(pan, query=True, xray=True)
     jointXray = pc.modelEditor(pan, query=True, jointXray=True)
     hud = pc.modelEditor(pan, query=True, hud=True)
+    particleInstancers = pc.modelEditor(pan, query=True, particleInstancers=True)
+    pluginShapes = pc.modelEditor(pan, query=True, pluginShapes=True)
 
     oCamShape = pc.modelEditor(pan, query=True, camera=True)
     if oCamShape.type() == "transform":
@@ -435,7 +437,9 @@ def makeCapture(sOutputPath, start, end, width, height, displaymode="",
     #visible types
     nurbsCurvesShowing = pc.modelEditor(pan, query=True, nurbsCurves=True)
 
-    editorKwargs = dict(hud=ornaments, wireframeOnShaded=False, displayAppearance="smoothShaded")
+    editorKwargs = dict(hud=ornaments, wireframeOnShaded=False,
+                        displayAppearance="smoothShaded",
+                        particleInstancers=False, pluginShapes=False)
     pc.modelEditor(pan, edit=True, nurbsCurves=False, **editorKwargs)
 
     playblastKwargs = dict(format=format, compression=compression, quality=100,
@@ -497,13 +501,14 @@ def makeCapture(sOutputPath, start, end, width, height, displaymode="",
 
     finally:
         #Reset values
-        pc.modelEditor(pan, edit=True, displayAppearance=app,
-                       displayTextures=tex,
+        pc.modelEditor(pan, edit=True, xray=xray, hud=hud,
+                       displayAppearance=displayAppearance,
+                       displayTextures=displayTextures,
                        wireframeOnShaded=wireOnShaded,
-                       xray=xray,
                        jointXray=jointXray,
                        nurbsCurves=nurbsCurvesShowing,
-                       hud=hud)
+                       particleInstancers=particleInstancers,
+                       pluginShapes=pluginShapes)
         #Camera
         if savedSettings:
             for sAttr, value in savedSettings.iteritems():
