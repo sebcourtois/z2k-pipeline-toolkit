@@ -745,7 +745,7 @@ def scanGeoCacheFiles(scnInfos, depConfDct=None):
 
     def addResult(res):
         scanResults.append(res)
-        sAllSeveritySet.update(res["scan_log"].iterkeys())
+        #sAllSeveritySet.update(res["scan_log"].iterkeys())
 
     def iterAlembicPaths():
 
@@ -841,6 +841,10 @@ def scanGeoCacheFiles(scnInfos, depConfDct=None):
             publishCount += c
 
     if scanResults:
+
+        for res in scanResults:
+            sAllSeveritySet.update(res["scan_log"].iterkeys())
+
         scanResults[-1]["scan_severities"] = sAllSeveritySet
         scanResults[-1]["publish_count"] = publishCount
 
@@ -1183,6 +1187,7 @@ def scanAllDependencyTypes(scnInfos, exclude=None):
         if scanResults:
             depScanDct[sDepType] = scanResults
 
+    pprint(depScanDct)
     return depScanDct
 
 dialog = None

@@ -565,7 +565,7 @@ class SceneManager():
                 assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
                 mop.loadRenderRefsFromCaches(damShot, "local")
                 geocaching.importCaches("local", dryRun=False, removeRefs=True,
-                                        processLabel="Apply", layoutViz=False)
+                                        processLabel="Apply local caches", layoutViz=False)
 
         elif sStepName == "rendering":
 
