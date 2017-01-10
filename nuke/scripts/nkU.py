@@ -1073,3 +1073,56 @@ def getStereoInfo(gui = True):
     log.printL("i",txt)
 
     return dict(resultB=log.resultB, logL=log.logL)
+
+
+
+def pointToPrivate(readNodeL=[], gui=True, postConformB=True):
+    log = LogBuilder(gui=gui, funcName ="pointToPrivate")
+
+    filePathExpS=""
+    filePathNewS = ""
+    unvalidNodeL = []
+    validNodeL = []
+
+
+    for each in readNodeL:
+        eachNameS = each['name'].getValue()
+
+        if 'read_exr' in eachNameS or 'read_comp' in eachNameS:
+            log.printL("i","skipping output node: '{}'".format(eachNameS))
+            continue
+        if each['disable'].getValue() == 1:
+            log.printL("i","skipping disabled node: '{}'".format(eachNameS))
+            continue
+
+        filePathExpS = nuke.filename(each)
+        print filePathExpS
+        if not filePathExpS:
+            log.printL("e","Undefined file path: '{}'".format(eachNameS))
+            unvalidNodeL.append(each)
+            continue
+
+        if not os.environ["OUTPUT_DIR"]in filePathExpS:
+            log.printL("e","unvalid file path, could not find '[getenv OUTPUT_DIR]' string in file path: '{}'".format(eachNameS))
+            unvalidNodeL.append(each)
+            continue
+
+
+        #filePathOrigS="[getenv OUTPUT_DIR]/%V/_version/lyr_00_bty_room-v005/sq0300_sh0020a.%04d.exr"
+        imageNameS=filePathExpS.split("/")[-1]
+        layerNameS=filePathExpS.split("/")[-2].split("-v")[0]
+
+
+        #"//zombiwalk/Projects/private/alexandreb/zomb/shot/sq6660/sq6660_sh0020a/08_render/render/%V/lyr_00_bty_room/sq0300_sh0020a.%04d.exr"
+        filePathNewS = normPath(os.environ["PRIV_DIR"]+"/08_render/render/%V/"+layerNameS+"/"+imageNameS)
+        #filePathNewS = os.environ["PRIV_DIR"]+"/08_render/render/%V/"+layerNameS+"/"+imageNameS
+
+        each['file'].setValue(filePathNewS)
+        log.printL("i","read node  : '{}'".format(eachNameS))
+        log.printL("i","old path -> '{}'".format(filePathExpS))
+        log.printL("i","new path -> '{}'".format(filePathNewS))
+
+    if postConformB :
+        conformReadNode(readNodeL=readNodeL, gui=gui, conformPathB = True) 
+
+    return dict(resultB=log.resultB, logL=log.logL)
