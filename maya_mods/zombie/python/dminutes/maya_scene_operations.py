@@ -12,7 +12,7 @@ import pymel.core as pc
 #import pymel.util as pmu
 import maya.cmds as mc
 
-from pytd.util.sysutils import toStr
+from pytd.util.sysutils import toStr, timer
 from pytd.util.fsutils import jsonWrite, pathResolve, jsonRead, copyFile
 
 from zomblib.editing import makeFilePath, movieToJpegSequence, convToH264
@@ -22,7 +22,8 @@ from pytaya.core import system as myasys
 from pytaya.core.transform import matchTransform
 from davos_maya.tool import reference as myaref
 
-from dminutes.miscUtils import deleteUnknownNodes
+from dminutes.miscUtils import deleteUnknownNodes, pathJoin
+from pprint import pprint
 
 pc.mel.source("AEimagePlaneTemplate.mel")
 
@@ -395,13 +396,11 @@ def getCameraRig():
     return camInfo
 
 @restoreSelection
+@timer
 def makeCapture(sOutputPath, start, end, width, height, displaymode="",
                 showFrameNumbers=True, format="iff", compression="jpg",
                 ornaments=False, play=False, useCamera=None, audioNode=None,
                 camSettings=None, quick=False):
-#                i_inFilmFit=0, i_inDisplayResolution=0, i_inDisplayFilmGate=0,
-#                i_inOverscan=1.0, i_inSafeAction=0, i_inSafeTitle=0,
-#                i_inGateMask=0, f_inMaskOpacity=0.8, quick=False):
 
     pc.select(cl=True)
     names = []
@@ -474,6 +473,7 @@ def makeCapture(sOutputPath, start, end, width, height, displaymode="",
             pc.setAttr(sNodeAttr, value)
         mc.refresh()
 
+    sTmpPath = ""
     try:
         if format == "iff":
             if showFrameNumbers:
@@ -491,15 +491,48 @@ def makeCapture(sOutputPath, start, end, width, height, displaymode="",
                 names.append(name)
 
         elif format == "qt" and compression == "H.264" and os.environ.get("Z2K_H264_FIX"):
-            playblastKwargs["compression"] = "Photo - JPEG"
-            sTmpPath = mc.playblast(filename=osp.basename(sOutputPath), **playblastKwargs)
-            convToH264(sTmpPath, sOutputPath)
-            names.append(sOutputPath)
+
+            sFileName = osp.basename(sOutputPath)
+            playblastKwargs["format"] = "avi"
+            playblastKwargs["compression"] = "lagarith"
+            sTmpDirPath = mc.workspace(expandName=mc.workspace(fileRuleEntry="movie"))
+            sTmpPath = pathJoin(sTmpDirPath, sFileName)
+
+            try:
+                sTmpPath = sTmpPath.replace(".mov", ".avi")
+                print "temporary capture:", sTmpPath
+                res = mc.playblast(filename=sTmpPath, **playblastKwargs)
+            except RuntimeError as e:
+                sMsg = e.args[-1].strip()
+                if "unable to initialize codec" not in sMsg.lower():
+                    raise
+
+                pc.displayWarning(sMsg.replace(".", ": ") + playblastKwargs["compression"])
+                playblastKwargs["format"] = "qt"
+                playblastKwargs["compression"] = "Photo - JPEG"
+
+                print "temporary capture:", sTmpPath
+                res = mc.playblast(filename=sTmpPath, **playblastKwargs)
+            
+            if not quick:
+                if not res:
+                    raise RuntimeError("Playblast was interrupted.")
+                sTmpPath = res
+
+            if sTmpPath:
+                convToH264(sTmpPath, sOutputPath)
+                names.append(sOutputPath)
         else:
             name = mc.playblast(filename=sOutputPath, **playblastKwargs)
             names.append(name)
 
     finally:
+        if sTmpPath:
+            try:
+                os.remove(sTmpPath)
+            except EnvironmentError as e:
+                pc.displayWarning(toStr(e))
+
         #Reset values
         pc.modelEditor(pan, edit=True, xray=xray, hud=hud,
                        displayAppearance=displayAppearance,
