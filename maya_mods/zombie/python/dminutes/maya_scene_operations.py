@@ -492,16 +492,17 @@ def makeCapture(sOutputPath, start, end, width, height, displaymode="",
 
         elif format == "qt" and compression == "H.264" and os.environ.get("Z2K_H264_FIX"):
 
-            sFileName = osp.basename(sOutputPath)
             playblastKwargs["format"] = "avi"
             playblastKwargs["compression"] = "lagarith"
+
+            sFileName = osp.basename(sOutputPath)
             sTmpDirPath = mc.workspace(expandName=mc.workspace(fileRuleEntry="movie"))
             sTmpPath = pathJoin(sTmpDirPath, sFileName)
+            sTmpAviPath = sTmpPath.replace(".mov", ".avi")
+            #print "temporary capture:", sTmpAviPath
 
             try:
-                sTmpPath = sTmpPath.replace(".mov", ".avi")
-                print "temporary capture:", sTmpPath
-                res = mc.playblast(filename=sTmpPath, **playblastKwargs)
+                res = mc.playblast(filename=sTmpAviPath, **playblastKwargs)
             except RuntimeError as e:
                 sMsg = e.args[-1].strip()
                 if "unable to initialize codec" not in sMsg.lower():
@@ -511,8 +512,10 @@ def makeCapture(sOutputPath, start, end, width, height, displaymode="",
                 playblastKwargs["format"] = "qt"
                 playblastKwargs["compression"] = "Photo - JPEG"
 
-                print "temporary capture:", sTmpPath
+                #print "temporary capture:", sTmpPath
                 res = mc.playblast(filename=sTmpPath, **playblastKwargs)
+            else:
+                sTmpPath = sTmpAviPath
             
             if not quick:
                 if not res:
