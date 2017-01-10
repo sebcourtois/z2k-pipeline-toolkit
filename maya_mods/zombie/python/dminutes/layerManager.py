@@ -7,7 +7,7 @@ from mtoa import aovs
 # import shutil
 import maya.mel
 # import pymel.core as pm
-
+from dminutes.rendering import changeAovFilter
 from dminutes import miscUtils
 reload (miscUtils)
 
@@ -480,24 +480,26 @@ def createTextureRefs():
             chrFilterL.append(each)
 
     alembicNodesL = mc.ls('*chr*Alembic*', l=1)
+    if alembicNodesL and not alembicNodesL == None:
+        for elem in alembicNodesL:
+            polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
+            for each in polyTransfertL:
+                mc.setAttr(each.split('.')[0] + '.vertices', 0)
 
-    for elem in alembicNodesL:
-        polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
-        for each in polyTransfertL:
-            mc.setAttr(each.split('.')[0] + '.vertices', 0)
+        for chr in chrFilterL:
+            print chr
+            mc.select(chr)
+            mc.CreateTextureReferenceObject()
 
-    for chr in chrFilterL:
-        print chr
-        mc.select(chr)
-        mc.CreateTextureReferenceObject()
-
-    for elem in alembicNodesL:
-        polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
-        for each in polyTransfertL:
-                mc.setAttr(each.split('.')[0] + '.vertices', 1)
-
-    mc.select(['*:*geo_reference*', 'grp_character'])
-    mc.parent()
+        for elem in alembicNodesL:
+            polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
+            for each in polyTransfertL:
+                    mc.setAttr(each.split('.')[0] + '.vertices', 1)
+    
+    isReferenceActive = mc.ls('*:*geo_reference*')
+    if isReferenceActive and not isReferenceActive == None:
+        mc.select(['*:*geo_reference*', 'grp_character'])
+        mc.parent()
 
 def createCryptomatteLayer():
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
@@ -578,7 +580,9 @@ def setUtlAovs() :
         pass
 
     pm.connectAttr('aiAOVDriverP32.aiTranslator', 'aiAOV_P.outputs[0].driver', f=True)
-    pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
+
+    #pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
+    #pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_N.outputs[0].filter', f=True)
     if pm.objExists('aiAOV_dmn_specular') == True:
         pm.delete('aiAOV_dmn_specular')
 
