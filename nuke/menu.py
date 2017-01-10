@@ -45,6 +45,8 @@ nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform/selected/read nodes (nearest fram
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform/all/read nodes (update to last vers)', lambda: nkU.conformReadNode(readNodeL=nuke.allNodes('Read'), gui=True, conformPathB = True, switchToLastVer = True) )
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/conform/selected/read nodes (update to last vers)', lambda: nkU.conformReadNode(readNodeL=nuke.selectedNodes('Read'), gui=True, conformPathB = True, switchToLastVer = True) )
 
+nuke.menu( 'Nuke' ).addCommand( 'Zombi/lighting/toPrivate/all read nodes', lambda: nkU.pointToPrivate(readNodeL=nuke.allNodes('Read'), gui=True) )
+nuke.menu( 'Nuke' ).addCommand( 'Zombi/lighting/toPrivate/selected read nodes', lambda: nkU.pointToPrivate(readNodeL=nuke.selectedNodes('Read'), gui=True) )
 
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/import template/ compositing', lambda: nkU.inportOutTemplate(template = "compo") )
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/import template/ stereo', lambda: nkU.inportOutTemplate(template = "stereo") )
@@ -60,3 +62,4 @@ nuke.menu( 'Nuke' ).addCommand( 'Zombi/import stereo Info', lambda: nkU.getStere
 m=menubar.addMenu("RRender");
 m.addCommand("Submit Comp", "nuke.load('rrSubmit_Nuke_5'), rrSubmit_Nuke()")
 m.addCommand("Submit Shotgun Nodes", "nuke.load('rrSubmit_Nuke_5'), rrSubmit_Nuke_Shotgun()")
+
