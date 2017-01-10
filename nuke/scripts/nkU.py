@@ -302,14 +302,27 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
     unvalidNodeL = []
     validNodeL = []
 
+
     def setAsUnvalid(errorMsgS = "",nodeNameS = ""):
         log.printL("e","{}: '{}'".format(errorMsgS,nodeNameS))
         each['tile_color'].setValue(3631284479) # orange
         nuke.toNode(nodeNameS).setName("Read")
         each['label'].setValue(errorMsgS)
 
+
+
+    def setAsMono(monoB=False, nodeO=""):
+        labelS = nodeO['label'].getValue()
+        if not "MONO" in labelS and monoB:
+            nodeO['label'].setValue("MONO\n"+labelS)
+        if "MONO" in labelS and not monoB:
+            nodeO['label'].setValue(labelS.replace("MONO",""))
+           
+
+
     for each in readNodeL:
         eachNameS = each['name'].getValue()
+        isMonoB=False
         if changeOnErrorI != 99:
             eachOnErrorI = changeOnErrorI
             each['on_error'].setValue(eachOnErrorI)
@@ -353,8 +366,8 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
         lastVerS=""
         lastVersLyrS=""        
         if "_version" in filePathExpS and "/output/" in filePathExpS:
-            filePathExpS=filePathExpS.replace("%V","left")
-            versionPathS = os.path.dirname(os.path.dirname(filePathExpS))
+            filePathExpTmpS = filePathExpS.replace("%V","left")
+            versionPathS = os.path.dirname(os.path.dirname(filePathExpTmpS))
             itemDirL = os.listdir(versionPathS)
             lyrBaseNameS=layerDirS.split("-v")[0]
             layerDirL = []
@@ -370,15 +383,10 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
         filePathOrigS = each['file'].getValue()
         filePathNewS = conformFilePath(filePathS = filePathOrigS, gui = gui)
         if switchToLastVer and lastVerS and lastVerS!=verS:
-            filePathNewS = filePathNewS.replace(verS,lastVerS)
+            filePathNewS=filePathNewS.replace(verS,lastVerS)
             verS = str(lastVerS)
 
 
-        if verS :
-            newLabelS="v"+verS
-        else:
-            newLabelS = ""
-        each['label'].setValue(newLabelS)
 
         if filePathNewS and conformPathB:
             if filePathNewS !=filePathOrigS:
@@ -386,12 +394,13 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
                 log.printL("i","'{}' --> {}".format(newEachNameS, filePathNewS))
                 each['file'].setValue(filePathNewS)
 
+
         if "%V" in filePathExpS:
             filePathExpLeftS = filePathExpS.replace("%V","left")
-            filePathExpRightS = filePathExpS.replace("%V","right")
+            filePathExpRightS =filePathExpS.replace("%V","right")
 
             if createEmptyRightLayers:
-                if not os.path.isdir(os.path.dirname(filePathExpRightS)):
+                if not os.path.isdir(os.path.dirname(filePathExpRightS)) and not  "/output/" in filePathExpRightS:
                     os.makedirs(os.path.dirname(filePathExpRightS))
 
             fileDirS = os.path.dirname(filePathExpLeftS)
@@ -399,11 +408,11 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
                 setAsUnvalid(errorMsgS = "missing left directory",nodeNameS = newEachNameS)
                 unvalidNodeL.append(each)
                 continue
+
             fileDirS = os.path.dirname(filePathExpRightS)
             if not os.path.isdir(fileDirS):
-                setAsUnvalid(errorMsgS = "missing right directory",nodeNameS = newEachNameS)
-                unvalidNodeL.append(each)
-                continue
+                os.makedirs(fileDirS)
+
 
             resultLeftD = getImgSeqInfo(filePathExpLeftS, nodeNameS= newEachNameS,gui=gui)
             resultRightD = getImgSeqInfo(filePathExpRightS, nodeNameS= newEachNameS,gui=gui)
@@ -411,7 +420,12 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
             each['first'].setValue(resultLeftD["firstImgI"])
             each['last'].setValue(resultLeftD["lastImgI"])
 
-
+            if resultRightD["frameNumberI"]==0:                   
+                setAsMono(monoB=True, nodeO=each)
+                isMonoB =True
+            else:
+                setAsMono(monoB=False, nodeO=each)
+                isMonoB =False
 
             if resultLeftD["frameNumberI"]==0:
                 txt="No left frames found"
@@ -419,25 +433,19 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
                 unvalidNodeL.append(each)
                 continue
 
-            if resultRightD["frameNumberI"]==0:
-                txt="No right frames found"
-                setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
-                unvalidNodeL.append(each)
-                continue
-
-            if resultLeftD["frameNumberI"]!=resultRightD["frameNumberI"]:
+            if resultLeftD["frameNumberI"]!=resultRightD["frameNumberI"] and not isMonoB:
                 txt="'{}' missmaching frame number: left '{}', right '{}'' ".format(newEachNameS, resultLeftD["frameNumberI"], resultRightD["frameNumberI"])
                 setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
                 unvalidNodeL.append(each)
                 continue
 
-            if resultLeftD["firstImgI"] != resultRightD["firstImgI"]:                   
+            if resultLeftD["firstImgI"] != resultRightD["firstImgI"]and not isMonoB:                   
                 txt="First frame stereo missmach: left '{}', right '{}'' ".format(newEachNameS, resultLeftD["firstImgI"], resultRightD["firstImgI"])
                 setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
                 unvalidNodeL.append(each)
                 continue
 
-            if resultLeftD["lastImgI"] != resultRightD["lastImgI"]:
+            if resultLeftD["lastImgI"] != resultRightD["lastImgI"]and not isMonoB:
                 txt="Last frame stereo missmach: left '{}', right '{}'' ".format(newEachNameS, resultLeftD["lastImgI"], resultRightD["lastImgI"])
                 setAsUnvalid(errorMsgS = txt,nodeNameS = newEachNameS)
                 unvalidNodeL.append(each)
@@ -477,6 +485,17 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
                 setAsUnvalid(errorMsgS = "Unvalid file path",nodeNameS = eachNameS)
                 unvalidNodeL.append(each)
                 continue
+
+
+        if verS :
+            newLabelS="v"+verS
+        else:
+            newLabelS = ""
+        labelS = each['label'].getValue()
+        if not "MONO" in labelS:
+            each['label'].setValue(newLabelS)
+        if "MONO" in labelS:
+           each['label'].setValue("MONO\n"+newLabelS)
 
 
         # conform node color
@@ -545,7 +564,10 @@ def getImgSeqInfo(filePathS = "", nodeNameS ="", gui = True):
             imgNumL.append(int(eachSplitL[1]))
 
     if not imgNumL:
-        log.printL("e","'{}' No sequ found in: '{}'".format(nodeNameS, fileDirS))
+        if not "/right/" in filePathS:
+            log.printL("e","'{}' No sequ found in: '{}'".format(nodeNameS, fileDirS))
+        else:
+            log.printL("w","'{}' No sequ found for right camera: '{}'".format(nodeNameS, fileDirS))
         return dict(resultB=log.resultB, logL=log.logL, firstImgI=firstImgI, lastImgI=lastImgI, missingFrameL=missingFrameL, frameNumberI=0)
 
     imgNumL.sort()
@@ -711,6 +733,7 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
                 continue
             lyrDirNameRightS = lyrDirNameS.replace("%V","right")
             if not os.path.isdir(lyrDirNameRightS):
+                #os.makedirs(os.path.dirname(filePathRightS))
                 log.printL("i","skipping, missing directory: '{}', '{}'".format(eachNameS,lyrDirNameRightS))
                 skippedNodeNameL.append(eachNameS)
                 continue
@@ -768,6 +791,7 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
         if "%V"in layerPathS:
             filePathLeftS = layerPathS.replace("%V","left")
             filePathRightS = layerPathS.replace("%V","right")
+
             resultD = publishLayer(layerPathS = filePathLeftS,comment=commentS,dryRun=dryRun,destination=destination, gui = True)
             publishLayer(layerPathS = filePathRightS,comment=commentS,dryRun=dryRun,destination=destination, gui = True)
             log.printL("i","Publishing stereo layers: '{}', '{}'".format(eachNameS,filePathExpS))
@@ -1047,5 +1071,58 @@ def getStereoInfo(gui = True):
 
     txt = "created node : '{}'".format(oNode['name'].getValue())
     log.printL("i",txt)
+
+    return dict(resultB=log.resultB, logL=log.logL)
+
+
+
+def pointToPrivate(readNodeL=[], gui=True, postConformB=True):
+    log = LogBuilder(gui=gui, funcName ="pointToPrivate")
+
+    filePathExpS=""
+    filePathNewS = ""
+    unvalidNodeL = []
+    validNodeL = []
+
+
+    for each in readNodeL:
+        eachNameS = each['name'].getValue()
+
+        if 'read_exr' in eachNameS or 'read_comp' in eachNameS:
+            log.printL("i","skipping output node: '{}'".format(eachNameS))
+            continue
+        if each['disable'].getValue() == 1:
+            log.printL("i","skipping disabled node: '{}'".format(eachNameS))
+            continue
+
+        filePathExpS = nuke.filename(each)
+        print filePathExpS
+        if not filePathExpS:
+            log.printL("e","Undefined file path: '{}'".format(eachNameS))
+            unvalidNodeL.append(each)
+            continue
+
+        if not os.environ["OUTPUT_DIR"]in filePathExpS:
+            log.printL("e","unvalid file path, could not find '[getenv OUTPUT_DIR]' string in file path: '{}'".format(eachNameS))
+            unvalidNodeL.append(each)
+            continue
+
+
+        #filePathOrigS="[getenv OUTPUT_DIR]/%V/_version/lyr_00_bty_room-v005/sq0300_sh0020a.%04d.exr"
+        imageNameS=filePathExpS.split("/")[-1]
+        layerNameS=filePathExpS.split("/")[-2].split("-v")[0]
+
+
+        #"//zombiwalk/Projects/private/alexandreb/zomb/shot/sq6660/sq6660_sh0020a/08_render/render/%V/lyr_00_bty_room/sq0300_sh0020a.%04d.exr"
+        filePathNewS = normPath(os.environ["PRIV_DIR"]+"/08_render/render/%V/"+layerNameS+"/"+imageNameS)
+        #filePathNewS = os.environ["PRIV_DIR"]+"/08_render/render/%V/"+layerNameS+"/"+imageNameS
+
+        each['file'].setValue(filePathNewS)
+        log.printL("i","read node  : '{}'".format(eachNameS))
+        log.printL("i","old path -> '{}'".format(filePathExpS))
+        log.printL("i","new path -> '{}'".format(filePathNewS))
+
+    if postConformB :
+        conformReadNode(readNodeL=readNodeL, gui=gui, conformPathB = True) 
 
     return dict(resultB=log.resultB, logL=log.logL)

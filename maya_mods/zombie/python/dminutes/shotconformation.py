@@ -232,7 +232,7 @@ def referenceShotAsset(gui = True , dryRun=False, astPrefix = "fx3", critical= T
                         statInfo = os.stat(sPublicReleaseFilePath)
                         statDate = statInfo.st_mtime
                         statSize = statInfo.st_size
-                        if statSize > 6500:
+                        if statSize > 5000:
                             dateS = datetime.fromtimestamp(int(statDate)).strftime(u"%Y-%m-%d %H:%M")
                             lPublicReleaseFilePath.append(sPublicReleaseFilePath)
                             txt = "Referencing: '{}'  publish date: {}".format(sPublicReleaseFilePath, dateS)

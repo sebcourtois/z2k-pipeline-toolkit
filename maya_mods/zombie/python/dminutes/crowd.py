@@ -31,6 +31,27 @@ from pytd.util.sysutils import toStr
 reload(geocaching)
 
 
+def iterActiveCaches(sGeoGrpList):
+
+    for sGeoGrp in sGeoGrpList:
+
+        if not mc.objExists(sGeoGrp + ".animationChoice"):
+            continue
+
+        sNodeList = mc.listConnections(sGeoGrp + ".animationChoice", s=False, d=True, type="choice")
+        if not sNodeList:
+            continue
+
+        sChoiceNode = sNodeList[0]
+        iChoiceIdx = mc.getAttr(sGeoGrp + ".animationChoice")
+
+        sNodeList = mc.listConnections(sChoiceNode + ".input[{}]".format(iChoiceIdx),
+                                       s=True, d=False, type="AlembicNode")
+        if not sNodeList:
+            continue
+
+        yield sNodeList[0]
+
 def delete(sGeoGrpList):
 
     for sGeoGrp in sGeoGrpList:

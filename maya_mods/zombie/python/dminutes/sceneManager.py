@@ -565,7 +565,7 @@ class SceneManager():
                 assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
                 mop.loadRenderRefsFromCaches(damShot, "local")
                 geocaching.importCaches("local", dryRun=False, removeRefs=True,
-                                        processLabel="Apply", layoutViz=False)
+                                        processLabel="Apply local caches", layoutViz=False)
 
         elif sStepName == "rendering":
 
@@ -848,8 +848,8 @@ class SceneManager():
                                       format="qt", compression="H.264", camSettings=camSettings,
                                       ornaments=True, play=False, quick=quick)
 
-                sOutFilePath = res[0]
-                if not quick:
+                sOutFilePath = res[0] if res else ""
+                if sOutFilePath and not quick:
                     try:
                         shutil.copystat(sScenePath, sOutFilePath)
                     except Exception as e:

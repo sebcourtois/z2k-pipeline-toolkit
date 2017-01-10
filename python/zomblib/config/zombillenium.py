@@ -392,7 +392,7 @@ class shot_lib(object):
                   "sg_tasks":("Compositing|compo_stereo",),
                   },
 
-    "compo_frames":{"default_sync_priority":1, },
+    #"compo_frames":{"default_sync_priority":1, },
     "compo_movie":{"default_sync_priority":1, },
     "compo_left_movie":{"default_sync_priority":1, },
     "compo_right_movie":{"default_sync_priority":1, },

@@ -13,6 +13,7 @@ from PySide.QtCore import Qt
 
 import maya.cmds as mc
 import pymel.core
+import pymel.mayautils
 
 from pytd.gui.itemviews.utils import toDisplayText
 from pytd.util.fsutils import pathResolve, pathJoin
@@ -90,17 +91,22 @@ class DockControlError(RuntimeError):
 
 @withSelectionRestored
 def launch(**kwargs):
+
+    def launchDeferred(**kwargs):
+        if not mc.ls(sl=True):
+            mc.select("|persp")
+            mc.refresh()
+        _launch(**kwargs)
+
     try:
         _launch(**kwargs)
     except DockControlError as e:
         if inDevMode():
             pc.displayWarning(toStr(e))
         kill()
-        if not mc.ls(sl=True):
-            mc.select("|persp")
-            mc.refresh()
-        _launch(**kwargs)
-    
+        pymel.mayautils.executeDeferred(launchDeferred, **kwargs)
+
+
 def _launch(**kwargs):
     """Main UI Creator"""
     global QWIDGETS
@@ -566,7 +572,8 @@ def chooseSgShotVersion(sgShotVersList):
     for sgShotVers in sgShotVersList:
         sShotVersPath = pathJoin(sgShotVers["code"])
         roleData = {Qt.UserRole:(0, sgShotVers)}
-        sComment = fromUtf8(sgShotVers["description"])
+        sComment = sgShotVers["description"]
+        sComment = fromUtf8(sComment) if sComment else ""
         sTextList = [sgShotVers["code"], sComment,
                      sgShotVers["sg_task.Task.sg_status_list"],
                      toDisplayText(sgShotVers["created_at"])]
