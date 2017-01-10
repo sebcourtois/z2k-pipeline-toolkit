@@ -17,8 +17,8 @@ import pymel.core as pm
 
 from dminutes import miscUtils
 reload (miscUtils)
-from dminutes import layerManager
-reload (layerManager)
+#from dminutes import layerManager
+#reload (layerManager)
 
 createOptions()
 
