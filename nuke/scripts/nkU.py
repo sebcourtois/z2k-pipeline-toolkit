@@ -372,7 +372,7 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
             lyrBaseNameS=layerDirS.split("-v")[0]
             layerDirL = []
             for eachItem in itemDirL:
-                if lyrBaseNameS in eachItem:
+                if lyrBaseNameS == eachItem.split("-v")[0]:
                     layerDirL.append(eachItem)
             layerDirL.sort()
             if layerDirL:
@@ -561,7 +561,11 @@ def getImgSeqInfo(filePathS = "", nodeNameS ="", gui = True):
     for each in itemDirL:
         eachSplitL = each.split(".")
         if  len(eachSplitL)==3 and eachSplitL[0]==imgRadS and eachSplitL[-1]==imgExtS:
-            imgNumL.append(int(eachSplitL[1]))
+            try:
+                imgNumL.append(int(eachSplitL[1]))
+            except Exception,err:
+                txt = "eachSplitL : {} ".format(eachSplitL)
+                log.printL("e",txt)
 
     if not imgNumL:
         if not "/right/" in filePathS:
