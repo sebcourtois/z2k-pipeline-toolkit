@@ -712,14 +712,14 @@ def createAovs(renderMode="render"):
                 myAOVs.addAOV("P", aovType='point')
             elif each == "aiAOV_Pref" and not 'aiAOV_Pref' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("Pref", aovType='point')
-                changeAovFilter('Pref', 'default')
+                #changeAovFilter('Pref', 'default')
             elif each == "aiAOV_crypto_object" and not 'aiAOV_crypto_object' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("crypto_object", aovType='rgb')
             elif each == "aiAOV_uvs" and not 'aiAOV_uvs' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("uvs", aovType='rgb')
             elif each == "aiAOV_N" and not 'aiAOV_N' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("N", aovType='vector')
-                changeAovFilter(aovName="N", filterName="default")
+                #changeAovFilter(aovName="N", filterName="default")
 
         aovs.refreshAliases()
         print "#### {:>7}: 'createAovs' has created {} aovs".format("Info", len(aovDmnNameL) + len(aovCustomNameL))
