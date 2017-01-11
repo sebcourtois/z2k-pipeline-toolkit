@@ -129,6 +129,9 @@ def finalLayoutToLighting(gui=True):
 
 
     miscUtils.deleteUnknownNodes()
+    sDirLightToHide = mc.ls('lgt_finalLayout_directional')
+    if sDirLightToHide and not sDirLightToHide == None:
+        mc.hide(sDirLightToHide)
 
     return dict(resultB=log.resultB, logL=log.logL)
 

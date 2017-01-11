@@ -7,12 +7,34 @@ from mtoa import aovs
 # import shutil
 import maya.mel
 # import pymel.core as pm
-
+#from dminutes.rendering import changeAovFilter
 from dminutes import miscUtils
 reload (miscUtils)
 
 
+def changeAovFilter(aovName="Z", filterName="default", gui=True):
+    log = miscUtils.LogBuilder(gui=gui, funcName="'changeAovFilter'")
+    aovNode = pm.ls('aiAOV_' + aovName, type='aiAOV')
+    if aovNode:
+        aovNode = aovNode[0]
+    else :
+        txt = "no '{}'' aovs found".format(aovName)
+        log.printL("e", txt)
+        return dict(resultB=log.resultB, logL=log.logL)
 
+    if filterName != "default":
+        filterNode = pm.createNode('aiAOVFilter', skipSelect=True)
+        filterNode.aiTranslator.set(filterName)
+        filterAttr = filterNode.attr('message')
+
+    else:
+        filterAttr = 'defaultArnoldFilter.message'
+
+    out = aovNode.attr('outputs')[0]
+    pm.connectAttr(filterAttr, out.filter, force=True)
+    aovs._aovOptionsChangedCallbacks._callbackQueue["aoveditor"][0]()
+
+    return dict(resultB=log.resultB, logL=log.logL)
 
 class LayerManager:
     def __init__(self, gui = True):     
@@ -332,7 +354,7 @@ class LayerManager:
         self.duplicateLayer(layerName= layerNameS)
 
         if not self.layerNameS:
-            txt = "'{}' cannot be duplicated".format(layerName)
+            txt = "'{}' cannot be duplicated".format(layerNameS)
             self.log.printL("i", txt)
             return dict(resultB=self.log.resultB, logL=self.log.logL)
 
@@ -407,7 +429,7 @@ class LayerManager:
         self.duplicateLayer(layerName=layerNameS)
 
         if not self.layerNameS:
-            txt = "'{}' cannot be duplicated".format(layerName)
+            txt = "'{}' cannot be duplicated".format(layerNameS)
             self.log.printL("i", txt)
             return dict(resultB=self.log.resultB, logL=self.log.logL)
 
@@ -480,24 +502,26 @@ def createTextureRefs():
             chrFilterL.append(each)
 
     alembicNodesL = mc.ls('*chr*Alembic*', l=1)
+    if alembicNodesL and not alembicNodesL == None:
+        for elem in alembicNodesL:
+            polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
+            for each in polyTransfertL:
+                mc.setAttr(each.split('.')[0] + '.vertices', 0)
 
-    for elem in alembicNodesL:
-        polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
-        for each in polyTransfertL:
-            mc.setAttr(each.split('.')[0] + '.vertices', 0)
+        for chr in chrFilterL:
+            print chr
+            mc.select(chr)
+            mc.CreateTextureReferenceObject()
 
-    for chr in chrFilterL:
-        print chr
-        mc.select(chr)
-        mc.CreateTextureReferenceObject()
-
-    for elem in alembicNodesL:
-        polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
-        for each in polyTransfertL:
-                mc.setAttr(each.split('.')[0] + '.vertices', 1)
-
-    mc.select(['*:*geo_reference*', 'grp_character'])
-    mc.parent()
+        for elem in alembicNodesL:
+            polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
+            for each in polyTransfertL:
+                    mc.setAttr(each.split('.')[0] + '.vertices', 1)
+    
+    isReferenceActive = mc.ls('*:*geo_reference*')
+    if isReferenceActive and not isReferenceActive == None:
+        mc.select(['*:*geo_reference*', 'grp_character'])
+        mc.parent()
 
 def createCryptomatteLayer():
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
@@ -578,7 +602,9 @@ def setUtlAovs() :
         pass
 
     pm.connectAttr('aiAOVDriverP32.aiTranslator', 'aiAOV_P.outputs[0].driver', f=True)
-    pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
+
+    #pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
+    #pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_N.outputs[0].filter', f=True)
     if pm.objExists('aiAOV_dmn_specular') == True:
         pm.delete('aiAOV_dmn_specular')
 

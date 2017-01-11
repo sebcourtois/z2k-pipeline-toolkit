@@ -848,8 +848,8 @@ class SceneManager():
                                       format="qt", compression="H.264", camSettings=camSettings,
                                       ornaments=True, play=False, quick=quick)
 
-                sOutFilePath = res[0]
-                if not quick:
+                sOutFilePath = res[0] if res else ""
+                if sOutFilePath and not quick:
                     try:
                         shutil.copystat(sScenePath, sOutFilePath)
                     except Exception as e:
