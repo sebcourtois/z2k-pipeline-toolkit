@@ -9,6 +9,10 @@ from zomblib import rvutils
 import shutil
 
 
+from zomblib import damutils
+from davos.core.damproject import DamProject
+
+
 osp = os.path
 
 FPS = 24.0
@@ -282,9 +286,24 @@ def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
             log.printL("i", txt)
             logFile.write(txt + "\n")
         if os.path.isdir(outSeqDir):
+            exrL=[]
             for eachFile in os.listdir(outSeqDir):
                 if ".json" in eachFile:
                     os.remove(osp.normpath(osp.join(outSeqDir, eachFile)))
+                if ".exr" in eachFile:
+                    exrL.append(eachFile)
+
+            shotS = osp.normpath(inSeqDir).split("shot")[-1].split("\\")[2]
+            proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal", standalone=True)
+            proj.loadEnviron()
+            damShot = proj.getShot(shotS)
+            sgShot = damShot.getSgInfo()
+            duration = damutils.getShotDuration(sgShot)
+            if duration != len(exrL):
+                txt = "wrong frame number, {} '.exr' found, but shotgun duration is {} \n".format(len(exrL),duration)
+                log.printL("e", txt)
+                logFile.write("####   Error: "+txt + "\n")
+
         
     for eachSeq in os.listdir(shotDir):
         if re.match('^sq[0-9]{4}$', eachSeq) and (eachSeq in inSeqList or not inSeqList):
