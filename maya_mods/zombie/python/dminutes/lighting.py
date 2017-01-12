@@ -40,7 +40,7 @@ def orientAssetLightAsCam(shotCamL=[],gui=True):
     return dict(resultB=log.resultB, logL=log.logL)
 
 
-def importFxLights(lgtRig='lgt_rig_fx.ma'):
+def importFxLights(lgtRig='lgt_rig_fx2.ma'):
 
     if mc.ls("|shot"):
         mainFilePath = pm.sceneName()
@@ -51,7 +51,7 @@ def importFxLights(lgtRig='lgt_rig_fx.ma'):
             if not refL == None:
                 if not 'lgt_rig_fx' in str(refL):
                     pm.createReference(os.environ['ZOMB_MISC_PATH'] + '/shading/lightRigs/' + lgtRig, namespace=lgtRig.split('.')[0])
-                    pm.select('*lgt_rig_fx:*')
+                    pm.select('*lgt_rig_fx2:*')
                     pm.group(n='lgt_fx_lights')
         else:
             txt = "You are not working in a 'shot' structure directory"
