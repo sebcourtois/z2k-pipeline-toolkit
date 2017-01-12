@@ -281,7 +281,11 @@ def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
             txt = "copy '{}' --> '{}'".format(inSeqDir,outSeqDir)
             log.printL("i", txt)
             logFile.write(txt + "\n")
-
+        if os.path.isdir(outSeqDir):
+            for eachFile in os.listdir(outSeqDir):
+                if ".json" in eachFile:
+                    os.remove(osp.normpath(osp.join(outSeqDir, eachFile)))
+        
     for eachSeq in os.listdir(shotDir):
         if re.match('^sq[0-9]{4}$', eachSeq) and (eachSeq in inSeqList or not inSeqList):
             for eachShot in os.listdir(osp.normpath(osp.join(shotDir, eachSeq))):
