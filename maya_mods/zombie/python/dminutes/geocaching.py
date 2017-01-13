@@ -432,6 +432,7 @@ def exportCaches(**kwargs):
     bRaw = kwargs.pop("raw", False)
     bJsonOnly = kwargs.pop("jsonOnly", False)
     bPublish = kwargs.pop("publish", False)
+    sOutDirPath = kwargs.pop("outputDir", "")
 
     scnInfos = infosFromScene()
     damShot = scnInfos.get("dam_entity")
@@ -461,7 +462,11 @@ def exportCaches(**kwargs):
         sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
         raise RuntimeError(sMsg)
 
-    sCacheDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
+    if sOutDirPath:
+        sCacheDirPath = sOutDirPath
+    else:
+        sCacheDirPath = mop.getMayaCacheDir(damShot).replace("\\", "/")
+
     if not osp.exists(sCacheDirPath):
         os.makedirs(sCacheDirPath)
 

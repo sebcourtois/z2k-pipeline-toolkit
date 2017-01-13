@@ -44,7 +44,7 @@ def entityFromScene(scenePath="", fail=True):
 
     return damEntity
 
-def infosFromScene(scenePath="", fail=True):
+def infosFromScene(scenePath="", project=None, fail=True):
 
     scnInfos = {}
 
@@ -52,7 +52,11 @@ def infosFromScene(scenePath="", fail=True):
     if not sCurScnPath:
         raise ValueError("Current scene is untitled.".format(sCurScnPath))
 
-    proj = DamProject.fromPath(sCurScnPath, fail=True)
+    if not project:
+        proj = DamProject.fromPath(sCurScnPath, fail=True)
+    else:
+        proj = project
+
     ctxData = {}
     rcFile = proj.entryFromPath(sCurScnPath, fail=fail)
     if rcFile:

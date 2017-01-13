@@ -259,4 +259,14 @@ def createNukeBatch(gui=True):
     renderBatch_obj.close()
     print "#### Info: nukeBatch.bat created: {}".format(os.path.normpath(renderBatch_trg))
 
+def renderSetup():
+
+    rendering.setArnoldRenderOptionShot(outputFormat="jpg", renderMode='finalLayout')
     
+    importFinalLayoutLight()
+    createRenderLayerLegacy(layerName="lay_finalLayout_00", lightL=["lgt_finalLayout_directional"], setMeshCacheL=[])
+    layerOverrideToonWeightOff(dmnToonList=[], layerName="lay_finalLayout_00", gui=True)
+    fixDeferLoad()
+    #layerOverrideFLCustomShader(dmnToonList=[], dmnInput = "dmnMask08", layerName = "lay_finalLayout_00",gui= True)
+
+

@@ -4,6 +4,7 @@ import os.path as osp
 import re
 import traceback
 #from functools import partial
+import glob
 
 import maya.cmds as mc
 
@@ -22,6 +23,7 @@ from davos.core.damtypes import DamShot
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
 from davos_maya.tool.general import infosFromScene, setMayaProject
+from pytd.util.fsutils import copyFile
 
 try:
     from dminutes import sceneManagerUI
@@ -56,6 +58,31 @@ def doPublish(*args):
 
     return publishing.publishCurrentScene(sceneInfos=scnInfos)
 
+def loadPlugins():
+
+    sPluginList = ("AbcExport.mll",
+                   "AbcImport.mll",
+                   "atomImportExport.mll",
+                   "matrixNodes.mll" if (pmv.current() > pmv.v2013) else "decomposeMatrix.mll",
+                   "nearestPointOnMesh.mll",# for stickyDeformer
+                   "pointOnMeshInfo.mll",# bonus tools for stickyDeformer
+                   "closestPointOnCurve.mll", # bonus tools for stickyDeformer
+                   "mtoa.mll", # arnold
+                   "gpuCache.mll",
+                   )
+
+    for sPlugin in sPluginList:
+
+        if not pm.pluginInfo(sPlugin, q=True, loaded=True):
+
+            try:
+                pm.loadPlugin(sPlugin)
+            except Exception, e:
+                pm.displayWarning(e.message)
+                continue
+            else:
+                pm.pluginInfo(sPlugin, e=True, autoload=True)
+
 class DavosSetup(ToolSetup):
 
     classMenuName = "davosMenu"
@@ -64,6 +91,8 @@ class DavosSetup(ToolSetup):
     def __init__(self):
         super(DavosSetup, self).__init__()
 
+        self.project = None
+        self.assetLibrary = None
         self.publicLibrariesItems = []
         self.privateLibraryPaths = []
 
@@ -85,53 +114,52 @@ class DavosSetup(ToolSetup):
         if not ToolSetup.beforeBuildingMenu(self):
             return False
 
-        sPluginList = ("AbcExport.mll",
-                       "AbcImport.mll",
-                       "atomImportExport.mll",
-                       "matrixNodes.mll" if (pmv.current() > pmv.v2013) else "decomposeMatrix.mll",
-                       "nearestPointOnMesh.mll",# for stickyDeformer
-                       "pointOnMeshInfo.mll",# bonus tools for stickyDeformer
-                       "closestPointOnCurve.mll", # bonus tools for stickyDeformer
-                       "mtoa.mll", # arnold
-                       "gpuCache.mll",
-                       )
-
-        for sPlugin in sPluginList:
-
-            if not pm.pluginInfo(sPlugin, q=True, loaded=True):
-
-                try:
-                    pm.loadPlugin(sPlugin)
-                except Exception, e:
-                    pm.displayWarning(e.message)
-                    continue
-
-                pm.pluginInfo(sPlugin, e=True, autoload=True)
-
         return True
 
     def afterBuildingMenu(self):
         ToolSetup.afterBuildingMenu(self)
 
+    def beforeReloading(self, *args):
+
+        file_browser.kill()
+
+        if smui:
+            try:
+                smui.kill()
+            except Exception as e:
+                pm.displayInfo("Could not kill 'sceneManagerUI': {}".format(toStr(e)))
+
+        ToolSetup.beforeReloading(self, *args)
+
+    def onMayaInitialized(self, clientData=None):
+        ToolSetup.onMayaInitialized(self, clientData=clientData)
+
         bBatchMode = pm.about(batch=True)
 
-        if not bBatchMode:
-            pubLibsItems = sPrivLibPathList = []
-            try:
-                proj = DamProject(os.environ["DAVOS_INIT_PROJECT"])
-                if proj:
-                    #proj.loadEnviron()
-                    allLibList = tuple(proj.iterLibraries(dbNode=False, weak=True, remember=False))
+        loadPlugins()
 
-                    pubLibsItems = tuple((lib.fullName, lib.dbPath(), lib.envPath())
-                                         for lib in allLibList if lib.space == "public")
-                    sPrivLibPathList = tuple(lib.dbPath() for lib in allLibList
-                                                            if lib.space == "private")
-            except:
-                traceback.print_exc()
+        pubLibsItems = sPrivLibPathList = []
+        try:
+            if bBatchMode:
+                proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal")
             else:
-                self.publicLibrariesItems = pubLibsItems
-                self.privateLibraryPaths = sPrivLibPathList
+                proj = DamProject(os.environ["DAVOS_INIT_PROJECT"])
+
+            self.project = proj
+
+            if proj:
+                allLibList = tuple(proj.iterLibraries(dbNode=False, weak=True, remember=False))
+
+                pubLibsItems = tuple((lib.fullName, lib.dbPath(), lib.envPath())
+                                     for lib in allLibList if lib.space == "public")
+                sPrivLibPathList = tuple(lib.dbPath() for lib in allLibList
+                                                        if lib.space == "private")
+                self.assetLibrary = proj.getLibrary("public", "asset_lib", dbNode=False)
+        except:
+            traceback.print_exc()
+        else:
+            self.publicLibrariesItems = pubLibsItems
+            self.privateLibraryPaths = sPrivLibPathList
 
         pmu.putEnv("DAVOS_FILE_CHECK", "1")
 
@@ -147,18 +175,6 @@ class DavosSetup(ToolSetup):
             if not pm.stackTrace(q=True, state=True):
                 pm.mel.ScriptEditor()
                 pm.mel.handleScriptEditorAction("showStackTrace")
-
-    def beforeReloading(self, *args):
-
-        file_browser.kill()
-
-        if smui:
-            try:
-                smui.kill()
-            except Exception as e:
-                pm.displayInfo("Could not kill 'sceneManagerUI': {}".format(toStr(e)))
-
-        ToolSetup.beforeReloading(self, *args)
 
     def onPreFileNewOrOpened(self, *args):
         ToolSetup.onPreFileNewOrOpened(self, *args)
@@ -183,30 +199,38 @@ class DavosSetup(ToolSetup):
     def onPreCreateReferenceCheck(self, mFileObj, clientData=None):
         """updates reference path to comply with the davos library's env. variable from where the reference belongs."""
 
+        ToolSetup.onPreCreateReferenceCheck(self, mFileObj, clientData)
+
         flags = 0
         if os.name == "nt":
             flags |= re.IGNORECASE
 
-        try:
-            sRefRawPath = osp.normpath(mFileObj.rawFullName()).replace("\\", "/")
+        sRefRawPath = osp.normpath(mFileObj.rawFullName()).replace("\\", "/")
 
-            for sPrivLibPath in self.privateLibraryPaths:
-                if osp.normcase(sPrivLibPath) in osp.normcase(sRefRawPath):
-                    return True
-
+        if "/private/" not in osp.normcase(sRefRawPath):
             for _, sPubLibPath, sLibEnv in self.publicLibrariesItems:
                 if osp.normcase(sPubLibPath) in osp.normcase(sRefRawPath):
                     #print re.split(sPubLibPath, sRefRawPath, 1, flags=flags)
-                    sRefEnvPath = re.split(re.escape(sPubLibPath), sRefRawPath, 1, flags=flags)[-1]
+                    sRefEnvPath = re.split(re.escape(sPubLibPath),
+                                           sRefRawPath, 1, flags=flags)[-1]
                     sRefEnvPath = osp.join(sLibEnv, sRefEnvPath).replace("\\", "/")
                     if osp.isfile(osp.expanduser(osp.expandvars(sRefEnvPath))):
                         #print "\n","ref from '{}': {} ...\n    ...conformed to {}".format(sLibSection,sRefRawPath, sRefEnvPath)
                         print "reference conformed to {}".format(sRefEnvPath)
                         mFileObj.setRawFullName(sRefEnvPath)
                         break
-        except Exception as e:
-            pm.displayError(e.message)
-            traceback.print_exc()
+
+        sCurScnPath = self.currentSceneName
+        if sCurScnPath and ("/private/" in sCurScnPath.lower()):
+            sRefResPath = osp.normpath(mFileObj.resolvedFullName()).replace("\\", "/")
+            if ("/set/" in sRefResPath) and ("/ref/" in sRefResPath):
+                sCurScnDir = osp.dirname(sCurScnPath)
+                sAstDirPath = osp.normpath(sRefResPath.rsplit("/ref/", 1)[0])
+                for sXgenPath in glob.iglob(sAstDirPath + "\\*.xgen"):
+                    try:
+                        copyFile(sXgenPath, sCurScnDir)
+                    except EnvironmentError as e:
+                        pm.displayError(toStr(e))
 
         return True
 
