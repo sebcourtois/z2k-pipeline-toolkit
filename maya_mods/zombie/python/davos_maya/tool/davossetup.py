@@ -226,6 +226,10 @@ class DavosSetup(ToolSetup):
                         pm.displayInfo("Xgen file already copied from current shot's data directory: '{}'"
                                        .format(sFilename))
                         continue
+
+                    if (not os.environ.get("OVERWRITE_XGEN_FILES")) and osp.exists(sXgnFilePath):
+                        continue
+
                     try:
                         copyFile(sXgnFilePath, sCurScnDir)
                     except EnvironmentError as e:
@@ -250,13 +254,16 @@ class DavosSetup(ToolSetup):
         if sDataDirPath:
             sCurScnDir = osp.dirname(sCurScnPath)
             for sXgnFilePath in glob.iglob(osp.normpath(sDataDirPath + "/*.xgen")):
+
+                if (not os.environ.get("OVERWRITE_XGEN_FILES")) and osp.exists(sXgnFilePath):
+                    continue
+
                 try:
                     copyFile(sXgnFilePath, sCurScnDir)
                 except EnvironmentError as e:
                     pm.displayError(toStr(e))
                 else:
                     self.copiedXgnFileNames.append(osp.basename(sXgnFilePath))
-
         return True
 
 #    def onSceneSaved(self):
