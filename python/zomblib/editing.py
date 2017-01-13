@@ -258,6 +258,9 @@ def h264ToProres(inSeqList, shotStep='01_previz'):
 
 def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
     log = LogBuilder(gui=False, funcName ="")
+    proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal", standalone=True)
+    proj.loadEnviron()
+
     shotDir = osp.normpath(osp.join(os.environ["ZOMB_SHOT_LOC"], "zomb", "shot"))
     if not outputDir:
         outputDir = os.environ["ZOMB_OUTPUT_PATH"]
@@ -273,6 +276,17 @@ def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
         shutil.rmtree(toDelete)
 
     def copySeqDir(inSeqDir="", outSeqDir=""):
+
+        versPkg = proj.entryFromPath(inSeqDir)
+        headPkg = versPkg.getHeadFile(dbNode=False)
+        headPkgLyrName = os.path.split(versPkg.absPath())[-1]
+
+        if os.path.split(inSeqDir)[-1]!= headPkgLyrName:
+            txt = "version mismatch, last output found: '{}', last published version: {}".format(inSeqDir,headPkgLyrName)
+            log.printL("e", txt)
+            logFile.write(txt + "\n")
+            return
+
         if os.path.isdir(outSeqDir):
             txt = "is up to date:'{}'".format(outSeqDir)
             log.printL("i", txt)
@@ -294,8 +308,6 @@ def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
                     exrL.append(eachFile)
 
             shotS = osp.normpath(inSeqDir).split("shot")[-1].split("\\")[2]
-            proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal", standalone=True)
-            proj.loadEnviron()
             damShot = proj.getShot(shotS)
             sgShot = damShot.getSgInfo()
             duration = damutils.getShotDuration(sgShot)
@@ -386,6 +398,8 @@ def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
                     imgSeqList.sort()
                     inSeqDir = osp.normpath(osp.join(inDir, imgSeqList[-1]))
                     outSeqDir = osp.normpath(osp.join(outDir, imgSeqList[-1]))
+
+
                     for eachOut in outDirL:
                         if imgSeqList[-1].split("-v")[0] in eachOut and eachOut != imgSeqList[-1]:
                             deleteDir(toDelete = osp.normpath(osp.join(outDir, eachOut)))
