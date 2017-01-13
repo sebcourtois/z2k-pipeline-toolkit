@@ -181,7 +181,7 @@ class shot_lib(object):
                         "sg_status":"rev",
                         },
 
-    "data_dir":{"default_sync_rules":["all_sites"], },
+    "data_dir":{"default_sync_rules":["all_sites"], "free_to_publish":True },
 
     #===========================================================================
     # PREVIZ RESOURCES

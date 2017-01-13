@@ -92,9 +92,9 @@ class DavosSetup(ToolSetup):
         super(DavosSetup, self).__init__()
 
         self.project = None
-        self.assetLibrary = None
         self.publicLibrariesItems = []
         self.privateLibraryPaths = []
+        self.copiedXgnFileNames = []
 
     def populateMenu(self):
 
@@ -114,7 +114,33 @@ class DavosSetup(ToolSetup):
         if not ToolSetup.beforeBuildingMenu(self):
             return False
 
+        #bBatchMode = pm.about(batch=True)
         loadPlugins()
+
+        try:
+            setMayaProject(pmu.getEnv("DAVOS_INIT_PROJECT"), "ZOMB_MAYA_PROJECT_PATH")
+        except Exception as e:
+            pm.displayError(toStr(e))
+
+        pubLibsItems = []
+        #sPrivLibPathList = []
+        try:
+            proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True, standalone=True)
+            if proj:
+                allLibList = tuple(proj.iterLibraries(dbNode=False, weak=True, remember=False))
+
+                pubLibsItems = tuple((lib.fullName, lib.dbPath(), lib.envPath())
+                                     for lib in allLibList if lib.space == "public")
+#                sPrivLibPathList = tuple(lib.dbPath() for lib in allLibList
+#                                                        if lib.space == "private")
+            self.project = proj
+        except:
+            traceback.print_exc()
+        else:
+            self.publicLibrariesItems = pubLibsItems
+            #self.privateLibraryPaths = sPrivLibPathList
+
+        pmu.putEnv("DAVOS_FILE_CHECK", "1")
 
         return True
 
@@ -122,31 +148,6 @@ class DavosSetup(ToolSetup):
         ToolSetup.afterBuildingMenu(self)
 
         bBatchMode = pm.about(batch=True)
-
-        try:
-            setMayaProject(pmu.getEnv("DAVOS_INIT_PROJECT"), "ZOMB_MAYA_PROJECT_PATH")
-        except Exception as e:
-            pm.displayError(e.message)
-
-        if not bBatchMode:
-            pubLibsItems = sPrivLibPathList = []
-            try:
-                proj = DamProject(os.environ["DAVOS_INIT_PROJECT"])
-                if proj:
-                    #proj.loadEnviron()
-                    allLibList = tuple(proj.iterLibraries(dbNode=False, weak=True, remember=False))
-
-                    pubLibsItems = tuple((lib.fullName, lib.dbPath(), lib.envPath())
-                                         for lib in allLibList if lib.space == "public")
-                    sPrivLibPathList = tuple(lib.dbPath() for lib in allLibList
-                                                            if lib.space == "private")
-            except:
-                traceback.print_exc()
-            else:
-                self.publicLibrariesItems = pubLibsItems
-                self.privateLibraryPaths = sPrivLibPathList
-
-        pmu.putEnv("DAVOS_FILE_CHECK", "1")
 
         pm.colorManagementPrefs(e=True, cmEnabled=False)
         pm.polyOptions(newPolymesh=True, smoothDrawType=0)
@@ -167,52 +168,6 @@ class DavosSetup(ToolSetup):
                 pm.displayInfo("Could not kill 'sceneManagerUI': {}".format(toStr(e)))
 
         ToolSetup.beforeReloading(self, *args)
-
-#    def onMayaInitialized(self, clientData=None):
-#        ToolSetup.onMayaInitialized(self, clientData=clientData)
-#
-#        bBatchMode = pm.about(batch=True)
-#
-#        try:
-#            setMayaProject(pmu.getEnv("DAVOS_INIT_PROJECT"), "ZOMB_MAYA_PROJECT_PATH")
-#        except Exception as e:
-#            pm.displayError(toStr(e))
-#
-#        loadPlugins()
-#
-#        pubLibsItems = sPrivLibPathList = []
-#        try:
-#            if bBatchMode:
-#                proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal")
-#            else:
-#                proj = DamProject(os.environ["DAVOS_INIT_PROJECT"])
-#
-#            self.project = proj
-#
-#            if proj:
-#                allLibList = tuple(proj.iterLibraries(dbNode=False, weak=True, remember=False))
-#
-#                pubLibsItems = tuple((lib.fullName, lib.dbPath(), lib.envPath())
-#                                     for lib in allLibList if lib.space == "public")
-#                sPrivLibPathList = tuple(lib.dbPath() for lib in allLibList
-#                                                        if lib.space == "private")
-#                self.assetLibrary = proj.getLibrary("public", "asset_lib", dbNode=False)
-#        except:
-#            traceback.print_exc()
-#        else:
-#            self.publicLibrariesItems = pubLibsItems
-#            self.privateLibraryPaths = sPrivLibPathList
-#
-#        pmu.putEnv("DAVOS_FILE_CHECK", "1")
-#
-#        if not bBatchMode:
-#
-#            pm.colorManagementPrefs(e=True, cmEnabled=False)
-#            pm.polyOptions(newPolymesh=True, smoothDrawType=0)
-#
-#            if not pm.stackTrace(q=True, state=True):
-#                pm.mel.ScriptEditor()
-#                pm.mel.handleScriptEditorAction("showStackTrace")
 
     def onPreFileNewOrOpened(self, *args):
         ToolSetup.onPreFileNewOrOpened(self, *args)
@@ -236,7 +191,6 @@ class DavosSetup(ToolSetup):
 
     def onPreCreateReferenceCheck(self, mFileObj, clientData=None):
         """updates reference path to comply with the davos library's env. variable from where the reference belongs."""
-
         ToolSetup.onPreCreateReferenceCheck(self, mFileObj, clientData)
 
         flags = 0
@@ -262,13 +216,46 @@ class DavosSetup(ToolSetup):
         if sCurScnPath and ("/private/" in sCurScnPath.lower()):
             sRefResPath = osp.normpath(mFileObj.resolvedFullName()).replace("\\", "/")
             if ("/set/" in sRefResPath) and ("/ref/" in sRefResPath):
+                sCopiedXgnFileList = self.copiedXgnFileNames
                 sCurScnDir = osp.dirname(sCurScnPath)
                 sAstDirPath = osp.normpath(sRefResPath.rsplit("/ref/", 1)[0])
-                for sXgenPath in glob.iglob(sAstDirPath + "\\*.xgen"):
+                for sXgnFilePath in glob.iglob(sAstDirPath + "\\*.xgen"):
+                    
+                    sFilename = osp.basename(sXgnFilePath)
+                    if sFilename in sCopiedXgnFileList:
+                        pm.displayInfo("Xgen file already copied from current shot's data directory: '{}'"
+                                       .format(sFilename))
+                        continue
                     try:
-                        copyFile(sXgenPath, sCurScnDir)
+                        copyFile(sXgnFilePath, sCurScnDir)
                     except EnvironmentError as e:
                         pm.displayError(toStr(e))
+
+        return True
+
+    def onBeforeOpenCheck(self, mFileObj, clientData=None):
+        ToolSetup.onBeforeOpenCheck(self, mFileObj, clientData=clientData)
+        
+        self.copiedXgnFileNames = []
+
+        sCurScnPath = self.currentSceneName
+        sDataDirPath = ""
+        proj = self.project
+
+        if ("/private/" in sCurScnPath.lower()) and ("/zomb/shot/" in sCurScnPath.lower()):
+            sShotCode = "_".join(osp.basename(sCurScnPath).split("_")[:2])
+            damShot = proj.getShot(sShotCode)
+            sDataDirPath = damShot.getPath("public", "data_dir")
+
+        if sDataDirPath:
+            sCurScnDir = osp.dirname(sCurScnPath)
+            for sXgnFilePath in glob.iglob(osp.normpath(sDataDirPath + "/*.xgen")):
+                try:
+                    copyFile(sXgnFilePath, sCurScnDir)
+                except EnvironmentError as e:
+                    pm.displayError(toStr(e))
+                else:
+                    self.copiedXgnFileNames.append(osp.basename(sXgnFilePath))
 
         return True
 
