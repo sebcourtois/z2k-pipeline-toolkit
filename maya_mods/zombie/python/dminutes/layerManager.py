@@ -11,31 +11,6 @@ import maya.mel
 from dminutes import miscUtils
 reload (miscUtils)
 
-
-def changeAovFilter(aovName="Z", filterName="default", gui=True):
-    log = miscUtils.LogBuilder(gui=gui, funcName="'changeAovFilter'")
-    aovNode = pm.ls('aiAOV_' + aovName, type='aiAOV')
-    if aovNode:
-        aovNode = aovNode[0]
-    else :
-        txt = "no '{}'' aovs found".format(aovName)
-        log.printL("e", txt)
-        return dict(resultB=log.resultB, logL=log.logL)
-
-    if filterName != "default":
-        filterNode = pm.createNode('aiAOVFilter', skipSelect=True)
-        filterNode.aiTranslator.set(filterName)
-        filterAttr = filterNode.attr('message')
-
-    else:
-        filterAttr = 'defaultArnoldFilter.message'
-
-    out = aovNode.attr('outputs')[0]
-    pm.connectAttr(filterAttr, out.filter, force=True)
-    aovs._aovOptionsChangedCallbacks._callbackQueue["aoveditor"][0]()
-
-    return dict(resultB=log.resultB, logL=log.logL)
-
 class LayerManager:
     def __init__(self, gui = True):     
         self.gui=gui
@@ -633,4 +608,27 @@ def setUtl32Aovs() :
     #pm.editRenderLayerAdjustment('defaultArnoldDriver.halfPrecision')
     #pm.setAttr('defaultArnoldDriver.halfPrecision', 0)
 
+def changeAovFilter(aovName="Z", filterName="default", gui=True):
+    log = miscUtils.LogBuilder(gui=gui, funcName="'changeAovFilter'")
+    aovNode = pm.ls('aiAOV_' + aovName, type='aiAOV')
+    if aovNode:
+        aovNode = aovNode[0]
+    else :
+        txt = "no '{}'' aovs found".format(aovName)
+        log.printL("e", txt)
+        return dict(resultB=log.resultB, logL=log.logL)
+
+    if filterName != "default":
+        filterNode = pm.createNode('aiAOVFilter', skipSelect=True)
+        filterNode.aiTranslator.set(filterName)
+        filterAttr = filterNode.attr('message')
+
+    else:
+        filterAttr = 'defaultArnoldFilter.message'
+
+    out = aovNode.attr('outputs')[0]
+    pm.connectAttr(filterAttr, out.filter, force=True)
+    aovs._aovOptionsChangedCallbacks._callbackQueue["aoveditor"][0]()
+
+    return dict(resultB=log.resultB, logL=log.logL)
 

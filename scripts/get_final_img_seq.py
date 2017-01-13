@@ -5,13 +5,17 @@ sInput = raw_input("sequences (comma separated):")
 sSeqList = list(s.strip() for s in sInput.split(','))
 
 iOutput = '1'
-iOutput = raw_input("please choose the output dir:\n 1 (default) = d:\n 2 = c:\n 3 = "+os.environ["ZOMB_OUTPUT_PATH"]+" :\n")
+iOutput = raw_input("please choose the output dir:\n 1 (default) = f:\n 2 = e:\n 3 = d:\n 4 = c:\n 5 = "+os.environ["ZOMB_OUTPUT_PATH"]+" :\n")
 
 if iOutput == '1' or not iOutput:
-    outputDir = 'd:/' 
+    outputDir = 'f:/' 
 elif iOutput == '2':
+    outputDir = 'e:/'
+elif iOutput == '3': 
+    outputDir = 'd:/' 
+elif iOutput == '4':
     outputDir = 'c:/' 
-elif iOutput == '3':
+elif iOutput == '5':
     outputDir = os.environ["ZOMB_OUTPUT_PATH"]
 else:
     raise ValueError(iOutput+" is not a valid entry")

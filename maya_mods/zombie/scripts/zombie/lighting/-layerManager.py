@@ -68,6 +68,8 @@ def buttonUtilsPass(*args):
 	layerManager.createCryptomatteLayer()
 	layerManager.setCryptoAov()
 	layerManager.createTextureRefs()
+	layerManager.changeAovFilter('N', 'default')
+	layerManager.changeAovFilter('Pref', 'default')
 
 #layer member
 def buttonAddSelectionToLayer(*args):
