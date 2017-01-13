@@ -23,7 +23,7 @@ from davos.core.damtypes import DamShot
 from davos_maya.tool import file_browser
 from davos_maya.tool import publishing
 from davos_maya.tool.general import infosFromScene, setMayaProject
-from pytd.util.fsutils import copyFile
+from pytd.util.fsutils import copyFile, pathJoin
 
 try:
     from dminutes import sceneManagerUI
@@ -227,14 +227,12 @@ class DavosSetup(ToolSetup):
                                        .format(sFilename))
                         continue
 
-                    if (not os.environ.get("OVERWRITE_XGEN_FILES")) and osp.exists(sXgnFilePath):
-                        continue
-
-                    try:
-                        copyFile(sXgnFilePath, sCurScnDir)
-                    except EnvironmentError as e:
-                        pm.displayError(toStr(e))
-
+                    sDstPath = pathJoin(sCurScnDir, sFilename)
+                    if os.environ.get("OVERWRITE_XGEN_FILES") or (not osp.exists(sDstPath)):
+                        try:
+                            copyFile(sXgnFilePath, sCurScnDir)
+                        except EnvironmentError as e:
+                            pm.displayError(toStr(e))
         return True
 
     def onBeforeOpenCheck(self, mFileObj, clientData=None):
@@ -254,16 +252,15 @@ class DavosSetup(ToolSetup):
         if sDataDirPath:
             sCurScnDir = osp.dirname(sCurScnPath)
             for sXgnFilePath in glob.iglob(osp.normpath(sDataDirPath + "/*.xgen")):
-
-                if (not os.environ.get("OVERWRITE_XGEN_FILES")) and osp.exists(sXgnFilePath):
-                    continue
-
-                try:
-                    copyFile(sXgnFilePath, sCurScnDir)
-                except EnvironmentError as e:
-                    pm.displayError(toStr(e))
-                else:
-                    self.copiedXgnFileNames.append(osp.basename(sXgnFilePath))
+                sFilename = osp.basename(sXgnFilePath)
+                sDstPath = pathJoin(sCurScnDir, sFilename)
+                if os.environ.get("OVERWRITE_XGEN_FILES") or (not osp.exists(sDstPath)):
+                    try:
+                        copyFile(sXgnFilePath, sCurScnDir)
+                    except EnvironmentError as e:
+                        pm.displayError(toStr(e))
+                    else:
+                        self.copiedXgnFileNames.append(sFilename)
         return True
 
 #    def onSceneSaved(self):
