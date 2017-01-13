@@ -227,12 +227,13 @@ class DavosSetup(ToolSetup):
                                        .format(sFilename))
                         continue
 
-                    sDstPath = pathJoin(sCurScnDir, sFilename)
-                    if os.environ.get("OVERWRITE_XGEN_FILES") or (not osp.exists(sDstPath)):
-                        try:
-                            copyFile(sXgnFilePath, sCurScnDir)
-                        except EnvironmentError as e:
-                            pm.displayError(toStr(e))
+#                    sDstPath = pathJoin(sCurScnDir, sFilename)
+#                    if os.environ.get("OVERWRITE_XGEN_FILES") or (not osp.exists(sDstPath)):
+                    bUpdate = False if os.environ.get("FORCE_XGEN_FILES_COPY") else True
+                    try:
+                        copyFile(sXgnFilePath, sCurScnDir, update=bUpdate)
+                    except EnvironmentError as e:
+                        pm.displayError(toStr(e))
         return True
 
     def onBeforeOpenCheck(self, mFileObj, clientData=None):
@@ -253,14 +254,16 @@ class DavosSetup(ToolSetup):
             sCurScnDir = osp.dirname(sCurScnPath)
             for sXgnFilePath in glob.iglob(osp.normpath(sDataDirPath + "/*.xgen")):
                 sFilename = osp.basename(sXgnFilePath)
-                sDstPath = pathJoin(sCurScnDir, sFilename)
-                if os.environ.get("OVERWRITE_XGEN_FILES") or (not osp.exists(sDstPath)):
-                    try:
-                        copyFile(sXgnFilePath, sCurScnDir)
-                    except EnvironmentError as e:
-                        pm.displayError(toStr(e))
-                    else:
-                        self.copiedXgnFileNames.append(sFilename)
+#                sDstPath = pathJoin(sCurScnDir, sFilename)
+#                if os.environ.get("OVERWRITE_XGEN_FILES") or (not osp.exists(sDstPath)):
+                bUpdate = False if os.environ.get("FORCE_XGEN_FILES_COPY") else True
+                try:
+                    copyFile(sXgnFilePath, sCurScnDir, update=bUpdate)
+                except EnvironmentError as e:
+                    pm.displayError(toStr(e))
+                else:
+                    self.copiedXgnFileNames.append(sFilename)
+
         return True
 
 #    def onSceneSaved(self):
