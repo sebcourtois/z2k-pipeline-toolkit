@@ -114,10 +114,47 @@ class DavosSetup(ToolSetup):
         if not ToolSetup.beforeBuildingMenu(self):
             return False
 
+        loadPlugins()
+
         return True
 
     def afterBuildingMenu(self):
         ToolSetup.afterBuildingMenu(self)
+
+        bBatchMode = pm.about(batch=True)
+
+        try:
+            setMayaProject(pmu.getEnv("DAVOS_INIT_PROJECT"), "ZOMB_MAYA_PROJECT_PATH")
+        except Exception as e:
+            pm.displayError(e.message)
+
+        if not bBatchMode:
+            pubLibsItems = sPrivLibPathList = []
+            try:
+                proj = DamProject(os.environ["DAVOS_INIT_PROJECT"])
+                if proj:
+                    #proj.loadEnviron()
+                    allLibList = tuple(proj.iterLibraries(dbNode=False, weak=True, remember=False))
+
+                    pubLibsItems = tuple((lib.fullName, lib.dbPath(), lib.envPath())
+                                         for lib in allLibList if lib.space == "public")
+                    sPrivLibPathList = tuple(lib.dbPath() for lib in allLibList
+                                                            if lib.space == "private")
+            except:
+                traceback.print_exc()
+            else:
+                self.publicLibrariesItems = pubLibsItems
+                self.privateLibraryPaths = sPrivLibPathList
+
+        pmu.putEnv("DAVOS_FILE_CHECK", "1")
+
+        pm.colorManagementPrefs(e=True, cmEnabled=False)
+        pm.polyOptions(newPolymesh=True, smoothDrawType=0)
+
+        if not bBatchMode:
+            if not pm.stackTrace(q=True, state=True):
+                pm.mel.ScriptEditor()
+                pm.mel.handleScriptEditorAction("showStackTrace")
 
     def beforeReloading(self, *args):
 
@@ -131,50 +168,51 @@ class DavosSetup(ToolSetup):
 
         ToolSetup.beforeReloading(self, *args)
 
-    def onMayaInitialized(self, clientData=None):
-        ToolSetup.onMayaInitialized(self, clientData=clientData)
-
-        bBatchMode = pm.about(batch=True)
-
-        loadPlugins()
-
-        pubLibsItems = sPrivLibPathList = []
-        try:
-            if bBatchMode:
-                proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal")
-            else:
-                proj = DamProject(os.environ["DAVOS_INIT_PROJECT"])
-
-            self.project = proj
-
-            if proj:
-                allLibList = tuple(proj.iterLibraries(dbNode=False, weak=True, remember=False))
-
-                pubLibsItems = tuple((lib.fullName, lib.dbPath(), lib.envPath())
-                                     for lib in allLibList if lib.space == "public")
-                sPrivLibPathList = tuple(lib.dbPath() for lib in allLibList
-                                                        if lib.space == "private")
-                self.assetLibrary = proj.getLibrary("public", "asset_lib", dbNode=False)
-        except:
-            traceback.print_exc()
-        else:
-            self.publicLibrariesItems = pubLibsItems
-            self.privateLibraryPaths = sPrivLibPathList
-
-        pmu.putEnv("DAVOS_FILE_CHECK", "1")
-
-        pm.colorManagementPrefs(e=True, cmEnabled=False)
-        pm.polyOptions(newPolymesh=True, smoothDrawType=0)
-
-        try:
-            setMayaProject(pmu.getEnv("DAVOS_INIT_PROJECT"), "ZOMB_MAYA_PROJECT_PATH")
-        except Exception as e:
-            pm.displayError(e.message)
-
-        if not bBatchMode:
-            if not pm.stackTrace(q=True, state=True):
-                pm.mel.ScriptEditor()
-                pm.mel.handleScriptEditorAction("showStackTrace")
+#    def onMayaInitialized(self, clientData=None):
+#        ToolSetup.onMayaInitialized(self, clientData=clientData)
+#
+#        bBatchMode = pm.about(batch=True)
+#
+#        try:
+#            setMayaProject(pmu.getEnv("DAVOS_INIT_PROJECT"), "ZOMB_MAYA_PROJECT_PATH")
+#        except Exception as e:
+#            pm.displayError(toStr(e))
+#
+#        loadPlugins()
+#
+#        pubLibsItems = sPrivLibPathList = []
+#        try:
+#            if bBatchMode:
+#                proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal")
+#            else:
+#                proj = DamProject(os.environ["DAVOS_INIT_PROJECT"])
+#
+#            self.project = proj
+#
+#            if proj:
+#                allLibList = tuple(proj.iterLibraries(dbNode=False, weak=True, remember=False))
+#
+#                pubLibsItems = tuple((lib.fullName, lib.dbPath(), lib.envPath())
+#                                     for lib in allLibList if lib.space == "public")
+#                sPrivLibPathList = tuple(lib.dbPath() for lib in allLibList
+#                                                        if lib.space == "private")
+#                self.assetLibrary = proj.getLibrary("public", "asset_lib", dbNode=False)
+#        except:
+#            traceback.print_exc()
+#        else:
+#            self.publicLibrariesItems = pubLibsItems
+#            self.privateLibraryPaths = sPrivLibPathList
+#
+#        pmu.putEnv("DAVOS_FILE_CHECK", "1")
+#
+#        if not bBatchMode:
+#
+#            pm.colorManagementPrefs(e=True, cmEnabled=False)
+#            pm.polyOptions(newPolymesh=True, smoothDrawType=0)
+#
+#            if not pm.stackTrace(q=True, state=True):
+#                pm.mel.ScriptEditor()
+#                pm.mel.handleScriptEditorAction("showStackTrace")
 
     def onPreFileNewOrOpened(self, *args):
         ToolSetup.onPreFileNewOrOpened(self, *args)
