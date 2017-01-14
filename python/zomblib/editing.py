@@ -9,6 +9,10 @@ from zomblib import rvutils
 import shutil
 
 
+from zomblib import damutils
+from davos.core.damproject import DamProject
+
+
 osp = os.path
 
 FPS = 24.0
@@ -254,6 +258,9 @@ def h264ToProres(inSeqList, shotStep='01_previz'):
 
 def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
     log = LogBuilder(gui=False, funcName ="")
+    proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal", standalone=True)
+    proj.loadEnviron()
+
     shotDir = osp.normpath(osp.join(os.environ["ZOMB_SHOT_LOC"], "zomb", "shot"))
     if not outputDir:
         outputDir = os.environ["ZOMB_OUTPUT_PATH"]
@@ -269,6 +276,17 @@ def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
         shutil.rmtree(toDelete)
 
     def copySeqDir(inSeqDir="", outSeqDir=""):
+
+        versPkg = proj.entryFromPath(inSeqDir)
+        headPkg = versPkg.getHeadFile(dbNode=False)
+        headPkgLyrName = os.path.split(versPkg.absPath())[-1]
+
+        if os.path.split(inSeqDir)[-1]!= headPkgLyrName:
+            txt = "version mismatch, last output found: '{}', last published version: {}".format(inSeqDir,headPkgLyrName)
+            log.printL("e", txt)
+            logFile.write(txt + "\n")
+            return
+
         if os.path.isdir(outSeqDir):
             txt = "is up to date:'{}'".format(outSeqDir)
             log.printL("i", txt)
@@ -281,7 +299,24 @@ def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
             txt = "copy '{}' --> '{}'".format(inSeqDir,outSeqDir)
             log.printL("i", txt)
             logFile.write(txt + "\n")
+        if os.path.isdir(outSeqDir):
+            exrL=[]
+            for eachFile in os.listdir(outSeqDir):
+                if ".json" in eachFile:
+                    os.remove(osp.normpath(osp.join(outSeqDir, eachFile)))
+                if ".exr" in eachFile:
+                    exrL.append(eachFile)
 
+            shotS = osp.normpath(inSeqDir).split("shot")[-1].split("\\")[2]
+            damShot = proj.getShot(shotS)
+            sgShot = damShot.getSgInfo()
+            duration = damutils.getShotDuration(sgShot)
+            if duration != len(exrL):
+                txt = "wrong frame number, {} '.exr' found, but shotgun duration is {} \n".format(len(exrL),duration)
+                log.printL("e", txt)
+                logFile.write("####   Error: "+txt + "\n")
+
+        
     for eachSeq in os.listdir(shotDir):
         if re.match('^sq[0-9]{4}$', eachSeq) and (eachSeq in inSeqList or not inSeqList):
             for eachShot in os.listdir(osp.normpath(osp.join(shotDir, eachSeq))):
@@ -363,6 +398,8 @@ def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
                     imgSeqList.sort()
                     inSeqDir = osp.normpath(osp.join(inDir, imgSeqList[-1]))
                     outSeqDir = osp.normpath(osp.join(outDir, imgSeqList[-1]))
+
+
                     for eachOut in outDirL:
                         if imgSeqList[-1].split("-v")[0] in eachOut and eachOut != imgSeqList[-1]:
                             deleteDir(toDelete = osp.normpath(osp.join(outDir, eachOut)))

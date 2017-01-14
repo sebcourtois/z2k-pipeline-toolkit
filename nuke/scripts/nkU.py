@@ -1130,3 +1130,26 @@ def pointToPrivate(readNodeL=[], gui=True, postConformB=True):
         conformReadNode(readNodeL=readNodeL, gui=gui, conformPathB = True) 
 
     return dict(resultB=log.resultB, logL=log.logL)
+
+
+def nukeRenderNodeList(nukeScriptS="", nodeList=[], gui=True):
+    log = LogBuilder(gui=gui, funcName ="nukeRenderNodeList")
+
+    filePathExpS=""
+    filePathNewS = ""
+    unvalidNodeL = []
+    validNodeL = []
+
+    if not os.path.isfile(nukeScriptS) or not ".nk" in nukeScriptS:
+        log.printL("e","'{}' is not a '.nk' file or doesn't exist".format(nukeScriptS))
+        return
+    #nukeCommand = '"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch "C:\Program Files\Nuke10.0v4\Nuke10.0.exe" %*'
+    #nukeCommand = r"C:\\Program Files\\Nuke10.0v4\\Nuke10.0.exe"
+    os.environ["Z2K_LAUNCH_SCRIPT"]
+    #nukeCommand ="C:\\Users\\abeermond\\DEVSPACE\\git\\z2k-pipeline-toolkit\\launchers\\paris\\nuke10.bat"
+    nukeCommand = normPath(os.path.join(os.path.split(os.environ["Z2K_LAUNCH_SCRIPT"])[0],"nuke10.bat"))
+    
+    os.environ["USER"]
+    subprocess.call(['start' , 'cmd', '/C',nukeCommand, "-x",nukeScriptS],shell=True)
+
+    return dict(resultB=log.resultB, logL=log.logL)
