@@ -62,14 +62,14 @@ def buttonCreateLightPass(*args):
 def buttonCreateFxsPass(*args):
 	lm.initLayer()
 	lm.createFxsPass()
+	layerManager.setFxsAov()
 
 def buttonUtilsPass(*args):
 	layerManager.setUtlAovs()
 	layerManager.createCryptomatteLayer()
 	layerManager.setCryptoAov()
 	layerManager.createTextureRefs()
-	layerManager.changeAovFilter('N', 'default')
-	layerManager.changeAovFilter('Pref', 'default')
+
 
 #layer member
 def buttonAddSelectionToLayer(*args):
