@@ -244,6 +244,7 @@ def initNukeShot(fileNameS= ""):
         df=dataFile(fileNameS)
         df.printData()
         df.initNukeEnvVar()
+        createNukeBatchMovie(gui=False)
     except:
         print "warning: error while running 'initNukeShot()'"
 
@@ -1143,13 +1144,49 @@ def nukeRenderNodeList(nukeScriptS="", nodeList=[], gui=True):
     if not os.path.isfile(nukeScriptS) or not ".nk" in nukeScriptS:
         log.printL("e","'{}' is not a '.nk' file or doesn't exist".format(nukeScriptS))
         return
-    #nukeCommand = '"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch "C:\Program Files\Nuke10.0v4\Nuke10.0.exe" %*'
-    #nukeCommand = r"C:\\Program Files\\Nuke10.0v4\\Nuke10.0.exe"
-    os.environ["Z2K_LAUNCH_SCRIPT"]
-    #nukeCommand ="C:\\Users\\abeermond\\DEVSPACE\\git\\z2k-pipeline-toolkit\\launchers\\paris\\nuke10.bat"
+
     nukeCommand = normPath(os.path.join(os.path.split(os.environ["Z2K_LAUNCH_SCRIPT"])[0],"nuke10.bat"))
-    
-    os.environ["USER"]
-    subprocess.call(['start' , 'cmd', '/C',nukeCommand, "-x",nukeScriptS],shell=True)
+
+    for each in nodeList:
+        subprocess.call(['start', 'cmd', '/C', nukeCommand, "-X"+each, nukeScriptS],shell=True)
+        #subprocess.call([nukeCommand, "-X"+each, nukeScriptS],shell=True)
 
     return dict(resultB=log.resultB, logL=log.logL)
+
+
+def createNukeBatchMovie(nodeList=[], gui=True):
+    log = LogBuilder(gui=gui, funcName ="createNukeBatchMovie")
+
+    nukeScriptS = nuke.root().knob('name').value()
+
+    if not nodeList:
+        if "_stereo" in nukeScriptS:
+            nodeList=['out_movie_stereo']
+        else:
+            nodeList=['out_movie']
+
+    workingDir = os.path.dirname(nukeScriptS)
+    renderBatchFile = normPath(os.path.join(workingDir,"nukeBatch.bat"))
+
+    renderBatch_obj = open(renderBatchFile, "w")
+
+    if os.environ["davos_site"] == "dmn_paris":
+         renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\nuke10.bat"'''+"\n")
+    elif os.environ["davos_site"] == "dmn_angouleme":
+        renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\angouleme\nuke10.bat"'''+"\n")
+    else:
+        renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\????????\nuke10.bat"'''+"\n")
+
+    renderBatch_obj.write(r'''set nukeScript='''+nukeScriptS+"\n")
+
+    for each in nodeList:
+        renderBatch_obj.write(r'''%nuke% -X '''+each+r''' %nukeScript%''')
+
+    renderBatch_obj.close()
+    print "#### Info: nukeBatch.bat created: {}".format(os.path.normpath(renderBatchFile))
+
+
+    return dict(resultB=log.resultB, logL=log.logL)
+
+
+
