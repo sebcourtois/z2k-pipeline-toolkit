@@ -1,13 +1,13 @@
 import maya.cmds as mc
 import pymel.core as pm
 from mtoa import aovs
-
+from mtoa.core import createOptions
 # import os
 # import re
 # import shutil
 import maya.mel
 # import pymel.core as pm
-#from dminutes.rendering import changeAovFilter
+
 from dminutes import miscUtils
 reload (miscUtils)
 
@@ -415,54 +415,6 @@ class LayerManager:
             txt = "no 'set_lyrX_visible' set found for layer '{}'".format(self.layerNameS)
             self.log.printL("e", txt)
 
-        dmnToonL = []
-        for eachGeo in setVisibleMemberL:
-            shdGroupL = mc.ls(mc.listHistory(eachGeo, future=True), type="shadingEngine")
-            if "eye" in eachGeo or "outline" in eachGeo:
-                pass
-            else:
-                if mc.getAttr(eachGeo + ".selfShadows") != 1:
-                    mc.editRenderLayerAdjustment(eachGeo + ".selfShadows")
-                    mc.setAttr(eachGeo + ".selfShadows", 1)
-                if mc.getAttr(eachGeo + ".castsShadows") != 1:
-                    mc.editRenderLayerAdjustment(eachGeo + ".castsShadows")
-                    mc.setAttr(eachGeo + ".castsShadows", 1)
-
-            for eachSG in shdGroupL:
-                aiShaderL = mc.listConnections(eachSG + '.aiSurfaceShader', connections=False, source=True, destination=False)
-                if aiShaderL:
-                    if mc.nodeType(aiShaderL[0]) == "dmnToon":
-                        dmnToonL.append(aiShaderL[0])
-                    else:
-                        txt = "'{}' is not the right type, should be a 'dmnToon'".format(aiShaderL[0])
-                        self.log.printL("e", txt)
-
-        toDeleteL = mc.ls(self.visDmnToonS)
-        if toDeleteL:
-            mc.delete(toDeleteL)
-            print "deleting:", toDeleteL
-
-        mc.sets(name=self.visDmnToonS, empty=True)
-
-        if dmnToonL:
-            mc.sets(dmnToonL, forceElement=self.visDmnToonS)
-            for each in dmnToonL:
-                connectL = mc.listConnections(each + ".aiSelfShadows", plugs=True, source=True, destination=False)
-                if connectL:
-                    for eachConnection in connectL:
-                        mc.editRenderLayerAdjustment(each + ".aiSelfShadows")
-                        mc.disconnectAttr (eachConnection, each + ".aiSelfShadows")
-                    mc.setAttr(each + ".aiSelfShadows", 1)
-                if mc.getAttr(each + ".aiSelfShadows") != 1:
-                    mc.editRenderLayerAdjustment(each + ".aiSelfShadows")
-                    mc.setAttr(each + ".aiSelfShadows", 1)
-
-#        mc.addAttr(self.visDmnToonS, shortName='output', longName='output', attributeType="enum", enumName="composite:final_layout:toon:rim_toon:contour:shadow_mask:incidence:lambert:occlusion:diffuse:ambient:specular:reflection:refraction:lightpass:diffuse_bounces:glossy_bounce")
-#        mc.setAttr(self.visDmnToonS + ".output", 14)
-#        mc.setAttr(self.visDmnToonS + ".aiOverride", 0)
-#        mc.editRenderLayerAdjustment(self.visDmnToonS + ".aiOverride")
-#        mc.setAttr(self.visDmnToonS + ".aiOverride", 1)
-
         txt = "Created '{}' light pass from '{}'".format(layerNameS, layerNameOrigS)
         self.log.printL("i", txt)
         return dict(resultB=self.log.resultB, logL=self.log.logL)
@@ -478,6 +430,7 @@ def createTextureRefs():
 
     alembicNodesL = mc.ls('*chr*Alembic*', l=1)
     if alembicNodesL and not alembicNodesL == None:
+        mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 0)
         for elem in alembicNodesL:
             polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
             for each in polyTransfertL:
@@ -492,13 +445,16 @@ def createTextureRefs():
             polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
             for each in polyTransfertL:
                     mc.setAttr(each.split('.')[0] + '.vertices', 1)
-    
+
+        mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 1)
+
     isReferenceActive = mc.ls('*:*geo_reference*')
     if isReferenceActive and not isReferenceActive == None:
         mc.select(['*:*geo_reference*', 'grp_character'])
         mc.parent()
 
 def createCryptomatteLayer():
+    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 0)
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
         pm.deleteUI("unifiedRenderGlobalsWindow")
     ## Add assets ##
@@ -512,16 +468,19 @@ def createCryptomatteLayer():
 
     pm.createRenderLayer(n='lyr_utl0_bty_16')
     pm.editRenderLayerGlobals(currentRenderLayer='lyr_utl0_bty_16')
+    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 1)
 
 def setCryptoAov():
     ''''
-        Special aov for cryptomatte to use in an extra layer
+        Specials aovs for cryptomatte to use in an extra layer
     '''
     ## Set dmnToon output mode to lambert ##
 #    dmnToonOutput = pm.ls(type='dmnToon')
 #    [pm.setAttr(out + '.output', 7) for out in dmnToonOutput]
 
     ## Create and set the Cryptomatte aov ##
+    createOptions()
+    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 0)
     defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
 
     if pm.objExists('alCryptoShader') == True:
@@ -544,9 +503,33 @@ def setCryptoAov():
     pm.editRenderLayerAdjustment('aiAOV_*.enabled')
     [aov.attr('enabled').set(False) for aov in aovsL]
     [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'crypto_object']
+    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 1)
 
+def setFxsAov():
+    ''''
+        Specials aovs for fxs pass to use as an extra layer
+    '''
+    createOptions()
+    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 0)
+    aovs.AOVInterface()
+    #myAovs.addAOV("crypto_object", aovType='rgb')
+    defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
+    aovsL = defRenderOpt.aovs.get()
+#    [aov.attr('enabled').set(False) for aov in aovsL if aov.attr('name').get() == 'crypto_object']
+    pm.editRenderLayerAdjustment('aiAOV_*.enabled')
+    [aov.attr('enabled').set(False) for aov in aovsL]
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'volume']
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'volume_direct']
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'volume_indirect']
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'volume_opacity']
+
+
+
+    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 1)
 
 def setUtlAovs() :
+    createOptions()
+    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 0)
     aovs.AOVInterface()
     defRenderOpt = pm.PyNode('defaultArnoldRenderOptions')
     aovsL = defRenderOpt.aovs.get()
@@ -578,10 +561,12 @@ def setUtlAovs() :
 
     pm.connectAttr('aiAOVDriverP32.aiTranslator', 'aiAOV_P.outputs[0].driver', f=True)
 
-    #pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_Pref.outputs[0].filter', f=True)
-    #pm.connectAttr('defaultArnoldFilter.aiTranslator', 'aiAOV_N.outputs[0].filter', f=True)
+#    changeAovFilter('N', 'default')
+#    changeAovFilter('Pref', 'default')
     if pm.objExists('aiAOV_dmn_specular') == True:
         pm.delete('aiAOV_dmn_specular')
+
+    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 1)
 
 def setUtl32Aovs() :
     aovs.AOVInterface()
@@ -608,27 +593,4 @@ def setUtl32Aovs() :
     #pm.editRenderLayerAdjustment('defaultArnoldDriver.halfPrecision')
     #pm.setAttr('defaultArnoldDriver.halfPrecision', 0)
 
-def changeAovFilter(aovName="Z", filterName="default", gui=True):
-    log = miscUtils.LogBuilder(gui=gui, funcName="'changeAovFilter'")
-    aovNode = pm.ls('aiAOV_' + aovName, type='aiAOV')
-    if aovNode:
-        aovNode = aovNode[0]
-    else :
-        txt = "no '{}'' aovs found".format(aovName)
-        log.printL("e", txt)
-        return dict(resultB=log.resultB, logL=log.logL)
-
-    if filterName != "default":
-        filterNode = pm.createNode('aiAOVFilter', skipSelect=True)
-        filterNode.aiTranslator.set(filterName)
-        filterAttr = filterNode.attr('message')
-
-    else:
-        filterAttr = 'defaultArnoldFilter.message'
-
-    out = aovNode.attr('outputs')[0]
-    pm.connectAttr(filterAttr, out.filter, force=True)
-    aovs._aovOptionsChangedCallbacks._callbackQueue["aoveditor"][0]()
-
-    return dict(resultB=log.resultB, logL=log.logL)
 
