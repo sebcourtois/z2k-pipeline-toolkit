@@ -836,7 +836,7 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
 
 
 
-def publishCompo(dryRun=False, gui = True):
+def publishCompo(dryRun=False, gui = True, commentS=""):
     log = LogBuilder(gui=gui, funcName ="publishCompo")
 
     stepS = os.environ["STEP"]
@@ -945,10 +945,10 @@ def publishCompo(dryRun=False, gui = True):
                 log.printL("e","Publish failed, missing directory: '{}', '{}'".format(readNodeName,filePathExpS),guiPopUp = True)
                 return
     
-
-    commentS = nuke.getInput("Please enter a publish comment", "")
     if not commentS:
-        log.printL("i","Pubish canceled")
+        commentS = nuke.getInput("Please enter a publish comment", "")
+    if not commentS:
+        log.printL("i","Publish canceled")
         raise RuntimeError("Publish canceled")
 
     sgVersionD = None
