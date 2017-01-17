@@ -20,8 +20,6 @@ reload (miscUtils)
 #from dminutes import layerManager
 #reload (layerManager)
 
-createOptions()
-
 if pm.window("unifiedRenderGlobalsWindow", exists=True):
     pm.deleteUI("unifiedRenderGlobalsWindow")
 
@@ -212,6 +210,8 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     """
     log = miscUtils.LogBuilder(gui=gui, funcName="setArnoldRenderOptionShot")
 
+    createOptions()
+    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 0)
     if renderMode == 'finalLayout':
         setRenderCamera(leftCam = False, rightCam = False)
     elif renderMode == 'fx3d':
@@ -300,6 +300,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 8)
         miscUtils.setAttrC("defaultArnoldFilter.width",4)
         miscUtils.setAttrC("defaultArnoldFilter.aiTranslator","blackman_harris",type="string")
+        mc.setAttr("defaultArnoldRenderOptions.motion_steps", 5)
         resolution = 1998
 
     if renderMode == 'fx3d':
@@ -334,6 +335,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     miscUtils.setAttrC("defaultResolution.height", resolution / aspectRatio)
     mc.setAttr('defaultArnoldRenderOptions.texture_searchpath', '[ZOMB_TEXTURE_PATH]', type='string')
     mc.setAttr('defaultArnoldRenderOptions.absoluteTexturePaths', 0)
+    mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 1)
 
     txt = "#### info: render options are now production ready"
     log.printL("i", txt)
@@ -677,6 +679,7 @@ def deleteAovs(GUI=True):
     return toReturn, infoS
 
 def createAovs(renderMode="render"):
+    createOptions()
     if mc.ls("defaultArnoldRenderOptions"):
         myAOVs = aovs.AOVInterface()
         #create aovs, type = rgb
@@ -689,7 +692,7 @@ def createAovs(renderMode="render"):
             aovCustomNameL = []
         else:
             aovDmnNameL = ["dmn_ambient", "dmn_diffuse", "dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon", "dmn_mask_transp", "dmn_lgtMask01", "dmn_lgtMask02"]
-            aovCustomNameL = ["aiAOV_depth_aa", "aiAOV_Z", "aiAOV_P", "aiAOV_Pref", "aiAOV_crypto_object", "aiAOV_uvs", "aiAOV_N"]
+            aovCustomNameL = ["aiAOV_depth_aa", "aiAOV_Z", "aiAOV_P", "aiAOV_Pref", "aiAOV_crypto_object", "aiAOV_uvs", "aiAOV_N", "volume", "volume_direct", "volume_indirect", "volume_opacity"]
 
 
         for each in aovDmnNameL:
@@ -712,14 +715,27 @@ def createAovs(renderMode="render"):
                 myAOVs.addAOV("P", aovType='point')
             elif each == "aiAOV_Pref" and not 'aiAOV_Pref' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("Pref", aovType='point')
-                #changeAovFilter('Pref', 'default')
+                changeAovFilter('Pref', 'default')
             elif each == "aiAOV_crypto_object" and not 'aiAOV_crypto_object' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("crypto_object", aovType='rgb')
             elif each == "aiAOV_uvs" and not 'aiAOV_uvs' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("uvs", aovType='rgb')
             elif each == "aiAOV_N" and not 'aiAOV_N' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("N", aovType='vector')
-                #changeAovFilter(aovName="N", filterName="default")
+                changeAovFilter(aovName="N", filterName="default")
+            # Volume AOV for fxs pass
+            elif each == "volume" and not 'volume' in mc.ls(type="aiAOV"):
+                myAOVs.addAOV("volume", aovType='rgb')
+                mc.setAttr("aiAOV_volume.enabled", 0)
+            elif each == "volume_direct" and not 'volume_direct' in mc.ls(type="aiAOV"):
+                myAOVs.addAOV("volume_direct", aovType='rgb')
+                mc.setAttr("aiAOV_volume_direct.enabled", 0)
+            elif each == "volume_indirect" and not 'volume_indirect' in mc.ls(type="aiAOV"):
+                myAOVs.addAOV("volume_indirect", aovType='rgb')
+                mc.setAttr("aiAOV_volume_indirect.enabled", 0)
+            elif each == "volume_opacity" and not 'volume_opacity' in mc.ls(type="aiAOV"):
+                myAOVs.addAOV("volume_opacity", aovType='rgb')
+                mc.setAttr("aiAOV_volume_opacity.enabled", 0)
 
         aovs.refreshAliases()
         print "#### {:>7}: 'createAovs' has created {} aovs".format("Info", len(aovDmnNameL) + len(aovCustomNameL))
@@ -777,6 +793,7 @@ def createCustomShader(shaderName="arlequin", gui=True):
     return dict(resultB=log.resultB, logL=log.logL, rootNodeOutputS=rootNodeOutput)
 
 def renderLeftCam():
+    createOptions()
     shotName = ''
     if not pm.sceneName() == '' :
         mainFilePathS = mc.file(q=True, sn=True)
@@ -801,6 +818,7 @@ def renderLeftCam():
     pm.setAttr('aiAOVDriverP32.prefix', aiAovPOutName, type='string')
 
 def renderRightCam():
+    createOptions()
     shotName = ''
     if not pm.sceneName() == '' :
         mainFilePathS = mc.file(q=True, sn=True)
