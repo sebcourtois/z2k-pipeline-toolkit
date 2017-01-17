@@ -175,16 +175,6 @@ class DavosSetup(ToolSetup):
 
     def onSceneOpened(self, *args):
         ToolSetup.onSceneOpened(self, *args)
-
-        sPanelList = mc.getPanel(type="modelPanel")
-        if sPanelList:
-            for sPanel in sPanelList:
-                try:
-                    mc.modelEditor(sPanel, e=True,
-                                   particleInstancers=False,
-                                   pluginShapes=False)
-                except RuntimeError as e:
-                    pm.displayWarning(toStr(e))
         if smui:
             if smui.isLaunched():
                 smui.doDetect()

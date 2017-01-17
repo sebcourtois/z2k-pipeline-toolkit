@@ -854,6 +854,18 @@ def doDetect(*args, **kwargs):
     """load context from scene"""
     loadContextFromScene(**kwargs)
 
+    sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
+    if sCtxStep in ("animation", "charfx"):
+        sPanelList = mc.getPanel(type="modelPanel")
+        if sPanelList:
+            for sPanel in sPanelList:
+                try:
+                    mc.modelEditor(sPanel, e=True,
+                                   particleInstancers=False,
+                                   pluginShapes=False)
+                except RuntimeError as e:
+                    pc.displayWarning(toStr(e))
+
 FILEREFS_FOR_LINE = {}
 
 def doSelectRefs(*args):
