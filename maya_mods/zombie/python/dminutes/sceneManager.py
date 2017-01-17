@@ -814,6 +814,17 @@ class SceneManager():
                 _, oImgPlaneCam = mop.getImagePlaneItems(create=False)
                 mop.arrangeViews(oShotCam, oImgPlaneCam, oStereoCam, singleView=True)
 
+            if sStep.lower() in ("animation", "charfx"):
+                sPanelList = mc.getPanel(type="modelPanel")
+                if sPanelList:
+                    for sPanel in sPanelList:
+                        try:
+                            mc.modelEditor(sPanel, e=True,
+                                           particleInstancers=False,
+                                           pluginShapes=False)
+                        except RuntimeError as e:
+                            pc.displayWarning(toStr(e))
+
             sCurSound = ""
             currTimes = None
             width, height = (1280, 720)

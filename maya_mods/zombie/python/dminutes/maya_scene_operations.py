@@ -424,8 +424,6 @@ def makeCapture(sOutputPath, start, end, width, height, displaymode="",
     xray = pc.modelEditor(pan, query=True, xray=True)
     jointXray = pc.modelEditor(pan, query=True, jointXray=True)
     hud = pc.modelEditor(pan, query=True, hud=True)
-    particleInstancers = pc.modelEditor(pan, query=True, particleInstancers=True)
-    pluginShapes = pc.modelEditor(pan, query=True, pluginShapes=True)
 
     oCamShape = pc.modelEditor(pan, query=True, camera=True)
     if oCamShape.type() == "transform":
@@ -437,8 +435,7 @@ def makeCapture(sOutputPath, start, end, width, height, displaymode="",
     nurbsCurvesShowing = pc.modelEditor(pan, query=True, nurbsCurves=True)
 
     editorKwargs = dict(hud=ornaments, wireframeOnShaded=False,
-                        displayAppearance="smoothShaded",
-                        particleInstancers=False, pluginShapes=False)
+                        displayAppearance="smoothShaded")
     pc.modelEditor(pan, edit=True, nurbsCurves=False, **editorKwargs)
 
     playblastKwargs = dict(format=format, compression=compression, quality=100,
@@ -542,9 +539,7 @@ def makeCapture(sOutputPath, start, end, width, height, displaymode="",
                        displayTextures=displayTextures,
                        wireframeOnShaded=wireOnShaded,
                        jointXray=jointXray,
-                       nurbsCurves=nurbsCurvesShowing,
-                       particleInstancers=particleInstancers,
-                       pluginShapes=pluginShapes)
+                       nurbsCurves=nurbsCurvesShowing,)
         #Camera
         if savedSettings:
             for sAttr, value in savedSettings.iteritems():
