@@ -20,8 +20,8 @@ reload (miscUtils)
 #from dminutes import layerManager
 #reload (layerManager)
 
-if pm.window("unifiedRenderGlobalsWindow", exists=True):
-    pm.deleteUI("unifiedRenderGlobalsWindow")
+#if pm.window("unifiedRenderGlobalsWindow", exists=True):
+#    pm.deleteUI("unifiedRenderGlobalsWindow")
 
 if pm.window("hyperShadePanel1Window", exists=True):
     pm.deleteUI("hyperShadePanel1Window")
@@ -38,7 +38,7 @@ def setArnoldRenderOption(outputFormat, renderMode=""):
     print ""
     print "#### {:>7}: runing rendering.setArnoldRenderOption(outputFormat = {})".format("info" , outputFormat)
     aspectRatio = 1.85
-
+    mc.setAttr('defaultRenderGlobals.currentRenderer', 'arnold', type='string')
     if renderMode == "":
         if mc.ls("|shot") and (mc.file(q=True, sn=True).split("/")[-4]) == "shot":
             renderMode = "render"
@@ -210,6 +210,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     """
     log = miscUtils.LogBuilder(gui=gui, funcName="setArnoldRenderOptionShot")
 
+#    mc.setAttr('defaultRenderGlobals.currentRenderer', 'arnold', type='string')
     createOptions()
     mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 0)
     if renderMode == 'finalLayout':
@@ -692,7 +693,7 @@ def createAovs(renderMode="render"):
             aovCustomNameL = []
         else:
             aovDmnNameL = ["dmn_ambient", "dmn_diffuse", "dmn_mask00", "dmn_mask01", "dmn_mask02", "dmn_mask03", "dmn_mask04", "dmn_mask05", "dmn_mask06", "dmn_mask07", "dmn_mask08", "dmn_mask09", "dmn_specular", "dmn_reflection", "dmn_refraction", "dmn_lambert_shdMsk_toon", "dmn_contour_inci_occ", "dmn_rimToon", "dmn_mask_transp", "dmn_lgtMask01", "dmn_lgtMask02"]
-            aovCustomNameL = ["aiAOV_depth_aa", "aiAOV_Z", "aiAOV_P", "aiAOV_Pref", "aiAOV_crypto_object", "aiAOV_uvs", "aiAOV_N", "volume", "volume_direct", "volume_indirect", "volume_opacity"]
+            aovCustomNameL = ["aiAOV_depth_aa", "aiAOV_Z", "aiAOV_P", "aiAOV_Pref", "aiAOV_crypto_object", "aiAOV_uvs", "aiAOV_N", "volume", "volume_key", "volume_fill", "volume_opacity"]
 
 
         for each in aovDmnNameL:
@@ -727,12 +728,12 @@ def createAovs(renderMode="render"):
             elif each == "volume" and not 'volume' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("volume", aovType='rgb')
                 mc.setAttr("aiAOV_volume.enabled", 0)
-            elif each == "volume_direct" and not 'volume_direct' in mc.ls(type="aiAOV"):
-                myAOVs.addAOV("volume_direct", aovType='rgb')
-                mc.setAttr("aiAOV_volume_direct.enabled", 0)
-            elif each == "volume_indirect" and not 'volume_indirect' in mc.ls(type="aiAOV"):
-                myAOVs.addAOV("volume_indirect", aovType='rgb')
-                mc.setAttr("aiAOV_volume_indirect.enabled", 0)
+            elif each == "volume_key" and not 'volume_key' in mc.ls(type="aiAOV"):
+                myAOVs.addAOV("volume_key", aovType='rgb')
+                mc.setAttr("aiAOV_volume_key.enabled", 0)
+            elif each == "volume_fill" and not 'volume_fill' in mc.ls(type="aiAOV"):
+                myAOVs.addAOV("volume_fill", aovType='rgb')
+                mc.setAttr("aiAOV_volume_fill.enabled", 0)
             elif each == "volume_opacity" and not 'volume_opacity' in mc.ls(type="aiAOV"):
                 myAOVs.addAOV("volume_opacity", aovType='rgb')
                 mc.setAttr("aiAOV_volume_opacity.enabled", 0)
@@ -763,7 +764,7 @@ def changeAovFilter(aovName="Z", filterName="default", gui=True):
 
     out = aovNode.attr('outputs')[0]
     pm.connectAttr(filterAttr, out.filter, force=True)
-    aovs._aovOptionsChangedCallbacks._callbackQueue["aoveditor"][0]()
+    #aovs._aovOptionsChangedCallbacks._callbackQueue["aoveditor"][0]()
 
     return dict(resultB=log.resultB, logL=log.logL)
 

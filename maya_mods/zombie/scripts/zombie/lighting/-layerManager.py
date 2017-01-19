@@ -33,6 +33,9 @@ def buttonCreateAutoLayering(*args):
 	lm.addItemToSet(rndItemL = setItem, setTypeI = 2 )
 	lm.createRndlayer(layerName="lyr_ast1_bty", layerContentL=None, disableLayer = True)
 	lm.createRndlayer(layerName="lyr_ast2_bty", layerContentL=None, disableLayer = True)
+	#fxs
+#	lm.createRndlayer(layerName="lyr_fxs0_bty", layerContentL=None, disableLayer=True)
+#	lm.addItemToSet(rndItemL=setItem, setTypeI=2)
 	lm.initLayerDisplay()
 
 

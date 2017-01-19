@@ -222,9 +222,10 @@ class LayerManager:
             rndItemL = self.rndItemL
 
         if mode == "add":
-            itemToAddL = list(set(rndItemL) - set(self.layerMemberL))
+#            itemToAddL = list(set(rndItemL) - set(self.layerMemberL))
+            itemToAddL = mc.ls(sl=1)
             if itemToAddL:
-                mc.editRenderLayerMembers(self.layerNameS, itemToAddL, remove= False, noRecurse=True)
+                mc.editRenderLayerMembers(self.layerNameS, itemToAddL, remove=False, noRecurse=True)
                 mc.sets(itemToAddL, forceElement=self.layerSetL[0])
                 self.log.printL("i", "added {} items to layer'{}': {}".format(len(itemToAddL), self.layerNameS, itemToAddL))
             else:
@@ -452,6 +453,7 @@ def createTextureRefs():
     if isReferenceActive and not isReferenceActive == None:
         mc.select(['*:*geo_reference*', 'grp_character'])
         mc.parent()
+        mc.hide('*:*geo_reference*')
 
 def createCryptomatteLayer():
     mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 0)
@@ -519,8 +521,8 @@ def setFxsAov():
     pm.editRenderLayerAdjustment('aiAOV_*.enabled')
     [aov.attr('enabled').set(False) for aov in aovsL]
     [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'volume']
-    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'volume_direct']
-    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'volume_indirect']
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'volume_key']
+    [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'volume_fill']
     [aov.attr('enabled').set(True) for aov in aovsL if aov.attr('name').get() == 'volume_opacity']
 
 
