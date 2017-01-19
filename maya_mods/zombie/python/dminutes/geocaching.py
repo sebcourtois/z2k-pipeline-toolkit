@@ -27,6 +27,8 @@ from pytaya.util.sysutils import argsToPyNode, withSelectionRestored
 from pytaya.core.transform import matchTransform
 from pytaya.core.cleaning import _yieldChildJunkShapes
 
+from davos.core.damtypes import DamAsset, DamShot
+
 from davos_maya.tool import reference as myaref
 from davos_maya.tool import dependency_scan
 from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
@@ -433,8 +435,9 @@ def exportCaches(**kwargs):
     bJsonOnly = kwargs.pop("jsonOnly", False)
     bPublish = kwargs.pop("publish", False)
     sOutDirPath = kwargs.pop("outputDir", "")
-
-    scnInfos = infosFromScene()
+    scnInfos = kwargs.pop("sceneInfos", None)
+    if not scnInfos:
+        scnInfos = infosFromScene()
     damShot = scnInfos.get("dam_entity")
 
     pubDepDir = None
@@ -1408,9 +1411,16 @@ def importCaches(sSpace=None, **kwargs):
         if bRemoveRefs and remove:# and bDryRun:
             oAbcRef.remove()
 
-    scnInfos = infosFromScene()
-    damShot = scnInfos.get("dam_entity")
-    shotLib = damShot.getLibrary("public")
+    scnInfos = kwargs.pop("sceneInfos", None)
+    if not scnInfos:
+        scnInfos = infosFromScene()
+
+    proj = scnInfos["project"]
+    damEntity = scnInfos.get("dam_entity")
+
+    damShot = None
+    if isinstance(damEntity, DamShot):
+        damShot = damEntity
 
     bCheckAstExists = False
     if jobList is not None:
@@ -1625,10 +1635,10 @@ def importCaches(sSpace=None, **kwargs):
                                    parent=sParent, unique=True)
                 mc.connectAttr(sScnAbcNode + ".transOp[0]", sAbcHook + ".translateX", f=True)
 
-            if sSpace == "public":
-                abcFile = shotLib.getEntry(sAbcFilePath, dbNode=False)
-                if abcFile:
-                    mc.setAttr(sScnAbcNode + ".abc_File", abcFile.envPath(), type="string")
+            abcFile = proj.rcFileFromPath(sAbcFilePath, dbNode=False, space="public",
+                                          fail=False, warn=False)
+            if abcFile:
+                mc.setAttr(sScnAbcNode + ".abc_File", abcFile.envPath(), type="string")
 
         doneWith(oAbcRef, bRemRef)
 
