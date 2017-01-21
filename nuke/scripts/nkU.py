@@ -245,7 +245,7 @@ def initNukeShot(fileNameS= ""):
         df.printData()
         df.initNukeEnvVar()
         createNukeBatchMovie(gui=False)
-        createPublishBat(gui=False)
+        #createPublishBat(gui=False)
     except:
         print "warning: error while running 'initNukeShot()'"
 
