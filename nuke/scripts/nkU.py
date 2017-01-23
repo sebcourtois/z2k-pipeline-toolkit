@@ -245,6 +245,7 @@ def initNukeShot(fileNameS= ""):
         df.printData()
         df.initNukeEnvVar()
         createNukeBatchMovie(gui=False)
+        #createPublishBat(gui=False)
     except:
         print "warning: error while running 'initNukeShot()'"
 
@@ -1184,6 +1185,35 @@ def createNukeBatchMovie(nodeList=[], gui=True):
 
     renderBatch_obj.close()
     print "#### Info: nukeBatch.bat created: {}".format(os.path.normpath(renderBatchFile))
+
+
+    return dict(resultB=log.resultB, logL=log.logL)
+
+
+
+def createPublishBat(gui=True):
+    log = LogBuilder(gui=gui, funcName ="createPublishBat")
+
+    nukeScriptS = nuke.root().knob('name').value()
+    workingDir = os.path.dirname(nukeScriptS)
+    publishBatFile = normPath(os.path.join(workingDir,"publish.bat"))
+
+    renderBatch_obj = open(publishBatFile, "w")
+
+    if os.environ["davos_site"] == "dmn_paris":
+         renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\nuke10.bat"'''+"\n")
+    elif os.environ["davos_site"] == "dmn_angouleme":
+        renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\angouleme\nuke10.bat"'''+"\n")
+    else:
+        renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\????????\nuke10.bat"'''+"\n")
+
+    renderBatch_obj.write(r'''set pythonFile="C:\Users\%USERNAME%\DEVSPACE\git\z2k-pipeline-toolkit\nuke\scripts\publish.py"'''+"\n")
+    renderBatch_obj.write(r'''set nukeScript='''+nukeScriptS+"\n")
+    renderBatch_obj.write(r'''%nuke% -t %pythonFile% %nukeScript%'''+"\n")
+    renderBatch_obj.write(r'''pause'''+"\n")
+
+    renderBatch_obj.close()
+    print "#### Info: publish.bat created: {}".format(os.path.normpath(publishBatFile))
 
 
     return dict(resultB=log.resultB, logL=log.logL)
