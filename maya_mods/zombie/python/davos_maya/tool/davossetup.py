@@ -175,9 +175,6 @@ class DavosSetup(ToolSetup):
 
     def onSceneOpened(self, *args):
         ToolSetup.onSceneOpened(self, *args)
-        if smui:
-            if smui.isLaunched():
-                smui.doDetect()
 
         sPanelList = mc.getPanel(type="modelPanel")
         if sPanelList:
@@ -188,6 +185,10 @@ class DavosSetup(ToolSetup):
                                    pluginShapes=False)
                 except RuntimeError as e:
                     pm.displayWarning(toStr(e))
+
+        if smui:
+            if smui.isLaunched():
+                smui.doDetect()
 
     def onPreCreateReferenceCheck(self, mFileObj, clientData=None):
         """updates reference path to comply with the davos library's env. variable from where the reference belongs."""
@@ -244,11 +245,16 @@ class DavosSetup(ToolSetup):
         sCurScnPath = self.currentSceneName
         sDataDirPath = ""
         proj = self.project
-
-        if ("/private/" in sCurScnPath.lower()) and ("/zomb/shot/" in sCurScnPath.lower()):
-            sShotCode = "_".join(osp.basename(sCurScnPath).split("_")[:2])
-            damShot = proj.getShot(sShotCode)
-            sDataDirPath = damShot.getPath("public", "data_dir")
+        sLowerScnPath = sCurScnPath.lower()
+        if ("/private/" in sLowerScnPath):
+            if ("/zomb/shot/" in sLowerScnPath):
+                sShotCode = "_".join(osp.basename(sCurScnPath).split("_")[:2])
+                damShot = proj.getShot(sShotCode)
+                sDataDirPath = damShot.getPath("public", "data_dir")
+            elif ("/zomb/asset/" in sLowerScnPath):
+                sAstName = "_".join(osp.basename(sCurScnPath).split("_")[:3])
+                damAst = proj.getAsset(sAstName)
+                sDataDirPath = damAst.getPath("public", "entity_dir")
 
         if sDataDirPath:
             sCurScnDir = osp.dirname(sCurScnPath)
