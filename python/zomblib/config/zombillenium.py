@@ -23,6 +23,8 @@ class project(object):
 
     private_path_envars = ("ZOMB_PRIVATE_LOC",)
 
+    toto = "{$DAVOS_USER@user_name}/{proute@toto_dir}/{shot_lib.entity_class}/{proj.dir_name@fuck_you}/pitoig/{rocco}"
+
     libraries = (
         "asset_lib",
         "shot_lib",

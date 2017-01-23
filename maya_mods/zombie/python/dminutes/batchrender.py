@@ -13,15 +13,39 @@ from davos_maya.tool.general import infosFromScene
 
 from dminutes import geocaching
 from dminutes import finalLayout
+import traceback
 
 reload(myaref)
 reload(geocaching)
 reload(finalLayout)
 
+def quitWithStatus(func):
+    def doIt(*args, **kwargs):
+        bSave = kwargs.pop("save", False)
+        bQuit = kwargs.pop("quit", mc.about(batch=True))
+        try:
+            res = func(*args, **kwargs)
+        except:
+            if bQuit:
+                sTrace = traceback.format_exc()
+#                lines = [""] + sTrace.splitlines(True)
+#                print "!ERROR!".join(lines)
+                pm.displayError(sTrace)
+                mc.quit(f=True, exitCode=1)
+            else:
+                raise
+        else:
+            if bSave:
+                pm.saveFile(force=True)
+            if bQuit:
+                mc.quit(force=True, exitCode=0)
+        return res
+    return doIt
 
-def setupLayoutScene(save=False):
+@quitWithStatus
+def setupLayoutScene(**kwargs):
 
-    proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal", standalone=True)
+    proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal", standalone=False)
 
     scnInfos = infosFromScene(project=proj)
     if scnInfos["resource"] != "layout_scene":
@@ -36,7 +60,8 @@ def setupLayoutScene(save=False):
 
     sOutDirPath = pm.sceneName().dirname() + "/geoCache"
     mc.select("set_*:grp_geo")
-    exportData = geocaching.exportCaches(selected=True, confirm=False, outputDir=sOutDirPath)
+    exportData = geocaching.exportCaches(selected=True, confirm=False,
+                                         sceneInfos=scnInfos, outputDir=sOutDirPath)
 
     jobList = exportData["jobs"]
     for jobInfos in jobList:
@@ -51,9 +76,6 @@ def setupLayoutScene(save=False):
 
     geocaching.importCaches(jobs=jobList, layoutViz=False, useCacheSet=True,
                             dryRun=False, beforeHistory=False, removeRefs=True,
-                            showScriptEditor=False)
+                            showScriptEditor=False, sceneInfos=scnInfos)
 
     finalLayout.renderSetup()
-
-    if save:
-        pm.saveFile(force=True)

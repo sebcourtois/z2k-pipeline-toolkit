@@ -417,7 +417,7 @@ class checkModule(object):
         boolResult=True
 
         # set progress bar
-        self.pBar_upd(step=1, maxValue=10, e=True)
+        self.pBar_upd(step=1, maxValue=9, e=True)
 
         # steps
 
@@ -523,31 +523,6 @@ class checkModule(object):
         result,debugD = jpZ.cleanUnusedConstraint()
         # prints -------------------
         self.printF( "cleanUnusedConstraint()", st="t")
-       # prints inside-------------------
-        self.printF(result, st="r")
-        if len(debugD["errorL"]):
-            self.printF("erroredL:")
-            for i in debugD["errorL"] :
-                self.printF("    -{0} error".format(i))
-        self.printF("total errored = {0}".format( len(debugD["errorL"] ) ) )
-        
-        if len(debugD["deletedL"]):
-            self.printF("deletedL:")
-            for i in debugD["deletedL"]:
-                self.printF("    -{0} deleted".format(i))
-        self.printF("total deleted = {0}".format(len(debugD["deletedL"]) ) )
-        # --------------------------
-        # --------------------------
-        if not result:
-            boolResult = False 
-        self.pBar_upd(step= 1,)
-
-
-
-        # 8 CleanDisconnectedNodes()
-        result,debugD = jpZ.CleanDisconnectedNodes()
-        # prints -------------------
-        self.printF( "CleanDisconnectedNodes()", st="t")
         # prints inside-------------------
         self.printF(result, st="r")
         if len(debugD["errorL"]):
@@ -566,6 +541,31 @@ class checkModule(object):
         if not result:
             boolResult = False 
         self.pBar_upd(step= 1,)
+
+
+
+#        # 8 CleanDisconnectedNodes()
+#        result, debugD = jpZ.CleanDisconnectedNodes()
+#        # prints -------------------
+#        self.printF("CleanDisconnectedNodes()", st="t")
+#        # prints inside-------------------
+#        self.printF(result, st="r")
+#        if len(debugD["errorL"]):
+#            self.printF("erroredL:")
+#            for i in debugD["errorL"] :
+#                self.printF("    -{0} error".format(i))
+#        self.printF("total errored = {0}".format(len(debugD["errorL"])))
+#
+#        if len(debugD["deletedL"]):
+#            self.printF("deletedL:")
+#            for i in debugD["deletedL"]:
+#                self.printF("    -{0} deleted".format(i))
+#        self.printF("total deleted = {0}".format(len(debugD["deletedL"])))
+#        # --------------------------
+#        # --------------------------
+#        if not result:
+#            boolResult = False
+#        self.pBar_upd(step=1,)
               
 
 
