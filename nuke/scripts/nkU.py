@@ -228,7 +228,7 @@ class dataFile():
 
                 self.log.printL("i","setting 'first_frame={}', 'first_frame={}' : ".format(self.timeIn,self.timeOut))
 
-            if self.depDir != : '06_finalLayout':
+            if self.depDir != '06_finalLayout':
                 createNukeBatchMovie(gui=False)
                 createPublishBat(gui=False)
 
