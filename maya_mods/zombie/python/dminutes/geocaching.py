@@ -526,16 +526,18 @@ def exportCaches(**kwargs):
                 except Exception as e:
                     pm.displayWarning(e.message)
 
+    sErrorList = []
     for sGeoGrp in sGeoGrpList:
 
         sFoundList = mc.ls(sGeoGrp)
         if not sFoundList:
-            pm.displayError("Object not found: {}.".format(sGeoGrp))
+            sErrorList.append("Object not found: {}.".format(sGeoGrp))
             continue
         elif len(sFoundList) > 1:
-            sMsg = "Multiple objects named '{}':\n".format(sGeoGrp)
-            sMsg += "\n".join(sFoundList)
-            pm.displayError(sMsg)
+            sSep = "\n    - "
+            sMsg = "Multiple objects named '{}':".format(sGeoGrp)
+            sMsg += (sSep + sSep.join(sFoundList))
+            sErrorList.append(sMsg)
             continue
 
         sFoundList= mc.ls(sGeoGrp, dag=True, type="mesh")
@@ -567,6 +569,9 @@ def exportCaches(**kwargs):
         jobInfos["source_file"] = sCurScnPath
 
         jobForRootDct[sGeoGrp] = jobInfos
+
+    if sErrorList:
+        raise RuntimeError("\n".join(sErrorList))
 
     exportInfos = {"jobs":jobForRootDct.values()}
 
