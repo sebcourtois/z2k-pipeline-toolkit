@@ -528,7 +528,18 @@ def exportCaches(**kwargs):
 
     for sGeoGrp in sGeoGrpList:
 
-        if not mc.ls(sGeoGrp, dag=True, type="mesh"):
+        sFoundList = mc.ls(sGeoGrp)
+        if not sFoundList:
+            pm.displayError("Object not found: {}.".format(sGeoGrp))
+            continue
+        elif len(sFoundList) > 1:
+            sMsg = "Multiple objects named '{}':\n".format(sGeoGrp)
+            sMsg += "\n".join(sFoundList)
+            pm.displayError(sMsg)
+            continue
+
+        sFoundList= mc.ls(sGeoGrp, dag=True, type="mesh")
+        if not sFoundList:
             pm.displayInfo("No meshes found under '{}': No geo cache to export."
                            .format(sGeoGrp))
             continue
