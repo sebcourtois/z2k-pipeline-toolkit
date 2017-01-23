@@ -179,6 +179,16 @@ class DavosSetup(ToolSetup):
             if smui.isLaunched():
                 smui.doDetect()
 
+        sPanelList = mc.getPanel(type="modelPanel")
+        if sPanelList:
+            for sPanel in sPanelList:
+                try:
+                    mc.modelEditor(sPanel, e=True,
+                                   particleInstancers=False,
+                                   pluginShapes=False)
+                except RuntimeError as e:
+                    pm.displayWarning(toStr(e))
+
     def onPreCreateReferenceCheck(self, mFileObj, clientData=None):
         """updates reference path to comply with the davos library's env. variable from where the reference belongs."""
         ToolSetup.onPreCreateReferenceCheck(self, mFileObj, clientData)
