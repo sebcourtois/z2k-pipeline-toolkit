@@ -408,13 +408,18 @@ class Z2kToolkit(object):
 
         with open(sFilePath, "w+") as f:
 
-            f.write("@echo off\n\n")
+            f.write("\n")
 
             for k, v in self.envRecord.iteritems():
 
                 bMultiLine = False
                 if isinstance(v, basestring):
+
                     v = re.sub(r"\$(\w+)", r"%\1%", osp.normpath(v))
+
+                    if "xgen" in k.lower():
+                        v = v.replace("\\", "/")
+
                     if os.pathsep in v:
                         bMultiLine = True
                         sSep = ';^\n'
