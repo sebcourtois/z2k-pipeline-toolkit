@@ -471,11 +471,11 @@ class Z2kToolkit(object):
 
         cmdArgs = sys.argv[1:]
         sAction = ""
-        sActionList = ("install", "launch", "release", "envtofile")
+        sActionList = ("install", "launch", "release", "envtofile", "loadenv")
         appArgs = []
         if len(sys.argv) > 2:
             sAction = sys.argv[1]
-            if sAction in ("launch",):# "envtofile"):
+            if sAction in ("launch", "loadenv"):
                 cmdArgs = sys.argv[1:2]
                 c = 2
                 for arg in sys.argv[2:]:
