@@ -260,14 +260,17 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 0)
     elif  outputFormat == "jpg":
         miscUtils.setAttrC("defaultArnoldDriver.aiTranslator", "jpeg", type="string")
-        miscUtils.setAttrC("defaultArnoldDisplayDriver.aiTranslator", "jpeg", type="string")
+        if mc.about(batch=True):
+            miscUtils.setAttrC("defaultArnoldDisplayDriver.aiTranslator", "jpeg", type="string")
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 0)
     if outputFormat == "png":
-        miscUtils.setAttrC("defaultArnoldDriver.aiTranslator", "png", type="string")
+        if mc.about(batch=True):
+            miscUtils.setAttrC("defaultArnoldDriver.aiTranslator", "png", type="string")
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 0)
     elif  outputFormat == "exr":
         miscUtils.setAttrC("defaultArnoldDriver.aiTranslator", "exr", type="string")
-        miscUtils.setAttrC("defaultArnoldDisplayDriver.aiTranslator", "exr", type="string")
+        if mc.about(batch=True):
+            miscUtils.setAttrC("defaultArnoldDisplayDriver.aiTranslator", "exr", type="string")
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 1)
 
 
@@ -317,6 +320,8 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     elif renderMode == 'finalLayout':
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 2)
         miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossySamples", 2)
+        mbLen = mc.getAttr("defaultArnoldRenderOptions.motion_frames")
+        mc.setAttr("defaultArnoldRenderOptions.motion_steps", int(mbLen * 10))
         resolution = 1920
 
     miscUtils.setAttrC("defaultArnoldRenderOptions.GITotalDepth", 4)
