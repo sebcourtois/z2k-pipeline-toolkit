@@ -858,16 +858,16 @@ def doDetect(*args, **kwargs):
 
     if SCENE_MANAGER and SCENE_MANAGER.context and ("step" in SCENE_MANAGER.context):
         sCtxStep = SCENE_MANAGER.context["step"]["code"].lower()
-        if sCtxStep in ("animation", "charfx"):
-            sPanelList = mc.getPanel(type="modelPanel")
-            if sPanelList:
-                for sPanel in sPanelList:
-                    try:
-                        mc.modelEditor(sPanel, e=True,
-                                       particleInstancers=False,
-                                       pluginShapes=False)
-                    except RuntimeError as e:
-                        pc.displayWarning(toStr(e))
+        bEnable = (sCtxStep in ("fx3d", "rendering"))
+        sPanelList = mc.getPanel(type="modelPanel")
+        if sPanelList:
+            for sPanel in sPanelList:
+                try:
+                    mc.modelEditor(sPanel, e=True,
+                                   particleInstancers=bEnable,
+                                   pluginShapes=bEnable)
+                except RuntimeError as e:
+                    pc.displayWarning(toStr(e))
 
 FILEREFS_FOR_LINE = {}
 

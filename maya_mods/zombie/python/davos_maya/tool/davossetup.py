@@ -175,6 +175,17 @@ class DavosSetup(ToolSetup):
 
     def onSceneOpened(self, *args):
         ToolSetup.onSceneOpened(self, *args)
+
+        sPanelList = mc.getPanel(type="modelPanel")
+        if sPanelList:
+            for sPanel in sPanelList:
+                try:
+                    mc.modelEditor(sPanel, e=True,
+                                   particleInstancers=False,
+                                   pluginShapes=False)
+                except RuntimeError as e:
+                    pm.displayWarning(toStr(e))
+
         if smui:
             if smui.isLaunched():
                 smui.doDetect()
@@ -234,11 +245,16 @@ class DavosSetup(ToolSetup):
         sCurScnPath = self.currentSceneName
         sDataDirPath = ""
         proj = self.project
-
-        if ("/private/" in sCurScnPath.lower()) and ("/zomb/shot/" in sCurScnPath.lower()):
-            sShotCode = "_".join(osp.basename(sCurScnPath).split("_")[:2])
-            damShot = proj.getShot(sShotCode)
-            sDataDirPath = damShot.getPath("public", "data_dir")
+        sLowerScnPath = sCurScnPath.lower()
+        if ("/private/" in sLowerScnPath):
+            if ("/zomb/shot/" in sLowerScnPath):
+                sShotCode = "_".join(osp.basename(sCurScnPath).split("_")[:2])
+                damShot = proj.getShot(sShotCode)
+                sDataDirPath = damShot.getPath("public", "data_dir")
+            elif ("/zomb/asset/" in sLowerScnPath):
+                sAstName = "_".join(osp.basename(sCurScnPath).split("_")[:3])
+                damAst = proj.getAsset(sAstName)
+                sDataDirPath = damAst.getPath("public", "entity_dir")
 
         if sDataDirPath:
             sCurScnDir = osp.dirname(sCurScnPath)

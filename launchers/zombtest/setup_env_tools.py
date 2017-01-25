@@ -18,9 +18,14 @@ ENVS = {
 
         "DAVOS_INIT_PROJECT":"zombtest",
         "DAVOS_SITE":"dmn_paris",
-        "ZTK_RELEASE_ALLOWED":"1",
 
-        "MAYA_MODULE_PATH":r"\\ZOMBIWALK\Z2K_RnD\maya_mods"
+        "Z2K_RELEASE_ALLOWED":"1",
+        "Z2K_INSTALL_LOC":"$USERPROFILE/zombtest",
+
+        "MAYA_MODULE_PATH":r"\\ZOMBIWALK\Z2K_RnD\maya_mods",
+
+        "XGEN_CONFIG_PATH":r"//ZOMBIWALK/Projects/zomb/tool/z2k-pipeline-toolkit/launchers/paris/xgen",
+        "XGEN_PATH":r"//ZOMBIWALK/Projects/zomb/tool/xgen",
         }
 
 try:

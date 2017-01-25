@@ -27,6 +27,8 @@ from pytaya.util.sysutils import argsToPyNode, withSelectionRestored
 from pytaya.core.transform import matchTransform
 from pytaya.core.cleaning import _yieldChildJunkShapes
 
+from davos.core.damtypes import DamAsset, DamShot
+
 from davos_maya.tool import reference as myaref
 from davos_maya.tool import dependency_scan
 from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
@@ -433,8 +435,9 @@ def exportCaches(**kwargs):
     bJsonOnly = kwargs.pop("jsonOnly", False)
     bPublish = kwargs.pop("publish", False)
     sOutDirPath = kwargs.pop("outputDir", "")
-
-    scnInfos = infosFromScene()
+    scnInfos = kwargs.pop("sceneInfos", None)
+    if not scnInfos:
+        scnInfos = infosFromScene()
     damShot = scnInfos.get("dam_entity")
 
     pubDepDir = None
@@ -523,9 +526,22 @@ def exportCaches(**kwargs):
                 except Exception as e:
                     pm.displayWarning(e.message)
 
+    sErrorList = []
     for sGeoGrp in sGeoGrpList:
 
-        if not mc.ls(sGeoGrp, dag=True, type="mesh"):
+        sFoundList = mc.ls(sGeoGrp)
+        if not sFoundList:
+            sErrorList.append("Object not found: {}.".format(sGeoGrp))
+            continue
+        elif len(sFoundList) > 1:
+            sSep = "\n    - "
+            sMsg = "Multiple objects named '{}':".format(sGeoGrp)
+            sMsg += (sSep + sSep.join(sFoundList))
+            sErrorList.append(sMsg)
+            continue
+
+        sFoundList= mc.ls(sGeoGrp, dag=True, type="mesh")
+        if not sFoundList:
             pm.displayInfo("No meshes found under '{}': No geo cache to export."
                            .format(sGeoGrp))
             continue
@@ -553,6 +569,9 @@ def exportCaches(**kwargs):
         jobInfos["source_file"] = sCurScnPath
 
         jobForRootDct[sGeoGrp] = jobInfos
+
+    if sErrorList:
+        raise RuntimeError("\n".join(sErrorList))
 
     exportInfos = {"jobs":jobForRootDct.values()}
 
@@ -1408,9 +1427,16 @@ def importCaches(sSpace=None, **kwargs):
         if bRemoveRefs and remove:# and bDryRun:
             oAbcRef.remove()
 
-    scnInfos = infosFromScene()
-    damShot = scnInfos.get("dam_entity")
-    shotLib = damShot.getLibrary("public")
+    scnInfos = kwargs.pop("sceneInfos", None)
+    if not scnInfos:
+        scnInfos = infosFromScene()
+
+    proj = scnInfos["project"]
+    damEntity = scnInfos.get("dam_entity")
+
+    damShot = None
+    if isinstance(damEntity, DamShot):
+        damShot = damEntity
 
     bCheckAstExists = False
     if jobList is not None:
@@ -1625,10 +1651,10 @@ def importCaches(sSpace=None, **kwargs):
                                    parent=sParent, unique=True)
                 mc.connectAttr(sScnAbcNode + ".transOp[0]", sAbcHook + ".translateX", f=True)
 
-            if sSpace == "public":
-                abcFile = shotLib.getEntry(sAbcFilePath, dbNode=False)
-                if abcFile:
-                    mc.setAttr(sScnAbcNode + ".abc_File", abcFile.envPath(), type="string")
+            abcFile = proj.rcFileFromPath(sAbcFilePath, dbNode=False, space="public",
+                                          fail=False, warn=False)
+            if abcFile:
+                mc.setAttr(sScnAbcNode + ".abc_File", abcFile.envPath(), type="string")
 
         doneWith(oAbcRef, bRemRef)
 

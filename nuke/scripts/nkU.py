@@ -228,7 +228,9 @@ class dataFile():
 
                 self.log.printL("i","setting 'first_frame={}', 'first_frame={}' : ".format(self.timeIn,self.timeOut))
 
-
+            if self.depDir != '06_finalLayout':
+                createNukeBatchMovie(gui=False)
+                createPublishBat(gui=False)
 
         else:
             txt = "one of the variable 'seq', 'shot', 'user' or 'dep' is undefined, could not set nuke proj environment var".format(self.fileNameS)
@@ -244,7 +246,6 @@ def initNukeShot(fileNameS= ""):
         df=dataFile(fileNameS)
         df.printData()
         df.initNukeEnvVar()
-        createNukeBatchMovie(gui=False)
     except:
         print "warning: error while running 'initNukeShot()'"
 
@@ -709,6 +710,7 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
     publishedNodeL = []
     publishedNodeNameL = []
     skippedNodeNameL = []
+    resultD={"publishedVersion":""}
 
     allViewerL = nuke.allNodes('Viewer')
     for each in allViewerL:
@@ -836,7 +838,7 @@ def publishNode(readNodeL=[],dryRun=False, destination = "output", gui = True, g
 
 
 
-def publishCompo(dryRun=False, gui = True, commentS=""):
+def publishCompo(dryRun=False, gui = True, commentS="", sgVersionData=None):
     log = LogBuilder(gui=gui, funcName ="publishCompo")
 
     stepS = os.environ["STEP"]
@@ -953,7 +955,7 @@ def publishCompo(dryRun=False, gui = True, commentS=""):
 
     sgVersionD = None
     try:
-        resultD =  proj.publishEditedVersion(nKFilePathS, comment=commentS, returnDict=True, uploadApart=False)
+        resultD =  proj.publishEditedVersion(nKFilePathS, comment=commentS, returnDict=True, uploadApart=False, sgVersionData=sgVersionData)
         sgVersionD = resultD["sg_version"]
     except Exception as err:
         log.printL("e","Nuke file publish failed: '{}'".format(err),guiPopUp = True)
@@ -1184,6 +1186,35 @@ def createNukeBatchMovie(nodeList=[], gui=True):
 
     renderBatch_obj.close()
     print "#### Info: nukeBatch.bat created: {}".format(os.path.normpath(renderBatchFile))
+
+
+    return dict(resultB=log.resultB, logL=log.logL)
+
+
+
+def createPublishBat(gui=True):
+    log = LogBuilder(gui=gui, funcName ="createPublishBat")
+
+    nukeScriptS = nuke.root().knob('name').value()
+    workingDir = os.path.dirname(nukeScriptS)
+    publishBatFile = normPath(os.path.join(workingDir,"publish.bat"))
+
+    renderBatch_obj = open(publishBatFile, "w")
+
+    if os.environ["davos_site"] == "dmn_paris":
+         renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\nuke10.bat"'''+"\n")
+    elif os.environ["davos_site"] == "dmn_angouleme":
+        renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\angouleme\nuke10.bat"'''+"\n")
+    else:
+        renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\????????\nuke10.bat"'''+"\n")
+
+    renderBatch_obj.write(r'''set pythonFile="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\nuke\scripts\publish.py"'''+"\n")
+    renderBatch_obj.write(r'''set nukeScript='''+nukeScriptS+"\n")
+    renderBatch_obj.write(r'''%nuke% -t %pythonFile% %nukeScript%'''+"\n")
+    renderBatch_obj.write(r'''pause'''+"\n")
+
+    renderBatch_obj.close()
+    print "#### Info: publish.bat created: {}".format(os.path.normpath(publishBatFile))
 
 
     return dict(resultB=log.resultB, logL=log.logL)

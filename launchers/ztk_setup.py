@@ -9,8 +9,12 @@ from shutil import make_archive, ignore_patterns
 from datetime import datetime
 import traceback
 import webbrowser
+from pprint import pprint
+from collections import OrderedDict
+import re
 
 BASE_NAME = "z2k-pipeline-toolkit"
+MASTER_NAME = BASE_NAME+"_master"
 
 APPS_LOCATIONS = {
 "Z2K_RV_LOC":(r"C:\Program Files\Shotgun\RV-7.0.0\bin",
@@ -66,15 +70,20 @@ def getAppPath(sAppName):
 
     return sAppPath
 
-def getLocalPath():
-    return pathJoin(os.environ["USERPROFILE"], "zombillenium", BASE_NAME)
+def pathInUserProfile(sPath):
+    sNormPath = addEndSlash(normAll(osp.expandvars(sPath)))
+    sLocToolPath = addEndSlash(normAll(os.environ["USERPROFILE"]))
+    return sNormPath.startswith(sLocToolPath)
 
-def getReleasePath(location="", fail=True):
+def pathInPublicTools(sPath):
+    sNormPath = addEndSlash(normAll(osp.expandvars(sPath)))
+    sPubToolPath = addEndSlash(normAll(os.environ["ZOMB_TOOL_PATH"]))
+    return sNormPath.startswith(sPubToolPath)
 
-    if location:
-        sReleaseLoc = location
-    else:
-        sReleaseLoc = os.environ["ZOMB_TOOL_PATH"]
+def mkReleasePath(sReleaseLoc, fail=True):
+
+    if not sReleaseLoc:
+        raise ValueError("invalid release location: '{}'".format(sReleaseLoc))
 
     if not osp.isdir(sReleaseLoc):
         if fail:
@@ -83,6 +92,9 @@ def getReleasePath(location="", fail=True):
             print "WARNING:", "No such release location: '{}'".format(sReleaseLoc)
 
     return pathJoin(sReleaseLoc, BASE_NAME)
+
+def defaultInstallLocation():
+    return osp.expandvars(pathJoin(os.environ["USERPROFILE"], "zombillenium"))
 
 class Z2kToolkit(object):
 
@@ -97,64 +109,75 @@ class Z2kToolkit(object):
         if not osp.isdir(sRootPath):
             raise EnvironmentError("No such directory: '{}'".format(sRootPath))
 
-        self.isDev = osp.isdir(pathJoin(sRootPath, ".git"))
+        self.isDev = osp.isdir(pathJoin(sRootPath, ".git"))# and (sDirName.lower() != MASTER_NAME)
         self.rootPath = sRootPath
         self.dirName = sDirName
         self.pythonPath = pathJoin(sRootPath, "python")
         self.thirdPartyPath = pathJoin(sRootPath, "third-party")
 
+        self.envRecord = OrderedDict()
         self.customEnvs = customEnvs
-        if customEnvs:
-            self.loadEnvs(customEnvs)
+        self.loadEnv(customEnvs)
 
-    def loadEnvs(self, customEnvs, replace=False):
+    def loadEnv(self, customEnvs, replace=False):
 
         print "Tools repository"
         print " - path          : {0}".format(self.rootPath)
         print " - configuration : {0}".format("Development" if self.isDev else "Production")
         print ""
 
-        print "\nLoading site-defined environment:"
-
         sConflictMode = "replace" if replace else "keep"
 
+        print "\nLoading site-defined environment:"
+
         for sVar, value in customEnvs.iteritems():
-            updEnv(sVar, value, conflict=sConflictMode)
+            self.updEnv(sVar, value, conflict=sConflictMode)
 
         print "\nLoading toolkit environment:"
 
+        sPubToolPath = os.environ["ZOMB_TOOL_PATH"]
+        sDefInstLoc = defaultInstallLocation()
+        sNormCurLoc = normAll(osp.dirname(self.rootPath))
+
+        if sNormCurLoc == normAll(sDefInstLoc):
+            if not os.environ.get("Z2K_RELEASE_LOC"):
+                self.updEnv("Z2K_RELEASE_LOC", sPubToolPath)
+        elif sNormCurLoc == normAll(sPubToolPath):
+            if not os.environ.get("Z2K_INSTALL_LOC"):
+                self.updEnv("Z2K_INSTALL_LOC", sDefInstLoc)
+
         sZtkSetupLoc = osp.dirname(__file__)
-        updEnv("PYTHONPATH", sZtkSetupLoc, conflict="add")
+        self.updEnv("PYTHONPATH", sZtkSetupLoc, conflict="add")
         sys.path.append(sZtkSetupLoc)
 
-        updEnv("PYTHONPATH", self.pythonPath, conflict="add")
+        self.updEnv("PYTHONPATH", self.pythonPath, conflict="add")
         sys.path.append(self.pythonPath)
 
         sDavosPath = pathJoin(self.pythonPath, "davos-dev")
-        updEnv("PYTHONPATH", sDavosPath, conflict="add")
+        self.updEnv("PYTHONPATH", sDavosPath, conflict="add")
         sys.path.append(sDavosPath)
 
         sPytdPath = pathJoin(self.pythonPath, "pypeline-tool-devkit")
-        updEnv("PYTHONPATH", sPytdPath, conflict="add")
+        self.updEnv("PYTHONPATH", sPytdPath, conflict="add")
         sys.path.append(sPytdPath)
 
-        updEnv("PYTHONPATH", self.thirdPartyPath, conflict="add")
+        self.updEnv("PYTHONPATH", self.thirdPartyPath, conflict="add")
         sys.path.append(self.thirdPartyPath)
 
         #python site so PySide is found and DamProject can be instantiated
         sPy27SitePath = pathJoin(self.thirdPartyPath, "_python27_site")
         site.addsitedir(sPy27SitePath)
 
-        updEnv("ZOMB_NUKE_PATH", pathJoin(self.rootPath, "nuke"),
-               conflict=sConflictMode)
-        #updEnv("ZTK_ROOT_PATH", self.rootPath, conflict=sConflictMode)
-        updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict=sConflictMode)
-        updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict=sConflictMode)
+        self.updEnv("ZOMB_NUKE_PATH", pathJoin(self.rootPath, "nuke"),
+                    conflict=sConflictMode)
+        #self.updEnv("Z2K_ROOT_PATH", self.rootPath, conflict=sConflictMode)
+        self.updEnv("DAVOS_CONF_PACKAGE", "zomblib.config", conflict=sConflictMode)
+        self.updEnv("DAVOS_INIT_PROJECT", "zombillenium", conflict=sConflictMode)
 
         if "DEV_MODE_ENV" not in os.environ:
-            os.environ["DEV_MODE_ENV"] = str(int(self.isDev))
+            self.updEnv("DEV_MODE_ENV", str(int(self.isDev)), conflict=sConflictMode)
 
-    def loadAppEnvs(self, sAppPath):
+    def loadAppEnv(self, sAppPath):
 
         sAppPath = sAppPath.lower()
         sAppName, _ = osp.splitext(osp.basename(sAppPath))
@@ -164,59 +187,76 @@ class Z2kToolkit(object):
         # initializing an empty DamProject to have project's environ loaded
         from davos.core.damproject import DamProject
         proj = DamProject(os.environ["DAVOS_INIT_PROJECT"], empty=True)
-        proj.loadEnviron()
+        proj.loadEnviron(record=self.envRecord)
 
         if sAppName in ("maya", "mayabatch", "render", "mayapy"):
 
             print "\nLoading Maya environment:"
 
-            updEnv("MAYA_MODULE_PATH", pathJoin(self.rootPath, "maya_mods"),
+            self.updEnv("MAYA_MODULE_PATH", pathJoin(self.rootPath, "maya_mods"),
                    conflict="add")
 
             if "maya2016" in sAppPath:
 
-                updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_mayapy2016_site"),
+                self.updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_mayapy2016_site"),
                        conflict="add")
 
         elif sAppName in ("rv", "rvpush"):
 
             print "\nLoading RV environment:"
 
-            updEnv("MU_MODULE_PATH", pathJoin(self.rootPath, "RV", "Mu"),
+            self.updEnv("MU_MODULE_PATH", pathJoin(self.rootPath, "RV", "Mu"),
                    conflict="add")
 
         elif sAppName in ("python", "pythonw", "eclipse", "splitall"):
 
             print "\nLoading {} environment:".format(sAppName.capitalize())
 
-            updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
+            self.updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
                    conflict="add")
 
         elif sAppName.lower().startswith("nuke"):
 
             print "\nLoading {} environment:".format(sAppName.capitalize())
 
-            updEnv("NUKE_PATH", pathJoin(self.rootPath, "nuke"),
-                   conflict="add")
+            self.updEnv("NUKE_PATH", pathJoin(self.rootPath, "nuke"), conflict="add")
 
-#        if bNeedPy27Site:
-#            updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
-#                   conflict="add")
         print ""
+
+    def updEnv(self, sVar, in_value, **kwargs):
+        return updEnv(sVar, in_value, record=self.envRecord, **kwargs)
+
+    def installPath(self, location=""):
+
+        if location:
+            return pathJoin(location, BASE_NAME)
+
+        return osp.expandvars(pathJoin(os.environ["Z2K_INSTALL_LOC"], BASE_NAME))
 
     def install(self, sInstallPath):
 
+        return self._makeCopy(self.rootPath, sInstallPath)
+
+    def update(self):
+        
+        if self.isDev:
+            #print "Not able to update a dev toolkit."
+            return False
+        
+        sReleasePath = osp.expandvars(pathJoin(os.environ["Z2K_RELEASE_LOC"], BASE_NAME))
+        return self._makeCopy(sReleasePath, self.rootPath)
+
+    def _makeCopy(self, sReleasePath, sInstallPath):
+
         bBeenUpdated = False
 
-        # tools update
-        sReleasePath = getReleasePath()
-        if self.isDev:
-            print "Tools update from development environment !"
-            sReleasePath = self.rootPath
+        if normAll(sReleasePath) == normAll(sInstallPath):
+            raise EnvironmentError("Same source and destination path:\n    '{}' = '{}'\n"
+                                   .format(sReleasePath, sInstallPath))
 
-        if sReleasePath == sInstallPath:
-            print "Source == Destination !"
-            return bBeenUpdated
+        bToPublicTool = pathInPublicTools(sInstallPath)
+        if bToPublicTool:
+            raise EnvironmentError("Not allowed to copy to '{}'\n".format(sInstallPath))
 
         sAction = "Installing"
         if osp.exists(sInstallPath):
@@ -225,55 +265,64 @@ class Z2kToolkit(object):
         else:
             os.makedirs(sInstallPath)
 
-        print "\n{} Z2K Toolkit:\n'{}' -> '{}'".format(sAction, sReleasePath, sInstallPath)
+        sMsgFmt = "\n{} Z2K Toolkit:\n'{}' -> '{}'"
+        print sMsgFmt.format(sAction, sReleasePath, sInstallPath)
 
-        sOutput = self.makeCopy(sReleasePath, sInstallPath,
+        sOutput = self.roboCopy(sReleasePath, sInstallPath,
                                 dryRun=True, summary=False)
         if not sOutput.strip():
-            print "\nNo changes !"
+            print " No changes ! ".center(120, "-"), "\n"
             return False
 
-        self.makeCopy(sReleasePath, sInstallPath)
+        if not pathInUserProfile(sInstallPath):
+            res = raw_input("Continue ? (yes/no)")
+            if res != "yes":
+                return False
+
+        self.roboCopy(sReleasePath, sInstallPath)
 
         cleanUpPyc(sInstallPath)
 
-        print ("{} '{}'".format(sAction.replace("ing", "ed"), sInstallPath))
+        print sMsgFmt.format(sAction.replace("ing", "ed"), sReleasePath, sInstallPath)
 
         return bBeenUpdated
 
-    def release(self, location="", archive=None):
+    def release(self, sReleaseLoc, archive=None):
 
         if not self.isDev:
-            raise EnvironmentError("Sorry, you are not in DEV mode !")
+            raise EnvironmentError("Sorry, you are NOT in DEV environment !")
 
-        sDistroPath = getReleasePath(location)
+        sReleasePath = mkReleasePath(sReleaseLoc)
+        bToPublicTool = pathInPublicTools(sReleaseLoc)
+        if bToPublicTool:
+            bReleaseOk = True if os.environ.get("Z2K_RELEASE_ALLOWED") else False
+            if (not bReleaseOk):
+                raise EnvironmentError("Not allowed to release.")
 
-        bReleaseOk = True if os.environ.get("ZTK_RELEASE_ALLOWED") else False
-        if (not location) and (not bReleaseOk):
-            raise EnvironmentError("Release of '{}' NOT allowed."
-                                   .format(BASE_NAME))
+            if self.dirName != MASTER_NAME:
+                raise EnvironmentError("Not allowed to release\nfrom '{}' to '{}'\n"
+                                       .format(self.rootPath, sReleasePath))
 
-        if osp.exists(sDistroPath):
+        if osp.exists(sReleasePath):
             bUpdating = True
             sAction = "Updating"
         else:
             bUpdating = False
             sAction = "Creating"
-            os.makedirs(sDistroPath)
+            os.makedirs(sReleasePath)
 
         if bUpdating:
-            sOutput = self.makeCopy(self.rootPath, sDistroPath,
-                                    dryRun=True, summary=False)
+            sOutput = self.roboCopy(self.rootPath, sReleasePath, dryRun=True, summary=False)
             if not sOutput.strip():
-                print "\nNo changes !"
+                print " No changes ! ".center(120, "-"), "\n"
                 return True
 
-            print '\n', " changes ".center(120, "-")
+            print '\n', " Changes ".center(120, "-")
             print sOutput
 
             if archive is None:
                 print ("\n{} toolkit release:\n'{}' -> '{}'\n"
-                       .format(sAction, self.rootPath, sDistroPath))
+                       .format(sAction, self.rootPath, sReleasePath))
                 sChoiceList = ("yes", "no", "cancel")
                 res = ""
                 while res not in sChoiceList:
@@ -282,38 +331,39 @@ class Z2kToolkit(object):
                         return False
                 archive = True if res == "yes" else False
             else:
-                sNoArchive = "" if archive else " (without archive)"
+                sNoArchive = "" if archive else " (no archiving)"
                 print ("\n{} toolkit release{}:\n'{}' -> '{}'\n"
-                       .format(sAction, sNoArchive, self.rootPath, sDistroPath))
-                res = raw_input("Continue ? (yes/no)")
-                if res != "yes":
+                       .format(sAction, sNoArchive, self.rootPath, sReleasePath))
+                res = raw_input("Continue ? (ok/cancel)")
+                if res != "ok":
                     return False
 
             if archive:
                 sDate = datetime.now().strftime("%Y%m%d-%H%M")
-                sZipPath = pathJoin(sDistroPath + "_backups", BASE_NAME + "_" + sDate)
+                sZipPath = pathJoin(sReleasePath + "_backups", BASE_NAME + "_" + sDate)
 
-                cleanUpPyc(sDistroPath)
+                cleanUpPyc(sReleasePath)
 
                 logger = initLogger()
                 make_archive(sZipPath , "zip",
-                             root_dir=osp.dirname(sDistroPath),
-                             base_dir=pathJoin('.', osp.basename(sDistroPath)),
+                             root_dir=osp.dirname(sReleasePath),
+                             base_dir=pathJoin('.', osp.basename(sReleasePath)),
                              logger=logger, dry_run=False)
 
-        sOscarPath = pathJoin(sDistroPath, "maya_mods", "Toonkit_module",
+        sOscarPath = pathJoin(sReleasePath, "maya_mods", "Toonkit_module",
                               "Maya2016", "Standalones", "OSCAR")
 
         if not os.path.exists(sOscarPath):
             os.makedirs(sOscarPath)
 
-        res = self.makeCopy(self.rootPath, sDistroPath)
+        res = self.roboCopy(self.rootPath, sReleasePath)
 
-        enableToolSync()
+        if bToPublicTool:
+            enableToolSync()
 
         return res
 
-    def makeCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
+    def roboCopy(self, sSrcRepoPath, sDestPath, dryRun=False, summary=True):
 
         sMsg = ""
         for p in (sSrcRepoPath, sDestPath):
@@ -350,16 +400,46 @@ class Z2kToolkit(object):
 
         return callCmd(cmdLine, catchStdout=dryRun)
 
-    def launchApp(self, appArgs, launch=True):
+    def writeEnv(self, sFilePath):
 
-        if (not launch) and not appArgs:
+        if not self.envRecord:
+            print "WARNING: No environment was recorded !"
             return
+
+        with open(sFilePath, "w+") as f:
+
+            f.write("\n")
+
+            for k, v in self.envRecord.iteritems():
+
+                bMultiLine = False
+                if isinstance(v, basestring):
+
+                    v = re.sub(r"\$(\w+)", r"%\1%", osp.normpath(v))
+
+                    if "xgen" in k.lower():
+                        v = v.replace("\\", "/")
+
+                    if os.pathsep in v:
+                        bMultiLine = True
+                        sSep = ';^\n'
+                        v = sSep.join(v.split(os.pathsep))
+
+                if bMultiLine:
+                    sLine = '\nset ^"{}=^\n{}^"\n\n'.format(k, v)
+                else:
+                    sLine = 'set "{}={}"\n'.format(k, v)
+
+                f.write(sLine)
+
+    def _resolvedArgs(self, appArgs):
+
+        appArgs = list(osp.expandvars(a) for a in appArgs)
 
         sAppPath = osp.normpath(appArgs[0])
 
         if ("/" in sAppPath) or ("\\" in sAppPath):
             sAppPath = osp.expandvars(sAppPath)
-            sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
             if not osp.isfile(sAppPath):
                 raise EnvironmentError("No such application found: '{}'".format(sAppPath))
 
@@ -368,37 +448,31 @@ class Z2kToolkit(object):
             sAppPath = getAppPath(sAppName)
             appArgs[0] = sAppPath
 
-        try:
-            self.loadAppEnvs(sAppPath)
-        except Exception as e:
-            print ("\n\n!!!!!!! Failed loading '{}' environments: {}"
-                   .format(sAppName, e))
-            traceback.print_exc()
-            if raw_input("\nPress enter to continue anyway...") == "raise": raise
+        return appArgs
 
-#        startupinfo = subprocess.STARTUPINFO()
-#        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-#        subprocess.call(appArgs, startupinfo=startupinfo)
-
-        appArgs = tuple(osp.expandvars(a) for a in appArgs)
+    def launchApp(self, appArgs):
 
         if self.isDev:
             print appArgs
 
-        if launch:
-            return callCmd(appArgs)
+        status = callCmd(appArgs)
+        if status:
+            print "Application failed with status {}:".format(status)
+            pprint(appArgs)
+        return status
 
     def runFromCmd(self):
 
-        launcherArgs = [sys.executable] + sys.argv
-        updEnv("Z2K_LAUNCHER_CMD", subprocess.list2cmdline(launcherArgs))
         sSetupEnvToolPath = osp.normpath(sys.argv[0])
-        updEnv("Z2K_LAUNCH_SCRIPT", osp.normpath(sys.argv[0]))
+        self.updEnv("Z2K_LAUNCH_SCRIPT", osp.normpath(sys.argv[0]))
+
+        launcherArgs = [sys.executable] + sys.argv
+        self.updEnv("Z2K_LAUNCHER_CMD", subprocess.list2cmdline(launcherArgs))
 
         cmdArgs = sys.argv[1:]
         sAction = ""
-        sActionList = ("install", "launch", "release", "loadenv")
-        launchArgs = []
+        sActionList = ("install", "launch", "release", "envtofile", "loadenv")
+        appArgs = []
         if len(sys.argv) > 2:
             sAction = sys.argv[1]
             if sAction in ("launch", "loadenv"):
@@ -410,7 +484,7 @@ class Z2kToolkit(object):
                     cmdArgs.append(arg)
                     c += 1
 
-                launchArgs = sys.argv[c:]
+                appArgs = sys.argv[c:]
 
         parser = argparse.ArgumentParser()
         parser.add_argument("action", choices=sActionList)
@@ -418,73 +492,103 @@ class Z2kToolkit(object):
         ns = parser.parse_args(cmdArgs if not sAction else [sAction])
 
         sAction = ns.action
-        bLaunchOrLoadEnv = (sAction in ("launch", "loadenv"))
-        sNormRootPath = normAll(self.rootPath)
-        if (not self.isDev) and bLaunchOrLoadEnv:
-            if sNormRootPath != normAll(getLocalPath()):
-                raise EnvironmentError("Apps can ONLY be LAUNCHED from '{}' !"
-                                       .format(osp.normpath(getLocalPath())))
+        bLaunch = (sAction == "launch")
+        bWriteEnv = (sAction == "envtofile")
 
-        if osp.normcase(self.dirName) == osp.normcase(BASE_NAME + "_master"):
+        sNormRootPath = normAll(self.rootPath)
+        if (not self.isDev) and (bLaunch or bWriteEnv):
+            if not pathInUserProfile(sNormRootPath):
+                raise EnvironmentError("Apps can NOT be LAUNCHED from '{}' !"
+                                       .format(osp.normpath(self.rootPath)))
+
+        if osp.normcase(self.dirName) == osp.normcase(MASTER_NAME):
             if sAction != "release":
                 raise EnvironmentError("You can NOT {} from '{}'. Only 'release' action allowed."
                                        .format(sAction, self.rootPath))
 
-        elif (sNormRootPath == normAll(getReleasePath(fail=False)) or
-              normAll("/zomb/tool/" + BASE_NAME) in sNormRootPath):
-            if sAction != "install":
-                raise EnvironmentError("You can NOT {} from '{}'. Only 'install' action allowed."
-                                       .format(sAction, self.rootPath))
+#        elif (sNormRootPath == normAll(mkReleasePath(fail=False)) or
+#              normAll("/zomb/tool/" + BASE_NAME) in sNormRootPath):
+#            if sAction != "install":
+#                raise EnvironmentError("You can NOT {} from '{}'. Only 'install' action allowed."
+#                                       .format(sAction, self.rootPath))
 
-        if bLaunchOrLoadEnv:
+        if (bLaunch or bWriteEnv):
+            if bWriteEnv:
+                parser.add_argument("filename", type=str)
+                parser.add_argument("--application", "-app", type=str)
+
             parser.add_argument("--update", "-u", type=int, default=1)
             parser.add_argument("--renew", "-r", type=int, default=0)
             ns = parser.parse_args(cmdArgs, ns)
 
+            if bWriteEnv and ns.application:
+                appArgs.append(ns.application)
+
             if ns.update:
-                bBeenUpdated = False
+                bUpdated = False
                 try:
-                    if (not self.isDev):
-                        bBeenUpdated = self.install(getLocalPath())
+                    bUpdated = self.update()
                 except Exception as err:
                     print ("\n\n!!!!!!! Failed updating toolkit: {}".format(err))
                     if raw_input("\nPress enter to continue...") == "raise": raise
 
-                #print "bBeenUpdated", bBeenUpdated
-                if bBeenUpdated and sAction == "launch":
+                #print "bUpdated", bUpdated
+                if bUpdated and bLaunch:
                     sMsg = """
 #===============================================================================
 # Tools updated so let's relaunch...
 #===============================================================================
                         """
                     relaunchArgs = ([sys.executable] + sys.argv[:c] +
-                                    ["--update", "0", "--renew", "1"] + launchArgs)
+                                    ["--update", "0", "--renew", "1"] + appArgs)
                     print sMsg
 #                    print sys.argv[:c]
-#                    print launchArgs
+#                    print appArgs
                     print relaunchArgs
 
-                    if sAction == "launch":
+                    if bLaunch:
                         return subprocess.call(relaunchArgs, shell=True)
 
             if ns.renew:
-                self.loadEnvs(self.customEnvs, replace=True)
+                self.envRecord.clear()
+                self.loadEnv(self.customEnvs, replace=True)
 
-            return self.launchApp(launchArgs, launch=(sAction == "launch"))
+            if bLaunch or (bWriteEnv and len(appArgs)):
+                appArgs = self._resolvedArgs(appArgs)
 
-        if sAction == "install":
-            p = getLocalPath()
-            self.install(p)
-            print normPath(p + sSetupEnvToolPath.split(BASE_NAME, 1)[1])
-            showPathInExplorer(normPath(p + sSetupEnvToolPath.split(BASE_NAME, 1)[1]),
-                               isFile=True, select=True)
+                sAppPath = appArgs[0]
+                try:
+                    self.loadAppEnv(sAppPath)
+                except Exception as e:
+                    sAppName = osp.basename(sAppPath).rsplit(".", 1)[0]
+                    print ("\n\n!!!!!!! Failed loading '{}' environments: {}"
+                           .format(sAppName, e))
+                    traceback.print_exc()
+                    if raw_input("\nPress enter to continue anyway...") == "raise": raise
 
-        elif sAction == "release":
-            parser.add_argument("--archive", "-a", type=int, default=None)
+            if bLaunch:
+                return self.launchApp(appArgs)
+            elif bWriteEnv:
+                return self.writeEnv(ns.filename)
+
+        elif sAction == "install":
             parser.add_argument("--location", "-l", type=str, default="")
             ns = parser.parse_args(cmdArgs, ns)
 
-            self.release(location=ns.location, archive=ns.archive)
+            sInstallPath = self.installPath(location=ns.location)
+            self.install(sInstallPath)
+
+            if (not self.isDev) and sys.stdin.isatty() and sys.stdout.isatty():
+                p = normPath(sInstallPath + sSetupEnvToolPath.split(BASE_NAME, 1)[1])
+                showPathInExplorer(p, isFile=True, select=True)
+
+        elif sAction == "release":
+            parser.add_argument("location", type=str)
+            parser.add_argument("--archive", "-a", type=int, default=None)
+            ns = parser.parse_args(cmdArgs, ns)
+
+            sReleaseLoc = osp.expandvars(ns.location)
+            self.release(sReleaseLoc, archive=ns.archive)
 
 CREATE_NO_WINDOW = 0x8000000
 
@@ -505,11 +609,12 @@ def callCmd(cmdArgs, catchStdout=False, shell=False, inData=None, noCmdWindow=Fa
     if catchStdout:
         outData, errData = pipe.communicate(inData)
         if errData and errData.strip():
-            print cmdArgs
+            pprint(cmdArgs)
             raise subprocess.CalledProcessError(errData)
         return outData
     else:
-        return pipe.wait()
+        status = pipe.wait()
+        return status
 
 def initLogger():
 
@@ -528,7 +633,7 @@ def initLogger():
 
     return logger
 
-def updEnv(sVar, in_value, conflict='replace'):
+def updEnv(sVar, in_value, conflict='replace', usingFunc=None, record=None):
 
     opts = ('add', 'replace', 'keep', 'fail')
     if conflict not in opts:
@@ -554,7 +659,13 @@ def updEnv(sVar, in_value, conflict='replace'):
             sAction = "upd"
 
     print sMsgFmt.format(sAction, sVar, in_value)
-    os.environ[sVar] = newValue
+    if usingFunc:
+        usingFunc(sVar, newValue)
+    else:
+        os.environ[sVar] = newValue
+
+    if record is not None:
+        record[sVar] = newValue
 
 def makePrivatePath(sPublicPath):
 
@@ -649,7 +760,7 @@ def enableToolSync(dryRun=False):
 
     if not dryRun:
         sToolPath = os.environ["ZOMB_TOOL_PATH"]
-        if not (os.environ.get("ZTK_RELEASE_ALLOWED") and 
+        if not (os.environ.get("Z2K_RELEASE_ALLOWED") and 
                 normAll(sToolPath).endswith(sToolDbPath)):
             print "\n", "Sync can NOT be enabled on {}".format(sToolPath)
             return False
