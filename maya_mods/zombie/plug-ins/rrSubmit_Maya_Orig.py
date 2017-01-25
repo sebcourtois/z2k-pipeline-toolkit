@@ -24,15 +24,9 @@ import maya.utils as mu
 import pymel.core as pm
 import copy
 from xml.etree.ElementTree import ElementTree, Element, SubElement
-from mtoa.core import createOptions
 
-from dminutes import finalLayout
-from pytd.util.sysutils import inDevMode
-reload (finalLayout)
 
-createOptions()
 
-#aiOpts = pm.ls(type='aiOptions')
 #Classes:
 # rrDelightRenderPass
 #    if 3delight is used for rendering, as 3delight has its own passes
@@ -45,7 +39,6 @@ createOptions()
 #
 #
 #
-
 
 def rrWriteLog(msg):
         UIMode=True
@@ -341,7 +334,6 @@ class rrMayaLayer:
 
             
     def CalcImageExtension(self):
-        mainFilePathS = cmds.file(q=True, sn = True)
         #renderMan:
         if (self.renderer=="renderMan"):
             rmanImages = maya.mel.eval('rman getPrefAsArray ImageFormatQuantizationTable;')
@@ -360,7 +352,7 @@ class rrMayaLayer:
             if (self.tempImageFormat==0):
                 self.tempImageExtension="iff"
             elif (self.tempImageFormat==0):
-                self.tempImageExtension="jpeg"
+                self.tempImageExtension="iff"
             elif (self.tempImageFormat==1):
                 self.tempImageExtension="exr"
             elif (self.tempImageFormat==2):
@@ -411,7 +403,7 @@ class rrMayaLayer:
             if (self.tempImageExtension=="qntpal"):
                 self.tempImageExtension="yuv"
         if (self.tempImageExtension=="jpeg"):
-            self.tempImageExtension="jpeg"
+            self.tempImageExtension="jpg"
         if (self.renderer=="maxwell"):
             if (self.tempImageFormat== 31):
                 self.tempImageExtension="exr"
@@ -547,22 +539,21 @@ class rrMayaLayer:
         self.imageFileName=self.imageFileName.replace("%e",self.tempImageExtension)
         self.imageFileName=self.imageFileName.replace("<Extension>",self.tempImageExtension)
 
-
         isUNC= (len(self.imageFileName)>2 and (self.imageFileName[0]=="/") and (self.imageFileName[1]=="/"))
         self.imageFileName=self.imageFileName.replace("//","/")
         if (isUNC):
             self.imageFileName='/'+self.imageFileName
-        if ((self.renderer=="arnold")  and (cmds.getAttr('defaultArnoldRenderOptions.aovMode')!=0) and (cmds.getAttr('defaultArnoldDriver.mergeAOVs')!=1) and (self.imageFileName.find("<Channel>")<0)):
+        if ((self.renderer=="arnold") and (cmds.getAttr('defaultArnoldRenderOptions.aovMode')!=0) and (cmds.getAttr('defaultArnoldDriver.mergeAOVs')!=1) and (self.imageFileName.find("<Channel>")<0)):
             if (len(os.path.dirname(self.imageFileName))>0):
                 self.imageFileName=os.path.dirname(self.imageFileName)+"/<Channel>/"+os.path.basename(self.imageFileName)
             else:
                 self.imageFileName="<Channel>/"+self.imageFileName
 
-
+                
         if (self.imageFileName.find("<Channel>")>=0):
-    #            if (self.renderer=="mentalRay") :
-    #                self.channelName="MasterBeauty"
-            if (self.renderer=="arnold"):
+            if (self.renderer=="mentalRay") :
+                self.channelName="MasterBeauty"
+            elif (self.renderer=="arnold"):
                 self.channelName="beauty"
             else:
                 self.imageFileName=self.imageFileName.replace("<Channel>","")
@@ -591,47 +582,28 @@ class rrMayaLayer:
             self.imageFileName=os.path.dirname(self.imageFileName)+"<Layer>/"+os.path.basename(self.imageFileName)
 
 
-        # #Now add the base path to the file output
-        # self.imageDir= cmds.workspace(fre="images")
-        # if (self.renderer=="renderMan"):
-        #     self.imageDir= maya.mel.eval('rman workspace GetDir rfmImages 1;')
+        #Now add the base path to the file output
+        self.imageDir= cmds.workspace(fre="images")
+        if (self.renderer=="renderMan"):
+            self.imageDir= maya.mel.eval('rman workspace GetDir rfmImages 1;')
         
-        # isRelative=True
-        # if (len(self.imageFileName)>1):
-        #     self.imageFileName=self.imageFileName.replace("\\","/")
-        #     if ((self.imageFileName[0]=="/" and (self.imageFileName[1]!="<")) or (self.imageFileName[1]==":")):
-        #         isRelative=False
-        #         self.imageDir=""
-        # if (isRelative):
-        #     #print ("rrSubmit - getImageOut - imageFileName isRelative, add "+self.imageDir)
-        #     if (len(self.imageDir)>1):                
-        #         self.imageDir=self.imageDir.replace("\\","/")
-        #         if ((self.imageDir[0]=="/") or (self.imageDir[1]==":")):
-        #             isRelative=False
-        # if (isRelative):
-        #     #print ("rrSubmit - getImageOut - imageFileName imageDir, add "+DatabaseDir)
-        #     self.imageDir=DatabaseDir+self.imageDir
-        #     self.imageDir+="/"
-
-
-        mainFilePathS = pm.sceneName()
-        
-        try:
-            versionNumber = os.path.basename(mainFilePathS).split("-")[1]
-            versionNumber = versionNumber.split(".")[0]
-        except:
-            versionNumber = "v000"
-
-        if "06_finalLayout" in mainFilePathS:
-                finalLayout.createNukeBatch()
-                self.imageDir = os.path.dirname(mainFilePathS)+"/render-"+versionNumber
-        elif "02_layout" in mainFilePathS:
-                self.imageDir = os.path.dirname(mainFilePathS) + "/render-" + versionNumber
-        elif "07_fx3d" in mainFilePathS:
-            self.imageDir = os.path.dirname(mainFilePathS) + "/work/render/render-" + versionNumber
-        elif "08_render" in mainFilePathS:
-            self.imageDir = os.path.dirname(mainFilePathS) + "/render"
-
+        isRelative=True
+        if (len(self.imageFileName)>1):
+            self.imageFileName=self.imageFileName.replace("\\","/")
+            if ((self.imageFileName[0]=="/" and (self.imageFileName[1]!="<")) or (self.imageFileName[1]==":")):
+                isRelative=False
+                self.imageDir=""
+        if (isRelative):
+            #print ("rrSubmit - getImageOut - imageFileName isRelative, add "+self.imageDir)
+            if (len(self.imageDir)>1):                
+                self.imageDir=self.imageDir.replace("\\","/")
+                if ((self.imageDir[0]=="/") or (self.imageDir[1]==":")):
+                    isRelative=False
+        if (isRelative):
+            #print ("rrSubmit - getImageOut - imageFileName imageDir, add "+DatabaseDir)
+            self.imageDir=DatabaseDir+self.imageDir
+            self.imageDir+="/"
+            
 
         #mentalcoreGlobals do it differently:
         if (cmds.objExists ( "mentalcoreGlobals" ) and (int(cmds.getAttr ('mentalcoreGlobals.enable'))==1 )):
@@ -950,15 +922,16 @@ class rrMayaLayer:
                                 self.tempCamRenderable[c]=True
                             else:
                                 self.tempCamRenderable[c]=False
-
         if (self.renderer=="renderManRIS"): 
             self.renderer = "renderMan"
-
-        self.nbRenderableCams = 0
+        self.nbRenderableCams=0;
         for c in range(0, len(self.tempCamNames)):
             if (self.tempCamRenderable[c]):
-                self.nbRenderableCams=self.nbRenderableCams+1
+                self.nbRenderableCams=self.nbRenderableCams+1;
 
+
+
+            
     # gather all information from a layer
     def getLayerSettings(self,Layer,DatabaseDir,SceneName,MayaVersion,isLayerRendering):
         #print ("rrSubmit - getLayerSettings '"+ Layer +"'")
@@ -1096,20 +1069,17 @@ class rrMayaLayer:
 
         #If there are more than one rederable cam, then RR should not set the -cam flag at render time
         if (self.nbRenderableCams>1):
-#            for c in range(0, len(self.tempCamRenderable)):
-#                if (self.tempCamRenderable[c]):
-#                    self.nbRenderableCams=self.nbRenderableCams+1
-#                    transformNode = cmds.listRelatives(self.tempCamNames[c],parent=True)
-#                    transformNode=transformNode[0]
-#                    if (self.camera!=transformNode):
-#                        self.channelFileName.append(self.imageFileName.replace('<Camera>',transformNode))
-#                        self.channelExtension.append(self.imageExtension)
-#                        self.maxChannels +=1
-#            self.camera=self.camera
-            if(self.camera == 'stereo_rig:cam_left'):
-                self.camera = 'stereo_rig:cam_left'
-            else:
-                self.camera = 'stereo_rig:cam_right'
+            for c in range(0, len(self.tempCamRenderable)):
+                if (self.tempCamRenderable[c]):
+                    self.nbRenderableCams=self.nbRenderableCams+1
+                    transformNode = cmds.listRelatives(self.tempCamNames[c],parent=True)
+                    transformNode=transformNode[0]
+                    if (self.camera!=transformNode):
+                        self.channelFileName.append(self.imageFileName.replace('<Camera>',transformNode))
+                        self.channelExtension.append(self.imageExtension)
+                        self.maxChannels +=1
+            self.camera=self.camera + " MultiCam"
+            
 
         if (self.renderer == 'mentalRay') and (MayaVersion>=2009.0):
             self.addChannelsToLayer()
@@ -1133,6 +1103,10 @@ class rrMayaLayer:
 
 
 
+
+   
+                
+
 class rrSceneInfo:
     def __init__(self):
         self.MayaVersion=""
@@ -1140,9 +1114,8 @@ class rrSceneInfo:
         self.DatabaseDir=""
             
     def getSceneInfo(self):
-        #self.DatabaseDir=cmds.workspace( q=True, rd=True )
+        self.DatabaseDir=cmds.workspace( q=True, rd=True )
         self.SceneName=cmds.file( q=True, location=True )
-        self.DatabaseDir = os.path.dirname(self.SceneName)
         version = cmds.about(apiVersion=True)
         version=str(version/100)+"."+str(version % 100).zfill(2)
         self.MayaVersion=version
@@ -1414,45 +1387,13 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             sub.text = str(text).decode("utf8")
         return sub
 
-    def writeToXMLstart(self, submitOptions):
+    def writeToXMLstart(self, submitOptions ):
         rootElement = Element("rrJob_submitFile")
         rootElement.attrib["syntax_version"] = "6.0"
         self.subE(rootElement, "DeleteXML", "0")
-        #self.subE(rootElement, "SubmitterParameter", submitOptions)
+        self.subE(rootElement, "SubmitterParameter", submitOptions)
         # YOU CAN ADD OTHER NOT SCENE-INFORMATION PARAMETERS USING THIS FORMAT:
         # self.subE(jobElement,"SubmitterParameter","PARAMETERNAME=" + PARAMETERVALUE_AS_STRING)
-        mainFilePathS = pm.sceneName()
-        if "06_finalLayout" in mainFilePathS:
-            notesFromFL = 'Rendu FL_Art (beauty + Arlequin)'
-            self.subE(rootElement,"SubmitterParameter","DefaultClientGroup=" + '1~ALL')
-            self.subE(rootElement,"SubmitterParameter","CustomUserInfo=" + '1~0~{}'.format(notesFromFL))
-            self.subE(rootElement,"SubmitterParameter","CompanyProjectName=" + '0~FL--JOBS')
-            self.subE(rootElement,"SubmitterParameter","Color_ID=" + '1~10')
-            self.subE(rootElement, "SubmitterParameter", "PPMakeNukeFLmovies=" + '1~1')
-            isXgen = cmds.ls(type='xgmPalette')
-            if isXgen:
-                self.subE(rootElement,"SubmitterParameter","AllowLocalSceneCopy=" + '1~0')
-
-        elif "02_layout" in mainFilePathS:
-            notesFromFL = 'Rendu Layout (beauty + Arlequin)'
-            self.subE(rootElement, "SubmitterParameter", "DefaultClientGroup=" + '1~ALL')
-            self.subE(rootElement, "SubmitterParameter", "CustomUserInfo=" + '1~0~{}'.format(notesFromFL))
-            self.subE(rootElement, "SubmitterParameter", "CompanyProjectName=" + '0~LAY--JOBS')
-            self.subE(rootElement, "SubmitterParameter", "Color_ID=" + '1~10')
-            self.subE(rootElement, "SubmitterParameter", "PPSetupForLayoutScene=" + '1~1')
-            isXgen = cmds.ls(type='xgmPalette')
-            if isXgen:
-                self.subE(rootElement, "SubmitterParameter", "AllowLocalSceneCopy=" + '1~0')
-            
-        elif "07_fx3d" in mainFilePathS:
-            notesFromFX = ''
-            self.subE(rootElement,"SubmitterParameter","DefaultClientGroup=" + '1~FX')
-            self.subE(rootElement,"SubmitterParameter","CustomUserInfo=" + '1~0~{}'.format(notesFromFX))
-            self.subE(rootElement,"SubmitterParameter","CompanyProjectName=" + '0~FX--JOBS')
-            self.subE(rootElement,"SubmitterParameter","Priority=" + '1~51')
-            #self.subE(rootElement, "SubmitterParameter", "UserName=" + '0~{}'.format(os.environ['DAVOS_USER']))
-            self.subE(rootElement,"SubmitterParameter","Color_ID=" + '1~4')           
-    
         return rootElement
 
 
@@ -1514,7 +1455,6 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
     def rrWriteLayerToFile(self,rootElement,Layer, channel,sceneInfo,camera,LocalTextureFile):
         #print("\n\n")
         #print LayerID
-        mainFilePathS = pm.sceneName()
         jobElement = self.subE(rootElement, "Job", "")
         if ((sys.platform.lower() == "win32") or (sys.platform.lower() == "win64")):
             self.subE(jobElement,"SceneOS", "win")
@@ -1522,25 +1462,11 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             self.subE(jobElement,"SceneOS", "mac")
         else:
             self.subE(jobElement,"SceneOS", "lx")
-#        if inDevMode():
-#            self.subE(jobElement, "Software", "MayaZ2K_dev")
-#        else:
-        self.subE(jobElement, "Software", "Maya")
+        self.subE(jobElement,"Software", "Maya")
         self.subE(jobElement,"Version", sceneInfo.MayaVersion)
         self.subE(jobElement,"SceneName", sceneInfo.SceneName)
         self.subE(jobElement,"SceneDatabaseDir", sceneInfo.DatabaseDir)
-
-        if inDevMode():
-            self.subE(jobElement, "Renderer", "arnold_dev")
-        elif ("06_finalLayout" in mainFilePathS):
-            self.subE(jobElement,"Renderer", "arnold_wmark")
-        elif ("02_layout" in mainFilePathS):
-            self.subE(jobElement, "Renderer", "arnold_wmark")
-        elif "07_fx3d" in mainFilePathS :
-            self.subE(jobElement,"Renderer", "arnold")
-        else:
-            self.subE(jobElement, "Renderer", Layer.renderer)
-
+        self.subE(jobElement,"Renderer", Layer.renderer)
         self.subE(jobElement,"Camera",camera)
         self.subE(jobElement,"Layer", Layer.name)
         self.subE(jobElement,"Channel", channel)
@@ -1614,10 +1540,6 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
     #      Main function called
     ########################################
     def doIt(self, arglist):
-        pm.mel.unifiedRenderGlobalsWindow()
-        if pm.window("unifiedRenderGlobalsWindow", exists=True):
-            pm.deleteUI("unifiedRenderGlobalsWindow")
-
         print ("rrSubmit v 7.0.24")
 
         #check if we are in console batch mode
@@ -1628,7 +1550,7 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
         except:
             UIMode=False
             print ("We are running in batch mode")
-
+        
         # Ask for scene save:
         if (UIMode and (cmds.file(q=True, mf=True))):  # //Ignore ifcheck
             ConfirmResult=(cmds.confirmDialog(message="Scene should be saved before network rendering.\n Save scene?", button=['Yes','No','Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel'))
@@ -1671,7 +1593,7 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
                 return False
 
         #write layers into file:
-        print ("rrSubmit - write layers into file")
+        #print ("rrSubmit - write layers into file")
         self.writeAllLayers(UIMode)
 
         #call submitter
@@ -1707,6 +1629,7 @@ def initializePlugin(mobject):
         sys.stderr.write( "Failed to register RR commands\n" )
         raise
 
+
 # Uninitialize the script plug-in
 def uninitializePlugin(mobject):
     maya.mel.eval('global string $RRMenuCtrl;')
@@ -1717,5 +1640,10 @@ def uninitializePlugin(mobject):
     except:
         sys.stderr.write( "Failed to unregister RR commands\n" )
         raise
+
+
+
+
+
 
 

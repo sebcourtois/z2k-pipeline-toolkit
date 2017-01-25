@@ -13,5 +13,6 @@
 <path>/${PROJECT_DIR_NAME}/movSplitter</path>
 <path>/${PROJECT_DIR_NAME}/scripts</path>
 <path>/${PROJECT_DIR_NAME}/nuke/scripts</path>
+<path>/${PROJECT_DIR_NAME}/maya_mods/zombie/plug-ins</path>
 </pydev_pathproperty>
 </pydev_project>
