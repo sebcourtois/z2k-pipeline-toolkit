@@ -397,9 +397,16 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
                 each['file'].setValue(filePathNewS)
 
 
-        if "%V" in filePathExpS:
-            filePathExpLeftS = filePathExpS.replace("%V","left")
-            filePathExpRightS =filePathExpS.replace("%V","right")
+        if "%V" in filePathExpS or "/left/" in filePathExpS or "/right/" in filePathExpS:
+            print 'filePathExpS', filePathExpS
+            filePathExpLeftS = filePathExpS.replace(r"%V","left")
+            filePathExpRightS = filePathExpS.replace(r"%V","right").replace("/left/","/right/")
+            print 'filePathExpRightS', filePathExpRightS
+            #create empty right directory if missing
+            fileDirS = os.path.dirname(filePathExpRightS)
+            if not os.path.isdir(fileDirS):
+                os.makedirs(fileDirS)
+
 
             if createEmptyRightLayers:
                 if not os.path.isdir(os.path.dirname(filePathExpRightS)) and not  "/output/" in filePathExpRightS:
@@ -410,10 +417,6 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
                 setAsUnvalid(errorMsgS = "missing left directory",nodeNameS = newEachNameS)
                 unvalidNodeL.append(each)
                 continue
-
-            fileDirS = os.path.dirname(filePathExpRightS)
-            if not os.path.isdir(fileDirS):
-                os.makedirs(fileDirS)
 
 
             resultLeftD = getImgSeqInfo(filePathExpLeftS, nodeNameS= newEachNameS,gui=gui)
