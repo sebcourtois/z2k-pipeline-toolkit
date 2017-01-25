@@ -267,7 +267,7 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 0)
     elif  outputFormat == "exr":
         miscUtils.setAttrC("defaultArnoldDriver.aiTranslator", "exr", type="string")
-        miscUtils.setAttrC("defaultArnoldDisplayDriver.aiTranslator", "exr", type="string")
+        miscUtils.setAttrC("defaultArnoldDisplayDriver.aiTranslator", "maya", type="string")
         mc.setAttr("defaultArnoldDriver.mergeAOVs", 1)
 
 
@@ -291,17 +291,17 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     miscUtils.setAttrC("defaultArnoldRenderOptions.log_verbosity", 1)#warnig + info
     miscUtils.setAttrC("defaultArnoldRenderOptions.motion_blur_enable", 1)
 
-    if not mc.getAttr("defaultArnoldRenderOptions.motion_frames") == 0.25 :
-        pass
-    else:
-        miscUtils.setAttrC("defaultArnoldRenderOptions.motion_frames", 0.25)
+#    if not mc.getAttr("defaultArnoldRenderOptions.motion_frames") == 0.25 :
+#        pass
+#    else:
+    miscUtils.setAttrC("defaultArnoldRenderOptions.motion_frames", 0.25)
 
 
     if renderMode == 'render':
         miscUtils.setAttrC("defaultArnoldRenderOptions.AASamples", 8)
         miscUtils.setAttrC("defaultArnoldFilter.width",4)
         miscUtils.setAttrC("defaultArnoldFilter.aiTranslator","blackman_harris",type="string")
-        mc.setAttr("defaultArnoldRenderOptions.motion_steps", 5)
+        mc.setAttr("defaultArnoldRenderOptions.motion_steps", 2)
         resolution = 1998
 
     if renderMode == 'fx3d':
@@ -324,8 +324,9 @@ def setArnoldRenderOptionShot(outputFormat="exr", renderMode='finalLayout', gui=
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIGlossyDepth", 1)
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIDiffuseDepth", 0)
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIRefractionDepth", 4)
-    miscUtils.setAttrC("defaultArnoldRenderOptions.GIReflectionDepth", 2)
+    miscUtils.setAttrC("defaultArnoldRenderOptions.GIReflectionDepth", 1)
     miscUtils.setAttrC("defaultArnoldRenderOptions.GIVolumeDepth", 1)
+    miscUtils.setAttrC("defaultArnoldRenderOptions.GIVolumeSamples", 0)
     miscUtils.setAttrC("defaultArnoldRenderOptions.autoTransparencyDepth", 10)
 
     aspectRatio = 1.85

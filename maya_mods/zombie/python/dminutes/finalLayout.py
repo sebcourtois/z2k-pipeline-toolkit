@@ -143,6 +143,9 @@ def createRenderLayerLegacy(layerName="lay_finalLayout_00", setMeshCacheL=[],lig
     mc.editRenderLayerGlobals( currentRenderLayer=layerName )
     mc.editRenderLayerMembers(layerName,layerItemL)
     mc.editRenderLayerMembers(layerName,lightL)
+    sXgmPalList = mc.ls(type="xgmPalette")
+    if sXgmPalList:
+        mc.editRenderLayerMembers(layerName, sXgmPalList)
     mc.setAttr(layerName+".renderable", 1)
 
     txt= "Added '{:>3}' object(s) to '{}' render layer. Content of following 'set_meshCache': '{}' ".format(len(layerItemL), layerName,setMeshCacheL)

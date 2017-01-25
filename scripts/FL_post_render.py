@@ -64,7 +64,7 @@ if len(batchRenderMoviesL) == 2:
             sNewStatus = "rev"
 
         if sNewStatus:
-            proj.updateSgEntity(sgTask, sg_status_list=sNewStatus, sg_operators=sgOpe)
+            proj.updateSgEntity(sgTask, sg_status_list=sNewStatus, sg_operators=[sgOpe])
 
     if flartMovie:
         sSrcMovPath = pathJoin(sRenderDirPath, sShotName + '_beauty.mov')
@@ -83,7 +83,7 @@ if len(batchRenderMoviesL) == 2:
             sNewStatus = "rev"
 
         if sNewStatus:
-            proj.updateSgEntity(sgTask, sg_status_list=sNewStatus, sg_operators=sgOpe)
+            proj.updateSgEntity(sgTask, sg_status_list=sNewStatus, sg_operators=[sgOpe])
 
 else:
     print 'Nothing to do, no renderBatchMovies found!'

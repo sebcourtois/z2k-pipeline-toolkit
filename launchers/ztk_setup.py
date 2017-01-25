@@ -123,7 +123,7 @@ class Z2kToolkit(object):
 
         print "Tools repository"
         print " - path          : {0}".format(self.rootPath)
-        print " - configuration : {0}".format("Development" if self.isDev else "Production")
+        print " - configuration : {0}".format("DEV" if self.isDev else "Production")
         print ""
 
         sConflictMode = "replace" if replace else "keep"
@@ -554,6 +554,7 @@ class Z2kToolkit(object):
                 self.loadEnv(self.customEnvs, replace=True)
 
             if bLaunch or (bWriteEnv and len(appArgs)):
+
                 appArgs = self._resolvedArgs(appArgs)
 
                 sAppPath = appArgs[0]
