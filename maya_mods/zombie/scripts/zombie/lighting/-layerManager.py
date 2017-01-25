@@ -69,9 +69,11 @@ def buttonCreateFxsPass(*args):
 
 def buttonUtilsPass(*args):
 	layerManager.setUtlAovs()
+	layerManager.renderLeftCam()
 	layerManager.createCryptomatteLayer()
 	layerManager.setCryptoAov()
 	layerManager.createTextureRefs()
+
 
 
 #layer member

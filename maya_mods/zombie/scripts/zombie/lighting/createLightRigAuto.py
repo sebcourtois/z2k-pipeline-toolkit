@@ -5,6 +5,7 @@ from mtoa.core import createOptions
 createOptions()
 
 def createLightRigFromShot():
+    pm.select(d=1)
     hookL = pm.ls('shot|grp_character')[0].getChildren()
     for hook in hookL :
         if hook.split('_')[0] == 'hook' :

@@ -416,6 +416,47 @@ class LayerManager:
             txt = "no 'set_lyrX_visible' set found for layer '{}'".format(self.layerNameS)
             self.log.printL("e", txt)
 
+        dmnToonL = []
+        for eachGeo in setVisibleMemberL:
+            shdGroupL = mc.ls(mc.listHistory(eachGeo, future=True), type="shadingEngine")
+            if "eye" in eachGeo or "outline" in eachGeo:
+                pass
+            else:
+                if mc.getAttr(eachGeo + ".aiSelfShadows") != 1:
+                    mc.editRenderLayerAdjustment(eachGeo + ".aiSelfShadows")
+                    mc.setAttr(eachGeo + ".aiSelfShadows", 1)
+                if mc.getAttr(eachGeo + ".castsShadows") != 1:
+                    mc.editRenderLayerAdjustment(eachGeo + ".castsShadows")
+                    mc.setAttr(eachGeo + ".castsShadows", 1)
+
+            for eachSG in shdGroupL:
+                aiShaderL = mc.listConnections(eachSG + '.aiSurfaceShader', connections=False, source=True, destination=False)
+                if aiShaderL:
+                    if mc.nodeType(aiShaderL[0]) == "dmnToon":
+                        dmnToonL.append(aiShaderL[0])
+                    else:
+                        txt = "'{}' is not the right type, should be a 'dmnToon'".format(aiShaderL[0])
+                        self.log.printL("e", txt)
+
+        toDeleteL = mc.ls(self.visDmnToonS)
+        if toDeleteL:
+            mc.delete(toDeleteL)
+            print "deleting:", toDeleteL
+
+        mc.sets(name=self.visDmnToonS, empty=True)
+
+        if dmnToonL:
+            mc.sets(dmnToonL, forceElement=self.visDmnToonS)
+            for each in dmnToonL:
+                connectL = mc.listConnections(each + ".selfShadows", plugs=True, source=True, destination=False)
+                if connectL:
+                    for eachConnection in connectL:
+                        mc.editRenderLayerAdjustment(each + ".selfShadows")
+                        mc.disconnectAttr (eachConnection, each + ".selfShadows")
+                    mc.setAttr(each + ".selfShadows", 1)
+                if mc.getAttr(each + ".selfShadows") != 1:
+                    mc.editRenderLayerAdjustment(each + ".selfShadows")
+                    mc.setAttr(each + ".selfShadows", 1)
         txt = "Created '{}' light pass from '{}'".format(layerNameS, layerNameOrigS)
         self.log.printL("i", txt)
         return dict(resultB=self.log.resultB, logL=self.log.logL)
@@ -563,8 +604,6 @@ def setUtlAovs() :
 
     pm.connectAttr('aiAOVDriverP32.aiTranslator', 'aiAOV_P.outputs[0].driver', f=True)
 
-#    changeAovFilter('N', 'default')
-#    changeAovFilter('Pref', 'default')
     if pm.objExists('aiAOV_dmn_specular') == True:
         pm.delete('aiAOV_dmn_specular')
 
@@ -595,4 +634,52 @@ def setUtl32Aovs() :
     #pm.editRenderLayerAdjustment('defaultArnoldDriver.halfPrecision')
     #pm.setAttr('defaultArnoldDriver.halfPrecision', 0)
 
+def renderLeftCam():
+    createOptions()
+    shotName = ''
+    if not pm.sceneName() == '' :
+        mainFilePathS = mc.file(q=True, sn=True)
+        shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
+    imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
+    if pm.window("unifiedRenderGlobalsWindow", exists=True):
+        pm.deleteUI("unifiedRenderGlobalsWindow")
+    if not '/left/<RenderLayer>/' in imageFileName or '/right/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
+        pm.setAttr('cam_' + shotName + ':cam_shot_default.renderable', 0)
+        pm.setAttr('stereo_rig:cam_stereoShape.renderable', 0)
+        pm.setAttr('stereo_rig:cam_stereoShape.farClipPlane', 100000)
+        pm.setAttr('stereo_rig:cam_rightShape.renderable', 0)
+        pm.setAttr('stereo_rig:cam_leftShape.renderable', 1)
+        if (pm.getAttr('stereo_rig:cam_leftShape.renderable')) :
+            pm.setAttr('defaultRenderGlobals.imageFilePrefix', '/left/<RenderLayer>/' + shotName, type='string')
+            print (u'Ready pour le rendu cam gauche')
+    else :
+        print (u'Merci, cam gauche already set, nothing to do !!')
+        pass
+    shotNameL = mainFilePathS.split('/')[2:-1]
+    aiAovPOutName = '//' + '/'.join(shotNameL) + '/render/left/<RenderLayer>_P32/' + shotName
+    pm.setAttr('aiAOVDriverP32.prefix', aiAovPOutName, type='string')
 
+def renderRightCam():
+    createOptions()
+    shotName = ''
+    if not pm.sceneName() == '' :
+        mainFilePathS = mc.file(q=True, sn=True)
+        shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
+    imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
+    if pm.window("unifiedRenderGlobalsWindow", exists=True):
+        pm.deleteUI("unifiedRenderGlobalsWindow")
+    if not '/right/<RenderLayer>/' in imageFileName or '/left/<RenderLayer>/' in imageFileName or len(imageFileName) == 14 :
+        pm.setAttr('cam_' + shotName + ':cam_shot_default.renderable', 0)
+        pm.setAttr('stereo_rig:cam_stereoShape.renderable', 0)
+        pm.setAttr('stereo_rig:cam_stereoShape.farClipPlane', 100000)
+        pm.setAttr('stereo_rig:cam_leftShape.renderable', 0)
+        pm.setAttr('stereo_rig:cam_rightShape.renderable', 1)
+        if (pm.getAttr('stereo_rig:cam_rightShape.renderable')) :
+            pm.setAttr('defaultRenderGlobals.imageFilePrefix', '/right/<RenderLayer>/' + shotName, type='string')
+            print (u'Ready pour le rendu cam droite')
+    else :
+        print (u'Merci, ok pour le rendu cam droite')
+        pass
+    shotNameL = mainFilePathS.split('/')[2:-1]
+    aiAovPOutName = '//' + '/'.join(shotNameL) + '/render/right/<RenderLayer>_P32/' + shotName
+    pm.setAttr('aiAOVDriverP32.prefix', aiAovPOutName, type='string')
