@@ -428,6 +428,7 @@ def exportCaches(**kwargs):
     sProcessLabel = kwargs.pop("processLabel", "Export caches")
     bDryRun = kwargs.pop("dryRun", False)
     bVerbose = kwargs.pop("verbose", True)
+    bFail = kwargs.pop("fail", True)
     frameRange = kwargs.pop("frameRange", None)
     if frameRange:
         frameRange = tuple(int(f) for f in frameRange)
@@ -570,10 +571,10 @@ def exportCaches(**kwargs):
 
         jobForRootDct[sGeoGrp] = jobInfos
 
-    if sErrorList:
-        raise RuntimeError("\n".join(sErrorList))
-
     exportInfos = {"jobs":jobForRootDct.values()}
+    
+    if sErrorList and bFail and (not mc.about(batch=True)):
+        raise RuntimeError("\n".join(sErrorList))
 
     if not bDryRun:
         if not bJsonOnly:
@@ -601,6 +602,12 @@ def exportCaches(**kwargs):
             publishedList.append(res)
 
         exportInfos["published"] = publishedList
+
+    if sErrorList and mc.about(batch=True):
+        if bFail:
+            raise RuntimeError("\n".join(sErrorList))
+        else:
+            exportInfos["errors"] = sErrorList
 
     return exportInfos
 

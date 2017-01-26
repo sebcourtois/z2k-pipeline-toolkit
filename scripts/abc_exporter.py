@@ -94,7 +94,8 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
 
     validShotList = list(o for o in validShotList if o)
     if len(validShotList) != len(srcScnList):
-        raise RuntimeError("number of shots and anim scenes must be the same.")
+        raise RuntimeError("number of shots and '{}' files must be the same."
+                           .format(sSrcRcName.replace("_scene", "")))
 
     loadDbNodes(proj, srcScnList)
 
@@ -112,7 +113,8 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
     validShotList = list(o for o in validShotList if o)
     srcScnList = list(o for o in srcScnList if o)
     if len(validShotList) != len(srcScnList):
-        raise RuntimeError("number of shots and anim scenes NOT the same.")
+        raise RuntimeError("number of shots and '{}' scenes NOT the same."
+                           .format(sSrcRcName.replace("_scene", "")))
 
     layoutScnList = []
     for i, animShot in enumerate(validShotList):

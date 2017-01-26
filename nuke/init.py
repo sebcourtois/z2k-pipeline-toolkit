@@ -27,6 +27,8 @@ reload(nkU)
 nuke.addOnScriptLoad(nkU.initNukeShot)
 nuke.addBeforeRender(nkU.createWriteDir)
 
+nuke.addOnScriptSave(nkU.createCompoBatchFiles)
+
 
 #sys.path.append(os.path.join(zombRootPath+"/zomb/tool",r"z2k-pipeline-toolkit\python\davos-dev"))
 #sys.path.append(os.path.join(zombRootPath+"/zomb/tool",r"z2k-pipeline-toolkit\python\pypeline-tool-devkit"))
