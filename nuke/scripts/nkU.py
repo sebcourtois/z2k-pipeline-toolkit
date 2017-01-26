@@ -228,10 +228,6 @@ class dataFile():
 
                 self.log.printL("i","setting 'first_frame={}', 'first_frame={}' : ".format(self.timeIn,self.timeOut))
 
-            if self.depDir != '06_finalLayout':
-                createNukeBatchMovie(gui=False)
-                createPublishBat(gui=False)
-
         else:
             txt = "one of the variable 'seq', 'shot', 'user' or 'dep' is undefined, could not set nuke proj environment var".format(self.fileNameS)
             self.log.printL("e", txt)
@@ -250,7 +246,10 @@ def initNukeShot(fileNameS= ""):
         print "warning: error while running 'initNukeShot()'"
 
 
-
+def createCompoBatchFiles():
+    if os.environ["DEP"] == '08_render' or os.environ["DEP"] == '10_compo':
+        createNukeBatchMovie(gui=False)
+        createPublishBat(gui=False)
 
 
 
