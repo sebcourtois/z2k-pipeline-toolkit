@@ -24,8 +24,9 @@ args = parser.parse_args()
 #sShotName = sTempRenderDirPath.split('/')[9]
 #sRenderDirPath = sTempRenderDirPath
 
-sUserName = args.aRenderDirPath.split('/')[5]
-sShotName = args.aRenderDirPath.split('/')[9]
+sRenderDirPathL = args.aRenderDirPath.split('/')
+sUserName = sRenderDirPathL[5]
+sShotName = sRenderDirPathL[9]
 
 sRenderDirPath = args.aRenderDirPath
 
