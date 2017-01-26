@@ -77,11 +77,24 @@ def loadPlugins():
 
             try:
                 pm.loadPlugin(sPlugin)
-            except Exception, e:
-                pm.displayWarning(e.message)
-                continue
+            except Exception as e:
+                pm.displayWarning(toStr(e))
             else:
                 pm.pluginInfo(sPlugin, e=True, autoload=True)
+
+    if os.environ.get("DAVOS_SITE", "") == "dmn_paris":
+        sPlugin = "rrSubmit_Maya_Z2K.py"
+        if not pm.pluginInfo(sPlugin, q=True, loaded=True):
+            try:
+                pm.loadPlugin(sPlugin)
+            except Exception as e:
+                pm.displayWarning(toStr(e))
+            else:
+                pm.pluginInfo(sPlugin, e=True, autoload=True)
+
+                sOldPlugin = "rrSubmit_Maya_2016+Z2K.py"
+                if pm.pluginInfo(sOldPlugin, q=True, loaded=True):
+                    pm.loadPlugin(sOldPlugin)
 
 class DavosSetup(ToolSetup):
 

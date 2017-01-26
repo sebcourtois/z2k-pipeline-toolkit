@@ -1,6 +1,8 @@
+
 import maya.cmds as mc
 #from mtoa.aovs import AOVInterface
 from mtoa import aovs
+from pprint import pprint
 
 import miscUtils
 import os
@@ -9,11 +11,10 @@ import shutil
 import maya.mel
 import pymel.core as pm
 
+from davos_maya.tool.general import infosFromScene
+
 from dminutes import rendering
 reload (rendering)
-from davos.core.damproject import DamProject
-
-from pprint import pprint
 
 def layerOverrideFLCustomShader(dmnToonList=[], dmnInput = "dmnMask08", layerName = "lay_finalLayout_00",gui= True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="layerOverrideFLCustomShader")
@@ -178,17 +179,12 @@ def fixDeferLoad():
     deferGeoL = mc.ls(type='aiStandIn')
     [mc.setAttr("%s.deferStandinLoad" % geo, 0) for geo in deferGeoL if not deferGeoL == None]
 
-def createNukeBatch(gui=True):
-    """
-    this  script creates a renderbatch.bat file in the private maya working dir, all the variable are set properly
-    a 'renderBatch_help.txt' is also created to help on addind render options to the render command
+def initTaskStatuses():
 
-    """
 #    sShotName = "sq6660_sh0050a"
-    sShotName = mc.getAttr('defaultRenderGlobals.imageFilePrefix')
-    proj = DamProject("zombillenium")
-    #shotgundb = proj._shotgundb
-    damShot = proj.getShot(sShotName)
+    scnInfos = infosFromScene()
+    damShot = scnInfos["dam_entity"]
+    proj = damShot.project
     sgTaskList = damShot.listSgTasks(moreFilters=[["content", "in", ("FL_Art", "Anim_MeshCache")]])
     #pprint(sgTaskList[0])
 
@@ -200,6 +196,12 @@ def createNukeBatch(gui=True):
         sNewStatus = "clc"
         proj.updateSgEntity(sgTaskList[0], sg_status_list=sNewStatus)
 
+def createNukeBatch(gui=True):
+    """
+    this  script creates a renderbatch.bat file in the private maya working dir, all the variable are set properly
+    a 'renderBatch_help.txt' is also created to help on addind render options to the render command
+
+    """
     log = miscUtils.LogBuilder(gui=gui, funcName="createNukeBatch")
 
     zombToolsPath = os.environ["ZOMB_TOOL_PATH"]
@@ -254,9 +256,7 @@ def createNukeBatch(gui=True):
 
     #finalCommand = r'"C:\Python27\python.exe" "C:\users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\setup_env_tools.py" launch %nuke% -x %nkscript% %argva% %argv0%'
     finalCommand = r'%nuke% -x %nkscript% %argva% %argv0%'
-    publish_movies = r'"C:\Python27\python.exe" "%USERPROFILE%\zombillenium\z2k-pipeline-toolkit\launchers\paris\setup_env_tools.py" launch "C:\Python27\python.exe" "%USERPROFILE%\zombillenium\z2k-pipeline-toolkit\scripts\FL_post_render.py" %argv0%'
     renderBatch_obj.write(finalCommand+"\n")
-    renderBatch_obj.write(publish_movies + "\n")
     renderBatch_obj.write("\n")
     #renderBatch_obj.write("pause\n")
     renderBatch_obj.close()
