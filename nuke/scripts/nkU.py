@@ -228,10 +228,6 @@ class dataFile():
 
                 self.log.printL("i","setting 'first_frame={}', 'first_frame={}' : ".format(self.timeIn,self.timeOut))
 
-            if self.depDir != '06_finalLayout':
-                createNukeBatchMovie(gui=False)
-                createPublishBat(gui=False)
-
         else:
             txt = "one of the variable 'seq', 'shot', 'user' or 'dep' is undefined, could not set nuke proj environment var".format(self.fileNameS)
             self.log.printL("e", txt)
@@ -250,7 +246,10 @@ def initNukeShot(fileNameS= ""):
         print "warning: error while running 'initNukeShot()'"
 
 
-
+def createCompoBatchFiles():
+    if os.environ["DEP"] == '08_render' or os.environ["DEP"] == '10_compo':
+        createNukeBatchMovie(gui=False)
+        createPublishBat(gui=False)
 
 
 
@@ -397,9 +396,16 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
                 each['file'].setValue(filePathNewS)
 
 
-        if "%V" in filePathExpS:
-            filePathExpLeftS = filePathExpS.replace("%V","left")
-            filePathExpRightS =filePathExpS.replace("%V","right")
+        if "%V" in filePathExpS or "/left/" in filePathExpS or "/right/" in filePathExpS:
+            print 'filePathExpS', filePathExpS
+            filePathExpLeftS = filePathExpS.replace(r"%V","left")
+            filePathExpRightS = filePathExpS.replace(r"%V","right").replace("/left/","/right/")
+            print 'filePathExpRightS', filePathExpRightS
+            #create empty right directory if missing
+            fileDirS = os.path.dirname(filePathExpRightS)
+            if not os.path.isdir(fileDirS):
+                os.makedirs(fileDirS)
+
 
             if createEmptyRightLayers:
                 if not os.path.isdir(os.path.dirname(filePathExpRightS)) and not  "/output/" in filePathExpRightS:
@@ -410,10 +416,6 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
                 setAsUnvalid(errorMsgS = "missing left directory",nodeNameS = newEachNameS)
                 unvalidNodeL.append(each)
                 continue
-
-            fileDirS = os.path.dirname(filePathExpRightS)
-            if not os.path.isdir(fileDirS):
-                os.makedirs(fileDirS)
 
 
             resultLeftD = getImgSeqInfo(filePathExpLeftS, nodeNameS= newEachNameS,gui=gui)
