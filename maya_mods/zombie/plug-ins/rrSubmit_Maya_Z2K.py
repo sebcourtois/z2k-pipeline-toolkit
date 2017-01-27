@@ -24,7 +24,7 @@ import maya.mel
 import pymel.core as pm
 #import copy
 from xml.etree.ElementTree import ElementTree, Element, SubElement
-#from mtoa.core import createOptions
+from mtoa.core import createOptions
 
 from pytd.util.sysutils import inDevMode
 from dminutes import finalLayout
@@ -1434,7 +1434,7 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
         if "06_finalLayout" in mainFilePathS:
             self.subE(rootElement, "SubmitterParameter", "PPFL-MakeQTMovies=" + '1~1')
             self.subE(rootElement, "SubmitterParameter", "PPFL-PublishQTMovies=" + '1~1')
-
+            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~0")
             self.subE(rootElement, "SubmitterParameter", "PreviewGamma2.2=" + '1~0')
             self.subE(rootElement, "SubmitterParameter", "DefaultClientGroup=" + '1~ALL')
             notesFromFL = 'Final Layout (beauty + arlequin)'
@@ -1449,6 +1449,7 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             self.subE(rootElement, "SubmitterParameter", "PPLAY-SetupCaches=" + '1~1')
             self.subE(rootElement, "SubmitterParameter", "PPFL-MakeQTMovies=" + '1~1')
             self.subE(rootElement, "SubmitterParameter", "PPFL-PublishQTMovies=" + '0~0')
+            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~1")
 
             self.subE(rootElement, "SubmitterParameter", "PreviewGamma2.2=" + '1~0')
             self.subE(rootElement, "SubmitterParameter", "DefaultClientGroup=" + '1~ALL')
@@ -1459,13 +1460,16 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             self.subE(rootElement, "SubmitterParameter", "AllowLocalSceneCopy=" + '1~0')
 
         elif "07_fx3d" in mainFilePathS:
+            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~1")
+            self.subE(rootElement, "SubmitterParameter", "DefaultClientGroup=1~FX")
             notesFromFX = ''
-            self.subE(rootElement, "SubmitterParameter", "DefaultClientGroup=" + '1~FX')
             self.subE(rootElement, "SubmitterParameter", "CustomUserInfo=" + '1~0~{}'.format(notesFromFX))
             self.subE(rootElement, "SubmitterParameter", "CompanyProjectName=" + '0~FX--JOBS')
             self.subE(rootElement, "SubmitterParameter", "Priority=" + '1~51')
             #self.subE(rootElement, "SubmitterParameter", "UserName=" + '0~{}'.format(os.environ['DAVOS_USER']))
             self.subE(rootElement, "SubmitterParameter", "Color_ID=" + '1~4')
+        else:
+            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~1")
 
         return rootElement
 
@@ -1701,10 +1705,11 @@ def initializePlugin(mobject):
         maya.mel.eval('menuItem -p $RRZombMenu -l "Submit scene - Local Textures" -c "rrSubmitZomb false true";')
         maya.mel.eval('menuItem -p $RRZombMenu -l "Submit scene - Simulate PhoenixFD object" -c "rrSubmitZomb false false true";')
         maya.mel.eval('menuItem -p $RRZombMenu -l "Submit scene - Export selected object as alembic cache" -c "rrSubmitZomb false false false true";')
-    else:
-        print ("We are running in batch mode")
 
-    #createOptions()
+    try:
+        createOptions()
+    except RuntimeError as e:
+        sys.stderr.write("ERROR: {}\n".format(e))
 
     mplugin = OpenMayaMPx.MFnPlugin(mobject)
     try:
