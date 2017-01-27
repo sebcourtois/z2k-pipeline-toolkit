@@ -1633,10 +1633,10 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
 
         #check if we are in console batch mode
         UIMode = (not cmds.about(batch=True))
-#        if UIMode:
-#            pm.mel.unifiedRenderGlobalsWindow()
-#            if pm.window("unifiedRenderGlobalsWindow", exists=True):
-#                pm.deleteUI("unifiedRenderGlobalsWindow")
+        if UIMode:
+            pm.mel.unifiedRenderGlobalsWindow()
+            if pm.window("unifiedRenderGlobalsWindow", exists=True):
+                pm.deleteUI("unifiedRenderGlobalsWindow")
 
         # Ask for scene save:
         if (UIMode and (cmds.file(q=True, mf=True))):  # //Ignore ifcheck
