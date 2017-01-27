@@ -1633,10 +1633,6 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
 
         #check if we are in console batch mode
         UIMode = (not cmds.about(batch=True))
-        if UIMode:
-            pm.mel.unifiedRenderGlobalsWindow()
-            if pm.window("unifiedRenderGlobalsWindow", exists=True):
-                pm.deleteUI("unifiedRenderGlobalsWindow")
 
         # Ask for scene save:
         if (UIMode and (cmds.file(q=True, mf=True))):  # //Ignore ifcheck
@@ -1652,6 +1648,11 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             if (UIMode):
                 cmds.confirmDialog(message="Scene was never saved!\n", button=['Abort'])
             return True
+
+        if UIMode:
+            pm.mel.unifiedRenderGlobalsWindow()
+            if pm.window("unifiedRenderGlobalsWindow", exists=True):
+                pm.deleteUI("unifiedRenderGlobalsWindow")
 
         #check if this function was called with parameters:
         self.multiCameraMode = False
