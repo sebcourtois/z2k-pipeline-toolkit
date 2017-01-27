@@ -247,6 +247,7 @@ def initNukeShot(fileNameS= ""):
 
 
 def createCompoBatchFiles():
+    initNukeShot()
     if os.environ["DEP"] == '08_render' or os.environ["DEP"] == '10_compo':
         createNukeBatchMovie(gui=False)
         createPublishBat(gui=False)
