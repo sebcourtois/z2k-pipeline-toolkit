@@ -11,23 +11,25 @@
 #
 ######################################################################
 
-import platform
+#import platform
 import random
 import os
 import sys
-import types
-import maya.OpenMaya as OpenMaya
+#import types
+#import maya.OpenMaya as OpenMaya
 import maya.OpenMayaMPx as OpenMayaMPx
 import maya.cmds as cmds
 import maya.mel
-import maya.utils as mu
+#import maya.utils as mu
 import pymel.core as pm
-import copy
+#import copy
 from xml.etree.ElementTree import ElementTree, Element, SubElement
 from mtoa.core import createOptions
 
 from pytd.util.sysutils import inDevMode
+from dminutes import finalLayout
 
+reload(finalLayout)
 
 #aiOpts = pm.ls(type='aiOptions')
 #Classes:
@@ -362,7 +364,6 @@ class rrMayaLayer:
 
 
     def CalcImageExtension(self):
-        mainFilePathS = cmds.file(q=True, sn=True)
         #renderMan:
         if (self.renderer == "renderMan"):
             rmanImages = maya.mel.eval('rman getPrefAsArray ImageFormatQuantizationTable;')
@@ -644,12 +645,12 @@ class rrMayaLayer:
             versionNumber = "v000"
 
         if "06_finalLayout" in mainFilePathS:
-                from dminutes import finalLayout
-                reload(finalLayout)
-                finalLayout.createNukeBatch()
-                self.imageDir = os.path.dirname(mainFilePathS) + "/render-" + versionNumber
+            finalLayout.initTaskStatuses()
+            finalLayout.createNukeBatch()
+            self.imageDir = os.path.dirname(mainFilePathS) + "/render-" + versionNumber
         elif "02_layout" in mainFilePathS:
-                self.imageDir = os.path.dirname(mainFilePathS) + "/render-" + versionNumber
+            finalLayout.createNukeBatch()
+            self.imageDir = os.path.dirname(mainFilePathS) + "/render-" + versionNumber
         elif "07_fx3d" in mainFilePathS:
             self.imageDir = os.path.dirname(mainFilePathS) + "/work/render/render-" + versionNumber
         elif "08_render" in mainFilePathS:
@@ -1406,48 +1407,71 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
     def writeToXMLstart(self, submitOptions):
         rootElement = Element("rrJob_submitFile")
         rootElement.attrib["syntax_version"] = "6.0"
+
         self.subE(rootElement, "DeleteXML", "0" if inDevMode() else "1")
         #self.subE(rootElement, "SubmitterParameter", submitOptions)s
         # YOU CAN ADD OTHER NOT SCENE-INFORMATION PARAMETERS USING THIS FORMAT:
         # self.subE(jobElement,"SubmitterParameter","PARAMETERNAME=" + PARAMETERVALUE_AS_STRING)
 
-        self.subE(rootElement, "SubmitterParameter", "PreviewGamma2.2=" + '1~0')
-
         if cmds.about(batch=True):
             self.subE(rootElement, "SubmitterParameter", "SendJobDisabled=" + '1~1')
 
+        sScriptList = ("PPDeletebroken",
+                       "PPDeleteJob",
+                       "PPShotgun-Quicktime",
+                       "PPShotgun-updateStats",
+                       "PPShotgun-pre-update",
+                       "PPShotgun-AddPreview",
+                       "PPAssembleTiles",
+                       "PPEXRCropchannels",
+                       "PPCreateFullVideo",
+                       "PPCreateSmallVideo",
+                       "PPJob-MakeVideo-proreshq")
+        for sScript in sScriptList:
+            self.subE(rootElement, "SubmitterParameter", sScript + "=" + '0~0')
+
         mainFilePathS = pm.sceneName()
         if "06_finalLayout" in mainFilePathS:
-            notesFromFL = 'Rendu FL_Art (beauty + Arlequin)'
+            self.subE(rootElement, "SubmitterParameter", "PPFL-MakeQTMovies=" + '1~1')
+            self.subE(rootElement, "SubmitterParameter", "PPFL-PublishQTMovies=" + '1~1')
+            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~0")
+            self.subE(rootElement, "SubmitterParameter", "PreviewGamma2.2=" + '1~0')
             self.subE(rootElement, "SubmitterParameter", "DefaultClientGroup=" + '1~ALL')
+            notesFromFL = 'Final Layout (beauty + arlequin)'
             self.subE(rootElement, "SubmitterParameter", "CustomUserInfo=" + '1~0~{}'.format(notesFromFL))
             self.subE(rootElement, "SubmitterParameter", "CompanyProjectName=" + '0~FL--JOBS')
             self.subE(rootElement, "SubmitterParameter", "Color_ID=" + '1~10')
-            self.subE(rootElement, "SubmitterParameter", "PPMakeNukeFLmovies=" + '1~1')
             isXgen = cmds.ls(type='xgmPalette')
             if isXgen:
                 self.subE(rootElement, "SubmitterParameter", "AllowLocalSceneCopy=" + '1~0')
 
         elif "02_layout" in mainFilePathS:
-            notesFromFL = 'Rendu Layout (beauty + Arlequin)'
+            self.subE(rootElement, "SubmitterParameter", "PPLAY-SetupCaches=" + '1~1')
+            self.subE(rootElement, "SubmitterParameter", "PPFL-MakeQTMovies=" + '1~1')
+            self.subE(rootElement, "SubmitterParameter", "PPFL-PublishQTMovies=" + '0~0')
+            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~1")
+
+            self.subE(rootElement, "SubmitterParameter", "PreviewGamma2.2=" + '1~0')
             self.subE(rootElement, "SubmitterParameter", "DefaultClientGroup=" + '1~ALL')
+            notesFromFL = 'Layout (beauty + arlequin)'
             self.subE(rootElement, "SubmitterParameter", "CustomUserInfo=" + '1~0~{}'.format(notesFromFL))
             self.subE(rootElement, "SubmitterParameter", "CompanyProjectName=" + '0~LAY--JOBS')
             self.subE(rootElement, "SubmitterParameter", "Color_ID=" + '1~10')
-            self.subE(rootElement, "SubmitterParameter", "PPSetupForLayoutScene=" + '1~1')
             self.subE(rootElement, "SubmitterParameter", "AllowLocalSceneCopy=" + '1~0')
 
         elif "07_fx3d" in mainFilePathS:
+            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~1")
+            self.subE(rootElement, "SubmitterParameter", "DefaultClientGroup=1~FX")
             notesFromFX = ''
-            self.subE(rootElement, "SubmitterParameter", "DefaultClientGroup=" + '1~FX')
             self.subE(rootElement, "SubmitterParameter", "CustomUserInfo=" + '1~0~{}'.format(notesFromFX))
             self.subE(rootElement, "SubmitterParameter", "CompanyProjectName=" + '0~FX--JOBS')
             self.subE(rootElement, "SubmitterParameter", "Priority=" + '1~51')
             #self.subE(rootElement, "SubmitterParameter", "UserName=" + '0~{}'.format(os.environ['DAVOS_USER']))
             self.subE(rootElement, "SubmitterParameter", "Color_ID=" + '1~4')
+        else:
+            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~1")
 
         return rootElement
-
 
 
     def writeToXMLEnd(self, f, rootElement):
@@ -1609,10 +1633,6 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
 
         #check if we are in console batch mode
         UIMode = (not cmds.about(batch=True))
-        if UIMode:
-            pm.mel.unifiedRenderGlobalsWindow()
-            if pm.window("unifiedRenderGlobalsWindow", exists=True):
-                pm.deleteUI("unifiedRenderGlobalsWindow")
 
         # Ask for scene save:
         if (UIMode and (cmds.file(q=True, mf=True))):  # //Ignore ifcheck
@@ -1628,6 +1648,11 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             if (UIMode):
                 cmds.confirmDialog(message="Scene was never saved!\n", button=['Abort'])
             return True
+
+        if UIMode:
+            pm.mel.unifiedRenderGlobalsWindow()
+            if pm.window("unifiedRenderGlobalsWindow", exists=True):
+                pm.deleteUI("unifiedRenderGlobalsWindow")
 
         #check if this function was called with parameters:
         self.multiCameraMode = False
@@ -1656,7 +1681,7 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
                 return False
 
         #write layers into file:
-        print ("rrSubmitZomb - write layers into file")
+        print ("rrSubmitZomb - write layers into file.")
         self.writeAllLayers(UIMode)
 
         #call submitter
@@ -1664,7 +1689,7 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
         if UIMode:
             self.submitLayers()
 
-        self.setResult(self.TempFileName)
+        self.setResult(os.path.normpath(self.TempFileName))
 
 
 # Initialize the script plug-in
@@ -1681,10 +1706,11 @@ def initializePlugin(mobject):
         maya.mel.eval('menuItem -p $RRZombMenu -l "Submit scene - Local Textures" -c "rrSubmitZomb false true";')
         maya.mel.eval('menuItem -p $RRZombMenu -l "Submit scene - Simulate PhoenixFD object" -c "rrSubmitZomb false false true";')
         maya.mel.eval('menuItem -p $RRZombMenu -l "Submit scene - Export selected object as alembic cache" -c "rrSubmitZomb false false false true";')
-    else:
-        print ("We are running in batch mode")
 
-    #createOptions()
+    try:
+        createOptions()
+    except RuntimeError as e:
+        sys.stderr.write("ERROR: {}\n".format(e))
 
     mplugin = OpenMayaMPx.MFnPlugin(mobject)
     try:
