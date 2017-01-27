@@ -111,50 +111,50 @@ class dataFile():
         self.increment = ""
         self.stepS = ""
 
-        if os.path.isfile(self.fileNameS) or os.path.isdir(self.fileNameS):
-            fileNameL=self.fileNameS.split("/")
-            self.stepS = fileNameL[-1].split("-v")[0].split("_")[-1]
-            if "private" in fileNameL and "shot" in fileNameL:
-                fileDataL = self.fileNameS.split("private/")[-1].split("/")
-                self.location = "private"
-                self.user = fileDataL[0]
-                self.proj = fileDataL[1]
-                self.typ = fileDataL[2]
-                self.seq = fileDataL[3]
-                self.shot = fileDataL[4]
-                self.depDir = fileDataL[5]
-                self.depDirSub = fileDataL[6]
-                if "render-v"in fileDataL[6]:
-                    renderDir = fileDataL[6]
-                    if len(fileDataL)>7: self.passName = fileDataL[7]
-                    if len(fileDataL)>8: self.layerName = fileDataL[8]
-                    if len(fileDataL)>9: 
-                        self.imageName = fileDataL[9]
-                        self.imageFormat = fileDataL[9].split('.')[-1]
-                        self.imageNumber = fileDataL[9].split('.')[-2]
-                    self.ver = fileDataL[6].replace("render-v","")
+        #if os.path.isfile(self.fileNameS) or os.path.isdir(self.fileNameS):
+        fileNameL=self.fileNameS.split("/")
+        self.stepS = fileNameL[-1].split("-v")[0].split("_")[-1]
+        if "private" in fileNameL and "shot" in fileNameL:
+            fileDataL = self.fileNameS.split("private/")[-1].split("/")
+            self.location = "private"
+            self.user = fileDataL[0]
+            self.proj = fileDataL[1]
+            self.typ = fileDataL[2]
+            self.seq = fileDataL[3]
+            self.shot = fileDataL[4]
+            self.depDir = fileDataL[5]
+            self.depDirSub = fileDataL[6]
+            if "render-v"in fileDataL[6]:
+                renderDir = fileDataL[6]
+                if len(fileDataL)>7: self.passName = fileDataL[7]
+                if len(fileDataL)>8: self.layerName = fileDataL[8]
+                if len(fileDataL)>9: 
+                    self.imageName = fileDataL[9]
+                    self.imageFormat = fileDataL[9].split('.')[-1]
+                    self.imageNumber = fileDataL[9].split('.')[-2]
+                self.ver = fileDataL[6].replace("render-v","")
 
-                elif "compo-v" in fileDataL[6]:
-                    self.ver = fileDataL[6].split("compo-v")[-1].split(".")[0]
-                    self.increment = fileDataL[6].split("compo-v")[-1].split(".")[1]
-                elif "stereo-v" in fileDataL[6]:
-                    self.ver = fileDataL[6].split("stereo-v")[-1].split(".")[0]
-                    self.increment = fileDataL[6].split("stereo-v")[-1].split(".")[1]
-                elif "precomp-v" in fileDataL[6]:
-                    self.ver = fileDataL[6].split("precomp-v")[-1].split(".")[0]
-                    self.increment = fileDataL[6].split("precomp-v")[-1].split(".")[1]
-            if nuke.GUI:
-                damShot = proj.getShot(self.shot)
-                sgShot = damShot.getSgInfo()
-                duration = damutils.getShotDuration(sgShot)
-                self.timeIn = 101
-                self.timeOut = self.timeIn + (duration-1)
-            else:
-                self.timeIn = 0
-                self.timeOut = 0
+            elif "compo-v" in fileDataL[6]:
+                self.ver = fileDataL[6].split("compo-v")[-1].split(".")[0]
+                self.increment = fileDataL[6].split("compo-v")[-1].split(".")[1]
+            elif "stereo-v" in fileDataL[6]:
+                self.ver = fileDataL[6].split("stereo-v")[-1].split(".")[0]
+                self.increment = fileDataL[6].split("stereo-v")[-1].split(".")[1]
+            elif "precomp-v" in fileDataL[6]:
+                self.ver = fileDataL[6].split("precomp-v")[-1].split(".")[0]
+                self.increment = fileDataL[6].split("precomp-v")[-1].split(".")[1]
+        if nuke.GUI:
+            damShot = proj.getShot(self.shot)
+            sgShot = damShot.getSgInfo()
+            duration = damutils.getShotDuration(sgShot)
+            self.timeIn = 101
+            self.timeOut = self.timeIn + (duration-1)
         else:
-            txt = "is not a file: '{}'".format(self.fileNameS)
-            self.log.printL("e", txt)
+            self.timeIn = 0
+            self.timeOut = 0
+        #else:
+            #txt = "is not a file: '{}'".format(self.fileNameS)
+            #self.log.printL("e", txt)
 
 
     def printData(self):
@@ -247,6 +247,7 @@ def initNukeShot(fileNameS= ""):
 
 
 def createCompoBatchFiles():
+    initNukeShot()
     if os.environ["DEP"] == '08_render' or os.environ["DEP"] == '10_compo':
         createNukeBatchMovie(gui=False)
         createPublishBat(gui=False)
