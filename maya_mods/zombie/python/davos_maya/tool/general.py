@@ -12,12 +12,13 @@ import pymel.core as pm
 import pymel.util as pmu
 
 from pytd.util.fsutils import pathResolve, normCase
-from davos.core.damproject import DamProject
 from pytd.util.qtutils import setWaitCursor
+from pytd.util.sysutils import toStr
+
+from davos.core.damproject import DamProject
 
 okValue = 'OK'
 noneValue = 'MISSING'
-
 
 def loadProject():
 
@@ -223,7 +224,7 @@ def listRelatedAssets(damShot, assetNames=None):
             try:
                 mrcVersFile = mrcFile.assertLatestFile(refresh=False, returnVersion=True)
             except EnvironmentError as e:
-                pm.displayWarning(e.message)
+                pm.displayWarning(toStr(e))
                 rcDct["status"] = "OUT OF SYNC"
 
             rcDct["version_file"] = mrcVersFile
@@ -242,14 +243,14 @@ def listRelatedAssets(damShot, assetNames=None):
                     try:
                         curVersFile = curRcFile.assertLatestFile(refresh=False, returnVersion=True)
                     except EnvironmentError as e:
-                        pm.displayWarning(e.message)
+                        pm.displayWarning(toStr(e))
 
                 iCurVers = curRcFile.currentVersion
                 if (not curVersFile) and iCurVers > 1:
                     v = iCurVers - 1
                     while (not curVersFile) and v > 0:
                         curVersFile = curRcFile.getVersionFile(v, refresh=False, dbNode=False)
-                        v = iCurVers - 1
+                        v -= 1
 
         astData["version_file"] = curVersFile
         astData["maya_rcs"] = astRcDct
