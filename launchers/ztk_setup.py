@@ -17,7 +17,8 @@ BASE_NAME = "z2k-pipeline-toolkit"
 MASTER_NAME = BASE_NAME+"_master"
 
 APPS_LOCATIONS = {
-"Z2K_RV_LOC":(r"C:\Program Files\Shotgun\RV-7.0.0\bin",
+"Z2K_RV_LOC":(r"C:\Program Files\Shotgun\RV-7.1.1\bin",
+              r"C:\Program Files\Shotgun\RV-7.0.0\bin",
               r"C:\Program Files\Shotgun\RV-7.0\bin",
               r"C:\Program Files\Shotgun\RV-6.2.8\bin",
               r"C:\Program Files\Shotgun\RV 6.2.6\bin",),
