@@ -1,0 +1,2 @@
+"C:\Python27\python.exe" "%~dp0\setup_env_tools.py" launch "C:\Python27\python.exe" "%~dp0\..\..\scripts\render_scene_builder.py" %*
+pause

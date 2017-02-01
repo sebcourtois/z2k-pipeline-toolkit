@@ -27,16 +27,16 @@ APPS_LOCATIONS = {
 
 APPS_INFOS = {
 "rv":{"app_loc_var":"Z2K_RV_LOC",
-      "app_bin_name":r"rv.exe",
+      "app_executable":r"rv.exe",
       },
 "rvpush":{"app_loc_var":"Z2K_RV_LOC",
-          "app_bin_name":r"rvpush.exe",
+          "app_executable":r"rvpush.exe",
           },
 "maya":{"app_loc_var":"Z2K_MAYA_LOC",
-        "app_bin_name":r"maya.exe",
+        "app_executable":r"maya.exe",
         },
 "mayabatch":{"app_loc_var":"Z2K_MAYA_LOC",
-             "app_bin_name":r"mayabatch.exe",
+             "app_executable":r"mayabatch.exe",
              },
 }
 
@@ -54,7 +54,7 @@ def getAppPath(sAppName):
     sNotFoundList = []
     for sLocPath in sLocPathList:
 
-        sAppPath = osp.normpath(osp.join(sLocPath, appInfos["app_bin_name"]))
+        sAppPath = osp.normpath(osp.join(sLocPath, appInfos["app_executable"]))
         if osp.isfile(sAppPath):
             sNotFoundList = []
             break
