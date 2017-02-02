@@ -475,17 +475,20 @@ def createTextureRefs():
         mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 0)
         for elem in alembicNodesL:
             polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
-            for each in polyTransfertL:
-                mc.setAttr(each.split('.')[0] + '.vertices', 0)
+            if polyTransfertL != None :
+                for each in polyTransfertL:
+                    mc.setAttr(each.split('.')[0] + '.vertices', 0)
 
         for chr in chrFilterL:
             print chr
-            mc.select(chr)
-            mc.CreateTextureReferenceObject()
+            if chrFilterL != None:
+                mc.select(chr)
+                mc.CreateTextureReferenceObject()
 
         for elem in alembicNodesL:
             polyTransfertL = mc.listConnections(elem + '.outPolyMesh', d=True, s=False, plugs=True)
-            for each in polyTransfertL:
+            if polyTransfertL != None :
+                for each in polyTransfertL:
                     mc.setAttr(each.split('.')[0] + '.vertices', 1)
 
         mc.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 1)

@@ -19,6 +19,8 @@ ENVS = {
         "ZOMB_MISC_LOC":"\\\\ZOMBILLENIUM\\ZOMBIDAMAS",
         "ZOMB_PRIVATE_LOC":"\\\\ZOMBILLENIUM\\ZOMBIDAMAS",
 
+        "ZOMB_OUTPUT_PATH_BIS":r"\\NEW_SERVER\output_bis",
+
         "ZOMB_TOOL_PATH":"\\\\ZOMBILLENIUM\\ZOMBIDAMAS\\zomb\\tool",
         "DAVOS_SITE":"dmn_angouleme",
 		

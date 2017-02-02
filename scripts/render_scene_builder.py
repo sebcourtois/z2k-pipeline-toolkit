@@ -9,17 +9,19 @@ from datetime import datetime
 import argparse
 import subprocess
 
-from pytd.util.sysutils import grouper, inDevMode
+from pytd.util.sysutils import grouper, inDevMode, toStr
 from pytd.util.logutils import confirmMessage
 from pytd.util.fsutils import pathJoin, pathSuffixed, jsonWrite
 
 from zomblib import damutils
 from zomblib.mayabatch import MayaBatch
-from zomblib.damutils import playbackTimesFromShot
+#from zomblib.damutils import playbackTimesFromShot
+from davos.core.utils import mkVersionSuffix
+from pprint import pprint
 
 LAUNCH_TIME = None
 
-def launch(sSrcRcName, shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
+def launch(shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
 
     global LAUNCH_TIME
 
@@ -60,55 +62,70 @@ def launch(sSrcRcName, shotNames=None, dryRun=False, timestamp=None, dialogParen
             sCmd = subprocess.list2cmdline(cmdArgs)
             print sCmd
 
-            sBatFilePath = makeOutputPath(sSrcRcName, "re_export.bat", timestamp=LAUNCH_TIME)
+            sBatFilePath = makeOutputPath("re_build.bat", timestamp=LAUNCH_TIME)
             with open(sBatFilePath, "w") as f:
                 f.writelines(("REM {}\n".format(s) for s in shotNames))
                 f.write(sCmd)
 
-    damShotList = list(proj.getShot(s) for s in shotNames)
-    sTitle = "EXPORT FROM " + sSrcRcName.upper()
+    sTitle = "RENDER SCENE BUILDER"
     print "\n", sTitle.center(len(sTitle) + 2).center(120, "#")
-    export(damShotList, sSrcRcName, dryRun=dryRun, prompt=bPrompt, sgShots=sgShots)
 
-def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
+    damShotList = list(proj.getShot(s) for s in shotNames)
+    build(damShotList, dryRun=dryRun, prompt=bPrompt, sgShots=sgShots)
+
+def build(damShotList, dryRun=False, prompt=True, sgShots=None,
+          sSrcRcName="finalLayout_scene", sDstRcName="rendering_scene"):
 
     proj = damShotList[0].project
     mayaBatch = MayaBatch()
     sgShotDct = {} if sgShots is None else dict((d["code"], d) for d in sgShots)
 
     sErrorList = []
-    srcScnList = []
+    pubScnDct = {}
     validShotList = damShotList[:]
     for i, damShot in enumerate(damShotList):
-        srcScn = None
-        try:
-            srcScn = damShot.getRcFile("public", sSrcRcName,
-                                          fail=True, dbNode=False)
-        except Exception as e:
-            sErrorList.append("{} - {}".format(damShot, e.message))
+        for sRcName in (sSrcRcName, sDstRcName):
+            pubScn = None
+            try:
+                pubScn = damShot.getRcFile("public", sRcName,
+                                            fail=True, dbNode=False)
+            except Exception as e:
+                sErrorList.append("{} - {}".format(damShot, toStr(e)))
+            else:
+                if not pubScn:
+                    sErrorList.append("{} - {}".format(damShot, "Could not get public {}"
+                                                       .format(sRcName.replace("_", " "))))
 
-        if srcScn:
-            srcScnList.append(srcScn)
-        else:
-            validShotList[i] = None
+            pubScnDct.setdefault(sRcName, []).append(pubScn)
 
-    validShotList = list(o for o in validShotList if o)
-    if len(validShotList) != len(srcScnList):
-        raise RuntimeError("number of shots and '{}' files must be the same."
-                           .format(sSrcRcName.replace("_scene", "")))
+    #validShotList = list(o for o in validShotList if o)
+    srcScnList = pubScnDct[sSrcRcName]
+    dstScnList = pubScnDct[sDstRcName]
 
-    loadDbNodes(proj, srcScnList)
+    loadDbNodes(proj, srcScnList + dstScnList)
 
-    for i, scnFile in enumerate(srcScnList):
+    for i, pubScn in enumerate(srcScnList):
         latestFile = None
-        try:
-            latestFile = _assertedLatestVersion(scnFile, refresh=False)
-        except Exception as e:
-            sErrorList.append(e.message)
+        if pubScn:
+            try:
+                latestFile = _assertedLatestVersion(pubScn, refresh=False)
+            except Exception as e:
+                sErrorList.append(toStr(e))
+            else:
+                if not latestFile:
+                    sMsg = "Could not get latest version of '{}'".format(pubScn.name)
+                    sErrorList.append("{} - {}".format(damShot, sMsg))
 
-        srcScnList[i] = latestFile
+        #print pubScn, latestFile
         if not latestFile:
             validShotList[i] = None
+            srcScnList[i] = None
+        else:
+            sVersSuffix = mkVersionSuffix(latestFile.versionFromName())
+            sSuffix = "".join((sVersSuffix, '-', "toRenderScene"))
+            privScn, _ = pubScn.copyToPrivateSpace(suffix=sSuffix, existing="replace",
+                                                     sourceFile=latestFile)
+            srcScnList[i] = privScn
 
     validShotList = list(o for o in validShotList if o)
     srcScnList = list(o for o in srcScnList if o)
@@ -116,40 +133,10 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
         raise RuntimeError("number of shots and '{}' scenes NOT the same."
                            .format(sSrcRcName.replace("_scene", "")))
 
-    layoutScnList = []
-    for i, animShot in enumerate(validShotList):
-
-        layInfoFile = animShot.getRcFile("public", "layoutInfo_file",
-                                         weak=True, dbNode=False)
-        if not layInfoFile.exists():
-            try:
-                layoutScn = animShot.getRcFile("public", "layout_scene",
-                                                fail=True, dbNode=False)
-            except Exception as e:
-                sErrorList.append("{} - {}".format(animShot, e.message))
-                continue
-
-            print ("{} - layout infos file not found and will be exported first."
-                   .format(animShot.name))
-
-            layoutScnList.append(layoutScn)
-
-    loadDbNodes(proj, layoutScnList)
-
-    for i, scnFile in enumerate(layoutScnList):
-        latestFile = None
-        try:
-            latestFile = _assertedLatestVersion(scnFile, refresh=False)
-        except Exception as e:
-            sErrorList.append(e.message)
-
-        layoutScnList[i] = latestFile
-
     if sgShotDct:
         sNoSgShotList = tuple(sh.name for sh in validShotList if sh.name not in sgShotDct)
     else:
         sNoSgShotList = tuple(sh.name for sh in validShotList)
-
 
     if sNoSgShotList:
         sgShotList = proj.listAllSgShots(moreFilters=[["code", "in", sNoSgShotList]],
@@ -158,19 +145,7 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
 
     #print sNoSgShotList, sgShotDct
 
-    numAnimShots = len(validShotList)
-
-    frameRangeList = numAnimShots * [None]
-    publishArgList = numAnimShots * [False]
-    for i, damShot in enumerate(validShotList):
-        sgShot = sgShotDct[damShot.name]
-        times = playbackTimesFromShot(sgShot)
-        #print damShot, sgShot, times
-        frameRange = (int(times["animationStartTime"]), int(times["animationEndTime"]))
-        frameRangeList[i] = frameRange
-
-        if damShot.sequence == "sq2000":
-            publishArgList[i] = True
+    numValidShots = len(validShotList)
 
     if sErrorList:
         sSep = "\nWARNING: "
@@ -178,18 +153,18 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
         print sErrMsg, '\n'
         prompt = True
 
-    numAllShots = len(damShotList)
+    numInShots = len(damShotList)
     if not validShotList:
-        sMsg = "None of the {} selected shots can be exported.".format(numAllShots)
+        sMsg = "None of the {} selected shots can be built.".format(numInShots)
         confirmMessage("SORRY !", sMsg, ["OK"])
         return
 
-    if numAnimShots != numAllShots:
-        sMsg = ("Only {}/{} shots will be exported.\n\nContinue to export anyway ?\n\n"
-                .format(numAnimShots, numAllShots))
+    if numValidShots != numInShots:
+        sMsg = ("Only {}/{} shots will be built.\n\nContinue to build anyway ?\n\n"
+                .format(numValidShots, numInShots))
         prompt = True
     else:
-        sMsg = "Export these {} shots ?\n\n".format(numAnimShots)
+        sMsg = "Build these {} shots ?\n\n".format(numValidShots)
 
     for grp in grouper(6, (o.name for o in validShotList)):
         sMsg += ("\n" + " ".join(s for s in grp if s is not None))
@@ -199,23 +174,21 @@ def export(damShotList, sSrcRcName, dryRun=False, prompt=True, sgShots=None):
         if res == "No":
             raise RuntimeWarning("Canceled !")
 
-    sCode = "from zomblib import damutils;reload(damutils);damutils.initProject()"
+    sCode = """
+from zomblib import damutils;reload(damutils);damutils.initProject()
+"""
     jobList = [{"title":"Batch initialization", "py_lines":[sCode], "fail":True}]
 
-    sExportFunc = "exportLayoutInfo(publish=True,dryRun={dryRun})"
-    jobArgsList = tuple(dict(scene=f.absPath(), dryRun=dryRun) for f in layoutScnList if f)
-    jobList.extend(generMayaJobs(sExportFunc, jobArgsList))
+#    sExportFunc = "exportCaches(selected=False, frameRange={frameRange}, dryRun={dryRun}, publish={publish})"
+#    jobArgsList = tuple(dict(scene=src.absPath(), dryRun=dryRun, frameRange=frm, publish=pub)
+#                        for src, frm, pub in izip(srcScnList, frameRangeList, publishArgList))
+#    jobList.extend(generMayaJobs(sExportFunc, jobArgsList))
 
-    sExportFunc = "exportCaches(selected=False, frameRange={frameRange}, dryRun={dryRun}, publish={publish})"
-    jobArgsList = tuple(dict(scene=src.absPath(), dryRun=dryRun, frameRange=frm, publish=pub)
-                        for src, frm, pub in izip(srcScnList, frameRangeList, publishArgList))
-    jobList.extend(generMayaJobs(sExportFunc, jobArgsList))
-
-    sJobFilePath = makeOutputPath(sSrcRcName, "maya_batch.json", timestamp=LAUNCH_TIME)
+    sJobFilePath = makeOutputPath("mayabatch.json", timestamp=LAUNCH_TIME)
     jsonWrite(sJobFilePath, jobList)
 
-    sLogFilePath = makeOutputPath(sSrcRcName, "maya_batch.log", timestamp=LAUNCH_TIME)
-    #sBatFilePath = makeOutputPath(sSrcRcName, "maya_batch.bat", timestamp=LAUNCH_TIME)
+    sLogFilePath = makeOutputPath("mayabatch.log", timestamp=LAUNCH_TIME)
+
     return mayaBatch.launch(sJobFilePath, logTo=sLogFilePath)
 
 def _assertedLatestVersion(scnFile, refresh=False):
@@ -259,11 +232,11 @@ geocaching.{func}
         job = {"title":sTitle, "py_lines":sCode.strip().split('\n')}
         yield job
 
-def makeOutputPath(sSrcRcName, sFileName, timestamp=None, save=True):
+def makeOutputPath(sFileName, timestamp=None, save=True):
 
     #for sFileName in ("maya_jobs.json", "maya_batch.bat", "maya_batch.log"):
     sOutDirPath = pathJoin(os.environ["USERPROFILE"], "zombillenium",
-                           "abc_exports", sSrcRcName)
+                           osp.splitext(osp.basename(__file__))[0])
 
     sFilePath = pathJoin(sOutDirPath, sFileName)
     if timestamp:
@@ -290,14 +263,14 @@ def loadDbNodes(proj, drcFileList):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("resource")
+    #parser.add_argument("resource")
     parser.add_argument("--dry", action="store_true")
     parser.add_argument("--time", type=int, default=None)
     parser.add_argument("--shots", nargs="*", default=None)
 
     try:
         ns = parser.parse_args()
-        launch(ns.resource, shotNames=ns.shots, dryRun=ns.dry, timestamp=ns.time)
+        launch(shotNames=ns.shots, dryRun=ns.dry, timestamp=ns.time)
     except Exception as e:
         os.environ["PYTHONINSPECT"] = "1"
         if isinstance(e, Warning):

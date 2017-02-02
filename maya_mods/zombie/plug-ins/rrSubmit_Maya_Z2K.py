@@ -1416,25 +1416,25 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
         if cmds.about(batch=True):
             self.subE(rootElement, "SubmitterParameter", "SendJobDisabled=" + '1~1')
 
-        sScriptList = ("PPDeletebroken",
-                       "PPDeleteJob",
-                       "PPShotgun-Quicktime",
-                       "PPShotgun-updateStats",
-                       "PPShotgun-pre-update",
-                       "PPShotgun-AddPreview",
-                       "PPAssembleTiles",
-                       "PPEXRCropchannels",
-                       "PPCreateFullVideo",
-                       "PPCreateSmallVideo",
-                       "PPJob-MakeVideo-proreshq")
-        for sScript in sScriptList:
-            self.subE(rootElement, "SubmitterParameter", sScript + "=" + '0~0')
+#        sScriptList = ("PPDeletebroken",
+#                       "PPDeleteJob",
+#                       "PPShotgun-Quicktime",
+#                       "PPShotgun-updateStats",
+#                       "PPShotgun-pre-update",
+#                       "PPShotgun-AddPreview",
+#                       "PPAssembleTiles",
+#                       "PPEXRCropchannels",
+#                       "PPCreateFullVideo",
+#                       "PPCreateSmallVideo",
+#                       "PPJob-MakeVideo-proreshq")
+#        for sScript in sScriptList:
+#            self.subE(rootElement, "SubmitterParameter", sScript + "=" + '0~0')
 
         mainFilePathS = pm.sceneName()
         if "06_finalLayout" in mainFilePathS:
             self.subE(rootElement, "SubmitterParameter", "PPFL-MakeQTMovies=" + '1~1')
             self.subE(rootElement, "SubmitterParameter", "PPFL-PublishQTMovies=" + '1~1')
-            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~0")
+            #self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~0")
             self.subE(rootElement, "SubmitterParameter", "PreviewGamma2.2=" + '1~0')
             self.subE(rootElement, "SubmitterParameter", "DefaultClientGroup=" + '1~ALL')
             notesFromFL = 'Final Layout (beauty + arlequin)'
@@ -1449,7 +1449,7 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             self.subE(rootElement, "SubmitterParameter", "PPLAY-SetupCaches=" + '1~1')
             self.subE(rootElement, "SubmitterParameter", "PPFL-MakeQTMovies=" + '1~1')
             self.subE(rootElement, "SubmitterParameter", "PPFL-PublishQTMovies=" + '0~0')
-            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~1")
+            #self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~1")
 
             self.subE(rootElement, "SubmitterParameter", "PreviewGamma2.2=" + '1~0')
             self.subE(rootElement, "SubmitterParameter", "DefaultClientGroup=" + '1~ALL')
@@ -1460,7 +1460,7 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             self.subE(rootElement, "SubmitterParameter", "AllowLocalSceneCopy=" + '1~0')
 
         elif "07_fx3d" in mainFilePathS:
-            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~1")
+            #self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~1")
             self.subE(rootElement, "SubmitterParameter", "DefaultClientGroup=1~FX")
             notesFromFX = ''
             self.subE(rootElement, "SubmitterParameter", "CustomUserInfo=" + '1~0~{}'.format(notesFromFX))
@@ -1468,8 +1468,8 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             self.subE(rootElement, "SubmitterParameter", "Priority=" + '1~51')
             #self.subE(rootElement, "SubmitterParameter", "UserName=" + '0~{}'.format(os.environ['DAVOS_USER']))
             self.subE(rootElement, "SubmitterParameter", "Color_ID=" + '1~4')
-        else:
-            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~1")
+#        else:
+#            self.subE(rootElement, "SubmitterParameter", "AutoApproveJob=1~1")
 
         return rootElement
 

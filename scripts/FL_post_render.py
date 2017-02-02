@@ -7,6 +7,8 @@ from davos.core.damproject import DamProject
 from pytd.util.fsutils import pathJoin, pathNorm
 from pytd.util.logutils import setLogLevel
 from collections import OrderedDict
+import traceback
+from pytd.util.sysutils import toStr
 
 
 #setLogLevel(0)
@@ -31,7 +33,7 @@ sImgDirList = sImgDirPath.split('/')
 sUserName = sImgDirList[5]
 sShotName = sImgDirList[9]
 
-proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal")
+proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal", standalone=True)
 shotgundb = proj._shotgundb
 damShot = proj.getShot(sShotName)
 
@@ -63,25 +65,47 @@ sgOpe = shotgundb.sg.find_one("CustomNonProjectEntity01", [["sg_login", "is", sU
 for sSuffix, (sSrcMovPath, pubFile) in movieDct.items():
     sgVersData = {"sg_status_list":"rev", "sg_operator":sgOpe}
     newVersFile, sgVersion = pubFile.publishVersion(sSrcMovPath, autoLock=True, autoUnlock=True,
-                                                    sgVersionData=sgVersData, sgUploadApart=False,
+                                                    sgVersionData=sgVersData, sgUpload=False,
                                                     comment="from " + osp.basename(sImgDirPath))
     movieDct[sSuffix] = (newVersFile, sgVersion)
 
+errorList = []
 # update task statuses
-for sSuffix, (newVersFile, sgVersion) in movieDct.items():
+for sSuffix, (newVersFile, sgVersion) in movieDct.iteritems():
+    try:
+        #print "*****", newVersFile.absPath()
+        sgTask = sgVersion["sg_task"]
+        #pprint(sgTask)
+        sCurStatus = sgVersion["sg_task.Task.sg_status_list"]
+        sNewStatus = ""
+        if sCurStatus == "clc":
+            sNewStatus = "rev"
+    
+        if sNewStatus:
+            sTask = sgTask.get("code", sgTask.get("name", sgTask.get("id", "undefined")))
+            print "\n", "Updating status of '{}' task to '{}'.".format(sTask, sNewStatus)
+            proj.updateSgEntity(sgTask, sg_status_list=sNewStatus)
+    except Exception as e:
+        errorList.append(e)
+        traceback.print_exc()
 
-    #print "*****", newVersFile.absPath()
-    sgTask = sgVersion["sg_task"]
-    #pprint(sgTask)
-    sCurStatus = sgVersion["sg_task.Task.sg_status_list"]
-    sNewStatus = ""
-    if sCurStatus == "clc":
-        sNewStatus = "rev"
+# upload movies
+for sSuffix, (newVersFile, sgVersion) in movieDct.iteritems():
+    try:
+        proj.uploadSgVersion(sgVersion, newVersFile.absPath(), apart=False)
+    except Exception as e:
+        errorList.append(e)
+        traceback.print_exc()
 
-    if sNewStatus:
-        sTask = sgTask.get("code", sgTask.get("name", sgTask.get("id", "undefined")))
-        print "Updating status of '{}' task to '{}'.".format(sTask, sNewStatus)
-        print proj.updateSgEntity(sgTask, sg_status_list=sNewStatus)
+if errorList:
+    numErrors =len(errorList)
+    if numErrors == 1:
+        raise errorList[0]
+    else:
+        sMsg = "\n{} errors while publishing movies:".format(numErrors)
+        sErrList = "{}: {}".format(type(e).__name__, toStr(e))
+        sMsg += (sSep + sSep.join(sErrList))
+        raise RuntimeError(sMsg)
 
 #damShot.showShotgunPage()
 #proj._authobj.logOut()

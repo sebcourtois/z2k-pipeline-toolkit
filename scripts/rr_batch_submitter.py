@@ -188,11 +188,10 @@ from zomblib import damutils;reload(damutils);damutils.initProject()
 #                        for src, frm, pub in izip(srcScnList, frameRangeList, publishArgList))
 #    jobList.extend(generMayaJobs(sExportFunc, jobArgsList))
 
-    sJobFilePath = makeOutputPath(sSrcRcName, "batch_submitter.json", timestamp=LAUNCH_TIME)
+    sJobFilePath = makeOutputPath(sSrcRcName, "mayabatch.json", timestamp=LAUNCH_TIME)
     jsonWrite(sJobFilePath, jobList)
+    sLogFilePath = makeOutputPath(sSrcRcName, "mayabatch.log", timestamp=LAUNCH_TIME)
 
-    sLogFilePath = makeOutputPath(sSrcRcName, "batch_submitter.log", timestamp=LAUNCH_TIME)
-    #sBatFilePath = makeOutputPath(sSrcRcName, "maya_batch.bat", timestamp=LAUNCH_TIME)
     return mayaBatch.launch(sJobFilePath, logTo=sLogFilePath)
 
 def _assertedLatestVersion(scnFile, refresh=False):
@@ -240,7 +239,7 @@ def makeOutputPath(sSrcRcName, sFileName, timestamp=None, save=True):
 
     #for sFileName in ("maya_jobs.json", "maya_batch.bat", "maya_batch.log"):
     sOutDirPath = pathJoin(os.environ["USERPROFILE"], "zombillenium",
-                           "rr_submitted", sSrcRcName)
+                           osp.splitext(osp.basename(__file__))[0], sSrcRcName)
 
     sFilePath = pathJoin(sOutDirPath, sFileName)
     if timestamp:

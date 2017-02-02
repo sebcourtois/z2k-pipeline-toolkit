@@ -406,8 +406,8 @@ class output_lib(object):
     public_path = join(expand('$ZOMB_OUTPUT_LOC'), "{proj.dir_name@project_dir}", dir_name)
     private_path = join(project.private_path, dir_name)
 
-    public_path_envars = ('ZOMB_OUTPUT_PATH',)
-    private_path_envars = tuple(("PRIV_" + v) for v in public_path_envars)
+    public_path_envars = ('ZOMB_OUTPUT_PATH', 'ZOMB_OUTPUT_PATH_BIS')
+    private_path_envars = ('PRIV_ZOMB_OUTPUT_PATH',)
 
     resource_tree = {
     "{sequence} -> sequence_dir":
