@@ -281,16 +281,54 @@ def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
         headPkg = versPkg.getHeadFile(dbNode=False)
         headPkgLyrName = os.path.split(versPkg.absPath())[-1]
 
+        versionDirS = os.path.dirname(inSeqDir)
+        shotNameS = os.path.basename(inSeqDir).replace("lyr_","").split("-")[0]
+        lyrVerS = os.path.basename(inSeqDir).replace("lyr_","").split("-")[1]
+        vesionDirContentL =  os.listdir(versionDirS)
+
+        nkFileL = []
+        movFileL = []     
+        for each in vesionDirContentL:
+            if ".nk" in each: 
+                nkFileL.append(each)
+            if ".mov" in each: 
+                movFileL.append(each)
+
+        if nkFileL:
+            nkFileL.sort()
+            nkVerS = nkFileL[-1].split(".")[0].split("-")[-1]
+        else:
+            txt = "no nuke file found in : {}".format(versionDirS)
+            log.printL("e", txt)
+            logFile.write("####   Error: "+txt + "\n")
+            return
+
+        if movFileL:
+            movFileL.sort()
+            movVerS = movFileL[-1].split(".")[0].split("-")[-1]
+        else:
+            txt = "no .mov file found in : {}".format(versionDirS)
+            log.printL("e", txt)
+            logFile.write("####   Error: "+txt + "\n")
+            return
+
+        if lyrVerS!= nkVerS or lyrVerS!= movVerS:
+            txt = "version mismatch, last layer: '{}', last .nk: {}, last .mov: {}".format(lyrVerS, nkVerS, movVerS)
+            log.printL("e", txt)
+            logFile.write("####   Error: "+txt + "\n")
+            return
+
+
         if os.path.split(inSeqDir)[-1]!= headPkgLyrName:
             txt = "version mismatch, last output found: '{}', last published version: {}".format(inSeqDir,headPkgLyrName)
             log.printL("e", txt)
-            logFile.write(txt + "\n")
+            logFile.write("####   Error: "+txt + "\n")
             return
 
         if os.path.isdir(outSeqDir):
             txt = "is up to date:'{}'".format(outSeqDir)
             log.printL("i", txt)
-            logFile.write(txt + "\n")
+            logFile.write("####   Info: "+txt + "\n")
         else:
             try:
                 shutil.copytree(inSeqDir, outSeqDir)
