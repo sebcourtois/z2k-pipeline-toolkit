@@ -14,6 +14,7 @@ import shutil
 # os.environ["ZOMB_ASSET_PATH"] = zombRootPath+"/zomb/asset"
 # os.environ["ZOMB_SHOT_PATH"] = zombRootPath+"/zomb/shot"
 # os.environ["ZOMB_OUTPUT_PATH"] = zombRootPath+"/zomb/output"
+# os.environ["ZOMB_OUTPUT_PATH_BIS"] = '\\\\ZOMBIWALK\\Projects\\zomb\\outputBis'
 # os.environ["ZOMB_MISC_PATH"] = zombRootPath+"/zomb/misc"
 # os.environ["ZOMB_TOOL_PATH"] = zombRootPath+"/zomb/tool"
 # os.environ["ZOMB_SHOT_LOC"] = zombRootPath+"/private/"+userName+"/zomb/shot"
@@ -186,6 +187,11 @@ class dataFile():
         if self.seq and self.shot and self.user and self.depDir:
 
             departementS =self.depDir
+
+            if self.seq in ["sq0350","sq0520"]:
+                os.environ["ZOMB_OUTPUT_PATH"] = normPath(os.environ["ZOMB_OUTPUT_PATH_BIS"])
+
+
             outputDirS = os.environ["ZOMB_OUTPUT_PATH"]+"/"+self.seq+"/"+self.shot
             shotDirS = os.environ["ZOMB_SHOT_PATH"]+"/"+self.seq+"/"+self.shot
 
@@ -651,28 +657,31 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
         outDirS = os.environ["OUTPUT_DIR"]+camDirS
         if not os.path.isdir(outDirS):
             os.makedirs(outDirS)
-        publishDir = outLib.getEntry(outDirS)
+        #publishDir = outLib.getEntry(outDirS)
+        lib=outLib
         publishDirS = outDirS
     elif destination ==  "shot":
         shotDirS = os.environ["SHOT_DIR"]+"/"+os.environ["DEP"]+camDirS
         if not os.path.isdir(shotDirS):
             os.makedirs(shotDirS)
-        publishDir = shotLib.getEntry(shotDirS)
+        #publishDir = shotLib.getEntry(shotDirS)
         publishDirS = shotDirS
+        lib = shotLib
 
-    publishHeadDir = publishDir.absPath()
+    #publishHeadDir = publishDir.absPath()
 
     newVersion = None
     if destination != "output":
+        publishDir = lib.getEntry(publishDirS)
         _ , newVersion = publishDir.publishFile(layerPathS, autoLock=True, autoUnlock=True, comment=comment, dryRun=dryRun, saveChecksum=False, version=int(os.environ["VER"]))
         publishLastVersDir = newVersion.absPath() #publishDir.absPath()+"/_version/"+newVersion.name
     else:
         newVersionNameS = moveLayer2output(layerPathS, publishDirS)
-        publishLastVersDir = publishDir.absPath()+"/_version/"+newVersionNameS
+        publishLastVersDir = publishDirS+"/_version/"+newVersionNameS
 
 
-    log.printL("i","Published layer: '{}'".format(publishHeadDir)) 
-    return dict(resultB=log.resultB, logL=log.logL, publishHeadDir = publishHeadDir, publishLastVersDir= publishLastVersDir, publishedVersion=newVersion)
+    log.printL("i","Published layer: '{}'".format(publishDirS)) 
+    return dict(resultB=log.resultB, logL=log.logL, publishHeadDir = publishDirS, publishLastVersDir= publishLastVersDir, publishedVersion=newVersion)
 
 
 
