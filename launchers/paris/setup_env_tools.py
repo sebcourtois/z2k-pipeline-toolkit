@@ -15,6 +15,7 @@ ENVS = {
         "ZOMB_PRIVATE_LOC":"\\\\ZOMBIWALK\\Projects",
 
         "ZOMB_TOOL_PATH":"\\\\ZOMBIWALK\\Projects\\zomb\\tool",
+        "ZOMB_OUTPUT_PATH_BIS":r"\\ZOMBIWALK\Projects\zomb\test\output",
 
         "DAVOS_SITE":"dmn_paris",
         "Z2K_RELEASE_ALLOWED":"1",
