@@ -437,8 +437,8 @@ def movieToJpegSequence(sMoviePath, sOutDirPath, sBaseFileName, padding=4):
     sFilename = ".".join((sBaseFileName, "{:0{}d}".format(1, padding), sExt))
     return makeFilePath(sOutDirPath, sBaseFileName, sExt, frame=1, padding=padding)
 
-def convToH264(sInputPath, sOutputPath):
 
+def convToH264(sInputPath, sOutputPath):
     cmdArgs = [ffmpegAppPath(),
                '-y', '-i',
                osp.normpath(sInputPath),
@@ -452,8 +452,8 @@ def convToH264(sInputPath, sOutputPath):
 
     return subprocess.check_call(cmdArgs)
 
-def playMovie(sMoviePath, pushToRv="", sequenceId=None):
 
+def playMovie(sMoviePath, pushToRv="", sequenceId=None):
     sCmd = ""
     bShell = False
     if pushToRv:
