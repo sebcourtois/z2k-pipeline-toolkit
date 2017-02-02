@@ -58,21 +58,23 @@ def doPublish(*args):
 
     return publishing.publishCurrentScene(sceneInfos=scnInfos)
 
+sPluginList = ["AbcExport.mll",
+               "AbcImport.mll",
+               "atomImportExport.mll",
+               "matrixNodes.mll" if (pmv.current() > pmv.v2013) else "decomposeMatrix.mll",
+               "nearestPointOnMesh.mll",# for stickyDeformer
+               "pointOnMeshInfo.mll",# bonus tools for stickyDeformer
+               "closestPointOnCurve.mll", # bonus tools for stickyDeformer
+               "mtoa.mll", # arnold
+               "gpuCache.mll",
+               ]
+
 def loadPlugins():
 
-    sPluginList = ["AbcExport.mll",
-                   "AbcImport.mll",
-                   "atomImportExport.mll",
-                   "matrixNodes.mll" if (pmv.current() > pmv.v2013) else "decomposeMatrix.mll",
-                   "nearestPointOnMesh.mll",# for stickyDeformer
-                   "pointOnMeshInfo.mll",# bonus tools for stickyDeformer
-                   "closestPointOnCurve.mll", # bonus tools for stickyDeformer
-                   "mtoa.mll", # arnold
-                   "gpuCache.mll",
-                   ]
+    global sPluginList
 
     if os.environ.get("DAVOS_SITE", "") == "dmn_paris":
-        sPluginList.append("rrSubmit_Maya_Z2K.py")
+        sPluginList.append("rrSubmit_Maya_2016+Z2K.py")
 
     for sPlugin in sPluginList:
         if not pm.pluginInfo(sPlugin, q=True, loaded=True):
@@ -82,12 +84,6 @@ def loadPlugins():
                 pm.displayWarning(toStr(e))
             else:
                 pm.pluginInfo(sPlugin, e=True, autoload=True)
-
-    sPlugin = "rrSubmit_Maya_Z2K.py"
-    if (sPlugin in sPluginList) and pm.pluginInfo(sPlugin, q=True, loaded=True):
-        sOldPlugin = "rrSubmit_Maya_2016+Z2K.py"
-        if pm.pluginInfo(sOldPlugin, q=True, loaded=True):
-            pm.unloadPlugin(sOldPlugin)
 
 class DavosSetup(ToolSetup):
 
@@ -195,6 +191,37 @@ class DavosSetup(ToolSetup):
         if smui:
             if smui.isLaunched():
                 smui.doDetect()
+
+    def onAfterMayaStart(self):
+        ToolSetup.onAfterMayaStart(self)
+
+        sPlugin = "rrSubmit_Maya_2016+Z2K.py"
+        if sPlugin in sPluginList:
+            sOldPlugin = "rrSubmit_Maya_Z2K.py"
+            print sOldPlugin.center(100, "#"), pm.pluginInfo(sOldPlugin, q=True, autoload=True)
+            #if pm.pluginInfo(sOldPlugin, q=True, autoload=True):
+            pm.pluginInfo(sOldPlugin, e=True, autoload=False)
+            pm.unloadPlugin(sOldPlugin)
+
+#    def onAfterPluginLoad(self, pluginInfos, clientData=None):
+#        ToolSetup.onAfterPluginLoad(self, pluginInfos, clientData=clientData)
+#
+#        global sPluginList
+#
+#        if not self.mayaIsStarting:
+#            return
+#
+#        sCurPlugin = osp.basename(pluginInfos[0])
+#        sOldPlugin = "rrSubmit_Maya_Z2K.py"
+#        if sCurPlugin != sOldPlugin:
+#            return
+#
+#        sPlugin = "rrSubmit_Maya_2016+Z2K.py"
+#        if sPlugin in sPluginList:
+#            print sOldPlugin.center(100, "#"), pm.pluginInfo(sOldPlugin, q=True, autoload=True)
+#            #if pm.pluginInfo(sOldPlugin, q=True, autoload=True):
+#            pm.pluginInfo(sOldPlugin, e=True, autoload=False)
+#            pm.unloadPlugin(sOldPlugin)
 
     def onPreCreateReferenceCheck(self, mFileObj, clientData=None):
         """updates reference path to comply with the davos library's env. variable from where the reference belongs."""

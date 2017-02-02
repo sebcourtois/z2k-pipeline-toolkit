@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 import argparse
 import subprocess
+from pprint import pprint
 
 from pytd.util.sysutils import grouper, inDevMode, toStr
 from pytd.util.logutils import confirmMessage
@@ -17,7 +18,6 @@ from zomblib import damutils
 from zomblib.mayabatch import MayaBatch
 #from zomblib.damutils import playbackTimesFromShot
 from davos.core.utils import mkVersionSuffix
-from pprint import pprint
 
 LAUNCH_TIME = None
 
@@ -73,17 +73,18 @@ def launch(shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
     damShotList = list(proj.getShot(s) for s in shotNames)
     build(damShotList, dryRun=dryRun, prompt=bPrompt, sgShots=sgShots)
 
-def build(damShotList, dryRun=False, prompt=True, sgShots=None,
+def build(in_damShotList, dryRun=False, prompt=True, sgShots=None,
           sSrcRcName="finalLayout_scene", sDstRcName="rendering_scene"):
 
+    damShotList = in_damShotList[:]
     proj = damShotList[0].project
+
     mayaBatch = MayaBatch()
-    sgShotDct = {} if sgShots is None else dict((d["code"], d) for d in sgShots)
+    sgShotDct = {} if (sgShots is None) else dict((d["code"], d) for d in sgShots)
 
     sErrorList = []
     pubScnDct = {}
-    validShotList = damShotList[:]
-    for i, damShot in enumerate(damShotList):
+    for damShot in damShotList:
         for sRcName in (sSrcRcName, sDstRcName):
             pubScn = None
             try:
@@ -93,50 +94,59 @@ def build(damShotList, dryRun=False, prompt=True, sgShots=None,
                 sErrorList.append("{} - {}".format(damShot, toStr(e)))
             else:
                 if not pubScn:
-                    sErrorList.append("{} - {}".format(damShot, "Could not get public {}"
-                                                       .format(sRcName.replace("_", " "))))
+                    sMsg = "Could not get public {}".format(sRcName.replace("_", " "))
+                    sErrorList.append("{} - {}".format(damShot, sMsg))
 
             pubScnDct.setdefault(sRcName, []).append(pubScn)
 
-    #validShotList = list(o for o in validShotList if o)
     srcScnList = pubScnDct[sSrcRcName]
     dstScnList = pubScnDct[sDstRcName]
 
-    loadDbNodes(proj, srcScnList + dstScnList)
+    loadDbNodes(proj, tuple(scn for scn in  (srcScnList + dstScnList) if scn))
 
-    for i, pubScn in enumerate(srcScnList):
-        latestFile = None
-        if pubScn:
+    for i, dstScn in enumerate(dstScnList):
+        if not dstScn:
+            continue
+
+        iDstVers = dstScn.currentVersion
+        if iDstVers:
+            dstScnList[i] = None
+            sMsg = " {} already started (v{})".format(sRcName.replace("_", " "), iDstVers)
+            sErrorList.append("{} - {}".format(dstScn.name, sMsg))
+            continue
+
+        sLockOwner = dstScn.getLockOwner(refresh=False)
+        if sLockOwner:
+            dstScnList[i] = None
+            sErrorList.append("{} - locked by '{}'.".format(dstScn.name, sLockOwner))
+            continue
+
+    for i, (srcScn, dstScn) in enumerate(izip(srcScnList, dstScnList)):
+        latestVers = None
+        if srcScn and dstScn:
             try:
-                latestFile = _assertedLatestVersion(pubScn, refresh=False)
+                latestVers = _assertedLatestVersion(srcScn, refresh=False)
             except Exception as e:
                 sErrorList.append(toStr(e))
             else:
-                if not latestFile:
-                    sMsg = "Could not get latest version of '{}'".format(pubScn.name)
-                    sErrorList.append("{} - {}".format(damShot, sMsg))
-
-        #print pubScn, latestFile
-        if not latestFile:
-            validShotList[i] = None
+                if not latestVers:
+                    sMsg = "could not get latest version."
+                    sErrorList.append("{} - {}".format(srcScn.name, sMsg))
+        #print srcScn, latestVers
+        if not latestVers:
             srcScnList[i] = None
         else:
-            sVersSuffix = mkVersionSuffix(latestFile.versionFromName())
-            sSuffix = "".join((sVersSuffix, '-', "toRenderScene"))
-            privScn, _ = pubScn.copyToPrivateSpace(suffix=sSuffix, existing="replace",
-                                                     sourceFile=latestFile)
+            sVersSuffix = mkVersionSuffix(latestVers.versionFromName())
+            sSuffix = "".join((sVersSuffix, '-', "built4Render"))
+            privScn, _ = srcScn.copyToPrivateSpace(suffix=sSuffix, existing="",
+                                                   sourceFile=latestVers)
             srcScnList[i] = privScn
 
-    validShotList = list(o for o in validShotList if o)
-    srcScnList = list(o for o in srcScnList if o)
-    if len(validShotList) != len(srcScnList):
-        raise RuntimeError("number of shots and '{}' scenes NOT the same."
-                           .format(sSrcRcName.replace("_scene", "")))
 
     if sgShotDct:
-        sNoSgShotList = tuple(sh.name for sh in validShotList if sh.name not in sgShotDct)
+        sNoSgShotList = tuple(sh.name for sh in damShotList if sh.name not in sgShotDct)
     else:
-        sNoSgShotList = tuple(sh.name for sh in validShotList)
+        sNoSgShotList = tuple(sh.name for sh in damShotList)
 
     if sNoSgShotList:
         sgShotList = proj.listAllSgShots(moreFilters=[["code", "in", sNoSgShotList]],
@@ -145,7 +155,34 @@ def build(damShotList, dryRun=False, prompt=True, sgShots=None,
 
     #print sNoSgShotList, sgShotDct
 
-    numValidShots = len(validShotList)
+    sTask = "final layout"
+    step = ""
+
+    for i, (damShot, srcScn, dstScn) in enumerate(izip(damShotList, srcScnList, dstScnList)):
+
+        if srcScn and dstScn:
+            sgShot = sgShotDct[damShot.name]
+            sgTask = damShot.getSgTask(sTask, step, sgEntity=sgShot, fail=True)
+            if sgTask["sg_status_list"] != "fin":
+                sMsg = ("Status of the {} task is not final yet."
+                        .format("|".join(s for s in (step, sTask) if s)))
+                sErrorList.append("{} - {}".format(damShot, sMsg))
+            else:
+                continue
+
+        damShotList[i] = None
+        srcScnList[i] = None
+        dstScnList[i] = None
+
+    damShotList = list(o for o in damShotList if o)
+    srcScnList = list(o for o in srcScnList if o)
+    dstScnList = list(o for o in dstScnList if o)
+
+#    if len(validShotList) != len(srcScnList):
+#        raise RuntimeError("number of shots and '{}' scenes NOT the same."
+#                           .format(sSrcRcName.replace("_scene", "")))
+
+    numValidShots = len(damShotList)
 
     if sErrorList:
         sSep = "\nWARNING: "
@@ -153,20 +190,20 @@ def build(damShotList, dryRun=False, prompt=True, sgShots=None,
         print sErrMsg, '\n'
         prompt = True
 
-    numInShots = len(damShotList)
-    if not validShotList:
-        sMsg = "None of the {} selected shots can be built.".format(numInShots)
+    numInputShots = len(in_damShotList)
+    if not damShotList:
+        sMsg = "None of the {} selected shots can be built.".format(numInputShots)
         confirmMessage("SORRY !", sMsg, ["OK"])
         return
 
-    if numValidShots != numInShots:
+    if numValidShots != numInputShots:
         sMsg = ("Only {}/{} shots will be built.\n\nContinue to build anyway ?\n\n"
-                .format(numValidShots, numInShots))
+                .format(numValidShots, numInputShots))
         prompt = True
     else:
         sMsg = "Build these {} shots ?\n\n".format(numValidShots)
 
-    for grp in grouper(6, (o.name for o in validShotList)):
+    for grp in grouper(6, (o.name for o in damShotList)):
         sMsg += ("\n" + " ".join(s for s in grp if s is not None))
 
     if prompt:
@@ -179,10 +216,9 @@ from zomblib import damutils;reload(damutils);damutils.initProject()
 """
     jobList = [{"title":"Batch initialization", "py_lines":[sCode], "fail":True}]
 
-#    sExportFunc = "exportCaches(selected=False, frameRange={frameRange}, dryRun={dryRun}, publish={publish})"
-#    jobArgsList = tuple(dict(scene=src.absPath(), dryRun=dryRun, frameRange=frm, publish=pub)
-#                        for src, frm, pub in izip(srcScnList, frameRangeList, publishArgList))
-#    jobList.extend(generMayaJobs(sExportFunc, jobArgsList))
+    jobArgsList = tuple(dict(src_scene=src.absPath(), dst_scene=dst.absPath(), dryRun=dryRun, lrd="none")
+                        for src, dst in izip(srcScnList, dstScnList))
+    jobList.extend(generMayaJobs(jobArgsList))
 
     sJobFilePath = makeOutputPath("mayabatch.json", timestamp=LAUNCH_TIME)
     jsonWrite(sJobFilePath, jobList)
@@ -199,34 +235,32 @@ def _assertedLatestVersion(scnFile, refresh=False):
 
     sLockOwner = scnFile.getLockOwner(refresh=refresh)
     if sLockOwner:
-        raise AssertionError("{} - locked by '{}'."
-                             .format(scnFile.name, sLockOwner))
+        raise AssertionError("{} - locked by '{}'.".format(scnFile.name, sLockOwner))
 
     versFile = scnFile.assertLatestFile(refresh=refresh, returnVersion=True)
 
     return versFile
 
-def generMayaJobs(sExportFunc, jobArgsList):
+def generMayaJobs(jobArgsList):
 
     sCodeFmt = """
 import maya.cmds as mc
 from pytaya.core import system as myasys
-from dminutes import geocaching
 
-myasys.openScene('{scene}', force=True, fail=False, {lrd})
+myasys.openScene('{src_scene}', force=True, fail=False, {lrd})
 mc.refresh()
-geocaching.{func}
+print "{dst_scene}"
 """
     for kwargs in (d.copy() for d in jobArgsList):
 
-        sAbsPath = kwargs.pop("scene")
+        sAbsPath = kwargs.get("src_scene")
         sLrd = kwargs.pop("lrd", "")
         if sLrd:
             sLrd = "lrd='{}'".format(sLrd)
 
-        sFunc = sExportFunc.format(**kwargs)
+        sFunc = ""
         sTitle = "{} on '{}'".format(sFunc, osp.basename(sAbsPath))
-        sCode = sCodeFmt.format(func=sFunc, scene=sAbsPath, lrd=sLrd)
+        sCode = sCodeFmt.format(lrd=sLrd, **kwargs)
         _ = compile(sCode, '<string>', 'exec')
 
         job = {"title":sTitle, "py_lines":sCode.strip().split('\n')}

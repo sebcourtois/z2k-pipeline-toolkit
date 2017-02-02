@@ -21,7 +21,7 @@ def processJobsFromFile(sJobFilePath):
 
         sTitle = job["title"]
 
-        sMsg = "#### PROCESSING {}/{} JOB: {}".format(i + 1, numJobs, sTitle)
+        sMsg = "#### STARTING {}/{} JOB: {}".format(i + 1, numJobs, sTitle)
         sSepLine = 120 * "#"
         print "\n", "\n".join((sSepLine, sSepLine, sMsg, "###"))
 
