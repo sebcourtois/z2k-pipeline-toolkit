@@ -4,12 +4,12 @@ print "Executing Z2K Toolkit's userSetup..."
 import pymel.mayautils
 import pymel.core as pm
 
-from davos_maya.tool.davossetup import DavosSetup
-davosSetup = DavosSetup()
+from davos_maya.tool import davossetup
+davosSetup = davossetup.DavosSetup()
 
 def onStartup():
 
-	davosSetup.install()
+	davosSetup.install(loadPlugins=False)
 
 	import stxScriptMenu
 	stxScriptMenu.install()
@@ -18,9 +18,7 @@ def onStartup():
 		for sScript in ("performStickyDeformer", "stickyDeformer", "stickyDeformerMenu"):
 			pm.mel.source(sScript)
 
-	pm.loadPlugin("xgenToolkit.mll")
-	pm.mel.xgmPreRendering()
+	davosSetup.loadPlugins()
 
 pymel.mayautils.executeDeferred(onStartup)
-
 
