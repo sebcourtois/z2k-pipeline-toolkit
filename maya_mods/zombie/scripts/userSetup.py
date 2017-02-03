@@ -4,10 +4,12 @@ print "Executing Z2K Toolkit's userSetup..."
 import pymel.mayautils
 import pymel.core as pm
 
+from davos_maya.tool.davossetup import DavosSetup
+davosSetup = DavosSetup()
+
 def onStartup():
 
-	from davos_maya.tool.davossetup import DavosSetup
-	DavosSetup().install()
+	davosSetup.install()
 
 	import stxScriptMenu
 	stxScriptMenu.install()
