@@ -404,10 +404,8 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
 
 
         if "%V" in filePathExpS or "/left/" in filePathExpS or "/right/" in filePathExpS:
-            print 'filePathExpS', filePathExpS
             filePathExpLeftS = filePathExpS.replace(r"%V","left")
             filePathExpRightS = filePathExpS.replace(r"%V","right").replace("/left/","/right/")
-            print 'filePathExpRightS', filePathExpRightS
             #create empty right directory if missing
             fileDirS = os.path.dirname(filePathExpRightS)
             if not os.path.isdir(fileDirS):
@@ -629,14 +627,11 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
             else:
                 layerNameNextVerS = layerNameS+"-v001"
             
-
         if not dryRun:
             try:
                 os.rename(layerPathS, versionDirS+"/"+layerNameNextVerS)
-                #shutil.move(layerPathS, versionDirS+"/"+layerNameNextVerS)
-            except Exception,err:
-                raise err
-
+            except OSError:
+                shutil.move(layerPathS, versionDirS+"/"+layerNameNextVerS)
         return layerNameNextVerS
 
     proj = DamProject("zombillenium")
