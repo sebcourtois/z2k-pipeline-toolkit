@@ -37,9 +37,9 @@ def createLightRigFromShot():
                 if char.split(':')[1] == 'geo_body':
                     print char.split(':')[1]
                     vertexLoc.append(pm.ls(char.getShape().vtx[398])[0])
-                if char.split(':')[1] == 'geo_torso':
-                    print char.split(':')[1]
-                    vertexLoc.append(pm.ls(char.getShape().vtx[3408])[0])
+#                if char.split(':')[1] == 'geo_torso':
+#                    print char.split(':')[1]
+#                    vertexLoc.append(pm.ls(char.getShape().vtx[3408])[0])
         else:
             pass
 
