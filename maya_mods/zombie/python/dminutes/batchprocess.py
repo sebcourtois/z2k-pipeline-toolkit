@@ -107,7 +107,7 @@ def buildRenderScene(publishAs=None, dryRun=False):
     if publishAs:
         sComment = "built from " + osp.basename(sCurScnPath).replace(damShot.name + "_", "")
         pubFile = proj.rcFileFromPath(publishAs, library=damShot.getLibrary())
-        if (not dryRun):
+        if not dryRun:
             pubFile.publishVersion(sCurScnPath, autoLock=True, autoUnlock=True,
                                    comment=sComment)
 

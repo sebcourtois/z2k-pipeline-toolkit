@@ -21,7 +21,7 @@ from davos.core.utils import mkVersionSuffix
 
 LAUNCH_TIME = None
 
-def launch(shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
+def launch(shotNames=None, dryRun=False, noPublish=False, timestamp=None, dialogParent=None):
 
     global LAUNCH_TIME
 
@@ -51,6 +51,9 @@ def launch(shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
             if dryRun and ("--dry" not in cmdArgs):
                 cmdArgs.append("--dry")
 
+            if noPublish and ("--no-publish" not in cmdArgs):
+                cmdArgs.append("--no-publish")
+
             if "--time" not in cmdArgs:
                 cmdArgs += ["--time", str(int(LAUNCH_TIME))]
 
@@ -69,11 +72,14 @@ def launch(shotNames=None, dryRun=False, timestamp=None, dialogParent=None):
 
     sTitle = "RENDER SCENE BUILDER"
     print "\n", sTitle.center(len(sTitle) + 2).center(120, "#")
+    kwargs = dict(dryRun=dryRun, prompt=bPrompt, noPublish=noPublish)
+    if inDevMode():
+        pprint(kwargs)
 
     damShotList = list(proj.getShot(s) for s in shotNames)
-    build(damShotList, dryRun=dryRun, prompt=bPrompt, sgShots=sgShots)
+    build(damShotList, sgShots=sgShots, **kwargs)
 
-def build(in_damShotList, dryRun=False, prompt=True, sgShots=None,
+def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=False,
           sSrcRcName="finalLayout_scene", sDstRcName="rendering_scene"):
 
     damShotList = in_damShotList[:]
@@ -169,13 +175,15 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None,
         if srcScn:
             sgShot = sgShotDct[damShot.name]
             sgTask = damShot.getSgTask(sTask, step, sgEntity=sgShot, fail=True)
-
             if sgTask["sg_status_list"] != "fin":
 
                 dstScnList[i] = None
                 sMsg = ("'{}' task's status is NOT FINAL and will NOT be published."
                         .format("|".join(s for s in (step, sTask) if s)))
                 sErrorList.append("{} - {}".format(damShot, sMsg))
+
+            elif noPublish:
+                dstScnList[i] = None
         else:
             damShotList[i] = None
             dstScnList[i] = None
@@ -315,12 +323,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     #parser.add_argument("resource")
     parser.add_argument("--dry", action="store_true")
+    parser.add_argument("--no-publish", action="store_true" if not inDevMode() else "store_false")
     parser.add_argument("--time", type=int, default=None)
     parser.add_argument("--shots", nargs="*", default=None)
 
     try:
         ns = parser.parse_args()
-        launch(shotNames=ns.shots, dryRun=ns.dry, timestamp=ns.time)
+        launch(shotNames=ns.shots, dryRun=ns.dry, timestamp=ns.time, noPublish=ns.no_publish)
     except Exception as e:
         os.environ["PYTHONINSPECT"] = "1"
         if isinstance(e, Warning):
