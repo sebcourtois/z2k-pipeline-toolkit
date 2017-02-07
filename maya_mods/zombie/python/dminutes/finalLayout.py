@@ -240,22 +240,22 @@ def createNukeBatch(gui=True):
 
 
     nukeScript = miscUtils.normPath(zombToolsPath + r"\template\nuke\finalLayoutTemplate.nk")
-    renderBatch_obj = open(renderBatch_trg, "w")
-    renderBatch_obj.write("set foundry_LICENSE="+licenceLocation+"\n")
-    renderBatch_obj.write(r'''set "NUKE_PATH=%USERPROFILE%\zombillenium\z2k-pipeline-toolkit\nuke"''' + "\n")
-    renderBatch_obj.write(r'''set "ZOMB_NUKE_PATH=%USERPROFILE%\zombillenium\z2k-pipeline-toolkit\nuke"''' + "\n")
+    with open(renderBatch_trg, "w") as batchFile:
+        batchFile.write("set foundry_LICENSE=" + licenceLocation + "\n")
+        batchFile.write(r'''set "NUKE_PATH=%USERPROFILE%\zombillenium\z2k-pipeline-toolkit\nuke"''' + "\n")
+        batchFile.write(r'''set "ZOMB_NUKE_PATH=%USERPROFILE%\zombillenium\z2k-pipeline-toolkit\nuke"''' + "\n")
 
-    renderBatch_obj.write("set nuke="+nukePath+"\n")
-    renderBatch_obj.write("rem set nuke="+nukePathLoc+"\n")
-    renderBatch_obj.write("set nkscript="+nukeScript+"\n")
-    renderBatch_obj.write("set argv0="+renderDir+"\n")
+        batchFile.write("set nuke=" + nukePath + "\n")
+        batchFile.write("rem set nuke=" + nukePathLoc + "\n")
+        batchFile.write("set nkscript=" + nukeScript + "\n")
+        batchFile.write("set argv0=" + renderDir + "\n")
 
-    #finalCommand = r'"C:\Python27\python.exe" "C:\users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\setup_env_tools.py" launch %nuke% -x %nkscript% %argva% %argv0%'
-    finalCommand = r'%nuke% -x %nkscript% %argva% %argv0%'
-    renderBatch_obj.write(finalCommand+"\n")
-    renderBatch_obj.write("\n")
-    #renderBatch_obj.write("pause\n")
-    renderBatch_obj.close()
+        #finalCommand = r'"C:\Python27\python.exe" "C:\users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\setup_env_tools.py" launch %nuke% -x %nkscript% %argva% %argv0%'
+        finalCommand = r'%nuke% -x %nkscript% %argva% %argv0%'
+        batchFile.write(finalCommand + "\n")
+        batchFile.write("\n")
+        #renderBatch_obj.write("pause\n")
+
     print "#### Info: nukeBatch.bat created: {}".format(os.path.normpath(renderBatch_trg))
 
 def renderSetup():
