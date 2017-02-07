@@ -1,12 +1,13 @@
-import maya.cmds as mc
-import pymel.core as pm
 
 import os
 import re
 from datetime import datetime
 
+import maya.cmds as mc
+import pymel.core as pm
+
 from davos_maya.tool.general import infosFromScene
-from davos.core.damproject import DamProject
+#from davos.core.damproject import DamProject
 
 from dminutes import miscUtils
 reload (miscUtils)
@@ -98,35 +99,55 @@ def finalLayoutToLighting(gui=True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="finalLayoutToLighting")
     deletedNodeL=[]
 
-    pm.editRenderLayerGlobals(currentRenderLayer='lay_finalLayout_00')
+    mc.editRenderLayerGlobals(currentRenderLayer='lay_finalLayout_00')
     testVisibilityL = mc.ls('*:grp_*', type='transform') + mc.ls('*:chr_*', type='transform') + mc.ls('*:geo_*', type='transform')
     visibilityL = []
     if not testVisibilityL == None:
         for each in testVisibilityL:
-            visibilityL += pm.ls(each + '.visibility')
+            visibilityL.append(each + '.visibility')
 
-    [pm.select(each.split('.')[0], add=True) for each in visibilityL if each.get() == False]
-    pm.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
-    pm.hide()
+    sHiddenList = list(sVizAttr.rsplit('.', 1)[0] for sVizAttr in visibilityL if not mc.getAttr(sVizAttr))
+
+    mc.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
+    if sHiddenList:
+        mc.select(sHiddenList)
+        pm.hide()
+        txt = "{} node(s) hidden: '{}': ".format(len(sHiddenList), sHiddenList)
+        log.printL("i", txt)
+
+    for sOverAttr, override in miscUtils.iterRenderLayerOverrides("lay_finalLayout_00"):
+        if not sOverAttr.endswith(".visibility"):
+            continue
+        try:
+            if isinstance(override, basestring):
+                if ("." in override) and mc.objExists(override):
+                    if not mc.isConnected(override, sOverAttr , ignoreUnitConversion=True):
+                        mc.connectAttr(override, sOverAttr, force=True)
+                else:
+                    mc.setAttr(sOverAttr, override, type="string")
+            else:
+                mc.setAttr(sOverAttr, override)
+        except RuntimeError as e:
+            pm.displayWarning(e)
 
     mc.ls("cam_animatic:asset*")
     toDeleteNodeL = mc.ls("mat_arelequin_*") + mc.ls("mat_arlequin_*") + mc.ls("aiAOV_arlequin*") + mc.ls("cam_animatic:asset*") + mc.ls("lay_finalLayout_*")
     for each in toDeleteNodeL: 
         try: 
             mc.delete(each)
-            deletedNodeL.append(each)
         except Exception as err:
-            print err
-            pass
+            pm.displayWarning(err)
+        else:
+            deletedNodeL.append(each)
 
     removeRefEditByAttr(inRefNodeL=[], attr="aovName", cmd="setAttr", failedRefEdit =True, GUI=True)
     txt = "{} node(s) deleted: '{}': ".format(len(deletedNodeL),deletedNodeL)
     log.printL("i", txt)
 
-    pm.mel.eval("source updateSoundMenu")
-    pm.mel.eval("setSoundDisplay audio 0")
-    log.printL("i", "sound turned off")
-
+    if not mc.about(batch=True):
+        pm.mel.eval("source updateSoundMenu")
+        pm.mel.eval("setSoundDisplay audio 0")
+        log.printL("i", "sound turned off")
 
     miscUtils.deleteUnknownNodes()
     sDirLightToHide = mc.ls('lgt_finalLayout_directional')
@@ -134,7 +155,6 @@ def finalLayoutToLighting(gui=True):
         mc.hide(sDirLightToHide)
 
     return dict(resultB=log.resultB, logL=log.logL)
-
 
 
 def releaseShotAsset(gui = True ,toReleaseL = [], dryRun=True, astPrefix = "fx3"):

@@ -6,7 +6,13 @@ import traceback
 from collections import OrderedDict
 
 from pytd.util.fsutils import jsonRead, pathNorm
+from pytd.util.sysutils import timer
 
+@timer
+def execJob(lines):
+    exec("\n".join(lines), {})
+
+@timer
 def processJobsFromFile(sJobFilePath):
 
     jobList = jsonRead(sJobFilePath)
@@ -23,14 +29,14 @@ def processJobsFromFile(sJobFilePath):
 
         sMsg = "#### STARTING {}/{} JOB: {}".format(i + 1, numJobs, sTitle)
         sSepLine = 120 * "#"
-        print "\n", "\n".join((sSepLine, sSepLine, sMsg, "###"))
+        print "\n", "\n".join((sSepLine, sMsg, "###"))
 
         lines = job["py_lines"]
         if not isinstance(lines, list):
             raise TypeError("'py_lines' value must be a {}, got {}."
                             .format(list, type(lines)))
         try:
-            exec("\n".join(lines), {})
+            execJob(lines)#exec("\n".join(lines), {})
         except Warning as w:
             print "WARNING: " + w.message
         except StandardError as e:
@@ -43,7 +49,7 @@ def processJobsFromFile(sJobFilePath):
 
         sMsg = "##### DONE WITH {}/{} JOB: {}".format(i + 1, numJobs, sTitle)
         #sSepLine = max(len(sMsg), 120) * "#"
-        print "\n".join(("####", sMsg, sSepLine, sSepLine)), "\n"
+        print "\n".join(("####", sMsg, sSepLine)), "\n"
 
     if numErrors:
         sMsg = " {}/{} JOBS FAILED ".format(numErrors, len(jobList)).center(120, "!")

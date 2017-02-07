@@ -50,7 +50,8 @@ def pathJoin(*args):
 def normPath(p):
     return os.path.normpath(p).replace("\\",'/')
 
-
+def listForNone(arg):
+    return [] if arg is None else arg
 
 def createUserWorkspace():
     try:
@@ -567,3 +568,23 @@ def createPartitionSets(setL =  ["set_0","set_1","set_2"],partitionS = "par_defa
         log.printL("i", txt)
 
     return dict(resultB=log.resultB, logL=log.logL)
+
+def iterRenderLayerOverrides(sLayerName):
+
+    for idx in listForNone(mc.getAttr(sLayerName + ".adjustments", multiIndices=True)):
+
+        sLyrAttr = sLayerName + ".adjustments[{}]".format(idx)
+        sInAttrList = mc.listConnections(sLyrAttr + ".plug", s=True, d=False,
+                                         plugs=True, skipConversionNodes=True)
+        if not sInAttrList:
+            continue
+
+        sInPlugAttr = sInAttrList[0]
+        sInAttrList = mc.listConnections(sLyrAttr + ".value", s=True, d=False,
+                                         plugs=True, skipConversionNodes=True)
+        if sInAttrList:
+            value = sInAttrList[0]
+        else:
+            value = mc.getAttr(sLyrAttr + ".value")
+
+        yield (sInPlugAttr, value)

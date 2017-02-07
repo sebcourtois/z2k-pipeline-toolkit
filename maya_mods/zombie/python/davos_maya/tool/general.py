@@ -304,7 +304,7 @@ def getSgRelatedVersionsHistory(scnInfos=None, logInfo=True, limit=0, relatedAss
                 filters.append(["entity.Asset.code", "in", sAstKeyList])
 
             sgRelVersList = proj.findSgVersions(moreFilters=filters,
-                                                     moreFields=sVersFieldList)
+                                                moreFields=sVersFieldList)
             if logInfo:
                 print "from 'sg_related_asset_versions'"
                 for i, sgRelVers in enumerate(sgRelVersList):
