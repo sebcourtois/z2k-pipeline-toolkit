@@ -159,29 +159,29 @@ class dataFile():
 
 
     def printData(self):
-        self.log = LogBuilder(gui=self.gui, funcName ="printData")
-        self.log.printL("i","fileNameS: '{}'".format(self.fileNameS))
-        self.log.printL("i","step: '{}'".format(self.stepS))
-        self.log.printL("i","location: '{}'".format(self.location))
-        self.log.printL("i","user: '{}'".format(self.user))
-        self.log.printL("i","proj: '{}'".format(self.proj))
-        self.log.printL("i","typ: '{}'".format(self.typ))
-        self.log.printL("i","seq: '{}'".format(self.seq))
-        self.log.printL("i","shot: '{}'".format(self.shot))
-        self.log.printL("i","depDir: '{}'".format(self.depDir))
-        self.log.printL("i","in: '{}'".format(self.timeIn))
-        self.log.printL("i","out: '{}'".format(self.timeOut))
+        self.log = LogBuilder(gui=self.gui, funcName ="")
+        self.log.printL("","fileNameS: '{}'".format(self.fileNameS))
+        self.log.printL("","step: '{}'".format(self.stepS))
+        self.log.printL("","location: '{}'".format(self.location))
+        self.log.printL("","user: '{}'".format(self.user))
+        self.log.printL("","proj: '{}'".format(self.proj))
+        self.log.printL("","typ: '{}'".format(self.typ))
+        self.log.printL("","seq: '{}'".format(self.seq))
+        self.log.printL("","shot: '{}'".format(self.shot))
+        self.log.printL("","depDir: '{}'".format(self.depDir))
+        self.log.printL("","in: '{}'".format(self.timeIn))
+        self.log.printL("","out: '{}'".format(self.timeOut))
 
         if "render-v"in self.depDirSub:
-            self.log.printL("i","passName: '{}'".format(self.passName))
-            self.log.printL("i","layerName: '{}'".format(self.layerName))
-            self.log.printL("i","imageName: '{}'".format(self.imageName))
-            self.log.printL("i","imageFormat: '{}'".format(self.imageFormat))
-            self.log.printL("i","imageNumber: '{}'".format(self.imageNumber))
-            self.log.printL("i","ver: '{}'".format(self.ver))
+            self.log.printL("","passName: '{}'".format(self.passName))
+            self.log.printL("","layerName: '{}'".format(self.layerName))
+            self.log.printL("","imageName: '{}'".format(self.imageName))
+            self.log.printL("","imageFormat: '{}'".format(self.imageFormat))
+            self.log.printL("","imageNumber: '{}'".format(self.imageNumber))
+            self.log.printL("","ver: '{}'".format(self.ver))
         elif "compo-v" in self.depDirSub or "stereo-v" in self.depDirSub:
-            self.log.printL("i","ver: '{}'".format(self.ver))
-            self.log.printL("i","increment: '{}'".format(self.increment))
+            self.log.printL("","ver: '{}'".format(self.ver))
+            self.log.printL("","increment: '{}'".format(self.increment))
 
     def initNukeEnvVar(self):
         if self.seq and self.shot and self.user and self.depDir:
@@ -200,20 +200,20 @@ class dataFile():
     
 
             miscDirS = os.environ["ZOMB_MISC_PATH"]
-            self.log.printL("i","initialising environnement variables")
-            self.log.printL("i","SEQ: "+self.seq)
-            self.log.printL("i","SHOT: "+self.shot)
-            self.log.printL("i","VER: "+self.ver)
-            self.log.printL("i","INC: "+self.increment)
-            self.log.printL("i","USER: "+self.user)
-            self.log.printL("i","DEP: "+departementS)
-            self.log.printL("i","OUTPUT_DIR: "+outputDirS)
-            self.log.printL("i","SHOT_DIR: "+shotDirS)
-            self.log.printL("i","PRIV_DIR: "+privateDirS)
-            self.log.printL("i","MISC_DIR: "+miscDirS)
-            self.log.printL("i","STEP: "+self.stepS)
-            self.log.printL("i","TIMEIN: '{}'".format(self.timeIn))
-            self.log.printL("i","TIMEOUT: '{}'".format(self.timeOut))
+            self.log.printL("","initialising environnement variables")
+            self.log.printL("","SEQ: "+self.seq)
+            self.log.printL("","SHOT: "+self.shot)
+            self.log.printL("","VER: "+self.ver)
+            self.log.printL("","INC: "+self.increment)
+            self.log.printL("","USER: "+self.user)
+            self.log.printL("","DEP: "+departementS)
+            self.log.printL("","OUTPUT_DIR: "+outputDirS)
+            self.log.printL("","SHOT_DIR: "+shotDirS)
+            self.log.printL("","PRIV_DIR: "+privateDirS)
+            self.log.printL("","MISC_DIR: "+miscDirS)
+            self.log.printL("","STEP: "+self.stepS)
+            self.log.printL("","TIMEIN: '{}'".format(self.timeIn))
+            self.log.printL("","TIMEOUT: '{}'".format(self.timeOut))
             os.environ["SEQ"] = self.seq
             os.environ["VER"] = self.ver
             os.environ["INC"] = self.increment
@@ -232,7 +232,7 @@ class dataFile():
                 nuke.Root()['first_frame'].setValue(self.timeIn)
                 nuke.Root()['last_frame'].setValue(self.timeOut)
 
-                self.log.printL("i","setting 'first_frame={}', 'first_frame={}' : ".format(self.timeIn,self.timeOut))
+                self.log.printL("","setting 'first_frame={}', 'first_frame={}' : ".format(self.timeIn,self.timeOut))
 
         else:
             txt = "one of the variable 'seq', 'shot', 'user' or 'dep' is undefined, could not set nuke proj environment var".format(self.fileNameS)
