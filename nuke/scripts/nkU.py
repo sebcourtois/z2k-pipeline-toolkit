@@ -189,7 +189,11 @@ class dataFile():
             departementS =self.depDir
 
             if self.seq in ["sq0350","sq0520"]:
-                os.environ["ZOMB_OUTPUT_PATH"] = normPath(os.environ["ZOMB_OUTPUT_PATH_BIS"])
+                if os.environ["ZOMB_OUTPUT_PATH_BIS"]:
+                    os.environ["ZOMB_OUTPUT_PATH"] = normPath(os.environ["ZOMB_OUTPUT_PATH_BIS"])
+                elif: "ZOMBIDAMAS" in os.environ["ZOMB_OUTPUT_PATH"]:
+                    os.environ["ZOMB_OUTPUT_PATH"] ="//JAKKU/zombillenium2/output"
+
 
 
             outputDirS = os.environ["ZOMB_OUTPUT_PATH"]+"/"+self.seq+"/"+self.shot
@@ -1002,11 +1006,8 @@ def isStereo():
 def createWriteDir():
     initNukeShot()
     myFile = nuke.filename(nuke.thisNode())
-    print 'myFile',myFile
     myDir = os.path.dirname( myFile )
-    print 'myDir', myDir
     osdir = nuke.callbacks.filenameFilter( myDir )
-    print 'osdir', osdir
 
     if osdir:
         if "%V" in osdir:
