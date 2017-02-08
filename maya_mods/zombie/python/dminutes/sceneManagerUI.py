@@ -546,8 +546,6 @@ def setAssetVersionsLocked(bLock, sConfirmMsg, *args):
 
         sVersPathDct = dict((d["entity"]["name"].lower(), pathResolve(d["sg_source_file"]))
                             for d in sgShotVers["sg_related_asset_versions"])
-        #pprint(sVersPathDct)
-
         count = 0
         for relAst in relAstList:
             damAst = relAst.get("dam_entity")

@@ -1,23 +1,27 @@
 
 import os.path as osp
+import traceback
 from pprint import pprint
 
 import maya.cmds as mc
 import pymel.core as pm
 
 from pytd.util.fsutils import pathJoin
+
 from davos.core.damproject import DamProject
 
 from davos_maya.tool import reference as myaref
-from davos_maya.tool.general import infosFromScene
+from davos_maya.tool import general as myagen
 
 from dminutes import geocaching
 from dminutes import finalLayout
-import traceback
+from dminutes import shotconformation as shotconfo
 
-reload(myaref)
 reload(geocaching)
 reload(finalLayout)
+reload(myaref)
+reload(myagen)
+reload(shotconfo)
 
 def quitWithStatus(func):
     def doIt(*args, **kwargs):
@@ -47,9 +51,9 @@ def setupLayoutScene(**kwargs):
 
     proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal", standalone=False)
 
-    scnInfos = infosFromScene(project=proj)
+    scnInfos = myagen.infosFromScene(project=proj)
     if scnInfos["resource"] != "layout_scene":
-        pm.displayWarning("Not a layout scene: batchrender.setupLayoutScene() not applied.")
+        pm.displayWarning("Not a layout scene: batchprocess.setupLayoutScene() not applied.")
         return
 
     def excludeRef(oFileRef):
@@ -79,3 +83,31 @@ def setupLayoutScene(**kwargs):
                             showScriptEditor=False, sceneInfos=scnInfos)
 
     finalLayout.renderSetup()
+
+def buildRenderScene(publishAs=None, dryRun=False):
+
+    sCurScnPath = pm.sceneName()
+    scnInfos = myagen.infosFromScene(sCurScnPath)
+
+    damShot = scnInfos["dam_entity"]
+    proj = damShot.project
+
+    relAstList = myagen.listRelatedAssets(damShot)
+    myaref.lockAssetRefsToRelatedVersion(relAstList)
+
+    if not pm.listReferences(loaded=True, unloaded=False):
+        pm.saveFile(force=True)
+        pm.openFile(sCurScnPath, force=True, lrd="all")
+
+    shotconfo.finalLayoutToLighting(gui=False)
+
+    if not dryRun:
+        pm.saveFile(force=True)
+
+    if publishAs:
+        sComment = "built from " + osp.basename(sCurScnPath).replace(damShot.name + "_", "")
+        pubFile = proj.rcFileFromPath(publishAs, library=damShot.getLibrary())
+        if not dryRun:
+            pubFile.publishVersion(sCurScnPath, autoLock=True, autoUnlock=True,
+                                   comment=sComment)
+
