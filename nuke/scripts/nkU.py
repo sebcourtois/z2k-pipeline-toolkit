@@ -250,7 +250,7 @@ def initNukeShot(fileNameS= ""):
         df.initNukeEnvVar()
     except Exception,err:
         print "warning: error while running 'initNukeShot()'"
-        print "#### error: "+err
+        print err
 
 
 def createCompoBatchFiles():
