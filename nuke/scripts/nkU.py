@@ -192,7 +192,9 @@ class dataFile():
                 try:
                     os.environ["ZOMB_OUTPUT_PATH"] = normPath(os.environ["ZOMB_OUTPUT_PATH_BIS"])
                 except:
-                    if  "ZOMBIDAMAS" in os.environ["ZOMB_OUTPUT_PATH"]:
+                    print "#### warning : 'ZOMB_OUTPUT_PATH_BIS' is not defined"
+                    if  "zombidamas" in os.environ["ZOMB_OUTPUT_PATH"]:
+                        print "#### warning : 'ZOMB_OUTPUT_PATH' = //JAKKU/zombillenium2/output"
                         os.environ["ZOMB_OUTPUT_PATH"] ="//JAKKU/zombillenium2/output"
 
 
