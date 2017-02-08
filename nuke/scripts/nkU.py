@@ -189,10 +189,11 @@ class dataFile():
             departementS =self.depDir
 
             if self.seq in ["sq0350","sq0520"]:
-                if os.environ["ZOMB_OUTPUT_PATH_BIS"]:
+                try:
                     os.environ["ZOMB_OUTPUT_PATH"] = normPath(os.environ["ZOMB_OUTPUT_PATH_BIS"])
-                elif "ZOMBIDAMAS" in os.environ["ZOMB_OUTPUT_PATH"]:
-                    os.environ["ZOMB_OUTPUT_PATH"] ="//JAKKU/zombillenium2/output"
+                except:
+                    if  "ZOMBIDAMAS" in os.environ["ZOMB_OUTPUT_PATH"]:
+                        os.environ["ZOMB_OUTPUT_PATH"] ="//JAKKU/zombillenium2/output"
 
 
 
