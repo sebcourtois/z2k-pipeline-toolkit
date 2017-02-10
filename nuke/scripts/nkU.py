@@ -189,7 +189,14 @@ class dataFile():
             departementS =self.depDir
 
             if self.seq in ["sq0350","sq0520"]:
-                os.environ["ZOMB_OUTPUT_PATH"] = normPath(os.environ["ZOMB_OUTPUT_PATH_BIS"])
+                try:
+                    os.environ["ZOMB_OUTPUT_PATH"] = normPath(os.environ["ZOMB_OUTPUT_PATH_BIS"])
+                except:
+                    print "#### warning : 'ZOMB_OUTPUT_PATH_BIS' is not defined"
+                    if  "zombidamas" in os.environ["ZOMB_OUTPUT_PATH"]:
+                        print "#### warning : 'ZOMB_OUTPUT_PATH' = //JAKKU/zombillenium2/output"
+                        os.environ["ZOMB_OUTPUT_PATH"] ="//JAKKU/zombillenium2/output"
+
 
 
             outputDirS = os.environ["ZOMB_OUTPUT_PATH"]+"/"+self.seq+"/"+self.shot
@@ -248,8 +255,9 @@ def initNukeShot(fileNameS= ""):
         df=dataFile(fileNameS)
         df.printData()
         df.initNukeEnvVar()
-    except:
+    except Exception,err:
         print "warning: error while running 'initNukeShot()'"
+        print err
 
 
 def createCompoBatchFiles():
@@ -1001,11 +1009,8 @@ def isStereo():
 def createWriteDir():
     initNukeShot()
     myFile = nuke.filename(nuke.thisNode())
-    print 'myFile',myFile
     myDir = os.path.dirname( myFile )
-    print 'myDir', myDir
     osdir = nuke.callbacks.filenameFilter( myDir )
-    print 'osdir', osdir
 
     if osdir:
         if "%V" in osdir:
