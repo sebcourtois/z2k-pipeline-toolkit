@@ -139,6 +139,7 @@ class Z2kToolkit(object):
         sPubToolPath = os.environ["ZOMB_TOOL_PATH"]
         sDefInstLoc = defaultInstallLocation()
         sNormCurLoc = normAll(osp.dirname(self.rootPath))
+        sNormCurLoc = normAll(sNormCurLoc.replace("p:", "//ZOMBIWALK/Projects"))
 
         if sNormCurLoc == normAll(sDefInstLoc):
             if not os.environ.get("Z2K_RELEASE_LOC"):
@@ -230,12 +231,11 @@ class Z2kToolkit(object):
     def installPath(self, location=""):
 
         if location:
-            return pathJoin(location, BASE_NAME)
+            return osp.expandvars(pathJoin(location, BASE_NAME))
 
         return osp.expandvars(pathJoin(os.environ["Z2K_INSTALL_LOC"], BASE_NAME))
 
     def install(self, sInstallPath):
-
         return self._makeCopy(self.rootPath, sInstallPath)
 
     def update(self):

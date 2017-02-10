@@ -17,11 +17,11 @@ from pytd.util.fsutils import pathJoin, pathSuffixed, jsonWrite
 from zomblib import damutils
 from zomblib.mayabatch import MayaBatch
 #from zomblib.damutils import playbackTimesFromShot
-from davos.core.utils import mkVersionSuffix
+from collections import OrderedDict
 
 LAUNCH_TIME = None
 
-def launch(shotNames=None, dryRun=False, noPublish=False, timestamp=None, dialogParent=None):
+def launch(shots=None, dryRun=False, noPublish=False, timestamp=None, dialogParent=None):
 
     global LAUNCH_TIME
 
@@ -31,11 +31,13 @@ def launch(shotNames=None, dryRun=False, noPublish=False, timestamp=None, dialog
     bPrompt = True
     bWriteCmd = False
     bOk = True
-    if not shotNames:
+    if not shots:
         bOk, sgShots = damutils.shotsFromShotgun(project=proj, dialogParent=dialogParent)
-        shotNames = tuple(d["code"] for d in sgShots)
+        sShotList = tuple(d["code"] for d in sgShots)
         bWriteCmd = True
         bPrompt = False
+    else:
+        sShotList = shots
 
     if not bOk:
         sys.exit()
@@ -57,26 +59,27 @@ def launch(shotNames=None, dryRun=False, noPublish=False, timestamp=None, dialog
             if "--time" not in cmdArgs:
                 cmdArgs += ["--time", str(int(LAUNCH_TIME))]
 
-            if shotNames and ("--shots" not in cmdArgs):
+            if sShotList and ("--shots" not in cmdArgs):
                 cmdArgs += ["--shots"]
-                print shotNames
-                cmdArgs.extend(shotNames)
+                print sShotList
+                cmdArgs.extend(sShotList)
 
             sCmd = subprocess.list2cmdline(cmdArgs)
             print sCmd
 
             sBatFilePath = makeOutputPath("re_build.bat", timestamp=LAUNCH_TIME)
             with open(sBatFilePath, "w") as f:
-                f.writelines(("REM {}\n".format(s) for s in shotNames))
+                f.writelines(("REM {}\n".format(s) for s in sShotList))
                 f.write(sCmd)
 
     sTitle = "RENDER SCENE BUILDER"
-    print "\n", sTitle.center(len(sTitle) + 2).center(120, "#")
+    print "\n", sTitle.center(len(sTitle) + 2).center(120, "-")
     kwargs = dict(dryRun=dryRun, prompt=bPrompt, noPublish=noPublish)
     if inDevMode():
         pprint(kwargs)
+    print ""
 
-    damShotList = list(proj.getShot(s) for s in shotNames)
+    damShotList = list(proj.getShot(s) for s in sShotList)
     build(damShotList, sgShots=sgShots, **kwargs)
 
 def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=False,
@@ -88,68 +91,63 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
     mayaBatch = MayaBatch()
     sgShotDct = {} if (sgShots is None) else dict((d["code"], d) for d in sgShots)
 
-    sErrorList = []
+    errorDct = OrderedDict()
     pubScnDct = {}
     for damShot in damShotList:
+        sErrorList = []
         for sRcName in (sSrcRcName, sDstRcName):
             pubScn = None
             try:
-                pubScn = damShot.getRcFile("public", sRcName,
-                                            fail=True, dbNode=False)
+                pubScn = damShot.getRcFile("public", sRcName, fail=True, dbNode=False)
             except Exception as e:
-                sErrorList.append("{} - {}".format(damShot, toStr(e)))
+                sErrorList.append("{}".format(toStr(e)))
             else:
                 if not pubScn:
                     sMsg = "Could not get public {}".format(sRcName.replace("_", " "))
-                    sErrorList.append("{} - {}".format(damShot, sMsg))
+                    sErrorList.append("{}".format(sMsg))
 
             pubScnDct.setdefault(sRcName, []).append(pubScn)
+
+        errorDct[damShot.name] = sErrorList
 
     srcScnList = pubScnDct[sSrcRcName]
     dstScnList = pubScnDct[sDstRcName]
 
     loadDbNodes(proj, tuple(scn for scn in  (srcScnList + dstScnList) if scn))
 
-    for i, dstScn in enumerate(dstScnList):
+    for i, (damShot, dstScn) in enumerate(izip(damShotList, dstScnList)):
+
         if not dstScn:
             continue
 
         iDstVers = dstScn.currentVersion
         if iDstVers:
             dstScnList[i] = None
-            sMsg = (" {} already started (v{:03d}) and will NOT be published."
-                    .format(sRcName.replace("_", " "), iDstVers))
-            sErrorList.append("{} - {}".format(dstScn.name, sMsg))
+            sMsg = ("'{}' already started (v{:03d}).".format(dstScn.name, iDstVers))
+            errorDct.setdefault(damShot.name, []).append(sMsg)
             continue
 
         sLockOwner = dstScn.getLockOwner(refresh=False)
         if sLockOwner:
             dstScnList[i] = None
-            sErrorList.append("{} - locked by '{}' and will NOT be published."
-                              .format(dstScn.name, sLockOwner))
+            sMsg = ("'{}' is locked by '{}'.".format(dstScn.name, sLockOwner))
+            errorDct.setdefault(damShot.name, []).append(sMsg)
             continue
 
 
-    for i, (srcScn, dstScn) in enumerate(izip(srcScnList, dstScnList)):
+    for i, (damShot, srcScn, dstScn) in enumerate(izip(damShotList, srcScnList, dstScnList)):
         latestVers = None
         if srcScn:# and dstScn:
             try:
                 latestVers = _assertedLatestVersion(srcScn, refresh=False)
             except Exception as e:
-                sErrorList.append(toStr(e))
+                errorDct.setdefault(damShot.name, []).append(toStr(e))
             else:
                 if not latestVers:
                     sMsg = "could not get latest version."
-                    sErrorList.append("{} - {}".format(srcScn.name, sMsg))
+                    errorDct.setdefault(damShot.name, []).append("{} - {}".format(srcScn.name, sMsg))
         #print srcScn, latestVers
-        if not latestVers:
-            srcScnList[i] = None
-        else:
-            sVersSuffix = mkVersionSuffix(latestVers.versionFromName())
-            sSuffix = "".join((sVersSuffix, '-', "toLighting"))
-            privScn, _ = srcScn.copyToPrivateSpace(suffix=sSuffix, existing="replace",
-                                                   sourceFile=latestVers)
-            srcScnList[i] = privScn
+        srcScnList[i] = latestVers
 
 
     if sgShotDct:
@@ -168,46 +166,76 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
         raise RuntimeError("number of shots and '{}' scenes NOT the same."
                            .format(sSrcRcName.replace("_scene", "")))
 
-    sTask = "Final Layout"
-    step = ""
 
-    for i, (damShot, srcScn) in enumerate(izip(damShotList, srcScnList)):
-        if srcScn:
-            sgShot = sgShotDct[damShot.name]
-            sgTask = damShot.getSgTask(sTask, step, sgEntity=sgShot, fail=True)
-            if sgTask["sg_status_list"] != "fin":
+    sStep = ""
+    sTask = "final layout"
 
-                dstScnList[i] = None
-                sMsg = ("'{}' task's status is NOT FINAL and will NOT be published."
-                        .format("|".join(s for s in (step, sTask) if s)))
-                sErrorList.append("{} - {}".format(damShot, sMsg))
+    filters = [["content", "is", sTask],
+               ["entity.Shot.code", "in", sgShotDct.keys()]]
+    fields = ["entity.Shot.code", "sg_status_list"]
+    sgTaskList = proj._shotgundb.sg.find("Task", filters, fields)
+    sgTaskDct = dict((d["entity.Shot.code"], d) for d in sgTaskList)
 
-            elif noPublish:
-                dstScnList[i] = None
-        else:
-            damShotList[i] = None
+    for i, (damShot, dstScn) in enumerate(izip(damShotList, dstScnList)):
+
+        if not dstScn:
+            continue
+
+        sShotName = damShot.name
+        #sgShot = sgShotDct[sShotName]
+        sgTask = sgTaskDct[sShotName]#damShot.getSgTask(sTask, sStep, sgEntity=sgShot, fail=True)
+
+        if sgTask["sg_status_list"] != "fin":
+
             dstScnList[i] = None
+            sMsg = ("Status of '{}' task NOT FINAL."
+                    .format("|".join(s for s in (sStep, sTask) if s)))
+            errorDct.setdefault(damShot.name, []).append(sMsg)
+
+        elif noPublish:
+            dstScnList[i] = None
+
+
+    bPublish = (not noPublish)
+
+    for i, (damShot, srcScn, dstScn) in enumerate(izip(damShotList, srcScnList, dstScnList)):
+
+        sShotName = damShot.name
+
+        if (bPublish and not (srcScn and dstScn)) or (not srcScn):
+            damShot = srcScn = dstScn = None
+            damShotList[i] = None
+            srcScnList[i] = None
+            dstScnList[i] = None
+
+        sMsgList = []
+        if srcScn:
+            sMsg = "ok to build "
+            if dstScn:
+                sMsg += "and publish"
+            sMsgList.append(sMsg)
+
+        sErrorList = errorDct.get(sShotName, [])
+        if sErrorList:
+            prompt = True
+            sMsgList.extend("ERROR: " + s for s in sErrorList)
+
+        sSep = "\n" + (len(sShotName) * " ") + " - "
+        print "{} - {}".format(sShotName, sSep.join(sMsgList))
+        #print damShot, srcScn, dstScn
 
     dstScnList = list(dst for shot, src, dst in izip(damShotList, srcScnList, dstScnList) if shot and src)
     damShotList = list(shot for shot in damShotList if shot)
     srcScnList = list(src for src in srcScnList if src)
 
     if len(damShotList) != len(srcScnList):
+        print len(damShotList), len(srcScnList), len(dstScnList)
         raise RuntimeError("number of valid shots and '{}' scenes NOT the same."
                            .format(sSrcRcName.replace("_scene", "")))
 
-#    for shot, src, dst in izip(damShotList, srcScnList, dstScnList):
-#        print shot, src, dst
-
     numValidShots = len(damShotList)
-
-    if sErrorList:
-        sSep = "\nWARNING: "
-        sErrMsg = sSep + sSep.join(sErrorList)
-        print sErrMsg, '\n'
-        prompt = True
-
     numInputShots = len(in_damShotList)
+
     if not damShotList:
         sMsg = "None of the {} selected shots can be built.".format(numInputShots)
         confirmMessage("SORRY !", sMsg, ["OK"])
@@ -226,17 +254,18 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
     if prompt:
         res = confirmMessage("DO YOU WANT TO...", sMsg, ["Yes", "No"])
         if res == "No":
-            raise RuntimeWarning("Canceled !")
+            sys.exit(0)
+            #raise RuntimeWarning("Canceled !")
+
 
     sCode = """
 from zomblib import damutils;reload(damutils);damutils.initProject()
 """
     jobList = [{"title":"Batch initialization", "py_lines":[sCode], "fail":True}]
 
-    jobArgsList = tuple(dict(src_scene=src.absPath(),
-                             dst_scene=dst.absPath() if dst else None,
-                             dryRun=dryRun,
-                             lrd="none") for src, dst in izip(srcScnList, dstScnList))
+    jobArgsList = tuple(dict(shot=shot.name, src_scene=src.absPath(),
+                             publish=True if dst else False, dryRun=dryRun)
+                        for shot, src, dst in izip(damShotList, srcScnList, dstScnList))
     jobList.extend(generMayaJobs(jobArgsList))
 
     sJobFilePath = makeOutputPath("mayabatch.json", timestamp=LAUNCH_TIME)
@@ -249,12 +278,12 @@ from zomblib import damutils;reload(damutils);damutils.initProject()
 def _assertedLatestVersion(scnFile, refresh=False):
 
     if not scnFile.currentVersion:
-        raise AssertionError("{} - no version yet.".format(scnFile.name))
+        raise AssertionError("'{}' has no version yet.".format(scnFile.name))
         #return None
 
     sLockOwner = scnFile.getLockOwner(refresh=refresh)
     if sLockOwner:
-        raise AssertionError("{} - locked by '{}'.".format(scnFile.name, sLockOwner))
+        raise AssertionError("'{}' is locked by '{}'.".format(scnFile.name, sLockOwner))
 
     versFile = scnFile.assertLatestFile(refresh=refresh, returnVersion=True)
 
@@ -263,28 +292,20 @@ def _assertedLatestVersion(scnFile, refresh=False):
 def generMayaJobs(jobArgsList):
 
     sCodeFmt = """
-from pytaya.core import system as myasys
-reload(myasys)
-
 from dminutes import batchprocess
 reload(batchprocess)
 
-myasys.openScene('{src_scene}', force=True, fail=False, {lrd})
-#pm.refresh()
-
-batchprocess.buildRenderScene(publishAs={dst_scene},dryRun={dryRun})
-
+#print "{shot}", "{src_scene}", {publish}, {dryRun}
+batchprocess.buildRenderScene("{shot}", "{src_scene}", publish={publish}, dryRun={dryRun})
 """
     for kwargs in (d.copy() for d in jobArgsList):
 
-        sAbsPath = kwargs.get("src_scene")
-        sLrd = kwargs.pop("lrd", "")
-        if sLrd:
-            sLrd = "lrd='{}'".format(sLrd)
+        sSrcScnPath = kwargs.get("src_scene")
 
-        sFunc = "buildRenderScene()"
-        sTitle = "{} on '{}'".format(sFunc, osp.basename(sAbsPath))
-        sCode = sCodeFmt.format(lrd=sLrd, **kwargs)
+        sFunc = "batchprocess.buildRenderScene()"
+        sTitle = "{} on '{}'".format(sFunc, osp.basename(sSrcScnPath))
+
+        sCode = sCodeFmt.format(**kwargs)
         _ = compile(sCode, '<string>', 'exec')
 
         job = {"title":sTitle, "py_lines":sCode.strip().split('\n')}
@@ -323,13 +344,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     #parser.add_argument("resource")
     parser.add_argument("--dry", action="store_true")
-    parser.add_argument("--no-publish", action="store_true" if not inDevMode() else "store_false")
+    parser.add_argument("--no-publish", action="store_true")
     parser.add_argument("--time", type=int, default=None)
     parser.add_argument("--shots", nargs="*", default=None)
 
+    ns = parser.parse_args()
+
+#    if inDevMode():
+#        ns.no_publish = True
+
     try:
-        ns = parser.parse_args()
-        launch(shotNames=ns.shots, dryRun=ns.dry, timestamp=ns.time, noPublish=ns.no_publish)
+        launch(shots=ns.shots, dryRun=ns.dry, timestamp=ns.time, noPublish=ns.no_publish)
     except Exception as e:
         os.environ["PYTHONINSPECT"] = "1"
         if isinstance(e, Warning):

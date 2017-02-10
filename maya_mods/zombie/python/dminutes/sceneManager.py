@@ -1023,11 +1023,12 @@ class SceneManager():
         sgVersion = publishCtx.postPublishInfos.get("sg_version")
         if sgVersion:
             try:
-                linkAssetVersionsInShotgun(sgVersion, publishCtx.sceneInfos)
+                damShot = publishCtx.sceneInfos.get("dam_entity")
+                linkAssetVersionsInShotgun(damShot, sgVersion)
             except Exception as e:
                 if inDevMode():
                     raise
-                pc.displayWarning(e.message)
+                pc.displayError(toStr(e))
 
         sStepCode = self.context["step"]["code"].lower()
 

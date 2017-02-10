@@ -9,9 +9,13 @@ import pymel.core as pm
 from pytd.util.fsutils import pathJoin
 
 from davos.core.damproject import DamProject
+from davos.core.utils import mkVersionSuffix
+
+from pytaya.core import system as myasys
 
 from davos_maya.tool import reference as myaref
 from davos_maya.tool import general as myagen
+from davos_maya.tool import publishing
 
 from dminutes import geocaching
 from dminutes import finalLayout
@@ -22,6 +26,8 @@ reload(finalLayout)
 reload(myaref)
 reload(myagen)
 reload(shotconfo)
+reload(publishing)
+reload(myasys)
 
 def quitWithStatus(func):
     def doIt(*args, **kwargs):
@@ -84,30 +90,53 @@ def setupLayoutScene(**kwargs):
 
     finalLayout.renderSetup()
 
-def buildRenderScene(publishAs=None, dryRun=False):
+def buildRenderScene(sShotName, sSrcScnPath, publish=False, dryRun=False):
 
-    sCurScnPath = pm.sceneName()
-    scnInfos = myagen.infosFromScene(sCurScnPath)
+    proj = DamProject("zombillenium")
+    damShot = proj.getShot(sShotName)
+    shotLib = damShot.getLibrary()
 
-    damShot = scnInfos["dam_entity"]
-    proj = damShot.project
+    srcScn = proj.rcFileFromPath(sSrcScnPath, library=shotLib, dbNode=False)
 
-    relAstList = myagen.listRelatedAssets(damShot)
-    myaref.lockAssetRefsToRelatedVersion(relAstList)
+    if publish:
+        sComment = "built from " + srcScn.name.replace(damShot.name + "_", "")
+        pubFile = damShot.getRcFile("public", "rendering_scene")
+
+    if srcScn.isVersionFile():
+        sVersSuffix = mkVersionSuffix(srcScn.versionFromName())
+        headFile = srcScn.getHeadFile(dbNode=False)
+        copiedFile = srcScn
+    else:
+        sVersSuffix = ""
+        headFile = srcScn
+        copiedFile = None
+
+    sSuffix = "".join((sVersSuffix, "-toLighting"))
+    privScn, _ = headFile.copyToPrivateSpace(suffix=sSuffix, existing="replace",
+                                             sourceFile=copiedFile)
+    srcScn = privScn
+    sSrcScnPath = srcScn.absPath()
+
+    myasys.openScene(sSrcScnPath, force=True, fail=False, lrd="none")
+
+    relatAstList = myagen.listRelatedAssets(damShot)
+    myaref.lockAssetRefsToRelatedVersion(relatAstList)
 
     if not pm.listReferences(loaded=True, unloaded=False):
         pm.saveFile(force=True)
-        pm.openFile(sCurScnPath, force=True, lrd="all")
+        pm.openFile(sSrcScnPath, force=True, lrd="all")
 
     shotconfo.finalLayoutToLighting(gui=False)
 
     if not dryRun:
         pm.saveFile(force=True)
 
-    if publishAs:
-        sComment = "built from " + osp.basename(sCurScnPath).replace(damShot.name + "_", "")
-        pubFile = proj.rcFileFromPath(publishAs, library=damShot.getLibrary())
-        if not dryRun:
-            pubFile.publishVersion(sCurScnPath, autoLock=True, autoUnlock=True,
-                                   comment=sComment)
+    if publish and (not dryRun):
+        sgVersData = {"sg_status_list":"rdy"}
+        _, sgVersion = pubFile.publishVersion(sSrcScnPath, autoLock=True,
+                                              autoUnlock=True,
+                                              comment=sComment,
+                                              sgVersionData=sgVersData)
+        if sgVersion:
+            publishing.linkAssetVersionsInShotgun(damShot, sgVersion)
 

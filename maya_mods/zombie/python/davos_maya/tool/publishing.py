@@ -522,7 +522,7 @@ def linkSceneDependencies(sCurScnPath, depScanResults, sDependencyType):
 
     return proj.linkResourceFiles(scnFile, depFileList, data)
 
-def linkAssetVersionsInShotgun(sgVersion, scnInfos, dryRun=False):
+def linkAssetVersionsInShotgun(damShot, sgVersion, relatedAssets=None, dryRun=False):
 
     def iterVersionEnvPaths(relAstList):
         for relAstData in relAstList:
@@ -531,10 +531,9 @@ def linkAssetVersionsInShotgun(sgVersion, scnInfos, dryRun=False):
                 yield versFile.envPath()
 
 #    sgShot = sgVersion["entity"]
-    damShot = scnInfos.get("dam_entity")
     proj = damShot.project
 
-    relatedAssetList = listRelatedAssets(damShot)
+    relatedAssetList = listRelatedAssets(damShot) if relatedAssets is None else relatedAssets
     if not relatedAssetList:
         return
 
