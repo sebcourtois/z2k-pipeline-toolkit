@@ -241,6 +241,7 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
         confirmMessage("SORRY !", sMsg, ["OK"])
         return
 
+    prompt = True
     if numValidShots != numInputShots:
         sMsg = ("Only {}/{} shots will be built.\n\nContinue to build anyway ?\n\n"
                 .format(numValidShots, numInputShots))
