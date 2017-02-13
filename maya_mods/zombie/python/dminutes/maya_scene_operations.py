@@ -1002,7 +1002,7 @@ def exportCamAlembic(**kwargs):
     bImgPlnViz = isImgPlaneHidden()
     setImgPlaneHidden(False)
     try:
-        res = mc.AbcExport(j=sAbcJobArgs.replace("\n", " "))
+        res = mc.AbcExport(j=sAbcJobArgs.replace("\n", " "), verbose=True)
     finally:
         setImgPlaneHidden(bImgPlnViz)
 

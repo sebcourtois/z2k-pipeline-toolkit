@@ -99,16 +99,19 @@ def finalLayoutToLighting(gui=True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="finalLayoutToLighting")
     deletedNodeL=[]
 
+    bBatchMode = mc.about(batch=True)
+
     mc.editRenderLayerGlobals(currentRenderLayer='lay_finalLayout_00')
+
     testVisibilityL = mc.ls('*:grp_*', type='transform') + mc.ls('*:chr_*', type='transform') + mc.ls('*:geo_*', type='transform')
     visibilityL = []
-    if not testVisibilityL == None:
+    if testVisibilityL:
         for each in testVisibilityL:
             visibilityL.append(each + '.visibility')
-
     sHiddenList = list(sVizAttr.rsplit('.', 1)[0] for sVizAttr in visibilityL if not mc.getAttr(sVizAttr))
 
     mc.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
+    
     if sHiddenList:
         mc.select(sHiddenList)
         pm.hide()
@@ -128,7 +131,7 @@ def finalLayoutToLighting(gui=True):
             else:
                 mc.setAttr(sOverAttr, override)
         except RuntimeError as e:
-            pm.displayWarning(e)
+            pm.displayError(e)
 
     mc.ls("cam_animatic:asset*")
     toDeleteNodeL = mc.ls("mat_arelequin_*") + mc.ls("mat_arlequin_*") + mc.ls("aiAOV_arlequin*") + mc.ls("cam_animatic:asset*") + mc.ls("lay_finalLayout_*")
@@ -140,11 +143,11 @@ def finalLayoutToLighting(gui=True):
         else:
             deletedNodeL.append(each)
 
-    removeRefEditByAttr(inRefNodeL=[], attr="aovName", cmd="setAttr", failedRefEdit =True, GUI=True)
+    removeRefEditByAttr(inRefNodeL=[], attr="aovName", cmd="setAttr", failedRefEdit=True, GUI=True)
     txt = "{} node(s) deleted: '{}': ".format(len(deletedNodeL),deletedNodeL)
     log.printL("i", txt)
 
-    if not mc.about(batch=True):
+    if not bBatchMode:
         pm.mel.eval("source updateSoundMenu")
         pm.mel.eval("setSoundDisplay audio 0")
         log.printL("i", "sound turned off")
