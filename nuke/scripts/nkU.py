@@ -188,7 +188,7 @@ class dataFile():
 
             departementS =self.depDir
 
-            if self.seq in ["sq0350","sq0520"]:
+            if self.seq in ["sq0350","sq0520","sq0230"]:
                 try:
                     os.environ["ZOMB_OUTPUT_PATH"] = normPath(os.environ["ZOMB_OUTPUT_PATH_BIS"])
                 except:
