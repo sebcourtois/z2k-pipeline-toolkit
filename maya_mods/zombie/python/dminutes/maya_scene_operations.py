@@ -780,7 +780,7 @@ def getAnimaticInfos(damShot, sSgStep):
 
     if sStepName == "final layout":
         sRcName = "anim_capture"
-    elif sStepName == "fx3d":
+    elif sStepName in ("fx3d", "rendering"):
         sRcName = "finalLayout_movie"
     else:
         sRcName = "animatic_capture"

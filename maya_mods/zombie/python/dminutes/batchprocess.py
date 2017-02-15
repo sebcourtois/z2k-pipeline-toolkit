@@ -143,3 +143,14 @@ def buildRenderScene(sSrcScnPath, publish=False, dryRun=False):
         if sgVersion:
             publishing.linkAssetVersionsInShotgun(damShot, sgVersion)
 
+
+def exportLayoutInfos(sSrcScnPath, publish=False, dryRun=False):
+
+    scnInfos = myagen.infosFromScene(sSrcScnPath)
+    damShot = scnInfos["dam_entity"]
+
+    myasys.openScene(sSrcScnPath, force=True, fail=False)
+    mc.refresh()
+
+    geocaching.exportLayoutInfo(publish=publish, dryRun=dryRun, sceneInfos=scnInfos)
+

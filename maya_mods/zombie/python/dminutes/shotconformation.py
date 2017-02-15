@@ -103,7 +103,9 @@ def finalLayoutToLighting(gui=True):
 
     mc.editRenderLayerGlobals(currentRenderLayer='lay_finalLayout_00')
 
-    testVisibilityL = mc.ls('*:grp_*', type='transform') + mc.ls('*:chr_*', type='transform') + mc.ls('*:geo_*', type='transform')
+    testVisibilityL = (mc.ls('*:grp_*', type='transform') +
+                       mc.ls('*:chr_*', type='transform') +
+                       mc.ls('*:geo_*', type='transform'))
     visibilityL = []
     if testVisibilityL:
         for each in testVisibilityL:
@@ -133,8 +135,12 @@ def finalLayoutToLighting(gui=True):
         except RuntimeError as e:
             pm.displayError(e)
 
-    mc.ls("cam_animatic:asset*")
-    toDeleteNodeL = mc.ls("mat_arelequin_*") + mc.ls("mat_arlequin_*") + mc.ls("aiAOV_arlequin*") + mc.ls("cam_animatic:asset*") + mc.ls("lay_finalLayout_*")
+    toDeleteNodeL = (mc.ls("mat_arelequin_*") +
+                     mc.ls("mat_arlequin_*") +
+                     mc.ls("aiAOV_arlequin*") +
+                     mc.ls("cam_animatic:asset*") +
+                     mc.ls("lay_finalLayout_*"))
+
     for each in toDeleteNodeL: 
         try: 
             mc.delete(each)
