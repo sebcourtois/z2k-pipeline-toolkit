@@ -9,7 +9,7 @@ from pprint import pprint
 
 #import maya.api.OpenMaya as om
 import maya.cmds as mc
-import maya.utils as mu
+#import maya.utils as mu
 
 from pymel.util.arguments import listForNone
 import pymel.core as pm
@@ -31,7 +31,7 @@ from davos.core.damtypes import DamAsset, DamShot
 
 from davos_maya.tool import reference as myaref
 from davos_maya.tool import dependency_scan
-from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
+from davos_maya.tool.general import infosFromScene
 from davos_maya.tool.general import iterGeoGroups
 
 from dminutes import maya_scene_operations as mop
@@ -274,23 +274,26 @@ def seperatorStr(numLines, width=120, decay=20, reverse=False):
              for i in xrange(numLines))
     return "\n".join(sorted((l.center(width) for l in lines), reverse=reverse))
 
-def relevantXfmAttrs(sXfm, unlocked=True):
+def relevantXfmAttrs(sXfm, unlocked=True, moreAttrs=None):
 
     flags = dict(unlocked=unlocked, connectable=True, scalar=True)
 
     sAttrSet = set(listForNone(mc.listAttr(sXfm, keyable=True, **flags)))
     sAttrSet.update(listForNone(mc.listAttr(sXfm, userDefined=True, **flags)))
 
+    if moreAttrs:
+        sAttrSet.update(argToSet(moreAttrs))
+
     return set(at for at in sAttrSet if not (("." in at) and not mc.objExists(sXfm + "." + at)))
 
 def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None,
-                      addAttrs=None, dryRun=False):
+                      attrsToStr=None, dryRun=False):
 
     sDiscardAttrSet = argToSet(discardAttrs)
+    sAttrToStrSet = argToSet(attrsToStr)
 
     listAttrs = lambda n: listForNone(mc.listAttr(n, scalar=True, settable=True,
-                                                 visible=True, connectable=True))
-
+                                                  visible=True, connectable=True))
     bCheckIfExists = True
     if callable(attrs):
         sOnlyAttrSet = set()
@@ -298,8 +301,6 @@ def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None,
         bCheckIfExists = False
     else:
         sOnlyAttrSet = argToSet(attrs)
-
-    sAddAttrSet = argToSet(addAttrs)
 
     outData = OrderedDict()
     #count = len(sNodeList)
@@ -311,13 +312,10 @@ def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None,
             sAttrSet &= sOnlyAttrSet
 
         sAttrSet -= sDiscardAttrSet
-        sAttrSet.update(sAddAttrSet)
-
         if not sAttrSet:
             continue
 
         values = OrderedDict()
-
         for sAttr in sAttrSet:
 
             sNodeAttr = sNode + "." + sAttr
@@ -325,7 +323,11 @@ def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None,
             if bCheckIfExists and ("." in sAttr) and not mc.objExists(sNodeAttr):
                 continue
 
-            values[sAttr] = mc.getAttr(sNodeAttr)
+            v = mc.getAttr(sNodeAttr)
+            if sAttr in sAttrToStrSet:
+                v = toStr(v)
+
+            values[sAttr] = v
 
         outData[sNode] = values
 
@@ -372,8 +374,9 @@ def exportLayoutInfo(**kwargs):
 
     print " Exporting '{}' infos... ".format(sScnRcName).center(100, "-")
 
-    exportScalarAttrs(sPrivFilePath, sXfmList, attrs=relevantXfmAttrs,
-                      addAttrs="worldMatrix", dryRun=bDryRun)
+    lsAttrsFunc = partial(relevantXfmAttrs, moreAttrs="worldMatrix")
+    exportScalarAttrs(sPrivFilePath, sXfmList, attrs=lsAttrsFunc,
+                      attrsToStr="worldMatrix", dryRun=bDryRun)
 
     res = sPrivFilePath
     if bPublish:
