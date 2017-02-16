@@ -84,7 +84,7 @@ def setupLayoutScene(**kwargs):
     myaref.loadAssetsAsResource("render_ref", checkSyncState=True, selected=False,
                                 exclude=excludeRef, fail=True)
 
-    geocaching.importCaches(jobs=jobList, visibilities=False, useCacheSet=True,
+    geocaching.importCaches(jobs=jobList, layout=True, useCacheSet=True,
                             dryRun=False, beforeHistory=False, removeRefs=True,
                             showScriptEditor=False, sceneInfos=scnInfos)
 
@@ -129,6 +129,8 @@ def buildRenderScene(sSrcScnPath, publish=False, dryRun=False):
 
     shotconfo.finalLayoutToLighting(gui=False)
 
+    geocaching.exportLayoutInfo(publish=publish, dryRun=dryRun, sceneInfos=scnInfos)
+
     if not dryRun:
         pm.saveFile(force=True)
 
@@ -140,4 +142,15 @@ def buildRenderScene(sSrcScnPath, publish=False, dryRun=False):
                                               sgVersionData=sgVersData)
         if sgVersion:
             publishing.linkAssetVersionsInShotgun(damShot, sgVersion)
+
+
+def exportLayoutInfos(sSrcScnPath, publish=False, dryRun=False):
+
+    scnInfos = myagen.infosFromScene(sSrcScnPath)
+    damShot = scnInfos["dam_entity"]
+
+    myasys.openScene(sSrcScnPath, force=True, fail=False)
+    mc.refresh()
+
+    geocaching.exportLayoutInfo(publish=publish, dryRun=dryRun, sceneInfos=scnInfos)
 

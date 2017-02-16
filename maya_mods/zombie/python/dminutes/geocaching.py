@@ -9,7 +9,7 @@ from pprint import pprint
 
 #import maya.api.OpenMaya as om
 import maya.cmds as mc
-import maya.utils as mu
+#import maya.utils as mu
 
 from pymel.util.arguments import listForNone
 import pymel.core as pm
@@ -31,7 +31,7 @@ from davos.core.damtypes import DamAsset, DamShot
 
 from davos_maya.tool import reference as myaref
 from davos_maya.tool import dependency_scan
-from davos_maya.tool.general import infosFromScene, assertSceneInfoMatches
+from davos_maya.tool.general import infosFromScene
 from davos_maya.tool.general import iterGeoGroups
 
 from dminutes import maya_scene_operations as mop
@@ -274,23 +274,26 @@ def seperatorStr(numLines, width=120, decay=20, reverse=False):
              for i in xrange(numLines))
     return "\n".join(sorted((l.center(width) for l in lines), reverse=reverse))
 
-def relevantXfmAttrs(sXfm, unlocked=True):
+def relevantXfmAttrs(sXfm, unlocked=True, moreAttrs=None):
 
     flags = dict(unlocked=unlocked, connectable=True, scalar=True)
 
     sAttrSet = set(listForNone(mc.listAttr(sXfm, keyable=True, **flags)))
     sAttrSet.update(listForNone(mc.listAttr(sXfm, userDefined=True, **flags)))
 
+    if moreAttrs:
+        sAttrSet.update(argToSet(moreAttrs))
+
     return set(at for at in sAttrSet if not (("." in at) and not mc.objExists(sXfm + "." + at)))
 
 def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None,
-                      addAttrs=None, dryRun=False):
+                      attrsToStr=None, dryRun=False):
 
     sDiscardAttrSet = argToSet(discardAttrs)
+    sAttrToStrSet = argToSet(attrsToStr)
 
     listAttrs = lambda n: listForNone(mc.listAttr(n, scalar=True, settable=True,
-                                                 visible=True, connectable=True))
-
+                                                  visible=True, connectable=True))
     bCheckIfExists = True
     if callable(attrs):
         sOnlyAttrSet = set()
@@ -298,8 +301,6 @@ def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None,
         bCheckIfExists = False
     else:
         sOnlyAttrSet = argToSet(attrs)
-
-    sAddAttrSet = argToSet(addAttrs)
 
     outData = OrderedDict()
     #count = len(sNodeList)
@@ -311,13 +312,10 @@ def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None,
             sAttrSet &= sOnlyAttrSet
 
         sAttrSet -= sDiscardAttrSet
-        sAttrSet.update(sAddAttrSet)
-
         if not sAttrSet:
             continue
 
         values = OrderedDict()
-
         for sAttr in sAttrSet:
 
             sNodeAttr = sNode + "." + sAttr
@@ -325,7 +323,11 @@ def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None,
             if bCheckIfExists and ("." in sAttr) and not mc.objExists(sNodeAttr):
                 continue
 
-            values[sAttr] = mc.getAttr(sNodeAttr)
+            v = mc.getAttr(sNodeAttr)
+            if sAttr in sAttrToStrSet:
+                v = toStr(v)
+
+            values[sAttr] = v
 
         outData[sNode] = values
 
@@ -339,14 +341,23 @@ def exportLayoutInfo(**kwargs):
     bDryRun = kwargs.pop("dryRun", False)
     sComment = kwargs.pop("comment", "")
 
-    scnInfos = infosFromScene()
+    scnInfos = kwargs.pop("sceneInfos", None)
+    if scnInfos is None:
+        scnInfos = infosFromScene()
+
     damShot = scnInfos.get("dam_entity")
-    privScnFile = scnInfos["rc_entry"]
+    curScnFile = scnInfos["rc_entry"]
 
-    sMsg = "Layout infos can only be exported from a layout scene (of course)."
-    assertSceneInfoMatches(scnInfos, "layout_scene", msg=sMsg)
+    sScnRcName = scnInfos.get("resource")
+    if sScnRcName == "layout_scene":
+        sOutRcName = "layoutInfo_file"
+    elif sScnRcName == "finalLayout_scene":
+        sOutRcName = "finalLayoutInfo_file"
+    else:
+        sMsg = "Can NOT export layout infos from a '{}': No output file defined.".format(sScnRcName)
+        raise AssertionError(sMsg)
 
-    sPrivFilePath = damShot.getPath("private", "layoutInfo_file")
+    sPrivFilePath = damShot.getPath("private", sOutRcName)
 
     sDirPath = os.path.dirname(sPrivFilePath)
     if (not os.path.exists(sDirPath)) and (not bDryRun):
@@ -361,22 +372,23 @@ def exportLayoutInfo(**kwargs):
         pm.displayWarning("No layout info to export !")
         return
 
-    print " Exporting layout info... ".center(100, "-")
+    print " Exporting '{}' infos... ".format(sScnRcName).center(100, "-")
 
-    exportScalarAttrs(sPrivFilePath, sXfmList, attrs=relevantXfmAttrs,
-                      addAttrs="worldMatrix", dryRun=bDryRun)
+    lsAttrsFunc = partial(relevantXfmAttrs, moreAttrs="worldMatrix")
+    exportScalarAttrs(sPrivFilePath, sXfmList, attrs=lsAttrsFunc,
+                      attrsToStr="worldMatrix", dryRun=bDryRun)
 
     res = sPrivFilePath
     if bPublish:
         if not sComment:
-            sComment = "from {}".format(privScnFile.name)
+            sComment = "from {}".format(curScnFile.name.replace(damShot.name + "_", ""))
 
-        pubFile = damShot.getRcFile("public", "layoutInfo_file", weak=True)
+        pubFile = damShot.getRcFile("public", sOutRcName, weak=True)
         parentDir = pubFile.parentDir()
         res = parentDir.publishFile(sPrivFilePath, autoLock=True, autoUnlock=True,
                                     comment=sComment, dryRun=bDryRun, saveChecksum=False)
     else:
-        pm.displayInfo("Layout info exported to '{}'".format(os.path.normpath(sPrivFilePath)))
+        pm.displayInfo("Layout infos exported to '{}'".format(os.path.normpath(sPrivFilePath)))
 
     return res
 
@@ -452,19 +464,21 @@ def exportCaches(**kwargs):
 
         pubDepDir = depConfDct["dep_public_loc"]
 
-    sScnRcName = scnInfos.get("resource")
-    if (not bRaw) and sScnRcName in ("anim_scene", "charFx_scene"):
-
-        def excludeRef(oFileRef):
-            return oFileRef.namespace.lower().startswith("cwp_")
-
-        myaref.loadAssetsAsResource("anim_ref", checkSyncState=True, selected=False,
-                                    exclude=excludeRef, fail=True)
-
     sGeoGrpList, bSelected = _confirmProcessing(sProcessLabel, **kwargs)
     if not sGeoGrpList:
         sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
         raise RuntimeError(sMsg)
+
+    sScnRcName = scnInfos.get("resource")
+    if (not bRaw) and (sScnRcName in ("anim_scene", "charFx_scene")):
+
+        def excludeRef(oFileRef):
+            sNmspc = oFileRef.namespace
+            return (sNmspc.lower().startswith("cwp_") or
+                    (sNmspc + ":grp_geo" not in sGeoGrpList))
+
+        myaref.loadAssetsAsResource("anim_ref", checkSyncState=True, selected=False,
+                                    exclude=excludeRef, fail=True)
 
     if sOutDirPath:
         sCacheDirPath = sOutDirPath
@@ -867,7 +881,7 @@ def transferXfmAttrs(astToAbcXfmMap, only=None, attrs=None, discardAttrs=None, d
 
     return True
 
-def transferVisibilities(astToAbcObjMap, dryRun=False):
+def transferVisibilities(astToAbcObjMap, static=True, dryRun=False):
 
     if isinstance(astToAbcObjMap, dict):
         astToAbcObjItems = tuple(astToAbcObjMap.iteritems())
@@ -891,7 +905,7 @@ def transferVisibilities(astToAbcObjMap, dryRun=False):
                 mc.connectAttr(sInConnList[0], sAstVizAttr, f=True)
             except RuntimeError as e:
                 pm.displayWarning(e.message)
-        else:
+        elif static:
             bAbcViz = mc.getAttr(sAbcVizAttr)
             bAstViz = mc.getAttr(sAstVizAttr)
 
@@ -925,7 +939,7 @@ def transferVisibilities(astToAbcObjMap, dryRun=False):
 MESH_INPUT_FILTER = ("displayLayer", "renderLayer", "renderLayerManager",
                     "displayLayerManager", "dagNode", "objectSet", "time")
 
-def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False,
+def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False, static=True,
                        beforeHistory=False, choiceIndex=None):
 
     global UNUSED_TRANSFER_NODES
@@ -1032,7 +1046,7 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False,
             bAnimatedMesh = True
 
         bSameVtxPos = False
-        if not bAnimatedMesh:
+        if (not bAnimatedMesh) and static:
             bSameVtxPos = (mc.polyCompare(sAbcMeshShape, sAstMeshShape, vertices=True) == 0)
 
         if bDynTopo:
@@ -1049,7 +1063,7 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False,
                 if not dryRun:
                     mc.connectAttr(sAbcOutAttr, sAstMeshShape + ".inMesh", f=True)
 
-            elif not dryRun:
+            elif static and (not dryRun):
                 sCacheShapeName = splitNamespace(sAstMeshXfm)[1] + "ShapeFromCache"
                 sCacheShapePath = "|".join((sAstMeshXfm, sCacheShapeName))
                 if mc.objExists(sCacheShapePath):
@@ -1134,21 +1148,15 @@ def transferOutConnections(sSrcNode, sDstNode, useNamespace=True):
             continue
         mc.connectAttr(sDstNode + "." + sSrcAttr, sDstPlug, force=True)
 
-def importLayoutVisibilities(damShot=None, onNamespaces=None, dryRun=False):
-
-    if not damShot:
-        damShot = infosFromScene().get("dam_entity")
-
-    layoutInfoFile = damShot.getRcFile("public", "layoutInfo_file", fail=True)
-    layoutData = jsonRead(layoutInfoFile.absPath())
+def applyLayoutVisibilities(layoutInfos, namespaces=None, dryRun=False):
 
     print "\n" + " Importing Layout visibilities ".center(120, "-")
 
-    for sObjPath, values in layoutData.iteritems():
+    for sObjPath, values in layoutInfos.iteritems():
 
         sObjNmspc, sObjName = splitNamespace(sObjPath)
 
-        if onNamespaces and (sObjNmspc not in onNamespaces):
+        if namespaces and (sObjNmspc not in namespaces):
             continue
 
         bWarn = (sObjNmspc.lower().startswith("set_")) and sObjName.lower().startswith("grp_")
@@ -1412,6 +1420,33 @@ def deleteRefEdits(sRefEditList):
         mc.referenceEdit(target, editCommand=sEditCmd, removeEdits=True,
                          successfulEdits=True, failedEdits=True)
 
+def _applyLayoutToAbcRef(astToAbcXfmMap, layoutInfos):
+
+    if isinstance(astToAbcXfmMap, dict):
+        astToAbcXfmItems = tuple(astToAbcXfmMap.iteritems())
+    else:
+        astToAbcXfmItems = astToAbcXfmMap
+
+    for sAstXfm, sAbcXfm in iterMatchedObjects(astToAbcXfmItems):
+
+        attrs = layoutInfos.get(sAstXfm)
+        if not attrs:
+            continue
+
+        sAbcAttrSet = relevantXfmAttrs(sAbcXfm)
+        for sAttr in sAbcAttrSet:
+            if sAttr not in attrs:
+                continue
+
+            try:
+                mc.setAttr(sAbcXfm + "." + sAttr, attrs[sAttr])
+            except RuntimeError as e:
+                if "locked or connected" in e.message:
+                    pass
+                else:
+                    raise#pm.displayWarning(e.message.strip())
+
+
 
 @autoKeyDisabled
 def importCaches(sSpace=None, **kwargs):
@@ -1421,7 +1456,7 @@ def importCaches(sSpace=None, **kwargs):
     bDryRun = kwargs.pop("dryRun", False)
     bRemoveRefs = kwargs.pop("removeRefs", True)
     bUseCacheObjset = kwargs.pop("useCacheSet", True)
-    bLayoutViz = kwargs.pop("layoutViz", True)
+    bLayout = kwargs.pop("layout", True)
     sProcessLabel = kwargs.pop("processLabel", "Import caches")
     bBeforeHist = kwargs.pop("beforeHistory", False)
     jobList = kwargs.pop("jobs", None)
@@ -1440,6 +1475,7 @@ def importCaches(sSpace=None, **kwargs):
 
     proj = scnInfos["project"]
     damEntity = scnInfos.get("dam_entity")
+    sScnRcName = scnInfos.get("resource", "")
 
     damShot = None
     if isinstance(damEntity, DamShot):
@@ -1451,9 +1487,10 @@ def importCaches(sSpace=None, **kwargs):
     else:
         if sSpace == "local":
             sCacheDirPath = mop.getMayaCacheDir(damShot)
+
         elif sSpace in ("public", "private"):
             sDepType = "geoCache_dep"
-            sScnRcName = scnInfos["resource"]
+
             if sScnRcName == "fx3d_scene":
                 depConfDct = damShot.getDependencyConf(sDepType, sScnRcName)
             else:
@@ -1502,6 +1539,39 @@ def importCaches(sSpace=None, **kwargs):
             pm.displayInfo("Canceled !")
             return
 
+    layoutInfos = None
+    finalLayoutInfos = None
+    if bLayout:
+        finaLayInfoFile = None
+        if sScnRcName in ( "finalLayout_scene","rendering_scene"):
+            finaLayInfoFile = damShot.getRcFile("public", "finalLayoutInfo_file",
+                                                fail=False, dbNode=False)
+        if finaLayInfoFile:
+            finalLayoutInfos = jsonRead(finaLayInfoFile.absPath())
+        elif (sScnRcName == "finalLayout_scene"):
+            layoutInfoFile = damShot.getRcFile("public", "layoutInfo_file",
+                                               fail=True, dbNode=False)
+            layoutInfos = jsonRead(layoutInfoFile.absPath())
+
+    if finalLayoutInfos:
+        itemList = finalLayoutInfos.items()
+
+        sNmspcList = tuple(getNamespace(s) for s in sGeoGrpList)
+        for i, (sNodePath, attrs) in enumerate(itemList):
+
+            if getNamespace(sNodePath) not in sNmspcList:
+                continue
+
+            sFoundList = mc.ls(sNodePath, long=True)
+            if len(sFoundList) == 1:
+                sNodeFullPath = sFoundList[0]
+                itemList[i] = (sNodeFullPath, attrs)
+                #finalLayoutInfos[sNodeFullPath] = attrs
+#            else:
+#                print "!!!!!! not found or multiple nodes named: '{}'".format(sNodePath)
+
+        finalLayoutInfos = dict(itemList)
+
     oFileRefDct = dict(pm.listReferences(namespaces=True, references=True))
     sScnNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
 
@@ -1510,17 +1580,15 @@ def importCaches(sSpace=None, **kwargs):
         pm.mel.handleScriptEditorAction("maximizeHistory")
 
     bRefOnly = (sProcessLabel.lower() == "reference")
+    if bRefOnly:
+        bUseCacheObjset = False
+    else:
+        if not bDryRun:
+            clearConnectedCaches(sGeoGrpList)
 
-    if (not bRefOnly) and (not bDryRun):
-        clearConnectedCaches(sGeoGrpList)
-
-    if bLayoutViz:
-
-        sNmspcList = None
-        if bSelected:
-            sNmspcList = tuple(getNamespace(s) for s in sGeoGrpList)
-
-        importLayoutVisibilities(damShot, onNamespaces=sNmspcList, dryRun=bDryRun)
+    if layoutInfos:
+        sNmspcList = tuple(getNamespace(s) for s in sGeoGrpList) if bSelected else None
+        applyLayoutVisibilities(layoutInfos, namespaces=sNmspcList, dryRun=bDryRun)
 
     mc.refresh()
 
@@ -1544,7 +1612,7 @@ def importCaches(sSpace=None, **kwargs):
         sAbcNmspc = osp.splitext(osp.basename(sAbcFilePath))[0]
         sScnAbcNodeName = jobInfos.get("choice_label", sAbcNmspc) + "_AlembicNode"
 
-        print ("\n" + (" " + sAstNmspc + " ").center(sepWidth, "-"))
+        print ("\n" + (" " + sAstNmspc + " ").center(sepWidth, "#"))
 
         if not osp.isfile(sAbcFilePath):
             pm.displayError("No such alembic file: '{}'".format(sAbcFilePath))
@@ -1571,9 +1639,6 @@ def importCaches(sSpace=None, **kwargs):
             oAbcRef = pm.PyNode(sAbcNodeList[0]).referenceFile()
             sAbcNmspc = oAbcRef.namespace
 
-        if bRefOnly:
-            doneWith(oAbcRef, bRemRef);continue
-
         if bCheckAstExists and sAstNmspc not in sScnNmspcList:
             pm.displayWarning("Asset NOT found: '{}'.".format(sAstNmspc))
             doneWith(oAbcRef, bRemRef);continue
@@ -1595,6 +1660,13 @@ def importCaches(sSpace=None, **kwargs):
         astToAbcXfmItems = getTransformMapping(sAstGeoGrp, sAbcNmspc, longName=True,
                                                consider=sCacheObjList)
         #pprint(astToAbcXfmItems)
+        if finalLayoutInfos:
+            print " apply final layout to '{}' ".format(sAbcNmspc).center(100, "-")
+            _applyLayoutToAbcRef(astToAbcXfmItems, finalLayoutInfos)
+
+        if bRefOnly:
+            doneWith(oAbcRef, bRemRef);continue
+
 
         if bOnMeshes:
             astToAbcMeshItems = getMeshMapping(astToAbcXfmItems, longName=True,
@@ -1622,24 +1694,23 @@ def importCaches(sSpace=None, **kwargs):
 
         if bOnXfms:
             transferXfmAttrs(astToAbcXfmItems, only=sCacheObjList, dryRun=bDryRun,
-                             discardAttrs="visibility")
+                             discardAttrs="visibility", values=bLayout)
 
         if astToAbcMeshItems:
             try:
                 iChoiceIdx = jobInfos.get("choice_index")
                 res = transferMeshShapes(astToAbcMeshItems, only=sCacheObjList,
                                          beforeHistory=bBeforeHist, choiceIndex=iChoiceIdx,
-                                         dryRun=bDryRun)
+                                         static=bLayout, dryRun=bDryRun)
                 outData.setdefault(sAstGeoGrp, {}).setdefault("choice_nodes", []).extend(res)
             finally:
                 if sAstNmspc in oFileRefDct:
                     for sNodeName in lsNodes(sAstNmspc + ":*", not_rn=True, nodeNames=True):
                         mc.rename(sNodeName, sNodeName.rsplit(":", 1)[-1])
 
-        transferVisibilities(astToAbcXfmItems, dryRun=bDryRun)
-
+        transferVisibilities(astToAbcXfmItems, static=bLayout, dryRun=bDryRun)
         if astToAbcMeshItems:
-            transferVisibilities(astToAbcMeshItems, dryRun=bDryRun)
+            transferVisibilities(astToAbcMeshItems, static=bLayout, dryRun=bDryRun)
 
         if (not bDryRun):
             sFoundList = mc.ls(sAbcNodeList, type="AlembicNode")

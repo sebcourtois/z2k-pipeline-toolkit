@@ -136,6 +136,7 @@ class shot_lib(object):
                     "{name}_finalLayout.ma -> finalLayout_scene":None,
                     "{name}_finalLayout.mov -> finalLayout_movie":None,
                     "{name}_arlequin.mov -> arlequin_movie":None,
+                    "{name}_finalLayoutInfo.json -> finalLayoutInfo_file":None,
                    },
                 "{07_fx3d@step} -> fx3d_dir":
                    {

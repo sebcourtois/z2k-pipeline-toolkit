@@ -565,7 +565,7 @@ class SceneManager():
                 assertTaskIsFinal(damShot, "final layout", sgEntity=sgEntity, critical=False)
                 mop.loadRenderRefsFromCaches(damShot, "local")
                 geocaching.importCaches("local", dryRun=False, removeRefs=True,
-                                        processLabel="Apply local caches", layoutViz=False)
+                                        processLabel="Apply local caches", layout=True)
 
         elif sStepName == "rendering":
 
@@ -1015,7 +1015,9 @@ class SceneManager():
 
     def postPublishCurrentScene(self, publishCtx, **kwargs):
 
-        print publishCtx.sceneInfos.get("sg_step").center(100, "-")
+        scnInfos = publishCtx.sceneInfos
+
+        print scnInfos.get("sg_step").center(100, "-")
 
         versFile = publishCtx.postPublishInfos["version_file"]
         sComment = "from {}".format(versFile.name)
@@ -1023,7 +1025,7 @@ class SceneManager():
         sgVersion = publishCtx.postPublishInfos.get("sg_version")
         if sgVersion:
             try:
-                damShot = publishCtx.sceneInfos.get("dam_entity")
+                damShot = scnInfos.get("dam_entity")
                 linkAssetVersionsInShotgun(damShot, sgVersion)
             except Exception as e:
                 if inDevMode():
@@ -1036,10 +1038,10 @@ class SceneManager():
             self.exportStereoCamFiles(publish=True, comment=sComment)
             return
 
-        if sStepCode in ("previz 3d", "layout"):
+        if sStepCode in ("layout", "final layout"):
+            geocaching.exportLayoutInfo(publish=True, comment=sComment, sceneInfos=scnInfos)
 
-            if sStepCode == "layout":
-                geocaching.exportLayoutInfo(publish=True, comment=sComment)
+        if sStepCode in ("previz 3d", "layout"):
 
             # here is the publish of the infoSet file with the position of the global and local srt of sets assets
             print "exporting the infoSet of the shot"

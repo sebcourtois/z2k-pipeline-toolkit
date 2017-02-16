@@ -52,12 +52,12 @@ def processJobsFromFile(sJobFilePath):
         print "\n".join(("####", sMsg, sSepLine)), "\n"
 
     if numErrors:
-        sMsg = " {}/{} JOBS FAILED ".format(numErrors, len(jobList)).center(120, "!")
-        print sMsg
+        sMsgFrame = " {}/{} JOBS FAILED ".format(numErrors, len(jobList)).center(120, "!")
+        print "\n", sMsgFrame, "\n"
         w = len(max(errorDct.iterkeys(), key=len))
         for k, v in errorDct.iteritems():
             print "- {k:<{w}}: {v}".format(k=k, v=v, w=w)
-        print sMsg
+        print "\n", sMsgFrame, "\n"
         exec("mc.file(new=True, f=True)")
     else:
         exec("mc.quit(f=True)")
