@@ -780,7 +780,7 @@ def getAnimaticInfos(damShot, sSgStep):
 
     if sStepName == "final layout":
         sRcName = "anim_capture"
-    elif sStepName == "fx3d":
+    elif sStepName in ("fx3d", "rendering"):
         sRcName = "finalLayout_movie"
     else:
         sRcName = "animatic_capture"
@@ -1002,7 +1002,7 @@ def exportCamAlembic(**kwargs):
     bImgPlnViz = isImgPlaneHidden()
     setImgPlaneHidden(False)
     try:
-        res = mc.AbcExport(j=sAbcJobArgs.replace("\n", " "))
+        res = mc.AbcExport(j=sAbcJobArgs.replace("\n", " "), verbose=True)
     finally:
         setImgPlaneHidden(bImgPlnViz)
 

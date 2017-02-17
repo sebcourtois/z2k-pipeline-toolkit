@@ -121,9 +121,11 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
             continue
 
         iDstVers = dstScn.currentVersion
-        if iDstVers:
+        sCmnt = dstScn.comment.strip()
+        if iDstVers and (not sCmnt.lower().startswith("built from ")):
             dstScnList[i] = None
-            sMsg = ("'{}' already started (v{:03d}).".format(dstScn.name, iDstVers))
+            sMsg = ("'{}' already edited by '{}' (v{:03d}: '{}')."
+                    .format(dstScn.name, dstScn.author, iDstVers, sCmnt))
             errorDct.setdefault(damShot.name, []).append(sMsg)
             continue
 
@@ -297,7 +299,7 @@ from dminutes import batchprocess
 reload(batchprocess)
 
 #print "{shot}", "{src_scene}", {publish}, {dryRun}
-batchprocess.buildRenderScene("{shot}", "{src_scene}", publish={publish}, dryRun={dryRun})
+batchprocess.buildRenderScene("{src_scene}", publish={publish}, dryRun={dryRun})
 """
     for kwargs in (d.copy() for d in jobArgsList):
 

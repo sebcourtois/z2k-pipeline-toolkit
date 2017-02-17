@@ -84,19 +84,23 @@ def setupLayoutScene(**kwargs):
     myaref.loadAssetsAsResource("render_ref", checkSyncState=True, selected=False,
                                 exclude=excludeRef, fail=True)
 
-    geocaching.importCaches(jobs=jobList, layoutViz=False, useCacheSet=True,
+    geocaching.importCaches(jobs=jobList, layout=True, useCacheSet=True,
                             dryRun=False, beforeHistory=False, removeRefs=True,
                             showScriptEditor=False, sceneInfos=scnInfos)
 
     finalLayout.renderSetup()
 
-def buildRenderScene(sShotName, sSrcScnPath, publish=False, dryRun=False):
+def buildRenderScene(sSrcScnPath, publish=False, dryRun=False):
 
-    proj = DamProject("zombillenium")
-    damShot = proj.getShot(sShotName)
-    shotLib = damShot.getLibrary()
+    scnInfos = myagen.infosFromScene(sSrcScnPath)
+    damShot = scnInfos["dam_entity"]
+    srcScn = scnInfos["rc_entry"]
 
-    srcScn = proj.rcFileFromPath(sSrcScnPath, library=shotLib, dbNode=False)
+#    proj = DamProject("zombillenium")
+#    damShot = proj.getShot(sShotName)
+#    shotLib = damShot.getLibrary()
+#
+#    srcScn = proj.rcFileFromPath(sSrcScnPath, library=shotLib, dbNode=False)
 
     if publish:
         sComment = "built from " + srcScn.name.replace(damShot.name + "_", "")
@@ -105,28 +109,27 @@ def buildRenderScene(sShotName, sSrcScnPath, publish=False, dryRun=False):
     if srcScn.isVersionFile():
         sVersSuffix = mkVersionSuffix(srcScn.versionFromName())
         headFile = srcScn.getHeadFile(dbNode=False)
-        copiedFile = srcScn
+        copySrcFile = srcScn
     else:
         sVersSuffix = ""
         headFile = srcScn
-        copiedFile = None
+        copySrcFile = None
 
     sSuffix = "".join((sVersSuffix, "-toLighting"))
     privScn, _ = headFile.copyToPrivateSpace(suffix=sSuffix, existing="replace",
-                                             sourceFile=copiedFile)
+                                             sourceFile=copySrcFile)
     srcScn = privScn
     sSrcScnPath = srcScn.absPath()
 
-    myasys.openScene(sSrcScnPath, force=True, fail=False, lrd="none")
+    myasys.openScene(sSrcScnPath, force=True, fail=False)
+    mc.refresh()
 
     relatAstList = myagen.listRelatedAssets(damShot)
     myaref.lockAssetRefsToRelatedVersion(relatAstList)
 
-    if not pm.listReferences(loaded=True, unloaded=False):
-        pm.saveFile(force=True)
-        pm.openFile(sSrcScnPath, force=True, lrd="all")
-
     shotconfo.finalLayoutToLighting(gui=False)
+
+    geocaching.exportLayoutInfo(publish=publish, dryRun=dryRun, sceneInfos=scnInfos)
 
     if not dryRun:
         pm.saveFile(force=True)
@@ -139,4 +142,15 @@ def buildRenderScene(sShotName, sSrcScnPath, publish=False, dryRun=False):
                                               sgVersionData=sgVersData)
         if sgVersion:
             publishing.linkAssetVersionsInShotgun(damShot, sgVersion)
+
+
+def exportLayoutInfos(sSrcScnPath, publish=False, dryRun=False):
+
+    scnInfos = myagen.infosFromScene(sSrcScnPath)
+    damShot = scnInfos["dam_entity"]
+
+    myasys.openScene(sSrcScnPath, force=True, fail=False)
+    mc.refresh()
+
+    geocaching.exportLayoutInfo(publish=publish, dryRun=dryRun, sceneInfos=scnInfos)
 

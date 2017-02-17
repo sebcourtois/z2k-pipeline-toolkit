@@ -419,8 +419,7 @@ def addMenuItems(sItemDirPath, parentMenu, oMenuConf, **kwargs):
                 if not pm.menuItem(sFullName, q=True, exists=True):
                     sItemName += sNameExt
                     if "/scripts/" in sScriptPath.lower():
-                        p = re.split("/scripts/", sScriptPath,
-                                             flags=re.IGNORECASE)[0]
+                        p = re.split("/scripts/", sScriptPath, flags=re.IGNORECASE)[0]
                         sLabelExt = " ( {} )".format(ospath.basename(p))
                     else:
                         sLabelExt = " ( {} )".format(i)
