@@ -15,9 +15,9 @@ from ztk_setup import Z2kToolkit
 ENVS = {
         "ZOMB_ASSET_LOC":"\\\\ZOMBILLENIUM\\ZOMBIDAMAS",
         "ZOMB_SHOT_LOC":"\\\\ZOMBILLENIUM\\ZOMBIDAMAS",
-        "ZOMB_OUTPUT_LOC":"\\\\ZOMBILLENIUM\\ZOMBIDAMAS",
+        "ZOMB_OUTPUT_LOC":"\\\\JAKKU\\zombillenium2",
         "ZOMB_MISC_LOC":"\\\\ZOMBILLENIUM\\ZOMBIDAMAS",
-        "ZOMB_PRIVATE_LOC":"\\\\ZOMBILLENIUM\\ZOMBIDAMAS",
+        "ZOMB_PRIVATE_LOC":"\\\\JAKKU\\zombillenium2",
 
         "ZOMB_OUTPUT_PATH_BIS":r"\\JAKKU\zombillenium2\output",
 

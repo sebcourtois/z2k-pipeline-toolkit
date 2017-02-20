@@ -348,6 +348,16 @@ def fixDeferLoad():
     [mc.setAttr("%s.overridePrimaryVisibility" % geo, 1) for geo in deferGeoL if not deferGeoL == None]
     [mc.setAttr("%s.overrideMatte" % geo, 1) for geo in deferGeoL if not deferGeoL == None]
 
+def fixToonWeight():
+    chrToon = (mc.ls(type='dmnToon', l=True))
+    if chrToon:
+        for chr in chrToon :
+            if 'chr_' in chr:
+                if not 'InnerMouth' in chr and not 'innerMouth' in chr and not 'innermouth' in chr and not 'inMouth' in chr:
+                    mc.setAttr(chr + '.toonWeight', 1)
+    else:
+        pass
+
 def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , gui = True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="setRenderCamera")
 

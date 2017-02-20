@@ -159,7 +159,7 @@ class LayerManager:
         self.log.funcName ="'createRndlayer' "
 
         if layerContentL is None:
-            layerContentL=self.astRndObjL
+            layerContentL=self.allRndObjL
 
 
         if layerName in mc.ls("*",type="renderLayer"):
