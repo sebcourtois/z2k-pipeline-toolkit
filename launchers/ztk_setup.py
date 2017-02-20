@@ -23,6 +23,9 @@ APPS_LOCATIONS = {
               r"C:\Program Files\Shotgun\RV-6.2.8\bin",
               r"C:\Program Files\Shotgun\RV 6.2.6\bin",),
 "Z2K_MAYA_LOC":(r"C:\Program Files\Autodesk\Maya2016\bin",),
+"Z2K_HOUDINI_LOC":(r"C:\Program Files\Side Effects Software\Houdini 15.5.740\bin",
+                   r"C:\Program Files\Side Effects Software\Houdini 15.5.607\bin",
+                   r"C:\Program Files\Side Effects Software\Houdini 15.5.480\bin"),
 }
 
 APPS_INFOS = {
@@ -37,6 +40,9 @@ APPS_INFOS = {
         },
 "mayabatch":{"app_loc_var":"Z2K_MAYA_LOC",
              "app_executable":r"mayabatch.exe",
+             },
+"houdinifx":{"app_loc_var":"Z2K_HOUDINI_LOC",
+             "app_executable":r"houdinifx.exe",
              },
 }
 
@@ -222,6 +228,13 @@ class Z2kToolkit(object):
             print "\nLoading {} environment:".format(sAppName.capitalize())
 
             self.updEnv("NUKE_PATH", pathJoin(self.rootPath, "nuke"), conflict="add")
+
+        elif sAppName.lower().startswith("houdinifx"):
+
+            print "\nLoading {} environment:".format(sAppName.capitalize())
+
+            #self.updEnv("HOUDINI_PATH", pathJoin(self.rootPath, "houdini_mods", "houdini15.5;&"), conflict="add")
+            #self.updEnv("HOUDINI_SCRIPT_PATH", pathJoin(self.rootPath, "houdini_mods", "houdini15.5", "scripts"), conflict="add")
 
         print ""
 
