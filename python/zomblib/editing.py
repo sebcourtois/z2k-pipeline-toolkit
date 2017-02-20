@@ -287,12 +287,19 @@ def getFinalImgSeq(inSeqList, bStereo=False, outputDir = ""):
         vesionDirContentL =  os.listdir(versionDirS)
 
         nkFileL = []
-        movFileL = []     
-        for each in vesionDirContentL:
-            if ".nk" in each: 
-                nkFileL.append(each)
-            if ".mov" in each: 
-                movFileL.append(each)
+        movFileL = []
+        if "_left" in  inSeqDir or "_right" in inSeqDir:    
+            for each in vesionDirContentL:
+                if ".nk" in each and "stereo" in each: 
+                    nkFileL.append(each)
+                if ".mov" in each and "stereo" in each: 
+                    movFileL.append(each)
+        else:
+            for each in vesionDirContentL:
+                if ".nk" in each and "compo" in each: 
+                    nkFileL.append(each)
+                if ".mov" in each and "compo" in each: 
+                    movFileL.append(each)
 
         if nkFileL:
             nkFileL.sort()
