@@ -35,6 +35,7 @@ from davos_maya.tool.general import infosFromScene
 from davos_maya.tool.general import iterGeoGroups
 
 from dminutes import maya_scene_operations as mop
+from fnmatch import fnmatch
 
 
 LOGGING_SETS = []
@@ -92,6 +93,9 @@ def addNode(sNodeType, sNodeName, parent=None, unique=True, skipSelect=True):
 
 def getNode(sNodeName):
     return sNodeName if mc.objExists(sNodeName) else None
+
+def getNodeName(sNodePath):
+    return sNodePath.rsplit("|", 1)[-1]    
 
 def getNamespace(sNodePath):
     sNodeName = sNodePath.rsplit("|", 1)[-1]
@@ -761,6 +765,11 @@ def iterMatchedObjects(objMappingItems):
         if t and isinstance(t, basestring):
             yield s, t
 
+def enumMatchedObjects(objMappingItems):
+    for i, (s, t) in enumerate(objMappingItems):
+        if t and isinstance(t, basestring):
+            yield i, s, t
+
 def getMeshMapping(xfmMappingItems, consider=None, longName=False):
 
     sConsiderList = mc.ls(consider, long=longName, ni=True) if consider else None
@@ -836,7 +845,7 @@ def getMeshMapping(xfmMappingItems, consider=None, longName=False):
         if sMultiMatchList:
             addLoggingSet("multiShapesMatch_" + sNamespace, sMultiMatchList)
 
-    return tuple(itm for itm in mappingItems if itm)
+    return list(itm for itm in mappingItems if itm)
 
 def transferXfmAttrs(astToAbcXfmMap, only=None, attrs=None, discardAttrs=None, dryRun=False,
                      values=True, inConnections=True, keepSourceConnections=True, locked=False):
@@ -939,8 +948,49 @@ def transferVisibilities(astToAbcObjMap, static=True, dryRun=False):
 MESH_INPUT_FILTER = ("displayLayer", "renderLayer", "renderLayerManager",
                     "displayLayerManager", "dagNode", "objectSet", "time")
 
+def _addDeformedShape(sAstMeshXfm, sAstMeshShape):
+
+    bLongName = sAstMeshXfm.startswith("|")
+
+#    bShapeViz = mc.getAttr(sAstMeshShape + ".visibility")
+#    if not bShapeViz:
+#        mc.setAttr(sAstMeshShape + ".visibility", True)
+
+#    try:
+    mc.blendShape(sAstMeshXfm, afterReference=True, includeHiddenSelections=True,
+                  topologyCheck=False)
+    sDeformedMesh = listChildMeshes(sAstMeshXfm, longName=bLongName)[0]
+    mc.delete(sDeformedMesh, ch=True)
+
+    sShapeName = getNodeName(sAstMeshXfm) + "ShapeDeformed"
+    mc.rename(sDeformedMesh, sShapeName)
+#    finally:
+#        mc.setAttr(sAstMeshShape + ".visibility", bShapeViz)
+
+    return  "|".join((sAstMeshXfm, sShapeName)) if bLongName or ("|" in sAstMeshXfm) else sShapeName
+
+def _addShapeFromCache(sAbcMeshShape, sAstMeshXfm):
+
+    sCacheShapeName = getNodeName(sAstMeshXfm) + "ShapeFromCache"
+    sCacheShapePath = "|".join((sAstMeshXfm, sCacheShapeName))
+    if mc.objExists(sCacheShapePath):
+        mc.delete(sCacheShapePath)
+
+    sAbcCopiedShape = copyShape(sAbcMeshShape, sAstMeshXfm, add=True,
+                                inPlace=True, s=True, t=True, r=True)[0]
+
+    #print "rename", sAbcCopiedShape, sCacheShapeName
+    sAbcCopiedShape = mc.rename(sAbcCopiedShape, sCacheShapeName)
+    mc.setAttr(sAbcCopiedShape + ".intermediateObject", True)
+
+    return sCacheShapePath if ("|" in sAstMeshXfm) else sCacheShapeName
+
 def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False, static=True,
-                       beforeHistory=False, choiceIndex=None):
+                       beforeHistory=False, choiceIndex=None, afterReference=False):
+
+    in_beforeHistory = beforeHistory
+    if in_beforeHistory and afterReference:
+        raise ValueError("beforeHistory and afterReference cannot be enabled both.")
 
     global UNUSED_TRANSFER_NODES
 
@@ -959,12 +1009,18 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False, static=True,
 
     sOnlyList = mc.ls(only, long=True, ni=True) if only else None
 
-    for sAstMeshShape, sAbcMeshShape in iterMatchedObjects(astToAbcMeshItems):
+    for i, sAstMeshShape, sAbcMeshShape in enumMatchedObjects(astToAbcMeshItems):
+
+        beforeHistory = in_beforeHistory
 
         astMeshPath = myapi.getDagPath(sAstMeshShape)
         sAstMeshXfm = astMeshPath.fullPathName().rsplit("|", 1)[0]
         sAstMeshShapeName = astMeshPath.partialPathName()
 
+        bIsDeformedShape = ((not mc.referenceQuery(sAstMeshShape, isNodeReferenced=True)) and
+                            ("ShapeDeformed" in getNodeName(sAstMeshShape)))
+
+        sAstRefMeshShape = ""
         sIntermedMesh = ""
         sPolyTrans = ""
         sHistList = []
@@ -979,16 +1035,18 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False, static=True,
             sHistList = lsNodes(sFullHistList, nodeNames=True,
                                 not_rn=True, not_type=MESH_INPUT_FILTER)
             if sHistList:
-                if (not beforeHistory):
+                if (not beforeHistory) and (not bIsDeformedShape):
                     sHasHistoryList.append(sAstMeshShape)
                     pm.displayWarning("Mesh with history ignored: '{}' - {}"
                                       .format(sAstMeshShapeName, sHistList))
                     continue
 
                 sFoundList = lsNodes(sFullHistList, type="mesh", io=True,
-                                     not_rn=True, nodeNames=True)
+                                     not_rn=(not bIsDeformedShape), nodeNames=True)
                 if sFoundList:
                     sIntermedMesh = sFoundList[0]
+                    if bIsDeformedShape:
+                        beforeHistory = True
 
                 sFoundList = lsNodes(sHistList, type="polyTransfer",
                                      not_rn=True, nodeNames=True)
@@ -1049,6 +1107,11 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False, static=True,
         if (not bAnimatedMesh) and static:
             bSameVtxPos = (mc.polyCompare(sAbcMeshShape, sAstMeshShape, vertices=True) == 0)
 
+        if afterReference and (not bIsDeformedShape): #and (not beforeHistory):
+            sAstRefMeshShape = sAstMeshShape
+            sAstMeshShape = _addDeformedShape(sAstMeshXfm, sAstMeshShape)
+            astToAbcMeshMap[i] = (sAstMeshShape, sAbcMeshShape)
+
         if bDynTopo:
 
             sColorSetList = mc.polyColorSet(sAbcMeshShape, q=True, allColorSets=True)
@@ -1064,24 +1127,34 @@ def transferMeshShapes(astToAbcMeshMap, only=None, dryRun=False, static=True,
                     mc.connectAttr(sAbcOutAttr, sAstMeshShape + ".inMesh", f=True)
 
             elif static and (not dryRun):
-                sCacheShapeName = splitNamespace(sAstMeshXfm)[1] + "ShapeFromCache"
-                sCacheShapePath = "|".join((sAstMeshXfm, sCacheShapeName))
-                if mc.objExists(sCacheShapePath):
-                    mc.delete(sCacheShapePath)
-
-                sAbcCopiedShape = copyShape(sAbcMeshShape, sAstMeshXfm, add=True,
-                                            inPlace=True, s=True, t=True, r=True)[0]
-
-                sAbcCopiedShape = mc.rename(sAbcCopiedShape, sCacheShapeName)
+                sAbcCopiedShape = _addShapeFromCache(sAbcMeshShape, sAstMeshXfm)
                 mc.connectAttr(sAbcCopiedShape + ".outMesh", sAstMeshShape + ".inMesh", f=True)
-                mc.setAttr(sAbcCopiedShape + ".intermediateObject", True)
+
         else:
 
             bPolyTransCreated = False
             if (bAnimatedMesh or (not bSameVtxPos)) and (not sPolyTrans) and (not dryRun):
-                    sPolyTrans = mc.polyTransfer(sAstMeshShape, ao=sAbcMeshShape,
-                                                 uv=False, v=True, vc=False, ch=True)[0]
-                    bPolyTransCreated = True
+
+                if not bSameVtxPos:
+                    sAbcMeshShape = _addShapeFromCache(sAbcMeshShape, sAstMeshXfm)
+                    #print "\n", "polyTransfer", sAstMeshShape, sAbcMeshShape
+
+                if sAstRefMeshShape:
+                    sPreChildShapeSet = set(mc.listRelatives(sAstMeshXfm, c=True,
+                                                          type="mesh", path=True))
+                    #print sPreChildShapeSet
+
+                sPolyTrans = mc.polyTransfer(sAstMeshShape, ao=sAbcMeshShape,
+                                             uv=False, v=True, vc=False, ch=True)[0]
+                bPolyTransCreated = True
+
+                if sAstRefMeshShape:
+                    sPostChildShapeSet = set(mc.listRelatives(sAstMeshXfm, c=True,
+                                                          type="mesh", path=True))
+                    #print sPostChildShapeSet
+                    sTmpShape = (sPostChildShapeSet - sPreChildShapeSet).pop()
+                    #print "transferOutConnections", sTmpShape, sAstRefMeshShape, "\n"
+                    transferOutConnections(sTmpShape, sAstRefMeshShape, useNamespace=False)
 
             if bAnimatedMesh and (not dryRun):
                 if bChoiceNode:
@@ -1238,7 +1311,7 @@ def clearConnectedCaches(sGeoGrpList=None, deep=False):
             sMsg = "No geo groups found{}".format(" from selection." if bSelected else ".")
             raise RuntimeError(sMsg)
 
-    if deep:
+    if deep and (not mc.about(batch=True)):
         pm.mel.ScriptEditor()
         pm.mel.handleScriptEditorAction("maximizeHistory")
 
@@ -1246,6 +1319,8 @@ def clearConnectedCaches(sGeoGrpList=None, deep=False):
     restoreEditDct = {}
     sScnAbcNodeList = []
     bLoadingDeferred = False
+
+    sReconnList = []
 
     for sAstGeoGrp in sGeoGrpList:
 
@@ -1258,7 +1333,7 @@ def clearConnectedCaches(sGeoGrpList=None, deep=False):
 
         print "\n", " clearing caches on '{}' ".upper().format(sAstNmspc).center(120, "#")
 
-        sAstMeshList = mc.ls(sAstNmspc + ":*", type="mesh", ni=True)
+        sAstMeshList = mc.ls(sAstNmspc + ":*", type="mesh", ni=True, long=True)
         oAstRef = pm.PyNode(sAstGeoGrp).referenceFile()
 
         sToDelList = []
@@ -1276,6 +1351,33 @@ def clearConnectedCaches(sGeoGrpList=None, deep=False):
         if sToDelList:
             print ("delete {} nodes on '{}' history.".format(len(sToDelList), sAstNmspc))
             mc.delete(sToDelList)
+
+            for sAstMesh in (sAstMeshList if oAstRef else []):
+
+                sHistList = listForNone(mc.listHistory(sAstMesh, il=2, pdo=True))
+                if not sHistList:
+                    continue
+
+                #print sAstMesh, sHistList
+
+                sInAttrList = mc.listConnections(sAstMesh + ".inMesh", s=True, d=False, p=True)
+                if not sInAttrList:
+                    continue
+
+                sInNodeAttr = sInAttrList[0]
+                sInNode = sInNodeAttr.rsplit(".")[0]
+
+                if (mc.objectType(sInNode) == "mesh") or mc.referenceQuery(sInNode, inr=True):
+                    continue
+
+                #print sAstMesh, sInNodeAttr
+                sReconnList.append((sAstMesh, sInNodeAttr))
+                mc.disconnectAttr(sInNodeAttr, sAstMesh + ".inMesh")
+
+                sHistList = listForNone(mc.listHistory(sInNode, il=2, pdo=True))
+                for sNode in sHistList:
+                    if mc.objectType(sNode, isType="deleteComponent"):
+                        mc.setAttr(sNode + ".nodeState", 1)
 
         bCleanSetAttrEdits = False
         if deep:
@@ -1368,14 +1470,34 @@ def clearConnectedCaches(sGeoGrpList=None, deep=False):
                             oAstRef.load()
 
                         if bCleanSetAttrEdits:
+
+                            sExclAttrList = ("pnts", "pt[[]*[]]", "pnts[[]*[]]",
+                                             "uvsp[[]*[]]", "uvSetPoints[[]*[]]")
+
                             sPreEditList = sPreClearEditDct["setAttr"]
-                            print ("restore {} 'setAttr' edits on '{}'"
-                                   .format(len(sPreEditList), sAstNmspc))
+                            n = 0
                             for sSetAttrEdit in sPreEditList:
+
+                                sNodeAttr = sSetAttrEdit.split(" ", 2)[1]
+                                sAttr = sNodeAttr.rsplit(".", 1)[1]
+
+                                bRestore = True
+                                for sPatrn in sExclAttrList:
+                                    if fnmatch(sAttr, sPatrn):
+                                        bRestore = False
+                                        break
+                                if not bRestore:
+                                    continue
+
                                 try:
                                     pm.mel.eval(sSetAttrEdit)
                                 except pm.MelError as e:
                                     print toStr(e)
+                                else:
+                                    n += 1
+
+                            print ("restored {}/{} 'setAttr' edits on '{}'"
+                                   .format(n, len(sPreEditList), sAstNmspc))
 
         sScnAbcNode = getNode(sScnAbcNodeName)
         if sScnAbcNode:
@@ -1401,6 +1523,34 @@ def clearConnectedCaches(sGeoGrpList=None, deep=False):
                         pm.mel.eval(sSetAttrEdit)
                     except pm.MelError as e:
                         print toStr(e)
+
+    if sReconnList:
+        sToDelList = []
+        for sAstMesh, sOutAttr in sReconnList:
+
+            if not mc.objExists(sOutAttr):
+                continue
+
+            sAstMeshXfm = sAstMesh.rsplit("|", 1)[0]
+            sAstMeshDfm = _addDeformedShape(sAstMeshXfm, sAstMesh)
+            print sOutAttr, sAstMeshDfm + ".inMesh"
+            mc.connectAttr(sOutAttr, sAstMeshDfm + ".inMesh", f=True)
+
+            sNode = sOutAttr.rsplit(".", 1)[0]
+            sHistList = listForNone(mc.listHistory(sNode, il=2))
+            if not sHistList:
+                continue
+
+            sMeshOrigList = lsNodes(sHistList, type="mesh", io=True,
+                                    not_rn=True, nodeNames=True)
+            if sMeshOrigList:
+                sMshOrig = sMeshOrigList[0]
+                transferOutConnections(sMshOrig, sAstMesh, useNamespace=False)
+                sToDelList.append(sMshOrig)
+
+        if sToDelList:
+            mc.delete(sToDelList)
+
     return
 
 def deleteRefEdits(sRefEditList):
@@ -1459,6 +1609,7 @@ def importCaches(sSpace=None, **kwargs):
     bLayout = kwargs.pop("layout", True)
     sProcessLabel = kwargs.pop("processLabel", "Import caches")
     bBeforeHist = kwargs.pop("beforeHistory", False)
+    bAfterRef = kwargs.pop("afterReference", False)
     jobList = kwargs.pop("jobs", None)
     bScriptEd = kwargs.pop("showScriptEditor", True)
     bOnXfms = kwargs.pop("onTransforms", True)
@@ -1575,7 +1726,7 @@ def importCaches(sSpace=None, **kwargs):
     oFileRefDct = dict(pm.listReferences(namespaces=True, references=True))
     sScnNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
 
-    if bScriptEd:
+    if bScriptEd and (not mc.about(batch=True)):
         pm.mel.ScriptEditor()
         pm.mel.handleScriptEditorAction("maximizeHistory")
 
@@ -1701,12 +1852,13 @@ def importCaches(sSpace=None, **kwargs):
                 iChoiceIdx = jobInfos.get("choice_index")
                 res = transferMeshShapes(astToAbcMeshItems, only=sCacheObjList,
                                          beforeHistory=bBeforeHist, choiceIndex=iChoiceIdx,
-                                         static=bLayout, dryRun=bDryRun)
+                                         static=bLayout, dryRun=bDryRun, afterReference=bAfterRef)
                 outData.setdefault(sAstGeoGrp, {}).setdefault("choice_nodes", []).extend(res)
             finally:
-                if sAstNmspc in oFileRefDct:
-                    for sNodeName in lsNodes(sAstNmspc + ":*", not_rn=True, nodeNames=True):
-                        mc.rename(sNodeName, sNodeName.rsplit(":", 1)[-1])
+                pass
+#                if sAstNmspc in oFileRefDct:
+#                    for sNodeName in lsNodes(sAstNmspc + ":*", not_rn=True, nodeNames=True):
+#                        mc.rename(sNodeName, sNodeName.rsplit(":", 1)[-1])
 
         transferVisibilities(astToAbcXfmItems, static=bLayout, dryRun=bDryRun)
         if astToAbcMeshItems:
