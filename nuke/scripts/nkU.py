@@ -636,8 +636,10 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
             
         if not dryRun:
             try:
+                log.printL("i","rename '{}' -> to -> '{}'".format(layerPathS, versionDirS+"/"+layerNameNextVerS))
                 os.rename(layerPathS, versionDirS+"/"+layerNameNextVerS)
             except OSError:
+                log.printL("w","rename failed, trying to move '{}' -> to -> '{}'".format(layerPathS, versionDirS+"/"+layerNameNextVerS))
                 shutil.move(layerPathS, versionDirS+"/"+layerNameNextVerS)
         return layerNameNextVerS
 
