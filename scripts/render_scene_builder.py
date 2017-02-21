@@ -241,7 +241,6 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
     if not damShotList:
         sMsg = "None of the {} selected shots can be built.".format(numInputShots)
         confirmMessage("SORRY !", sMsg, ["OK"])
-        return
 
     prompt = True
     if numValidShots != numInputShots:
@@ -255,11 +254,12 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
         sMsg += ("\n" + " ".join(s for s in grp if s is not None))
 
     if prompt:
-        res = confirmMessage("DO YOU WANT TO...", sMsg, ["Yes", "No"])
+        res = confirmMessage("DO YOU WANT TO...", sMsg, ["Yes", "No", "Refresh"])
         if res == "No":
             sys.exit(0)
             #raise RuntimeWarning("Canceled !")
-
+        elif res == "Refresh":
+            return build(in_damShotList, dryRun=dryRun, prompt=prompt, sgShots=sgShots, noPublish=noPublish)
 
     sCode = """
 from zomblib import damutils;reload(damutils);damutils.initProject()

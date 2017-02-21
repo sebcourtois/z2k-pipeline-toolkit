@@ -1352,7 +1352,7 @@ def clearConnectedCaches(sGeoGrpList=None, deep=False):
             print ("delete {} nodes on '{}' history.".format(len(sToDelList), sAstNmspc))
             mc.delete(sToDelList)
 
-            for sAstMesh in (sAstMeshList if oAstRef else []):
+            for sAstMesh in (sAstMeshList if (oAstRef and deep) else []):
 
                 sHistList = listForNone(mc.listHistory(sAstMesh, il=2, pdo=True))
                 if not sHistList:
@@ -1471,15 +1471,15 @@ def clearConnectedCaches(sGeoGrpList=None, deep=False):
 
                         if bCleanSetAttrEdits:
 
-                            sExclAttrList = ("pnts", "pt[[]*[]]", "pnts[[]*[]]",
-                                             "uvsp[[]*[]]", "uvSetPoints[[]*[]]")
-
+                            sExclAttrList = ("pt", "pnts", "pt[[]*[]]", "pnts[[]*[]]", "pnts[[]*[]].*", "pt[[]*[]].*",
+                                             "uvsp", "uvSetPoints", "uvsp[[]*[]]", "uvSetPoints[[]*[]]", "uvsp[[]*[]].*", "uvSetPoints[[]*[]].*",
+                                             "uvSet", "uvst", "uvSet[[]*[]]", "uvst[[]*[]]", "uvSet[[]*[]].*", "uvst[[]*[]].*")
                             sPreEditList = sPreClearEditDct["setAttr"]
                             n = 0
                             for sSetAttrEdit in sPreEditList:
 
                                 sNodeAttr = sSetAttrEdit.split(" ", 2)[1]
-                                sAttr = sNodeAttr.rsplit(".", 1)[1]
+                                sAttr = sNodeAttr.split(".", 1)[1]
 
                                 bRestore = True
                                 for sPatrn in sExclAttrList:

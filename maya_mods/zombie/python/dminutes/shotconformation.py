@@ -44,7 +44,7 @@ def assertTaskIsFinal(damShot, sTask, step="", sgEntity=None, critical=True):
 
     promptToContinue(err)
 
-def removeRefEditByAttr(inRefNodeL=[], attr="smoothDrawType", cmd="setAttr",failedRefEdit =False, GUI=True):
+def removeRefEditByAttr(inRefNodeL=[], attr="smoothDrawType", cmd="setAttr", failedRefEdit=False, GUI=True, fullAttr=False):
     log = miscUtils.LogBuilder(gui=GUI, funcName ="removeRefEditByAttr")
     refNodeL = []
 
@@ -68,7 +68,7 @@ def removeRefEditByAttr(inRefNodeL=[], attr="smoothDrawType", cmd="setAttr",fail
 
             sNodeAttrDct = dict()
             for sNodeAttr in sNodeAttrList:
-                sAttr = sNodeAttr.rsplit(".", 1)[1]
+                sAttr = sNodeAttr.split(".", 1)[1] if fullAttr else sNodeAttr.rsplit(".", 1)[1]
                 for sPatrn in sAttrPtrnList:
                     if fnmatch(sAttr, sPatrn):
                         sNodeAttrDct.setdefault(sAttr, set()).add(sNodeAttr)
@@ -169,11 +169,16 @@ def finalLayoutToLighting(gui=True):
         txt = "{} node(s) deleted: '{}': ".format(len(deletedNodeL), deletedNodeL)
         log.printL("i", txt)
 
-    sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution",
-                 "pnts", "pt[[]*[]]", "pnts[[]*[]]",
-                 "uvsp[[]*[]]", "uvSetPoints[[]*[]]",
-                 "uvSetName")
-    removeRefEditByAttr([], attr=sAttrList, cmd=("setAttr",), GUI=True)
+#    sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution",
+#                 "pnts", "pt[[]*[]]", "pnts[[]*[]]",
+#                 "uvsp[[]*[]]", "uvSetPoints[[]*[]]",
+#                 "uvSetName")
+#    removeRefEditByAttr([], attr=sAttrList, cmd=("setAttr",), GUI=True)
+
+    sAttrList = ("pt", "pnts", "pt[[]*[]]", "pnts[[]*[]]", "pnts[[]*[]].*", "pt[[]*[]].*",
+                 "uvsp", "uvSetPoints", "uvsp[[]*[]]", "uvSetPoints[[]*[]]", "uvsp[[]*[]].*", "uvSetPoints[[]*[]].*",
+                 "uvSet", "uvst", "uvSet[[]*[]]", "uvst[[]*[]]", "uvSet[[]*[]].*", "uvst[[]*[]].*")
+    removeRefEditByAttr([], attr=sAttrList, cmd=("setAttr",), GUI=True, fullAttr=True)
 
     cleaning.deleteAllJunkShapes()
 
