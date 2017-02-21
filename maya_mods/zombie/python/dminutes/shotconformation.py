@@ -2,14 +2,20 @@
 import os
 import re
 from datetime import datetime
+from fnmatch import fnmatch
 
 import maya.cmds as mc
 import pymel.core as pm
+import pymel.util as pmu
+
+from pytaya.core.general import lsNodes
+from pytaya.core import cleaning
 
 from davos_maya.tool.general import infosFromScene
 #from davos.core.damproject import DamProject
 
 from dminutes import miscUtils
+
 reload (miscUtils)
 
 
@@ -38,11 +44,11 @@ def assertTaskIsFinal(damShot, sTask, step="", sgEntity=None, critical=True):
 
     promptToContinue(err)
 
-def removeRefEditByAttr(inRefNodeL=[], attr="smoothDrawType", cmd="setAttr",failedRefEdit =False, GUI=True):
+def removeRefEditByAttr(inRefNodeL=[], attr="smoothDrawType", cmd="setAttr", failedRefEdit=False, GUI=True, fullAttr=False):
     log = miscUtils.LogBuilder(gui=GUI, funcName ="removeRefEditByAttr")
     refNodeL = []
 
-    sAttrList = attr if not isinstance(attr, basestring) else [attr]
+    sAttrPtrnList = attr if not isinstance(attr, basestring) else [attr]
     sCmdList = cmd if not isinstance(cmd, basestring) else [cmd]
 
     if not inRefNodeL:
@@ -62,9 +68,11 @@ def removeRefEditByAttr(inRefNodeL=[], attr="smoothDrawType", cmd="setAttr",fail
 
             sNodeAttrDct = dict()
             for sNodeAttr in sNodeAttrList:
-                sAttr = sNodeAttr.rsplit(".", 1)[1]
-                if sAttr in sAttrList:
-                    sNodeAttrDct.setdefault(sAttr, set()).add(sNodeAttr)
+                sAttr = sNodeAttr.split(".", 1)[1] if fullAttr else sNodeAttr.rsplit(".", 1)[1]
+                for sPatrn in sAttrPtrnList:
+                    if fnmatch(sAttr, sPatrn):
+                        sNodeAttrDct.setdefault(sAttr, set()).add(sNodeAttr)
+                        break
 
             if not sNodeAttrDct:
                 continue
@@ -76,30 +84,29 @@ def removeRefEditByAttr(inRefNodeL=[], attr="smoothDrawType", cmd="setAttr",fail
             try:
                 for sAttr, sNodeAttrSet in sNodeAttrDct.iteritems():
                     for sNodeAttr in sNodeAttrSet:
-                        mc.referenceEdit(sNodeAttr, editCommand=sCmd, removeEdits=True,failedEdits=True, successfulEdits=True)
+                        mc.referenceEdit(sNodeAttr, editCommand=sCmd, removeEdits=True, failedEdits=True, successfulEdits=True)
                         
-                        sMsg = "'{}', '{} .{}' {} reference edit deleted".format(eachRefNode , sCmd, sAttr, len(sNodeAttrSet))
+                    sMsg = ("'{}': removed {} '.{}' on {} node(s)"
+                            .format(eachRefNode, sCmd, sAttr, len(sNodeAttrSet)))
                     log.printL("i", sMsg)
             finally:
                 if refIsLoaded:
                     mc.file(loadReference=eachRefNode)
 
         if failedRefEdit:
-            mc.referenceEdit(eachRefNode, removeEdits=True,failedEdits=True,successfulEdits = False)
+            mc.referenceEdit(eachRefNode, removeEdits=True, failedEdits=True, successfulEdits=False)
             sMsg = "'{}'  all failing reference edit  removed".format(eachRefNode)
             log.printL("i", sMsg)
 
-    for each in log.logL:
-        print each
+    if not mc.about(batch=True):
+        for each in log.logL:
+            print each
 
     return log.resultB, log.logL
 
 
-def finalLayoutToLighting(gui=True):
-    log = miscUtils.LogBuilder(gui=gui, funcName ="finalLayoutToLighting")
-    deletedNodeL=[]
-
-    bBatchMode = mc.about(batch=True)
+def deleteFlRenderLayer(gui=True):
+    log = miscUtils.LogBuilder(gui=gui, funcName="deleteFlRenderLayer")
 
     mc.editRenderLayerGlobals(currentRenderLayer='lay_finalLayout_00')
 
@@ -113,7 +120,7 @@ def finalLayoutToLighting(gui=True):
     sHiddenList = list(sVizAttr.rsplit('.', 1)[0] for sVizAttr in visibilityL if not mc.getAttr(sVizAttr))
 
     mc.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
-    
+
     if sHiddenList:
         mc.select(sHiddenList)
         pm.hide()
@@ -135,33 +142,68 @@ def finalLayoutToLighting(gui=True):
         except RuntimeError as e:
             pm.displayError(e)
 
+    mc.delete('lay_finalLayout_00')
+
+def finalLayoutToLighting(gui=True):
+    log = miscUtils.LogBuilder(gui=gui, funcName ="finalLayoutToLighting")
+    deletedNodeL=[]
+
+    bBatchMode = mc.about(batch=True)
+    
+    deleteFlRenderLayer(gui=gui)
+
     toDeleteNodeL = (mc.ls("mat_arelequin_*") +
                      mc.ls("mat_arlequin_*") +
                      mc.ls("aiAOV_arlequin*") +
                      mc.ls("cam_animatic:asset*") +
                      mc.ls("lay_finalLayout_*"))
 
-    for each in toDeleteNodeL: 
-        try: 
-            mc.delete(each)
-        except Exception as err:
-            pm.displayWarning(err)
-        else:
-            deletedNodeL.append(each)
+    if toDeleteNodeL:
+        for each in toDeleteNodeL:
+            try:
+                mc.delete(each)
+            except Exception as err:
+                pm.displayWarning(err)
+            else:
+                deletedNodeL.append(each)
+        txt = "{} node(s) deleted: '{}': ".format(len(deletedNodeL), deletedNodeL)
+        log.printL("i", txt)
 
-    removeRefEditByAttr(inRefNodeL=[], attr="aovName", cmd="setAttr", failedRefEdit=True, GUI=True)
-    txt = "{} node(s) deleted: '{}': ".format(len(deletedNodeL),deletedNodeL)
-    log.printL("i", txt)
+    sAttrList = ("aiCustomAOVs[[]*[]].aovName", "smoothDrawType", "displaySmoothMesh", "dispResolution",
+                 "pt", "pnts", "pt[[]*[]]", "pnts[[]*[]]", "pnts[[]*[]].*", "pt[[]*[]].*",
+                 "uvsp", "uvSetPoints", "uvsp[[]*[]]", "uvSetPoints[[]*[]]", "uvsp[[]*[]].*", "uvSetPoints[[]*[]].*",
+                 "uvSet", "uvst", "uvSet[[]*[]]", "uvst[[]*[]]", "uvSet[[]*[]].*", "uvst[[]*[]].*")
+    removeRefEditByAttr([], attr=sAttrList, cmd=("setAttr",), GUI=True, fullAttr=True)
 
-    if not bBatchMode:
-        pm.mel.eval("source updateSoundMenu")
-        pm.mel.eval("setSoundDisplay audio 0")
-        log.printL("i", "sound turned off")
+    cleaning.deleteAllJunkShapes()
+
+    sJunkPolyTransList = []
+    for each in lsNodes(nodeNames=True, type="polyTransfer", not_rn=True):
+        if not mc.listConnections(each, s=True, d=True, plugs=True):
+            sJunkPolyTransList.append(each)
+    if sJunkPolyTransList:
+        mc.delete(sJunkPolyTransList)
+        txt = "{} 'polyTransfer' node(s) deleted: '{}': ".format(len(sJunkPolyTransList), sJunkPolyTransList)
+        log.printL("i", txt)
 
     miscUtils.deleteUnknownNodes()
     sDirLightToHide = mc.ls('lgt_finalLayout_directional')
     if sDirLightToHide and not sDirLightToHide == None:
         mc.hide(sDirLightToHide)
+
+    # optimize scene
+    pmu.putEnv("MAYA_TESTING_CLEANUP", "1")
+    sCleanOptList = ("referencedOption", "shaderOption")
+    try:
+        pm.mel.source("cleanUpScene.mel")
+        pm.mel.scOpt_performOneCleanup(sCleanOptList)
+    finally:
+        pmu.putEnv("MAYA_TESTING_CLEANUP", "")
+
+    if not bBatchMode:
+        pm.mel.eval("source updateSoundMenu")
+        pm.mel.eval("setSoundDisplay audio 0")
+        log.printL("i", "sound turned off")
 
     return dict(resultB=log.resultB, logL=log.logL)
 

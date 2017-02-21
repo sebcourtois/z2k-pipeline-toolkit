@@ -189,9 +189,6 @@ class DavosSetup(ToolSetup):
         ToolSetup.onPreFileNewOrOpened(self, *args)
         pm.colorManagementPrefs(e=True, cmEnabled=False)
 
-    def onSceneOpened(self, *args):
-        ToolSetup.onSceneOpened(self, *args)
-
         sPanelList = mc.getPanel(type="modelPanel")
         if sPanelList:
             for sPanel in sPanelList:
@@ -201,6 +198,9 @@ class DavosSetup(ToolSetup):
                                    pluginShapes=False)
                 except RuntimeError as e:
                     pm.displayWarning(toStr(e))
+
+    def onSceneOpened(self, *args):
+        ToolSetup.onSceneOpened(self, *args)
 
         if smui:
             if smui.isLaunched():

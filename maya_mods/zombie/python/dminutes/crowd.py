@@ -262,7 +262,7 @@ def importAnimCaches(jobList):
     try:
         res = geocaching.importCaches(jobs=jobList, layout=False, useCacheSet=False,
                                       dryRun=False, beforeHistory=True, removeRefs=True,
-                                      showScriptEditor=False)
+                                      showScriptEditor=False, afterReference=False)
         pprint(res)
     finally:
         geocaching.USE_LOGGING_SETS = True
