@@ -19,20 +19,27 @@ def buttonCreateAutoLayering(*args):
 	# sets
 	lm.createRndlayer(layerName="lyr_set0_bty", layerContentL=None, disableLayer = False)
 	notSetItem = []
+	envItem =[]
 	setItem = []
 	for each in lm.layerMemberL:
-		if not "set_" in each:
-			notSetItem.append(each)
-		else:
+		if  "set_" in each:
 			setItem.append(each)
-	lm.addItemToSet(rndItemL = notSetItem, setTypeI = 2 )
+		elif "env_" in each:
+			envItem.append(each)
+		else:
+			notSetItem.append(each)
+
+	lm.addItemToSet(rndItemL = notSetItem+envItem, setTypeI = 2 )
 	lm.createRndlayer(layerName="lyr_set1_bty", layerContentL=None, disableLayer = True)
+	lm.addItemToSet(rndItemL = notSetItem+envItem, setTypeI = 2 )
 
 	#asset
 	lm.createRndlayer(layerName="lyr_ast0_bty", layerContentL=None, disableLayer = False)
-	lm.addItemToSet(rndItemL = setItem, setTypeI = 2 )
+	lm.addItemToSet(rndItemL = setItem+envItem, setTypeI = 2 )
 	lm.createRndlayer(layerName="lyr_ast1_bty", layerContentL=None, disableLayer = True)
+	lm.addItemToSet(rndItemL = setItem+envItem, setTypeI = 2 )
 	lm.createRndlayer(layerName="lyr_ast2_bty", layerContentL=None, disableLayer = True)
+	lm.addItemToSet(rndItemL = setItem+envItem, setTypeI = 2 )
 	#fxs
 #	lm.createRndlayer(layerName="lyr_fxs0_bty", layerContentL=None, disableLayer=True)
 #	lm.addItemToSet(rndItemL=setItem, setTypeI=2)

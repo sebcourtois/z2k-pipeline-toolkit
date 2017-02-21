@@ -109,7 +109,7 @@ class MrcFile(DrcFile):
         sRefDepth = kwargs.pop("loadReferenceDepth", kwargs.pop("lrd", None))
         if sRefDepth is None:
             if not self.library.project.mayaLoadReferences:
-                kwargs["loadReferenceDepth"] = "none"
+                kwargs["loadReferenceDepth"] = "topOnly"
         elif sRefDepth != "default":
             kwargs["loadReferenceDepth"] = sRefDepth
 
@@ -161,6 +161,7 @@ SCRIPT_EDITOR_SHOWN = False
 def showScriptEditor():
     global SCRIPT_EDITOR_SHOWN
     if not SCRIPT_EDITOR_SHOWN:
-        pm.mel.ScriptEditor()
-        pm.mel.handleScriptEditorAction("maximizeHistory")
+        if (not pm.about(batch=True)):
+            pm.mel.ScriptEditor()
+            pm.mel.handleScriptEditorAction("maximizeHistory")
         SCRIPT_EDITOR_SHOWN = True

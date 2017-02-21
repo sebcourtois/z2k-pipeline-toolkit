@@ -187,7 +187,7 @@ class dataFile():
         if self.seq and self.shot and self.user and self.depDir:
 
             departementS =self.depDir
-
+            """
             if self.seq in ["sq0350","sq0520","sq0230","sq0530","sq0300","sq0150","sq0170","sq0450"]:
                 try:
                     os.environ["ZOMB_OUTPUT_PATH"] = normPath(os.environ["ZOMB_OUTPUT_PATH_BIS"])
@@ -196,8 +196,7 @@ class dataFile():
                     if  "zombidamas" in os.environ["ZOMB_OUTPUT_PATH"]:
                         print "#### warning : 'ZOMB_OUTPUT_PATH' = //JAKKU/zombillenium2/output"
                         os.environ["ZOMB_OUTPUT_PATH"] ="//JAKKU/zombillenium2/output"
-
-
+            """
 
             outputDirS = os.environ["ZOMB_OUTPUT_PATH"]+"/"+self.seq+"/"+self.shot
             shotDirS = os.environ["ZOMB_SHOT_PATH"]+"/"+self.seq+"/"+self.shot
@@ -637,8 +636,10 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
             
         if not dryRun:
             try:
+                log.printL("i","rename '{}' -> to -> '{}'".format(layerPathS, versionDirS+"/"+layerNameNextVerS))
                 os.rename(layerPathS, versionDirS+"/"+layerNameNextVerS)
             except OSError:
+                log.printL("w","rename failed, trying to move '{}' -> to -> '{}'".format(layerPathS, versionDirS+"/"+layerNameNextVerS))
                 shutil.move(layerPathS, versionDirS+"/"+layerNameNextVerS)
         return layerNameNextVerS
 

@@ -85,8 +85,9 @@ def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishIn
 
     if sDependPathList:
 
-        pm.mel.ScriptEditor()
-        pm.mel.handleScriptEditorAction("maximizeHistory")
+        if (not pm.about(batch=True)):
+            pm.mel.ScriptEditor()
+            pm.mel.handleScriptEditorAction("maximizeHistory")
 
         sDependLabel = labelify(sDependType.rsplit("_dep", 1)[0])
         print "\n" + " Publishing {} files ".format(sDependLabel).center(120, '-')
