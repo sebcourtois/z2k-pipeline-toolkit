@@ -169,13 +169,8 @@ def finalLayoutToLighting(gui=True):
         txt = "{} node(s) deleted: '{}': ".format(len(deletedNodeL), deletedNodeL)
         log.printL("i", txt)
 
-#    sAttrList = ("smoothDrawType", "displaySmoothMesh", "dispResolution",
-#                 "pnts", "pt[[]*[]]", "pnts[[]*[]]",
-#                 "uvsp[[]*[]]", "uvSetPoints[[]*[]]",
-#                 "uvSetName")
-#    removeRefEditByAttr([], attr=sAttrList, cmd=("setAttr",), GUI=True)
-
-    sAttrList = ("pt", "pnts", "pt[[]*[]]", "pnts[[]*[]]", "pnts[[]*[]].*", "pt[[]*[]].*",
+    sAttrList = ("aiCustomAOVs[[]*[]].aovName", "smoothDrawType", "displaySmoothMesh", "dispResolution",
+                 "pt", "pnts", "pt[[]*[]]", "pnts[[]*[]]", "pnts[[]*[]].*", "pt[[]*[]].*",
                  "uvsp", "uvSetPoints", "uvsp[[]*[]]", "uvSetPoints[[]*[]]", "uvsp[[]*[]].*", "uvSetPoints[[]*[]].*",
                  "uvSet", "uvst", "uvSet[[]*[]]", "uvst[[]*[]]", "uvSet[[]*[]].*", "uvst[[]*[]].*")
     removeRefEditByAttr([], attr=sAttrList, cmd=("setAttr",), GUI=True, fullAttr=True)
