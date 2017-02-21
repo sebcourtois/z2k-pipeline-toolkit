@@ -58,6 +58,10 @@ def buttonDuplicateLayer(*args):
 	lm.initLayer()
 	lm.duplicateLayer(layerName= "", rndItemL = None)
 
+def buttonDuplicateLayerWithOverrides(*args):
+	lm.initLayer()
+	lm.duplicateLayerWithOverrides(layerName="", rndItemL=None)
+
 def buttonCreateLightPass(*args):
 	lm.initLayer()
 	lm.createLightPass()
@@ -130,7 +134,8 @@ mc.flowLayout()
 mc.button( label='create custom layer', recomputeSize = False, width = 250, c= buttonCreateCustomLayer )
 mc.setParent( '..' )
 mc.flowLayout()
-mc.button( label='duplicate layer', recomputeSize = False, width = 250, c= buttonDuplicateLayer )
+mc.button(label='duplicate layer', recomputeSize=False, width=250, c=buttonDuplicateLayer)
+#mc.button(label='dupli w overrides', recomputeSize=False, width=100, c=buttonDuplicateLayerWithOverrides)
 mc.setParent( '..' )
 mc.flowLayout()
 mc.button( label='create light pass', recomputeSize = False, width = 250, c= buttonCreateLightPass )
