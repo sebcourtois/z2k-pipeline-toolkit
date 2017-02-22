@@ -1,0 +1,278 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="0" y="28" w="1922" h="1052" screen="1">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1870" stretch="1"/>
+            <splitter orientation="1">
+                <split size="1281"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                    <page id="uk.co.thefoundry.scripteditor.1"/>
+                </dock>
+                <split size="585"/>
+                <splitter orientation="2">
+                    <split size="743"/>
+                    <dock id="" activePageId="Properties.1">
+                        <page id="Properties.1"/>
+                    </dock>
+                    <split size="255"/>
+                    <splitter orientation="1">
+                        <split size="291"/>
+                        <dock id="" activePageId="uk.co.thefoundry.waveformscope.1">
+                            <page id="uk.co.thefoundry.waveformscope.1"/>
+                        </dock>
+                        <split size="290"/>
+                        <dock id="" activePageId="uk.co.thefoundry.vectorscope.1">
+                            <page id="uk.co.thefoundry.vectorscope.1"/>
+                        </dock>
+                    </splitter>
+                </splitter>
+            </splitter>
+        </splitter>
+    </window>
+    <window x="1920" y="0" w="1920" h="1080" fullscreen="1" screen="0">
+        <splitter orientation="1">
+            <split size="1920"/>
+            <dock id="" activePageId="Viewer.1">
+                <page id="Viewer.1"/>
+            </dock>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name //zombillenium/zombidamas/private/jeremyb/zomb/misc/notes/nuke/compositing/python/convert_p_to_z.nk
+ frame 108
+ first_frame 108
+ last_frame 129
+ lock_range true
+ format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ colorManagement Nuke
+}
+Group {
+ inputs 0
+ name convert_p_to_z
+ note_font "Verdana Bold Bold Bold"
+ note_font_size 12
+ selected true
+ xpos 1059
+ ypos 113
+ addUserKnob {20 settings}
+ addUserKnob {20 endGroup_3 l endGroup n -1}
+ addUserKnob {20 endGroup_2 l endGroup n -1}
+ addUserKnob {41 readername l "READER_NAME : " T BAKE_POSITION.readername}
+ addUserKnob {41 cameraname l "CAMERA_NAME :" T BAKE_POSITION.cameraname}
+ addUserKnob {26 ""}
+ addUserKnob {41 bakeposition l "BAKE POSITION" T BAKE_POSITION.bakeposition}
+ addUserKnob {26 ""}
+ addUserKnob {20 camera_baked_settings l "camera settings" n 1}
+ addUserKnob {41 focal l "focal length" T bake_position.focal}
+ addUserKnob {41 haperture l "horiz aperture" T bake_position.haperture}
+ addUserKnob {41 vaperture l "vert aperture" T bake_position.vaperture}
+ addUserKnob {41 win_translate l "window translate" T bake_position.win_translate}
+ addUserKnob {41 win_scale l "window scale" T bake_position.win_scale}
+ addUserKnob {20 endGroup n -1}
+ addUserKnob {26 ""}
+ addUserKnob {20 zgrade l Grade n 1}
+ addUserKnob {20 endGroup_1 l endGroup n -1}
+ addUserKnob {41 blackpoint T MAX_DEPTH_VALUE.blackpoint}
+ addUserKnob {41 whitepoint T MAX_DEPTH_VALUE.whitepoint}
+ addUserKnob {26 ""}
+ addUserKnob {20 filtering l "Filtering : " n 1}
+ addUserKnob {41 creasedis l Disable_crease T crease.disable}
+ addUserKnob {41 size_1 l size T crease.size}
+ addUserKnob {41 filtering_add l "Disable filtering" T antialiasing1.disable}
+ addUserKnob {41 antialiasing l "antialiasing :" T antialiasing1.antialiasing}
+ addUserKnob {41 normalize T antialiasing1.normalize}
+ addUserKnob {20 despill l "Despill :" n 1}
+ addUserKnob {41 alpha_ed l "Copy alpha disable" T Copy1.disable}
+ addUserKnob {41 erode_dis l "Disable despill" T FilterErode1.disable}
+ addUserKnob {41 size T FilterErode1.size}
+ addUserKnob {26 ""}
+ addUserKnob {26 sp l "info :" T "Channel depth cree a partir de la pass \"P_32\" (no AA)"}
+}
+ Camera2 {
+  inputs 0
+  useMatrix true
+  matrix {
+      {{curve x140 0.4446351826} {curve x140 0.04625344649} {curve x140 0.8945166469} {curve x140 16.80147552}}
+      {{curve x140 0} {curve x140 0.9986656904} {curve x140 -0.05163875595} {curve x140 44.90523148}}
+      {{curve x140 -0.89571172} {curve x140 0.02296040952} {curve x140 0.4440419376} {curve x140 15.02911377}}
+      {{curve x140 0} {curve x140 0} {curve x140 0} {curve x140 1}}
+    }
+  haperture 35
+  vaperture 18.91891892
+  name bake_position
+  xpos 361
+  ypos 512
+ }
+ NoOp {
+  inputs 0
+  name BAKE_POSITION
+  tile_color 0x9c0000ff
+  note_font "Verdana Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic"
+  note_font_size 12
+  note_font_color 0xffffffff
+  xpos 347
+  ypos 424
+  addUserKnob {20 BAKED_SETTINGS}
+  addUserKnob {1 readername l "READER_NAME : " t "READER_NAME = \"reader_baked\"\nCAMERA_NAME = \"exr_baked_cam\"\nSCANRENDER = \"ScanRender_baked\""}
+  readername reader_name
+  addUserKnob {1 cameraname l "CAMERA_NAME :" t "READER_NAME = \"reader_baked\"\nCAMERA_NAME = \"exr_baked_cam\"\nSCANRENDER = \"ScanRender_baked\""}
+  cameraname bake_position
+  addUserKnob {26 ""}
+  addUserKnob {22 bakeposition l "BAKE POSITION" T "import nuke\nimport os\nimport math\n \nbakedNode = nuke.toNode('BAKE_POSITION')\n\nREADER_NAME = bakedNode.knob('readername').value()\nCAMERA_NAME = bakedNode.knob('cameraname').value()\n \ndef getMetadataMatrix(meta_list):\n    m = nuke.math.Matrix4()\n    try:\n        for i in range (0,16) :\n            m\[i] = meta_list\[i]   \n    except:\n        m.makeIdentity()\n    return m    \n\ndef ExrToCamera():\n    # Get Read Node Name to MetaData\n    node = nuke.toNode(READER_NAME)\n    metaData = node.metadata()\n    \n    # Request fields\n    reqFields = \['exr/%s' % i for i in ('worldToCamera', 'worldToNDC')]\n    if not set( reqFields ).issubset( metaData ):\n        nuke.message('no basic matrices for camera found')\n        print 'no basic matrices for camera found'\n        return\n    else:\n        print 'found needed data'\n        \n    # Add/Check some Var, convert inch to mm\n    imageWidth = metaData\['input/width']\n    imageHeight = metaData\['input/height']\n    aspectRatio = float(imageWidth)/float(imageHeight)\n    hAperture = 35.0\n    vAperture = hAperture/aspectRatio\n    #val = node.metadata( 'exr/cameraAperture', frame)\n    #fov = node.metadata( 'exr/cameraFov', frame)\n    #focal = hAperture / (2 * math.tan(math.radians(fov)/2.0))\n    focalLengthMeta = metaData\['exr/CameraFocalLength']\n    focalLengthCam = hAperture*focalLengthMeta\n    \n    # Get frame settings and prompt user\n    first = node.firstFrame()\n    last = node.lastFrame()\n    ret = nuke.getFramesAndViews( 'Create Camera', '%s-%s' %( first, last )  )\n    frameRange = nuke.FrameRange( ret\[0] )\n    camViews = (ret\[1])\n\n    for act in camViews:\n        # Get Camera node \n        cam = nuke.toNode(CAMERA_NAME)\n        \n        # Reset settings\n        cam\['focal'].clearAnimated()\n        cam\['haperture'].clearAnimated()\n        cam\['vaperture'].clearAnimated()\n        cam\['matrix'].clearAnimated()\n        cam\['matrix'].clearAnimated()\n        \n        # Apply basic no keyframe value\n        cam\['useMatrix'].setValue( True )\n        cam\['haperture'].setValue ( hAperture )\n        cam\['vaperture'].setValue ( vAperture )\n        cam\['focal'].setValue ( round(focalLengthCam, 1) )\n\n        for k in ( 'focal', 'matrix'):\n            cam\[k].setAnimated()\n        \n        task = nuke.ProgressTask( 'Baking camera %s' % node.name() )\n\n        for curTask, frame in enumerate( frameRange ):\n            if task.isCancelled():\n                break\n            task.setMessage( 'processing %s' % frame )\n            wTC = node.metadata('exr/worldToCamera',frame, act)\n            wTN = node.metadata('exr/worldToNDC',frame, act)\n            \n            worldNDC = wTN\n            # Make table\n            lx =  (-1 - worldNDC\[12] - worldNDC\[8]) / worldNDC\[0]\n            rx =  (1 - worldNDC\[12] - worldNDC\[8]) / worldNDC\[0]\n            by = (-1 - worldNDC\[13] - worldNDC\[9]) / worldNDC\[5]\n            ty = (1 - worldNDC\[13] - worldNDC\[9]) / worldNDC\[5]\n            swW = max( lx , rx ) - min( lx , rx )  # Screen Window Width\n            swH = max( by , ty ) - min( by , ty )  # Screen Window Height\n            cam\['focal'].setValueAt(  float( round(focalLengthCam, 1) ), frame )\n        \n            # Matrix math for rotation and translation    \n            matrixList = wTC\n            camMatrix = getMetadataMatrix(wTC)\n            \n            flipZ=nuke.math.Matrix4()\n            flipZ.makeIdentity()\n            flipZ.scale(1,1,-1)\n         \n            transposedMatrix = nuke.math.Matrix4(camMatrix)\n            transposedMatrix.transpose()\n            transposedMatrix=transposedMatrix*flipZ\n            invMatrix=transposedMatrix.inverse()\n            \n            for i in range(0,16):\n                matrixList\[i]=invMatrix\[i]\n            \n            for i, v in enumerate( matrixList ):\n                cam\[ 'matrix' ].setValueAt( v, frame, i)\n\n                task.setProgress( int( float(curTask) / frameRange.frames() *100) )\nExrToCamera()" +STARTLINE}
+ }
+ Input {
+  inputs 0
+  name alpha_in
+  note_font Verdana
+  xpos 690
+  ypos 349
+  number 1
+ }
+ Shuffle {
+  in alpha
+  red alpha
+  green alpha
+  blue alpha
+  name alpha_disp
+  xpos 690
+  ypos 427
+ }
+ Expression {
+  expr0 trunc(r)
+  expr1 trunc(g)
+  expr2 trunc(b)
+  channel3 alpha
+  expr3 trunc(a)
+  name trunc_alpha
+  xpos 690
+  ypos 535
+  cached true
+ }
+ FilterErode {
+  channels alpha
+  size -1
+  name FilterErode1
+  selected true
+  xpos 690
+  ypos 586
+ }
+set N388f400 [stack 0]
+ Dot {
+  name Dot1
+  xpos 724
+  ypos 925
+ }
+ Input {
+  inputs 0
+  name P_32_input
+  note_font Verdana
+  xpos 471
+  ypos 353
+ }
+ Add {
+  channels rgb
+  value {{-bake_position.world_matrix.7} {-bake_position.world_matrix.3} {-bake_position.world_matrix.11} {curve}}
+  name add_extend
+  xpos 471
+  ypos 504
+ }
+set N38c7000 [stack 0]
+ ColorMatrix {
+  matrix {
+      {{bake_position.world_matrix.0} {bake_position.world_matrix.1} {bake_position.world_matrix.2}}
+      {{bake_position.world_matrix.4} {bake_position.world_matrix.5} {bake_position.world_matrix.6}}
+      {{bake_position.world_matrix.8} {bake_position.world_matrix.9} {bake_position.world_matrix.10}}
+    }
+  invert true
+  name ColorMatrix_cam
+  xpos 471
+  ypos 530
+ }
+ Multiply {
+  channels rgb
+  value -1
+  name negative
+  xpos 471
+  ypos 556
+ }
+ Shuffle {
+  in rgb
+  red blue
+  green blue
+  name rgb_viewer
+  xpos 471
+  ypos 582
+ }
+ Grade {
+  blackpoint 50
+  black_clamp false
+  name MAX_DEPTH_VALUE
+  label "\[value blackpoint]"
+  note_font "Verdana Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic"
+  xpos 471
+  ypos 649
+ }
+ FilterErode {
+  channels rgb
+  size 0
+  name crease
+  xpos 471
+  ypos 733
+  disable true
+ }
+set N38c7c00 [stack 0]
+ EdgeDetectWrapper {
+  edgedetector simple
+  name EdgeDetect1
+  xpos 323
+  ypos 817
+ }
+push $N38c7c00
+ antialiasing {
+  inputs 2
+  name antialiasing1
+  xpos 471
+  ypos 823
+  disable true
+  channels rgb
+  maskChannelInput none
+ }
+ Copy {
+  inputs 2
+  from0 rgba.alpha
+  to0 rgba.alpha
+  name Copy1
+  xpos 471
+  ypos 915
+ }
+ Output {
+  name z_Output
+  xpos 471
+  ypos 1008
+ }
+push $N38c7000
+push $N388f400
+ Viewer {
+  inputs 2
+  frame_range 101-140
+  input_number 1
+  translate {0.0285000056 0.08799999952}
+  name Viewer1
+  xpos 580
+  ypos 542
+ }
+end_group

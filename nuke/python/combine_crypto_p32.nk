@@ -1,0 +1,136 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="-1920" y="76" w="1920" h="1052" screen="1">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1868" stretch="1"/>
+            <splitter orientation="1">
+                <split size="1228"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                    <page id="uk.co.thefoundry.scripteditor.1"/>
+                </dock>
+                <split size="636"/>
+                <dock id="" activePageId="Properties.1">
+                    <page id="Properties.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+    <window x="0" y="0" w="1920" h="1080" maximized="1" fullscreen="1" screen="0">
+        <splitter orientation="1">
+            <split size="1683"/>
+            <dock id="" activePageId="Viewer.1">
+                <page id="Viewer.1"/>
+            </dock>
+            <split size="233"/>
+            <splitter orientation="2">
+                <split size="444"/>
+                <dock id="" activePageId="Error Console.1">
+                    <page id="Error Console.1"/>
+                </dock>
+                <split size="308"/>
+                <dock id="" activePageId="uk.co.thefoundry.waveformscope.1">
+                    <page id="uk.co.thefoundry.waveformscope.1"/>
+                </dock>
+                <split size="320"/>
+                <dock id="" activePageId="uk.co.thefoundry.vectorscope.1">
+                    <page id="uk.co.thefoundry.vectorscope.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name //Zombillenium/zombidamas/private/jeremyb/zomb/misc/notes/nuke/compositing/python/combine_crypto_p32.nk
+ format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ colorManagement Nuke
+}
+BackdropNode {
+ inputs 0
+ name combine_crypto_p32
+ tile_color 0x9fa36dff
+ label "CRYPTO_P32_COMBINE\nREMOVE ALIASING\n\n"
+ note_font "Verdana Bold Bold"
+ note_font_size 16
+ xpos -145
+ ypos -213
+ bdwidth 300
+ bdheight 294
+}
+Dot {
+ inputs 0
+ name Dot3
+ label PASS_UTIL
+ note_font "Verdana Bold Italic Bold Italic"
+ note_font_size 16
+ note_font_color 0xff
+ xpos -37
+ ypos -145
+}
+Cryptomatte {
+ name CRYPTO_ID
+ xpos -71
+ ypos -108
+ matteList ""
+ cryptoLayer ""
+ expression ""
+ keyedName ""
+ previewChannel rgba
+ in00 rgba
+}
+Dot {
+ inputs 0
+ name Dot4
+ label P32
+ note_font "Verdana Bold Italic Bold Italic"
+ note_font_size 16
+ xpos 86
+ ypos -149
+}
+P_Matte {
+ name P_MATTE
+ xpos 52
+ ypos -109
+ in rgba
+ output alpha
+ matteShape Cube
+ center {-217.5905762 -407.7468262 -160.7532959}
+ scaling {200 30 200}
+ falloffType Exponential
+ falloff 0.79
+ exp 2.15
+}
+Dilate {
+ channels alpha
+ size 6
+ name P_MATTE_DILATE
+ xpos 52
+ ypos 23
+}
+ChannelMerge {
+ inputs 2
+ operation multiply
+ name MULTIPLY_ALPHA
+ xpos -71
+ ypos 16
+}
+Dot {
+ name Dot1
+ label o_MASK
+ note_font "Verdana Bold Bold"
+ note_font_size 16
+ xpos -125
+ ypos 33
+}

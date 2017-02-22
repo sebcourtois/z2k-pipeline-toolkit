@@ -1,0 +1,6241 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="-4" y="-4" w="1928" h="1060" maximized="1" screen="1">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1257" stretch="1"/>
+            <splitter orientation="2">
+                <split size="1010"/>
+                <dock id="" activePageId="DAG.1">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                </dock>
+            </splitter>
+            <split size="615"/>
+            <dock id="" activePageId="Properties.1">
+                <page id="Properties.1"/>
+            </dock>
+        </splitter>
+    </window>
+    <window x="1920" y="0" w="1928" h="1092" screen="0">
+        <splitter orientation="2">
+            <split size="1068"/>
+            <dock id="" activePageId="Viewer.1">
+                <page id="Viewer.1"/>
+            </dock>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name //zombillenium/zombidamas/partage/01_COMPO/template/sq0000_sh0000a_compo-v001.003_4.nk
+ frame 198
+ last_frame 200
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ colorManagement Nuke
+ views "left #ff0000
+right #00ff00"
+ views_colours true
+}
+BackdropNode {
+ inputs 0
+ name light_bg
+ tile_color 0x471247ff
+ label "grade bg without lgm"
+ note_font_size 75
+ xpos -12085
+ ypos -3769
+ bdwidth 1723
+ bdheight 1473
+ z_order -2
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode6
+ tile_color 0x8e8e3800
+ label relight
+ note_font_size 42
+ xpos -11334
+ ypos -3689
+ bdwidth 421
+ bdheight 657
+ z_order -1
+}
+BackdropNode {
+ inputs 0
+ name recap_pipe
+ tile_color 0x525652ff
+ label recap_pipe
+ note_font_size 50
+ xpos -10821
+ ypos -507
+ bdwidth 3490
+ bdheight 4199
+ z_order -1
+}
+BackdropNode {
+ inputs 0
+ name AST1
+ tile_color 0x4e883eff
+ gl_color 0xafcc4dff
+ label "AST\n"
+ note_font_size 50
+ note_font_color 0xff
+ xpos -3485
+ ypos 305
+ bdwidth 885
+ bdheight 594
+}
+BackdropNode {
+ inputs 0
+ name BAKED_CAMERA_PLATE
+ tile_color 0x7e3f3fff
+ note_font Verdana
+ note_font_size 16
+ xpos -11324
+ ypos -3609
+ bdwidth 401
+ bdheight 182
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode1
+ tile_color 0x880019ff
+ label "BURNING SCREEN"
+ note_font "Verdana Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold"
+ note_font_size 25
+ xpos -9169
+ ypos -2572
+ bdwidth 712
+ bdheight 432
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode4
+ tile_color 0x388e8e00
+ label "stereo tools\n"
+ note_font_size 42
+ xpos -7264
+ ypos -1610
+ bdwidth 242
+ bdheight 301
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode5
+ tile_color 0x627f62ff
+ label "RETOUCHE SHADOW ST MAP"
+ note_font_size 42
+ xpos -12319
+ ypos -1854
+ bdwidth 956
+ bdheight 1255
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode7
+ tile_color 0x8e388e00
+ label "     occlu"
+ note_font_size 42
+ xpos -11874
+ ypos -3050
+ bdwidth 278
+ bdheight 160
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode8
+ tile_color 0x388e8e00
+ label "    p_matte"
+ note_font_size 42
+ xpos -11869
+ ypos -2875
+ bdwidth 416
+ bdheight 122
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode9
+ tile_color 0x7171c600
+ label "    roto"
+ note_font_size 42
+ xpos -11869
+ ypos -2729
+ bdwidth 316
+ bdheight 110
+}
+BackdropNode {
+ inputs 0
+ name Linear_sRGB_Process
+ tile_color 0x6b7f66ff
+ label Linear_sRGB_Process
+ note_font_size 25
+ xpos -10261
+ ypos -1872
+ bdwidth 369
+ bdheight 433
+}
+BackdropNode {
+ inputs 0
+ name SET1
+ tile_color 0x545c88ff
+ label SETS
+ note_font_size 50
+ note_font_color 0xff
+ xpos -4988
+ ypos 337
+ bdwidth 1409
+ bdheight 559
+}
+BackdropNode {
+ inputs 0
+ name antialising
+ tile_color 0xaaaaaa00
+ label antialise
+ note_font_size 25
+ xpos -9810
+ ypos -1867
+ bdwidth 313
+ bdheight 406
+}
+BackdropNode {
+ inputs 0
+ name before_ldv
+ tile_color 0x70327fff
+ label "before_ldv_roto_aov\n"
+ note_font_size 25
+ xpos -9289
+ ypos -153
+ bdwidth 387
+ bdheight 253
+}
+BackdropNode {
+ inputs 0
+ name camera_metadata
+ tile_color 0xaaaaaa00
+ label camera_metadata
+ note_font_size 25
+ xpos -10753
+ ypos -1861
+ bdwidth 352
+ bdheight 421
+}
+BackdropNode {
+ inputs 0
+ name clean_toon_contour_visage_riggbase
+ tile_color 0x388e8e00
+ label clean_toon_contour_visage_riggbase
+ note_font_size 25
+ xpos -9514
+ ypos 266
+ bdwidth 603
+ bdheight 956
+}
+BackdropNode {
+ inputs 0
+ name clean_toon_peau_pour_sun_pass
+ tile_color 0xaaaaaa00
+ label clean_toon_peau_pour_sun_pass
+ note_font_size 25
+ xpos -9957
+ ypos 362
+ bdwidth 423
+ bdheight 764
+}
+BackdropNode {
+ inputs 0
+ name clean_visage_sun_pass
+ tile_color 0x8e388e00
+ label clean_visage_sun_pass
+ note_font_size 25
+ xpos -8799
+ ypos 642
+ bdwidth 472
+ bdheight 789
+}
+BackdropNode {
+ inputs 0
+ name degradé_sun_pass_avec_pass_P
+ tile_color 0x388e8e00
+ label degradé_sun_pass_avec_pass_P
+ note_font_size 25
+ xpos -9362
+ ypos 2033
+ bdwidth 479
+ bdheight 567
+}
+BackdropNode {
+ inputs 0
+ name degrain
+ tile_color 0xaeaeb2ff
+ label degrain
+ note_font Verdana
+ note_font_size 25
+ xpos -9443
+ ypos -1861
+ bdwidth 639
+ bdheight 481
+}
+BackdropNode {
+ inputs 0
+ name final_layout2
+ tile_color 0x5ea59aff
+ label final_layout
+ note_font_size 25
+ xpos -5404
+ ypos 1483
+ bdwidth 366
+ bdheight 175
+}
+BackdropNode {
+ inputs 0
+ name gizmo1
+ tile_color 0x8e8e3800
+ label gizmo
+ note_font_size 25
+ xpos -8094
+ ypos -1896
+ bdwidth 737
+ bdheight 618
+}
+BackdropNode {
+ inputs 0
+ name lgp_flamme_add_toon_contour
+ tile_color 0x388e8e00
+ note_font_size 42
+ xpos -8212
+ ypos 1511
+ bdwidth 385
+ bdheight 675
+}
+BackdropNode {
+ inputs 0
+ name liseret_haut_arcade
+ tile_color 0x71c67100
+ label liseret_haut_arcade
+ note_font_size 42
+ xpos -13058
+ ypos -3497
+ bdwidth 606
+ bdheight 603
+}
+BackdropNode {
+ inputs 0
+ name match_other_shot2
+ tile_color 0xaaaaaa00
+ label match_other_shot
+ note_font_size 25
+ xpos -4579
+ ypos 2513
+ bdwidth 690
+ bdheight 271
+}
+BackdropNode {
+ inputs 0
+ name paupiere_grade
+ tile_color 0x8e8e3800
+ label paupiere_grade
+ note_font_size 25
+ xpos -9286
+ ypos 1292
+ bdwidth 296
+ bdheight 315
+}
+BackdropNode {
+ inputs 0
+ name precomp_fx
+ tile_color 0xa3a55eff
+ label precomp_fx
+ note_font_size 25
+ xpos -5402
+ ypos 1062
+ bdwidth 366
+ bdheight 175
+}
+BackdropNode {
+ inputs 0
+ name previous_version
+ tile_color 0x388e8e00
+ label previous_version
+ note_font_size 25
+ xpos -4578
+ ypos 2263
+ bdwidth 309
+ bdheight 206
+}
+BackdropNode {
+ inputs 0
+ name ref2
+ tile_color 0x77a577ff
+ label "ref "
+ note_font_size 25
+ xpos -5409
+ ypos 1736
+ bdwidth 383
+ bdheight 898
+}
+BackdropNode {
+ inputs 0
+ name ref_perso_arthur
+ tile_color 0xaaaaaa00
+ label ref_perso_arthur
+ note_font_size 25
+ xpos -5388
+ ypos 2436
+ bdwidth 164
+ bdheight 176
+}
+BackdropNode {
+ inputs 0
+ name render_precomp
+ tile_color 0x7b69b7ff
+ label render_precomp
+ note_font_size 25
+ xpos -5408
+ ypos 1266
+ bdwidth 366
+ bdheight 175
+}
+BackdropNode {
+ inputs 0
+ name tools
+ tile_color 0x7171c600
+ label "nuke tool used\n"
+ note_font_size 25
+ xpos -8606
+ ypos -1867
+ bdwidth 363
+ bdheight 490
+}
+BackdropNode {
+ inputs 0
+ name transparence_shadow_et_toon
+ tile_color 0x8e388e00
+ label transparence_shadow_et_toon
+ note_font_size 42
+ xpos -11860
+ ypos 1501
+ bdwidth 809
+ bdheight 1113
+}
+BackdropNode {
+ inputs 0
+ name P_avec_locator_et_offsetAxis
+ tile_color 0x71c67100
+ label P_avec_locator_et_offsetAxis
+ note_font_size 25
+ xpos -7870
+ ypos -1520
+ bdwidth 435
+ bdheight 209
+ z_order 1
+}
+BackdropNode {
+ inputs 0
+ name Pref_pour_perso1
+ tile_color 0x71c67100
+ label Pref_pour_perso
+ note_font_size 25
+ xpos -7613
+ ypos -1878
+ bdwidth 213
+ bdheight 304
+ z_order 1
+}
+BackdropNode {
+ inputs 0
+ name ast0
+ tile_color 0xdbc4c4ff
+ label "ast0 / Maîtresse"
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -12309
+ ypos -1774
+ bdwidth 736
+ bdheight 404
+ z_order 1
+}
+BackdropNode {
+ inputs 0
+ name ast1
+ tile_color 0xdbc4c4ff
+ label "ast0 / Steven"
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -3437
+ ypos 433
+ bdwidth 777
+ bdheight 388
+ z_order 1
+}
+BackdropNode {
+ inputs 0
+ name ast5
+ tile_color 0xdbc4c4ff
+ label "ast0 / Aurelien"
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -9404
+ ypos -1088
+ bdwidth 1004
+ bdheight 430
+ z_order 1
+}
+BackdropNode {
+ inputs 0
+ name misc2
+ label Util
+ note_font_size 25
+ xpos -10787
+ ypos -1121
+ bdwidth 1116
+ bdheight 459
+ z_order 1
+}
+BackdropNode {
+ inputs 0
+ name set3
+ tile_color 0xdbc4c4ff
+ label "set0 / Campagne"
+ note_font Verdana
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -4952
+ ypos 455
+ bdwidth 396
+ bdheight 387
+ z_order 1
+}
+BackdropNode {
+ inputs 0
+ name set4
+ tile_color 0xd7dbc1ff
+ label "set1 / Parc\n"
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -4507
+ ypos 453
+ bdwidth 408
+ bdheight 379
+ z_order 1
+}
+BackdropNode {
+ inputs 0
+ name set5
+ tile_color 0xd7dbc1ff
+ label "set2 / SalleReunion\n"
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -4037
+ ypos 457
+ bdwidth 391
+ bdheight 370
+ z_order 1
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode10
+ tile_color 0xdb8888ff
+ label "Util 16"
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -10229
+ ypos -1055
+ bdwidth 326
+ bdheight 263
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode11
+ tile_color 0xa6c1dbff
+ label "Util 32\n"
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -10753
+ ypos -1060
+ bdwidth 326
+ bdheight 263
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name bty_ast0
+ tile_color 0xdb8888ff
+ label bty
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -12285
+ ypos -1697
+ bdwidth 369
+ bdheight 268
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name bty_ast1
+ tile_color 0xdb8888ff
+ label bty
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -3413
+ ypos 510
+ bdwidth 326
+ bdheight 263
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name bty_ast6
+ tile_color 0xdb8888ff
+ label bty
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -9379
+ ypos -1012
+ bdwidth 326
+ bdheight 263
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name bty_set3
+ tile_color 0xdb8888ff
+ label "bty\n"
+ note_font Verdana
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -4916
+ ypos 513
+ bdwidth 326
+ bdheight 263
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name bty_set4
+ tile_color 0xdb8888ff
+ label "bty\n"
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -4470
+ ypos 510
+ bdwidth 326
+ bdheight 263
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name bty_set5
+ tile_color 0xdb8888ff
+ label "bty\n"
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -4000
+ ypos 514
+ bdwidth 326
+ bdheight 263
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name lgp_ast1
+ tile_color 0xa6c1dbff
+ label lgp
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -3022
+ ypos 508
+ bdwidth 326
+ bdheight 263
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name lgp_ast2
+ tile_color 0xa6c1dbff
+ label "P 32"
+ note_font_size 50
+ note_font_color 0xd8d2d2ff
+ xpos -11897
+ ypos -1703
+ bdwidth 293
+ bdheight 277
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name lgp_ast6
+ tile_color 0xa6c1dbff
+ label "lgp \n"
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -8844
+ ypos -1004
+ bdwidth 317
+ bdheight 286
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name lgp_replace_shadmasktoon
+ tile_color 0x4a5662ff
+ label "lgp_replace_shadmasktoon_process_\n"
+ note_font_size 25
+ note_font_color 0xd8d2d2ff
+ xpos -12505
+ ypos -368
+ bdwidth 1301
+ bdheight 1504
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name yeux_charactere1
+ tile_color 0x8e8e3800
+ label yeux_charactere
+ note_font_size 25
+ xpos -9277
+ ypos 2888
+ bdwidth 355
+ bdheight 206
+ z_order 2
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode2
+ tile_color 0x388e8e00
+ label "multiply par diffuse"
+ note_font_size 25
+ xpos -11874
+ ypos 719
+ bdwidth 467
+ bdheight 110
+ z_order 3
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode3
+ tile_color 0x7171c600
+ label "grade profondeur lgp"
+ note_font_size 25
+ xpos -11810
+ ypos 415
+ bdwidth 403
+ bdheight 199
+ z_order 3
+}
+BackdropNode {
+ inputs 0
+ name correction_lgp_perso
+ tile_color 0xaaaaaa00
+ label correction_lgp_perso
+ note_font_size 25
+ xpos -11780
+ ypos 277
+ bdwidth 373
+ bdheight 122
+ z_order 3
+}
+BackdropNode {
+ inputs 0
+ name toon_sur_lgp
+ tile_color 0x71c67100
+ label "toon_sur_lgp\n"
+ note_font_size 25
+ xpos -12022
+ ypos 29
+ bdwidth 616
+ bdheight 230
+ z_order 3
+}
+BackdropNode {
+ inputs 0
+ name P_pour_decor1
+ tile_color 0x7c378eff
+ label P_pour_decor
+ note_font_size 25
+ xpos -7838
+ ypos -1869
+ bdwidth 200
+ bdheight 300
+ z_order 5
+}
+Read {
+ inputs 0
+ file P:/private/guillaumer/zomb/shot/sq0300/sq0300_sh0120a/08_render/render-v016/lyr_00_bty_room/sq0300_sh0120a.####.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 101
+ last 260
+ origfirst 101
+ origlast 260
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read29
+ xpos -9349
+ ypos -1781
+ disable true
+}
+set N1e3da400 [stack 0]
+Dot {
+ name Dot18
+ xpos -9315
+ ypos -1663
+}
+set N1e3da000 [stack 0]
+add_layer {dmn_reflection dmn_reflection.red dmn_reflection.green dmn_reflection.blue}
+Shuffle {
+ in dmn_reflection
+ alpha black
+ name Shuffle1
+ xpos -9230
+ ypos -1667
+}
+set N1e40fc00 [stack 0]
+add_layer {dmn_lambert_shdMsk_toon dmn_lambert_shdMsk_toon.red dmn_lambert_shdMsk_toon.green dmn_lambert_shdMsk_toon.blue}
+Shuffle {
+ in dmn_lambert_shdMsk_toon
+ red blue
+ green blue
+ alpha black
+ name Shuffle3
+ xpos -9037
+ ypos -1667
+}
+set N1e40f800 [stack 0]
+push $N1e40f800
+Denoise2 {
+ inputs 2
+ type Digital
+ model Constant
+ amount 3
+ rolloff 5
+ smoothness 10
+ sharpen 5
+ lumablend 0.8
+ "Noise Analysis" 1
+ lockNoiseAnalysis true
+ analysisRegion {1167.599976 26.75 1250.800049 393.6000061}
+ analysisFrame 211
+ "Tune Frequencies" 1
+ highAmount 5
+ mediumAmount 5
+ processLow false
+ processVeryLow false
+ "Tune Channels" 1
+ needsAnalyzing false
+ profileCurve {profile {curve 0 x0.125 0 0 0 0 0 0 0 0}}
+ serializeKnob "0.325356 0.5 0.5
+0.00572487 1.09979e-008 1.09979e-008
+0.00572487 1.09979e-008 1.09979e-008
+0.00604578 1.09488e-008 1.09488e-008
+0 0 0
+0.00187805 1.38291e-008 1.38291e-008
+0.00187805 1.38291e-008 1.38291e-008
+0.00155322 1.64594e-008 1.64594e-008
+0 0 0
+0.000708588 1.63573e-008 1.63573e-008
+0.000708588 1.63573e-008 1.63573e-008
+0.000891592 1.90524e-008 1.90524e-008
+0 0 0
+0.000230527 1.67183e-008 1.67183e-008
+0.000230527 1.67183e-008 1.67183e-008
+0.00029018 2.09471e-008 2.09471e-008
+0 0 0 0 0 0 0 0 0 
+5669788383915506784"
+ name Denoise1
+ xpos -9037
+ ypos -1589
+}
+FrameBlend {
+ numframes 2
+ name FrameBlend1
+ xpos -9037
+ ypos -1472
+}
+push $N1e40fc00
+push $N1e40fc00
+Denoise2 {
+ inputs 2
+ amount 3
+ smoothness 5
+ lumablend 1
+ "Noise Analysis" 1
+ analysisFrame 229
+ "Tune Frequencies" 1
+ processVeryLow false
+ "Tune Channels" 1
+ lumaAmount 10
+ chromaAmount 0
+ needsAnalyzing false
+ profileCurve {profile {curve x0.1000000015 0 x0.1333521456 0 x0.1778279394 0 x0.2371373773 0 x0.3162277639 0 x0.4216965139 0 x0.5623413324 0 x0.7498942018 0 x1 0}}
+ serializeKnob "1.73743 0.519016 0.457792
+0.00138928 0.000166858 0.000237821
+0.00138928 0.000166858 0.000237821
+0.00105912 0.000106125 0.000179886
+0 0 0
+0.000707182 9.33161e-005 0.0001236
+0.000707182 9.33161e-005 0.0001236
+0.000305047 4.22024e-005 5.74453e-005
+0 0 0
+0.0005341 8.23693e-005 0.000107898
+0.0005341 8.23693e-005 0.000107898
+0.000232896 4.9322e-005 5.16174e-005
+0 0 0
+8.94044e-005 2.90803e-005 2.76477e-005
+8.94044e-005 2.90803e-005 2.76477e-005
+0.000117091 3.19063e-005 3.17335e-005
+0 0 0 0 0 0 0 0 0 
+7711697202892066741"
+ name Denoise3
+ xpos -9230
+ ypos -1599
+}
+FrameBlend {
+ numframes 2
+ name FrameBlend2
+ xpos -9230
+ ypos -1532
+}
+push $N1e3da000
+Copy {
+ inputs 2
+ from0 rgba.red
+ to0 dmn_reflection.red
+ from1 rgba.green
+ to1 dmn_reflection.green
+ from2 rgba.blue
+ to2 dmn_reflection.blue
+ metainput A
+ rangeinput A
+ name Copy6
+ xpos -9349
+ ypos -1545
+}
+Copy {
+ inputs 2
+ from0 -rgba.red
+ to0 -dmn_lambert_shdMsk_toon.red
+ from1 -rgba.green
+ to1 -dmn_lambert_shdMsk_toon.green
+ from2 rgba.blue
+ to2 dmn_lambert_shdMsk_toon.blue
+ metainput A
+ rangeinput A
+ name Copy5
+ xpos -9349
+ ypos -1479
+}
+Camera2 {
+ inputs 0
+ name Camera1
+ xpos -9584
+ ypos -1746
+ disable true
+}
+Dot {
+ inputs 0
+ name Dot3
+ xpos -9766
+ ypos -1783
+}
+set N1e45d800 [stack 0]
+Card2 {
+ translate {0 0 -2.035}
+ control_points {3 3 3 6 
+
+1 {-0.5 -0.5 0} 0 {0.1666666865 0 0} 0 {0 0 0} 0 {0 0.1666666865 0} 0 {0 0 0} 0 {0 0 0} 
+1 {0 -0.5 0} 0 {0.1666666716 0 0} 0 {-0.1666666716 0 0} 0 {0 0.1666666865 0} 0 {0 0 0} 0 {0.5 0 0} 
+1 {0.5 -0.5 0} 0 {0 0 0} 0 {-0.1666666865 0 0} 0 {0 0.1666666865 0} 0 {0 0 0} 0 {1 0 0} 
+1 {-0.5 0 0} 0 {0.1666666865 0 0} 0 {0 0 0} 0 {0 0.1666666716 0} 0 {0 -0.1666666716 0} 0 {0 0.5 0} 
+1 {0 0 0} 0 {0.1666666716 0 0} 0 {-0.1666666716 0 0} 0 {0 0.1666666716 0} 0 {0 -0.1666666716 0} 0 {0.5 0.5 0} 
+1 {0.5 0 0} 0 {0 0 0} 0 {-0.1666666865 0 0} 0 {0 0.1666666716 0} 0 {0 -0.1666666716 0} 0 {1 0.5 0} 
+1 {-0.5 0.5 0} 0 {0.1666666865 0 0} 0 {0 0 0} 0 {0 0 0} 0 {0 -0.1666666865 0} 0 {0 1 0} 
+1 {0 0.5 0} 0 {0.1666666716 0 0} 0 {-0.1666666716 0 0} 0 {0 0 0} 0 {0 -0.1666666865 0} 0 {0.5 1 0} 
+1 {0.5 0.5 0} 0 {0 0 0} 0 {-0.1666666865 0 0} 0 {0 0 0} 0 {0 -0.1666666865 0} 0 {1 1 0} }
+ name Card1
+ xpos -9707
+ ypos -1787
+ disable true
+}
+push 0
+ScanlineRender {
+ inputs 3
+ conservative_shader_sampling false
+ antialiasing high
+ samples 8
+ shutter 1
+ stochastic_samples 20
+ motion_vectors_type distance
+ MB_channel forward
+ name ScanlineRender1
+ xpos -9707
+ ypos -1726
+ disable true
+}
+Dot {
+ name Dot23
+ xpos -9673
+ ypos -1664
+}
+set N1e45cc00 [stack 0]
+Transform {
+ translate {0.5 0.5}
+ center {999 540}
+ name Transform3
+ xpos -9605
+ ypos -1646
+ disable true
+}
+push $N1e45cc00
+Merge2 {
+ inputs 2
+ operation copy
+ mix 0.5
+ name Merge4
+ xpos -9707
+ ypos -1646
+ disable true
+}
+Reformat {
+ resize fill
+ filter Notch
+ name Reformat8
+ xpos -9707
+ ypos -1574
+ disable true
+}
+Blur {
+ size 3
+ name Blur1
+ xpos -9707
+ ypos -1509
+ disable true
+}
+push $N1e45d800
+Switch {
+ inputs 2
+ which 1
+ name Switch1
+ xpos -9800
+ ypos -1503
+}
+push $N1e3da400
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet7
+ xpos -9190
+ ypos -1751
+}
+ShuffleCopy {
+ inputs 0
+ in depth
+ alpha alpha2
+ black red
+ out2 depth
+ name ShuffleCopy1
+ xpos -8382
+ ypos -1728
+}
+ZDefocus2 {
+ math depth
+ center 59.953125
+ focal_point {1061 247}
+ dof 0.5
+ layers 10
+ legacy_resize_mode false
+ show_legacy_resize_mode false
+ bloom_threshold 0
+ bloom_gain 4
+ name ZDefocus1
+ xpos -8382
+ ypos -1626
+}
+Read {
+ inputs 0
+ file //zombillenium/Zombillenium/zombidamas/private/damienc/zomb/shot/sq0530/sq0530_sh0060a/08_render/render-v007/left/lyr_utl0_bty/sq0530_sh0060a.####.exr
+ localizationPolicy off
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 101
+ last 888
+ origfirst 101
+ origlast 888
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read25
+ xpos -7603
+ ypos -1798
+ disable true
+}
+add_layer {Pref Pref.X Pref.Y Pref.Z}
+Shuffle {
+ in Pref
+ name Shuffle42
+ xpos -7603
+ ypos -1697
+ disable true
+}
+P_Matte {
+ name P_Matte11
+ xpos -7603
+ ypos -1646
+ disable true
+ in rgb
+ output rgba
+ matteShape Cube
+ center {348 -0.4155273438 13.65625}
+ scaling {100 3 100}
+}
+Read {
+ inputs 0
+ file //zombillenium/zombidamas/private/damienc/zomb/shot/sq0530/sq0530_sh0020a/08_render/render-v000/lyr_set2_bty_SalleReunion/stereo_rig_cam_left/sq0530_sh0020a.0101.exr
+ localizationPolicy off
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read6
+ xpos -7828
+ ypos -1789
+ disable true
+}
+add_layer {P P.X P.Y P.Z}
+Shuffle {
+ in P
+ name Shuffle43
+ xpos -7828
+ ypos -1687
+ disable true
+}
+P_Matte {
+ name P_Matte13
+ xpos -7828
+ ypos -1643
+ disable true
+ in rgb
+ output rgba
+}
+add_layer {dmn_mask01 dmn_mask01.red dmn_mask01.green dmn_mask01.blue}
+Shuffle {
+ inputs 0
+ in dmn_mask01
+ red blue
+ green blue
+ name Shuffle16
+ xpos -9024
+ ypos -2493
+}
+set N36673400 [stack 0]
+Dilate {
+ size 1
+ name Dilate6
+ xpos -8914
+ ypos -2499
+}
+push 0
+Noise {
+ inputs 1+1
+ size 10
+ zoffset {{curve x101 0 x285 15}}
+ octaves 2
+ lacunarity 1
+ gain 0.346
+ center {999 540}
+ name Noise2
+ xpos -8914
+ ypos -2420
+}
+ColorCorrect {
+ gain 2
+ shadows.gain {1 0 0.032916 1}
+ shadows.gain_panelDropped true
+ midtones.gain {1 0.035793 0 1}
+ midtones.gain_panelDropped true
+ highlights.gain {1 0.823372 0 1}
+ highlights.gain_panelDropped true
+ lookup {shadow {curve 1 s0 x0.4675054848 0 s0}
+   midtone {1-shadow-highlight}
+   highlight {curve x0.4963895082 0 s-0.009999999776 x1 1 s0}}
+ name ColorCorrect5
+ xpos -8914
+ ypos -2363
+}
+Blur {
+ size 2
+ name Blur5
+ xpos -8914
+ ypos -2327
+}
+Glow2 {
+ brightness 5
+ size 5
+ name Glow3
+ xpos -8914
+ ypos -2201
+}
+push $N36673400
+push $N36673400
+Merge2 {
+ inputs 2
+ name Merge5
+ xpos -9024
+ ypos -2259
+}
+Glow2 {
+ inputs 0
+ tint {0.399454236 0.3920399845 0.4050000012 1}
+ tolerance 0.3
+ size 20
+ name Glow1
+ xpos -8745
+ ypos -2339
+}
+Grade {
+ inputs 1+1
+ white 0
+ add {0.4600000083 0.07405918837 0 0.150000006}
+ name Grade10
+ xpos -8745
+ ypos -2259
+ disable true
+}
+Merge2 {
+ inputs 2
+ name burning_screen
+ xpos -8745
+ ypos -2201
+}
+Shuffle {
+ inputs 0
+ in P
+ name Shuffle44
+ xpos -7773
+ ypos -1460
+}
+P_Matte {
+ name P_Matte17
+ xpos -7773
+ ypos -1416
+ in P
+ output alpha
+ center {{parent.parent.Axis1.translate+offsetAxis} {parent.parent.Axis1.translate+offsetAxis} {parent.parent.Axis1.translate+offsetAxis}}
+ uniform_scale 4.4
+ falloffType Exponential
+ falloff 0.828
+ exp 5.44
+ addUserKnob {20 Axis_Settings}
+ addUserKnob {13 offsetAxis l "Axis Offset : "}
+ offsetAxis {2 0 -0.1}
+}
+Blur {
+ size 3
+ name Blur18
+ xpos -7773
+ ypos -1359
+}
+Axis2 {
+ inputs 0
+ read_from_file true
+ translate {{curve x101 34.55944061 34.56102753 34.56623077 34.57233429 34.52305984 34.38330841 34.17248535 33.92946625 33.67478943 33.39089966 33.08474731 32.73620605 32.34056091 31.93369484 31.56950569 31.28952789 31.09651375 30.97050858 30.87895584 30.80861282 30.75709343 30.72175598 30.69876671 30.6853981 30.68060684 30.68060684 30.68060684 30.68060684 30.68060684 30.68060684 30.68060684 30.68060684 30.68061829 30.68071747 30.68100166 30.68034172 30.67898941 30.67910385 30.68284225 30.69177628 30.7057724 30.72539139 30.76807404 30.84438324 30.94802094 31.06653595 31.19255829 31.32476425 31.45617676 31.58112717 31.69101906 31.78141022 31.8504715 31.89904404 31.93320084 31.95789719 31.97445297 31.98184204 31.983284 31.98373795 31.98373795 31.98373795 31.98373795} {curve x101 577.2495698 577.2501802 577.251523 577.2524995 577.2405366 577.2188081 577.2129488 577.2462739 577.317563 577.4088716 577.5105562 577.6134614 577.7073335 577.7994966 577.8931245 577.9782075 578.0454072 578.0983858 578.1433687 578.17352 578.1886568 578.1959199 578.1980562 578.1984224 578.1986665 578.1986665 578.1986665 578.1986665 578.1986665 578.1986665 578.1986665 578.1986665 578.1987276 578.1987886 578.1987886 578.1983613 578.1970796 578.1946382 578.190854 578.1874361 578.1854829 578.1842622 578.175107 578.1530122 578.1251802 578.0955781 578.058896 578.0082368 577.9479341 577.8855562 577.8273286 577.7756319 577.7329072 577.7017183 577.6808443 577.6681489 577.6610689 577.6586275 577.6587495 577.6587495 577.6587495 577.6587495 577.6587495} {curve x101 101.2061768 101.206871 101.207077 101.2046432 101.1336975 100.9721832 100.7911377 100.6525345 100.5576706 100.4800415 100.4195862 100.3724213 100.3505096 100.3621674 100.4076385 100.4783936 100.5650253 100.6628418 100.7553711 100.822052 100.8563843 100.8704834 100.8727264 100.87146 100.8712921 100.8712921 100.8712921 100.8712921 100.8712921 100.8712921 100.8712921 100.8712921 100.8712921 100.8711548 100.8706741 100.866272 100.856514 100.8443909 100.832901 100.8274078 100.8277817 100.8304062 100.8273239 100.8151245 100.7976379 100.779129 100.7615662 100.7438202 100.7281723 100.7152939 100.705162 100.6950607 100.6826935 100.6681061 100.6548462 100.6467438 100.642807 100.6416473 100.6414795 100.6414185 100.6414185 100.6414185 100.6414185}}
+ rotate {{curve x101 7.209865646 7.21025418 7.20979384 7.209248544 6.64314337 5.367120803 3.942303906 2.730619433 1.652245752 0.5808558123 -0.3362347168 -1.050301316 -1.57454515 -1.933422285 -2.134294866 -2.181958036 -2.116189977 -1.881395826 -1.529606465 -1.238444501 -1.085860449 -1.02632612 -1.02232598 -1.035996306 -1.041267143 -1.041267143 -1.041267143 -1.041267143 -1.041267143 -1.041267143 -1.041267143 -1.041267143 -1.038785016 -1.033363189 -1.026230608 -1.019320036 -1.008550811 -0.9916600012 -0.9643187833 -0.8697477662 -0.6724921437 -0.4048140778 -0.1884512337 -0.1288905061 -0.2294648658 -0.4940813085 -0.9143060296 -1.452923918 -2.071196785 -2.740827437 -3.425797115 -4.070866032 -4.642238562 -5.110517577 -5.411284797 -5.541594892 -5.569665254 -5.566176716 -5.561159525 -5.559604666 -5.559604666 -5.559604666 -5.559604666} {curve x101 19.06916369 19.07262871 19.0909615 19.13954558 20.13146564 22.42304083 25.20860199 27.55009323 29.11315899 30.39434054 31.57311842 33.13970976 35.29286807 37.7869643 39.9969721 41.44667248 42.02855692 41.91164936 41.63741174 41.46951869 41.45481372 41.51068259 41.58708561 41.63756986 41.64962692 41.64962692 41.64962692 41.64962692 41.64962692 41.64962692 41.64962692 41.64962692 41.64994691 41.65149977 41.65533131 41.665003 41.67688376 41.6963824 41.7235541 41.81779356 42.01634858 42.29884618 42.49550818 42.46234298 42.19870141 41.71090389 40.6175068 38.71212775 36.28408672 33.62775459 31.04681077 28.82340879 27.17103813 26.21365103 25.71771989 25.34668317 25.102529 25.01219573 25.01415659 25.01520408 25.01520408 25.01520408 25.01520408} {curve x101 -100.778538 -100.7786264 -100.7786058 -100.7782251 -101.3434241 -102.527884 -103.4776194 -103.4223221 -102.2821093 -100.5427072 -98.45978705 -96.23424058 -94.08290639 -92.04544685 -90.0494784 -88.19178224 -86.51581007 -84.95288955 -83.53910139 -82.4903602 -81.89823449 -81.61843099 -81.52898514 -81.5086032 -81.49616922 -81.49616922 -81.49616922 -81.49616922 -81.49616922 -81.49616922 -81.49616922 -81.49616922 -81.49553435 -81.496051 -81.5007242 -81.51593117 -81.54918992 -81.61243749 -81.71571038 -81.85995813 -82.03899834 -82.25440193 -82.56369578 -82.95372109 -83.31421022 -83.53453743 -83.71634905 -84.03919503 -84.47954263 -84.99434186 -85.55720995 -86.19993974 -86.91106961 -87.61681835 -88.33852131 -89.01368624 -89.51481913 -89.72337537 -89.73842045 -89.74344494 -89.74344494 -89.74344494 -89.74344494}}
+ scaling {{curve x101 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1} {curve x101 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1} {curve x101 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1}}
+ uniform_scale {{curve x101 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1}}
+ skew {{curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} {curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} {curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0}}
+ pivot {{curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} {curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} {curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0}}
+ file //zombillenium/zombidamas/private/damienc/zomb/shot/sq0530/sq0530_sh0080a/08_render/render_to_comp/sq0530_sh0080a_smartphoneSteven_locator.abc.abc
+ version 2
+ name Axis1
+ xpos -7623
+ ypos -1432
+}
+Read {
+ inputs 0
+ file //zombillenium/zombidamas/private/anthonyn/zomb/shot/sq0140/sq0140_sh0080a/08_render/render_to_comp/left/lyr_utl1_bty_32/sq0140_sh0080a.####.exr
+ localizationPolicy on
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 110
+ last 330
+ origfirst 110
+ origlast 330
+ origset true
+ on_error "nearest frame"
+ version 15
+ name Read51
+ xpos -10682
+ ypos -1003
+}
+Dot {
+ name Dot113
+ xpos -10648
+ ypos -857
+}
+set N3a85b000 [stack 0]
+Dot {
+ name Dot56
+ xpos -10648
+ ypos 2112
+}
+Shuffle {
+ in P
+ name Shuffle40
+ xpos -9054
+ ypos 2108
+}
+P_Matte {
+ name P_Matte3
+ xpos -9054
+ ypos 2195
+ in rgb
+ output rgba
+ matteShape Cube
+ center {87.61100769 17.28813934 375.7470703}
+ scaling {0.5 0.5 0.5}
+}
+Blur {
+ size 3
+ name Blur9
+ xpos -9054
+ ypos 2267
+}
+Read {
+ inputs 0
+ file //zombillenium/zombidamas/private/anthonyn/zomb/shot/sq0140/sq0140_sh0080a/08_render/render_to_comp/left/lyr_ast0_lgp_Aurelien/sq0140_sh0080a.####.exr
+ localizationPolicy on
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 110
+ last 330
+ origfirst 110
+ origlast 330
+ origset true
+ on_error "nearest frame"
+ name Read8
+ xpos -8764
+ ypos -926
+}
+Dot {
+ name Dot111
+ xpos -8730
+ ypos -844
+}
+set N47738400 [stack 0]
+Reformat {
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ name Reformat40
+ xpos -8764
+ ypos -281
+}
+Unpremult {
+ name Unpremult17
+ xpos -8754
+ ypos 499
+}
+Remove {
+ channels alpha
+ name Remove4
+ xpos -8752
+ ypos 879
+ disable true
+}
+set N47773400 [stack 0]
+add_layer {dmn_mask05 dmn_mask05.red dmn_mask05.green dmn_mask05.blue}
+Shuffle {
+ in dmn_mask05
+ green red
+ blue red
+ alpha black
+ name Shuffle30
+ xpos -8517
+ ypos 941
+}
+set N47773000 [stack 0]
+Shuffle {
+ in dmn_mask05
+ red blue
+ green blue
+ alpha black
+ name Shuffle4
+ xpos -8447
+ ypos 1006
+}
+push 0
+push $N47773000
+Shuffle {
+ in dmn_mask05
+ red green
+ blue green
+ alpha black
+ name Shuffle37
+ xpos -8592
+ ypos 1006
+}
+push $N47773000
+Merge2 {
+ inputs 3+1
+ operation plus
+ name Merge48
+ xpos -8517
+ ypos 1073
+}
+Shuffle {
+ alpha red
+ name Shuffle39
+ xpos -8517
+ ypos 1131
+}
+FilterErode {
+ channels rgba
+ size 0
+ name FilterErode2
+ xpos -8517
+ ypos 1201
+ disable true
+}
+Blur {
+ name Blur8
+ xpos -8517
+ ypos 1277
+ disable true
+}
+Constant {
+ inputs 0
+ channels rgb
+ name Constant3
+ xpos -8692
+ ypos 1183
+}
+push $N47773400
+Merge2 {
+ inputs 2+1
+ operation mask
+ name Merge49
+ xpos -8752
+ ypos 1283
+}
+Dot {
+ name Dot7
+ xpos -8718
+ ypos 2396
+}
+Merge2 {
+ inputs 2
+ operation multiply
+ name Merge44
+ xpos -9054
+ ypos 2392
+}
+Roto {
+ inputs 0
+ curves {{{v x3f99999a}
+  {f 0}
+  {n
+   {layer Root
+    {f 2097664}
+    {t x4479c000 x44070000}
+    {a pt1x 0 pt1y 0 pt2x 0 pt2y 0 pt3x 0 pt3y 0 pt4x 0 pt4y 0 ptex00 0 ptex01 0 ptex02 0 ptex03 0 ptex10 0 ptex11 0 ptex12 0 ptex13 0 ptex20 0 ptex21 0 ptex22 0 ptex23 0 ptex30 0 ptex31 0 ptex32 0 ptex33 0 ptof1x 0 ptof1y 0 ptof2x 0 ptof2y 0 ptof3x 0 ptof3y 0 ptof4x 0 ptof4y 0 pterr 0 ptrefset 0 ptmot x40800000 ptref 0}
+    {curvegroup Bezier1 512 bezier
+     {{cc
+       {f 8192}
+       {px x42ca0000
+        {xc305c838 x4207aae0}
+        {x44290000 x44590002}
+        {x430e0000 xc2100000}
+        {xc0800000 x40000000}
+        {x444e8000 x44558000}
+        {x40800000 xc0000000}
+        {xc0000000 x40800000}
+        {x44478000 x44378000}
+        {x40000000 xc0800000}
+        {x40000000 xc0c00000}
+        {x44330000 x442d0000}
+        {xc0000000 x40c00000}
+        {xc0800000 xc1200000}
+        {x442a8000 x443e0000}
+        {x40800000 x41200000}}}     idem}
+     {tx x42ca0000 x44394ccd x4441999a}
+     {a osw x41200000 osf 0 str 1 spx x4479c000 spy x44070000 sb 1 nv x40000000 view2 x40000000 ltn x42ca0000 ltm x42ca0000 tt x40800000}}}}}}
+ toolbox {selectAll {
+  { selectAll str 1 ssx 1 ssy 1 sf 1 }
+  { createBezier str 1 ssx 1 ssy 1 sf 1 sb 1 tt 4 }
+  { createBezierCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createBSpline str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createEllipse str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangle str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangleCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { brush str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { eraser src 2 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { clone src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { reveal src 3 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { dodge src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { burn src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { blur src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { sharpen src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { smear src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+} }
+ toolbar_brush_hardness 0.200000003
+ toolbar_source_transform_scale {1 1}
+ toolbar_source_transform_center {999 540}
+ colorOverlay {0 0 0 0}
+ lifetime_type "all frames"
+ lifetime_start 101
+ lifetime_end 101
+ motionblur_shutter_offset_type centred
+ source_black_outside true
+ name Roto3
+ xpos -9017
+ ypos 13
+}
+Read {
+ inputs 0
+ file //zombillenium/zombidamas/private/anthonyn/zomb/shot/sq0140/sq0140_sh0080a/08_render/render_to_comp/left/lyr_ast0_bty_Aurelien/sq0140_sh0080a.####.exr
+ localizationPolicy on
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 110
+ last 330
+ origfirst 110
+ origlast 330
+ origset true
+ on_error "nearest frame"
+ version 1
+ name Read60
+ xpos -9276
+ ypos -934
+}
+Dot {
+ name Dot136
+ xpos -9242
+ ypos -845
+}
+set N4791dc00 [stack 0]
+Reformat {
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ name Reformat3
+ xpos -9276
+ ypos -279
+}
+Dot {
+ name Dot14
+ xpos -9242
+ ypos -205
+}
+set N4791d000 [stack 0]
+Dot {
+ name Dot31
+ xpos -9242
+ ypos -57
+}
+set N4791cc00 [stack 0]
+Shuffle {
+ in dmn_lambert_shdMsk_toon
+ red green
+ blue green
+ alpha green
+ name Shuffle14
+ xpos -9148
+ ypos -61
+}
+Merge2 {
+ inputs 2
+ name Merge29
+ xpos -9156
+ ypos 13
+}
+push $N4791cc00
+Copy {
+ inputs 2
+ from0 -rgba.red
+ to0 -dmn_lambert_shdMsk_toon.red
+ from1 rgba.green
+ to1 dmn_lambert_shdMsk_toon.green
+ from2 -rgba.blue
+ to2 -dmn_lambert_shdMsk_toon.blue
+ metainput A
+ rangeinput A
+ name Copy2
+ xpos -9276
+ disable true
+}
+Dot {
+ name Dot5
+ xpos -9242
+ ypos 383
+}
+set N4794bc00 [stack 0]
+Shuffle {
+ in dmn_mask05
+ green red
+ blue red
+ alpha red
+ name Shuffle5
+ xpos -9116
+ ypos 439
+}
+set N4794b800 [stack 0]
+push $N4794b800
+push $N4794bc00
+add_layer {dmn_contour_inci_occ dmn_contour_inci_occ.red dmn_contour_inci_occ.green dmn_contour_inci_occ.blue}
+Grade {
+ inputs 1+1
+ channels {dmn_contour_inci_occ.red -dmn_contour_inci_occ.green -dmn_contour_inci_occ.blue}
+ black 1
+ unpremult rgba.alpha
+ name remove_contour_Lift1
+ xpos -9276
+ ypos 422
+}
+Grade {
+ inputs 1+1
+ channels {-dmn_lambert_shdMsk_toon.red -dmn_lambert_shdMsk_toon.green dmn_lambert_shdMsk_toon.blue}
+ black 1
+ unpremult rgba.alpha
+ name remove_shad_Lift1
+ xpos -9276
+ ypos 477
+}
+Dot {
+ name Dot4
+ xpos -9242
+ ypos 633
+}
+set N4794ac00 [stack 0]
+Shuffle {
+ in dmn_contour_inci_occ
+ green red
+ blue red
+ alpha red
+ name Shuffle18
+ xpos -9441
+ ypos 696
+}
+set N4794a800 [stack 0]
+Shuffle {
+ in dmn_mask05
+ alpha blue
+ name Shuffle19
+ xpos -9337
+ ypos 741
+}
+ColorCorrect {
+ channels rgba
+ saturation 0
+ gain 5
+ name ColorCorrect11
+ xpos -9337
+ ypos 767
+}
+FilterErode {
+ channels rgba
+ size 0
+ name FilterErode1
+ xpos -9337
+ ypos 793
+}
+Clamp {
+ name Clamp3
+ xpos -9337
+ ypos 819
+}
+push $N4794a800
+Merge2 {
+ inputs 2
+ operation max
+ name Merge46
+ xpos -9441
+ ypos 884
+}
+Shuffle {
+ alpha blue
+ name Shuffle22
+ xpos -9441
+ ypos 910
+}
+push $N4794ac00
+Shuffle {
+ in dmn_lambert_shdMsk_toon
+ red blue
+ green blue
+ alpha blue
+ name Shuffle26
+ xpos -9190
+ ypos 689
+}
+set N4798cc00 [stack 0]
+Shuffle {
+ in dmn_mask05
+ alpha blue
+ name Shuffle27
+ xpos -9086
+ ypos 720
+}
+ColorCorrect {
+ channels rgba
+ saturation 0
+ gain 5
+ name ColorCorrect12
+ xpos -9070
+ ypos 749
+}
+FilterErode {
+ channels rgba
+ size 0
+ name FilterErode4
+ xpos -9070
+ ypos 775
+}
+Clamp {
+ name Clamp4
+ xpos -9070
+ ypos 801
+}
+push $N4798cc00
+Merge2 {
+ inputs 2
+ operation max
+ name Merge47
+ xpos -9190
+ ypos 863
+}
+Shuffle {
+ alpha blue
+ name Shuffle28
+ xpos -9190
+ ypos 889
+}
+push $N4794ac00
+Copy {
+ inputs 2
+ from0 rgba.blue
+ to0 dmn_lambert_shdMsk_toon.blue
+ name Copy4
+ xpos -9283
+ ypos 980
+ disable true
+}
+Copy {
+ inputs 2
+ from0 rgba.blue
+ to0 dmn_contour_inci_occ.red
+ name Copy7
+ xpos -9276
+ ypos 1042
+ disable true
+}
+Dot {
+ name Dot6
+ xpos -9242
+ ypos 1372
+}
+set N479d6800 [stack 0]
+Shuffle {
+ in dmn_lambert_shdMsk_toon
+ red green
+ blue green
+ alpha green
+ name Shuffle49
+ xpos -9202
+ ypos 1404
+}
+set N479d6400 [stack 0]
+add_layer {dmn_mask06 dmn_mask06.red dmn_mask06.green dmn_mask06.blue}
+Shuffle {
+ in dmn_mask06
+ green red
+ blue red
+ alpha red
+ name Shuffle50
+ xpos -9084
+ ypos 1427
+}
+push $N479d6400
+Merge2 {
+ inputs 2
+ name Merge34
+ xpos -9202
+ ypos 1495
+}
+push $N479d6800
+Copy {
+ inputs 2
+ from0 rgba.green
+ to0 dmn_lambert_shdMsk_toon.green
+ name Copy18
+ xpos -9276
+ ypos 1566
+ disable true
+}
+LdvDmToon {
+ name LdvDmToon10
+ xpos -9281
+ ypos 1673
+ value_5 {0.2103952467 0.3695653975 0.3799999952 1}
+ value_4 {1.175367475 1.379999995 1.059402943 1}
+ value 1
+ value_3 10
+ value_1 0
+ value_2 0
+}
+Unpremult {
+ name Unpremult15
+ xpos -9276
+ ypos 1935
+}
+Merge2 {
+ inputs 2
+ operation plus
+ name Merge50
+ xpos -9276
+ ypos 2537
+}
+set N47c30400 [stack 0]
+Dot {
+ name Dot1
+ xpos -8981
+ ypos 2936
+}
+set N47c30000 [stack 0]
+Shuffle {
+ in dmn_mask05
+ red green
+ blue green
+ alpha green
+ name Shuffle2
+ xpos -9015
+ ypos 3025
+}
+push $N47c30000
+Grade {
+ white 2.1
+ name Grade3
+ xpos -9172
+ ypos 2933
+}
+push $N4791d000
+Dot {
+ name Dot16
+ xpos -8039
+ ypos -205
+}
+Dot {
+ name Dot59
+ xpos -8039
+ ypos 1728
+}
+set N47c7d000 [stack 0]
+Shuffle {
+ in dmn_lambert_shdMsk_toon
+ red green
+ blue green
+ alpha white
+ name Shuffle_omb3
+ xpos -7934
+ ypos 2054
+}
+Grade {
+ name Grade_omb1_LIFT2
+ xpos -7934
+ ypos 2112
+}
+push $N47c7d000
+Shuffle {
+ in dmn_contour_inci_occ
+ green red
+ blue red
+ alpha white
+ name Shuffle_trait3
+ xpos -8073
+ ypos 1979
+}
+Grade {
+ name Grade_trait1_LIFT2
+ xpos -8073
+ ypos 2021
+}
+Read {
+ inputs 0
+ file //zombillenium/Zombillenium/zombidamas/private/damienc/zomb/shot/sq0530/sq0530_sh0060a/08_render/render_to_comp/left/lyr_ast0_lgp_Steven_Flamme/sq0530_sh0060a.####.exr
+ localizationPolicy off
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 101
+ last 801
+ origfirst 101
+ origlast 801
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read4
+ xpos -8202
+ ypos -903
+ disable true
+}
+set N47cbdc00 [stack 0]
+Remove {
+ channels alpha
+ name Remove8
+ xpos -8202
+ ypos 1591
+}
+Unpremult {
+ name Unpremult19
+ xpos -8202
+ ypos 1839
+}
+Grade {
+ white {0.8999999762 0.2529862225 0.03600001708 2.299999952}
+ name Grade20
+ xpos -8202
+ ypos 1916
+}
+Merge2 {
+ inputs 2
+ operation multiply
+ invert_mask true
+ name Merge52
+ xpos -8203
+ ypos 2021
+}
+Merge2 {
+ inputs 2
+ operation multiply
+ name Merge53
+ xpos -8203
+ ypos 2112
+}
+Dot {
+ name Dot8
+ xpos -8169
+ ypos 2783
+}
+push $N47c30400
+Merge2 {
+ inputs 2
+ operation plus
+ name Merge54
+ xpos -9271
+ ypos 2779
+ disable true
+}
+Merge2 {
+ inputs 2+1
+ name Merge9
+ xpos -9271
+ ypos 3025
+}
+Premult {
+ name Premult4
+ xpos -9271
+ ypos 3162
+}
+Constant {
+ inputs 0
+ channels rgb
+ color 0.5
+ name BG1
+ xpos -9680
+ ypos 2786
+}
+Merge2 {
+ inputs 2
+ name Merge10
+ xpos -9680
+ ypos 3331
+}
+Read {
+ inputs 0
+ file D:/RECUP_PARIS/Render_layer_300/Sq_080/render-v007/lyr_99_utl/sq0300_sh0080a.%04d.exr
+ localizationPolicy off
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 101
+ last 343
+ origfirst 101
+ origlast 343
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read22
+ xpos -8033
+ ypos -1649
+ disable true
+}
+add_layer {crypto_object crypto_object.red crypto_object.green crypto_object.blue}
+add_layer {crypto_object00 crypto_object00.red crypto_object00.green crypto_object00.blue crypto_object00.alpha}
+Cryptomatte {
+ name Cryptomatte7
+ xpos -8033
+ ypos -1531
+ disable true
+ matteList ""
+ cryptoLayer crypto_object
+ expression ""
+ keyedName ""
+ previewChannel crypto_object
+ in00 crypto_object00
+}
+Group {
+ inputs 0
+ name LdvChr11
+ xpos -8034
+ ypos -1763
+ disable true
+ addUserKnob {20 User}
+ addUserKnob {41 value_5 l Ambient_Tint T TintAmbient1.value}
+ addUserKnob {41 value_4 l Diffuse_Tint T TintDiffuse1.value}
+ addUserKnob {41 value l Spec_Tint T TintSpec1.value}
+ addUserKnob {41 value_3 l RimToon_Tint T TintRimToon1.value}
+ addUserKnob {41 value_1 l Reflection_Tint T TintRefl1.value}
+ addUserKnob {41 value_2 l Refraction_Tint T TintRefraction1.value}
+ addUserKnob {26 ""}
+ addUserKnob {41 which l Shadow_Blend T TweakShadow.which}
+ addUserKnob {41 which_2 l Occlusion_Blend T TweakOcclusion.which}
+ addUserKnob {41 which_3 l Toon_Blend T TweakToon.which}
+ addUserKnob {41 which_1 l Contour_Blend T TweakContour.which}
+ addUserKnob {26 ""}
+ addUserKnob {41 value_6 l Face_Tint T TintFace.value}
+ addUserKnob {41 value_7 l Eyes_Tint T TintEyes.value}
+ addUserKnob {41 value_8 l Mouth_Tint T TintMouth.value}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos -1314
+  ypos -305
+ }
+set N47d76000 [stack 0]
+ Unpremult {
+  channels all
+  name Unpremult1
+  xpos -1314
+  ypos -279
+ }
+ Dot {
+  name Dot12
+  xpos -1280
+  ypos -241
+ }
+set N47dbf800 [stack 0]
+ Dot {
+  name Dot17
+  xpos -909
+  ypos -194
+ }
+set N47dbf400 [stack 0]
+ Shuffle {
+  in dmn_contour_inci_occ
+  red blue
+  green blue
+  alpha black
+  name occlusion
+  xpos -1210
+  ypos -44
+ }
+push $N47dbf800
+ Dot {
+  name Dot11
+  xpos -1280
+  ypos -207
+ }
+ Shuffle {
+  red alpha
+  green alpha
+  blue alpha
+  name Shuffle1
+  xpos -1314
+  ypos -183
+ }
+ Unpremult {
+  channels all
+  name Unpremult2
+  xpos -1314
+  ypos -3
+ }
+set N47dbe400 [stack 0]
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakOcclusion
+  xpos -1210
+  ypos 75
+ }
+set N47dbe000 [stack 0]
+ Dot {
+  name Dot14
+  xpos -1105
+  ypos 286
+ }
+set N47debc00 [stack 0]
+push $N47dbf400
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  red blue
+  green blue
+  alpha blue
+  name shadow_msk
+  xpos -887
+  ypos -47
+ }
+set N47deb800 [stack 0]
+push 0
+push $N47dbf400
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  red green
+  blue green
+  alpha black
+  name toon
+  xpos -990
+  ypos -47
+ }
+set N47deb400 [stack 0]
+push $N47dbf400
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  green red
+  blue red
+  alpha black
+  name lambert
+  xpos -752
+  ypos -48
+ }
+ Merge2 {
+  inputs 3+1
+  operation multiply
+  name Merge10
+  xpos -752
+  ypos 86
+ }
+push $N47dbf400
+ Shuffle {
+  in dmn_contour_inci_occ
+  red green
+  blue green
+  alpha black
+  name incidence
+  xpos -655
+  ypos -49
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge7
+  xpos -664
+  ypos 180
+ }
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge15
+  xpos -921
+  ypos 386
+ }
+ Dot {
+  name Dot20
+  xpos -887
+  ypos 445
+ }
+set N47e2bc00 [stack 0]
+ Transform {
+  center {1024 553.5}
+  name _MERGE15_in_shader
+  xpos -799
+  ypos 441
+ }
+push $N47dbf400
+ Shuffle {
+  in dmn_contour_inci_occ
+  green red
+  blue red
+  alpha black
+  name contour
+  xpos -1113
+  ypos -47
+ }
+push $N47dbe400
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakContour
+  xpos -1113
+  ypos 77
+ }
+push $N47dbe000
+push 0
+push $N47deb400
+push $N47dbe400
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakToon
+  xpos -990
+  ypos 81
+ }
+push $N47deb800
+push $N47dbe400
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakShadow
+  xpos -887
+  ypos 79
+ }
+ Merge2 {
+  inputs 4+1
+  operation multiply
+  name Merge13
+  xpos -990
+  ypos 192
+ }
+ Dot {
+  name Dot16
+  xpos -956
+  ypos 770
+ }
+set N47e2a000 [stack 0]
+ Transform {
+  center {1024 553.5}
+  name _MERGE7_in_shader
+  xpos -889
+  ypos 766
+ }
+push $N47dbf400
+add_layer {dmn_ambient dmn_ambient.red dmn_ambient.green dmn_ambient.blue}
+ Shuffle {
+  in dmn_ambient
+  alpha black
+  name ambient
+  xpos -561
+  ypos -50
+ }
+ Dot {
+  name Dot2
+  xpos -527
+  ypos 630
+ }
+set N47e5d400 [stack 0]
+push $N47e5d400
+push $N47e2bc00
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge12
+  xpos -708
+  ypos 626
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge18
+  xpos -708
+  ypos 652
+ }
+push $N47debc00
+push $N47dbe400
+ Dot {
+  name Dot3
+  xpos -1280
+  ypos 417
+ }
+ Dissolve {
+  inputs 2
+  which 1
+  name Dissolve1
+  xpos -1139
+  ypos 407
+ }
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge5
+  xpos -708
+  ypos 727
+ }
+ Dot {
+  name Dot19
+  xpos -674
+  ypos 772
+ }
+set N47e9dc00 [stack 0]
+ Transform {
+  center {1024 553.5}
+  name _MERGE14_in_shader
+  xpos -633
+  ypos 768
+ }
+push $N47dbf800
+ Dot {
+  name Dot15
+  xpos -1397
+  ypos -212
+ }
+set N47e9d400 [stack 0]
+add_layer {dmn_diffuse dmn_diffuse.red dmn_diffuse.green dmn_diffuse.blue}
+ Shuffle {
+  in dmn_diffuse
+  alpha black
+  name diffuse
+  xpos -1404
+  ypos -49
+ }
+ Dot {
+  name Dot1
+  xpos -1370
+  ypos 624
+ }
+set N47e9cc00 [stack 0]
+push $N47e2bc00
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge9
+  xpos -1260
+  ypos 620
+ }
+push $N47e9cc00
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge11
+  xpos -1260
+  ypos 646
+ }
+ Dot {
+  name Dot18
+  xpos -1200
+  ypos 772
+ }
+set N47e9c000 [stack 0]
+ Transform {
+  center {1024 553.5}
+  name _MERGE9_in_shader
+  xpos -1142
+  ypos 768
+ }
+push $N47d76000
+push 0
+push 0
+push 0
+push 0
+push 0
+push 0
+push 0
+push $N47d76000
+push $N47e9d400
+ Shuffle {
+  in alpha
+  in2 alpha
+  green red
+  blue red
+  alpha black
+  name alpha
+  xpos -1913
+  ypos -58
+ }
+ Dot {
+  name Dot13
+  xpos -1879
+  ypos 1244
+ }
+push $N47e9d400
+add_layer {dmn_refraction dmn_refraction.red dmn_refraction.green dmn_refraction.blue}
+ Shuffle {
+  in dmn_refraction
+  alpha black
+  name refraction
+  xpos -1808
+  ypos -60
+ }
+ Dot {
+  name Dot10
+  xpos -1774
+  ypos 1219
+ }
+ Multiply {
+  channels rgb
+  name TintRefraction1
+  xpos -1244
+  ypos 1215
+ }
+push $N47e9d400
+ Shuffle {
+  in dmn_reflection
+  alpha black
+  name spec_indirect
+  xpos -1706
+  ypos -54
+ }
+ Dot {
+  name Dot9
+  xpos -1672
+  ypos 1192
+ }
+ Multiply {
+  channels rgb
+  name TintRefl1
+  xpos -1243
+  ypos 1188
+ }
+push $N47e9d400
+add_layer {dmn_rimToon dmn_rimToon.red dmn_rimToon.green dmn_rimToon.blue}
+ Shuffle {
+  in dmn_rimToon
+  alpha black
+  name rim_toon
+  xpos -1506
+  ypos -53
+ }
+ Dot {
+  name Dot21
+  xpos -1472
+  ypos 1140
+ }
+ Multiply {
+  channels rgb
+  name TintRimToon1
+  xpos -1245
+  ypos 1136
+ }
+push $N47e9c000
+push $N47e2a000
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge1
+  xpos -1152
+  ypos 1036
+ }
+ Multiply {
+  channels rgb
+  name TintDiffuse1
+  xpos -1152
+  ypos 1062
+ }
+ Dot {
+  name Dot4
+  xpos -1118
+  ypos 1088
+ }
+push $N47e2a000
+ Invert {
+  channels rgb
+  name Invert2
+  xpos -899
+  ypos 903
+ }
+push $N47e9dc00
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge2
+  xpos -817
+  ypos 1033
+ }
+ Multiply {
+  channels rgb
+  name TintAmbient1
+  xpos -817
+  ypos 1062
+ }
+ Dot {
+  name Dot5
+  xpos -783
+  ypos 1088
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge14
+  xpos -988
+  ypos 1084
+ }
+ Transform {
+  center {1024 553.5}
+  name _OUTRGB_noRFL_noRFR_
+  xpos -988
+  ypos 1110
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name RIMTOON
+  xpos -988
+  ypos 1136
+ }
+push $N47e9d400
+add_layer {dmn_specular dmn_specular.red dmn_specular.green dmn_specular.blue}
+ Shuffle {
+  in dmn_specular
+  alpha black
+  name spec_direct
+  xpos -1610
+  ypos -54
+ }
+ Dot {
+  name Dot8
+  xpos -1576
+  ypos 1166
+ }
+ Multiply {
+  channels rgb
+  name TintSpec1
+  xpos -1245
+  ypos 1162
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name plusSPECULAR
+  xpos -988
+  ypos 1162
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name plusREFLECTION
+  xpos -988
+  ypos 1188
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name plusREFRACTION
+  xpos -988
+  ypos 1214
+ }
+ ShuffleCopy {
+  inputs 2
+  alpha blue
+  name ShuffleCopy1
+  xpos -988
+  ypos 1240
+ }
+ Dot {
+  name Dot6
+  xpos -954
+  ypos 1312
+ }
+set N48f38800 [stack 0]
+ Shuffle {
+  in dmn_mask05
+  name Shuffle2
+  xpos -1212
+  ypos 1308
+ }
+ Dot {
+  name Dot23
+  xpos -1178
+  ypos 1334
+ }
+set N48f38000 [stack 0]
+ Dot {
+  name Dot22
+  xpos -1178
+  ypos 1360
+ }
+set N48f77c00 [stack 0]
+ Dot {
+  name Dot7
+  xpos -1178
+  ypos 1386
+ }
+ Shuffle {
+  red blue
+  green blue
+  alpha blue
+  name Shuffle4
+  xpos -1122
+  ypos 1382
+ }
+push $N48f77c00
+ Shuffle {
+  red green
+  blue green
+  alpha green
+  name Shuffle5
+  xpos -1122
+  ypos 1356
+ }
+push $N48f38000
+ Shuffle {
+  green red
+  blue red
+  alpha red
+  name Shuffle3
+  xpos -1121
+  ypos 1330
+ }
+push $N48f38800
+ Multiply {
+  inputs 1+1
+  channels rgb
+  name TintFace
+  xpos -988
+  ypos 1330
+ }
+ Multiply {
+  inputs 1+1
+  channels rgba
+  name TintEyes
+  xpos -988
+  ypos 1356
+ }
+ Multiply {
+  inputs 1+1
+  channels rgb
+  name TintMouth
+  xpos -988
+  ypos 1382
+ }
+ Premult {
+  name Premult1
+  xpos -988
+  ypos 1445
+ }
+ Output {
+  name Output1
+  xpos -988
+  ypos 1471
+ }
+ Viewer {
+  inputs 10
+  frame_range 1-20
+  input_number 9
+  name Viewer1
+  xpos -218
+  ypos 1668
+ }
+end_group
+STMap {
+ inputs 0
+ name STMap1
+ xpos -8560
+ ypos -1675
+}
+push $N47cbdc00
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet5
+ xpos -8047
+ ypos -873
+}
+Read {
+ inputs 0
+ file //zombillenium/zombidamas/private/damienc/zomb/shot/sq0140/sq0140_sh0030a/08_render/render_to_comp/left/lyr_ast2_lgp_Aton/sq0140_sh0030a.%04d.exr
+ localizationPolicy off
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 112
+ last 192
+ origfirst 112
+ origlast 192
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read26
+ xpos -11507
+ ypos -286
+ disable true
+}
+Dot {
+ name Dot19
+ xpos -11462
+ ypos -190
+}
+set N48fac800 [stack 0]
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet8
+ xpos -11365
+ ypos -194
+}
+Read {
+ inputs 0
+ file //zombillenium/zombidamas/private/damienc/zomb/shot/sq0140/sq0140_sh0030a/08_render/render_to_comp/left/lyr_ast2_bty_Aton/sq0140_sh0030a.%04d.exr
+ localizationPolicy off
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 112
+ last 192
+ origfirst 112
+ origlast 192
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read11
+ xpos -12011
+ ypos -282
+ disable true
+}
+Dot {
+ name Dot9
+ xpos -11977
+ ypos -166
+}
+set N49003c00 [stack 0]
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet9
+ xpos -11901
+ ypos -170
+}
+Read {
+ inputs 0
+ file //zombillenium/zombidamas/private/damienc/zomb/shot/sq0140/sq0140_sh0030a/08_render/render_to_comp/left/lyr_utl1_bty_32_chr/sq0140_sh0030a.0112.exr
+ localizationPolicy off
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read12
+ xpos -12417
+ ypos -280
+ disable true
+}
+Dot {
+ name Dot21
+ xpos -12383
+ ypos -96
+}
+set N49003000 [stack 0]
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet10
+ xpos -12336
+ ypos -100
+}
+push $N49003000
+Reformat {
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ name Reformat23
+ xpos -12417
+ ypos 157
+}
+Shuffle {
+ in P
+ name Shuffle59
+ xpos -12417
+ ypos 215
+}
+Dot {
+ name Dot13
+ xpos -12383
+ ypos 547
+}
+Dot {
+ name Dot10
+ xpos -11766
+ ypos 547
+}
+set N49033800 [stack 0]
+P_Matte {
+ name P_Matte5
+ xpos -11593
+ ypos 495
+ in rgb
+ output rgba
+ unpremultiply true
+ center {36.7364502 5.844891548 347.2713013}
+ rotate {0 9.5 0}
+ scaling {0.1 0.03 0.1}
+ uniform_scale 35
+}
+push $N49033800
+P_Matte {
+ name P_Matte8
+ xpos -11703
+ ypos 543
+ in rgb
+ output rgba
+ unpremultiply true
+ center {37.94655991 6.068668842 343.7790527}
+ rotate {0 9.5 0}
+ scaling {1 1 0.5}
+ uniform_scale 15
+ falloffType Smooth
+}
+push $N49033800
+P_Matte {
+ name P_Matte1
+ xpos -11800
+ ypos 584
+ in rgb
+ output rgba
+ unpremultiply true
+ center {41.08021545 5.324205875 343.1672974}
+ rotate {0 9.5 0}
+ scaling {0.2 0.2 0.2}
+ uniform_scale 15
+ falloffType Exponential
+ falloff 0.63
+ exp 10
+}
+Merge2 {
+ inputs 2
+ operation minus
+ mix 0.79
+ name Merge15
+ xpos -11703
+ ypos 584
+}
+Merge2 {
+ inputs 2
+ operation stencil
+ name Merge1
+ xpos -11593
+ ypos 584
+}
+push $N49003c00
+Reformat {
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ name Reformat17
+ xpos -12011
+ ypos -108
+}
+Dot {
+ name Dot11
+ xpos -11977
+ ypos -31
+}
+set N49291c00 [stack 0]
+Dot {
+ name Dot12
+ xpos -11830
+ ypos 216
+}
+set N49291800 [stack 0]
+P_Matte {
+ name PRef
+ xpos -11770
+ ypos 363
+ in Pref
+ output rgba
+ matteShape Cube
+ center {4.640625 11.4921875 1.982421875}
+ scaling {0.2 0.2 0.2}
+ uniform_scale 2.8
+ falloff 0.315
+}
+Invert {
+ name Invert1
+ xpos -11632
+ ypos 357
+}
+push $N49291800
+Shuffle {
+ in dmn_lambert_shdMsk_toon
+ red green
+ blue green
+ alpha green
+ name Shuffle_TOON
+ xpos -11643
+ ypos 212
+}
+push $N48fac800
+Reformat {
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ name Reformat18
+ xpos -11496
+ ypos -113
+}
+Shuffle {
+ in rgb
+ green red
+ blue red
+ alpha red
+ name Shuffle_R
+ xpos -11496
+ ypos 96
+}
+Merge2 {
+ inputs 2
+ operation multiply
+ name Merge2
+ xpos -11497
+ ypos 212
+}
+Merge2 {
+ inputs 2
+ operation multiply
+ name Merge16
+ xpos -11497
+ ypos 362
+}
+Grade {
+ inputs 1+1
+ white 3.55
+ name Grade14
+ xpos -11497
+ ypos 584
+}
+push $N49291800
+Shuffle {
+ in dmn_diffuse
+ name Shuffle9
+ xpos -11864
+ ypos 799
+}
+Merge2 {
+ inputs 2
+ operation multiply
+ mix 0.96
+ name Merge14
+ xpos -11497
+ ypos 799
+}
+Grade {
+ white {0.378000021 0.5607945919 1.25999999 3.950000048}
+ name Gr_BleuTV
+ xpos -11497
+ ypos 929
+}
+push $N49291c00
+Grade {
+ channels {dmn_contour_inci_occ.red -dmn_contour_inci_occ.green -dmn_contour_inci_occ.blue}
+ black 1
+ unpremult rgba.alpha
+ name remove_contour_Lift3
+ xpos -12012
+ ypos 112
+ disable true
+}
+Grade {
+ channels {-dmn_lambert_shdMsk_toon.red -dmn_lambert_shdMsk_toon.green dmn_lambert_shdMsk_toon.blue}
+ black 1
+ unpremult rgba.alpha
+ name remove_shadow_Lift9
+ xpos -12012
+ ypos 204
+}
+LdvDmToon {
+ name LdvDmToon2
+ xpos -12012
+ ypos 308
+ value_5 0
+ value_4 {0.07999999821 0.110400036 0.16 0}
+ value 1
+ value_3 {5 5 1.5 100}
+ value_1 1
+ value_2 1
+ which 0
+ which_3 0
+}
+Merge2 {
+ inputs 2
+ operation plus
+ name Merge12
+ xpos -12012
+ ypos 1065
+}
+push $N3a85b000
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet37
+ xpos -10538
+ ypos -860
+}
+push $N47738400
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet35
+ xpos -8656
+ ypos -847
+}
+Group {
+ inputs 0
+ name StereoDisparityGenerator5
+ tile_color 0xffff
+ label "Inf disp = \[python round(\[value DisparityCalculator.dispMax],2)] pix\n"
+ xpos -7253
+ ypos -1530
+ addUserKnob {20 User}
+ addUserKnob {41 in l "zDepth channel" t "Choose zDepth channel. Value = distance to camera" T ShuffleInDepth.in}
+ addUserKnob {20 Camera n 1}
+ addUserKnob {41 focal l Focal T DisparityCalculator.focal}
+ addUserKnob {41 capteur l Haperture t "Sensor width" T DisparityCalculator.capteur}
+ addUserKnob {41 res l Resolution t "Image width (ex: 1920, 2048, 4096...)" T DisparityCalculator.res}
+ addUserKnob {20 endGroup n -1}
+ addUserKnob {26 unamed l "" +STARTLINE}
+ addUserKnob {20 stereo l Stereo n 1}
+ addUserKnob {41 zeroP l "Zero Parallax" T DisparityCalculator.zeroP}
+ addUserKnob {41 ia l Interaxial T DisparityCalculator.ia}
+ addUserKnob {20 endGroup_1 l endGroup n -1}
+}
+ BackdropNode {
+  inputs 0
+  name BackdropNode1
+  tile_color 0xaaaaaa00
+  label "CREATE\nDISPARITY MAP"
+  note_font_size 42
+  xpos 336
+  ypos -483
+  bdwidth 316
+  bdheight 293
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode2
+  tile_color 0x7171c600
+  label "CREATE\nDISPLACE MAP"
+  note_font_size 42
+  xpos 336
+  ypos -155
+  bdwidth 305
+  bdheight 415
+ }
+ Input {
+  inputs 0
+  name Input1
+  xpos 346
+  ypos -566
+ }
+ Dot {
+  name Dot40
+  xpos 380
+  ypos -379
+ }
+set N4af88000 [stack 0]
+ Dot {
+  name Dot1
+  xpos 559
+  ypos -379
+ }
+ Shuffle {
+  in depth
+  out depth
+  name ShuffleInDepth
+  xpos 525
+  ypos -314
+ }
+set N4afcb800 [stack 0]
+ Expression {
+  temp_expr0 DisparityCalculator.dispMax.left
+  channel0 depth
+  expr0 DisparityCalculator.dispMax-((DisparityCalculator.ia*DisparityCalculator.focal*DisparityCalculator.res)/(DisparityCalculator.capteur*depth.Z))
+  channel1 none
+  channel2 none
+  name Expression1
+  xpos 525
+  ypos -246
+ }
+push $N4af88000
+add_layer {DisparityMap DisparityMap.u}
+ ShuffleCopy {
+  inputs 2
+  in depth
+  red red
+  green black
+  blue black
+  alpha black
+  out DisparityMap
+  name ShuffleCopyOutDisparity
+  xpos 346
+  ypos -246
+ }
+ Dot {
+  name Dot2
+  xpos 380
+  ypos -35
+ }
+set N4afca800 [stack 0]
+ Dot {
+  name Dot5
+  xpos 554
+  ypos -35
+ }
+ ShuffleViews {
+  views {left right right left}
+  name ShuffleViews1
+  xpos 520
+  ypos 36
+ }
+ Expression {
+  expr0 "\vdefault\v(x+.5)+DisparityMap.u\vleft\v(x+.5)-DisparityMap.u"
+  expr1 y+.5
+  channel2 none
+  name Expression2
+  xpos 520
+  ypos 120
+ }
+ Expression {
+  expr0 r/width
+  expr1 g/height
+  channel2 none
+  expr2 0
+  name Expression3
+  xpos 520
+  ypos 194
+ }
+push $N4afca800
+add_layer {DisplaceSTmap DisplaceSTmap.u DisplaceSTmap.v}
+ ShuffleCopy {
+  inputs 2
+  red red
+  green green
+  blue black
+  alpha black
+  out DisplaceSTmap
+  name ShuffleCopy4
+  xpos 346
+  ypos 194
+ }
+ Output {
+  name Output1
+  xpos 346
+  ypos 402
+ }
+push $N4afcb800
+ NoOp {
+  name DisparityCalculator
+  selected true
+  xpos 415
+  ypos -314
+  addUserKnob {20 User}
+  addUserKnob {20 Camera n 1}
+  addUserKnob {7 dispMax}
+  dispMax {{(ia*focal*res)/(capteur*zeroP)}}
+  addUserKnob {7 focal}
+  focal {{curve x101 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90}}
+  addUserKnob {7 capteur}
+  capteur 35
+  addUserKnob {7 res}
+  res {{input.width}}
+  addUserKnob {26 ""}
+  addUserKnob {7 zeroP R 0 20}
+  zeroP {{parent.parent.stereoInfo.camZeroPar.left}}
+  addUserKnob {7 ia l interaxial}
+  ia {{parent.parent.stereoInfo.camInter.left}}
+  addUserKnob {20 endGroup n -1}
+  addUserKnob {20 DispGroup l Disparity n 1}
+  addUserKnob {7 disparity R -16 16}
+  disparity {{dispMax-((ia*focal*res)/(capteur*color.r))}}
+  addUserKnob {20 endGroup_1 l endGroup n -1}
+  addUserKnob {26 ""}
+  addUserKnob {18 color}
+  color {7.1 9.063311 10.063311}
+  addUserKnob {6 color_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+ }
+end_group
+Group {
+ inputs 0
+ name StereoDisplaceTool7
+ tile_color 0xff00ffff
+ label "\[value displaceFrom]\nExternal DispMap = \[value OutDispMap]"
+ xpos -7254
+ ypos -1456
+ addUserKnob {20 User}
+ addUserKnob {4 displaceFrom l "Displace method" M {"Left to Right" "Right to Left" ""}}
+ addUserKnob {26 ""}
+ addUserKnob {41 channels T STMap1.channels}
+ addUserKnob {41 uv l "UV channels" T STMap1.uv}
+ addUserKnob {6 OutDispMap l "Use external DisplaceMap" +STARTLINE}
+ OutDispMap true
+ addUserKnob {26 ""}
+ addUserKnob {41 size l "DispMap filter" T Blur1.size}
+}
+ Input {
+  inputs 0
+  name src
+  xpos 582
+  ypos 304
+ }
+ Dot {
+  name Dot1
+  xpos 616
+  ypos 365
+ }
+set N4b023c00 [stack 0]
+ OneView {
+  view right
+  name OneView1
+  label "\[value view]"
+  xpos 678
+  ypos 454
+ }
+push $N4b023c00
+ OneView {
+  name OneView3
+  label "\[value view]"
+  xpos 582
+  ypos 456
+ }
+ set C4b023400 [stack 0]
+ Switch {
+  inputs 2
+  which {{displaceFrom}}
+  name Switch2
+  xpos 583
+  ypos 669
+ }
+ set C4b030d00 [stack 0]
+set N4b030d00 [stack 0]
+ Input {
+  inputs 0
+  name DisplaceMap
+  xpos 836
+  ypos 302
+  number 1
+ }
+push $N4b023c00
+ Switch {
+  inputs 2
+  which {{parent.OutDispMap.left}}
+  name Switch1
+  xpos 836
+  ypos 362
+ }
+set N4b030880 [stack 0]
+ OneView {
+  view right
+  name OneView2
+  label "\[value view]"
+  xpos 958
+  ypos 452
+ }
+push $N4b030880
+clone $C4b023400 {
+  xpos 836
+  ypos 452
+  selected false
+ }
+clone $C4b030d00 {
+  inputs 2
+  xpos 836
+  ypos 515
+  selected false
+ }
+ Blur {
+  size 10
+  name Blur1
+  xpos 836
+  ypos 571
+ }
+push $N4b030d00
+ STMap {
+  inputs 2
+  channels rgba
+  uv DisplaceSTmap
+  name STMap1
+  selected true
+  xpos 837
+  ypos 669
+ }
+set N4b022000 [stack 0]
+ JoinViews {
+  inputs 2
+  name JoinViews2
+  xpos 836
+  ypos 824
+  viewassoc "left\nright"
+ }
+push $N4b022000
+push $N4b030d00
+ JoinViews {
+  inputs 2
+  name JoinViews1
+  xpos 583
+  ypos 822
+  viewassoc "left\nright"
+ }
+clone $C4b030d00 {
+  inputs 2
+  xpos 583
+  ypos 950
+  selected false
+ }
+ Output {
+  name Output1
+  xpos 583
+  ypos 1037
+ }
+end_group
+Read {
+ inputs 0
+ file //zombillenium/zombidamas/private/anthonyn/zomb/shot/sq0140/sq0140_sh0080a/08_render/render_to_comp/left/lyr_utl0_bty_16/sq0140_sh0080a.####.exr
+ localizationPolicy on
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 110
+ last 330
+ origfirst 110
+ origlast 330
+ origset true
+ on_error "nearest frame"
+ version 4
+ name Read50
+ xpos -10195
+ ypos -995
+}
+Dot {
+ name Dot112
+ xpos -10161
+ ypos -848
+}
+set N4b069400 [stack 0]
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet36
+ xpos -10051
+ ypos -851
+}
+push $N4b069400
+Dot {
+ name Dot55
+ xpos -10161
+ ypos 741
+}
+Cryptomatte {
+ name Cryptomatte6
+ xpos -10050
+ ypos 925
+ matteList "geo_default_armsShape, geo_default_headShape"
+ cryptoLayer crypto_object
+ expression "((crypto_object00.red == -1.30374732634e+23 || crypto_object00.red == -3.25059846718e+28) ? crypto_object00.green : 0.0) + ((crypto_object00.blue == -1.30374732634e+23 || crypto_object00.blue == -3.25059846718e+28) ? crypto_object00.alpha : 0.0) + ((crypto_object01.red == -1.30374732634e+23 || crypto_object01.red == -3.25059846718e+28) ? crypto_object01.green : 0.0) + ((crypto_object01.blue == -1.30374732634e+23 || crypto_object01.blue == -3.25059846718e+28) ? crypto_object01.alpha : 0.0) + ((crypto_object02.red == -1.30374732634e+23 || crypto_object02.red == -3.25059846718e+28) ? crypto_object02.green : 0.0) + ((crypto_object02.blue == -1.30374732634e+23 || crypto_object02.blue == -3.25059846718e+28) ? crypto_object02.alpha : 0.0) + 0"
+ keyedName geo_default_armsShape
+ previewChannel crypto_object
+ in00 crypto_object00
+}
+push $N4791d000
+Dot {
+ name Dot15
+ xpos -9823
+ ypos -205
+}
+Reformat {
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ name Reformat10
+ xpos -9857
+ ypos 488
+}
+set N4b10fc00 [stack 0]
+Grade {
+ channels {-dmn_lambert_shdMsk_toon.red -dmn_lambert_shdMsk_toon.green dmn_lambert_shdMsk_toon.blue}
+ black 1
+ unpremult rgba.alpha
+ name remove_toon_Lift1
+ xpos -9751
+ ypos 662
+}
+Group {
+ name LdvChr5
+ xpos -9751
+ ypos 759
+ addUserKnob {20 User}
+ addUserKnob {41 value_5 l Ambient_Tint T TintAmbient1.value}
+ addUserKnob {41 value_4 l Diffuse_Tint T TintDiffuse1.value}
+ addUserKnob {41 value l Spec_Tint T TintSpec1.value}
+ addUserKnob {41 value_3 l RimToon_Tint T TintRimToon1.value}
+ addUserKnob {41 value_1 l Reflection_Tint T TintRefl1.value}
+ addUserKnob {41 value_2 l Refraction_Tint T TintRefraction1.value}
+ addUserKnob {26 ""}
+ addUserKnob {41 which l Shadow_Blend T TweakShadow.which}
+ addUserKnob {41 which_2 l Occlusion_Blend T TweakOcclusion.which}
+ addUserKnob {41 which_3 l Toon_Blend T TweakToon.which}
+ addUserKnob {41 which_1 l Contour_Blend T TweakContour.which}
+ addUserKnob {26 ""}
+ addUserKnob {41 value_6 l Face_Tint T TintFace.value}
+ addUserKnob {41 value_7 l Eyes_Tint T TintEyes.value}
+ addUserKnob {41 value_8 l Mouth_Tint T TintMouth.value}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos -1314
+  ypos -305
+ }
+set N4b10f000 [stack 0]
+ Unpremult {
+  channels all
+  name Unpremult1
+  xpos -1314
+  ypos -279
+ }
+ Dot {
+  name Dot12
+  xpos -1280
+  ypos -241
+ }
+set N4b10e800 [stack 0]
+ Dot {
+  name Dot17
+  xpos -909
+  ypos -194
+ }
+set N4b10e400 [stack 0]
+ Shuffle {
+  in dmn_contour_inci_occ
+  red blue
+  green blue
+  alpha black
+  name occlusion
+  xpos -1210
+  ypos -44
+ }
+push $N4b10e800
+ Dot {
+  name Dot11
+  xpos -1280
+  ypos -207
+ }
+ Shuffle {
+  red alpha
+  green alpha
+  blue alpha
+  name Shuffle1
+  xpos -1314
+  ypos -183
+ }
+ Unpremult {
+  channels all
+  name Unpremult2
+  xpos -1314
+  ypos -3
+ }
+set N4b13f400 [stack 0]
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakOcclusion
+  xpos -1210
+  ypos 75
+ }
+set N4b13f000 [stack 0]
+ Dot {
+  name Dot14
+  xpos -1105
+  ypos 286
+ }
+set N4b13ec00 [stack 0]
+push $N4b10e400
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  red blue
+  green blue
+  alpha blue
+  name shadow_msk
+  xpos -887
+  ypos -47
+ }
+set N4b13e800 [stack 0]
+push 0
+push $N4b10e400
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  red green
+  blue green
+  alpha black
+  name toon
+  xpos -990
+  ypos -47
+ }
+set N4b13e400 [stack 0]
+push $N4b10e400
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  green red
+  blue red
+  alpha black
+  name lambert
+  xpos -752
+  ypos -48
+ }
+ Merge2 {
+  inputs 3+1
+  operation multiply
+  name Merge10
+  xpos -752
+  ypos 86
+ }
+push $N4b10e400
+ Shuffle {
+  in dmn_contour_inci_occ
+  red green
+  blue green
+  alpha black
+  name incidence
+  xpos -655
+  ypos -49
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge7
+  xpos -664
+  ypos 180
+ }
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge15
+  xpos -921
+  ypos 386
+ }
+ Dot {
+  name Dot20
+  xpos -887
+  ypos 445
+ }
+set N4b172c00 [stack 0]
+ Transform {
+  center {1024 553.5}
+  name _MERGE15_in_shader
+  xpos -799
+  ypos 441
+ }
+push $N4b10e400
+ Shuffle {
+  in dmn_contour_inci_occ
+  green red
+  blue red
+  alpha black
+  name contour
+  xpos -1113
+  ypos -47
+ }
+push $N4b13f400
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakContour
+  xpos -1113
+  ypos 77
+ }
+push $N4b13f000
+push 0
+push $N4b13e400
+push $N4b13f400
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakToon
+  xpos -990
+  ypos 81
+ }
+push $N4b13e800
+push $N4b13f400
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakShadow
+  xpos -887
+  ypos 79
+ }
+ Merge2 {
+  inputs 4+1
+  operation multiply
+  name Merge13
+  xpos -990
+  ypos 192
+ }
+ Dot {
+  name Dot16
+  xpos -956
+  ypos 770
+ }
+set N4b1af000 [stack 0]
+ Transform {
+  center {1024 553.5}
+  name _MERGE7_in_shader
+  xpos -889
+  ypos 766
+ }
+push $N4b10e400
+ Shuffle {
+  in dmn_ambient
+  alpha black
+  name ambient
+  xpos -561
+  ypos -50
+ }
+ Dot {
+  name Dot2
+  xpos -527
+  ypos 630
+ }
+set N4b1ae400 [stack 0]
+push $N4b1ae400
+push $N4b172c00
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge12
+  xpos -708
+  ypos 626
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge18
+  xpos -708
+  ypos 652
+ }
+push $N4b13ec00
+push $N4b13f400
+ Dot {
+  name Dot3
+  xpos -1280
+  ypos 417
+ }
+ Dissolve {
+  inputs 2
+  which 1
+  name Dissolve1
+  xpos -1139
+  ypos 407
+ }
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge5
+  xpos -708
+  ypos 727
+ }
+ Dot {
+  name Dot19
+  xpos -674
+  ypos 772
+ }
+set N4b1eec00 [stack 0]
+ Transform {
+  center {1024 553.5}
+  name _MERGE14_in_shader
+  xpos -633
+  ypos 768
+ }
+push $N4b10e800
+ Dot {
+  name Dot15
+  xpos -1397
+  ypos -212
+ }
+set N4b1ee400 [stack 0]
+ Shuffle {
+  in dmn_diffuse
+  alpha black
+  name diffuse
+  xpos -1404
+  ypos -49
+ }
+ Dot {
+  name Dot1
+  xpos -1370
+  ypos 624
+ }
+set N4b21fc00 [stack 0]
+push $N4b172c00
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge9
+  xpos -1260
+  ypos 620
+ }
+push $N4b21fc00
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge11
+  xpos -1260
+  ypos 646
+ }
+ Dot {
+  name Dot18
+  xpos -1200
+  ypos 772
+ }
+set N4b21f000 [stack 0]
+ Transform {
+  center {1024 553.5}
+  name _MERGE9_in_shader
+  xpos -1142
+  ypos 768
+ }
+push $N4b10f000
+push 0
+push 0
+push 0
+push 0
+push 0
+push 0
+push 0
+push $N4b10f000
+push $N4b1ee400
+ Shuffle {
+  in alpha
+  in2 alpha
+  green red
+  blue red
+  alpha black
+  name alpha
+  xpos -1913
+  ypos -58
+ }
+ Dot {
+  name Dot13
+  xpos -1879
+  ypos 1244
+ }
+push $N4b1ee400
+ Shuffle {
+  in dmn_refraction
+  alpha black
+  name refraction
+  xpos -1808
+  ypos -60
+ }
+ Dot {
+  name Dot10
+  xpos -1774
+  ypos 1219
+ }
+ Multiply {
+  channels rgb
+  name TintRefraction1
+  xpos -1244
+  ypos 1215
+ }
+push $N4b1ee400
+ Shuffle {
+  in dmn_reflection
+  alpha black
+  name spec_indirect
+  xpos -1706
+  ypos -54
+ }
+ Dot {
+  name Dot9
+  xpos -1672
+  ypos 1192
+ }
+ Multiply {
+  channels rgb
+  value 0
+  name TintRefl1
+  xpos -1243
+  ypos 1188
+ }
+push $N4b1ee400
+ Shuffle {
+  in dmn_rimToon
+  alpha black
+  name rim_toon
+  xpos -1506
+  ypos -53
+ }
+ Dot {
+  name Dot21
+  xpos -1472
+  ypos 1140
+ }
+ Multiply {
+  channels rgb
+  name TintRimToon1
+  xpos -1245
+  ypos 1136
+ }
+push $N4b21f000
+push $N4b1af000
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge1
+  xpos -1152
+  ypos 1036
+ }
+ Multiply {
+  channels rgb
+  value {0.1269000173 0.130112946 0.2700000107 1}
+  name TintDiffuse1
+  xpos -1152
+  ypos 1062
+ }
+ Dot {
+  name Dot4
+  xpos -1118
+  ypos 1088
+ }
+push $N4b1af000
+ Invert {
+  channels rgb
+  name Invert2
+  xpos -899
+  ypos 903
+ }
+push $N4b1eec00
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge2
+  xpos -817
+  ypos 1033
+ }
+ Multiply {
+  channels rgb
+  value {0.1040392369 0.1263528466 0.3059977889 1}
+  name TintAmbient1
+  xpos -817
+  ypos 1062
+ }
+ Dot {
+  name Dot5
+  xpos -783
+  ypos 1088
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge14
+  xpos -988
+  ypos 1084
+ }
+ Transform {
+  center {1024 553.5}
+  name _OUTRGB_noRFL_noRFR_
+  xpos -988
+  ypos 1110
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name RIMTOON
+  xpos -988
+  ypos 1136
+ }
+push $N4b1ee400
+ Shuffle {
+  in dmn_specular
+  alpha black
+  name spec_direct
+  xpos -1610
+  ypos -54
+ }
+ Dot {
+  name Dot8
+  xpos -1576
+  ypos 1166
+ }
+ Multiply {
+  channels rgb
+  name TintSpec1
+  xpos -1245
+  ypos 1162
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name plusSPECULAR
+  xpos -988
+  ypos 1162
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name plusREFLECTION
+  xpos -988
+  ypos 1188
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name plusREFRACTION
+  xpos -988
+  ypos 1214
+ }
+ ShuffleCopy {
+  inputs 2
+  alpha blue
+  name ShuffleCopy1
+  xpos -988
+  ypos 1240
+ }
+ Dot {
+  name Dot6
+  xpos -954
+  ypos 1312
+ }
+set N4b301800 [stack 0]
+ Shuffle {
+  in dmn_mask05
+  name Shuffle2
+  xpos -1212
+  ypos 1308
+ }
+ Dot {
+  name Dot23
+  xpos -1178
+  ypos 1334
+ }
+set N4b301000 [stack 0]
+ Dot {
+  name Dot22
+  xpos -1178
+  ypos 1360
+ }
+set N4b300c00 [stack 0]
+ Dot {
+  name Dot7
+  xpos -1178
+  ypos 1386
+ }
+ Shuffle {
+  red blue
+  green blue
+  alpha blue
+  name Shuffle4
+  xpos -1122
+  ypos 1382
+ }
+push $N4b300c00
+ Shuffle {
+  red green
+  blue green
+  alpha green
+  name Shuffle5
+  xpos -1122
+  ypos 1356
+ }
+push $N4b301000
+ Shuffle {
+  green red
+  blue red
+  alpha red
+  name Shuffle3
+  xpos -1121
+  ypos 1330
+ }
+push $N4b301800
+ Multiply {
+  inputs 1+1
+  channels rgb
+  name TintFace
+  xpos -988
+  ypos 1330
+ }
+ Multiply {
+  inputs 1+1
+  channels rgba
+  name TintEyes
+  xpos -988
+  ypos 1356
+ }
+ Multiply {
+  inputs 1+1
+  channels rgb
+  name TintMouth
+  xpos -988
+  ypos 1382
+ }
+ Premult {
+  name Premult1
+  xpos -988
+  ypos 1445
+ }
+ Output {
+  name Output1
+  xpos -988
+  ypos 1471
+ }
+ Viewer {
+  inputs 10
+  frame_range 1-20
+  input_number 9
+  name Viewer1
+  xpos -218
+  ypos 1668
+ }
+end_group
+push $N4b10fc00
+Group {
+ name LdvChr10
+ xpos -9857
+ ypos 763
+ addUserKnob {20 User}
+ addUserKnob {41 value_5 l Ambient_Tint T TintAmbient1.value}
+ addUserKnob {41 value_4 l Diffuse_Tint T TintDiffuse1.value}
+ addUserKnob {41 value l Spec_Tint T TintSpec1.value}
+ addUserKnob {41 value_3 l RimToon_Tint T TintRimToon1.value}
+ addUserKnob {41 value_1 l Reflection_Tint T TintRefl1.value}
+ addUserKnob {41 value_2 l Refraction_Tint T TintRefraction1.value}
+ addUserKnob {26 ""}
+ addUserKnob {41 which l Shadow_Blend T TweakShadow.which}
+ addUserKnob {41 which_2 l Occlusion_Blend T TweakOcclusion.which}
+ addUserKnob {41 which_3 l Toon_Blend T TweakToon.which}
+ addUserKnob {41 which_1 l Contour_Blend T TweakContour.which}
+ addUserKnob {26 ""}
+ addUserKnob {41 value_6 l Face_Tint T TintFace.value}
+ addUserKnob {41 value_7 l Eyes_Tint T TintEyes.value}
+ addUserKnob {41 value_8 l Mouth_Tint T TintMouth.value}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos -1314
+  ypos -305
+ }
+set N4b326400 [stack 0]
+ Unpremult {
+  channels all
+  name Unpremult1
+  xpos -1314
+  ypos -279
+ }
+ Dot {
+  name Dot12
+  xpos -1280
+  ypos -241
+ }
+set N4b37bc00 [stack 0]
+ Dot {
+  name Dot17
+  xpos -909
+  ypos -194
+ }
+set N4b37b800 [stack 0]
+ Shuffle {
+  in dmn_contour_inci_occ
+  red blue
+  green blue
+  alpha black
+  name occlusion
+  xpos -1210
+  ypos -44
+ }
+push $N4b37bc00
+ Dot {
+  name Dot11
+  xpos -1280
+  ypos -207
+ }
+ Shuffle {
+  red alpha
+  green alpha
+  blue alpha
+  name Shuffle1
+  xpos -1314
+  ypos -183
+ }
+ Unpremult {
+  channels all
+  name Unpremult2
+  xpos -1314
+  ypos -3
+ }
+set N4b37a800 [stack 0]
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakOcclusion
+  xpos -1210
+  ypos 75
+ }
+set N4b37a400 [stack 0]
+ Dot {
+  name Dot14
+  xpos -1105
+  ypos 286
+ }
+set N4b37a000 [stack 0]
+push $N4b37b800
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  red blue
+  green blue
+  alpha blue
+  name shadow_msk
+  xpos -887
+  ypos -47
+ }
+set N4b3a1c00 [stack 0]
+push 0
+push $N4b37b800
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  red green
+  blue green
+  alpha black
+  name toon
+  xpos -990
+  ypos -47
+ }
+set N4b3a1800 [stack 0]
+push $N4b37b800
+ Shuffle {
+  in dmn_lambert_shdMsk_toon
+  green red
+  blue red
+  alpha black
+  name lambert
+  xpos -752
+  ypos -48
+ }
+ Merge2 {
+  inputs 3+1
+  operation multiply
+  name Merge10
+  xpos -752
+  ypos 86
+ }
+push $N4b37b800
+ Shuffle {
+  in dmn_contour_inci_occ
+  red green
+  blue green
+  alpha black
+  name incidence
+  xpos -655
+  ypos -49
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge7
+  xpos -664
+  ypos 180
+ }
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge15
+  xpos -921
+  ypos 386
+ }
+ Dot {
+  name Dot20
+  xpos -887
+  ypos 445
+ }
+set N4b3a0000 [stack 0]
+ Transform {
+  center {1024 553.5}
+  name _MERGE15_in_shader
+  xpos -799
+  ypos 441
+ }
+push $N4b37b800
+ Shuffle {
+  in dmn_contour_inci_occ
+  green red
+  blue red
+  alpha black
+  name contour
+  xpos -1113
+  ypos -47
+ }
+push $N4b37a800
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakContour
+  xpos -1113
+  ypos 77
+ }
+push $N4b37a400
+push 0
+push $N4b3a1800
+push $N4b37a800
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakToon
+  xpos -990
+  ypos 81
+ }
+push $N4b3a1c00
+push $N4b37a800
+ Dissolve {
+  inputs 2
+  which 1
+  name TweakShadow
+  xpos -887
+  ypos 79
+ }
+ Merge2 {
+  inputs 4+1
+  operation multiply
+  name Merge13
+  xpos -990
+  ypos 192
+ }
+ Dot {
+  name Dot16
+  xpos -956
+  ypos 770
+ }
+set N4b3e0400 [stack 0]
+ Transform {
+  center {1024 553.5}
+  name _MERGE7_in_shader
+  xpos -889
+  ypos 766
+ }
+push $N4b37b800
+ Shuffle {
+  in dmn_ambient
+  alpha black
+  name ambient
+  xpos -561
+  ypos -50
+ }
+ Dot {
+  name Dot2
+  xpos -527
+  ypos 630
+ }
+set N4b41b800 [stack 0]
+push $N4b41b800
+push $N4b3a0000
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge12
+  xpos -708
+  ypos 626
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge18
+  xpos -708
+  ypos 652
+ }
+push $N4b37a000
+push $N4b37a800
+ Dot {
+  name Dot3
+  xpos -1280
+  ypos 417
+ }
+ Dissolve {
+  inputs 2
+  which 1
+  name Dissolve1
+  xpos -1139
+  ypos 407
+ }
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge5
+  xpos -708
+  ypos 727
+ }
+ Dot {
+  name Dot19
+  xpos -674
+  ypos 772
+ }
+set N4b41a000 [stack 0]
+ Transform {
+  center {1024 553.5}
+  name _MERGE14_in_shader
+  xpos -633
+  ypos 768
+ }
+push $N4b37bc00
+ Dot {
+  name Dot15
+  xpos -1397
+  ypos -212
+ }
+set N4b451800 [stack 0]
+ Shuffle {
+  in dmn_diffuse
+  alpha black
+  name diffuse
+  xpos -1404
+  ypos -49
+ }
+ Dot {
+  name Dot1
+  xpos -1370
+  ypos 624
+ }
+set N4b451000 [stack 0]
+push $N4b3a0000
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge9
+  xpos -1260
+  ypos 620
+ }
+push $N4b451000
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge11
+  xpos -1260
+  ypos 646
+ }
+ Dot {
+  name Dot18
+  xpos -1200
+  ypos 772
+ }
+set N4b450400 [stack 0]
+ Transform {
+  center {1024 553.5}
+  name _MERGE9_in_shader
+  xpos -1142
+  ypos 768
+ }
+push $N4b326400
+push 0
+push 0
+push 0
+push 0
+push 0
+push 0
+push 0
+push $N4b326400
+push $N4b451800
+ Shuffle {
+  in alpha
+  in2 alpha
+  green red
+  blue red
+  alpha black
+  name alpha
+  xpos -1913
+  ypos -58
+ }
+ Dot {
+  name Dot13
+  xpos -1879
+  ypos 1244
+ }
+push $N4b451800
+ Shuffle {
+  in dmn_refraction
+  alpha black
+  name refraction
+  xpos -1808
+  ypos -60
+ }
+ Dot {
+  name Dot10
+  xpos -1774
+  ypos 1219
+ }
+ Multiply {
+  channels rgb
+  name TintRefraction1
+  xpos -1244
+  ypos 1215
+ }
+push $N4b451800
+ Shuffle {
+  in dmn_reflection
+  alpha black
+  name spec_indirect
+  xpos -1706
+  ypos -54
+ }
+ Dot {
+  name Dot9
+  xpos -1672
+  ypos 1192
+ }
+ Multiply {
+  channels rgb
+  value 0
+  name TintRefl1
+  xpos -1243
+  ypos 1188
+ }
+push $N4b451800
+ Shuffle {
+  in dmn_rimToon
+  alpha black
+  name rim_toon
+  xpos -1506
+  ypos -53
+ }
+ Dot {
+  name Dot21
+  xpos -1472
+  ypos 1140
+ }
+ Multiply {
+  channels rgb
+  name TintRimToon1
+  xpos -1245
+  ypos 1136
+ }
+push $N4b450400
+push $N4b3e0400
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge1
+  xpos -1152
+  ypos 1036
+ }
+ Multiply {
+  channels rgb
+  value {0.1269000173 0.130112946 0.2700000107 1}
+  name TintDiffuse1
+  xpos -1152
+  ypos 1062
+ }
+ Dot {
+  name Dot4
+  xpos -1118
+  ypos 1088
+ }
+push $N4b3e0400
+ Invert {
+  channels rgb
+  name Invert2
+  xpos -899
+  ypos 903
+ }
+push $N4b41a000
+ Merge2 {
+  inputs 2
+  operation multiply
+  name Merge2
+  xpos -817
+  ypos 1033
+ }
+ Multiply {
+  channels rgb
+  value {0.1040392369 0.1263528466 0.3059977889 1}
+  name TintAmbient1
+  xpos -817
+  ypos 1062
+ }
+ Dot {
+  name Dot5
+  xpos -783
+  ypos 1088
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge14
+  xpos -988
+  ypos 1084
+ }
+ Transform {
+  center {1024 553.5}
+  name _OUTRGB_noRFL_noRFR_
+  xpos -988
+  ypos 1110
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name RIMTOON
+  xpos -988
+  ypos 1136
+ }
+push $N4b451800
+ Shuffle {
+  in dmn_specular
+  alpha black
+  name spec_direct
+  xpos -1610
+  ypos -54
+ }
+ Dot {
+  name Dot8
+  xpos -1576
+  ypos 1166
+ }
+ Multiply {
+  channels rgb
+  name TintSpec1
+  xpos -1245
+  ypos 1162
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name plusSPECULAR
+  xpos -988
+  ypos 1162
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name plusREFLECTION
+  xpos -988
+  ypos 1188
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name plusREFRACTION
+  xpos -988
+  ypos 1214
+ }
+ ShuffleCopy {
+  inputs 2
+  alpha blue
+  name ShuffleCopy1
+  xpos -988
+  ypos 1240
+ }
+ Dot {
+  name Dot6
+  xpos -954
+  ypos 1312
+ }
+set N4b52ac00 [stack 0]
+ Shuffle {
+  in dmn_mask05
+  name Shuffle2
+  xpos -1212
+  ypos 1308
+ }
+ Dot {
+  name Dot23
+  xpos -1178
+  ypos 1334
+ }
+set N4b52a400 [stack 0]
+ Dot {
+  name Dot22
+  xpos -1178
+  ypos 1360
+ }
+set N4b52a000 [stack 0]
+ Dot {
+  name Dot7
+  xpos -1178
+  ypos 1386
+ }
+ Shuffle {
+  red blue
+  green blue
+  alpha blue
+  name Shuffle4
+  xpos -1122
+  ypos 1382
+ }
+push $N4b52a000
+ Shuffle {
+  red green
+  blue green
+  alpha green
+  name Shuffle5
+  xpos -1122
+  ypos 1356
+ }
+push $N4b52a400
+ Shuffle {
+  green red
+  blue red
+  alpha red
+  name Shuffle3
+  xpos -1121
+  ypos 1330
+ }
+push $N4b52ac00
+ Multiply {
+  inputs 1+1
+  channels rgb
+  name TintFace
+  xpos -988
+  ypos 1330
+ }
+ Multiply {
+  inputs 1+1
+  channels rgba
+  name TintEyes
+  xpos -988
+  ypos 1356
+ }
+ Multiply {
+  inputs 1+1
+  channels rgb
+  name TintMouth
+  xpos -988
+  ypos 1382
+ }
+ Premult {
+  name Premult1
+  xpos -988
+  ypos 1445
+ }
+ Output {
+  name Output1
+  xpos -988
+  ypos 1471
+ }
+ Viewer {
+  inputs 10
+  frame_range 1-20
+  input_number 9
+  name Viewer1
+  xpos -218
+  ypos 1668
+ }
+end_group
+Merge2 {
+ inputs 2+1
+ operation copy
+ name Merge45
+ xpos -9857
+ ypos 925
+}
+Dot {
+ inputs 0
+ name Dot42
+ xpos -8273
+ ypos -1518
+}
+set N4b597400 [stack 0]
+push 0
+Merge2 {
+ inputs 2
+ name Merge17
+ xpos -8576
+ ypos -1510
+}
+set N4b597000 [stack 0]
+push $N4b597400
+LightWrap {
+ inputs 2
+ name LightWrap2
+ xpos -8440
+ ypos -1464
+ Diffuse 50
+ Intensity 10
+ onlywrap true
+ disableluma true
+ FGBlur 10
+ LumaTolerance 1
+ master 1
+ shadows 1
+ midtones 1
+ highlights 1
+}
+push $N4b597000
+Merge2 {
+ inputs 2
+ operation plus
+ name Merge30
+ xpos -8576
+ ypos -1428
+}
+Read {
+ inputs 0
+ file //zombillenium/zombidamas/private/damienc/zomb/shot/sq0150/sq0150_sh0110a/08_render/render_to_comp/%V/lyr_ast0_bty_Aurelien/sq0150_sh0110a.####.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 101
+ last 160
+ origfirst 101
+ origlast 160
+ origset true
+ name Read9
+ xpos -11543
+ ypos 1625
+}
+set N4c2dfc00 [stack 0]
+Shuffle {
+ in dmn_lambert_shdMsk_toon
+ red blue
+ green blue
+ alpha blue
+ name Shuffle11
+ xpos -11604
+ ypos 1801
+}
+push $N4c2dfc00
+Shuffle {
+ in dmn_lambert_shdMsk_toon
+ red green
+ blue green
+ alpha green
+ name Shuffle10
+ xpos -11797
+ ypos 1818
+}
+set N4c2df400 [stack 0]
+Shuffle {
+ in dmn_mask06
+ green red
+ blue red
+ alpha red
+ name Shuffle12
+ xpos -11734
+ ypos 1891
+}
+push $N4c2df400
+Merge2 {
+ inputs 2
+ name Merge3
+ xpos -11797
+ ypos 1984
+}
+Merge2 {
+ inputs 2
+ operation in
+ name Merge6
+ xpos -11604
+ ypos 2297
+}
+push $N4c2dfc00
+Copy {
+ inputs 2
+ from0 rgba.alpha
+ to0 dmn_lambert_shdMsk_toon.blue
+ name Copy1
+ xpos -11543
+ ypos 2411
+}
+LdvDmToon {
+ name LdvDmToon5
+ xpos -11543
+ ypos 2472
+ value_5 {0.1800000072 0.1800000072 0.1800000072 0}
+ value_4 {0.1988803148 0.200000003 0.1930000037 0}
+ value 0
+ value_3 1
+ value_1 {1.403748155 2.420000076 1.723086953 0}
+ value_2 1
+ which 0.75
+ which_3 0
+ value_6 1
+ value_7 {1.068944335 1.100000024 0.9954999685 1}
+ value_8 1
+}
+Grade {
+ white 2
+ name Grade1
+ xpos -11543
+ ypos 2498
+}
+Read {
+ inputs 0
+ file "\[getenv OUTPUT_DIR]/%V/_version/lyr_ast0_bty_P32-v002/\[getenv SHOT].%04d.exr"
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 101
+ last 139
+ origfirst 101
+ origlast 139
+ origset true
+ on_error "nearest frame"
+ name lyr_ast0_bty_P32_0
+ tile_color 0xc900ff
+ label v002
+ xpos -11812
+ ypos -1632
+}
+Reformat {
+ name Reformat14
+ xpos -11812
+ ypos -1299
+}
+Read {
+ inputs 0
+ file "\[getenv OUTPUT_DIR]/%V/_version/lyr_ast0_bty-v002/\[getenv SHOT].%04d.exr"
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 101
+ last 139
+ origfirst 101
+ origlast 139
+ origset true
+ on_error "nearest frame"
+ name lyr_ast0_bty_0
+ tile_color 0xc900ff
+ label v002
+ xpos -12182
+ ypos -1636
+}
+Dot {
+ name Dot17
+ xpos -12148
+ ypos -1530
+}
+set N4c540000 [stack 0]
+Roto {
+ inputs 0
+ cliptype none
+ curves {{{v x3f99999a}
+  {f 0}
+  {n
+   {layer Root
+    {f 2097664}
+    {t x4479c000 x44070000}
+    {a pt1x 0 pt1y 0 pt2x 0 pt2y 0 pt3x 0 pt3y 0 pt4x 0 pt4y 0 ptex00 0 ptex01 0 ptex02 0 ptex03 0 ptex10 0 ptex11 0 ptex12 0 ptex13 0 ptex20 0 ptex21 0 ptex22 0 ptex23 0 ptex30 0 ptex31 0 ptex32 0 ptex33 0 ptof1x 0 ptof1y 0 ptof2x 0 ptof2y 0 ptof3x 0 ptof3y 0 ptof4x 0 ptof4y 0 pterr 0 ptrefset 0 ptmot x40800000 ptref 0}
+    {curvegroup Bezier2 512 bezier
+     {{cc
+       {f 8192}
+       {px x42ca0000
+        {x4349d770 x41315200}
+        {x4507988f x44be9c2d}
+        {xc3322370 xbfda9400}
+        {x439c9408 xc2c459b0}
+        {x44a4ed19 x44c36cd5}
+        {xc3846a24 x42c37060}
+        {x42bfaa20 xc312b718}
+        {x446056a3 x44f3e62f}
+        {xc29697f0 x42e68d70}
+        {xc23cecc0 x42266480}
+        {x446fe92f x44f9b57d}
+        {x42796d10 xc2b357d0}
+        {xc25a3aa0 x416dbf80}
+        {x44915664 x44f68ffc}
+        {x43c559a4 xc2d6ffd0}
+        {xc3f2c790 x415cc900}
+        {x45089a3f x44deaf6a}
+        {x432a3db0 x41360e00}
+        {xc0ecfc00 x431a1750}
+        {x45142e76 x44ca9694}
+        {x3fcc1000 xc31ee8b0}}}     idem}
+     {t
+   {{x42ca0000 x44788000}}
+   {{x42ca0000 x43d84000}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 1}}  1
+   {{x42ca0000 1}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 1}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 1}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 1}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 0}}
+   {{x42ca0000 1}}}
+     {a osw x41200000 osf 0 str 1 spx x4479c000 spy x44070000 sb 1 nv x40000000 view2 x40000000 ltn x42ca0000 ltm x42ca0000 tt x40800000}}
+    {curvegroup Bezier1 512 bezier
+     {{cc
+       {f 8192}
+       {px x42ca0000
+        {x4197b140 xc2cbe650}
+        {x44f7813b x449d1e65}
+        {xc1c1e900 x42d2b340}
+        {x418b6f80 xc2980e80}
+        {x44f3b242 x44af60e8}
+        {xc3179210 x3f78c000}
+        {xc2d305e0 x42f0ea90}
+        {x44b6905e x448d3157}
+        {x4249f440 xc2022ae0}
+        {xc2a90320 xc2d99200}
+        {x44f35032 x44839920}
+        {x4219f9c0 x4270dc00}}}
+      {cc
+       {f 8192}
+       {px x42ca0000
+        {x4197b140 xc2cbe650}
+        {x3f999800 0}
+        {xc1c1e900 x42d2b340}
+        {x418b6f80 xc2980e80}
+        {0 0}
+        {xc3179210 x3f78c000}
+        {xc2d305e0 x42f0ea90}
+        {0 0}
+        {x4249f440 xc2022ae0}
+        {xc2a90320 xc2d99200}
+        {0 0}
+        {x4219f9c0 x4270dc00}}}}
+     {t
+      {{x42ca0000 x44788000}}
+      {{x42ca0000 x43d84000}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 1}}     1
+      {{x42ca0000 1}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 1}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 1}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 1}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 0}}
+      {{x42ca0000 1}}}
+     {a osw x41200000 osf 0 str 1 spx x4479c000 spy x44070000 sb 1 nv x40000000 view2 x40000000 ltn x42ca0000 ltm x42ca0000 tt x40800000}}}}}}
+ toolbox {selectAll {
+  { selectAll str 1 ssx 1 ssy 1 sf 1 }
+  { createBezier str 1 ssx 1 ssy 1 sf 1 sb 1 tt 4 }
+  { createBezierCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createBSpline str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createEllipse str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangle str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangleCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { addPoints str 1 ssx 1 ssy 1 sf 1 }
+  { brush str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { eraser src 2 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { clone src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { reveal src 3 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { dodge src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { burn src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { blur src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { sharpen src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { smear src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+} }
+ toolbar_brush_hardness 0.200000003
+ toolbar_source_transform_scale {1 1}
+ toolbar_source_transform_center {999 540}
+ colorOverlay {0 0 0 0}
+ lifetime_type "all frames"
+ lifetime_start 101
+ lifetime_end 101
+ motionblur_shutter_offset_type centred
+ source_black_outside true
+ name Roto2
+ xpos -11629
+ ypos -1271
+}
+Read {
+ inputs 0
+ file //zombillenium/zombidamas/partage/01_COMPO/UVmap/chr_maitresse_UV_Visage.tif
+ format "4000 4000 0 0 4000 4000 1 "
+ origset true
+ name Read17
+ xpos -11491
+ ypos -1350
+}
+Grade {
+ white 0
+ name Grade2
+ xpos -11491
+ ypos -1203
+}
+Merge2 {
+ inputs 2
+ name Merge18
+ xpos -11629
+ ypos -1203
+}
+add_layer {uvs uvs.red uvs.green uvs.blue}
+STMap {
+ inputs 2
+ channels rgba
+ uv uvs
+ name STMap2
+ xpos -11979
+ ypos -1203
+}
+FilterErode {
+ channels all
+ size -1
+ name FilterErode6
+ xpos -11979
+ ypos -1098
+}
+FilterErode {
+ channels all
+ size 4
+ name FilterErode3
+ xpos -11979
+ ypos -1026
+}
+FilterErode {
+ channels all
+ size -5
+ name FilterErode5
+ xpos -11975
+ ypos -973
+}
+Keyer {
+ input rgba
+ operation "luminance key"
+ range {0.4333476427 1 1 1}
+ name Keyer1
+ xpos -11975
+ ypos -929
+}
+Shuffle {
+ red alpha
+ green alpha
+ blue alpha
+ name Shuffle8
+ xpos -11975
+ ypos -882
+}
+Blur {
+ size 1.5
+ name Blur2
+ xpos -11975
+ ypos -856
+}
+Invert {
+ name Invert3
+ xpos -11975
+ ypos -818
+}
+push $N4c540000
+Reformat {
+ name Reformat15
+ xpos -12182
+ ypos -1294
+}
+set N4c60ac00 [stack 0]
+Shuffle {
+ in dmn_lambert_shdMsk_toon
+ red blue
+ green blue
+ alpha blue
+ name Shuffle13
+ xpos -12090
+ ypos -1205
+}
+Merge2 {
+ inputs 2
+ operation multiply
+ name Merge19
+ xpos -12090
+ ypos -765
+}
+push $N4c60ac00
+Copy {
+ inputs 2
+ from0 rgba.blue
+ to0 dmn_lambert_shdMsk_toon.blue
+ name Copy3
+ xpos -12182
+ ypos -694
+}
+LdvDmToon {
+ name LdvDmToon7
+ xpos -12179
+ ypos -629
+ value_5 {0.3811550736 0.407115519 0.4099999964 1}
+ value_4 {0.3245049417 0.344999969 0.3449999988 1}
+ value 1
+ value_3 1
+ value_1 1
+ value_2 1
+}
+push $N4c540000
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet4
+ xpos -12075
+ ypos -1534
+}
+push $N4791dc00
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet45
+ xpos -9171
+ ypos -849
+}
+Camera2 {
+ inputs 0
+ useMatrix true
+ matrix {
+     {{curve x101 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599 0.7713117599} {curve x101 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909 0.02805689909} {curve x101 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258 0.6358389258} {curve x101 47.85335922 47.85338974 47.85342026 47.85347748 47.85352707 47.85358047 47.85364151 47.85370255 47.85377121 47.85385132 47.85393906 47.85403061 47.85412979 47.8542366 47.85433578 47.85445786 47.85457611 47.85469055 47.85481644 47.85495758 47.85511017}}
+     {{curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} {curve x101 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675 0.9990279675} {curve x101 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982 -0.04408290982} {curve x101 576.946106 576.946106 576.946106 576.946106 576.946106 576.946106 576.946106 576.946106 576.946106 576.946228 576.946167 576.946167 576.946167 576.946167 576.946167 576.946167 576.9460449 576.9460449 576.946167 576.946167 576.946106}}
+     {{curve x101 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817 -0.6364576817} {curve x101 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333 0.03400166333} {curve x101 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931 0.7705619931} {curve x101 116.1654663 116.1654816 116.1655273 116.1655884 116.1656342 116.1656952 116.1657562 116.1658325 116.1659241 116.166008 116.1661072 116.1661987 116.1663132 116.1664352 116.1665421 116.1666718 116.1668015 116.166954 116.1670914 116.1672363 116.1674042}}
+     {{curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} {curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} {curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} {curve x101 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119 1.000000119}}
+   }
+ focal {{curve x101 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60 60}}
+ haperture 35
+ vaperture 18.91891892
+ name exr_baked_cam
+ xpos -10727
+ ypos -1553
+}
+set N4d82a400 [stack 0]
+push $N4d82a400
+Read {
+ inputs 0
+ file //zombillenium/Zombillenium/zombidamas/private/damienc/zomb/shot/sq0530/sq0530_sh0060a/08_render/render-v005/lyr_set1_bty_SalleReunion/sq0530_sh0060a.####.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 101
+ last 888
+ origfirst 101
+ origlast 888
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read1
+ xpos -10718
+ ypos -1791
+ disable true
+}
+PositionToPoints2 {
+ display textured
+ render_mode textured
+ P_channel P
+ detail 0.17
+ pointSize 4.4
+ name PositionToPoints2
+ xpos -10718
+ ypos -1627
+}
+Scene {
+ inputs 2
+ name Scene2
+ xpos -10495
+ ypos -1647
+}
+push 0
+ScanlineRender {
+ inputs 3
+ conservative_shader_sampling false
+ samples {{curve x101 8}}
+ name ScanRender_baked
+ xpos -10505
+ ypos -1533
+}
+Camera2 {
+ inputs 0
+ name exr_baked_cam2
+ xpos -11319
+ ypos -3549
+}
+push 0
+push 0
+ScanlineRender {
+ inputs 3
+ conservative_shader_sampling false
+ shutter {{BAKE_CAMERA.shutterbaked}}
+ name ScanRender_baked1
+ xpos -11175
+ ypos -3529
+}
+Dot {
+ name Dot20
+ label OUTPUT
+ note_font "Verdana Bold Bold Bold Bold Bold Bold Bold Bold"
+ note_font_size 12
+ note_font_color 0xff
+ xpos -11141
+ ypos -3449
+}
+Read {
+ inputs 0
+ file //ZOMBILLENIUM/ZOMBIDAMAS/zomb/output/sq0160/sq0160_sh0020a/left/_version/lyr_set1_bty_mainStreet_P32-v002/sq0160_sh0020a.0197.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ name lyr_set1_bty_mainStreet_P32_1
+ tile_color 0xc900ff
+ label "MONO\nv002"
+ xpos -9772
+ ypos -2370
+}
+P_Noise {
+ name P_Noise1
+ xpos -9772
+ ypos -2194
+}
+Read {
+ inputs 0
+ file P:/private/jeanlucs/zomb/shot/sq0300/sq0300_sh0040a/08_render/render-v006/francisLightRigBase/sq0300_sh0040a.0101.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ version 5
+ colorspace linear
+ in_colorspace linear
+ out_colorspace linear
+ name Read13
+ xpos -10082
+ ypos -1781
+ disable true
+}
+Dot {
+ name Dot2
+ xpos -10048
+ ypos -1656
+}
+set N4d917000 [stack 0]
+ColorCorrect {
+ shadows.gain 1.58
+ name ColorCorrect1
+ xpos -10082
+ ypos -1556
+}
+push $N4d917000
+Colorspace {
+ colorspace_out sRGB
+ name Colorspace1
+ xpos -10181
+ ypos -1603
+}
+ColorCorrect {
+ shadows.gain 0.74
+ lookup {shadow {curve 1 s0 x0.4675053954 0 s0}
+   midtone {1-shadow-highlight}
+   highlight {}}
+ name ColorCorrect8
+ xpos -10181
+ ypos -1548
+}
+Colorspace {
+ colorspace_in sRGB
+ name Colorspace2
+ xpos -10181
+ ypos -1492
+}
+NoOp {
+ inputs 0
+ name BAKE_CAMERA
+ tile_color 0x9c0000ff
+ label "\nEXR Name : \[value BAKE_CAMERA.readername]\nShutter Default : \[value BAKE_CAMERA.shutterbaked]"
+ note_font "Verdana Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic"
+ note_font_size 12
+ note_font_color 0xffffffff
+ xpos -11019
+ ypos -3547
+ addUserKnob {20 BAKED_SETTINGS}
+ addUserKnob {1 readername l "READER_NAME : " t "READER_NAME = \"reader_baked\"\nCAMERA_NAME = \"exr_baked_cam\"\nSCANRENDER = \"ScanRender_baked\""}
+ readername reader_baked
+ addUserKnob {1 cameraname l "CAMERA_NAME :" t "READER_NAME = \"reader_baked\"\nCAMERA_NAME = \"exr_baked_cam\"\nSCANRENDER = \"ScanRender_baked\""}
+ cameraname exr_baked_cam
+ addUserKnob {1 scanrendername l "SCANRENDER NAME : " t "READER_NAME = \"reader_baked\"\nCAMERA_NAME = \"exr_baked_cam\"\nSCANRENDER = \"ScanRender_baked\""}
+ scanrendername ScanRender_baked
+ addUserKnob {26 ""}
+ addUserKnob {7 shutterbaked l "Baked Shutter" t "Baked Shutter Speed"}
+ shutterbaked 0.5
+ addUserKnob {22 bake l BAKE T "import nuke\nimport os\nimport math\n\n'''\nTODO :\nManque FOV Fichier Maya, voir pour extract en metadata.\nexemple pour une FLenght:\nimport math\nnode = nuke.toNode(\"reader\")\nmetaData = node.metadata()\nhAperture = 35.0\nvAperture = (hAperture)*(metaData\['exr/CameraFilmApertureVertical'])\nfocal = hAperture / (2 * math.tan(math.radians(32.52)/2.0))\nprint round(focal, 3)\n\nREADER_NAME = \"reader_baked\"\nCAMERA_NAME = \"exr_baked_cam\"\nSCANRENDER = \"ScanRender_baked\"\n '''\n \nbakedNode = nuke.toNode('BAKE_CAMERA')\n\nREADER_NAME = bakedNode.knob('readername').value()\nCAMERA_NAME = bakedNode.knob('cameraname').value()\nSCANRENDER = bakedNode.knob('scanrendername').value()\n \ndef getMetadataMatrix(meta_list):\n    m = nuke.math.Matrix4()\n    try:\n        for i in range (0,16) :\n            m\[i] = meta_list\[i]   \n    except:\n        m.makeIdentity()\n    return m    \n\ndef ExrToCamera():\n    # Get Read Node Name to MetaData\n    node = nuke.toNode(READER_NAME)\n    metaData = node.metadata()\n    \n    # Request fields\n    reqFields = \['exr/%s' % i for i in ('worldToCamera', 'worldToNDC')]\n    if not set( reqFields ).issubset( metaData ):\n        nuke.message('no basic matrices for camera found')\n        print 'no basic matrices for camera found'\n        return\n    else:\n        print 'found needed data'\n        \n    # Add/Check some Var, convert inch to mm\n    imageWidth = metaData\['input/width']\n    imageHeight = metaData\['input/height']\n    aspectRatio = float(imageWidth)/float(imageHeight)\n    hAperture = 35.0\n    vAperture = hAperture/aspectRatio\n    #val = node.metadata( 'exr/cameraAperture', frame)\n    #fov = node.metadata( 'exr/cameraFov', frame)\n    #focal = hAperture / (2 * math.tan(math.radians(fov)/2.0))\n    focalLengthMeta = metaData\['exr/CameraFocalLength']\n    focalLengthCam = hAperture*focalLengthMeta\n    \n    # Try fix Sample AA Arnold to ScanLine Render\n    try:\n        scan_render = nuke.toNode(SCANRENDER)        \n        aa_sample = metaData\['exr/arnold/AA_samples']\n        scan_render\['samples'].clearAnimated()\n        scan_render\['samples'].setAnimated()        \n        scan_render\['samples'].setValue( aa_sample )\n    except:\n        print \"No ScanLine Render\"\n    \n    # Get frame settings and prompt user\n    first = node.firstFrame()\n    last = node.lastFrame()\n    ret = nuke.getFramesAndViews( 'Create Camera', '%s-%s' %( first, last )  )\n    frameRange = nuke.FrameRange( ret\[0] )\n    camViews = (ret\[1])\n\n    for act in camViews:\n        # Get Camera node \n        cam = nuke.toNode(CAMERA_NAME)\n        \n        # Reset settings\n        cam\['focal'].clearAnimated()\n        cam\['haperture'].clearAnimated()\n        cam\['vaperture'].clearAnimated()\n        cam\['matrix'].clearAnimated()\n        cam\['matrix'].clearAnimated()\n        \n        # Apply basic no keyframe value\n        cam\['useMatrix'].setValue( True )\n        cam\['haperture'].setValue ( hAperture )\n        cam\['vaperture'].setValue ( vAperture )\n        cam\['focal'].setValue ( round(focalLengthCam, 1) )\n\n        for k in ( 'focal', 'matrix'):\n            cam\[k].setAnimated()\n        \n        task = nuke.ProgressTask( 'Baking camera %s' % node.name() )\n\n        for curTask, frame in enumerate( frameRange ):\n            if task.isCancelled():\n                break\n            task.setMessage( 'processing %s' % frame )\n            wTC = node.metadata('exr/worldToCamera',frame, act)\n            wTN = node.metadata('exr/worldToNDC',frame, act)\n            \n            worldNDC = wTN\n            # Make table\n            lx =  (-1 - worldNDC\[12] - worldNDC\[8]) / worldNDC\[0]\n            rx =  (1 - worldNDC\[12] - worldNDC\[8]) / worldNDC\[0]\n            by = (-1 - worldNDC\[13] - worldNDC\[9]) / worldNDC\[5]\n            ty = (1 - worldNDC\[13] - worldNDC\[9]) / worldNDC\[5]\n            swW = max( lx , rx ) - min( lx , rx )  # Screen Window Width\n            swH = max( by , ty ) - min( by , ty )  # Screen Window Height\n            cam\['focal'].setValueAt(  float( round(focalLengthCam, 1) ), frame )\n        \n            # Matrix math for rotation and translation    \n            matrixList = wTC\n            camMatrix = getMetadataMatrix(wTC)\n            \n            flipZ=nuke.math.Matrix4()\n            flipZ.makeIdentity()\n            flipZ.scale(1,1,-1)\n         \n            transposedMatrix = nuke.math.Matrix4(camMatrix)\n            transposedMatrix.transpose()\n            transposedMatrix=transposedMatrix*flipZ\n            invMatrix=transposedMatrix.inverse()\n            \n            for i in range(0,16):\n                matrixList\[i]=invMatrix\[i]\n            \n            for i, v in enumerate( matrixList ):\n                cam\[ 'matrix' ].setValueAt( v, frame, i)\n\n                task.setProgress( int( float(curTask) / frameRange.frames() *100) )\nExrToCamera()" +STARTLINE}
+}
+Read {
+ inputs 0
+ file //ZOMBILLENIUM/ZOMBIDAMAS/zomb/output/sq0160/sq0160_sh0020a/left/_version/lyr_set1_bty_mainStreet_P32-v002/sq0160_sh0020a.0197.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ name lyr_set1_bty_mainStreet_P32_2
+ tile_color 0xc900ff
+ label "MONO\nv002"
+ xpos -11524
+ ypos -3360
+}
+set N4d981800 [stack 0]
+Read {
+ inputs 0
+ file //ZOMBILLENIUM/ZOMBIDAMAS/zomb/output/sq0160/sq0160_sh0020a/left/_version/lyr_set1_bty_mainStreet-v002/sq0160_sh0020a.0197.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ name lyr_set1_bty_mainStreet_2
+ tile_color 0xc900ff
+ label "MONO\nv002"
+ xpos -11864
+ ypos -3347
+}
+set N4d981400 [stack 0]
+PositionToPoints2 {
+ inputs 2
+ display textured
+ render_mode textured
+ P_channel rgb
+ name PositionToPoints1
+ xpos -11320
+ ypos -3148
+}
+push $N4d981800
+push $N4d981400
+add_layer {p p.red p.green p.blue}
+Copy {
+ inputs 2
+ from0 rgba.red
+ to0 p.red
+ from1 rgba.green
+ to1 p.green
+ from2 rgba.blue
+ to2 p.blue
+ name Copy8
+ xpos -11661
+ ypos -3145
+}
+set N4d980800 [stack 0]
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet1
+ xpos -11458
+ ypos -3126
+}
+Read {
+ inputs 0
+ file //ZOMBILLENIUM/ZOMBIDAMAS/zomb/output/sq0320/sq0320_sh0180a/left/_version/lyr_ast0_bty_Francis-v002/sq0320_sh0180a.####.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 101
+ last 588
+ origfirst 101
+ origlast 588
+ origset true
+ name lyr_ast0_bty_Francis_1
+ tile_color 0xc900ff
+ label v002
+ xpos -13048
+ ypos -3417
+}
+set N4d980000 [stack 0]
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet2
+ xpos -12918
+ ypos -3381
+}
+Roto {
+ inputs 0
+ curves {{{v x3f99999a}
+  {f 0}
+  {n
+   {layer Root
+    {f 2097152}
+    {t x4479c000 x44070000}
+    {a pt1x 0 pt1y 0 pt2x 0 pt2y 0 pt3x 0 pt3y 0 pt4x 0 pt4y 0 ptex00 0 ptex01 0 ptex02 0 ptex03 0 ptex10 0 ptex11 0 ptex12 0 ptex13 0 ptex20 0 ptex21 0 ptex22 0 ptex23 0 ptex30 0 ptex31 0 ptex32 0 ptex33 0 ptof1x 0 ptof1y 0 ptof2x 0 ptof2y 0 ptof3x 0 ptof3y 0 ptof4x 0 ptof4y 0 pterr 0 ptrefset 0 ptmot x40800000 ptref 0}
+    {curvegroup Bezier1 512 bezier
+     {{cc
+       {f 8192}
+       {px x43200000
+        {xc1200000 x40c00000}
+        {x43ea0000 x4491c000}
+        {x41200000 xc0c00000}
+        {xc1400000 x41400000}
+        {x44095999 x4431599a}
+        {x41400000 xc1400000}
+        {xc32ab338 xc1519980}
+        {x4471acce x44144666}
+        {x429dc620 x40c1b700}
+        {xc0000000 xc2180000}
+        {x44410000 x44650000}
+        {x40000000 x42180000}
+        {x42100000 xc0800000}
+        {x443ae666 x4492a99a}
+        {xc2100000 x40800000}
+        {x40800000 x41000000}
+        {x440b8000 x44914000}
+        {xc0800000 xc1000000}}}     idem}
+     {tx x43200000 x4420c000 x4473c000}
+     {a osw x41200000 osf 0 str 1 spx x4479c000 spy x44070000 sb 1 nv x40000000 view2 x40000000 ltn x43200000 ltm x43200000 tt x40800000}}}}}}
+ toolbox {selectAll {
+  { selectAll str 1 ssx 1 ssy 1 sf 1 }
+  { createBezier str 1 ssx 1 ssy 1 sf 1 sb 1 tt 4 }
+  { createBezierCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createBSpline str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createEllipse str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangle str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangleCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { brush str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { eraser src 2 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { clone src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { reveal src 3 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { dodge src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { burn src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { blur src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { sharpen src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { smear src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+} }
+ toolbar_brush_hardness 0.200000003
+ toolbar_source_transform_scale {1 1}
+ toolbar_source_transform_center {999 540}
+ colorOverlay {0 0 0 0}
+ lifetime_type "all frames"
+ lifetime_start 160
+ lifetime_end 160
+ motionblur_shutter_offset_type centred
+ source_black_outside true
+ name Roto5
+ xpos -10944
+ ypos -2775
+}
+Invert {
+ name Invert2
+ xpos -11060
+ ypos -2748
+}
+Read {
+ inputs 0
+ file //ZOMBILLENIUM/ZOMBIDAMAS/zomb/output/sq0160/sq0160_sh0020a/left/_version/lyr_utl0_bty_16-v002/sq0160_sh0020a.0197.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ name lyr_utl0_bty_16_2
+ tile_color 0xc900ff
+ label "MONO\nv002"
+ xpos -10526
+ ypos -3320
+}
+set N4d9d9000 [stack 0]
+Cryptomatte {
+ name Cryptomatte13
+ xpos -10526
+ ypos -3030
+ matteOnly true
+ matteList "<-1.31298896534e-25>, <-1595623.0>, <0.265789538622>, <1.50441670654e-17>, <2.89015534286e+38>, <2.91749007175e-08>, <7.53825172565e+32>"
+ cryptoLayer crypto_object
+ expression "((crypto_object00.red == 0.265789538622 || crypto_object00.red == 7.53825172565e+32 || crypto_object00.red == 1.50441670654e-17 || crypto_object00.red == -1595623.0 || crypto_object00.red == 2.91749007175e-08 || crypto_object00.red == 2.89015534286e+38 || crypto_object00.red == -1.31298896534e-25) ? crypto_object00.green : 0.0) + ((crypto_object00.blue == 0.265789538622 || crypto_object00.blue == 7.53825172565e+32 || crypto_object00.blue == 1.50441670654e-17 || crypto_object00.blue == -1595623.0 || crypto_object00.blue == 2.91749007175e-08 || crypto_object00.blue == 2.89015534286e+38 || crypto_object00.blue == -1.31298896534e-25) ? crypto_object00.alpha : 0.0) + ((crypto_object01.red == 0.265789538622 || crypto_object01.red == 7.53825172565e+32 || crypto_object01.red == 1.50441670654e-17 || crypto_object01.red == -1595623.0 || crypto_object01.red == 2.91749007175e-08 || crypto_object01.red == 2.89015534286e+38 || crypto_object01.red == -1.31298896534e-25) ? crypto_object01.green : 0.0) + ((crypto_object01.blue == 0.265789538622 || crypto_object01.blue == 7.53825172565e+32 || crypto_object01.blue == 1.50441670654e-17 || crypto_object01.blue == -1595623.0 || crypto_object01.blue == 2.91749007175e-08 || crypto_object01.blue == 2.89015534286e+38 || crypto_object01.blue == -1.31298896534e-25) ? crypto_object01.alpha : 0.0) + ((crypto_object02.red == 0.265789538622 || crypto_object02.red == 7.53825172565e+32 || crypto_object02.red == 1.50441670654e-17 || crypto_object02.red == -1595623.0 || crypto_object02.red == 2.91749007175e-08 || crypto_object02.red == 2.89015534286e+38 || crypto_object02.red == -1.31298896534e-25) ? crypto_object02.green : 0.0) + ((crypto_object02.blue == 0.265789538622 || crypto_object02.blue == 7.53825172565e+32 || crypto_object02.blue == 1.50441670654e-17 || crypto_object02.blue == -1595623.0 || crypto_object02.blue == 2.91749007175e-08 || crypto_object02.blue == 2.89015534286e+38 || crypto_object02.blue == -1.31298896534e-25) ? crypto_object02.alpha : 0.0) + 0"
+ keyedName "ID value not in manifest."
+ previewChannel crypto_object
+ in00 crypto_object00
+}
+Invert {
+ name Invert4
+ xpos -10526
+ ypos -2964
+}
+Phong {
+ inputs 0
+ diffuse 0.5
+ specular 0
+ max_shininess 0
+ name Phong1
+ xpos -11035
+ ypos -3271
+}
+Camera2 {
+ inputs 0
+ useMatrix true
+ matrix {
+     {{curve x197 0.962290585} {curve x197 -0.002810644684} {curve x197 0.2720092237} {curve x197 74.87985992}}
+     {{curve x197 0} {curve x197 0.9999466538} {curve x197 0.01033235155} {curve x197 16.65350914}}
+     {{curve x197 -0.2720237374} {curve x197 -0.009942724369} {curve x197 0.9622392058} {curve x197 1385.206909}}
+     {{curve x197 0} {curve x197 0} {curve x197 0} {curve x197 1}}
+   }
+ focal {{curve x197 50}}
+ haperture 35
+ vaperture 18.91891892
+ name exr_baked_cam1
+ xpos -11310
+ ypos -3293
+}
+Light2 {
+ inputs 0
+ translate {100 1000 1012}
+ depthmap_slope_bias 0.01
+ name Light1
+ xpos -11125
+ ypos -3283
+}
+push $N4d980800
+add_layer {N N.X N.Y N.Z}
+ReLight {
+ inputs 4
+ normal N
+ position p
+ name ReLight1
+ xpos -11193
+ ypos -3057
+}
+Shuffle {
+ green red
+ blue red
+ alpha red
+ name Shuffle6
+ xpos -11193
+ ypos -2841
+}
+Grade {
+ channels rgba
+ blackpoint 0.25
+ white 3
+ name Grade11
+ xpos -11193
+ ypos -2782
+}
+Merge2 {
+ inputs 2
+ operation multiply
+ name Merge7
+ xpos -11193
+ ypos -2733
+}
+Merge2 {
+ inputs 2
+ operation multiply
+ name Merge57
+ xpos -11193
+ ypos -2707
+}
+set N4dab0400 [stack 0]
+push $N4d980000
+Dot {
+ name Dot43
+ xpos -13014
+ ypos -3219
+}
+set N4dab0000 [stack 0]
+Shuffle {
+ in dmn_mask06
+ green red
+ blue red
+ alpha red
+ name Shuffle7
+ xpos -12542
+ ypos -3160
+}
+Grade {
+ channels rgba
+ white 5
+ name Grade7
+ xpos -12542
+ ypos -3126
+}
+Dilate {
+ size 4
+ name Dilate5
+ xpos -12542
+ ypos -3067
+}
+push $N4dab0000
+Shuffle {
+ in dmn_lambert_shdMsk_toon
+ red green
+ blue green
+ alpha green
+ name Shuffle15
+ xpos -12674
+ ypos -3153
+}
+Dilate {
+ inputs 1+1
+ size -1
+ name Dilate4
+ xpos -12674
+ ypos -3100
+}
+push $N4dab0000
+Copy {
+ inputs 2
+ from0 rgba.alpha
+ to0 dmn_lambert_shdMsk_toon.green
+ name Copy9
+ xpos -13048
+ ypos -3060
+}
+LdvDmToon {
+ name LdvDmToon8
+ xpos -13048
+ ypos -2924
+ value_5 {0.348399967 0.3676478863 0.5199999809 1}
+ value_4 {0.6795023084 0.7259950638 0.7799999714 1}
+ value 1
+ value_3 1
+ value_1 1
+ value_2 1
+ value_6 1
+ value_7 1
+ value_8 {1.480000019 1.471013427 1.420799971 1}
+}
+push 0
+push 0
+Read {
+ inputs 0
+ file //ZOMBILLENIUM/ZOMBIDAMAS/zomb/output/sq0160/sq0160_sh0020a/left/_version/lyr_ast3_bty_persos1erPlan-v002/sq0160_sh0020a.0197.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ name lyr_ast3_bty_persos1erPlan_2
+ tile_color 0xc900ff
+ label "MONO\nv002"
+ xpos -10648
+ ypos -2490
+}
+push 0
+Read {
+ inputs 0
+ file //ZOMBILLENIUM/ZOMBIDAMAS/zomb/output/sq0160/sq0160_sh0020a/left/_version/lyr_ast1_bty_persos3emePlan-v002/sq0160_sh0020a.0197.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ name lyr_ast1_bty_persos3emePlan_2
+ tile_color 0xc900ff
+ label "MONO\nv002"
+ xpos -10639
+ ypos -2701
+}
+push $N4dab0400
+Dot {
+ name Dot22
+ xpos -11344
+ ypos -2551
+}
+Roto {
+ inputs 0
+ curves {{{v x3f99999a}
+  {f 0}
+  {n
+   {layer Root
+    {f 2097152}
+    {t x4479c000 x44070000}
+    {a pt1x 0 pt1y 0 pt2x 0 pt2y 0 pt3x 0 pt3y 0 pt4x 0 pt4y 0 ptex00 0 ptex01 0 ptex02 0 ptex03 0 ptex10 0 ptex11 0 ptex12 0 ptex13 0 ptex20 0 ptex21 0 ptex22 0 ptex23 0 ptex30 0 ptex31 0 ptex32 0 ptex33 0 ptof1x 0 ptof1y 0 ptof2x 0 ptof2y 0 ptof3x 0 ptof3y 0 ptof4x 0 ptof4y 0 pterr 0 ptrefset 0 ptmot x40800000 ptref 0}
+    {curvegroup Bezier1 512 bezier
+     {{cc
+       {f 8192}
+       {px x43200000
+        {1 0}
+        {xc1b00000 x43c68000}
+        {xbf800000 0}
+        {xc09a2200 x401a2200}
+        {x445d8004 x43f40000}
+        {x40800000 xc0000000}
+        {0 1}
+        {x445a8004 x43f00000}
+        {0 xbf800000}
+        {x40400000 x40400000}
+        {xc0800000 x43c30000}
+        {xc0400000 xc0400000}}}
+      {cc
+       {f 8192}
+       {px x43200000
+        {1 0}
+        {xc3090004 x43947ffc}
+        {xbf800000 0}
+        {xc09a2200 x401a2200}
+        {x4186c5a0 x431ab0e4}
+        {x40800000 xc0000000}
+        {0 1}
+        {x43600000 xbf7ffe00}
+        {0 xbf800000}
+        {x40400000 x40400000}
+        {xc225e242 xc2811064}
+        {xc0400000 xc0400000}}}}
+     {tx x43200000 x43d8c000 x43db6000}
+     {a osw x41200000 osf 0 str 1 spx x4479c000 spy x44070000 sb 1 nv x40000000 view2 x40000000 ltn x43200000 ltm x43200000 tt x40800000}}}}}}
+ toolbox {selectAll {
+  { selectAll str 1 ssx 1 ssy 1 sf 1 }
+  { createBezier str 1 ssx 1 ssy 1 sf 1 sb 1 tt 4 }
+  { createBezierCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createBSpline str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createEllipse str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangle str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangleCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { brush str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { eraser src 2 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { clone src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { reveal src 3 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { dodge src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { burn src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { blur src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { sharpen src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { smear src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+} }
+ toolbar_brush_hardness 0.200000003
+ toolbar_source_transform_scale {1 1}
+ toolbar_source_transform_center {999 540}
+ colorOverlay {0 0 0 0}
+ lifetime_type "all frames"
+ lifetime_start 160
+ lifetime_end 160
+ motionblur_shutter_offset_type centred
+ source_black_outside true
+ name Roto1
+ xpos -11642
+ ypos -2649
+}
+push $N4d981800
+P_Matte {
+ name P_Matte25
+ xpos -11538
+ ypos -2789
+ in rgb
+ output rgba
+ matteShape Cube
+ center {-110.098312 54.717066 1013.522363}
+ scaling {1.1 0.73 1.4}
+ uniform_scale 25
+}
+Grade {
+ channels rgba
+ white 5
+ name Grade9
+ xpos -11639
+ ypos -2789
+}
+Clamp {
+ name Clamp1
+ xpos -11639
+ ypos -2853
+ disable true
+}
+Grade {
+ white 0.18
+ name Grade6
+ xpos -11749
+ ypos -2847
+ disable true
+}
+Dilate {
+ size 1
+ name Dilate1
+ xpos -11749
+ ypos -2795
+}
+push $N4d9d9000
+Cryptomatte {
+ name Cryptomatte15
+ xpos -10859
+ ypos -2981
+ matteList "<-1.31298896534e-25>, <2.89015534286e+38>, <7.53825172565e+32>"
+ cryptoLayer crypto_object
+ expression "((crypto_object00.red == 2.89015534286e+38 || crypto_object00.red == 7.53825172565e+32 || crypto_object00.red == -1.31298896534e-25) ? crypto_object00.green : 0.0) + ((crypto_object00.blue == 2.89015534286e+38 || crypto_object00.blue == 7.53825172565e+32 || crypto_object00.blue == -1.31298896534e-25) ? crypto_object00.alpha : 0.0) + ((crypto_object01.red == 2.89015534286e+38 || crypto_object01.red == 7.53825172565e+32 || crypto_object01.red == -1.31298896534e-25) ? crypto_object01.green : 0.0) + ((crypto_object01.blue == 2.89015534286e+38 || crypto_object01.blue == 7.53825172565e+32 || crypto_object01.blue == -1.31298896534e-25) ? crypto_object01.alpha : 0.0) + ((crypto_object02.red == 2.89015534286e+38 || crypto_object02.red == 7.53825172565e+32 || crypto_object02.red == -1.31298896534e-25) ? crypto_object02.green : 0.0) + ((crypto_object02.blue == 2.89015534286e+38 || crypto_object02.blue == 7.53825172565e+32 || crypto_object02.blue == -1.31298896534e-25) ? crypto_object02.alpha : 0.0) + 0"
+ keyedName "ID value not in manifest."
+ previewChannel crypto_object
+ in00 crypto_object00
+}
+set N5368b700 [stack 0]
+Dilate {
+ size 1
+ name Dilate3
+ xpos -11686
+ ypos -2932
+}
+push $N5368b700
+Dilate {
+ size 1
+ name Dilate2
+ xpos -11689
+ ypos -2970
+}
+push $N4d981400
+Grade {
+ inputs 1+1
+ channels {-dmn_contour_inci_occ.red dmn_contour_inci_occ.green dmn_contour_inci_occ.blue}
+ white 1.5
+ gamma 0.385
+ invert_mask true
+ name Grade4
+ xpos -11862
+ ypos -2970
+}
+Grade {
+ inputs 1+1
+ channels {-dmn_contour_inci_occ.red dmn_contour_inci_occ.green dmn_contour_inci_occ.blue}
+ gamma 0.3
+ name Grade24
+ xpos -11862
+ ypos -2932
+}
+LdvDmToon {
+ name LdvDmToon_BATIMENT
+ xpos -12087
+ ypos -2883
+ value_5 1
+ value_4 1
+ value 1
+ value_3 1
+ value_1 1
+ value_2 1
+}
+Grade {
+ inputs 1+1
+ white 0.3
+ name Grade5
+ xpos -11859
+ ypos -2789
+}
+Grade {
+ inputs 1+1
+ white 0.5
+ name Grade15
+ xpos -11859
+ ypos -2649
+}
+Grade {
+ inputs 1+1
+ white 5
+ name Grade13
+ xpos -11859
+ ypos -2536
+}
+Merge2 {
+ inputs 3+1
+ name Merge58
+ xpos -11859
+ ypos -2380
+}
+Viewer {
+ inputs 5
+ frame_range 1-200
+ name Viewer1
+ xpos -11108
+ ypos -2075
+}
+Read {
+ inputs 0
+ file //zombillenium/Zombillenium/zombidamas/private/damienc/zomb/shot/sq0530/sq0530_sh0020a/08_render/render-v000/lyr_ast0_bty_Steven/stereo_rig_cam_left/sq0530_sh0020a.0101.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read3
+ xpos -3306
+ ypos 583
+ disable true
+}
+Dot {
+ name Dot24
+ xpos -3272
+ ypos 678
+}
+set Na4a48c00 [stack 0]
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet15
+ xpos -3199
+ ypos 674
+ disable true
+}
+Read {
+ inputs 0
+ file //zombillenium/Zombillenium/zombidamas/private/damienc/zomb/shot/sq0530/sq0530_sh0020a/08_render/render-v000/lyr_set1_bty_Parc/stereo_rig_cam_left/sq0530_sh0020a.0101.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read7
+ xpos -4397
+ ypos 561
+ disable true
+}
+Dot {
+ name Dot25
+ xpos -4363
+ ypos 647
+}
+set Na4a48000 [stack 0]
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet17
+ xpos -4269
+ ypos 643
+ disable true
+}
+Read {
+ inputs 0
+ file //zombillenium/Zombillenium/zombidamas/private/damienc/zomb/shot/sq0530/sq0530_sh0020a/08_render/render-v000/lyr_set2_bty_SalleReunion/stereo_rig_cam_left/sq0530_sh0020a.0101.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read41
+ xpos -3927
+ ypos 594
+ disable true
+}
+Dot {
+ name Dot32
+ xpos -3893
+ ypos 680
+}
+set Na4a7f400 [stack 0]
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet19
+ xpos -3802
+ ypos 676
+ disable true
+}
+Read {
+ inputs 0
+ file //zombillenium/Zombillenium/zombidamas/private/damienc/zomb/shot/sq0530/sq0530_sh0020a/08_render/render-v000/lyr_ast0_lgp_Steven/stereo_rig_cam_left/sq0530_sh0020a.0101.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read42
+ xpos -2948
+ ypos 581
+ disable true
+}
+Dot {
+ name Dot33
+ xpos -2914
+ ypos 667
+}
+set Na4a7e800 [stack 0]
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet20
+ xpos -2804
+ ypos 663
+ disable true
+}
+Read {
+ inputs 0
+ file //zombillenium/Zombillenium/zombidamas/private/damienc/zomb/shot/sq0530/sq0530_sh0020a/08_render/render-v000/lyr_set0_bty_Campagne/stereo_rig_cam_left/sq0530_sh0020a.0101.exr
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ origset true
+ in_colorspace linear
+ out_colorspace linear
+ name Read40
+ xpos -4815
+ ypos 573
+ disable true
+}
+Dot {
+ name Dot27
+ xpos -4791
+ ypos 657
+}
+set Na4ac1c00 [stack 0]
+LayerContactSheet {
+ showLayerNames true
+ name LayerContactSheet18
+ xpos -4700
+ ypos 653
+ disable true
+}
+Read {
+ inputs 0
+ file //zombillenium/zombidamas/partage/01_COMPO/Ref_divers/ref_ECLAIRAGE-v04-prev.jpg
+ format "842 1191 0 0 842 1191 1 "
+ origset true
+ name Read2
+ xpos -5344
+ ypos 2499
+}
+push $Na4a48c00
+Reformat {
+ name Reformat12
+ xpos -3306
+ ypos 862
+}
+Dot {
+ name Dot45
+ xpos -3272
+ ypos 1077
+}
+set Na4ac0800 [stack 0]
+push $Na4a7e800
+Reformat {
+ name Reformat13
+ xpos -2948
+ ypos 855
+}
+Remove {
+ channels alpha
+ name Remove3
+ xpos -2948
+ ypos 1018
+}
+ShuffleCopy {
+ inputs 2
+ name ShuffleCopy10
+ xpos -2948
+ ypos 1073
+}
+Dot {
+ name Dot34
+ xpos -2919
+ ypos 1753
+}
+push $Na4ac0800
+LdvDmToon {
+ name LdvDmToon4
+ xpos -3308
+ ypos 1115
+ value_5 1
+ value_4 1
+ value 1
+ value_3 1
+ value_1 1
+ value_2 1
+}
+Unpremult {
+ name Unpremult12
+ xpos -3308
+ ypos 1179
+}
+Merge2 {
+ inputs 2
+ operation plus
+ name Merge20
+ xpos -3308
+ ypos 1749
+}
+Premult {
+ name Premult10
+ xpos -3308
+ ypos 2007
+}
+push $Na4a7f400
+Reformat {
+ name Reformat11
+ xpos -3927
+ ypos 867
+}
+LdvDmToon {
+ name LdvDmToon3
+ xpos -3927
+ ypos 1089
+ value_5 1
+ value_4 1
+ value 1
+ value_3 1
+ value_1 1
+ value_2 1
+}
+Unpremult {
+ name Unpremult13
+ xpos -3927
+ ypos 1176
+}
+Dot {
+ name Dot37
+ xpos -3893
+ ypos 1801
+}
+Premult {
+ name Premult3
+ xpos -4532
+ ypos 1797
+}
+push $Na4a48000
+Reformat {
+ name Reformat9
+ xpos -4397
+ ypos 862
+}
+LdvDmToon {
+ name LdvDmToon1
+ xpos -4397
+ ypos 1101
+ value_5 1
+ value_4 1
+ value 1
+ value_3 1
+ value_1 1
+ value_2 1
+}
+Unpremult {
+ name Unpremult14
+ xpos -4397
+ ypos 1182
+}
+Dot {
+ name Dot40
+ xpos -4363
+ ypos 1642
+}
+Premult {
+ name Premult1
+ xpos -4534
+ ypos 1638
+}
+push $Na4ac1c00
+Reformat {
+ name Reformat7
+ xpos -4824
+ ypos 866
+}
+LdvDmToon {
+ name LdvDmToon6
+ xpos -4824
+ ypos 1113
+ value_5 1
+ value_4 1
+ value 1
+ value_3 1
+ value_1 1
+ value_2 1
+}
+Merge2 {
+ inputs 2
+ name Merge21
+ xpos -4824
+ ypos 1638
+}
+Merge2 {
+ inputs 2
+ name Merge22
+ xpos -4824
+ ypos 1797
+}
+Merge2 {
+ inputs 2
+ name Merge23
+ xpos -4824
+ ypos 2007
+}
+Reformat {
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ name Reformat16
+ xpos -4824
+ ypos 2145
+}
+Read {
+ inputs 0
+ file //zombillenium/zombidamas/partage/04_SQ_REF_LIGHTCOMP/sq0530/sq0530_sh0020a.0113.jpg
+ format "1920 1038 0 0 1920 1038 1 "
+ origset true
+ name Read49
+ xpos -5331
+ ypos 1789
+}
+Reformat {
+ name Reformat6
+ xpos -5163
+ ypos 1819
+}
+Read {
+ inputs 0
+ file "\[getenv SHOT_DIR]/06_finalLayout/\[getenv SHOT]_finalLayout.mov"
+ format "1920 1080 0 0 1920 1080 1 HD_1080"
+ last 60
+ origlast 60
+ origset true
+ decoder mov32
+ mov32_codec {{0} "D�codeur H.264 (appl - avc1)"}
+ mov32_pixel_format {{0} "default (YCbCr  8-bit 422 (2vuy))" "RGBA  8-bit" "YCbCr  8-bit 422 (2vuy)"}
+ name Read46
+ xpos -5318
+ ypos 1535
+}
+TimeOffset {
+ time_offset 100
+ time ""
+ name TimeOffset3
+ xpos -5208
+ ypos 1565
+}
+Reformat {
+ name Reformat4
+ xpos -5208
+ ypos 1591
+}
+Read {
+ inputs 0
+ file "\[getenv SHOT_DIR]/07_fx3d/\[getenv SHOT]_fxPrecomp.mov"
+ format "1920 1080 0 0 1920 1080 1 HD_1080"
+ last 40
+ origlast 40
+ origset true
+ decoder mov32
+ mov32_codec {{0} "D�codeur H.264 (appl - avc1)"}
+ mov32_pixel_format {{0} "default (YCbCr  8-bit 422 (2vuy))" "RGBA  8-bit" "YCbCr  8-bit 422 (2vuy)"}
+ name Read10
+ xpos -5332
+ ypos 1128
+}
+TimeOffset {
+ time_offset 100
+ time ""
+ name TimeOffset1
+ xpos -5212
+ ypos 1158
+}
+Reformat {
+ name Reformat5
+ xpos -5212
+ ypos 1184
+}
+Read {
+ inputs 0
+ file "\[getenv SHOT_DIR]/08_render/\[getenv SHOT]_render.mov"
+ format "1920 1080 0 0 1920 1080 1 HD_1080"
+ origset true
+ decoder mov32
+ mov32_codec {{0} "D�codeur H.264 (appl - avc1)"}
+ mov32_pixel_format {{0} "default (YCbCr  8-bit 422 (2vuy))" "RGBA  8-bit" "YCbCr  8-bit 422 (2vuy)"}
+ name Read5
+ xpos -5330
+ ypos 1318
+}
+TimeOffset {
+ time_offset 100
+ time ""
+ name TimeOffset2
+ xpos -5212
+ ypos 1348
+}
+Reformat {
+ name Reformat1
+ xpos -5212
+ ypos 1374
+}
+Read {
+ inputs 0
+ file "//zombillenium/zombidamas/private/\[value rartist]/zomb/shot/\[value rsequence]/\[value rsequence]_\[value rshot]\[value rpad]/10_compo/\[value rvers]/lyr_\[value rsequence]_\[value rshot]\[value rpad]/\[value rsequence]_\[value rshot]\[value rpad].%04d.exr"
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 101
+ last 600
+ origfirst 101
+ origlast 600
+ origset true
+ on_error "nearest frame"
+ version 10
+ name R_Match_Shot
+ label "\[value rvers]"
+ xpos -4503
+ ypos 2585
+ addUserKnob {20 fastchecker l FINDER -STARTLINE}
+ addUserKnob {22 fast_reply l "<span style=\\\"color:white\\\"><b>Auto Fill Entry</b></span>" t "Pour les faineants :)\n" T "import nuke\nimport nukescripts\nimport subprocess\nimport os\nimport re\n\n\nrootName = nuke.root().name()\n\ncleanPathFile = nukescripts.replaceHashes(rootName)\n\ncompers = cleanPathFile.split(\"/\")\[5]\n\nshotFinderName = cleanPathFile.split(\"/\")\[9]\n\nseqF = shotFinderName.split(\"_\")\[0]\n\nshotF = shotFinderName.split(\"_\")\[1]\n\npadF = re.search('\[a-f]', shotF)\n\n\n#fast fill entry with filename\nnuke.thisNode().knob(\"rartist\").setValue(compers)\nnuke.thisNode().knob(\"rsequence\").setValue(seqF)\nnuke.thisNode().knob(\"rshot\").setValue(shotF)\nnuke.thisNode().knob(\"rpad\").setValue(padF.group(0))" +STARTLINE}
+ addUserKnob {26 ""}
+ addUserKnob {26 spacer001 l "" +STARTLINE T <br>}
+ addUserKnob {4 rartist l "Artiste :" M {anaism annef elodied ericc johnm jeremyb manonc olivierj philippej romainm stephaniev yanng "" "" "" "" ""}}
+ addUserKnob {4 rsequence l "Seq : " -STARTLINE M {sq0002 sq0010 sq0020 sq0030 sq0040 sq0050 sq0060 sq0070 sq0080 sq0090 sq0100 sq0110 sq0120 sq0130 sq0140 sq0150 sq0160 sq0170 sq0180 sq0190 sq0200 sq0205 sq0210 sq0220 sq0230 sq0240 sq0250 sq0260 sq0270 sq0280 sq0290 sq0300 sq0310 sq0320 sq0330 sq0340 sq0350 sq0360 sq0370 sq0380 sq0390 sq0400 sq0410 sq0420 sq0430 sq0440 sq0450 sq0460 sq0470 sq0480 sq0490 sq0500 sq0510 sq0520 sq0530 sq0535 sq0540 sq0550 sq0560 sq0570 sq0580 sq0590 sq0600 sq0610 sq0620 sq0630 sq0640 sq0645 sq0650 sq0660 sq0670 sq0680 sq0690 sq0700 sq0710 sq0720 sq0730 sq0740 sq0750 sq0760 sq0770 sq0780 sq0790 sq0800 sq0810 sq1000 sq1100 sq2000 sq6660 ""}}
+ addUserKnob {4 rshot l "Shot : " -STARTLINE M {sh0001 sh0002 sh0003 sh0004 sh0005 sh0006 sh0007 sh0008 sh0009 sh0010 sh0011 sh0012 sh0013 sh0014 sh0015 sh0016 sh0017 sh0018 sh0019 sh0020 sh0021 sh0022 sh0023 sh0024 sh0025 sh0026 sh0027 sh0028 sh0029 sh0030 sh0031 sh0032 sh0033 sh0034 sh0035 sh0036 sh0037 sh0038 sh0039 sh0040 sh0041 sh0042 sh0043 sh0044 sh0045 sh0046 sh0047 sh0048 sh0049 sh0050 sh0051 sh0052 sh0053 sh0054 sh0055 sh0056 sh0057 sh0058 sh0059 sh0060 sh0061 sh0062 sh0063 sh0064 sh0065 sh0066 sh0067 sh0068 sh0069 sh0070 sh0071 sh0072 sh0073 sh0074 sh0075 sh0076 sh0077 sh0078 sh0079 sh0080 sh0081 sh0082 sh0083 sh0084 sh0085 sh0086 sh0087 sh0088 sh0089 sh0090 sh0091 sh0092 sh0093 sh0094 sh0095 sh0096 sh0097 sh0098 sh0099 sh0100 sh0101 sh0102 sh0103 sh0104 sh0105 sh0106 sh0107 sh0108 sh0109 sh0110 sh0111 sh0112 sh0113 sh0114 sh0115 sh0116 sh0117 sh0118 sh0119 sh0120 sh0121 sh0122 sh0123 sh0124 sh0125 sh0126 sh0127 sh0128 sh0129 sh0130 sh0131 sh0132 sh0133 sh0134 sh0135 sh0136 sh0137 sh0138 sh0139 sh0140 sh0141 sh0142 sh0143 sh0144 sh0145 sh0146 sh0147 sh0148 sh0149 sh0150 sh0151 sh0152 sh0153 sh0154 sh0155 sh0156 sh0157 sh0158 sh0159 sh0160 sh0161 sh0162 sh0163 sh0164 sh0165 sh0166 sh0167 sh0168 sh0169 sh0170 sh0171 sh0172 sh0173 sh0174 sh0175 sh0176 sh0177 sh0178 sh0179 sh0180 sh0181 sh0182 sh0183 sh0184 sh0185 sh0186 sh0187 sh0188 sh0189 sh0190 sh0191 sh0192 sh0193 sh0194 sh0195 sh0196 sh0197 sh0198 sh0199 sh0200 sh0201 sh0202 sh0203 sh0204 sh0205 sh0206 sh0207 sh0208 sh0209 sh0210 sh0211 sh0212 sh0213 sh0214 sh0215 sh0216 sh0217 sh0218 sh0219 sh0220 sh0221 sh0222 sh0223 sh0224 sh0225 sh0226 sh0227 sh0228 sh0229 sh0230 sh0231 sh0232 sh0233 sh0234 sh0235 sh0236 sh0237 sh0238 sh0239 sh0240 sh0241 sh0242 sh0243 sh0244 sh0245 sh0246 sh0247 sh0248 sh0249 sh0250 sh0251 sh0252 sh0253 sh0254 sh0255 sh0256 sh0257 sh0258 sh0259 sh0260 sh0261 sh0262 sh0263 sh0264 sh0265 sh0266 sh0267 sh0268 sh0269 sh0270 sh0271 sh0272 sh0273 sh0274 sh0275 sh0276 sh0277 sh0278 sh0279 sh0280 sh0281 sh0282 sh0283 sh0284 sh0285 sh0286 sh0287 sh0288 sh0289 sh0290 sh0291 sh0292 sh0293 sh0294 sh0295 sh0296 sh0297 sh0298 sh0299 sh0300 sh0310 sh0320 sh0330 sh0340 sh0350 sh0360 sh0370 sh0380 sh0390 sh0400 sh0410 sh0420 sh0430 sh0440 sh0450 "" ""}}
+ addUserKnob {4 rpad l "Padding : " -STARTLINE M {a b c d e f ""}}
+ addUserKnob {4 rvers l "Version : " -STARTLINE M {compo-v001 compo-v002 compo-v003 compo-v004 compo-v005 compo-v006 compo-v007 compo-v008 compo-v009 compo-v010 compo-v011 compo-v012 compo-v013 compo-v014 compo-v015 compo-v016 compo-v017 compo-v018 compo-v019 compo-v020 "" "" "" "" "" "" "" ""}}
+ addUserKnob {26 ""}
+ addUserKnob {26 spacer002 l "" +STARTLINE T <br>}
+ addUserKnob {22 openexplorer l "<span style=\\\"color:white\\\"><b>Open in Explorer</b></span>" t "open in explorer sequence file" T "import nuke\nimport nukescripts \nimport subprocess\nimport os\n\nrPathFind = nukescripts.replaceHashes(nuke.filename(nuke.thisNode()))\nrFolder = os.path.normpath(os.path.dirname(rPathFind))\nrFolderClean = rFolder + \"\\\\\"\n\nos.system('explorer \"%s\"' % rFolderClean)" +STARTLINE}
+ addUserKnob {26 spacer003 l "" +STARTLINE T <br>}
+ addUserKnob {26 ""}
+ addUserKnob {22 rview l "<span style=\\\"color:white\\\"><b>view last Version :</b></span>" t "Check the last version in folder" -STARTLINE T "vPathFind = nukescripts.replaceHashes(nuke.filename(nuke.thisNode()))\n\nvBaseName = os.path.dirname(vPathFind)\nvName = vBaseName\nverComp = '/'.join(vBaseName.split('/')\[:-2])\n\n#Check frame numbers\n#for root, dirs, files in os.walk(vBaseName):\n#    print root, dirs, files\n\nlist = \[]\n#listing du repertoire et affiche le dernier element parcourus\nfor version in os.listdir(verComp):\n    if version.startswith(\"compo-v\"):\n        list.append(version)\n    else:\n        nuke.thisNode().knob(\"rviewerver\").setValue('<span style=\"color:red\"><b>no version found !</b></span>')\nnuke.thisNode().knob(\"rviewerver\").setValue(str(list))"}
+ addUserKnob {26 rviewerver l "" +STARTLINE T "\['compo-v001', 'compo-v002', 'compo-v003']"}
+}
+Read {
+ inputs 0
+ file "//zombillenium/zombidamas/private/\[value rartist]/zomb/shot/\[value rsequence]/\[value rsequence]_\[value rshot]\[value rpad]/10_compo/\[value rvers]/lyr_\[value rsequence]_\[value rshot]\[value rpad]/\[value rsequence]_\[value rshot]\[value rpad].%04d.exr"
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 101
+ last 600
+ origfirst 101
+ origlast 600
+ origset true
+ on_error "nearest frame"
+ version 10
+ name R_Match_Shot1
+ label "\[value rvers]"
+ xpos -4517
+ ypos 2363
+ addUserKnob {20 fastchecker l FINDER -STARTLINE}
+ addUserKnob {22 fast_reply l "<span style=\\\"color:white\\\"><b>Auto Fill Entry</b></span>" t "Pour les faineants :)\n" T "import nuke\nimport nukescripts\nimport subprocess\nimport os\nimport re\n\n\nrootName = nuke.root().name()\n\ncleanPathFile = nukescripts.replaceHashes(rootName)\n\ncompers = cleanPathFile.split(\"/\")\[5]\n\nshotFinderName = cleanPathFile.split(\"/\")\[9]\n\nseqF = shotFinderName.split(\"_\")\[0]\n\nshotF = shotFinderName.split(\"_\")\[1]\n\npadF = re.search('\[a-f]', shotF)\n\n\n#fast fill entry with filename\nnuke.thisNode().knob(\"rartist\").setValue(compers)\nnuke.thisNode().knob(\"rsequence\").setValue(seqF)\nnuke.thisNode().knob(\"rshot\").setValue(shotF)\nnuke.thisNode().knob(\"rpad\").setValue(padF.group(0))" +STARTLINE}
+ addUserKnob {26 ""}
+ addUserKnob {26 spacer001 l "" +STARTLINE T <br>}
+ addUserKnob {4 rartist l "Artiste :" M {anaism annef elodied ericc johnm jeremyb manonc olivierj philippej romainm stephaniev yanng "" "" "" "" ""}}
+ rartist johnm
+ addUserKnob {4 rsequence l "Seq : " -STARTLINE M {sq0002 sq0010 sq0020 sq0030 sq0040 sq0050 sq0060 sq0070 sq0080 sq0090 sq0100 sq0110 sq0120 sq0130 sq0140 sq0150 sq0160 sq0170 sq0180 sq0190 sq0200 sq0205 sq0210 sq0220 sq0230 sq0240 sq0250 sq0260 sq0270 sq0280 sq0290 sq0300 sq0310 sq0320 sq0330 sq0340 sq0350 sq0360 sq0370 sq0380 sq0390 sq0400 sq0410 sq0420 sq0430 sq0440 sq0450 sq0460 sq0470 sq0480 sq0490 sq0500 sq0510 sq0520 sq0530 sq0535 sq0540 sq0550 sq0560 sq0570 sq0580 sq0590 sq0600 sq0610 sq0620 sq0630 sq0640 sq0645 sq0650 sq0660 sq0670 sq0680 sq0690 sq0700 sq0710 sq0720 sq0730 sq0740 sq0750 sq0760 sq0770 sq0780 sq0790 sq0800 sq0810 sq1000 sq1100 sq2000 sq6660 ""}}
+ rsequence sq0180
+ addUserKnob {4 rshot l "Shot : " -STARTLINE M {sh0001 sh0002 sh0003 sh0004 sh0005 sh0006 sh0007 sh0008 sh0009 sh0010 sh0011 sh0012 sh0013 sh0014 sh0015 sh0016 sh0017 sh0018 sh0019 sh0020 sh0021 sh0022 sh0023 sh0024 sh0025 sh0026 sh0027 sh0028 sh0029 sh0030 sh0031 sh0032 sh0033 sh0034 sh0035 sh0036 sh0037 sh0038 sh0039 sh0040 sh0041 sh0042 sh0043 sh0044 sh0045 sh0046 sh0047 sh0048 sh0049 sh0050 sh0051 sh0052 sh0053 sh0054 sh0055 sh0056 sh0057 sh0058 sh0059 sh0060 sh0061 sh0062 sh0063 sh0064 sh0065 sh0066 sh0067 sh0068 sh0069 sh0070 sh0071 sh0072 sh0073 sh0074 sh0075 sh0076 sh0077 sh0078 sh0079 sh0080 sh0081 sh0082 sh0083 sh0084 sh0085 sh0086 sh0087 sh0088 sh0089 sh0090 sh0091 sh0092 sh0093 sh0094 sh0095 sh0096 sh0097 sh0098 sh0099 sh0100 sh0101 sh0102 sh0103 sh0104 sh0105 sh0106 sh0107 sh0108 sh0109 sh0110 sh0111 sh0112 sh0113 sh0114 sh0115 sh0116 sh0117 sh0118 sh0119 sh0120 sh0121 sh0122 sh0123 sh0124 sh0125 sh0126 sh0127 sh0128 sh0129 sh0130 sh0131 sh0132 sh0133 sh0134 sh0135 sh0136 sh0137 sh0138 sh0139 sh0140 sh0141 sh0142 sh0143 sh0144 sh0145 sh0146 sh0147 sh0148 sh0149 sh0150 sh0151 sh0152 sh0153 sh0154 sh0155 sh0156 sh0157 sh0158 sh0159 sh0160 sh0161 sh0162 sh0163 sh0164 sh0165 sh0166 sh0167 sh0168 sh0169 sh0170 sh0171 sh0172 sh0173 sh0174 sh0175 sh0176 sh0177 sh0178 sh0179 sh0180 sh0181 sh0182 sh0183 sh0184 sh0185 sh0186 sh0187 sh0188 sh0189 sh0190 sh0191 sh0192 sh0193 sh0194 sh0195 sh0196 sh0197 sh0198 sh0199 sh0200 sh0201 sh0202 sh0203 sh0204 sh0205 sh0206 sh0207 sh0208 sh0209 sh0210 sh0211 sh0212 sh0213 sh0214 sh0215 sh0216 sh0217 sh0218 sh0219 sh0220 sh0221 sh0222 sh0223 sh0224 sh0225 sh0226 sh0227 sh0228 sh0229 sh0230 sh0231 sh0232 sh0233 sh0234 sh0235 sh0236 sh0237 sh0238 sh0239 sh0240 sh0241 sh0242 sh0243 sh0244 sh0245 sh0246 sh0247 sh0248 sh0249 sh0250 sh0251 sh0252 sh0253 sh0254 sh0255 sh0256 sh0257 sh0258 sh0259 sh0260 sh0261 sh0262 sh0263 sh0264 sh0265 sh0266 sh0267 sh0268 sh0269 sh0270 sh0271 sh0272 sh0273 sh0274 sh0275 sh0276 sh0277 sh0278 sh0279 sh0280 sh0281 sh0282 sh0283 sh0284 sh0285 sh0286 sh0287 sh0288 sh0289 sh0290 sh0291 sh0292 sh0293 sh0294 sh0295 sh0296 sh0297 sh0298 sh0299 sh0300 sh0310 sh0320 sh0330 sh0340 sh0350 sh0360 sh0370 sh0380 sh0390 sh0400 sh0410 sh0420 sh0430 sh0440 sh0450 "" ""}}
+ rshot sh0030
+ addUserKnob {4 rpad l "Padding : " -STARTLINE M {a b c d e f ""}}
+ addUserKnob {4 rvers l "Version : " -STARTLINE M {compo-v001 compo-v002 compo-v003 compo-v004 compo-v005 compo-v006 compo-v007 compo-v008 compo-v009 compo-v010 compo-v011 compo-v012 compo-v013 compo-v014 compo-v015 compo-v016 compo-v017 compo-v018 compo-v019 compo-v020 "" "" "" "" "" "" "" ""}}
+ addUserKnob {26 ""}
+ addUserKnob {26 spacer002 l "" +STARTLINE T <br>}
+ addUserKnob {22 openexplorer l "<span style=\\\"color:white\\\"><b>Open in Explorer</b></span>" t "open in explorer sequence file" T "import nuke\nimport nukescripts \nimport subprocess\nimport os\n\nrPathFind = nukescripts.replaceHashes(nuke.filename(nuke.thisNode()))\nrFolder = os.path.normpath(os.path.dirname(rPathFind))\nrFolderClean = rFolder + \"\\\\\"\n\nos.system('explorer \"%s\"' % rFolderClean)" +STARTLINE}
+ addUserKnob {26 spacer003 l "" +STARTLINE T <br>}
+ addUserKnob {26 ""}
+ addUserKnob {22 rview l "<span style=\\\"color:white\\\"><b>view last Version :</b></span>" t "Check the last version in folder" -STARTLINE T "vPathFind = nukescripts.replaceHashes(nuke.filename(nuke.thisNode()))\n\nvBaseName = os.path.dirname(vPathFind)\nvName = vBaseName\nverComp = '/'.join(vBaseName.split('/')\[:-2])\n\n#Check frame numbers\n#for root, dirs, files in os.walk(vBaseName):\n#    print root, dirs, files\n\nlist = \[]\n#listing du repertoire et affiche le dernier element parcourus\nfor version in os.listdir(verComp):\n    if version.startswith(\"compo-v\"):\n        list.append(version)\n    else:\n        nuke.thisNode().knob(\"rviewerver\").setValue('<span style=\"color:red\"><b>no version found !</b></span>')\nnuke.thisNode().knob(\"rviewerver\").setValue(str(list))"}
+ addUserKnob {26 rviewerver l "" +STARTLINE T "\['compo-v001', 'compo-v002']"}
+}

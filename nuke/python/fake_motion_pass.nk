@@ -1,0 +1,261 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="-1920" y="28" w="1920" h="1052" screen="1">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1868" stretch="1"/>
+            <splitter orientation="1">
+                <split size="1228"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                    <page id="uk.co.thefoundry.scripteditor.1"/>
+                </dock>
+                <split size="636"/>
+                <dock id="" activePageId="Properties.1">
+                    <page id="Properties.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+    <window x="0" y="0" w="1920" h="1080" maximized="1" fullscreen="1" screen="0">
+        <splitter orientation="1">
+            <split size="1683"/>
+            <dock id="" activePageId="Viewer.1">
+                <page id="Viewer.1"/>
+            </dock>
+            <split size="233"/>
+            <splitter orientation="2">
+                <split size="444"/>
+                <dock id="" activePageId="Error Console.1">
+                    <page id="Error Console.1"/>
+                </dock>
+                <split size="308"/>
+                <dock id="" activePageId="uk.co.thefoundry.waveformscope.1">
+                    <page id="uk.co.thefoundry.waveformscope.1"/>
+                </dock>
+                <split size="320"/>
+                <dock id="" activePageId="uk.co.thefoundry.vectorscope.1">
+                    <page id="uk.co.thefoundry.vectorscope.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name //zombillenium/zombidamas/private/jeremyb/zomb/misc/notes/nuke/compositing/python/fake_motion_pass.nk
+ format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ colorManagement Nuke
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode2
+ label ADD_MOTION
+ note_font "Verdana Bold Bold Bold Bold Bold"
+ note_font_size 14
+ xpos 16
+ ypos -375
+ bdwidth 230
+ bdheight 122
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode3
+ label UV_to_VECTOR
+ note_font "Verdana Bold Bold Bold Bold Bold Bold Bold"
+ note_font_size 14
+ xpos -94
+ ypos -155
+ bdwidth 219
+ bdheight 171
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode4
+ label VECTOR_to_UV
+ note_font "Verdana Bold Bold Bold Bold Bold Bold Bold Bold"
+ note_font_size 14
+ xpos -94
+ ypos 64
+ bdwidth 219
+ bdheight 171
+}
+Dot {
+ inputs 0
+ name Dot16
+ label i_exr
+ note_font "Verdana Bold Italic Bold Italic"
+ note_font_size 14
+ xpos 72
+ ypos -435
+}
+set N3a97c00 [stack 0]
+Dot {
+ name Dot1
+ xpos 72
+ ypos -349
+}
+set N3a97800 [stack 0]
+Dot {
+ name Dot2
+ xpos 182
+ ypos -349
+}
+Expression {
+ expr0 (x+0.5)/width
+ channel1 {-rgba.red rgba.green -rgba.blue none}
+ expr1 (y+.5)/height
+ channel2 {-rgba.red -rgba.green rgba.blue none}
+ name Expression1
+ xpos 148
+ ypos -286
+}
+push $N3a97800
+ShuffleCopy {
+ inputs 2
+ in2 none
+ red red
+ green green
+ alpha black
+ out motion
+ name add_motion1
+ xpos 38
+ ypos -286
+}
+SplineWarp3 {
+ colorOverlay {0 0 0 0}
+ view {}
+ curves {{{v x3f99999a}
+  {f 0}
+  {n
+   {layer Root
+    {f 2097664}
+    {t x43eb4000 x43b40000}
+    {a pt1x 0 pt1y 0 pt2x 0 pt2y 0 pt3x 0 pt3y 0 pt4x 0 pt4y 0 ptex00 0 ptex01 0 ptex02 0 ptex03 0 ptex10 0 ptex11 0 ptex12 0 ptex13 0 ptex20 0 ptex21 0 ptex22 0 ptex23 0 ptex30 0 ptex31 0 ptex32 0 ptex33 0 ptof1x 0 ptof1y 0 ptof2x 0 ptof2y 0 ptof3x 0 ptof3y 0 ptof4x 0 ptof4y 0 pterr 0 ptrefset 0 ptmot x40800000 ptref 0}}}}}
+ toolbar_preview_mode "persistent preview"
+ name SplineWarp3_2
+ xpos 38
+ ypos -214
+ disable true
+}
+Dot {
+ name Dot19
+ xpos 72
+ ypos -112
+}
+set N3ab0800 [stack 0]
+Shuffle {
+ in motion
+ name UV_Channel2
+ xpos -63
+ ypos -116
+}
+Expression {
+ expr0 -x+r*width-0.5
+ expr1 -y+g*height-0.5
+ channel2 {-rgba.red -rgba.green -rgba.blue none}
+ channel3 {none none none -rgba.alpha}
+ name UV_to_Vectors5
+ xpos -63
+ ypos -66
+}
+Dot {
+ name Dot20
+ xpos -29
+ ypos -13
+}
+push $N3ab0800
+ShuffleCopy {
+ inputs 2
+ in2 none
+ red red
+ green green
+ alpha black
+ out {{{parent.UV_Channel.in}}}
+ name ShuffleCopy4
+ xpos 38
+ ypos -17
+}
+set N35997800 [stack 0]
+push $N3a97c00
+Dot {
+ name Dot17
+ xpos 260
+ ypos -435
+}
+Copy {
+ inputs 2
+ from0 rgba.red
+ to0 forward.u
+ from1 rgba.green
+ to1 forward.v
+ name Copy3
+ xpos 226
+ ypos -30
+}
+VectorBlur {
+ channels rgba
+ uv motion
+ name VectorBlur1
+ xpos 356
+ ypos -17
+}
+push $N35997800
+Dot {
+ name Dot3
+ xpos 72
+ ypos 120
+}
+set N35996800 [stack 0]
+Shuffle {
+ in motion
+ name vec_Channel_select1
+ xpos -61
+ ypos 116
+}
+Expression {
+ expr0 (r+x+0.5)/width
+ expr1 (g+y+0.5)/height
+ channel2 {-rgba.red -rgba.green -rgba.blue none}
+ channel3 {none none none -rgba.alpha}
+ name Vectors_to_UV1
+ xpos -61
+ ypos 175
+}
+push $N35996800
+ShuffleCopy {
+ inputs 2
+ in2 none
+ red red
+ green green
+ alpha black
+ out {{{parent.UV_Channel.in}}}
+ name add_uv1
+ xpos 38
+ ypos 175
+}
+Shuffle {
+ in motion
+ name Shuffle1
+ label "\[value in]"
+ xpos 223
+ ypos 169
+}
+push 0
+STMap {
+ inputs 2
+ uv rgba
+ name STMap2
+ xpos 355
+ ypos 169
+}

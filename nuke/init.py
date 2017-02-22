@@ -18,6 +18,25 @@ scriptsPath = os.path.join(sNukePath, "scripts").replace("\\", "/")
 if os.path.isdir(scriptsPath):
     nuke.pluginAddPath(scriptsPath)
 
+pythonPath = os.path.join(sNukePath, "python").replace("\\", "/")
+if os.path.isdir(scriptsPath):
+    nuke.pluginAddPath(pythonPath)
+
+iconsPath = os.path.join(sNukePath, "icons").replace("\\", "/")
+if os.path.isdir(scriptsPath):
+    nuke.pluginAddPath(iconsPath)
+
+NodePresetPath = os.path.join(sNukePath, "NodePreset").replace("\\", "/")
+if os.path.isdir(scriptsPath):
+    nuke.pluginAddPath(NodePresetPath)
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+#---------------------------------------------ToolBox from Compositing Angouleme----------------------------------------------------------#
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+
+# nuke.pluginAddPath( os.path.join(os.path.expanduser("~"), "zombillenium\\z2k-pipeline-toolkit\\nuke\\python"))
+# nuke.pluginAddPath( os.path.join(os.path.expanduser("~"), "zombillenium\\z2k-pipeline-toolkit\\nuke\\icons"))
+# nuke.pluginAddPath( os.path.join(os.path.expanduser("~"), "zombillenium\\z2k-pipeline-toolkit\\nuke\\NodePreset"))
+
 import nkFinalLayout as nkFinalLayout
 reload(nkFinalLayout)
 

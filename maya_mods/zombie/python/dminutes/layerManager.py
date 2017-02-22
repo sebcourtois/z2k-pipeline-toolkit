@@ -277,7 +277,7 @@ class LayerManager:
                 partitionOrigS = each
                 break
 
-        mc.createRenderLayer( layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True )
+        mc.createRenderLayer(layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True)
         self.initLayer()
 
 
