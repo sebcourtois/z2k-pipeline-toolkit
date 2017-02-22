@@ -169,11 +169,8 @@ def finalLayoutToLighting(gui=True):
         txt = "{} node(s) deleted: '{}': ".format(len(deletedNodeL), deletedNodeL)
         log.printL("i", txt)
 
-    sAttrList = ("aiCustomAOVs[[]*[]].aovName", "smoothDrawType", "displaySmoothMesh", "dispResolution",
-                 "pt", "pnts", "pt[[]*[]]", "pnts[[]*[]]", "pnts[[]*[]].*", "pt[[]*[]].*",
-                 "uvsp", "uvSetPoints", "uvsp[[]*[]]", "uvSetPoints[[]*[]]", "uvsp[[]*[]].*", "uvSetPoints[[]*[]].*",
-                 "uvSet", "uvst", "uvSet[[]*[]]", "uvst[[]*[]]", "uvSet[[]*[]].*", "uvst[[]*[]].*")
-    removeRefEditByAttr([], attr=sAttrList, cmd=("setAttr",), GUI=True, fullAttr=True)
+    sAttrList = ("aovName", "smoothDrawType", "displaySmoothMesh", "dispResolution",)
+    removeRefEditByAttr([], attr=sAttrList, cmd=("setAttr",), GUI=True)
 
     cleaning.deleteAllJunkShapes()
 
