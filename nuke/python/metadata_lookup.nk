@@ -1,0 +1,82 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="0" y="111" w="1920" h="1052" screen="1">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1868" stretch="1"/>
+            <splitter orientation="1">
+                <split size="1228"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                    <page id="uk.co.thefoundry.scripteditor.1"/>
+                </dock>
+                <split size="636"/>
+                <dock id="" activePageId="Properties.1">
+                    <page id="Properties.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+    <window x="1920" y="0" w="1920" h="1080" maximized="1" fullscreen="1" screen="0">
+        <splitter orientation="1">
+            <split size="1683"/>
+            <dock id="" activePageId="Viewer.1">
+                <page id="Viewer.1"/>
+            </dock>
+            <split size="233"/>
+            <splitter orientation="2">
+                <split size="444"/>
+                <dock id="" activePageId="Error Console.1">
+                    <page id="Error Console.1"/>
+                </dock>
+                <split size="308"/>
+                <dock id="" activePageId="uk.co.thefoundry.waveformscope.1">
+                    <page id="uk.co.thefoundry.waveformscope.1"/>
+                </dock>
+                <split size="320"/>
+                <dock id="" activePageId="uk.co.thefoundry.vectorscope.1">
+                    <page id="uk.co.thefoundry.vectorscope.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name //Zombillenium/zombidamas/private/jeremyb/zomb/misc/notes/nuke/compositing/python/metadata_lookup.nk
+ format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ colorManagement Nuke
+}
+StickyNote {
+ inputs 0
+ name metadata_finder
+ tile_color 0x5a0f15ff
+ label "MetaData\nLookup"
+ note_font "Verdana Bold Bold"
+ note_font_size 12
+ note_font_color 0xff
+ selected true
+ xpos -57
+ ypos -92
+ addUserKnob {20 lookup}
+ addUserKnob {1 readername l "Reader Name : "}
+ readername layerName
+ addUserKnob {26 sp l "" +STARTLINE T <br>}
+ addUserKnob {26 meta l METADATA}
+ addUserKnob {26 ratio l "ratio :" T 1.85}
+ addUserKnob {26 formatwh l "format :" T "1998 x 1080"}
+ addUserKnob {26 haperture l "haperture :" T 35.0}
+ addUserKnob {26 vaperture l "vaperture :" T 18.9189189189}
+ addUserKnob {26 focal l "focal :" T 50.0}
+ addUserKnob {22 checkmetadata l Check T "metalookup = nuke.toNode('metadata_finder')\n\nREADER_NAME = metalookup.knob('readername').value()\n\nnode = nuke.toNode(READER_NAME)\nmetaData = node.metadata()\n\nimageWidth = metaData\['input/width']\nimageHeight = metaData\['input/height']\naspectRatio = float(imageWidth)/float(imageHeight)\nhAperture = 35.0\nvAperture = hAperture/aspectRatio\nfocalLengthMeta = metaData\['exr/CameraFocalLength']\nfocalLengthCam = hAperture*focalLengthMeta\n\nmetalookup.knob('haperture').setValue(str(hAperture))\nmetalookup.knob('vaperture').setValue(str(vAperture))\n\nmetalookup.knob('focal').setValue(str(round(focalLengthCam,1)))\n\nmetalookup.knob('ratio').setValue(str(aspectRatio))\n\nmetalookup.knob('formatwh').setValue(str(imageWidth) + \" x \" + str(imageHeight))\n" +STARTLINE}
+}

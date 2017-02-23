@@ -354,7 +354,8 @@ def fixToonWeight():
         for chr in chrToon :
             if 'chr_' in chr:
                 if not 'InnerMouth' in chr and not 'innerMouth' in chr and not 'innermouth' in chr and not 'inMouth' in chr:
-                    mc.setAttr(chr + '.toonWeight', 1)
+                    if mc.getAttr(chr + '.toonWeight') != 1:
+                        mc.setAttr(chr + '.toonWeight', 1)
     else:
         pass
 

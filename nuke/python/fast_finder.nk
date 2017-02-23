@@ -1,0 +1,94 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="0" y="28" w="1920" h="1052" screen="1">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1868" stretch="1"/>
+            <splitter orientation="1">
+                <split size="1280"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                    <page id="uk.co.thefoundry.scripteditor.1"/>
+                </dock>
+                <split size="584"/>
+                <splitter orientation="2">
+                    <split size="743"/>
+                    <dock id="" activePageId="Properties.1">
+                        <page id="Properties.1"/>
+                    </dock>
+                    <split size="255"/>
+                    <splitter orientation="1">
+                        <split size="290"/>
+                        <dock id="" activePageId="uk.co.thefoundry.waveformscope.1">
+                            <page id="uk.co.thefoundry.waveformscope.1"/>
+                        </dock>
+                        <split size="290"/>
+                        <dock id="" activePageId="uk.co.thefoundry.vectorscope.1">
+                            <page id="uk.co.thefoundry.vectorscope.1"/>
+                        </dock>
+                    </splitter>
+                </splitter>
+            </splitter>
+        </splitter>
+    </window>
+    <window x="1920" y="0" w="1920" h="1080" fullscreen="1" screen="0">
+        <splitter orientation="1">
+            <split size="1920"/>
+            <dock id="" activePageId="Viewer.1">
+                <page id="Viewer.1"/>
+            </dock>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name //JAKKU/zombillenium2/private/jeremyb/zomb/misc/notes/nuke/compositing/python/fast_finder.nk
+ format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ colorManagement Nuke
+ addUserKnob {20 User}
+ addUserKnob {7 f}
+}
+Read {
+ inputs 0
+ file "//JAKKU/zombillenium2/private/\[value rartist]/zomb/shot/\[value rsequence]/\[value rsequence]_\[value rshot]/10_compo/\[value rvers]/lyr_\[value rsequence]_\[value rshot]/\[value rsequence]_\[value rshot].%04d.exr"
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ first 101
+ last 154
+ origfirst 101
+ origlast 154
+ origset true
+ on_error "nearest frame"
+ version 11
+ name R_Match_Shot3
+ label "\[value rvers]"
+ xpos -515
+ ypos -730
+ addUserKnob {20 fastchecker l FINDER -STARTLINE}
+ addUserKnob {22 fast_reply l "<span style=\\\"color:white\\\"><b>Auto Fill Entry</b></span>" t "Automatic filling" T "import nuke\nimport nukescripts\nimport subprocess\nimport os\nimport re\n\n\nrootName = nuke.root().name()\n\ncleanPathFile = nukescripts.replaceHashes(rootName)\ncompers = cleanPathFile.split(\"/\")\[5]\nshotFinderName = cleanPathFile.split(\"/\")\[9]\nseqF = shotFinderName.split(\"_\")\[0]\nshotF = shotFinderName.split(\"_\")\[1]\n\n\n#fast fill entry with filename\nnuke.thisNode().knob(\"rartist\").setValue(compers)\nnuke.thisNode().knob(\"rsequence\").setValue(seqF)\nnuke.thisNode().knob(\"rshot\").setValue(shotF)\n\n#check frame range\nrFF = nuke.root()\['first_frame'].value()\nrLF = nuke.root()\['last_frame'].value()\n\nnuke.thisNode().knob(\"first\").setValue(int(rFF))\nnuke.thisNode().knob(\"last\").setValue(int(rLF))\n\nnuke.thisNode().knob(\"origfirst\").setValue(int(rFF))\nnuke.thisNode().knob(\"origlast\").setValue(int(rLF))" +STARTLINE}
+ addUserKnob {26 ""}
+ addUserKnob {26 spacer001 l "" +STARTLINE T <br>}
+ addUserKnob {4 rartist l "Artiste :" M {anaism annef elodied ericc johnm jeremyb jimmyb manonc maximet olivierj pauliner philippej romainm stephaniev yanng ""}}
+ rartist jeremyb
+ addUserKnob {4 rsequence l "Seq : " M {sq0002 sq0010 sq0020 sq0030 sq0040 sq0050 sq0060 sq0070 sq0080 sq0090 sq0100 sq0110 sq0120 sq0130 sq0140 sq0150 sq0160 sq0170 sq0180 sq0190 sq0200 sq0205 sq0210 sq0220 sq0230 sq0240 sq0250 sq0260 sq0270 sq0280 sq0290 sq0300 sq0310 sq0320 sq0330 sq0340 sq0350 sq0360 sq0370 sq0380 sq0390 sq0400 sq0410 sq0420 sq0430 sq0440 sq0450 sq0460 sq0470 sq0480 sq0490 sq0500 sq0510 sq0520 sq0530 sq0535 sq0540 sq0550 sq0560 sq0570 sq0580 sq0590 sq0600 sq0610 sq0620 sq0630 sq0640 sq0645 sq0650 sq0660 sq0670 sq0680 sq0690 sq0700 sq0710 sq0720 sq0730 sq0740 sq0750 sq0760 sq0770 sq0780 sq0790 sq0800 sq0810 sq1000 sq1100 sq2000 sq6660 "" ""}}
+ addUserKnob {1 rshot l "Shot :" t "Enter shot number :\nDon't forget \"sh\" prefixe and \"a\" padding.\n\neg : sh0000a" -STARTLINE}
+ rshot sh0000a
+ addUserKnob {4 rvers l "Version : " -STARTLINE M {compo-v001 compo-v002 compo-v003 compo-v004 compo-v005 compo-v006 compo-v007 compo-v008 compo-v009 compo-v010 compo-v011 compo-v012 compo-v013 compo-v014 compo-v015 compo-v016 compo-v017 compo-v018 compo-v019 compo-v020}}
+ addUserKnob {26 ""}
+ addUserKnob {26 spacer002 l "" +STARTLINE T <br>}
+ addUserKnob {22 openexplorer l "<span style=\\\"color:white\\\"><b>Open in Explorer</b></span>" t "open in explorer sequence file" T "import nuke\nimport nukescripts \nimport subprocess\nimport os\n\nrPathFind = nukescripts.replaceHashes(nuke.filename(nuke.thisNode()))\nrFolder = os.path.normpath(os.path.dirname(rPathFind))\nrFolderClean = rFolder + \"\\\\\"\n\nos.system('explorer \"%s\"' % rFolderClean)" +STARTLINE}
+ addUserKnob {22 playonrv l "<span style=\\\"color:white\\\"><b>Play on RV</b></span>" t "play sequences in RV" -STARTLINE T "import nuke\nimport nukescripts \nimport subprocess\nimport os\n\nrvPath = \"C:\\\\Program Files\\\\Shotgun\\\\RV-7.0.0\\\\bin\\\\rv.exe \"\nrPathFind = nukescripts.replaceHashes(nuke.filename(nuke.thisNode()))\nrFolder = os.path.normpath(os.path.dirname(rPathFind))\nrFolderClean = rFolder + \"\\\\\"\n\nsubprocess.Popen(\[rvPath, rFolderClean])"}
+ addUserKnob {26 spacer003 l "" +STARTLINE T <br>}
+ addUserKnob {26 ""}
+ addUserKnob {22 rview l "<span style=\\\"color:white\\\"><b>Lastest version :</b></span>" t "Checks the latest version." -STARTLINE T "vPathFind = nukescripts.replaceHashes(nuke.filename(nuke.thisNode()))\n\nvBaseName = os.path.dirname(vPathFind)\nvName = vBaseName\nverComp = '/'.join(vBaseName.split('/')\[:-2])\n\n#Check frame numbers\n#for root, dirs, files in os.walk(vBaseName):\n#    print root, dirs, files\n\nlist = \[]\n#listing du repertoire et affiche le dernier element parcourut\nfor version in os.listdir(verComp):\n    if version.startswith(\"compo-v\"):\n        list.append(version)\n    else:\n        nuke.thisNode().knob(\"rviewerver\").setValue('<span style=\"color:red\"><b>no version found !</b></span>')\nnuke.thisNode().knob(\"rviewerver\").setValue(str(list))"}
+ addUserKnob {26 rviewerver l "" -STARTLINE T "\['compo-v001']"}
+}

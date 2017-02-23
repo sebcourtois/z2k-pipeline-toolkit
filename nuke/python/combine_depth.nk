@@ -1,0 +1,650 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="0" y="28" w="1920" h="1052" screen="1">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1868" stretch="1"/>
+            <splitter orientation="1">
+                <split size="1280"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                    <page id="uk.co.thefoundry.scripteditor.1"/>
+                </dock>
+                <split size="584"/>
+                <splitter orientation="2">
+                    <split size="743"/>
+                    <dock id="" activePageId="Properties.1">
+                        <page id="Properties.1"/>
+                    </dock>
+                    <split size="255"/>
+                    <splitter orientation="1">
+                        <split size="290"/>
+                        <dock id="" activePageId="uk.co.thefoundry.waveformscope.1">
+                            <page id="uk.co.thefoundry.waveformscope.1"/>
+                        </dock>
+                        <split size="290"/>
+                        <dock id="" activePageId="uk.co.thefoundry.vectorscope.1">
+                            <page id="uk.co.thefoundry.vectorscope.1"/>
+                        </dock>
+                    </splitter>
+                </splitter>
+            </splitter>
+        </splitter>
+    </window>
+    <window x="1920" y="0" w="1920" h="1080" fullscreen="1" screen="0">
+        <splitter orientation="1">
+            <split size="1920"/>
+            <dock id="" activePageId="Viewer.1">
+                <page id="Viewer.1"/>
+            </dock>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name //zombillenium/zombidamas/private/jeremyb/zomb/misc/notes/nuke/compositing/python/combine_depth.nk
+ first_frame 101
+ last_frame 171
+ lock_range true
+ format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ colorManagement Nuke
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode1
+ tile_color 0x978b8bff
+ label "COMBINE_DEPTH\nAA - NO AA"
+ note_font "Verdana Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold"
+ note_font_size 28
+ xpos -217
+ ypos -393
+ bdwidth 505
+ bdheight 675
+}
+BackdropNode {
+ inputs 0
+ name BackdropNode3
+ tile_color 0x8ecbd6ff
+ label FOG_COLOR
+ note_font "Verdana Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold Bold"
+ note_font_size 28
+ xpos -219
+ ypos 307
+ bdwidth 509
+ bdheight 212
+}
+Dot {
+ inputs 0
+ name Dot18
+ xpos -189
+ ypos -210
+}
+Dot {
+ name Dot52
+ tile_color 0xffffffff
+ gl_color 0xffffffff
+ label i_Set2_Depth
+ note_font "Verdana Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic"
+ note_font_size 14
+ note_font_color 0xffffffff
+ xpos 148
+ ypos -210
+}
+set N38a3400 [stack 0]
+push $N38a3400
+Group {
+ inputs 2
+ name Kill_inf_depth_value_02
+ xpos 114
+ ypos -34
+ addUserKnob {20 normalize_Depth}
+ addUserKnob {41 temp_expr0 l "Min value" T brake_inf_value.temp_expr0}
+ addUserKnob {41 premult T Unpremult1.disable}
+ addUserKnob {41 aanoaa l "AA - noAA" T Switch1.which}
+ addUserKnob {26 ""}
+ addUserKnob {41 disabletrunc l "disable Trunc Alpha" T trunc_alpha.disable}
+ addUserKnob {41 disablerode l "disable Erode Alpha" T FilterErode1.disable}
+ addUserKnob {41 scale T trunc_alpha.scale}
+ addUserKnob {26 ""}
+}
+ Input {
+  inputs 0
+  name alpha
+  xpos 38
+  ypos 174
+  number 1
+ }
+ Expression {
+  temp_expr0 0
+  channel0 none
+  expr0 trunc(r*scale)/scale
+  channel1 none
+  expr1 trunc(g*scale)/scale
+  channel2 none
+  expr2 trunc(b*scale)/scale
+  expr3 trunc(a*scale)-1
+  name trunc_alpha
+  xpos 38
+  ypos 238
+  cached true
+  disable true
+  addUserKnob {20 User}
+  addUserKnob {7 scale R 2 20}
+  scale 2
+ }
+ FilterErode {
+  channels alpha
+  size {{trunc_alpha.scale/-10}}
+  name FilterErode1
+  xpos 38
+  ypos 296
+  disable true
+ }
+ Input {
+  inputs 0
+  name depth
+  xpos 424
+  ypos 171
+ }
+set N15672400 [stack 0]
+ Shuffle {
+  in depth
+  name Shuffle_depth
+  xpos 285
+  ypos 310
+ }
+push $N15672400
+add_layer {depth_aa depth_aa.red depth_aa.green depth_aa.blue depth_aa.alpha}
+ Multiply {
+  channels depth_aa
+  value -1
+  name Multiply1
+  xpos 424
+  ypos 283
+ }
+ Shuffle {
+  in depth_aa
+  red blue
+  green blue
+  name Shuffle_depthaa
+  xpos 424
+  ypos 367
+ }
+ Switch {
+  inputs 2
+  which 1
+  name Switch1
+  selected true
+  xpos 285
+  ypos 367
+ }
+ Copy {
+  inputs 2
+  from0 rgba.alpha
+  to0 rgba.alpha
+  name Copy1
+  xpos 38
+  ypos 361
+ }
+ Unpremult {
+  name Unpremult1
+  xpos 38
+  ypos 434
+  disable true
+ }
+ Expression {
+  temp_name0 valmin
+  temp_expr0 0.000001
+  channel0 rgb
+  expr0 r==0?valmin:r
+  name brake_inf_value
+  xpos 38
+  ypos 487
+  addUserKnob {20 User}
+  addUserKnob {7 infvalknob R 0.0001 1}
+  infvalknob 1e-005
+ }
+ Expression {
+  channel0 rgb
+  expr0 1/r
+  name flip_nrm_space
+  xpos 38
+  ypos 548
+ }
+set N156bc400 [stack 0]
+ Output {
+  name Output1
+  xpos 38
+  ypos 660
+ }
+push $N156bc400
+ Viewer {
+  frame_range 101-140
+  name Viewer1
+  xpos -223
+  ypos 247
+ }
+end_group
+Premult {
+ name Premult7
+ xpos 114
+ ypos 49
+}
+Dot {
+ name Dot34
+ xpos 148
+ ypos 200
+}
+Dot {
+ inputs 0
+ name Dot20
+ xpos -191
+ ypos -168
+}
+Dot {
+ name Dot16
+ label i_Set1_Depth
+ note_font "Verdana Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic"
+ note_font_size 14
+ xpos 11
+ ypos -168
+}
+set N390ac00 [stack 0]
+push $N390ac00
+Group {
+ inputs 2
+ name Kill_inf_depth_value_01
+ xpos -23
+ ypos -33
+ addUserKnob {20 normalize_Depth}
+ addUserKnob {41 temp_expr0 l "Min value" T brake_inf_value.temp_expr0}
+ addUserKnob {41 premult T Unpremult1.disable}
+ addUserKnob {41 aanoaa l "AA - noAA" T Switch1.which}
+ addUserKnob {26 ""}
+ addUserKnob {41 disabletrunc l "disable Trunc Alpha" T trunc_alpha.disable}
+ addUserKnob {41 disablerode l "disable Erode Alpha" T FilterErode1.disable}
+ addUserKnob {41 scale T trunc_alpha.scale}
+ addUserKnob {26 ""}
+}
+ Input {
+  inputs 0
+  name alpha
+  xpos 38
+  ypos 174
+  number 1
+ }
+ Expression {
+  temp_expr0 0
+  channel0 none
+  expr0 trunc(r*scale)/scale
+  channel1 none
+  expr1 trunc(g*scale)/scale
+  channel2 none
+  expr2 trunc(b*scale)/scale
+  expr3 trunc(a*scale)-1
+  name trunc_alpha
+  xpos 38
+  ypos 238
+  cached true
+  disable true
+  addUserKnob {20 User}
+  addUserKnob {7 scale R 2 20}
+  scale 2
+ }
+ FilterErode {
+  channels alpha
+  size {{trunc_alpha.scale/-10}}
+  name FilterErode1
+  xpos 38
+  ypos 296
+  disable true
+ }
+ Input {
+  inputs 0
+  name depth
+  xpos 424
+  ypos 171
+ }
+set N2cb4dc00 [stack 0]
+ Shuffle {
+  in depth
+  name Shuffle_depth
+  xpos 285
+  ypos 310
+ }
+push $N2cb4dc00
+ Multiply {
+  channels depth_aa
+  value -1
+  name Multiply1
+  xpos 424
+  ypos 283
+ }
+ Shuffle {
+  in depth_aa
+  red blue
+  green blue
+  name Shuffle_depthaa
+  xpos 424
+  ypos 367
+ }
+ Switch {
+  inputs 2
+  which 1
+  name Switch1
+  selected true
+  xpos 285
+  ypos 367
+ }
+ Copy {
+  inputs 2
+  from0 rgba.alpha
+  to0 rgba.alpha
+  name Copy1
+  xpos 38
+  ypos 361
+ }
+ Unpremult {
+  name Unpremult1
+  xpos 38
+  ypos 434
+  disable true
+ }
+ Expression {
+  temp_name0 valmin
+  temp_expr0 0.000001
+  channel0 rgb
+  expr0 r==0?valmin:r
+  name brake_inf_value
+  xpos 38
+  ypos 487
+  addUserKnob {20 User}
+  addUserKnob {7 infvalknob R 0.0001 1}
+  infvalknob 1e-005
+ }
+ Expression {
+  channel0 rgb
+  expr0 1/r
+  name flip_nrm_space
+  xpos 38
+  ypos 548
+ }
+set N2cb87c00 [stack 0]
+ Output {
+  name Output1
+  xpos 38
+  ypos 660
+ }
+push $N2cb87c00
+ Viewer {
+  frame_range 101-140
+  name Viewer1
+  xpos -223
+  ypos 247
+ }
+end_group
+Premult {
+ name Premult6
+ xpos -23
+ ypos 49
+}
+Dot {
+ name Dot25
+ xpos 11
+ ypos 138
+}
+Dot {
+ inputs 0
+ name Dot24
+ xpos -190
+ ypos -126
+}
+Dot {
+ name Dot54
+ label i_Set0_Depth
+ note_font "Verdana Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic"
+ note_font_size 14
+ note_font_color 0xff
+ xpos -117
+ ypos -126
+}
+set N24ead000 [stack 0]
+push $N24ead000
+Group {
+ inputs 2
+ name Kill_inf_depth_value_00
+ xpos -151
+ ypos -35
+ addUserKnob {20 normalize_Depth}
+ addUserKnob {41 temp_expr0 l "Min value" T brake_inf_value.temp_expr0}
+ addUserKnob {41 premult T Unpremult1.disable}
+ addUserKnob {41 aanoaa l "AA - noAA" T Switch1.which}
+ addUserKnob {26 ""}
+ addUserKnob {41 disabletrunc l "disable Trunc Alpha" T trunc_alpha.disable}
+ addUserKnob {41 disablerode l "disable Erode Alpha" T FilterErode1.disable}
+ addUserKnob {41 scale T trunc_alpha.scale}
+ addUserKnob {26 ""}
+}
+ Input {
+  inputs 0
+  name alpha
+  xpos 38
+  ypos 174
+  number 1
+ }
+ Expression {
+  temp_expr0 0
+  channel0 none
+  expr0 trunc(r*scale)/scale
+  channel1 none
+  expr1 trunc(g*scale)/scale
+  channel2 none
+  expr2 trunc(b*scale)/scale
+  expr3 trunc(a*scale)-1
+  name trunc_alpha
+  xpos 38
+  ypos 238
+  cached true
+  disable true
+  addUserKnob {20 User}
+  addUserKnob {7 scale R 2 20}
+  scale 2
+ }
+ FilterErode {
+  channels alpha
+  size {{trunc_alpha.scale/-10}}
+  name FilterErode1
+  xpos 38
+  ypos 296
+  disable true
+ }
+ Input {
+  inputs 0
+  name depth
+  xpos 424
+  ypos 171
+ }
+set N2cb86000 [stack 0]
+ Shuffle {
+  in depth
+  name Shuffle_depth
+  xpos 285
+  ypos 310
+ }
+push $N2cb86000
+ Multiply {
+  channels depth_aa
+  value -1
+  name Multiply1
+  xpos 424
+  ypos 283
+ }
+ Shuffle {
+  in depth_aa
+  red blue
+  green blue
+  name Shuffle_depthaa
+  xpos 424
+  ypos 367
+ }
+ Switch {
+  inputs 2
+  which 1
+  name Switch1
+  selected true
+  xpos 285
+  ypos 367
+ }
+ Copy {
+  inputs 2
+  from0 rgba.alpha
+  to0 rgba.alpha
+  name Copy1
+  xpos 38
+  ypos 361
+ }
+ Unpremult {
+  name Unpremult1
+  xpos 38
+  ypos 434
+  disable true
+ }
+ Expression {
+  temp_name0 valmin
+  temp_expr0 0.000001
+  channel0 rgb
+  expr0 r==0?valmin:r
+  name brake_inf_value
+  xpos 38
+  ypos 487
+  addUserKnob {20 User}
+  addUserKnob {7 infvalknob R 0.0001 1}
+  infvalknob 1e-005
+ }
+ Expression {
+  channel0 rgb
+  expr0 1/r
+  name flip_nrm_space
+  xpos 38
+  ypos 548
+ }
+set N2cbc6000 [stack 0]
+ Output {
+  name Output1
+  xpos 38
+  ypos 660
+ }
+push $N2cbc6000
+ Viewer {
+  frame_range 101-140
+  name Viewer1
+  xpos -223
+  ypos 247
+ }
+end_group
+Premult {
+ name Premult8
+ xpos -151
+ ypos 51
+}
+Merge2 {
+ inputs 2
+ operation max
+ name Merge3
+ xpos -151
+ ypos 134
+}
+Merge2 {
+ inputs 2
+ operation max
+ name Merge4
+ xpos -151
+ ypos 196
+}
+Grade {
+ whitepoint 0.03
+ name MAIN_DEPTH_VALUE4
+ xpos -151
+ ypos 255
+}
+Dot {
+ name Dot28
+ xpos -117
+ ypos 368
+}
+set N24f06c00 [stack 0]
+push $N24f06c00
+Grade {
+ blackpoint 0.07
+ whitepoint 2.55
+ white 0.94
+ multiply 1.94
+ gamma 0.2
+ black_clamp false
+ name Final_Grade
+ xpos -81
+ ypos 364
+}
+Dot {
+ name Dot29
+ xpos 79
+ ypos 368
+}
+Constant {
+ inputs 0
+ color {0.2581827939 0.4178849757 0.527115047 0.9215686917}
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ name Constant4
+ xpos 169
+ ypos 429
+}
+Copy {
+ inputs 2
+ from0 rgba.red
+ to0 rgba.alpha
+ name Copy10
+ xpos 45
+ ypos 446
+}
+Switch {
+ inputs 2
+ which 1
+ name Switch_fog
+ label "\[value Switch_fog.which]"
+ xpos -151
+ ypos 446
+}
+Dot {
+ name Dot30
+ label o_Combine_Depth
+ note_font "Verdana Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic Bold Italic"
+ note_font_size 14
+ xpos -117
+ ypos 496
+}
+StickyNote {
+ inputs 0
+ name StickyNote1
+ label "<p>\nswitch = 0 : Applique un fog de la couleur du constant "
+ xpos 5
+ ypos 327
+}
+StickyNote {
+ inputs 0
+ name StickyNote2
+ label "Si vous utilisez le <b>LdvDmToon</b>, veuillez à copier l'alpha <b>brute</b> de votre EXR.    \nCar si vous utilisez l'alpha <u>après</u> le <b>LdvDmToon</b>, vous allez avoir un lisere.     \n\n"
+ note_font "Verdana Italic Italic Italic Italic Italic Italic Italic Italic"
+ note_font_size 14
+ xpos -202
+ ypos -299
+}

@@ -277,7 +277,7 @@ class LayerManager:
                 partitionOrigS = each
                 break
 
-        mc.createRenderLayer( layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True )
+        mc.createRenderLayer(layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True)
         self.initLayer()
 
 
@@ -321,6 +321,80 @@ class LayerManager:
         self.log.printL("i", txt)
         return dict(resultB=self.log.resultB, logL=self.log.logL)
 
+    def duplicateLayerWithOverrides(self, layerName="", rndItemL=None):
+        self.log.funcName = "'duplicateLayer'"
+        if not layerName:
+            layerName = self.layerNameS + "_copy"
+
+        layerContentOrigL = self.layerMemberL
+        layerSetOrigL = self.layerSetL
+        layerIdOrigI = self.layerIdI
+        layerNameOrigS = self.layerNameS
+
+
+        if not self.layerNameS:
+            txt = "'{}' cannot be duplicated".format(layerName)
+            self.log.printL("i", txt)
+            return dict(resultB=self.log.resultB, logL=self.log.logL)
+
+        if layerName in mc.ls("*", type="renderLayer"):
+            txt = "'{}' render layer already exist".format(layerName)
+            self.log.printL("e", txt)
+            return dict(resultB=self.log.resultB, logL=self.log.logL)
+
+        allPartitionL = mc.ls(type="partition")
+        partitionOrigS = ""
+        for each in allPartitionL:
+            setL = mc.partition(each, q=True)
+            if setL == layerSetOrigL:
+                partitionOrigS = each
+                break
+
+#        mc.createRenderLayer(layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True)
+        mc.duplicate(layerNameOrigS, name=layerName, inputConnections=True)
+        mc.editRenderLayerGlobals(currentRenderLayer=layerName)
+        self.initLayer()
+
+
+        layerIdS = str(mc.getAttr(self.layerNameS + ".identification"))
+
+        toDeleteL = mc.ls("par_lyrID" + layerIdS) + mc.ls(self.layerSetL)
+        if toDeleteL:
+            mc.delete(toDeleteL)
+            print "deleting:", toDeleteL
+
+        mc.partition(name="par_lyrID" + layerIdS)
+        mc.duplicate(layerSetOrigL[0], name=self.layerSetL[0], inputConnections=True)
+        mc.duplicate(layerSetOrigL[1], name=self.layerSetL[1], inputConnections=True)
+        mc.duplicate(layerSetOrigL[2], name=self.layerSetL[2], inputConnections=True)
+
+        print "switch to ", layerNameOrigS
+        mc.editRenderLayerGlobals(currentRenderLayer=layerNameOrigS)
+        mc.editRenderLayerAdjustment(self.layerSetL[1] + ".aiOverride", remove=False)
+        mc.editRenderLayerAdjustment(self.layerSetL[2] + ".aiOverride", remove=False)
+        mc.editRenderLayerGlobals(currentRenderLayer=layerName)
+        print "switch to ", layerName
+
+        mc.setAttr(self.layerSetL[1] + ".aiOverride", 0)
+        mc.editRenderLayerAdjustment(self.layerSetL[1] + ".aiOverride")
+        mc.setAttr(self.layerSetL[1] + ".aiOverride", 1)
+
+        mc.setAttr(self.layerSetL[2] + ".aiOverride", 0)
+        mc.editRenderLayerAdjustment(self.layerSetL[2] + ".aiOverride")
+        mc.setAttr(self.layerSetL[2] + ".aiOverride", 1)
+
+        for eachSet in self.layerSetL:
+            outConnectionL = mc.listConnections(eachSet + ".partition", d=True, s=False, plugs=True)
+            if outConnectionL:
+                for eachConnection in outConnectionL:
+                    mc.disconnectAttr (eachSet + ".partition", eachConnection)
+
+        mc.partition(self.layerSetL, add="par_lyrID" + layerIdS)
+
+
+        txt = "'{}' duplicated with ovveride to {}".format(layerNameOrigS, layerName)
+        self.log.printL("i", txt)
+        return dict(resultB=self.log.resultB, logL=self.log.logL)
 
     def createLightPass(self):
         self.log.funcName ="'createLightPass' "
@@ -334,7 +408,7 @@ class LayerManager:
             self.log.printL("i", txt)
             return dict(resultB=self.log.resultB, logL=self.log.logL)
 
-        setVisibleL = mc.ls(self.layerSetL[0], type = "objectSet")
+        setVisibleL = mc.ls(self.layerSetL[0], type="objectSet")
         if setVisibleL:
             setVisibleMemberL= mc.sets(setVisibleL[0], q=True)
         else:
@@ -344,15 +418,16 @@ class LayerManager:
         dmnToonL = []
         for eachGeo in setVisibleMemberL:
             shdGroupL = mc.ls(mc.listHistory(eachGeo,future = True),type="shadingEngine")
-            if "eye" in eachGeo or "outline" in eachGeo:
-                pass
-            else:
-                if mc.getAttr(eachGeo+".aiSelfShadows")!=1:
-                    mc.editRenderLayerAdjustment(eachGeo+".aiSelfShadows")
-                    mc.setAttr(eachGeo + ".aiSelfShadows", 1)
-                if mc.getAttr(eachGeo+".castsShadows")!=1:
-                    mc.editRenderLayerAdjustment(eachGeo+".castsShadows")
-                    mc.setAttr(eachGeo+".castsShadows",1)
+            if mc.nodeType(eachGeo) == 'mesh':
+                if "eye" and "outline" in eachGeo:
+                    pass
+                else:
+                    if mc.getAttr(eachGeo + ".aiSelfShadows") != 1:
+                        mc.editRenderLayerAdjustment(eachGeo + ".aiSelfShadows")
+                        mc.setAttr(eachGeo + ".aiSelfShadows", 1)
+                    if mc.getAttr(eachGeo + ".castsShadows") != 1:
+                        mc.editRenderLayerAdjustment(eachGeo + ".castsShadows")
+                        mc.setAttr(eachGeo + ".castsShadows", 1)
 
             for eachSG in shdGroupL:
                 aiShaderL = mc.listConnections(eachSG+'.aiSurfaceShader',connections = False,  source =True, destination = False)
@@ -419,15 +494,16 @@ class LayerManager:
         dmnToonL = []
         for eachGeo in setVisibleMemberL:
             shdGroupL = mc.ls(mc.listHistory(eachGeo, future=True), type="shadingEngine")
-            if "eye" in eachGeo or "outline" in eachGeo:
-                pass
-            else:
-                if mc.getAttr(eachGeo + ".aiSelfShadows") != 1:
-                    mc.editRenderLayerAdjustment(eachGeo + ".aiSelfShadows")
-                    mc.setAttr(eachGeo + ".aiSelfShadows", 1)
-                if mc.getAttr(eachGeo + ".castsShadows") != 1:
-                    mc.editRenderLayerAdjustment(eachGeo + ".castsShadows")
-                    mc.setAttr(eachGeo + ".castsShadows", 1)
+            if mc.nodeType(eachGeo) == 'mesh':
+                if "eye" in eachGeo or "outline" in eachGeo:
+                    pass
+                else:
+                    if mc.getAttr(eachGeo + ".aiSelfShadows") != 1:
+                        mc.editRenderLayerAdjustment(eachGeo + ".aiSelfShadows")
+                        mc.setAttr(eachGeo + ".aiSelfShadows", 1)
+                    if mc.getAttr(eachGeo + ".castsShadows") != 1:
+                        mc.editRenderLayerAdjustment(eachGeo + ".castsShadows")
+                        mc.setAttr(eachGeo + ".castsShadows", 1)
 
             for eachSG in shdGroupL:
                 aiShaderL = mc.listConnections(eachSG + '.aiSurfaceShader', connections=False, source=True, destination=False)

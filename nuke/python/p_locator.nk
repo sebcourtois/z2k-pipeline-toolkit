@@ -1,0 +1,191 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="0" y="28" w="1920" h="1052" screen="1">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1868" stretch="1"/>
+            <splitter orientation="1">
+                <split size="1228"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                    <page id="uk.co.thefoundry.scripteditor.1"/>
+                </dock>
+                <split size="636"/>
+                <dock id="" activePageId="Properties.1">
+                    <page id="Properties.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+    <window x="1920" y="0" w="1920" h="1080" fullscreen="1" screen="0">
+        <splitter orientation="1">
+            <split size="1683"/>
+            <dock id="" activePageId="Viewer.1">
+                <page id="Viewer.1"/>
+            </dock>
+            <split size="233"/>
+            <splitter orientation="2">
+                <split size="444"/>
+                <dock id="" activePageId="Error Console.1">
+                    <page id="Error Console.1"/>
+                </dock>
+                <split size="308"/>
+                <dock id="" activePageId="uk.co.thefoundry.waveformscope.1">
+                    <page id="uk.co.thefoundry.waveformscope.1"/>
+                </dock>
+                <split size="320"/>
+                <dock id="" activePageId="uk.co.thefoundry.vectorscope.1">
+                    <page id="uk.co.thefoundry.vectorscope.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name //Zombillenium/zombidamas/private/jeremyb/zomb/misc/notes/nuke/compositing/python/p_locator.nk
+ format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ colorManagement Nuke
+}
+add_layer {P P.X P.Y P.Z}
+Group {
+ inputs 0
+ name P_Locator
+ help "p_locator V2"
+ xpos -210
+ ypos -67
+ addUserKnob {20 choice_1 l choice}
+ addUserKnob {4 choice l "Output choice :" M {"Locator File" "Nuke Axis" "" "" ""}}
+ addUserKnob {20 User l "Locator File"}
+ addUserKnob {41 in l "position data" T P_Matte_axisFile.in}
+ addUserKnob {41 output T P_Matte_axisFile.output}
+ addUserKnob {41 unpremultiply T P_Matte_axisFile.unpremultiply}
+ addUserKnob {41 useAlpha l "ignore outside alpha" T P_Matte_axisFile.useAlpha}
+ addUserKnob {26 ""}
+ addUserKnob {41 matteShape T P_Matte_axisFile.matteShape}
+ addUserKnob {41 center T P_Matte_axisFile.center}
+ addUserKnob {26 ""}
+ addUserKnob {41 rot_order l "rotation order" T P_Matte_axisFile.rot_order}
+ addUserKnob {41 rotate T P_Matte_axisFile.rotate}
+ addUserKnob {41 scaling l scale T P_Matte_axisFile.scaling}
+ addUserKnob {41 uniform_scale l "uniform scale" T P_Matte_axisFile.uniform_scale}
+ addUserKnob {41 skew T P_Matte_axisFile.skew}
+ addUserKnob {41 pivot T P_Matte_axisFile.pivot}
+ addUserKnob {41 offsetAxis l "Axis Offset : " T P_Matte_axisFile.offsetAxis}
+ addUserKnob {26 ""}
+ addUserKnob {41 falloffType T P_Matte_axisFile.falloffType}
+ addUserKnob {41 falloff T P_Matte_axisFile.falloff}
+ addUserKnob {41 exp T P_Matte_axisFile.exp}
+ addUserKnob {20 User_1 l "Axis Nuke"}
+ addUserKnob {41 in_1 l "position data" T P_Matte_axisnuke.in}
+ addUserKnob {41 output_1 l output T P_Matte_axisnuke.output}
+ addUserKnob {41 unpremultiply_1 l unpremultiply T P_Matte_axisnuke.unpremultiply}
+ addUserKnob {41 useAlpha_1 l "ignore outside alpha" T P_Matte_axisnuke.useAlpha}
+ addUserKnob {26 ""}
+ addUserKnob {41 matteShape_1 l matteShape T P_Matte_axisnuke.matteShape}
+ addUserKnob {41 center_1 l center T P_Matte_axisnuke.center}
+ addUserKnob {26 ""}
+ addUserKnob {41 rot_order_1 l "rotation order" T P_Matte_axisnuke.rot_order}
+ addUserKnob {41 rotate_1 l rotate T P_Matte_axisnuke.rotate}
+ addUserKnob {41 scaling_1 l scale T P_Matte_axisnuke.scaling}
+ addUserKnob {41 uniform_scale_1 l "uniform scale" T P_Matte_axisnuke.uniform_scale}
+ addUserKnob {41 skew_1 l skew T P_Matte_axisnuke.skew}
+ addUserKnob {41 pivot_1 l pivot T P_Matte_axisnuke.pivot}
+ addUserKnob {41 offsetAxis_1 l "Axis Offset : " T P_Matte_axisnuke.offsetAxis}
+ addUserKnob {26 ""}
+ addUserKnob {41 falloffType_1 l falloffType T P_Matte_axisnuke.falloffType}
+ addUserKnob {41 falloff_1 l falloff T P_Matte_axisnuke.falloff}
+ addUserKnob {41 exp_1 l exp T P_Matte_axisnuke.exp}
+ addUserKnob {20 "" l File}
+ addUserKnob {41 read_from_file_link l "read from file" T LOCATOR.read_from_file_link}
+ addUserKnob {41 file T LOCATOR.file}
+ addUserKnob {41 reload T LOCATOR.reload}
+ addUserKnob {41 fbx_take_name l "animation stack name" T LOCATOR.fbx_take_name}
+ addUserKnob {41 fbx_node_name l "node name" T LOCATOR.fbx_node_name}
+ addUserKnob {41 fbx_load_take_node_names l "load take node names" T LOCATOR.fbx_load_take_node_names}
+ addUserKnob {41 frame_rate l "frame rate" T LOCATOR.frame_rate}
+ addUserKnob {41 use_frame_rate l "use frame rate" T LOCATOR.use_frame_rate}
+ addUserKnob {26 "" l " "}
+}
+ Axis2 {
+  inputs 0
+  translate {{curve x101 34.55944061 34.56102753 34.56623077 34.57233429 34.52305984 34.38330841 34.17248535 33.92946625 33.67478943 33.39089966 33.08474731 32.73620605 32.34056091 31.93369484 31.56950569 31.28952789 31.09651375 30.97050858 30.87895584 30.80861282 30.75709343 30.72175598 30.69876671 30.6853981 30.68060684 30.68060684 30.68060684 30.68060684 30.68060684 30.68060684 30.68060684 30.68060684 30.68061829 30.68071747 30.68100166 30.68034172 30.67898941 30.67910385 30.68284225 30.69177628 30.7057724 30.72539139 30.76807404 30.84438324 30.94802094 31.06653595 31.19255829 31.32476425 31.45617676 31.58112717 31.69101906 31.78141022 31.8504715 31.89904404 31.93320084 31.95789719 31.97445297 31.98184204 31.983284 31.98373795 31.98373795 31.98373795 31.98373795} {curve x101 577.2495698 577.2501802 577.251523 577.2524995 577.2405366 577.2188081 577.2129488 577.2462739 577.317563 577.4088716 577.5105562 577.6134614 577.7073335 577.7994966 577.8931245 577.9782075 578.0454072 578.0983858 578.1433687 578.17352 578.1886568 578.1959199 578.1980562 578.1984224 578.1986665 578.1986665 578.1986665 578.1986665 578.1986665 578.1986665 578.1986665 578.1986665 578.1987276 578.1987886 578.1987886 578.1983613 578.1970796 578.1946382 578.190854 578.1874361 578.1854829 578.1842622 578.175107 578.1530122 578.1251802 578.0955781 578.058896 578.0082368 577.9479341 577.8855562 577.8273286 577.7756319 577.7329072 577.7017183 577.6808443 577.6681489 577.6610689 577.6586275 577.6587495 577.6587495 577.6587495 577.6587495 577.6587495} {curve x101 101.2061768 101.206871 101.207077 101.2046432 101.1336975 100.9721832 100.7911377 100.6525345 100.5576706 100.4800415 100.4195862 100.3724213 100.3505096 100.3621674 100.4076385 100.4783936 100.5650253 100.6628418 100.7553711 100.822052 100.8563843 100.8704834 100.8727264 100.87146 100.8712921 100.8712921 100.8712921 100.8712921 100.8712921 100.8712921 100.8712921 100.8712921 100.8712921 100.8711548 100.8706741 100.866272 100.856514 100.8443909 100.832901 100.8274078 100.8277817 100.8304062 100.8273239 100.8151245 100.7976379 100.779129 100.7615662 100.7438202 100.7281723 100.7152939 100.705162 100.6950607 100.6826935 100.6681061 100.6548462 100.6467438 100.642807 100.6416473 100.6414795 100.6414185 100.6414185 100.6414185 100.6414185}}
+  rotate {{curve x101 7.209865646 7.21025418 7.20979384 7.209248544 6.64314337 5.367120803 3.942303906 2.730619433 1.652245752 0.5808558123 -0.3362347168 -1.050301316 -1.57454515 -1.933422285 -2.134294866 -2.181958036 -2.116189977 -1.881395826 -1.529606465 -1.238444501 -1.085860449 -1.02632612 -1.02232598 -1.035996306 -1.041267143 -1.041267143 -1.041267143 -1.041267143 -1.041267143 -1.041267143 -1.041267143 -1.041267143 -1.038785016 -1.033363189 -1.026230608 -1.019320036 -1.008550811 -0.9916600012 -0.9643187833 -0.8697477662 -0.6724921437 -0.4048140778 -0.1884512337 -0.1288905061 -0.2294648658 -0.4940813085 -0.9143060296 -1.452923918 -2.071196785 -2.740827437 -3.425797115 -4.070866032 -4.642238562 -5.110517577 -5.411284797 -5.541594892 -5.569665254 -5.566176716 -5.561159525 -5.559604666 -5.559604666 -5.559604666 -5.559604666} {curve x101 19.06916369 19.07262871 19.0909615 19.13954558 20.13146564 22.42304083 25.20860199 27.55009323 29.11315899 30.39434054 31.57311842 33.13970976 35.29286807 37.7869643 39.9969721 41.44667248 42.02855692 41.91164936 41.63741174 41.46951869 41.45481372 41.51068259 41.58708561 41.63756986 41.64962692 41.64962692 41.64962692 41.64962692 41.64962692 41.64962692 41.64962692 41.64962692 41.64994691 41.65149977 41.65533131 41.665003 41.67688376 41.6963824 41.7235541 41.81779356 42.01634858 42.29884618 42.49550818 42.46234298 42.19870141 41.71090389 40.6175068 38.71212775 36.28408672 33.62775459 31.04681077 28.82340879 27.17103813 26.21365103 25.71771989 25.34668317 25.102529 25.01219573 25.01415659 25.01520408 25.01520408 25.01520408 25.01520408} {curve x101 -100.778538 -100.7786264 -100.7786058 -100.7782251 -101.3434241 -102.527884 -103.4776194 -103.4223221 -102.2821093 -100.5427072 -98.45978705 -96.23424058 -94.08290639 -92.04544685 -90.0494784 -88.19178224 -86.51581007 -84.95288955 -83.53910139 -82.4903602 -81.89823449 -81.61843099 -81.52898514 -81.5086032 -81.49616922 -81.49616922 -81.49616922 -81.49616922 -81.49616922 -81.49616922 -81.49616922 -81.49616922 -81.49553435 -81.496051 -81.5007242 -81.51593117 -81.54918992 -81.61243749 -81.71571038 -81.85995813 -82.03899834 -82.25440193 -82.56369578 -82.95372109 -83.31421022 -83.53453743 -83.71634905 -84.03919503 -84.47954263 -84.99434186 -85.55720995 -86.19993974 -86.91106961 -87.61681835 -88.33852131 -89.01368624 -89.51481913 -89.72337537 -89.73842045 -89.74344494 -89.74344494 -89.74344494 -89.74344494}}
+  scaling {{curve x101 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1} {curve x101 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1} {curve x101 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1}}
+  uniform_scale {{curve x101 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1}}
+  skew {{curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} {curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} {curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0}}
+  pivot {{curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} {curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0} {curve x101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0}}
+  version 2
+  name LOCATOR
+  xpos 76
+  ypos 174
+ }
+ Input {
+  inputs 0
+  name p_32_input
+  note_font Verdana
+  xpos -43
+  ypos 74
+ }
+set N47297c00 [stack 0]
+ P_Matte {
+  name P_Matte_axisnuke
+  selected true
+  xpos 239
+  ypos 188
+  in P
+  output alpha
+  center {{"\[topnode input1].translate+offsetAxis"} {"\[topnode input1].translate+offsetAxis"} {"\[topnode input1].translate+offsetAxis"}}
+  uniform_scale 4.4
+  falloffType Exponential
+  falloff 0.828
+  exp 5.44
+  addUserKnob {20 Axis_Settings}
+  addUserKnob {13 offsetAxis l "Axis Offset : "}
+ }
+push $N47297c00
+ P_Matte {
+  name P_Matte_axisFile
+  xpos -43
+  ypos 188
+  in P
+  output alpha
+  center {{parent.parent.LOCATOR.translate+offsetAxis} {parent.parent.LOCATOR.translate+offsetAxis} {parent.parent.LOCATOR.translate+offsetAxis}}
+  uniform_scale 4.4
+  falloffType Exponential
+  falloff 0.828
+  exp 5.44
+  addUserKnob {20 Axis_Settings}
+  addUserKnob {13 offsetAxis l "Axis Offset : "}
+ }
+ Switch {
+  inputs 2
+  which {{parent.choice}}
+  name Switch1
+  xpos -43
+  ypos 333
+ }
+ Output {
+  name Output1
+  xpos -43
+  ypos 433
+ }
+ Input {
+  inputs 0
+  name axis_input
+  note_font Verdana
+  xpos 238
+  ypos 75
+  number 1
+ }
+end_group
