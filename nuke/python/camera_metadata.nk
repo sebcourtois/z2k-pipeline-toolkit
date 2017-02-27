@@ -1,0 +1,128 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="-4" y="24" w="1928" h="1060" maximized="1" screen="1">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1876" stretch="1"/>
+            <splitter orientation="1">
+                <split size="1197"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                    <page id="uk.co.thefoundry.scripteditor.1"/>
+                </dock>
+                <split size="675"/>
+                <dock id="" activePageId="Properties.1">
+                    <page id="Properties.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+    <window x="1920" y="0" w="1920" h="1080" maximized="1" fullscreen="1" screen="0">
+        <splitter orientation="1">
+            <split size="1683"/>
+            <dock id="" activePageId="Viewer.1">
+                <page id="Viewer.1"/>
+            </dock>
+            <split size="233"/>
+            <splitter orientation="2">
+                <split size="444"/>
+                <dock id="" activePageId="Error Console.1">
+                    <page id="Error Console.1"/>
+                </dock>
+                <split size="308"/>
+                <dock id="" activePageId="uk.co.thefoundry.waveformscope.1">
+                    <page id="uk.co.thefoundry.waveformscope.1"/>
+                </dock>
+                <split size="320"/>
+                <dock id="" activePageId="uk.co.thefoundry.vectorscope.1">
+                    <page id="uk.co.thefoundry.vectorscope.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name //zombillenium/zombidamas/private/jeremyb/zomb/misc/notes/nuke/compositing/python/camera_metadata.nk
+ frame 174
+ first_frame 101
+ last_frame 177
+ lock_range true
+ format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ colorManagement Nuke
+}
+BackdropNode {
+ inputs 0
+ name BAKED_CAMERA_PLATE
+ tile_color 0x7e3f3fff
+ note_font Verdana
+ note_font_size 16
+ xpos -331
+ ypos 368
+ bdwidth 433
+ bdheight 268
+}
+Camera2 {
+ inputs 0
+ name exr_baked_cam
+ xpos -300
+ ypos 428
+}
+push 0
+push 0
+ScanlineRender {
+ inputs 3
+ conservative_shader_sampling false
+ shutter {{BAKE_CAMERA.shutterbaked}}
+ name ScanRender_baked
+ xpos -182
+ ypos 448
+}
+Dot {
+ name Dot1
+ label OUTPUT
+ note_font "Verdana Bold Bold Bold"
+ note_font_size 12
+ note_font_color 0xff
+ xpos -148
+ ypos 528
+}
+NoOp {
+ inputs 0
+ name BAKE_CAMERA
+ tile_color 0x9c0000ff
+ label "\nEXR Name : \[value BAKE_CAMERA.readername]\nShutter Default : \[value BAKE_CAMERA.shutterbaked]"
+ note_font "Verdana Bold Italic Bold Italic Bold Italic"
+ note_font_size 12
+ note_font_color 0xffffffff
+ xpos -32
+ ypos 427
+ addUserKnob {20 BAKED_SETTINGS}
+ addUserKnob {1 readername l "READER_NAME : " t "READER_NAME = \"reader_baked\"\nCAMERA_NAME = \"exr_baked_cam\"\nSCANRENDER = \"ScanRender_baked\""}
+ readername reader_baked
+ addUserKnob {1 cameraname l "CAMERA_NAME :" t "READER_NAME = \"reader_baked\"\nCAMERA_NAME = \"exr_baked_cam\"\nSCANRENDER = \"ScanRender_baked\""}
+ cameraname exr_baked_cam
+ addUserKnob {1 scanrendername l "SCANRENDER NAME : " t "READER_NAME = \"reader_baked\"\nCAMERA_NAME = \"exr_baked_cam\"\nSCANRENDER = \"ScanRender_baked\""}
+ scanrendername ScanRender_baked
+ addUserKnob {26 ""}
+ addUserKnob {7 shutterbaked l "Baked Shutter" t "Baked Shutter Speed"}
+ shutterbaked 0.5
+ addUserKnob {22 bake l BAKE T "import nuke\nimport os\nimport math\n\n'''\nTODO :\nManque FOV Fichier Maya, voir pour extract en metadata.\nexemple pour une FLenght:\nimport math\nnode = nuke.toNode(\"reader\")\nmetaData = node.metadata()\nhAperture = 35.0\nvAperture = (hAperture)*(metaData\['exr/CameraFilmApertureVertical'])\nfocal = hAperture / (2 * math.tan(math.radians(32.52)/2.0))\nprint round(focal, 3)\n\nREADER_NAME = \"reader_baked\"\nCAMERA_NAME = \"exr_baked_cam\"\nSCANRENDER = \"ScanRender_baked\"\n '''\n \nbakedNode = nuke.toNode('BAKE_CAMERA')\n\nREADER_NAME = bakedNode.knob('readername').value()\nCAMERA_NAME = bakedNode.knob('cameraname').value()\nSCANRENDER = bakedNode.knob('scanrendername').value()\n \ndef getMetadataMatrix(meta_list):\n    m = nuke.math.Matrix4()\n    try:\n        for i in range (0,16) :\n            m\[i] = meta_list\[i]   \n    except:\n        m.makeIdentity()\n    return m    \n\ndef ExrToCamera():\n    # Get Read Node Name to MetaData\n    node = nuke.toNode(READER_NAME)\n    metaData = node.metadata()\n    \n    # Request fields\n    reqFields = \['exr/%s' % i for i in ('worldToCamera', 'worldToNDC')]\n    if not set( reqFields ).issubset( metaData ):\n        nuke.message('no basic matrices for camera found')\n        print 'no basic matrices for camera found'\n        return\n    else:\n        print 'found needed data'\n        \n    # Add/Check some Var, convert inch to mm\n    imageWidth = metaData\['input/width']\n    imageHeight = metaData\['input/height']\n    aspectRatio = float(imageWidth)/float(imageHeight)\n    hAperture = 35.0\n    vAperture = hAperture/aspectRatio\n    #val = node.metadata( 'exr/cameraAperture', frame)\n    #fov = node.metadata( 'exr/cameraFov', frame)\n    #focal = hAperture / (2 * math.tan(math.radians(fov)/2.0))\n    focalLengthMeta = metaData\['exr/CameraFocalLength']\n    focalLengthCam = hAperture*focalLengthMeta\n    \n    # Try fix Sample AA Arnold to ScanLine Render\n    try:\n        scan_render = nuke.toNode(SCANRENDER)        \n        aa_sample = metaData\['exr/arnold/AA_samples']\n        scan_render\['samples'].clearAnimated()\n        scan_render\['samples'].setAnimated()        \n        scan_render\['samples'].setValue( aa_sample )\n    except:\n        print \"No ScanLine Render\"\n    \n    # Get frame settings and prompt user\n    first = node.firstFrame()\n    last = node.lastFrame()\n    ret = nuke.getFramesAndViews( 'Create Camera', '%s-%s' %( first, last )  )\n    frameRange = nuke.FrameRange( ret\[0] )\n    camViews = (ret\[1])\n\n    for act in camViews:\n        # Get Camera node \n        cam = nuke.toNode(CAMERA_NAME)\n        \n        # Reset settings\n        cam\['focal'].clearAnimated()\n        cam\['haperture'].clearAnimated()\n        cam\['vaperture'].clearAnimated()\n        cam\['matrix'].clearAnimated()\n        cam\['matrix'].clearAnimated()\n        \n        # Apply basic no keyframe value\n        cam\['useMatrix'].setValue( True )\n        cam\['haperture'].setValue ( hAperture )\n        cam\['vaperture'].setValue ( vAperture )\n        cam\['focal'].setValue ( round(focalLengthCam, 1) )\n\n        for k in ( 'focal', 'matrix'):\n            cam\[k].setAnimated()\n        \n        task = nuke.ProgressTask( 'Baking camera %s' % node.name() )\n\n        for curTask, frame in enumerate( frameRange ):\n            if task.isCancelled():\n                break\n            task.setMessage( 'processing %s' % frame )\n            wTC = node.metadata('exr/worldToCamera',frame, act)\n            wTN = node.metadata('exr/worldToNDC',frame, act)\n            \n            worldNDC = wTN\n            # Make table\n            lx =  (-1 - worldNDC\[12] - worldNDC\[8]) / worldNDC\[0]\n            rx =  (1 - worldNDC\[12] - worldNDC\[8]) / worldNDC\[0]\n            by = (-1 - worldNDC\[13] - worldNDC\[9]) / worldNDC\[5]\n            ty = (1 - worldNDC\[13] - worldNDC\[9]) / worldNDC\[5]\n            swW = max( lx , rx ) - min( lx , rx )  # Screen Window Width\n            swH = max( by , ty ) - min( by , ty )  # Screen Window Height\n            cam\['focal'].setValueAt(  float( round(focalLengthCam, 1) ), frame )\n        \n            # Matrix math for rotation and translation    \n            matrixList = wTC\n            camMatrix = getMetadataMatrix(wTC)\n            \n            flipZ=nuke.math.Matrix4()\n            flipZ.makeIdentity()\n            flipZ.scale(1,1,-1)\n         \n            transposedMatrix = nuke.math.Matrix4(camMatrix)\n            transposedMatrix.transpose()\n            transposedMatrix=transposedMatrix*flipZ\n            invMatrix=transposedMatrix.inverse()\n            \n            for i in range(0,16):\n                matrixList\[i]=invMatrix\[i]\n            \n            for i, v in enumerate( matrixList ):\n                cam\[ 'matrix' ].setValueAt( v, frame, i)\n\n                task.setProgress( int( float(curTask) / frameRange.frames() *100) )\nExrToCamera()" +STARTLINE}
+}
+StickyNote {
+ inputs 0
+ name StickyNote1
+ label "- <b>Copiez</b> le nom du reader dans <b>BAKE_CAMERA</b>\n- <b> Executez BAKE</b> dans <b>BAKE_CAMERA</b>\n- Ensuite vous pouvez <b>tout supprimer</b> et ne garder que <b>exr_baked_cam</b>"
+ xpos -315
+ ypos 564
+}

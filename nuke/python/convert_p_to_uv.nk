@@ -1,0 +1,230 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="-1924" y="24" w="1928" h="1060" maximized="1" screen="1">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1876" stretch="1"/>
+            <splitter orientation="1">
+                <split size="1233"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                    <page id="uk.co.thefoundry.scripteditor.1"/>
+                </dock>
+                <split size="639"/>
+                <dock id="" activePageId="Properties.1">
+                    <page id="Properties.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+    <window x="0" y="0" w="1920" h="1080" maximized="1" fullscreen="1" screen="0">
+        <splitter orientation="1">
+            <split size="1683"/>
+            <dock id="" activePageId="Viewer.1">
+                <page id="Viewer.1"/>
+            </dock>
+            <split size="233"/>
+            <splitter orientation="2">
+                <split size="444"/>
+                <dock id="" activePageId="Error Console.1">
+                    <page id="Error Console.1"/>
+                </dock>
+                <split size="308"/>
+                <dock id="" activePageId="uk.co.thefoundry.waveformscope.1">
+                    <page id="uk.co.thefoundry.waveformscope.1"/>
+                </dock>
+                <split size="320"/>
+                <dock id="" activePageId="uk.co.thefoundry.vectorscope.1">
+                    <page id="uk.co.thefoundry.vectorscope.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name //zombillenium/zombidamas/private/jeremyb/zomb/misc/notes/nuke/compositing/python/convert_p_to_uv.nk
+ frame 108
+ first_frame 108
+ last_frame 129
+ lock_range true
+ format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ colorManagement Nuke
+}
+BackdropNode {
+ inputs 0
+ name convertPtoZ1
+ tile_color 0xafa98aff
+ label "CONVERT P to UV"
+ note_font "Verdana Bold Bold Bold"
+ note_font_size 24
+ selected true
+ xpos 754
+ ypos -184
+ bdwidth 452
+ bdheight 615
+}
+Axis2 {
+ inputs 0
+ scaling {50 50 50}
+ uniform_scale 10
+ name modify_screen
+ selected true
+ xpos 1105
+ ypos -73
+}
+Input {
+ inputs 0
+ name P_32_input1
+ note_font "Verdana Bold Bold"
+ selected true
+ xpos 795
+ ypos -129
+ number 1
+}
+Shuffle {
+ in rgb
+ name get_rgb
+ selected true
+ xpos 795
+ ypos -69
+}
+Dot {
+ name Dot3
+ selected true
+ xpos 829
+ ypos -3
+}
+set Na3270800 [stack 0]
+NoOp {
+ name pick_position
+ note_font "Verdana Bold"
+ selected true
+ xpos 1096
+ ypos -9
+ addUserKnob {20 User}
+ addUserKnob {12 Center}
+ Center {1056 306}
+ addUserKnob {13 CenterPosition}
+ CenterPosition {{"\[sample this Red Center.x Center.y]"} {"\[sample this Green Center.x Center.y]"} {"\[sample this Blue Center.x Center.y]"}}
+ addUserKnob {22 BakePosition l "Bake Position" T "m = nuke.thisNode()\nxyz = m\['CenterPosition'].getValue()\nm\['BakedCenterPosition'].setValue(xyz)" +STARTLINE}
+ addUserKnob {13 BakedCenterPosition}
+ BakedCenterPosition {-124.096 -258.23 -11.7586}
+}
+Input {
+ inputs 0
+ name screen_to_map
+ note_font "Verdana Bold Bold Bold"
+ selected true
+ xpos 930
+ ypos -126
+ number 2
+}
+Dot {
+ name Dot9
+ selected true
+ xpos 964
+ ypos 35
+}
+set N27031400 [stack 0]
+NoOp {
+ name Get_format1
+ note_font "Verdana Bold"
+ selected true
+ xpos 1097
+ ypos 32
+ addUserKnob {20 User}
+ addUserKnob {14 format R 0 100}
+ format {{format.h} {format.w}}
+}
+Axis2 {
+ inputs 0
+ rotate {{-parent.modify_screen.rotate} {-parent.modify_screen.rotate} {-parent.modify_screen.rotate}}
+ scaling {{1/parent.modify_screen.scaling} {1/parent.modify_screen.scaling} {1/parent.modify_screen.scaling}}
+ uniform_scale {{1000/parent.modify_screen.uniform_scale}}
+ skew {{-parent.modify_screen.skew} {-parent.modify_screen.skew} {-parent.modify_screen.skew}}
+ name select_axis
+ selected true
+ xpos 893
+ ypos 106
+}
+push $Na3270800
+Expression {
+ expr0 "r - parent.pick_position.BakedCenterPosition.x"
+ expr1 "g - parent.pick_position.BakedCenterPosition.y"
+ expr2 "b - parent.pick_position.BakedCenterPosition.z"
+ name MoveToCenter1
+ selected true
+ xpos 795
+ ypos 48
+}
+ColorMatrix {
+ matrix {
+     {{parent.select_axis.world_matrix.0} {parent.select_axis.world_matrix.1} {parent.select_axis.world_matrix.2}}
+     {{parent.select_axis.world_matrix.4} {parent.select_axis.world_matrix.5} {parent.select_axis.world_matrix.6}}
+     {{parent.select_axis.world_matrix.8} {parent.select_axis.world_matrix.9} {parent.select_axis.world_matrix.10}}
+   }
+ name ColorMatrix2
+ selected true
+ xpos 795
+ ypos 74
+}
+Expression {
+ expr0 "(r + (parent.Get_format1.format.w/2) ) / parent.Get_format1.format.w"
+ expr1 "(g + (parent.Get_format1.format.h/2) ) / parent.Get_format1.format.h"
+ name Transform_to_STMap1
+ selected true
+ xpos 795
+ ypos 170
+}
+Expression {
+ expr0 "TileX ? ( MirrorX ? (     (abs(fmod(r, 2)) > 1) ? (1 - abs(fmod(r,1))) : abs(fmod(r,1))     ) :  abs(fmod(r, 1)) ) : r"
+ expr1 "TileY ? ( MirrorY ? (     (abs(fmod(g, 2)) > 1) ? (1 - abs(fmod(g,1))) : abs(fmod(g,1))     ) :  abs(fmod(g, 1)) ) : g"
+ name Tiling2
+ selected true
+ xpos 795
+ ypos 196
+ addUserKnob {20 User}
+ addUserKnob {6 TileX +STARTLINE}
+ addUserKnob {6 MirrorX -STARTLINE}
+ addUserKnob {6 TileY +STARTLINE}
+ addUserKnob {6 MirrorY -STARTLINE}
+}
+BlackOutside {
+ name BlackOutside1
+ selected true
+ xpos 795
+ ypos 222
+}
+push $N27031400
+Dot {
+ name Dot10
+ selected true
+ xpos 964
+ ypos 283
+}
+STMap {
+ inputs 2
+ uv rgb
+ name STMap2
+ selected true
+ xpos 795
+ ypos 273
+}
+Output {
+ name uv_output
+ note_font "Verdana Bold"
+ selected true
+ xpos 795
+ ypos 368
+}

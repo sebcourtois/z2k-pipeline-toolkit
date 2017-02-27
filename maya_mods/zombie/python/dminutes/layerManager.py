@@ -277,7 +277,7 @@ class LayerManager:
                 partitionOrigS = each
                 break
 
-        mc.createRenderLayer( layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True )
+        mc.createRenderLayer(layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True)
         self.initLayer()
 
 
@@ -350,7 +350,9 @@ class LayerManager:
                 partitionOrigS = each
                 break
 
-        mc.createRenderLayer(layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True)
+#        mc.createRenderLayer(layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True)
+        mc.duplicate(layerNameOrigS, name=layerName, inputConnections=True)
+        mc.editRenderLayerGlobals(currentRenderLayer=layerName)
         self.initLayer()
 
 
@@ -367,9 +369,9 @@ class LayerManager:
         mc.duplicate(layerSetOrigL[2], name=self.layerSetL[2], inputConnections=True)
 
         print "switch to ", layerNameOrigS
-        #mc.editRenderLayerGlobals( currentRenderLayer=layerNameOrigS )
-        #mc.editRenderLayerAdjustment(self.layerSetL[1]+".aiOverride", remove=True)
-        #mc.editRenderLayerAdjustment(self.layerSetL[2]+".aiOverride", remove=True)
+        mc.editRenderLayerGlobals(currentRenderLayer=layerNameOrigS)
+        mc.editRenderLayerAdjustment(self.layerSetL[1] + ".aiOverride", remove=False)
+        mc.editRenderLayerAdjustment(self.layerSetL[2] + ".aiOverride", remove=False)
         mc.editRenderLayerGlobals(currentRenderLayer=layerName)
         print "switch to ", layerName
 
@@ -417,7 +419,6 @@ class LayerManager:
         for eachGeo in setVisibleMemberL:
             shdGroupL = mc.ls(mc.listHistory(eachGeo,future = True),type="shadingEngine")
             if mc.nodeType(eachGeo) == 'mesh':
-                print eachGeo
                 if "eye" and "outline" in eachGeo:
                     pass
                 else:
@@ -493,15 +494,16 @@ class LayerManager:
         dmnToonL = []
         for eachGeo in setVisibleMemberL:
             shdGroupL = mc.ls(mc.listHistory(eachGeo, future=True), type="shadingEngine")
-            if "eye" in eachGeo or "outline" in eachGeo:
-                pass
-            else:
-                if mc.getAttr(eachGeo + ".aiSelfShadows") != 1:
-                    mc.editRenderLayerAdjustment(eachGeo + ".aiSelfShadows")
-                    mc.setAttr(eachGeo + ".aiSelfShadows", 1)
-                if mc.getAttr(eachGeo + ".castsShadows") != 1:
-                    mc.editRenderLayerAdjustment(eachGeo + ".castsShadows")
-                    mc.setAttr(eachGeo + ".castsShadows", 1)
+            if mc.nodeType(eachGeo) == 'mesh':
+                if "eye" in eachGeo or "outline" in eachGeo:
+                    pass
+                else:
+                    if mc.getAttr(eachGeo + ".aiSelfShadows") != 1:
+                        mc.editRenderLayerAdjustment(eachGeo + ".aiSelfShadows")
+                        mc.setAttr(eachGeo + ".aiSelfShadows", 1)
+                    if mc.getAttr(eachGeo + ".castsShadows") != 1:
+                        mc.editRenderLayerAdjustment(eachGeo + ".castsShadows")
+                        mc.setAttr(eachGeo + ".castsShadows", 1)
 
             for eachSG in shdGroupL:
                 aiShaderL = mc.listConnections(eachSG + '.aiSurfaceShader', connections=False, source=True, destination=False)

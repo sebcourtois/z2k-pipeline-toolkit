@@ -1,0 +1,71 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+Gizmo {
+ inputs 0
+ postage_stamp true
+ addUserKnob {20 FINDER}
+ addUserKnob {22 auto_fill_entry l "<span style=\\\"color:white\\\"><b>Auto Fill Entry</b></span>" t "Pour les faineants :)\n\n" T "import nuke\nimport os\n\nrootName = nuke.root().name()\n\nshotFinderName = rootName.split(\"/\")\[9]\nseqF = shotFinderName.split(\"_\")\[0]\nshotF = shotFinderName.split(\"_\")\[1]\nshotFClean = shotF.translate(None, \"a\")\n\ndptLast = nuke.root()\['last_frame'].value()\n\n\n#fast fill entry with filename\nnuke.thisNode().knob(\"seqview\").setValue(seqF)\nnuke.thisNode().knob(\"shotview\").setValue(shotFClean)\nnuke.thisNode().knob(\"dptViewLast\").setValue(int(dptLast - 100))" +STARTLINE}
+ addUserKnob {26 dptfinder l "<span style=\\\"color:white\\\"><b>Dpt Finder</b></span>"}
+ addUserKnob {4 seqview l "sq :" M {sq0002 sq0010 sq0020 sq0030 sq0040 sq0050 sq0060 sq0070 sq0080 sq0090 sq0100 sq0110 sq0120 sq0130 sq0140 sq0150 sq0160 sq0170 sq0180 sq0190 sq0200 sq0205 sq0210 sq0220 sq0230 sq0240 sq0250 sq0260 sq0270 sq0280 sq0290 sq0300 sq0310 sq0320 sq0330 sq0340 sq0350 sq0360 sq0370 sq0380 sq0390 sq0400 sq0410 sq0420 sq0430 sq0440 sq0450 sq0460 sq0470 sq0480 sq0490 sq0500 sq0510 sq0520 sq0530 sq0535 sq0540 sq0550 sq0560 sq0570 sq0580 sq0590 sq0600 sq0610 sq0620 sq0630 sq0640 sq0645 sq0650 sq0660 sq0670 sq0680 sq0690 sq0700 sq0710 sq0720 sq0730 sq0740 sq0750 sq0760 sq0770 sq0780 sq0790 sq0800 sq0810 sq1000 sq1100 sq2000 sq6660 ""}}
+ addUserKnob {4 shotview l "sh :" -STARTLINE M {sh0001 sh0002 sh0003 sh0004 sh0005 sh0006 sh0007 sh0008 sh0009 sh0010 sh0011 sh0012 sh0013 sh0014 sh0015 sh0016 sh0017 sh0018 sh0019 sh0020 sh0021 sh0022 sh0023 sh0024 sh0025 sh0026 sh0027 sh0028 sh0029 sh0030 sh0031 sh0032 sh0033 sh0034 sh0035 sh0036 sh0037 sh0038 sh0039 sh0040 sh0041 sh0042 sh0043 sh0044 sh0045 sh0046 sh0047 sh0048 sh0049 sh0050 sh0051 sh0052 sh0053 sh0054 sh0055 sh0056 sh0057 sh0058 sh0059 sh0060 sh0061 sh0062 sh0063 sh0064 sh0065 sh0066 sh0067 sh0068 sh0069 sh0070 sh0071 sh0072 sh0073 sh0074 sh0075 sh0076 sh0077 sh0078 sh0079 sh0080 sh0081 sh0082 sh0083 sh0084 sh0085 sh0086 sh0087 sh0088 sh0089 sh0090 sh0091 sh0092 sh0093 sh0094 sh0095 sh0096 sh0097 sh0098 sh0099 sh0100 sh0101 sh0102 sh0103 sh0104 sh0105 sh0106 sh0107 sh0108 sh0109 sh0110 sh0111 sh0112 sh0113 sh0114 sh0115 sh0116 sh0117 sh0118 sh0119 sh0120 sh0121 sh0122 sh0123 sh0124 sh0125 sh0126 sh0127 sh0128 sh0129 sh0130 sh0131 sh0132 sh0133 sh0134 sh0135 sh0136 sh0137 sh0138 sh0139 sh0140 sh0141 sh0142 sh0143 sh0144 sh0145 sh0146 sh0147 sh0148 sh0149 sh0150 sh0151 sh0152 sh0153 sh0154 sh0155 sh0156 sh0157 sh0158 sh0159 sh0160 sh0161 sh0162 sh0163 sh0164 sh0165 sh0166 sh0167 sh0168 sh0169 sh0170 sh0171 sh0172 sh0173 sh0174 sh0175 sh0176 sh0177 sh0178 sh0179 sh0180 sh0181 sh0182 sh0183 sh0184 sh0185 sh0186 sh0187 sh0188 sh0189 sh0190 sh0191 sh0192 sh0193 sh0194 sh0195 sh0196 sh0197 sh0198 sh0199 sh0200 sh0201 sh0202 sh0203 sh0204 sh0205 sh0206 sh0207 sh0208 sh0209 sh0210 sh0211 sh0212 sh0213 sh0214 sh0215 sh0216 sh0217 sh0218 sh0219 sh0220 sh0221 sh0222 sh0223 sh0224 sh0225 sh0226 sh0227 sh0228 sh0229 sh0230 sh0231 sh0232 sh0233 sh0234 sh0235 sh0236 sh0237 sh0238 sh0239 sh0240 sh0241 sh0242 sh0243 sh0244 sh0245 sh0246 sh0247 sh0248 sh0249 sh0250 sh0251 sh0252 sh0253 sh0254 sh0255 sh0256 sh0257 sh0258 sh0259 sh0260 sh0261 sh0262 sh0263 sh0264 sh0265 sh0266 sh0267 sh0268 sh0269 sh0270 sh0271 sh0272 sh0273 sh0274 sh0275 sh0276 sh0277 sh0278 sh0279 sh0280 sh0281 sh0282 sh0283 sh0284 sh0285 sh0286 sh0287 sh0288 sh0289 sh0290 sh0291 sh0292 sh0293 sh0294 sh0295 sh0296 sh0297 sh0298 sh0299 sh0300 sh0310 sh0320 sh0330 sh0340 sh0350 sh0360 sh0370 sh0380 sh0390 sh0400 sh0410 sh0420 sh0430 sh0440 "" ""}}
+ addUserKnob {26 spacer001 l "" +STARTLINE T <br>}
+ addUserKnob {26 departement l "<span style=\\\"color:white\\\"><b>Departement</b></span>"}
+ addUserKnob {4 dptfolderview l "Dpt :" -STARTLINE M {04_anim 05_charFx 06_finalLayout 07_fx3d 08_render 10_compo "" "" "" ""}}
+ addUserKnob {4 departementview l "Dpt Step :" -STARTLINE M {anim charFx finalLayout fx3d fxPrecomp render compo "" "" "" "" "" "" "" ""}}
+ addUserKnob {41 reload T Read1.reload}
+ addUserKnob {26 space01 l "" +STARTLINE T <br>}
+ addUserKnob {26 vformatinput l "<span style=\\\"color:white\\\"><b>Format input :</b></span>"}
+ addUserKnob {41 format T Read1.format}
+ addUserKnob {41 first l "Input frame range" T Read1.first}
+ addUserKnob {41 dptViewLast l "" -STARTLINE T Read1.last}
+ addUserKnob {41 time_offset l Offset -STARTLINE T TimeOffset3.time_offset}
+ addUserKnob {26 spacer l "" +STARTLINE T "\n"}
+ addUserKnob {26 vformatoutput l "<span style=\\\"color:white\\\"><b>Reformat 2K_DCP_FLAT</b></span>"}
+ addUserKnob {41 disable_1 l disable -STARTLINE T Reformat1.disable}
+ addUserKnob {41 format_1 l "Reformat to :" -STARTLINE T Reformat1.format}
+}
+ Read {
+  inputs 0
+  file "//zombillenium/Zombillenium/zombidamas/zomb/shot/\[value seqview]/\[value seqview]_\[value shotview]a/\[value dptfolderview]/\[value seqview]_\[value shotview]a_\[value departementview].mov"
+  format "1920 1080 0 0 1920 1080 1 HD_1080"
+  last 83
+  origlast 60
+  origset true
+  version 1
+  decoder mov32
+  mov32_codec {{0} "Décodeur H.264 (appl - avc1)"}
+  mov32_pixel_format {{0} "default (YCbCr  8-bit 422 (2vuy))" "RGBA  8-bit" "YCbCr  8-bit 422 (2vuy)"}
+  name Read1
+  tile_color 0xd87100ff
+  label "Wrong image format"
+  xpos -398
+  ypos 283
+ }
+ Reformat {
+  format "1998 1080 0 0 1998 1080 1 2K_DCP_FLAT"
+  name Reformat1
+  xpos -398
+  ypos 407
+ }
+ TimeOffset {
+  time_offset 100
+  time ""
+  name TimeOffset3
+  xpos -398
+  ypos 476
+ }
+set N3854f00 [stack 0]
+ Output {
+  name Output1
+  xpos -398
+  ypos 542
+ }
+push $N3854f00
+ Viewer {
+  frame_range 101-150
+  name Viewer1
+  selected true
+  xpos -540
+  ypos 485
+ }
+end_group

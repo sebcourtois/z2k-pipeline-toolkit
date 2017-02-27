@@ -1,0 +1,387 @@
+#! C:/Program Files/Nuke10.0v4/nuke-10.0.4.dll -nx
+version 10.0 v4
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="0" y="28" w="1920" h="1052" screen="1">
+        <splitter orientation="1">
+            <split size="40"/>
+            <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                <page id="Toolbar.1"/>
+            </dock>
+            <split size="1868" stretch="1"/>
+            <splitter orientation="1">
+                <split size="1228"/>
+                <dock id="" activePageId="DAG.1" focus="true">
+                    <page id="DAG.1"/>
+                    <page id="Curve Editor.1"/>
+                    <page id="DopeSheet.1"/>
+                    <page id="uk.co.thefoundry.scripteditor.1"/>
+                    <page id="DAG.2"/>
+                </dock>
+                <split size="636"/>
+                <dock id="" activePageId="Properties.1">
+                    <page id="Properties.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+    <window x="1920" y="0" w="1920" h="1080" maximized="1" fullscreen="1" screen="0">
+        <splitter orientation="1">
+            <split size="1683"/>
+            <dock id="" activePageId="Viewer.1">
+                <page id="Viewer.1"/>
+            </dock>
+            <split size="233"/>
+            <splitter orientation="2">
+                <split size="444"/>
+                <dock id="" activePageId="Error Console.1">
+                    <page id="Error Console.1"/>
+                </dock>
+                <split size="308"/>
+                <dock id="" activePageId="uk.co.thefoundry.waveformscope.1">
+                    <page id="uk.co.thefoundry.waveformscope.1"/>
+                </dock>
+                <split size="320"/>
+                <dock id="" activePageId="uk.co.thefoundry.vectorscope.1">
+                    <page id="uk.co.thefoundry.vectorscope.1"/>
+                </dock>
+            </splitter>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name //Zombillenium/zombidamas/private/jeremyb/zomb/misc/notes/nuke/compositing/python/fast_relight.nk
+ format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
+ proxy_type scale
+ proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+ colorManagement Nuke
+}
+Group {
+ inputs 0
+ name Fast_Relight
+ selected true
+ xpos -55
+ ypos -76
+ addUserKnob {20 Relight_settings}
+ addUserKnob {20 fr_input l "Input : " n 1}
+ addUserKnob {41 normal l "normal vectors" T fast_relight_node.normal}
+ addUserKnob {41 position l "point positions" T fast_relight_node.position}
+ addUserKnob {20 endGroup_5 l endGroup n -1}
+ addUserKnob {26 ""}
+ addUserKnob {6 fakeaa l "AA (convolve) :" t "Fake AA, sur une matrice convolve." +STARTLINE}
+ addUserKnob {41 antialiasing l "" -STARTLINE T antialiase_math.antialiasing}
+ addUserKnob {20 light_01_group l "Light 01 :" n 1}
+ addUserKnob {41 disable_3 l disable T fr_light_01.disable}
+ addUserKnob {26 light_01_position l <b>position</b>}
+ addUserKnob {7 light_01_longitude l "Longitude :" t "Longitude > Horizontal\n\nRotation autour de Y.\nLight qui tourne autour du centre." R -180 180}
+ addUserKnob {7 light_01_latitude l "Latitude :" t "Latitude > Vertical.\n\nRotation sur Z, X.\nLight qui se leve et se couche, un peux comme le soleil.\n" R -180 180}
+ addUserKnob {41 distancescale_light01 l "Light distance :" t "Raprocher ou eloigner la light du centre du monde.\n" T fr_light_01.uniform_scale}
+ addUserKnob {26 light_01_settings l <b>settings</b>}
+ addUserKnob {41 color T fr_light_01.color}
+ addUserKnob {41 intensity T fr_light_01.intensity}
+ addUserKnob {41 falloff_type l "falloff type" T fr_light_01.falloff_type}
+ addUserKnob {20 light_01_endGroup l endGroup n -1}
+ addUserKnob {26 ""}
+ addUserKnob {20 light_02_group l "Light 02 :" n 1}
+ light_02_group 0
+ addUserKnob {41 disable_4 l disable T fr_light_02.disable}
+ addUserKnob {26 light_02_position l <b>position</b>}
+ addUserKnob {7 light_02_longitude l "Longitude :" R -180 180}
+ addUserKnob {7 light_02_latitude l "Latitude :" R -180 180}
+ light_02_latitude -180
+ addUserKnob {41 distancescale_light02 l "Distance Scale :" T fr_light_02.uniform_scale}
+ addUserKnob {26 light_02_settings l <b>settings</b>}
+ addUserKnob {41 color_1 l color T fr_light_02.color}
+ addUserKnob {41 intensity_1 l intensity T fr_light_02.intensity}
+ addUserKnob {41 falloff_type_1 l "falloff type" T fr_light_02.falloff_type}
+ addUserKnob {20 light_02_endGroup l endGroup n -1}
+ addUserKnob {26 ""}
+ addUserKnob {20 rematerial l "Material :" n 1}
+ addUserKnob {41 emission T fr_material.emission}
+ addUserKnob {41 diffuse T fr_material.diffuse}
+ addUserKnob {41 specular T fr_material.specular}
+ addUserKnob {41 specular_panelDropped l "panel dropped state" T fr_material.specular_panelDropped}
+ addUserKnob {41 min_shininess l "min shininess" T fr_material.min_shininess}
+ addUserKnob {41 max_shininess l "max shininess" T fr_material.max_shininess}
+ addUserKnob {41 shininess_channel l "shininess channel" T fr_material.shininess_channel}
+ addUserKnob {20 endGroup_2 l endGroup n -1}
+ addUserKnob {26 ""}
+ addUserKnob {41 disable_1 l "Disable Position to Point" T fr_cloud.disable}
+ addUserKnob {41 disable_2 l Unpremult T fr_premult.disable}
+ addUserKnob {20 Coordinate}
+ addUserKnob {4 yup l "Coordinate :" M {Y-up Z-up "" ""}}
+}
+ Input {
+  inputs 0
+  name vec
+  xpos -103
+  ypos -576
+ }
+ Dot {
+  name Dot1
+  xpos -69
+  ypos -435
+ }
+set N1de5ec00 [stack 0]
+ Dot {
+  name Dot4
+  xpos 239
+  ypos -435
+ }
+set N1de5e800 [stack 0]
+ Dot {
+  name Dot5
+  xpos 376
+  ypos -435
+ }
+ ColorMatrix {
+  channels {{{parent.fast_relight_node.normal}}}
+  matrix {
+      {1 0 0}
+      {0 0 1}
+      {0 -1 0}
+    }
+  name dsmax_zup_normal
+  xpos 342
+  ypos -385
+ }
+push $N1de5e800
+ ColorMatrix {
+  channels {{{parent.fast_relight_node.position}}}
+  matrix {
+      {1 0 0}
+      {0 0 1}
+      {0 -1 0}
+    }
+  name dsmax_zup_position
+  xpos 205
+  ypos -384
+ }
+push $N1de5ec00
+ Dot {
+  name Dot3
+  xpos 51
+  ypos -297
+ }
+ Copy {
+  inputs 2
+  from0 -rgba.alpha
+  to0 -rgba.alpha
+  channels {{{parent.fast_relight_node.position}}}
+  name Copy_zup_position
+  xpos 205
+  ypos -314
+ }
+ Copy {
+  inputs 2
+  from0 -rgba.alpha
+  to0 -rgba.alpha
+  channels {{{parent.fast_relight_node.normal}}}
+  name Copy_zup_normal
+  xpos 342
+  ypos -314
+ }
+ Dot {
+  name Dot6
+  xpos 376
+  ypos -213
+ }
+push $N1de5ec00
+ Switch {
+  inputs 2
+  which {{yup}}
+  name zup_to_yup
+  xpos -103
+  ypos -217
+ }
+ Dot {
+  name Dot12
+  xpos -69
+  ypos -96
+ }
+set N3c68d000 [stack 0]
+ Dot {
+  name Dot11
+  xpos -216
+  ypos -96
+ }
+ Matrix {
+  channels {{{parent.fast_relight_node.normal}}}
+  matrix {
+      {{"parent.antialiase_math.antialiasing <= 1 ? 0 : parent.antialiase_math.antialiasing-1"} {parent.antialiase_math.antialiasing} {"parent.antialiase_math.antialiasing <= 1 ? 0 : parent.antialiase_math.antialiasing-1"}}
+      {{parent.antialiase_math.antialiasing} {"( parent.antialiase_math.antialiasing) >= 1 \n? \n( parent.antialiase_math.antialiasing * 2 ) \n: \n( parent.antialiase_math.antialiasing + 1 ) "} {parent.antialiase_math.antialiasing}}
+      {{"parent.antialiase_math.antialiasing <= 1 ? 0 : parent.antialiase_math.antialiasing-1"} {parent.antialiase_math.antialiasing} {"parent.antialiase_math.antialiasing <= 1 ? 0 : parent.antialiase_math.antialiasing-1"}}
+    }
+  normalize true
+  name antialiase_math
+  xpos -250
+  ypos 47
+  addUserKnob {20 User}
+  addUserKnob {7 antialiasing R 0 4}
+ }
+push $N3c68d000
+ Switch {
+  inputs 2
+  which {{fakeaa}}
+  name switch_aa
+  xpos -103
+  ypos 47
+ }
+ Unpremult {
+  channels all
+  name fr_unpremult
+  xpos -103
+  ypos 193
+ }
+set N1de9a400 [stack 0]
+ Shuffle {
+  in alpha
+  name fr_alpha_select
+  xpos -262
+  ypos 199
+ }
+ Dot {
+  name Dot2
+  xpos -228
+  ypos 451
+ }
+ BasicMaterial {
+  inputs 0
+  name fr_material
+  xpos 333
+  ypos 429
+ }
+ Input {
+  inputs 0
+  name camera
+  xpos -532
+  ypos -577
+  number 1
+ }
+ Dot {
+  name Dot7
+  xpos -498
+  ypos 322
+ }
+ Environment {
+  inputs 0
+  color {0 0 0}
+  color_panelDropped true
+  mirror true
+  name Environment1
+  xpos 605
+  ypos 407
+ }
+ Input {
+  inputs 0
+  name light_03
+  xpos 871
+  ypos -592
+  number 3
+ }
+ Dot {
+  name Dot10
+  xpos 905
+  ypos 322
+ }
+ Light2 {
+  inputs 0
+  translate {2000 0 0}
+  rotate {0 {parent.light_02_latitude} {parent.light_02_longitude}}
+  pivot {-2000 0 0}
+  samples 6
+  sample_width 2.2
+  depthmap_bias 0.046
+  depthmap_slope_bias 0.01
+  shadow_jitter_scale 3.2
+  depthmap_width 3350
+  name fr_light_02
+  xpos 696
+  ypos 189
+  disable true
+ }
+set N3c61a000 [stack 0]
+ Light2 {
+  inputs 0
+  translate {2000 0 0}
+  rotate {0 {parent.light_01_latitude} {parent.light_01_longitude}}
+  pivot {-2000 0 0}
+  samples 6
+  sample_width 2.2
+  depthmap_bias 0.046
+  depthmap_slope_bias 0.01
+  shadow_jitter_scale 3.2
+  depthmap_width 3350
+  name fr_light_01
+  xpos 533
+  ypos 189
+ }
+set N3c657c00 [stack 0]
+ Scene {
+  inputs 4
+  name fr_scene_light
+  xpos 605
+  ypos 298
+ }
+push $N1de9a400
+ ReLight {
+  inputs 4
+  normal rgb
+  position rgb
+  name fast_relight_node
+  xpos -103
+  ypos 318
+ }
+ Copy {
+  inputs 2
+  from0 rgba.alpha
+  to0 rgba.alpha
+  name fr_copy_alpha
+  xpos -103
+  ypos 441
+ }
+ Premult {
+  name fr_premult
+  xpos -103
+  ypos 677
+  disable true
+ }
+ Output {
+  name Output1
+  xpos -103
+  ypos 736
+ }
+push $N3c61a000
+ Dot {
+  name Dot8
+  xpos 614
+  ypos 110
+ }
+push $N3c657c00
+ Dot {
+  name Dot9
+  xpos 192
+  ypos 213
+ }
+push $N3c68d000
+ PositionToPoints2 {
+  selectable false
+  render_mode off
+  cast_shadow false
+  receive_shadow false
+  P_channel {{{parent.fast_relight_node.position}}}
+  N_channel {{{parent.fast_relight_node.normal}}}
+  name fr_cloud
+  xpos 158
+  ypos -100
+  disable true
+ }
+ Scene {
+  inputs 3
+  name fr_scene_cloud
+  xpos 168
+  ypos 86
+ }
+end_group
