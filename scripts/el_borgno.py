@@ -250,7 +250,9 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
 
     if not damShotList:
         sMsg = "None of the {} selected shots can be submitted.".format(numInputShots)
-        confirmMessage("SORRY !", sMsg, ["OK"])
+        res = confirmMessage("SORRY !", sMsg, ["Refresh", "Quit"])
+        if res == "Refresh":
+            return submit(in_damShotList, dryRun=dryRun, prompt=prompt, sgShots=sgShots, noPublish=noPublish)
         return
 
     prompt = True
@@ -265,8 +267,8 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
         sMsg += ("\n" + " ".join(s for s in grp if s is not None))
 
     if prompt:
-        res = confirmMessage("DO YOU WANT TO...", sMsg, ["Yes", "No", "Refresh"])
-        if res == "No":
+        res = confirmMessage("DO YOU WANT TO...", sMsg, ["Submit", "Quit", "Refresh"])
+        if res == "Quit":
             sys.exit(0)
             #raise RuntimeWarning("Canceled !")
         elif res == "Refresh":

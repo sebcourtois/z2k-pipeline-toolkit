@@ -109,7 +109,7 @@ def buildRenderScene(sSrcScnPath, publish=False, dryRun=False):
         headFile = srcScn
         copySrcFile = None
 
-    sSuffix = "".join((sVersSuffix, "-elBorgno"))
+    sSuffix = "".join((sVersSuffix, "-toLighting"))
     privScn, _ = headFile.copyToPrivateSpace(suffix=sSuffix, existing="replace",
                                              sourceFile=copySrcFile)
     srcScn = privScn
@@ -178,7 +178,7 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
     "DefaultClientGroup=" + '1~ALL',
     "CustomUserInfo=" + '1~0~Rendu Cam Right',
     "CompanyProjectName=" + '0~el-borgno',
-    "CustomVersionName=" + '0~{}'.format(sVersSuffix),
+    "CustomVersionName=" + '0~{}'.format(sVersSuffix.strip("-")),
     "Color_ID=" + '1~10'
     ]
 
