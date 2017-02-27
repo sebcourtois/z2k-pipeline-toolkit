@@ -67,12 +67,12 @@ def launch(shots=None, dryRun=False, noPublish=False, timestamp=None, dialogPare
             sCmd = subprocess.list2cmdline(cmdArgs)
             print sCmd
 
-            sBatFilePath = makeOutputPath("re_build.bat", timestamp=LAUNCH_TIME)
+            sBatFilePath = makeOutputPath("re_submit.bat", timestamp=LAUNCH_TIME)
             with open(sBatFilePath, "w") as f:
                 f.writelines(("REM {}\n".format(s) for s in sShotList))
                 f.write(sCmd)
 
-    sTitle = "RENDER SCENE BUILDER"
+    sTitle = "EL BORGNO"
     print "\n", sTitle.center(len(sTitle) + 2).center(120, "-")
     kwargs = dict(dryRun=dryRun, prompt=bPrompt, noPublish=noPublish)
     if inDevMode():
@@ -80,10 +80,17 @@ def launch(shots=None, dryRun=False, noPublish=False, timestamp=None, dialogPare
     print ""
 
     damShotList = list(proj.getShot(s) for s in sShotList)
-    build(damShotList, sgShots=sgShots, **kwargs)
+    submit(damShotList, sgShots=sgShots, **kwargs)
 
-def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=False,
-          sSrcRcName="finalLayout_scene", sDstRcName="rendering_scene"):
+def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=False):
+
+    sSrcRcName = "rendering_scene"
+    sDstRcName = ""
+#    if not sDstRcName:
+#        noPublish = True
+
+    sStep = ""
+    sTask = "rendering"
 
     damShotList = in_damShotList[:]
     proj = damShotList[0].project
@@ -97,14 +104,15 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
         sErrorList = []
         for sRcName in (sSrcRcName, sDstRcName):
             pubScn = None
-            try:
-                pubScn = damShot.getRcFile("public", sRcName, fail=True, dbNode=False)
-            except Exception as e:
-                sErrorList.append("{}".format(toStr(e)))
-            else:
-                if not pubScn:
-                    sMsg = "Could not get public {}".format(sRcName.replace("_", " "))
-                    sErrorList.append("{}".format(sMsg))
+            if sRcName:
+                try:
+                    pubScn = damShot.getRcFile("public", sRcName, fail=True, dbNode=False)
+                except Exception as e:
+                    sErrorList.append("{}".format(toStr(e)))
+                else:
+                    if not pubScn:
+                        sMsg = "Could not get public {}".format(sRcName.replace("_", " "))
+                        sErrorList.append("{}".format(sMsg))
 
             pubScnDct.setdefault(sRcName, []).append(pubScn)
 
@@ -122,7 +130,7 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
 
         iDstVers = dstScn.currentVersion
         sCmnt = dstScn.comment.strip()
-        if iDstVers and (not sCmnt.lower().startswith("built from ")):
+        if iDstVers and (not sCmnt.lower().startswith("submitted from ")):
             dstScnList[i] = None
             sMsg = ("'{}' already edited by '{}' (v{:03d}: '{}')."
                     .format(dstScn.name, dstScn.author, iDstVers, sCmnt))
@@ -169,36 +177,38 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
                            .format(sSrcRcName.replace("_scene", "")))
 
 
-    sStep = ""
-    sTask = "final layout"
-
     filters = [["content", "is", sTask],
                ["entity.Shot.code", "in", sgShotDct.keys()]]
     fields = ["entity.Shot.code", "sg_status_list"]
     sgTaskList = proj._shotgundb.sg.find("Task", filters, fields)
     sgTaskDct = dict((d["entity.Shot.code"], d) for d in sgTaskList)
 
-    for i, (damShot, dstScn) in enumerate(izip(damShotList, dstScnList)):
+    for i, (damShot, srcScn, dstScn) in enumerate(izip(damShotList, srcScnList, dstScnList)):
 
-        if not dstScn:
+        if sDstRcName and (not dstScn):
             continue
 
         sShotName = damShot.name
-        #sgShot = sgShotDct[sShotName]
-        sgTask = sgTaskDct[sShotName]#damShot.getSgTask(sTask, sStep, sgEntity=sgShot, fail=True)
+        sgTask = sgTaskDct[sShotName]
 
-        if sgTask["sg_status_list"] != "fin":
+        if sgTask["sg_status_list"] not in ("fin", "cmpt"):
 
-            dstScnList[i] = None
-            sMsg = ("Status of '{}' task NOT FINAL."
+            if sDstRcName:
+                dstScnList[i] = None
+            else:
+                srcScnList[i] = None
+
+            sMsg = ("Status of '{}' task NOT FINAL or COMPLETE."
                     .format("|".join(s for s in (sStep, sTask) if s)))
             errorDct.setdefault(damShot.name, []).append(sMsg)
 
         elif noPublish:
-            dstScnList[i] = None
+            if sDstRcName:
+                dstScnList[i] = None
+            else:
+                srcScnList[i] = None
 
-
-    bPublish = (not noPublish)
+    bPublish = True if sDstRcName and (not noPublish) else False
 
     for i, (damShot, srcScn, dstScn) in enumerate(izip(damShotList, srcScnList, dstScnList)):
 
@@ -212,7 +222,7 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
 
         sMsgList = []
         if srcScn:
-            sMsg = "ok to build "
+            sMsg = "ok to submit "
             if dstScn:
                 sMsg += "and publish"
             sMsgList.append(sMsg)
@@ -223,8 +233,8 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
             sMsgList.extend("ERROR: " + s for s in sErrorList)
 
         sSep = "\n" + (len(sShotName) * " ") + " - "
-        print "{} - {}".format(sShotName, sSep.join(sMsgList))
-        #print damShot, srcScn, dstScn
+        print "{} - {}".format(sShotName, sSep.join(sMsgList))#, damShot, srcScn, dstScn
+
 
     dstScnList = list(dst for shot, src, dst in izip(damShotList, srcScnList, dstScnList) if shot and src)
     damShotList = list(shot for shot in damShotList if shot)
@@ -239,13 +249,13 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
     numInputShots = len(in_damShotList)
 
     if not damShotList:
-        sMsg = "None of the {} selected shots can be built.".format(numInputShots)
+        sMsg = "None of the {} selected shots can be submitted.".format(numInputShots)
         confirmMessage("SORRY !", sMsg, ["OK"])
         return
 
     prompt = True
     if numValidShots != numInputShots:
-        sMsg = ("Only {}/{} shots will be built.\n\nContinue to build anyway ?\n\n"
+        sMsg = ("Only {}/{} shots will be submitted.\n\nContinue to submit anyway ?\n\n"
                 .format(numValidShots, numInputShots))
         prompt = True
     else:
@@ -260,7 +270,7 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
             sys.exit(0)
             #raise RuntimeWarning("Canceled !")
         elif res == "Refresh":
-            return build(in_damShotList, dryRun=dryRun, prompt=prompt, sgShots=sgShots, noPublish=noPublish)
+            return submit(in_damShotList, dryRun=dryRun, prompt=prompt, sgShots=sgShots, noPublish=noPublish)
 
     sCode = """
 from zomblib import damutils;reload(damutils);damutils.initProject()
@@ -299,14 +309,14 @@ def generMayaJobs(jobArgsList):
 from dminutes import batchprocess
 reload(batchprocess)
 
-#print "{shot}", "{src_scene}", {publish}, {dryRun}
-batchprocess.buildRenderScene("{src_scene}", publish={publish}, dryRun={dryRun})
+print "{shot}", "{src_scene}", "publish={publish}", "dryRun={dryRun}"
+batchprocess.submitElBorgno("{src_scene}", step=10)
 """
     for kwargs in (d.copy() for d in jobArgsList):
 
         sSrcScnPath = kwargs.get("src_scene")
 
-        sFunc = "batchprocess.buildRenderScene()"
+        sFunc = "batchprocess.submitElBorgno()"
         sTitle = "{} on '{}'".format(sFunc, osp.basename(sSrcScnPath))
 
         sCode = sCodeFmt.format(**kwargs)

@@ -290,8 +290,8 @@ def relevantXfmAttrs(sXfm, unlocked=True, moreAttrs=None):
 
     return set(at for at in sAttrSet if not (("." in at) and not mc.objExists(sXfm + "." + at)))
 
-def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None,
-                      attrsToStr=None, dryRun=False):
+def gatherScalarValues(sNodeList, attrs=None, discardAttrs=None, attrsToStr=None,
+                       defaultValues=True):
 
     sDiscardAttrSet = argToSet(discardAttrs)
     sAttrToStrSet = argToSet(attrsToStr)
@@ -328,15 +328,47 @@ def exportScalarAttrs(sFilePath, sNodeList, attrs=None, discardAttrs=None,
                 continue
 
             v = mc.getAttr(sNodeAttr)
+            if not defaultValues:
+                dv = mc.attributeQuery(sAttr, node=sNode, listDefault=True)[0]
+                if v == dv:
+                    continue
+
             if sAttr in sAttrToStrSet:
                 v = toStr(v)
 
             values[sAttr] = v
 
-        outData[sNode] = values
+        if values:
+            outData[sNode] = values
 
-    if not dryRun:
-        jsonWrite(sFilePath, outData)
+    return outData
+
+def conformAlembicNodeNames():
+
+    for sCurAbcNode in lsNodes(type="AlembicNode", not_rn=True, nodeNames=True):
+
+        sFutureList = mc.listHistory(sCurAbcNode, future=True, il=2)
+        if not sFutureList:
+            continue
+
+        sFutureList = lsNodes(sFutureList, type="dagNode", nodeNames=True)
+        if not sFutureList:
+            continue
+
+        sAstNode = sFutureList[0]
+        if ":" in sAstNode:
+            sAstNmspc = getNamespace(sAstNode)
+        elif sAstNode.startswith("hook_"):
+            sAstNmspc = "_".join(sAstNode.split("_")[1:-1])
+        else:
+            continue
+
+        sConfoName = sAstNmspc + "_cache" + "_AlembicNode"
+        if sCurAbcNode == sConfoName:
+            continue
+
+        print "renaming '{}' to '{}'".format(sCurAbcNode, sConfoName)
+        mc.rename(sCurAbcNode, sConfoName)
 
 @setWaitCursor
 def exportLayoutInfo(**kwargs):
@@ -376,11 +408,20 @@ def exportLayoutInfo(**kwargs):
         pm.displayWarning("No layout info to export !")
         return
 
+    conformAlembicNodeNames()
+
     print " Exporting '{}' infos... ".format(sScnRcName).center(100, "-")
 
     lsAttrsFunc = partial(relevantXfmAttrs, moreAttrs="worldMatrix")
-    exportScalarAttrs(sPrivFilePath, sXfmList, attrs=lsAttrsFunc,
-                      attrsToStr="worldMatrix", dryRun=bDryRun)
+    attrValues = gatherScalarValues(sXfmList, attrs=lsAttrsFunc, attrsToStr="worldMatrix")
+
+    sAbcNodeList = tuple(n for n in lsNodes(type="AlembicNode", not_rn=True, nodeNames=True)
+                            if mc.listConnections(n, s=False, d=True, scn=True))
+    if sAbcNodeList:
+        attrValues.update(gatherScalarValues(sAbcNodeList, attrs=relevantXfmAttrs, defaultValues=False))
+
+    if not bDryRun:
+        jsonWrite(sPrivFilePath, attrValues)
 
     res = sPrivFilePath
     if bPublish:
@@ -392,7 +433,7 @@ def exportLayoutInfo(**kwargs):
         res = parentDir.publishFile(sPrivFilePath, autoLock=True, autoUnlock=True,
                                     comment=sComment, dryRun=bDryRun, saveChecksum=False)
     else:
-        pm.displayInfo("Layout infos exported to '{}'".format(os.path.normpath(sPrivFilePath)))
+        pm.displayInfo("Layout infos exported to '{}'".format(osp.normpath(sPrivFilePath)))
 
     return res
 
@@ -1570,12 +1611,24 @@ def deleteRefEdits(sRefEditList):
         mc.referenceEdit(target, editCommand=sEditCmd, removeEdits=True,
                          successfulEdits=True, failedEdits=True)
 
-def _applyLayoutToAbcRef(astToAbcXfmMap, layoutInfos):
+def _applyLayoutToAbcRef(layoutInfos, astToAbcXfmMap, sRefAbcNode, sScnAbcNodeName):
 
     if isinstance(astToAbcXfmMap, dict):
         astToAbcXfmItems = tuple(astToAbcXfmMap.iteritems())
     else:
         astToAbcXfmItems = astToAbcXfmMap
+
+    if sRefAbcNode:
+        abcAttrs = layoutInfos.get(sScnAbcNodeName, {})
+        for sAttr, v in abcAttrs.iteritems():
+            try:
+                mc.setAttr(sRefAbcNode + "." + sAttr, v)
+            except RuntimeError as e:
+                if "locked or connected" in e.message:
+                    pass
+                else:
+                    raise#pm.displayWarning(e.message.strip())
+
 
     for sAstXfm, sAbcXfm in iterMatchedObjects(astToAbcXfmItems):
 
@@ -1585,6 +1638,7 @@ def _applyLayoutToAbcRef(astToAbcXfmMap, layoutInfos):
 
         sAbcAttrSet = relevantXfmAttrs(sAbcXfm)
         for sAttr in sAbcAttrSet:
+
             if sAttr not in attrs:
                 continue
 
@@ -1595,8 +1649,6 @@ def _applyLayoutToAbcRef(astToAbcXfmMap, layoutInfos):
                     pass
                 else:
                     raise#pm.displayWarning(e.message.strip())
-
-
 
 @autoKeyDisabled
 def importCaches(sSpace=None, **kwargs):
@@ -1760,7 +1812,7 @@ def importCaches(sSpace=None, **kwargs):
         sAbcFilePath = jobInfos["file"]
 
         sAstNmspc = getNamespace(sAstGeoGrp)
-        sAbcNmspc = osp.splitext(osp.basename(sAbcFilePath))[0]
+        sAbcNmspc = (sAstNmspc + "_cache") if sAstNmspc else osp.splitext(osp.basename(sAbcFilePath))[0]
         sScnAbcNodeName = jobInfos.get("choice_label", sAbcNmspc) + "_AlembicNode"
 
         print ("\n" + (" " + sAstNmspc + " ").center(sepWidth, "#"))
@@ -1776,7 +1828,7 @@ def importCaches(sSpace=None, **kwargs):
             if pathEqual(oAbcRef.path, sAbcFilePath):
                 print "Reloading cache reference: '{}'".format(sAbcFilePath)
                 oAbcRef.load()
-                sAbcNodeList = mc.ls(sAbcNmspc + ":*")
+                sImpNodeList = mc.ls(sAbcNmspc + ":*")
                 bRemRef = False
             else:
                 oAbcRef = None
@@ -1784,10 +1836,10 @@ def importCaches(sSpace=None, **kwargs):
         if not oAbcRef:
             print "Importing cache file: '{}'".format(sAbcFilePath)
 
-            sAbcNodeList = mc.file(sAbcFilePath, type="Alembic", r=True, ns=sAbcNmspc,
+            sImpNodeList = mc.file(sAbcFilePath, type="Alembic", r=True, ns=sAbcNmspc,
                                    rnn=True, mergeNamespacesOnClash=False, gl=True)
 
-            oAbcRef = pm.PyNode(sAbcNodeList[0]).referenceFile()
+            oAbcRef = pm.PyNode(sImpNodeList[0]).referenceFile()
             sAbcNmspc = oAbcRef.namespace
 
         if bCheckAstExists and sAstNmspc not in sScnNmspcList:
@@ -1808,12 +1860,17 @@ def importCaches(sSpace=None, **kwargs):
                 pm.displayError("'{}' is empty !".format(sCacheSetName))
                 doneWith(oAbcRef, bRemRef);continue
 
+        sRefAbcNode = ""
+        sFoundList = mc.ls(sImpNodeList, type="AlembicNode")
+        if sFoundList:
+            sRefAbcNode = sFoundList[0]
+
         astToAbcXfmItems = getTransformMapping(sAstGeoGrp, sAbcNmspc, longName=True,
                                                consider=sCacheObjList)
         #pprint(astToAbcXfmItems)
         if finalLayoutInfos:
             print " apply final layout to '{}' ".format(sAbcNmspc).center(100, "-")
-            _applyLayoutToAbcRef(astToAbcXfmItems, finalLayoutInfos)
+            _applyLayoutToAbcRef(finalLayoutInfos, astToAbcXfmItems, sRefAbcNode, sScnAbcNodeName)
 
         if bRefOnly:
             doneWith(oAbcRef, bRemRef);continue
@@ -1865,9 +1922,7 @@ def importCaches(sSpace=None, **kwargs):
             transferVisibilities(astToAbcMeshItems, static=bLayout, dryRun=bDryRun)
 
         if (not bDryRun):
-            sFoundList = mc.ls(sAbcNodeList, type="AlembicNode")
-            if sFoundList:
-                sRefAbcNode = sFoundList[0]
+            if sRefAbcNode:
                 sScnAbcNode = mc.duplicate(sRefAbcNode, ic=True, n=sScnAbcNodeName)[0]
                 transferOutConnections(sRefAbcNode, sScnAbcNode)
                 outData.setdefault(sAstGeoGrp, {}).setdefault("alembic_nodes", []).append(sScnAbcNode)

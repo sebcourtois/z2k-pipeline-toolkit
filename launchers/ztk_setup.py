@@ -477,9 +477,9 @@ class Z2kToolkit(object):
 
     def runFromCmd(self):
 
+        self.updEnv("Z2K_TOOLKIT_PATH", self.rootPath)
         sSetupEnvToolPath = osp.normpath(sys.argv[0])
         self.updEnv("Z2K_LAUNCH_SCRIPT", osp.normpath(sys.argv[0]))
-
         launcherArgs = [sys.executable] + sys.argv
         self.updEnv("Z2K_LAUNCHER_CMD", subprocess.list2cmdline(launcherArgs))
 
