@@ -122,7 +122,7 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
 
         iDstVers = dstScn.currentVersion
         sCmnt = dstScn.comment.strip()
-        if iDstVers and (not sCmnt.lower().startswith("built from ")):
+        if iDstVers:# and (not sCmnt.lower().startswith("built from ")):
             dstScnList[i] = None
             sMsg = ("'{}' already edited by '{}' (v{:03d}: '{}')."
                     .format(dstScn.name, dstScn.author, iDstVers, sCmnt))
@@ -215,6 +215,11 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
             sMsg = "ok to build "
             if dstScn:
                 sMsg += "and publish"
+
+                sComment = dstScn.comment
+                if sComment:
+                    sMsg += " - v{:03d}: {}".format(dstScn.currentVersion, sComment)
+
             sMsgList.append(sMsg)
 
         sErrorList = errorDct.get(sShotName, [])

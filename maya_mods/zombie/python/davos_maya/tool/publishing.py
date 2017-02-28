@@ -453,7 +453,7 @@ def publishCurrentScene(*args, **kwargs):
             return
         sgVersionData = prePublishInfos["sg_version_data"]
         publishCtx = PublishContext(scnInfos, prePublishInfos)
-    except Exception, e:
+    except Exception as e:
         pubScnFile._abortPublish(e, None, None)
         raise
 

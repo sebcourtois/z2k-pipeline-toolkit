@@ -123,6 +123,7 @@ def buildRenderScene(sSrcScnPath, publish=False, dryRun=False):
 
     shotconfo.finalLayoutToLighting(gui=False)
 
+    geocaching.conformAbcNodeNames()
     geocaching.exportLayoutInfo(publish=publish, dryRun=dryRun, sceneInfos=scnInfos)
 
     if not dryRun:
@@ -146,6 +147,7 @@ def exportLayoutInfos(sSrcScnPath, publish=False, dryRun=False):
     myasys.openScene(sSrcScnPath, force=True, fail=False)
     mc.refresh()
 
+    geocaching.conformAbcNodeNames()
     geocaching.exportLayoutInfo(publish=publish, dryRun=dryRun, sceneInfos=scnInfos)
 
 def submitElBorgno(sSrcScnPath, step=None, dryRun=False):

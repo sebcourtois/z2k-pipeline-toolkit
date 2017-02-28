@@ -28,6 +28,7 @@ from zomblib import damutils
 from pytaya.core.general import copyAttrs, getObject
 from pytaya.core import system as myasys
 from pytaya.util.sysutils import withSelectionRestored
+from pytaya.core import cleaning
 
 from davos_maya.tool.publishing import publishCurrentScene
 from davos_maya.tool.publishing import linkAssetVersionsInShotgun
@@ -1007,11 +1008,17 @@ class SceneManager():
 
         if sStepCode == "final layout":
             geocaching.removeCacheReferences()
+            geocaching.conformAbcNodeNames()
 
         if sStepCode not in ("previz 3d", "stereo") and self.isShotCamEdited():
             self.exportCamAnimFiles(publish=True)
             self.importShotCamAbcFile()
             mop.setCamAsPerspView(self.getShotCamera())
+
+        try:
+            cleaning.deleteAllJunkShapes()
+        except Exception as e:
+            pc.displayWarning(toStr(e))
 
     def postPublishCurrentScene(self, publishCtx, **kwargs):
 

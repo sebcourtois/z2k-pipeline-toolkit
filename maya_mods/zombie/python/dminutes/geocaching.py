@@ -343,9 +343,12 @@ def gatherScalarValues(sNodeList, attrs=None, discardAttrs=None, attrsToStr=None
 
     return outData
 
-def conformAlembicNodeNames():
+def conformAbcNodeNames():
 
     for sCurAbcNode in lsNodes(type="AlembicNode", not_rn=True, nodeNames=True):
+
+        if mc.lockNode(sCurAbcNode, q=True)[0]:
+            continue
 
         sFutureList = mc.listHistory(sCurAbcNode, future=True, il=2)
         if not sFutureList:
@@ -410,8 +413,6 @@ def exportLayoutInfo(**kwargs):
     if not sXfmList:
         pm.displayWarning("No layout info to export !")
         return
-
-    conformAlembicNodeNames()
 
     print " Exporting '{}' infos... ".format(sScnRcName).center(100, "-")
 
