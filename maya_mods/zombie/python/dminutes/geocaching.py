@@ -368,7 +368,10 @@ def conformAlembicNodeNames():
             continue
 
         print "renaming '{}' to '{}'".format(sCurAbcNode, sConfoName)
-        mc.rename(sCurAbcNode, sConfoName)
+        try:
+            mc.rename(sCurAbcNode, sConfoName)
+        except RuntimeError as e:
+            pm.displayWarning(toStr(e))
 
 @setWaitCursor
 def exportLayoutInfo(**kwargs):
