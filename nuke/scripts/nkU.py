@@ -635,6 +635,9 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
                 layerNameNextVerS = layerNameS+"-v001"
             
         if not dryRun:
+            allViewerL = nuke.allNodes('Viewer')
+            for each in allViewerL:
+                nuke.delete(each)
             try:
                 log.printL("i","rename '{}' -> to -> '{}'".format(layerPathS, versionDirS+"/"+layerNameNextVerS))
                 os.rename(layerPathS, versionDirS+"/"+layerNameNextVerS)

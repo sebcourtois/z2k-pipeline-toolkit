@@ -96,12 +96,6 @@ def buildRenderScene(sSrcScnPath, publish=False, dryRun=False):
     damShot = scnInfos["dam_entity"]
     srcScn = scnInfos["rc_entry"]
 
-#    proj = DamProject("zombillenium")
-#    damShot = proj.getShot(sShotName)
-#    shotLib = damShot.getLibrary()
-#
-#    srcScn = proj.rcFileFromPath(sSrcScnPath, library=shotLib, dbNode=False)
-
     if publish:
         sComment = "built from " + srcScn.name.replace(damShot.name + "_", "")
         pubFile = damShot.getRcFile("public", "rendering_scene")
@@ -129,6 +123,7 @@ def buildRenderScene(sSrcScnPath, publish=False, dryRun=False):
 
     shotconfo.finalLayoutToLighting(gui=False)
 
+    geocaching.conformAbcNodeNames()
     geocaching.exportLayoutInfo(publish=publish, dryRun=dryRun, sceneInfos=scnInfos)
 
     if not dryRun:
@@ -147,10 +142,63 @@ def buildRenderScene(sSrcScnPath, publish=False, dryRun=False):
 def exportLayoutInfos(sSrcScnPath, publish=False, dryRun=False):
 
     scnInfos = myagen.infosFromScene(sSrcScnPath)
-    damShot = scnInfos["dam_entity"]
+    #damShot = scnInfos["dam_entity"]
 
     myasys.openScene(sSrcScnPath, force=True, fail=False)
     mc.refresh()
 
+    geocaching.conformAbcNodeNames()
     geocaching.exportLayoutInfo(publish=publish, dryRun=dryRun, sceneInfos=scnInfos)
+
+def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
+
+    mc.loadPlugin("rrSubmit_Maya_Z2K.py")
+
+    scnInfos = myagen.infosFromScene(sSrcScnPath)
+    #damShot = scnInfos["dam_entity"]
+    srcScn = scnInfos["rc_entry"]
+
+    if srcScn.isVersionFile():
+        sVersSuffix = mkVersionSuffix(srcScn.versionFromName())
+        headFile = srcScn.getHeadFile(dbNode=False)
+        copySrcFile = srcScn
+    else:
+        sVersSuffix = ""
+        headFile = srcScn
+        copySrcFile = None
+
+    sSuffix = "".join((sVersSuffix, "-elBorgno"))
+    privScn, _ = headFile.copyToPrivateSpace(suffix=sSuffix, existing="replace",
+                                             sourceFile=copySrcFile)
+    srcScn = privScn
+    sSrcScnPath = srcScn.absPath()
+
+    myasys.openScene(sSrcScnPath, force=True, fail=False, lrd="none")
+    mc.refresh()
+
+    params = [
+    "DefaultClientGroup=" + '1~ALL',
+    "CustomUserInfo=" + '1~0~Rendu Cam Right',
+    "CompanyProjectName=" + '0~el-borgno',
+    "CustomVersionName=" + '0~{}'.format(sVersSuffix.strip("-")),
+    "Color_ID=" + '1~10'
+    ]
+
+    curStep = mc.getAttr("defaultRenderGlobals.byFrameStep")
+    try:
+        if step:
+            mc.setAttr("defaultRenderGlobals.byFrameStep", step)
+
+        sFilePath = mc.rrSubmitZomb(parameter=params)
+        print "\n", sFilePath.center(120, "-")
+        with open(sFilePath, 'r') as fileobj:
+            for l in fileobj:
+                print l.strip()
+        print sFilePath.center(120, "-"), "\n"
+
+    finally:
+        mc.setAttr("defaultRenderGlobals.byFrameStep", curStep)
+
+
+
 
