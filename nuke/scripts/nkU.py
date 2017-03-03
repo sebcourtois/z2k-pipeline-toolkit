@@ -642,8 +642,9 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
                 log.printL("i","rename '{}' -> to -> '{}'".format(layerPathS, versionDirS+"/"+layerNameNextVerS))
                 os.rename(layerPathS, versionDirS+"/"+layerNameNextVerS)
             except OSError:
-                log.printL("w","rename failed, trying to move '{}' -> to -> '{}'".format(layerPathS, versionDirS+"/"+layerNameNextVerS))
-                shutil.move(layerPathS, versionDirS+"/"+layerNameNextVerS)
+                log.printL("w","rename failed, trying to copy '{}' -> to -> '{}'".format(layerPathS, versionDirS+"/"+layerNameNextVerS))
+                shutil.copytree(layerPathS, versionDirS+"/"+layerNameNextVerS, symlinks=False, ignore=None)
+                #shutil.move(layerPathS, versionDirS+"/"+layerNameNextVerS)
         return layerNameNextVerS
 
     proj = DamProject("zombillenium")
