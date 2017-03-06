@@ -264,6 +264,8 @@ def createCompoBatchFiles():
     if os.environ["DEP"] == '08_render' or os.environ["DEP"] == '10_compo':
         createNukeBatchMovie(gui=False)
         createPublishBat(gui=False)
+    if os.environ["DEP"] == '10_compo' and os.environ["davos_site"] == "dmn_paris":  #"dmn_angouleme"
+        createCopyBat(gui=False)
 
 
 
@@ -1238,3 +1240,38 @@ def createPublishBat(gui=True):
 
 
 
+def createCopyBat(gui=True):
+    log = LogBuilder(gui=gui, funcName ="createCopyBat")
+
+    nukeScriptS = nuke.root().knob('name').value()
+    workingDir = os.path.dirname(nukeScriptS)
+    copyBatFile = normPath(os.path.join(workingDir,"copy.bat"))
+
+    exrDirS = ""
+    for each in nuke.allNodes('Read'):
+        if 'read_exr' in each['name'].getValue():
+            exrFileNameS= nuke.filename(each)
+            exrDirS =  os.path.dirname(exrFileNameS)
+
+    if os.environ["davos_site"] == "dmn_paris":
+         partageDirS = r"//Zombiwalk/z2k/06_PARTAGE/alex/test"
+    elif os.environ["davos_site"] == "dmn_angouleme":
+        partageDirS = r"//zombillenium/zombidamas/partage/04_SQ_REF_LIGHTCOMP"
+    else:
+        partageDirS = r"//zombillenium/?????/partage"
+
+    
+
+    renderBatch_obj = open(copyBatFile, "w")
+    renderBatch_obj.write(r'''set pythonFile="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\nuke\scripts\copyBat.py"'''+"\n")
+    renderBatch_obj.write(r'''set seqS='''+os.environ["SEQ"]+"\n")
+    renderBatch_obj.write(r'''set exrDirS='''+exrDirS+"\n")
+    renderBatch_obj.write(r'''set partageDirS='''+partageDirS+"\n")
+    renderBatch_obj.write(r'''"C:\Python27\python.exe" %pythonFile% %seqS% %exrDirS% %partageDirS%'''+"\n") 
+    renderBatch_obj.write(r'''pause'''+"\n")
+
+    renderBatch_obj.close()
+    print "#### Info: copy.bat created: {}".format(os.path.normpath(copyBatFile))
+
+
+    return dict(resultB=log.resultB, logL=log.logL)
