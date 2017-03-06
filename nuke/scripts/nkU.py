@@ -1260,8 +1260,6 @@ def createCopyBat(gui=True):
     else:
         partageDirS = r"//zombillenium/?????/partage"
 
-    
-
     renderBatch_obj = open(copyBatFile, "w")
     renderBatch_obj.write(r'''set pythonFile="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\nuke\scripts\copyBat.py"'''+"\n")
     renderBatch_obj.write(r'''set seqS='''+os.environ["SEQ"]+"\n")
