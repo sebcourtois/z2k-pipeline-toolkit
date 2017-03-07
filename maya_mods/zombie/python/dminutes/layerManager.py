@@ -309,10 +309,10 @@ class LayerManager:
         mc.setAttr(self.layerSetL[2]+".aiOverride", 1)
 
         for eachSet in self.layerSetL:
-            outConnectionL = mc.listConnections( eachSet+".partition", d=True, s=False, plugs=True)
+            outConnectionL = mc.listConnections(eachSet + ".partition", d=True, s=False, plugs=True)
             if outConnectionL:
                 for eachConnection in outConnectionL:
-                    mc.disconnectAttr (eachSet+".partition", eachConnection)
+                    mc.disconnectAttr (eachSet + ".partition", eachConnection)
 
         mc.partition(self.layerSetL, add= "par_lyrID"+layerIdS)
 
@@ -350,8 +350,8 @@ class LayerManager:
                 partitionOrigS = each
                 break
 
-#        mc.createRenderLayer(layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True)
-        mc.duplicate(layerNameOrigS, name=layerName, inputConnections=True)
+        mc.createRenderLayer(layerContentOrigL, noRecurse=True, name=layerName, makeCurrent=True)
+        #mc.duplicate(layerNameOrigS, name=layerName, inputConnections=True)
         mc.editRenderLayerGlobals(currentRenderLayer=layerName)
         self.initLayer()
 
@@ -370,8 +370,8 @@ class LayerManager:
 
         print "switch to ", layerNameOrigS
         mc.editRenderLayerGlobals(currentRenderLayer=layerNameOrigS)
-        mc.editRenderLayerAdjustment(self.layerSetL[1] + ".aiOverride", remove=False)
-        mc.editRenderLayerAdjustment(self.layerSetL[2] + ".aiOverride", remove=False)
+        mc.editRenderLayerAdjustment(self.layerSetL[1] + ".aiOverride", remove=True)
+        mc.editRenderLayerAdjustment(self.layerSetL[2] + ".aiOverride", remove=True)
         mc.editRenderLayerGlobals(currentRenderLayer=layerName)
         print "switch to ", layerName
 

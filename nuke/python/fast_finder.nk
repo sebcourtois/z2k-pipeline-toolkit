@@ -50,7 +50,7 @@ define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
 }
 Root {
  inputs 0
- name //JAKKU/zombillenium2/private/jeremyb/zomb/misc/notes/nuke/compositing/python/fast_finder.nk
+ name D:/Perso/nuke_toolbox_ang_menu/nuke/python/fast_finder.nk
  format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
  proxy_type scale
  proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
@@ -77,8 +77,8 @@ Read {
  addUserKnob {22 fast_reply l "<span style=\\\"color:white\\\"><b>Auto Fill Entry</b></span>" t "Automatic filling" T "import nuke\nimport nukescripts\nimport subprocess\nimport os\nimport re\n\n\nrootName = nuke.root().name()\n\ncleanPathFile = nukescripts.replaceHashes(rootName)\ncompers = cleanPathFile.split(\"/\")\[5]\nshotFinderName = cleanPathFile.split(\"/\")\[9]\nseqF = shotFinderName.split(\"_\")\[0]\nshotF = shotFinderName.split(\"_\")\[1]\n\n\n#fast fill entry with filename\nnuke.thisNode().knob(\"rartist\").setValue(compers)\nnuke.thisNode().knob(\"rsequence\").setValue(seqF)\nnuke.thisNode().knob(\"rshot\").setValue(shotF)\n\n#check frame range\nrFF = nuke.root()\['first_frame'].value()\nrLF = nuke.root()\['last_frame'].value()\n\nnuke.thisNode().knob(\"first\").setValue(int(rFF))\nnuke.thisNode().knob(\"last\").setValue(int(rLF))\n\nnuke.thisNode().knob(\"origfirst\").setValue(int(rFF))\nnuke.thisNode().knob(\"origlast\").setValue(int(rLF))" +STARTLINE}
  addUserKnob {26 ""}
  addUserKnob {26 spacer001 l "" +STARTLINE T <br>}
- addUserKnob {4 rartist l "Artiste :" M {anaism annef elodied ericc johnm jeremyb jimmyb manonc maximet olivierj pauliner philippej romainm stephaniev yanng ""}}
- rartist jeremyb
+ addUserKnob {4 rartist l "Artiste :" M {anaism annef elodied ericc guillaumer johnm jeremyb jimmyb manonc maximet olivierj pauliner philippej romainm stephaniev thibaultm yanng "" ""}}
+ rartist johnm
  addUserKnob {4 rsequence l "Seq : " M {sq0002 sq0010 sq0020 sq0030 sq0040 sq0050 sq0060 sq0070 sq0080 sq0090 sq0100 sq0110 sq0120 sq0130 sq0140 sq0150 sq0160 sq0170 sq0180 sq0190 sq0200 sq0205 sq0210 sq0220 sq0230 sq0240 sq0250 sq0260 sq0270 sq0280 sq0290 sq0300 sq0310 sq0320 sq0330 sq0340 sq0350 sq0360 sq0370 sq0380 sq0390 sq0400 sq0410 sq0420 sq0430 sq0440 sq0450 sq0460 sq0470 sq0480 sq0490 sq0500 sq0510 sq0520 sq0530 sq0535 sq0540 sq0550 sq0560 sq0570 sq0580 sq0590 sq0600 sq0610 sq0620 sq0630 sq0640 sq0645 sq0650 sq0660 sq0670 sq0680 sq0690 sq0700 sq0710 sq0720 sq0730 sq0740 sq0750 sq0760 sq0770 sq0780 sq0790 sq0800 sq0810 sq1000 sq1100 sq2000 sq6660 "" ""}}
  addUserKnob {1 rshot l "Shot :" t "Enter shot number :\nDon't forget \"sh\" prefixe and \"a\" padding.\n\neg : sh0000a" -STARTLINE}
  rshot sh0000a
