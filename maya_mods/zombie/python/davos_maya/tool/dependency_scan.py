@@ -6,7 +6,7 @@ import functools
 from itertools import groupby
 from pprint import pprint
 #import filecmp
-
+from collections import OrderedDict
 
 from PySide import QtGui
 from PySide.QtCore import Qt
@@ -18,22 +18,24 @@ import pymel.core as pm
 from maya.app.general.mayaMixin import MayaQWidgetBaseMixin
 
 from pytd.util.fsutils import normCase, pathJoin, pathNorm, pathNormAll
-from pytd.util.fsutils import pathResolve, pathReSub, pathEqual
+from pytd.util.fsutils import pathResolve, pathReSub, pathEqual, pathRelativeTo
 from pytd.util.fsutils import ignorePatterns, iterPaths
 from pytd.util.strutils import labelify, assertChars
 from pytd.util.qtutils import setWaitCursor
-from pytd.util.sysutils import argToTuple, toStr, inDevMode
+from pytd.util.utiltypes import OrderedTree
+from pytd.util.sysutils import argToTuple, toStr, inDevMode, qtGuiApp
 from pytd.gui.dialogs import QuickTreeDialog, confirmDialog
 from pytd.gui.widgets import QuickTree, QuickTreeItem
 #from pytd.util.logutils import logMsg
+
+from davos.core.utils import isPack
+from davos.core.damtypes import DamShot
 
 from pytaya.core.general import lsNodes
 from pytaya.core.reference import listReferences
 from pytaya.core.system import iterNodeAttrFiles
 
-from .general import infosFromScene
-from davos.core.utils import isPack
-from davos.core.damtypes import DamShot
+from davos_maya.tool.general import infosFromScene
 
 osp = os.path
 pilimage = PIL.Image
@@ -94,13 +96,24 @@ class DependencyTree(QuickTree):
 
         self.itemDelegate().setItemMarginSize(4, 4)
 
-    def _onItemClicked(self, item):
-        userData = item.data(0, Qt.UserRole)
-        if userData:
-            wrappedNodes = argToTuple(userData)
-            pm.select(tuple(wn.node for wn in wrappedNodes))
-        else:
-            pm.select(cl=True)
+        self.itemSelectionChanged.connect(self.onSelectionChanged)
+
+#    def _onItemClicked(self, item):
+#        userData = item.data(0, Qt.UserRole)
+#        if userData:
+#            wrappedNodes = argToTuple(userData)
+#            pm.select(tuple(wn.node for wn in wrappedNodes))
+#        else:
+#            pm.select(cl=True)
+
+    def onSelectionChanged(self):
+        oNodeList = []
+        for item in self.selectedItems():
+            userData = item.data(0, Qt.UserRole)
+            if userData:
+                wrappedNodes = argToTuple(userData)
+                oNodeList.extend(wn.node for wn in wrappedNodes)
+        pm.select(oNodeList)
 
 class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
 
@@ -117,6 +130,8 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
         self.refreshBtn = self.buttonBox.addButton("Refresh", QtGui.QDialogButtonBox.ResetRole)
         self.refreshBtn.clicked.connect(self.refresh)
 
+        self.treeWidget.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+
     def refresh(self):
         self.treeWidget.clear()
         self.setupTreeData(self.__scanFunc(infosFromScene()))
@@ -127,80 +142,17 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
         if not depScanDct:
             return
 
-        sAllSeveritySet = set()
-        numAllPublishes = 0
-        allScanResults = []
-        for scanResults in depScanDct.itervalues():
-            if not scanResults:
-                continue
-            sAllSeveritySet.update(scanResults[-1]["scan_severities"])
-            numAllPublishes += scanResults[-1]["publish_count"]
-            allScanResults.extend(scanResults)
+        dependLogs = extractDependencyLogs(depScanDct)
+
+        treeData = dependLogs["data"]
+        sFileGrpItems = dependLogs["file_groups"]
+        sAllSeveritySet = dependLogs["severities"]
+        numAllPublishes = dependLogs["publish_count"]
 
         treeWidget = self.treeWidget
 
         sHeaderList = ["Files", "Summary", "Description"]
         treeWidget.setHeaderLabels(sHeaderList)
-
-        sFileGrpItems = set()
-        treeData = []
-        for result in allScanResults:
-
-            fileNodes = result["file_nodes"]
-            sFileNodeList = tuple(n.name()for n in fileNodes)
-
-            wrappedNodes = []
-            numNodes = 0
-            sNumNodes = ""
-
-            if fileNodes:
-                fileNodeTreeData = {}
-                for fileNode in fileNodes:
-
-                    sNodeName = fileNode.name()
-
-                    wrappedNode = WrappedNode(fileNode)
-                    wrappedNodes.append(wrappedNode)
-
-                    fileAttr = fileNode.attr(FILE_PATH_ATTRS[fileNode.type()])
-
-                    itemData = {"texts": [sNodeName, "", fileAttr.get()],
-                                "roles":{Qt.UserRole:(0, wrappedNode)},
-                                "type":NODE_ITEM_TYPE
-                                }
-                    fileNodeTreeData[sNodeName] = itemData
-
-                numNodes = len(fileNodes)
-                sNumNodes = "{} {}".format(numNodes, "nodes" if numNodes > 1 else "node")
-
-            sTexAbsPath = result["abs_path"]
-            sFilename = osp.basename(sTexAbsPath)
-
-            scanLogDct = result["scan_log"]
-
-            for sSeverity, logItemsList in scanLogDct.iteritems():
-
-                sSeverityTitle = (sSeverity + 's').upper()
-
-                for sLogCode, sLogMsg in logItemsList:
-
-                    sItemPath = pathJoin(sSeverityTitle, labelify(sLogCode))
-                    sFileGrpItems.add(sItemPath)
-                    sItemPath = pathJoin(sItemPath, sFilename)
-
-                    itemRoles = {Qt.UserRole:(0, wrappedNodes)}
-
-                    itemData = {"path": sItemPath,
-                                "texts": [sFilename, sNumNodes, sLogMsg.strip().rstrip('.')],
-                                "roles":itemRoles,
-                                "type":FILE_ITEM_TYPE
-                                }
-                    treeData.append(itemData)
-
-                    for sNodeName in sFileNodeList:
-                        itemData = fileNodeTreeData[sNodeName].copy()
-                        itemData["path"] = pathJoin(sItemPath, sNodeName)
-                        treeData.append(itemData)
 
         numCol = treeWidget.columnCount()
         serverityItems = (("info", Qt.green), ("warning", Qt.yellow), ("error", Qt.red))
@@ -244,6 +196,89 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
             item = treeWidget.topLevelItem(i)
             item.setExpanded(True)
 
+        return treeData
+
+def extractDependencyLogs(depScanDct):
+
+    sAllSeveritySet = set()
+    numAllPublishes = 0
+    allScanResults = []
+    for scanResults in depScanDct.itervalues():
+        if not scanResults:
+            continue
+        sAllSeveritySet.update(scanResults[-1]["scan_severities"])
+        numAllPublishes += scanResults[-1]["publish_count"]
+        allScanResults.extend(scanResults)
+
+    errorCountDct = OrderedDict()
+    sFileGrpItems = set()
+    treeData = []
+    for result in allScanResults:
+
+        fileNodes = result["file_nodes"]
+        sFileNodeList = tuple(n.name()for n in fileNodes)
+
+        wrappedNodes = []
+        numNodes = 0
+        sNumNodes = ""
+
+        if fileNodes:
+            fileNodeTreeData = {}
+            for fileNode in fileNodes:
+
+                sNodeName = fileNode.name()
+
+                wrappedNode = WrappedNode(fileNode)
+                wrappedNodes.append(wrappedNode)
+
+                fileAttr = fileNode.attr(FILE_PATH_ATTRS[fileNode.type()])
+
+                itemData = {"texts": [sNodeName, "", fileAttr.get()],
+                            "roles":{Qt.UserRole:(0, wrappedNode)},
+                            "type":NODE_ITEM_TYPE
+                            }
+                fileNodeTreeData[sNodeName] = itemData
+
+            numNodes = len(fileNodes)
+            sNumNodes = "{} {}".format(numNodes, "nodes" if numNodes > 1 else "node")
+
+        sTexAbsPath = result["abs_path"]
+        sFilename = osp.basename(sTexAbsPath)
+
+        scanLogDct = result["scan_log"]
+
+        for sSeverity, logItemsList in scanLogDct.iteritems():
+
+            sSeverityLabel = sSeverity.upper() + "S"
+
+            for sLogCode, sLogMsg in logItemsList:
+
+                if sSeverity == "error":
+                    if sLogCode in errorCountDct:
+                        errorCountDct[sLogCode] += 1
+                    else:
+                        errorCountDct[sLogCode] = 1
+
+                sItemPath = pathJoin(sSeverityLabel, labelify(sLogCode))
+                sFileGrpItems.add(sItemPath)
+                sItemPath = pathJoin(sItemPath, sFilename)
+
+                itemRoles = {Qt.UserRole:(0, wrappedNodes)}
+
+                itemData = {"path": sItemPath,
+                            "texts": [sFilename, sNumNodes, sLogMsg.strip().rstrip('.')],
+                            "roles":itemRoles,
+                            "type":FILE_ITEM_TYPE
+                            }
+                treeData.append(itemData)
+
+                for sNodeName in sFileNodeList:
+                    itemData = fileNodeTreeData[sNodeName].copy()
+                    itemData["path"] = pathJoin(sItemPath, sNodeName)
+                    treeData.append(itemData)
+
+    return {"data":treeData, "file_groups":sFileGrpItems, "error_count":errorCountDct,
+            "publish_count":numAllPublishes, "severities":sAllSeveritySet}
 
 def scanReferenceFiles(proj):
 
@@ -719,7 +754,7 @@ def firstPrefix(sNodeName):
     return sNodeName.split("_", 1)[0] if "_" in sNodeName else ""
 
 @setWaitCursor
-def scanGeoCacheFiles(scnInfos, depConfDct=None):
+def scanGeoCacheFiles(scnInfos, depConfDct=None, among=None):
 
     damEntity = scnInfos.get("dam_entity")
     proj = scnInfos["project"]
@@ -810,7 +845,7 @@ def scanGeoCacheFiles(scnInfos, depConfDct=None):
                          "public_file":None,
                         }
 
-            sDepDirPath, sDepFilename = osp.split(sDepAbsPath)
+            sDepDirPath, _ = osp.split(sDepAbsPath)
 
             if bPublicFile:
                 scanLogDct.setdefault("info", []).append(('PublicFile', sDepAbsPath))
@@ -850,8 +885,81 @@ def scanGeoCacheFiles(scnInfos, depConfDct=None):
 
     return scanResults
 
+def pathFromCacheNode(cacheNode):
+
+    cacheNode.useFileSequence = False
+
+    if not cacheNode.getAttr("enable"):
+        return
+
+    sFileList = pm.cacheFile(cacheNode, q=True, fileName=True)
+    if not sFileList:
+        return pathJoin(cacheNode.getAttr("cachePath"), cacheNode.getAttr("cacheName") + ".xml")
+
+    if len(sFileList) > 2:
+        cacheNode.useFileSequence = True
+        return sFileList[0]
+    else:
+        return sFileList
+
+def iterCachePaths(sNodeType, out_fileNodeDct, pathFromNodeFnc=None,
+                   ignorePaths=None, excludeFnc=None, among=None):
+
+    sFileAttrName = FILE_PATH_ATTRS[sNodeType]
+
+    if among is None:
+        allFileNodes = lsNodes("*", type=sNodeType, not_rn=True)
+    else:
+        sAmongList = lsNodes(among, type=sNodeType, not_rn=True, nodeNames=True)
+        sNodeList = lsNodes("*", type=sNodeType, not_rn=True, nodeNames=True)
+        allFileNodes = list(pm.PyNode(n) for n in sNodeList if n in sAmongList)
+#        print "\n", sAmongList
+#        print sNodeList
+#        print allFileNodes, "\n"
+
+    sIgnorePathList = None
+    if ignorePaths:
+        sIgnorePathList = tuple(pathNormAll(p) for p in ignorePaths)
+
+    for fileNode in allFileNodes:
+
+        sFellowPathList = tuple()
+        if pathFromNodeFnc:
+            res = pathFromNodeFnc(fileNode)
+            if isinstance(res, (list, tuple, set)):
+                sDepPath = res[0]
+                sFellowPathList = res[1:]
+            else:
+                sDepPath = res
+        else:
+            sDepPath = fileNode.getAttr(sFileAttrName)
+
+        if not sDepPath:
+            continue
+
+        sDepAbsPath = pathNorm(pathResolve(sDepPath))
+        sDepNormPath = pathNormAll(sDepAbsPath)
+
+        if sIgnorePathList and (sDepNormPath in sIgnorePathList):
+            continue
+
+        if excludeFnc and excludeFnc(fileNode, sDepNormPath):
+            continue
+
+        if sDepNormPath in out_fileNodeDct:
+            out_fileNodeDct[sDepNormPath].append(fileNode)
+        else:
+            out_fileNodeDct[sDepNormPath] = [fileNode]
+
+            yield sDepAbsPath
+
+            for p in sFellowPathList:
+                p = pathNorm(pathResolve(p))
+                #out_fileNodeDct[p] = None
+                yield p
+
 @setWaitCursor
-def scanFxCacheFiles(scnInfos, depConfDct=None):
+def scanFxCacheFiles(scnInfos, depConfDct=None, among=None):
 
     damEntity = scnInfos.get("dam_entity")
     proj = scnInfos["project"]
@@ -877,49 +985,6 @@ def scanFxCacheFiles(scnInfos, depConfDct=None):
     def addResult(res):
         scanResults.append(res)
         #sAllSeveritySet.update(res["scan_log"].iterkeys())
-
-    def iterCachePaths(sNodeType, pathFromNodeFnc=None, ignorePaths=None):
-
-        sFileAttrName = FILE_PATH_ATTRS[sNodeType]
-        allFileNodes = lsNodes("*", type=sNodeType, not_rn=True)
-
-        sIgnorePathList = None
-        if ignorePaths:
-            sIgnorePathList = tuple(pathNormAll(p) for p in ignorePaths)
-
-        for fileNode in allFileNodes:
-
-            if pathFromNodeFnc:
-                res = pathFromNodeFnc(fileNode)
-                if isinstance(res, list):
-                    sDepPath = res[0]
-                    for p in res[1:]:
-                        yield pathNorm(pathResolve(p))
-                else:
-                    sDepPath = res
-            else:
-                sDepPath = fileNode.getAttr(sFileAttrName)
-
-            if not sDepPath:
-                continue
-
-            sDepAbsPath = pathNorm(pathResolve(sDepPath))
-            sDepNormPath = pathNormAll(sDepAbsPath)
-
-            if sIgnorePathList and (sDepNormPath in sIgnorePathList):
-                continue
-
-            sFileName = osp.basename(sDepNormPath)
-            if firstPrefix(sFileName) in sGeoAstTypeList:
-                continue
-
-            if sDepNormPath in fileNodeDct:
-                fileNodeDct[sDepNormPath].append(fileNode)
-                continue
-            else:
-                fileNodeDct[sDepNormPath] = [fileNode]
-
-            yield sDepAbsPath
 
     def doScan(sAllDepPathList):
 
@@ -968,7 +1033,7 @@ def scanFxCacheFiles(scnInfos, depConfDct=None):
                          "public_file":None,
                         }
 
-            sDepDirPath, sDepFilename = osp.split(sDepAbsPath)
+            sDepDirPath, _ = osp.split(sDepAbsPath)
 
             if bPublicFile:
                 scanLogDct.setdefault("info", []).append(('PublicFile', sDepAbsPath))
@@ -1002,35 +1067,30 @@ def scanFxCacheFiles(scnInfos, depConfDct=None):
 
             addResult(resultDct)
 
+    def excludeAssetCaches(fileNode, sDepNormPath):
+        sFileName = osp.basename(sDepNormPath)
+        return (firstPrefix(sFileName) in sGeoAstTypeList)
+
     sIgnorePathList = []
     if isinstance(damEntity, DamShot):
         sIgnorePathList.append(damEntity.getPath("public", "camera_abc"))
         sIgnorePathList.append(damEntity.getPath("private", "camera_abc"))
 
-    doScan(iterCachePaths("AlembicNode", ignorePaths=sIgnorePathList))
+    doScan(iterCachePaths("AlembicNode", fileNodeDct, ignorePaths=sIgnorePathList,
+                          excludeFnc=excludeAssetCaches, among=among))
 
-    def pathFromCacheNode(cacheNode):
-        cacheNode.useFileSequence = False
-        sFileList = pm.cacheFile(cacheNode, q=True, fileName=True)
-        if not sFileList:
-            return pathJoin(cacheNode.getAttr("cachePath"), cacheNode.getAttr("cacheName") + ".xml")
-        if len(sFileList) > 2:
-            cacheNode.useFileSequence = True
-            return sFileList[0]
-        else:
-            return sFileList
+    doScan(iterCachePaths("cacheFile", fileNodeDct, pathFromNodeFnc=pathFromCacheNode,
+                          among=among))
 
-    doScan(iterCachePaths("cacheFile", pathFromCacheNode))
-
-    doScan(iterCachePaths("BE_VDBRead"))
+    doScan(iterCachePaths("BE_VDBRead", fileNodeDct, among=among))
 
     pathFromNode = lambda n: n.getAttr("volumePath") if n.getAttr("FromFile") else ""
-    doScan(iterCachePaths("BE_VDBArnoldRender", pathFromNode))
+    doScan(iterCachePaths("BE_VDBArnoldRender", fileNodeDct,
+                          pathFromNodeFnc=pathFromNode, among=among))
 
     publishCount = setPublishableStates(scanResults, pubDepDir)
 
     if scanResults:
-
         for res in scanResults:
             sAllSeveritySet.update(res["scan_log"].iterkeys())
 
@@ -1082,7 +1142,7 @@ def setPublishableStates(scanResults, pubDepDir, loadDbNodes=True):
         if res["drc_file"] != pubFile:
             if pubFile in pubFileDct:
                 scanLogDct = res["scan_log"]
-                sErrMsg = ("'{}' used to publish:\n - {}"
+                sErrMsg = ("'{}' used to publish:\n  {}"
                            .format(pubFile.name, pubFileDct[pubFile]["abs_path"]))
                 scanLogDct.setdefault("error", []).append(("NameAlreadyUsed", sErrMsg))
                 bIgnore = True
@@ -1160,7 +1220,7 @@ Wait for the next synchro and retry publishing."""
 
     return bPublishable
 
-def scanAllDependencyTypes(scnInfos, exclude=None):
+def scanAllDependencyTypes(scnInfos, exclude=None, among=None):
 
     proj = scnInfos["project"]
     sSection = scnInfos["section"]
@@ -1178,22 +1238,63 @@ def scanAllDependencyTypes(scnInfos, exclude=None):
         if sDepType == "texture_dep":
             scanResults = scanTextureFiles(scnInfos)
         elif sDepType == "geoCache_dep":
-            scanResults = scanGeoCacheFiles(scnInfos)
+            scanResults = scanGeoCacheFiles(scnInfos, among=among)
         elif sDepType == "fxCache_dep":
-            scanResults = scanFxCacheFiles(scnInfos)
+            scanResults = scanFxCacheFiles(scnInfos, among=among)
         else:
             pm.displayWarning("Dependency type NOT supported yet: '{}'"
                               .format(sDepType))
         if scanResults:
             depScanDct[sDepType] = scanResults
 
-    pprint(depScanDct)
+    #pprint(depScanDct)
     return depScanDct
+
+def _traverseLogTree(tree, data, parentPath="", rootPath=""):
+
+    for current, children in tree.iteritems():
+
+        p = pathJoin(parentPath, current)
+
+        depth = len(p.split("/")) - 1
+        if depth > 2:
+            continue
+
+        bBypassItem = False
+        if rootPath:
+            rp = pathRelativeTo(p, rootPath)
+            if (rp == ".") or (".." in rp):
+                bBypassItem = True
+
+        if bBypassItem:
+            pass
+        else:
+            kwargs = data.get(p, {}).copy()
+            texts = kwargs.pop("texts", None)
+
+            sTab = depth * (4 * ("-" if depth < 2 else " "))
+            if texts:
+                sSep = "\n" + (len(sTab) * " ") + (4 * " ")
+                sFilename = "- " + texts[0]
+                sNumNode = texts[1]
+                if sNumNode:
+                    sNumNode = " - " + sNumNode
+
+                sMsg = texts[2].replace("\n", sSep)
+                print sTab + "".join((sFilename, sNumNode, sSep, sMsg)) + "\n"
+
+            elif depth == 0:
+                print " {} ".format(current).center(120, "-")
+            else:
+                print sTab, current
+
+        if children:
+            _traverseLogTree(children, data, p, rootPath=rootPath)
 
 dialog = None
 
 def launch(scnInfos=None, scanFunc=None, modal=False, okLabel="OK",
-           expandTree=False, forceDialog=False, exclude=None):
+           expandTree=False, forceDialog=False, exclude=None, among=None):
 
     global dialog
 
@@ -1201,63 +1302,93 @@ def launch(scnInfos=None, scanFunc=None, modal=False, okLabel="OK",
         scnInfos = infosFromScene()
 
     damEntity = scnInfos.get("dam_entity")
-    proj = scnInfos["project"]
+    #proj = scnInfos["project"]
 
     if scanFunc is None:
-        scanFunc = functools.partial(scanAllDependencyTypes, exclude=exclude)
+        scanFunc = functools.partial(scanAllDependencyTypes, exclude=exclude,
+                                     among=among)
 
     depScanDct = scanFunc(scnInfos)
     if not depScanDct:
         return depScanDct
 
-    sAllSeveritySet = set()
-    for scanResults in depScanDct.itervalues():
-        if not scanResults:
-            continue
-        sAllSeveritySet.update(scanResults[-1]["scan_severities"])
+    sTitle = " - ".join(("Dependencies Status", damEntity.name))
 
-    if (not forceDialog) and (not sAllSeveritySet):
+    if qtGuiApp():
+
+        sAllSeveritySet = set()
+        for scanResults in depScanDct.itervalues():
+            if not scanResults:
+                continue
+            sAllSeveritySet.update(scanResults[-1]["scan_severities"])
+
+        if (not forceDialog) and (not sAllSeveritySet):
+            return depScanDct
+
+        dialog = DependencyTreeDialog(scanFunc)
+
+        dialog.setWindowTitle(sTitle)
+
+        buttonBox = dialog.buttonBox
+        okBtn = buttonBox.button(QtGui.QDialogButtonBox.Ok)
+
+        err = None
+        if "error" in sAllSeveritySet:
+            err = RuntimeError("Please, fix the following errors and retry...")
+            buttonBox.removeButton(okBtn)
+            btn = buttonBox.button(QtGui.QDialogButtonBox.Cancel)
+            btn.setText("Close")
+        else:
+            if modal:
+                okBtn.setText(okLabel)
+
+        dialog.show()
+        dialog.setupTreeData(depScanDct, allExpanded=expandTree)
+
+        if modal:
+            if err:
+                confirmDialog(title='SORRY !',
+                              message=toStr(err),
+                              button=["OK"],
+                              defaultButton="OK",
+                              cancelButton="OK",
+                              dismissString="OK",
+                              icon="critical",
+                              parent=dialog)
+                raise err
+
+            dialog.close()
+            if dialog.exec_():
+                return dialog.depScanDct
+    else:
+        dependLogs = extractDependencyLogs(depScanDct)
+
+        errorCountDct = dependLogs["error_count"]
+        numPublish = dependLogs["publish_count"]
+
+        if (not errorCountDct) and (not numPublish):
+            return
+
+        pathItems = tuple(((pathNorm(d.pop("path")), d) for d in dependLogs["data"]))
+        tree = OrderedTree.fromPaths(t[0] for t in pathItems)
+
+        print "\n" + sTitle.center(len(sTitle) + 2).center(120, "*")
+        _traverseLogTree(tree, dict(pathItems))
+        print sTitle.center(len(sTitle) + 2).center(120, "*") + "\n"
+
+        if numPublish and ("FileNotFound" in errorCountDct):
+            numFilesNotFound = errorCountDct["FileNotFound"]
+            if numPublish > numFilesNotFound:
+                errorCountDct.pop("FileNotFound")
+                pm.displayWarning("{} '{}' error(s) ignored.".format(numFilesNotFound, "FileNotFound"))
+
+        if errorCountDct:
+            sSep = "\n   - "
+            sMsg = "Errors in scene dependencies:" + sSep
+            sMsg += sSep.join("{} {}".format(count, sErrCode)  for sErrCode, count in errorCountDct.iteritems())
+            raise AssertionError(sMsg)
+
         return depScanDct
 
-    dialog = DependencyTreeDialog(scanFunc)
-
-    l = ("Dependencies Status", damEntity.name, proj.name.capitalize())
-    dialog.setWindowTitle(" - ".join(l))
-
-    buttonBox = dialog.buttonBox
-    okBtn = buttonBox.button(QtGui.QDialogButtonBox.Ok)
-
-    err = None
-    if "error" in sAllSeveritySet:
-
-        err = RuntimeError("Please, fix the following errors and retry...")
-
-        buttonBox.removeButton(okBtn)
-        btn = buttonBox.button(QtGui.QDialogButtonBox.Cancel)
-        btn.setText("Close")
-    else:
-        if modal:
-            okBtn.setText(okLabel)
-
-    dialog.show()
-    dialog.setupTreeData(depScanDct, allExpanded=expandTree)
-
-    if modal:
-        if err:
-            confirmDialog(title='SORRY !',
-                          message=toStr(err),
-                          button=["OK"],
-                          defaultButton="OK",
-                          cancelButton="OK",
-                          dismissString="OK",
-                          icon="critical",
-                          parent=dialog
-                          )
-            raise err
-
-        dialog.close()
-        if dialog.exec_():
-            return dialog.depScanDct
-
-    return None
+    return
 

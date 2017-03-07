@@ -142,13 +142,20 @@ def iterIncrementFiles(sFilePath):
 
 class SceneManager():
     """Main Class to handle SceneManager Data and operations"""
-    def __init__(self, d_inContext=None):
+    def __init__(self, sceneInfos=None):
         self.context = {}
-        self.projectname = "zombillenium"
-        self.context['damProject'] = damproject.DamProject(self.projectname)
 
-        if not self.context['damProject']:
-            raise RuntimeError("Cannot initialize project '{0}'".format(self.projectname))
+        self.sceneInfos = sceneInfos
+        if sceneInfos:
+            proj = sceneInfos["project"]
+        else:
+            proj = damproject.DamProject("zombillenium")
+            if not proj:
+                raise RuntimeError("Cannot initialize project '{0}'".format("zombillenium"))
+
+        self.projectname = proj.name
+        self.context['damProject'] = proj
+        self.project = proj
 
     def getTasks(self, b_inMyTasks=False):
         proj = self.context['damProject']
@@ -190,6 +197,13 @@ class SceneManager():
             pc.warning('damProject.getPath failed with {0}, {1}, {2} : {3}'.format(lib, s_inFileTag, tokens, e))
 
         return path
+
+    def currentStepName(self):
+        ctx = self.context
+        if ctx and ('step' in ctx):
+            return self.context['step']['code']
+        else:
+            return self.sceneInfos["sg_step"]
 
     def infosFromCurrentScene(self):
         """Retrieve the scene path and get davos data from it"""
@@ -1004,7 +1018,7 @@ class SceneManager():
 
     def prePublishCurrentScene(self, publishCtx, **kwargs):
 
-        sStepCode = self.context["step"]["code"].lower()
+        sStepCode = self.currentStepName().lower()
 
         if sStepCode == "final layout":
             geocaching.removeCacheReferences()
@@ -1039,7 +1053,7 @@ class SceneManager():
                     raise
                 pc.displayError(toStr(e))
 
-        sStepCode = self.context["step"]["code"].lower()
+        sStepCode = self.currentStepName().lower()
 
         if sStepCode == "stereo":
             self.exportStereoCamFiles(publish=True, comment=sComment)
@@ -1081,22 +1095,23 @@ class SceneManager():
 
         return oShotCam
 
-    def publish(self):
+    def publish(self, **kwargs):
         try:
             self.assertBeforePublish()
         except AssertionError as e:
-            pc.confirmDialog(title='SORRY !',
-                             message=toStr(e),
-                             button=["OK"],
-                             defaultButton="OK",
-                             cancelButton="OK",
-                             dismissString="OK",
-                             icon="critical")
+            if not mc.about(batch=True):
+                pc.confirmDialog(title='SORRY !',
+                                 message=toStr(e),
+                                 button=["OK"],
+                                 defaultButton="OK",
+                                 cancelButton="OK",
+                                 dismissString="OK",
+                                 icon="critical")
             raise
 
         res = publishCurrentScene(prePublishFunc=self.prePublishCurrentScene,
-                                  postPublishFunc=self.postPublishCurrentScene)
-
+                                  postPublishFunc=self.postPublishCurrentScene,
+                                  **kwargs)
         return res
 
     def listRelatedAssets(self):
@@ -1248,10 +1263,22 @@ class SceneManager():
         mc.playbackOptions(edit=True, **times)
 
     def mkShotCamNamespace(self):
-        return mop.mkShotCamNamespace(self.context['entity']['code'].lower())
+        ctx = self.context
+        if ctx and ('entity' in ctx):
+            sShotCode = self.context['entity']['code']
+        else:
+            sShotCode = self.sceneInfos["dam_entity"].name
+
+        return mop.mkShotCamNamespace(sShotCode.lower())
 
     def getShotCamera(self, fail=False):
-        return mop.getShotCamera(self.context['entity']['code'].lower(), fail=fail)
+        ctx = self.context
+        if ctx and ('entity' in ctx):
+            sShotCode = self.context['entity']['code']
+        else:
+            sShotCode = self.sceneInfos["dam_entity"].name
+
+        return mop.getShotCamera(sShotCode.lower(), fail=fail)
 
     def importShotCam(self):
 
@@ -1272,14 +1299,19 @@ class SceneManager():
         return pc.PyNode(sCamNspace + ":cam_shot_default")
 
     def getDamShot(self):
-        sEntityType = self.context['entity']['type'].lower()
-        if sEntityType != 'shot':
+
+        ctx = self.context
+        if ctx and ('entity' in ctx):
+            sEntityType = self.context['entity']['type']
+            sShotCode = self.context['entity']['code']
+        else:
+            sEntityType = self.sceneInfos["dam_entity"].sgEntityType
+            sShotCode = self.sceneInfos["dam_entity"].name
+
+        if sEntityType.lower() != 'shot':
             raise TypeError("Unexpected entity type: '{}'".format(sEntityType))
 
-        sShotCode = self.context['entity']['code'].lower()
-        proj = self.context["damProject"]
-#        shotLib = proj.getLibrary("public", "shot_lib")
-        return DamShot(proj, name=sShotCode)
+        return DamShot(self.project, name=sShotCode.lower())
 
     def getShotCamAbcNodes(self):
 

@@ -6,12 +6,14 @@ from pprint import pprint
 import maya.cmds as mc
 import pymel.core as pm
 
-from pytd.util.fsutils import pathJoin
+from pytd.util.fsutils import pathJoin, pathNorm, pathEqual
 
 from davos.core.damproject import DamProject
 from davos.core.utils import mkVersionSuffix
 
 from pytaya.core import system as myasys
+from pytaya.core.cleaning import deleteAllJunkShapes
+from pytaya.core.general import lsNodes
 
 from davos_maya.tool import reference as myaref
 from davos_maya.tool import general as myagen
@@ -20,6 +22,7 @@ from davos_maya.tool import publishing
 from dminutes import geocaching
 from dminutes import finalLayout
 from dminutes import shotconformation as shotconfo
+from dminutes import sceneManager
 
 reload(geocaching)
 reload(finalLayout)
@@ -28,6 +31,7 @@ reload(myagen)
 reload(shotconfo)
 reload(publishing)
 reload(myasys)
+reload(sceneManager)
 
 def quitWithStatus(func):
     def doIt(*args, **kwargs):
@@ -92,52 +96,45 @@ def setupLayoutScene(**kwargs):
 
 def buildRenderScene(sSrcScnPath, publish=False, dryRun=False):
 
-    scnInfos = myagen.infosFromScene(sSrcScnPath)
-    damShot = scnInfos["dam_entity"]
-    srcScn = scnInfos["rc_entry"]
+    srcScnInfos = myagen.infosFromScene(sSrcScnPath)
+    damShot = srcScnInfos["dam_entity"]
+    srcScn = srcScnInfos["rc_entry"]
+    if not srcScn.isVersionFile():
+        raise ValueError("Source scene is NOT a version file: '{}'"
+                         .format(sSrcScnPath))
+
+    pubDstScn = damShot.getRcFile("public", "rendering_scene")
+    sComment = "built from " + srcScn.name.replace(damShot.name + "_", "")
+    sgVersData = {"sg_status_list":"rdy"}
 
     if publish:
-        sComment = "built from " + srcScn.name.replace(damShot.name + "_", "")
-        pubFile = damShot.getRcFile("public", "rendering_scene")
+        pubDstScn.ensureLocked(autoLock=True)
 
-    if srcScn.isVersionFile():
-        sVersSuffix = mkVersionSuffix(srcScn.versionFromName())
-        headFile = srcScn.getHeadFile(dbNode=False)
-        copySrcFile = srcScn
-    else:
-        sVersSuffix = ""
-        headFile = srcScn
-        copySrcFile = None
+    try:
+        privDstScn, _ = pubDstScn.copyToPrivateSpace(suffix=pubDstScn.makeEditSuffix(),
+                                                     existing="replace",
+                                                     sourceFile=srcScn)
+        sSrcScnPath = privDstScn.absPath()
 
-    sSuffix = "".join((sVersSuffix, "-toLighting"))
-    privScn, _ = headFile.copyToPrivateSpace(suffix=sSuffix, existing="replace",
-                                             sourceFile=copySrcFile)
-    srcScn = privScn
-    sSrcScnPath = srcScn.absPath()
+        myasys.openScene(sSrcScnPath, force=True, fail=False)
+        mc.refresh()
 
-    myasys.openScene(sSrcScnPath, force=True, fail=False)
-    mc.refresh()
+        relatAstList = myagen.listRelatedAssets(damShot)
+        myaref.lockAssetRefsToRelatedVersion(relatAstList)
 
-    relatAstList = myagen.listRelatedAssets(damShot)
-    myaref.lockAssetRefsToRelatedVersion(relatAstList)
+        shotconfo.finalLayoutToLighting(gui=False)
 
-    shotconfo.finalLayoutToLighting(gui=False)
+        geocaching.conformAbcNodeNames()
+        geocaching.exportLayoutInfo(publish=publish, dryRun=dryRun, sceneInfos=srcScnInfos)
 
-    geocaching.conformAbcNodeNames()
-    geocaching.exportLayoutInfo(publish=publish, dryRun=dryRun, sceneInfos=scnInfos)
-
-    if not dryRun:
-        pm.saveFile(force=True)
-
-    if publish and (not dryRun):
-        sgVersData = {"sg_status_list":"rdy"}
-        _, sgVersion = pubFile.publishVersion(sSrcScnPath, autoLock=True,
-                                              autoUnlock=True,
-                                              comment=sComment,
-                                              sgVersionData=sgVersData)
-        if sgVersion:
-            publishing.linkAssetVersionsInShotgun(damShot, sgVersion)
-
+        if publish:
+            scnInfos = myagen.infosFromScene()
+            scnMng = sceneManager.SceneManager(scnInfos)
+            scnMng.publish(comment=sComment, sgVersionData=sgVersData, 
+                           dryRun=dryRun, autoUnlock=False)
+    finally:
+        if publish:
+            pubDstScn.setLocked(False)
 
 def exportLayoutInfos(sSrcScnPath, publish=False, dryRun=False):
 
@@ -154,24 +151,20 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
 
     mc.loadPlugin("rrSubmit_Maya_Z2K.py")
 
-    scnInfos = myagen.infosFromScene(sSrcScnPath)
+    srcScnInfos = myagen.infosFromScene(sSrcScnPath)
     #damShot = scnInfos["dam_entity"]
-    srcScn = scnInfos["rc_entry"]
+    srcScn = srcScnInfos["rc_entry"]
+    if not srcScn.isVersionFile():
+        raise ValueError("Source scene is NOT a version file: '{}'"
+                         .format(sSrcScnPath))
 
-    if srcScn.isVersionFile():
-        sVersSuffix = mkVersionSuffix(srcScn.versionFromName())
-        headFile = srcScn.getHeadFile(dbNode=False)
-        copySrcFile = srcScn
-    else:
-        sVersSuffix = ""
-        headFile = srcScn
-        copySrcFile = None
+    sVersSuffix = mkVersionSuffix(srcScn.versionFromName())
+    headFile = srcScn.getHeadFile(dbNode=False)
 
-    sSuffix = "".join((sVersSuffix, "-elBorgno"))
+    sSuffix = "".join((sVersSuffix, "-elborgno"))
     privScn, _ = headFile.copyToPrivateSpace(suffix=sSuffix, existing="replace",
-                                             sourceFile=copySrcFile)
-    srcScn = privScn
-    sSrcScnPath = srcScn.absPath()
+                                             sourceFile=srcScn)
+    sSrcScnPath = privScn.absPath()
 
     myasys.openScene(sSrcScnPath, force=True, fail=False, lrd="none")
     mc.refresh()
@@ -200,5 +193,107 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
         mc.setAttr("defaultRenderGlobals.byFrameStep", curStep)
 
 
+def publishCfxCaches(sSrcScnPath, publish=False, dryRun=False):
 
+    #raise RuntimeError("Bypassing job")
 
+    from davos_maya.tool import dependency_scan;reload(dependency_scan)
+
+    srcScnInfos = myagen.infosFromScene(sSrcScnPath)
+    damShot = srcScnInfos["dam_entity"]
+    srcScn = srcScnInfos["rc_entry"]
+    bPublicSrc = srcScn.isPublic()
+    if bPublicSrc and not srcScn.isVersionFile():
+        raise ValueError("Source scene is NOT a version file: '{}'"
+                         .format(sSrcScnPath))
+
+    sCurUser = damShot.project.loggedUser().loginName
+
+    pubDstScn = damShot.getRcFile("public", "charFx_scene")
+    sComment = "BATCH: published caches"
+    sgVersData = {"sg_status_list":"omt"}
+
+    if publish:
+        pubDstScn.ensureLocked(autoLock=True)
+
+    try:
+        if bPublicSrc:
+            privDstScn, _ = pubDstScn.copyToPrivateSpace(suffix=pubDstScn.makeEditSuffix(),
+                                                         existing="replace",
+                                                         sourceFile=srcScn)
+            sSrcScnPath = privDstScn.absPath()
+
+        openKwargs = dict(force=True, fail=False)
+#        if (not publish) and dryRun:
+#            openKwargs.update(lrd="none")
+
+        if not pathEqual(pm.sceneName(), sSrcScnPath):
+            myasys.openScene(sSrcScnPath, **openKwargs)
+            srcScnInfos = myagen.infosFromScene()
+
+        deleteAllJunkShapes()
+
+        dependDct = None
+        sCacheNodeList = lsNodes(type="cacheFile", not_rn=True, nodeNames=True)
+        if sCacheNodeList:
+
+            # grouping CFX meshes by assets to world
+            sGeoGrpList = mc.ls("chr_*:grp_geo") + mc.ls("prp_*:grp_geo") + mc.ls("vhl_*:grp_geo")
+            worldGrpDct = {}
+            for sXfm in mc.ls(lsNodes(sGeoGrpList, dag=True, not_rn=True, nodeNames=True), exactType="transform"):
+                sParent = mc.listRelatives(sXfm, p=True, path=True)[0]
+                sAstNmspc = sParent.rsplit("|", 1)[-1].rsplit(":", 1)[0]
+                worldGrpDct.setdefault(sAstNmspc, []).append(sXfm)
+
+            for sAstNmspc, sObjList in worldGrpDct.iteritems():
+                print u"grouping under '{}': {}".format(sAstNmspc + "_CFX", sObjList)
+                mc.group(sObjList, name=sAstNmspc + "_CFX", world=True)
+
+            # filter useless nodes through preview of exported selection for chr, prp and vhl assets
+            sNodeList = None
+            sToSelList = mc.ls("chr_*:asset") + mc.ls("prp_*:asset") + mc.ls("vhl_*:asset")
+            if sToSelList:
+                mc.select(sToSelList)
+                sNodeList = mc.file(exportSelected=True, preview=True, force=True, type="mayaAscii",
+                                    preserveReferences=True, shader=False, channels=True,
+                                    constraints=True, expressions=True, constructionHistory=True)
+                print "Nodes to connected to an asset ref:", len(sNodeList)
+
+            sCurUserDir = "/{}/".format(sCurUser)
+            sAuthorDir = "/{}/".format(pubDstScn.author)
+
+            if sNodeList:
+                sCacheNodeList = lsNodes(sNodeList, type="cacheFile", not_rn=True, nodeNames=True)
+
+            for sCacheNode in sCacheNodeList:
+                sCacheDir = pathNorm(mc.getAttr(sCacheNode + ".cachePath"))
+                sCacheName = mc.getAttr(sCacheNode + ".cacheName")
+                sCachePath = mc.cacheFile(sCacheNode, q=True, fileName=True)
+                if (not sCachePath) and (sCurUserDir in sCacheDir):
+                    print sCacheDir, sCacheName
+                    sCacheDir = sCacheDir.replace(sCurUserDir, sAuthorDir)
+                    print "--->", sCacheDir, sCacheName
+                    mc.setAttr(sCacheNode + ".cachePath", sCacheDir, type="string")
+
+            dependDct = dependency_scan.launch(srcScnInfos, among=sNodeList, modal=True, okLabel="Publish")
+            if not dependDct:
+                print " No dependencies to publish ".center(80, "!")
+
+        else:
+            print " No 'cacheFile' nodes found ".center(80, "!")
+
+        if publish:
+            scnInfos = myagen.infosFromScene()
+
+            if dependDct:
+                damShot = scnInfos["dam_entity"]
+                cacheDir = damShot.getResource("public", "charFx_cache_dir")
+                if not dryRun:
+                    cacheDir.setSyncRules(["no_sync"])
+
+            scnMng = sceneManager.SceneManager(scnInfos)
+            scnMng.publish(comment=sComment, sgVersionData=sgVersData,
+                           dependencies=dependDct, dryRun=dryRun, autoUnlock=False)
+    finally:
+        if publish:
+            pubDstScn.setLocked(False)

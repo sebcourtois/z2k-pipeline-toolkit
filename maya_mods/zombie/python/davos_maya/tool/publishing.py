@@ -105,7 +105,7 @@ def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishIn
         bUseSubprocess = False
         if not bUseSubprocess:
 
-            print "\n" + " Publishing fellow files (.psd, .tx, etc...) ".center(120, '-')
+            print "\n" + " Publishing additional files (.psd, .tx, etc...) ".center(120, '-')
 
             publishedFellowItems = publishDependencies(depConfDct,
                                                        sFellowPathList,
@@ -118,7 +118,7 @@ def publishSceneDependencies(scnInfos, sDependType, depScanResults, prePublishIn
 
         else:
             sMsg = """
-    Opening a new process to publish fellow files: .psd, .tx, etc...
+    Opening a new process to publish additional files: .psd, .tx, etc...
         """
             pm.displayWarning(sMsg)
 
@@ -213,7 +213,7 @@ def repathDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
     publishedItemsDct = dict(izip((pathNormAll(p) for p in sDepPathList),
                                   publishedItems))
 
-    sMsgFmt = "\nRelinking '{}' node: \n    from '{}'\n      to '{}'"
+    sMsgFmt = "\n" + "Re-pathing '{}' node: \n      from '{}'\n        to '{}'"
 
     sEnvVarName = depConfDct.get("env_var", "")
 
@@ -249,21 +249,23 @@ def repathDependenciesToPublic(proj, depConfDct, sDepPathList, publishedItems,
             if sNodeName in sLinkedList:
                 continue
 
-            fileAttr = fileNode.attr(FILE_PATH_ATTRS[fileNode.type()])
+            sNodeType = fileNode.type()
+            fileAttr = fileNode.attr(FILE_PATH_ATTRS[sNodeType])
 
-            sSrcFilePath = pathNorm(pathResolve(fileAttr.get()))
+            sCurrentPath = pathNorm(pathResolve(fileAttr.get()))
             if bIsPack:
                 #print fileNode, sSrcFilePath, sPackSep
-                sEndPath = re.split(sPackSep, sSrcFilePath)[-1]
-                sPubFilePath = pathJoin(sPubEnvPath, sEndPath)
+                sEndPath = re.split(sPackSep, sCurrentPath)[-1]
+                sPublicPath = pathJoin(sPubEnvPath, sEndPath)
+            elif sNodeType == "cacheFile":
+                sPublicPath = osp.dirname(sPubEnvPath)
             else:
-                sPubFilePath = sPubEnvPath
+                sPublicPath = sPubEnvPath
 
-            sMsg = (sMsgFmt.format(sNodeName, sSrcFilePath, sPubFilePath))
-            print sMsg
+            print sMsgFmt.format(sNodeName, sCurrentPath, sPublicPath)
 
             if not bDryRun:
-                fileAttr.set(sPubFilePath)
+                fileAttr.set(sPublicPath)
 
             sLinkedList.append(sNodeName)
 
@@ -299,7 +301,7 @@ def lockDependenciesToCurrentVersion(proj, depScanResults, **kwargs):
 
     proj.dbNodesFromEntries(headFileList)
 
-    sMsgFmt = "\nRelinking '{}' node: \n    from '{}'\n      to '{}'"
+    sMsgFmt = "\n" + "Re-pathing '{}' node: \n      from '{}'\n        to '{}'"
 
     sLinkedList = []
     sNotFoundList = []
@@ -388,7 +390,7 @@ def quickSceneCleanUp(damEntity):
 
 def publishCurrentScene(*args, **kwargs):
 
-    bWithDeps = kwargs.pop("dependencies", True)
+    dependencies = kwargs.pop("dependencies", True)
     prePublishFunc = kwargs.pop("prePublishFunc", None)
     postPublishFunc = kwargs.pop("postPublishFunc", None)
     scnInfos = kwargs.pop("sceneInfos", None)
@@ -425,7 +427,7 @@ def publishCurrentScene(*args, **kwargs):
             raise
 
     depScanDct = {}
-    if damEntity and bWithDeps:
+    if damEntity and dependencies:
 
         sExcDepList = None
 
@@ -440,19 +442,32 @@ def publishCurrentScene(*args, **kwargs):
             if sRes == "No":
                 sExcDepList = ["texture_dep", "fxCache_dep"]
 
-        depScanDct = dependency_scan.launch(scnInfos, modal=True, okLabel="Publish",
-                                            exclude=sExcDepList)
-        if depScanDct is None:
-            pm.displayInfo("Canceled !")
-            return
+        if isinstance(dependencies, dict):
+            depScanDct = dependencies
+        else:
+            depScanDct = dependency_scan.launch(scnInfos, modal=True, okLabel="Publish",
+                                                exclude=sExcDepList)
+            if depScanDct is None:
+                pm.displayInfo("Canceled !")
+                return
 
-    bSgVersion = True
+    bSgVersion = kwargs.pop("withSgVersion", True)
     try:
-        prePublishInfos = pubScnFile.beginPublish(sCurScnPath, checkLock=False, **kwargs)
+        prePublishInfos = pubScnFile.beginPublish(sCurScnPath,
+                                                  comment=kwargs.pop("comment", ""),
+                                                  autoLock=False,
+                                                  version=kwargs.pop("version", None),
+                                                  sgTask=kwargs.pop("sgTask", None),
+                                                  withSgVersion=bSgVersion,
+                                                  checkLock=False,
+                                                  sgVersionData=kwargs.pop("sgVersionData", None),
+                                                  )
         if prePublishInfos is None:
             return
+
         sgVersionData = prePublishInfos["sg_version_data"]
         publishCtx = PublishContext(scnInfos, prePublishInfos)
+
     except Exception as e:
         pubScnFile._abortPublish(e, None, None)
         raise
@@ -470,6 +485,7 @@ def publishCurrentScene(*args, **kwargs):
         if bDryRun:
             return
 
+    print "Saving scene:", sCurScnPath
     sSavedScnPath = myasys.saveScene(prompt=False, checkError=False)
     if not sSavedScnPath:
         raise RuntimeError("Failed to save current scene !")

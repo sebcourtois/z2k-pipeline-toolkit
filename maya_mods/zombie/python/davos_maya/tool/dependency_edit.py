@@ -224,7 +224,7 @@ def editTextureFiles(dryRun=False):
         pm.mel.handleScriptEditorAction("maximizeHistory")
     mu.executeInMainThreadWithResult(showScriptEditor)
 
-    sMsgFmt = "\nRelinking '{}' node: \n    from '{}'\n      to '{}'"
+    sMsgFmt = "\n" + "Re-pathing '{}' node: \n      from '{}'\n        to '{}'"
     privFile = None
     sCopiedList = []
     numLinked = 0

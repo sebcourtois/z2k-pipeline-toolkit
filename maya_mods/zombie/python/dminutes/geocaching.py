@@ -388,7 +388,7 @@ def exportLayoutInfo(**kwargs):
         scnInfos = infosFromScene()
 
     damShot = scnInfos.get("dam_entity")
-    curScnFile = scnInfos["rc_entry"]
+    scnFile = scnInfos["rc_entry"]
 
     sScnRcName = scnInfos.get("resource")
     if sScnRcName == "layout_scene":
@@ -430,7 +430,7 @@ def exportLayoutInfo(**kwargs):
     res = sPrivFilePath
     if bPublish:
         if not sComment:
-            sComment = "from {}".format(curScnFile.name.replace(damShot.name + "_", ""))
+            sComment = "from {}".format(scnFile.name.replace(damShot.name + "_", ""))
 
         pubFile = damShot.getRcFile("public", sOutRcName, weak=True)
         parentDir = pubFile.parentDir()

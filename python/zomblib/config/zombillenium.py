@@ -278,6 +278,11 @@ class shot_lib(object):
                     "sg_uploaded_movie":"charFx_capture",
                     "sg_path_to_movie":"charFx_capture",
                     "sg_tasks":("charfx",),
+                      "dependency_types":
+                            {"fxCache_dep":
+                                {"dep_public_loc":"charFx_cache_dir",
+                                 "checksum":False},
+                            }
                     },
     "charFx_capture":{"default_sync_priority":1, },
 
@@ -335,7 +340,7 @@ class shot_lib(object):
                          "texture_dep":
                             {"dep_public_loc":"fx3d_texture_dir",
                             "checksum":True},
-                            }
+                        }
                   },
     "fx3d_precomp_movie":{"create_sg_version":True,
                           "sg_uploaded_movie":True,

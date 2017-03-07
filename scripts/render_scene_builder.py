@@ -21,7 +21,7 @@ from collections import OrderedDict
 
 LAUNCH_TIME = None
 
-def launch(shots=None, dryRun=False, noPublish=False, timestamp=None, dialogParent=None):
+def launch(shots=None, dryRun=False, noPublish=False, rebuild=False, timestamp=None, dialogParent=None):
 
     global LAUNCH_TIME
 
@@ -56,6 +56,9 @@ def launch(shots=None, dryRun=False, noPublish=False, timestamp=None, dialogPare
             if noPublish and ("--no-publish" not in cmdArgs):
                 cmdArgs.append("--no-publish")
 
+            if rebuild and ("--rebuild" not in cmdArgs):
+                cmdArgs.append("--rebuild")
+
             if "--time" not in cmdArgs:
                 cmdArgs += ["--time", str(int(LAUNCH_TIME))]
 
@@ -74,7 +77,7 @@ def launch(shots=None, dryRun=False, noPublish=False, timestamp=None, dialogPare
 
     sTitle = "RENDER SCENE BUILDER"
     print "\n", sTitle.center(len(sTitle) + 2).center(120, "-")
-    kwargs = dict(dryRun=dryRun, prompt=bPrompt, noPublish=noPublish)
+    kwargs = dict(dryRun=dryRun, prompt=bPrompt, noPublish=noPublish, rebuild=rebuild)
     if inDevMode():
         pprint(kwargs)
     print ""
@@ -82,8 +85,10 @@ def launch(shots=None, dryRun=False, noPublish=False, timestamp=None, dialogPare
     damShotList = list(proj.getShot(s) for s in sShotList)
     build(damShotList, sgShots=sgShots, **kwargs)
 
-def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=False,
-          sSrcRcName="finalLayout_scene", sDstRcName="rendering_scene"):
+def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=False, rebuild=False):
+
+    sSrcRcName = "finalLayout_scene"
+    sDstRcName = "rendering_scene"
 
     damShotList = in_damShotList[:]
     proj = damShotList[0].project
@@ -122,7 +127,12 @@ def build(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fal
 
         iDstVers = dstScn.currentVersion
         sCmnt = dstScn.comment.strip()
-        if iDstVers:# and (not sCmnt.lower().startswith("built from ")):
+        
+        bAlreadyEdited = True if iDstVers else False
+        if rebuild:
+            bAlreadyEdited &= (not sCmnt.lower().startswith("built from "))
+        
+        if bAlreadyEdited:
             dstScnList[i] = None
             sMsg = ("'{}' already edited by '{}' (v{:03d}: '{}')."
                     .format(dstScn.name, dstScn.author, iDstVers, sCmnt))
@@ -355,6 +365,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     #parser.add_argument("resource")
     parser.add_argument("--dry", action="store_true")
+    parser.add_argument("--rebuild", action="store_true")
     parser.add_argument("--no-publish", action="store_true")
     parser.add_argument("--time", type=int, default=None)
     parser.add_argument("--shots", nargs="*", default=None)
@@ -365,7 +376,8 @@ if __name__ == "__main__":
 #        ns.no_publish = True
 
     try:
-        launch(shots=ns.shots, dryRun=ns.dry, timestamp=ns.time, noPublish=ns.no_publish)
+        launch(shots=ns.shots, dryRun=ns.dry, timestamp=ns.time,
+               noPublish=ns.no_publish, rebuild=ns.rebuild)
     except Exception as e:
         os.environ["PYTHONINSPECT"] = "1"
         if isinstance(e, Warning):

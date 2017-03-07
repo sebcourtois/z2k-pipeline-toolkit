@@ -24,6 +24,8 @@ ENVS = {
 
         "XGEN_CONFIG_PATH":r"//ZOMBIWALK/Projects/zomb/tool/z2k-pipeline-toolkit/launchers/paris/xgen",
         "XGEN_PATH":r"//ZOMBIWALK/Projects/zomb/tool/xgen",
+
+        "P_DRIVE_UNC_PATH":r"\\ZOMBIWALK\Projects"
         }
 
 try:
