@@ -264,7 +264,7 @@ def createCompoBatchFiles():
     if os.environ["DEP"] == '08_render' or os.environ["DEP"] == '10_compo':
         createNukeBatchMovie(gui=False)
         createPublishBat(gui=False)
-    if os.environ["DEP"] == '10_compo' and os.environ["davos_site"] == "dmn_paris":  #"dmn_angouleme"
+    if os.environ["DEP"] == '10_compo' and os.environ["davos_site"] == "dmn_angouleme":  #"dmn_angouleme", "dmn_paris"
         createCopyBat(gui=False)
 
 
