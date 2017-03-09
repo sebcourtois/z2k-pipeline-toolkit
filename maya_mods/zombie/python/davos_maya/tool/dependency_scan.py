@@ -198,7 +198,7 @@ class DependencyTreeDialog(MayaQWidgetBaseMixin, QuickTreeDialog):
 
         return treeData
 
-def extractDependencyLogs(depScanDct):
+def extractDependencyLogs(depScanDct, errorToWarning=None):
 
     sAllSeveritySet = set()
     numAllPublishes = 0
@@ -249,16 +249,17 @@ def extractDependencyLogs(depScanDct):
 
         for sSeverity, logItemsList in scanLogDct.iteritems():
 
-            sSeverityLabel = sSeverity.upper() + "S"
-
             for sLogCode, sLogMsg in logItemsList:
 
                 if sSeverity == "error":
-                    if sLogCode in errorCountDct:
+                    if errorToWarning and (sLogCode in errorToWarning):
+                        sSeverity = "warning"
+                    elif sLogCode in errorCountDct:
                         errorCountDct[sLogCode] += 1
                     else:
                         errorCountDct[sLogCode] = 1
 
+                sSeverityLabel = sSeverity.upper() + "S"
                 sItemPath = pathJoin(sSeverityLabel, labelify(sLogCode))
                 sFileGrpItems.add(sItemPath)
                 sItemPath = pathJoin(sItemPath, sFilename)
@@ -1293,8 +1294,8 @@ def _traverseLogTree(tree, data, parentPath="", rootPath=""):
 
 dialog = None
 
-def launch(scnInfos=None, scanFunc=None, modal=False, okLabel="OK",
-           expandTree=False, forceDialog=False, exclude=None, among=None):
+def launch(scnInfos=None, scanFunc=None, modal=False, okLabel="OK", expandTree=False,
+           forceDialog=False, exclude=None, among=None, errorToWarning=None):
 
     global dialog
 
@@ -1361,7 +1362,7 @@ def launch(scnInfos=None, scanFunc=None, modal=False, okLabel="OK",
             if dialog.exec_():
                 return dialog.depScanDct
     else:
-        dependLogs = extractDependencyLogs(depScanDct)
+        dependLogs = extractDependencyLogs(depScanDct, errorToWarning=errorToWarning)
 
         errorCountDct = dependLogs["error_count"]
         numPublish = dependLogs["publish_count"]

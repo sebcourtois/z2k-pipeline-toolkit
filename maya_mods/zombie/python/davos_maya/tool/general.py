@@ -16,6 +16,7 @@ from pytd.util.qtutils import setWaitCursor
 from pytd.util.sysutils import toStr
 
 from davos.core.damproject import DamProject
+from pytaya.core.general import lsNodes
 
 okValue = 'OK'
 noneValue = 'MISSING'
@@ -365,9 +366,14 @@ def iterGeoGroups(**kwargs):
     if bSelected:
         if bSelShape:
             sObjList = mc.ls(sl=True, dag=True, type="shape", ni=True)
+            for sShape in sObjList:
+                if ":" not in sShape.rsplit("|", 1)[-1]:
+                    sObjList.extend(mc.listRelatives(sShape, p=True, c=False, path=True))
         else:
             sObjList = mc.ls(sl=True)
+
         sNmspcList = set(o.rsplit("|", 1)[-1].rsplit(":", 1)[0] for o in sObjList)
+
     elif sNmspcList is None:
         sNmspcList = mc.namespaceInfo(listOnlyNamespaces=True)
 

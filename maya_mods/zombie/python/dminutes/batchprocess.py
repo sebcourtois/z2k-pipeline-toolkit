@@ -154,7 +154,8 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
     srcScnInfos = myagen.infosFromScene(sSrcScnPath)
     #damShot = scnInfos["dam_entity"]
     srcScn = srcScnInfos["rc_entry"]
-    if not srcScn.isVersionFile():
+    bPublicSrc = srcScn.isPublic()
+    if bPublicSrc and not srcScn.isVersionFile():
         raise ValueError("Source scene is NOT a version file: '{}'"
                          .format(sSrcScnPath))
 
@@ -167,22 +168,22 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
     sSrcScnPath = privScn.absPath()
 
     myasys.openScene(sSrcScnPath, force=True, fail=False, lrd="none")
-    mc.refresh()
 
     params = [
-    "DefaultClientGroup=" + '1~ALL',
-    "CustomUserInfo=" + '1~0~Rendu Cam Right',
-    "CompanyProjectName=" + '0~el-borgno',
-    "CustomVersionName=" + '0~{}'.format(sVersSuffix.strip("-")),
-    "Color_ID=" + '1~10'
-    ]
+        "SendJobDisabled=" + '1~1',
+        "DefaultClientGroup=" + '1~ALL',
+        "CustomUserInfo=" + '1~0~Rendu Cam Right',
+        "CompanyProjectName=" + '0~el-borgno',
+        "CustomVersionName=" + '0~{}'.format(sVersSuffix.strip("-")),
+        "Color_ID=" + '1~10',
+        ]
 
     curStep = mc.getAttr("defaultRenderGlobals.byFrameStep")
     try:
         if step:
             mc.setAttr("defaultRenderGlobals.byFrameStep", step)
 
-        sFilePath = mc.rrSubmitZomb(parameter=params)
+        sFilePath = mc.rrSubmitZomb(parameter=params, noSubmit=True)
         print "\n", sFilePath.center(120, "-")
         with open(sFilePath, 'r') as fileobj:
             for l in fileobj:
@@ -210,7 +211,7 @@ def publishCfxCaches(sSrcScnPath, publish=False, dryRun=False):
     sCurUser = damShot.project.loggedUser().loginName
 
     pubDstScn = damShot.getRcFile("public", "charFx_scene")
-    sComment = "BATCH: published caches"
+    sComment = "BATCH: published caches 2"
     sgVersData = {"sg_status_list":"omt"}
 
     if publish:
@@ -237,48 +238,51 @@ def publishCfxCaches(sSrcScnPath, publish=False, dryRun=False):
         sCacheNodeList = lsNodes(type="cacheFile", not_rn=True, nodeNames=True)
         if sCacheNodeList:
 
-            # grouping CFX meshes by assets to world
-            sGeoGrpList = mc.ls("chr_*:grp_geo") + mc.ls("prp_*:grp_geo") + mc.ls("vhl_*:grp_geo")
-            worldGrpDct = {}
-            for sXfm in mc.ls(lsNodes(sGeoGrpList, dag=True, not_rn=True, nodeNames=True), exactType="transform"):
-                sParent = mc.listRelatives(sXfm, p=True, path=True)[0]
-                sAstNmspc = sParent.rsplit("|", 1)[-1].rsplit(":", 1)[0]
-                worldGrpDct.setdefault(sAstNmspc, []).append(sXfm)
+            if False:
+                # grouping CFX meshes by assets to world
+                sGeoGrpList = mc.ls("chr_*:grp_geo") + mc.ls("prp_*:grp_geo") + mc.ls("vhl_*:grp_geo")
+                worldGrpDct = {}
+                for sXfm in mc.ls(lsNodes(sGeoGrpList, dag=True, not_rn=True, nodeNames=True), exactType="transform"):
+                    sParent = mc.listRelatives(sXfm, p=True, path=True)[0]
+                    sAstNmspc = sParent.rsplit("|", 1)[-1].rsplit(":", 1)[0]
+                    worldGrpDct.setdefault(sAstNmspc, []).append(sXfm)
 
-            for sAstNmspc, sObjList in worldGrpDct.iteritems():
-                print u"grouping under '{}': {}".format(sAstNmspc + "_CFX", sObjList)
-                mc.group(sObjList, name=sAstNmspc + "_CFX", world=True)
+                for sAstNmspc, sObjList in worldGrpDct.iteritems():
+                    print u"grouping under '{}': {}".format(sAstNmspc + "_CFX", sObjList)
+                    mc.group(sObjList, name=sAstNmspc + "_CFX", world=True)
 
             # filter useless nodes through preview of exported selection for chr, prp and vhl assets
             sNodeList = None
-            sToSelList = mc.ls("chr_*:asset") + mc.ls("prp_*:asset") + mc.ls("vhl_*:asset")
-            if sToSelList:
-                mc.select(sToSelList)
-                sNodeList = mc.file(exportSelected=True, preview=True, force=True, type="mayaAscii",
-                                    preserveReferences=True, shader=False, channels=True,
-                                    constraints=True, expressions=True, constructionHistory=True)
-                print "Nodes to connected to an asset ref:", len(sNodeList)
-
-            sCurUserDir = "/{}/".format(sCurUser)
-            sAuthorDir = "/{}/".format(pubDstScn.author)
+            if False:
+                sToSelList = mc.ls("chr_*:asset") + mc.ls("prp_*:asset") + mc.ls("vhl_*:asset")
+                if sToSelList:
+                    mc.select(sToSelList)
+                    sNodeList = mc.file(exportSelected=True, preview=True, force=True, type="mayaAscii",
+                                        preserveReferences=True, shader=False, channels=True,
+                                        constraints=True, expressions=True, constructionHistory=True)
+                    print "Nodes to connected to an asset ref:", len(sNodeList)
 
             if sNodeList:
                 sCacheNodeList = lsNodes(sNodeList, type="cacheFile", not_rn=True, nodeNames=True)
 
-            for sCacheNode in sCacheNodeList:
-                sCacheDir = pathNorm(mc.getAttr(sCacheNode + ".cachePath"))
-                sCacheName = mc.getAttr(sCacheNode + ".cacheName")
-                sCachePath = mc.cacheFile(sCacheNode, q=True, fileName=True)
-                if (not sCachePath) and (sCurUserDir in sCacheDir):
-                    print sCacheDir, sCacheName
-                    sCacheDir = sCacheDir.replace(sCurUserDir, sAuthorDir)
-                    print "--->", sCacheDir, sCacheName
-                    mc.setAttr(sCacheNode + ".cachePath", sCacheDir, type="string")
+            if False:
+                sCurUserDir = "/{}/".format(sCurUser)
+                sAuthorDir = "/{}/".format(pubDstScn.author)
+                for sCacheNode in sCacheNodeList:
+                    sCacheDir = pathNorm(mc.getAttr(sCacheNode + ".cachePath"))
+                    sCacheName = mc.getAttr(sCacheNode + ".cacheName")
+                    sCachePath = mc.cacheFile(sCacheNode, q=True, fileName=True)
+                    if (not sCachePath) and (sCurUserDir in sCacheDir):
+                        print sCacheDir, sCacheName
+                        sCacheDir = sCacheDir.replace(sCurUserDir, sAuthorDir)
+                        print "--->", sCacheDir, sCacheName
+                        mc.setAttr(sCacheNode + ".cachePath", sCacheDir, type="string")
 
-            dependDct = dependency_scan.launch(srcScnInfos, among=sNodeList, modal=True, okLabel="Publish")
+            dependDct = dependency_scan.launch(srcScnInfos, among=sNodeList,
+                                               modal=(not dryRun), okLabel="Publish",
+                                               errorToWarning=("FileNotFound", "NameAlreadyUsed"))
             if not dependDct:
                 print " No dependencies to publish ".center(80, "!")
-
         else:
             print " No 'cacheFile' nodes found ".center(80, "!")
 

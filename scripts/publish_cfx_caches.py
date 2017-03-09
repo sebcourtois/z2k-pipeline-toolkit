@@ -86,7 +86,7 @@ def launch():
     query = {
     "file":r"REGEX_/zomb/shot/.+/sq\d{4}_sh\d{4}[a-z]_(charFx|charFx-v\d{3})\.ma",
     "origin":"dmn_paris",
-    "comment":{"$exists":True, "$ne":"BATCH: published caches"}
+    "comment":{"$exists":True, "$ne":"BATCH: published caches 2"}
     }
     foundNodeList = proj._db.findNodes(query)
 
@@ -151,7 +151,7 @@ def launch():
         #print n.dataRepr()
     headers = ["file", "size", "time", "author", "comment"]
     print tabulate(table, headers, tablefmt="simple")
-    print "{} resources - {:.2cM}".format(len(versNodeList), (MemSize(totalSize)))
+    print "{} resources - {:.2cM}".format(len(srcScnList), (MemSize(totalSize)))
 
     if sErrorList:
         sSep = "\n" + "ERROR: "

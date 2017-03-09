@@ -42,8 +42,8 @@ reload(finalLayout)
 
 
 def rrWriteLog(msg):
-    UIMode = (not cmds.about(batch=True))
-    if (UIMode):
+    uiMode = (not cmds.about(batch=True))
+    if (uiMode):
         cmds.confirmDialog(message=msg, button=['Abort'])
     else:
         print msg
@@ -1167,7 +1167,7 @@ def rrGetRR_Root():
     return ""
 
 
-def rrSetNewTempFileName(UIMode):
+def rrSetNewTempFileName(uiMode):
     random.seed()
     if ((sys.platform.lower() == "win32") or (sys.platform.lower() == "win64")):
         if os.environ.has_key('TEMP'):
@@ -1178,7 +1178,7 @@ def rrSetNewTempFileName(UIMode):
     else:
         nam = "/tmp/"
     nam += "rrSubmitMaya_"
-    if (UIMode):
+    if (uiMode):
         nam += str(random.randrange(1000, 10000, 1))
     nam += ".xml"
     return nam
@@ -1419,9 +1419,6 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
         # YOU CAN ADD OTHER NOT SCENE-INFORMATION PARAMETERS USING THIS FORMAT:
         # self.subE(jobElement,"SubmitterParameter","PARAMETERNAME=" + PARAMETERVALUE_AS_STRING)
 
-        if cmds.about(batch=True):
-            self.subE(rootElement, "SubmitterParameter", "SendJobDisabled=" + '1~1')
-
         if cmds.ls(type='xgmPalette'):
             self.subE(rootElement, "SubmitterParameter", "AllowLocalSceneCopy=" + '1~0')
 
@@ -1586,8 +1583,8 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             self.subE(jobElement, "customRenVer_" + layer.rendererVersionName, layer.rendererVersion)
 
     #write all information (layer/passes) into RR job file
-    def writeAllLayers(self, UIMode, customParams=None):
-        self.TempFileName = rrSetNewTempFileName(UIMode)
+    def writeAllLayers(self, uiMode, customParams=None):
+        self.TempFileName = rrSetNewTempFileName(uiMode)
 
         tmpFile = open(self.TempFileName, "w")
         xmlObj = self.writeToXMLstart(customParams)
@@ -1617,10 +1614,13 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
 
 
     #call the submitter
-    def submitLayers(self):
+    def submitLayers(self, uiMode):
         if ((sys.platform.lower() == "win32") or (sys.platform.lower() == "win64")):
             #print ("Executing: \""+self.RR_ROOT+"\\win__rrSubmitter.bat\"  "+self.TempFileName)
-            os.system("\"" + self.RR_ROOT + "\\win__rrSubmitter.bat\"  " + self.TempFileName)
+            if uiMode:
+                os.system("\"" + self.RR_ROOT + "\\win__rrSubmitter.bat\"  " + self.TempFileName)
+            else:
+                os.system("\"" + self.RR_ROOT + "\\win__rrSubmitterconsole.bat\"  " + self.TempFileName)
         elif (sys.platform.lower() == "darwin"):
             #print ("Executing: \""+self.RR_ROOT+"/bin/mac/rrSubmitter.app/Contents/MacOS/rrSubmitter\"  "+self.TempFileName)
             os.system("\"" + self.RR_ROOT + "/bin/mac/rrSubmitter.app/Contents/MacOS/rrSubmitter\"  " + self.TempFileName)
@@ -1633,6 +1633,8 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
         syntax = MSyntax()
         syntax.addFlag("-p", "-parameter", MSyntax.kString)
         syntax.makeFlagMultiUse("-p")
+        syntax.addFlag("-nui", "-noUI")
+        syntax.addFlag("-ns", "-noSubmit")
         return syntax
 
     ########################################
@@ -1651,10 +1653,10 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
                 sParamList.append(parArgs.asString(0))
 
         #check if we are in console batch mode
-        UIMode = (not cmds.about(batch=True))
+        uiMode = (not cmds.about(batch=True)) and (not argData.isFlagSet("noUI"))
 
         # Ask for scene save:
-        if (UIMode and (cmds.file(q=True, mf=True))):  # //Ignore ifcheck
+        if (uiMode and (cmds.file(q=True, mf=True))):  # //Ignore ifcheck
             ConfirmResult = (cmds.confirmDialog(message="Scene should be saved before network rendering.\n Save scene?", button=['Yes', 'No', 'Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel'))
             if (ConfirmResult == "Cancel"):
                 return True
@@ -1664,11 +1666,11 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
         #get information about the scene:
         self.SceneInfo.getSceneInfo()
         if (self.SceneInfo.SceneName == "unknown"):
-            if (UIMode):
+            if (uiMode):
                 cmds.confirmDialog(message="Scene was never saved!\n", button=['Abort'])
             return True
 
-        if UIMode:
+        if uiMode:
             pm.mel.unifiedRenderGlobalsWindow()
             if pm.window("unifiedRenderGlobalsWindow", exists=True):
                 pm.deleteUI("unifiedRenderGlobalsWindow")
@@ -1702,12 +1704,12 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
         #write layers into file:
         print ("rrSubmitZomb - write layers into file.")
 
-        self.writeAllLayers(UIMode, customParams=sParamList)
+        self.writeAllLayers(uiMode, customParams=sParamList)
 
         #call submitter
         #print ("rrSubmitZomb - call submitter")
-        if UIMode:
-            self.submitLayers()
+        if not argData.isFlagSet("noSubmit"):
+            self.submitLayers(uiMode)
 
         self.setResult(os.path.normpath(self.TempFileName))
 
