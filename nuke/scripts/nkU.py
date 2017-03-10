@@ -7,8 +7,9 @@ import errno
 #cat plante en mode nuke render
 #from davos.core.damproject import DamProject
 from pprint import pprint
-import shutil
+#import shutil
 
+import shutiloptim as shutil
 
 # rappel
 # os.environ["ZOMB_ASSET_PATH"] = zombRootPath+"/zomb/asset"

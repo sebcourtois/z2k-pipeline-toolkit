@@ -1,7 +1,8 @@
 
 import sys
-import shutil
 import os
+import shutiloptim as shutil
+#import shutil
 
 print sys.argv
 seqS = sys.argv[1]
