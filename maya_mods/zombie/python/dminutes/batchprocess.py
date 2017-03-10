@@ -196,7 +196,7 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
 
 def publishCfxCaches(sSrcScnPath, publish=False, dryRun=False):
 
-    #raise RuntimeError("Bypassing job")
+#    raise RuntimeError("Bypassing job")
 
     from davos_maya.tool import dependency_scan;reload(dependency_scan)
 

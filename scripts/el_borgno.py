@@ -191,7 +191,7 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
         sShotName = damShot.name
         sgTask = sgTaskDct[sShotName]
 
-        if sgTask["sg_status_list"] not in ("fin", "cmpt"):
+        if sgTask["sg_status_list"] not in ("wfa", "cmpt"):
 
             if sDstRcName:
                 dstScnList[i] = None

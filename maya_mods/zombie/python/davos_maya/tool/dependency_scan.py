@@ -895,7 +895,12 @@ def pathFromCacheNode(cacheNode):
 
     sFileList = pm.cacheFile(cacheNode, q=True, fileName=True)
     if not sFileList:
-        return pathJoin(cacheNode.getAttr("cachePath"), cacheNode.getAttr("cacheName") + ".xml")
+        sCachePath = cacheNode.getAttr("cachePath")
+        sCacheName = cacheNode.getAttr("cacheName")
+        if sCachePath and sCacheName:
+            return pathJoin(sCachePath, sCacheName + ".xml")
+        else:
+            return
 
     if len(sFileList) > 2:
         cacheNode.useFileSequence = True

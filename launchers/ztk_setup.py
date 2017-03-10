@@ -202,26 +202,29 @@ class Z2kToolkit(object):
             print "\nLoading Maya environment:"
 
             self.updEnv("MAYA_MODULE_PATH", pathJoin(self.rootPath, "maya_mods"),
-                   conflict="add")
+                        conflict="add")
+
+            self.updEnv("MAYA_SCRIPT_PATH", pathJoin(self.rootPath, "maya_mods", "zombie", "AETemplates"),
+                        conflict="add")
 
             if "maya2016" in sAppPath:
 
                 self.updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_mayapy2016_site"),
-                       conflict="add")
+                            conflict="add")
 
         elif sAppName in ("rv", "rvpush"):
 
             print "\nLoading RV environment:"
 
             self.updEnv("MU_MODULE_PATH", pathJoin(self.rootPath, "RV", "Mu"),
-                   conflict="add")
+                        conflict="add")
 
         elif sAppName in ("python", "pythonw", "eclipse", "splitall"):
 
             print "\nLoading {} environment:".format(sAppName.capitalize())
 
             self.updEnv("Z2K_PYTHON_SITES", pathJoin(self.thirdPartyPath, "_python27_site"),
-                   conflict="add")
+                        conflict="add")
 
         elif sAppName.lower().startswith("nuke"):
 
