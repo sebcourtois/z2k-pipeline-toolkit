@@ -1446,7 +1446,6 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             self.subE(rootElement, "SubmitterParameter", "CompanyProjectName=" + '0~FX--JOBS')
             self.subE(rootElement, "SubmitterParameter", "Priority=" + '1~51')
             self.subE(rootElement, "SubmitterParameter", "PreviewGamma2.2=" + '0~1')
-            #self.subE(rootElement, "SubmitterParameter", "UserName=" + '0~{}'.format(os.environ['DAVOS_USER']))
             self.subE(rootElement, "SubmitterParameter", "Color_ID=" + '1~4')
 
         elif '08_render' in mainFilePathS:
@@ -1463,6 +1462,7 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             #self.subE(rootElement,"SubmitterParameter","Priority=" + '1~20')
             self.subE(rootElement, "SubmitterParameter", "CustomVersionName=" + '0~{}'.format(versionNumber))
             self.subE(rootElement, "SubmitterParameter", "Color_ID=" + '1~10')
+
 
         elif "02_layout" in mainFilePathS:
             self.subE(rootElement, "SubmitterParameter", "PPLAY-SetupCaches=" + '1~1')
@@ -1674,32 +1674,32 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             pm.mel.unifiedRenderGlobalsWindow()
             if pm.window("unifiedRenderGlobalsWindow", exists=True):
                 pm.deleteUI("unifiedRenderGlobalsWindow")
-
-        #check if this function was called with parameters:
-        self.multiCameraMode = False
-        self.phoenixFD = False
-        self.alembicSelection = False
-        if ((arglist.length() > 0) and arglist.asBool(0)):
-            self.multiCameraMode = True
-        if ((arglist.length() > 1) and arglist.asBool(1)):
-            self.writeTextureList()
-        if ((arglist.length() > 2) and arglist.asBool(2)):
-            self.phoenixFD = True
-        if ((arglist.length() > 3) and arglist.asBool(3)):
-            self.alembicSelection = True
-
-        #get all layers:
-        #print ("rrSubmitZomb - get all layers")
-        if (self.phoenixFD):
-            if (not self.getPhoenixSim()):
-                return False
-        elif (self.alembicSelection):
-            if (not self.getAlembicObj()):
-                return False
-        else:
-            if (not self.getAllLayers()):
-                #print ("rrSubmitZomb - unable to get render/layer information")
-                return False
+#
+#        #check if this function was called with parameters:
+#        self.multiCameraMode = False
+#        self.phoenixFD = False
+#        self.alembicSelection = False
+#        if ((arglist.length() > 0) and arglist.asBool(0)):
+#            self.multiCameraMode = True
+#        if ((arglist.length() > 1) and arglist.asBool(1)):
+#            self.writeTextureList()
+#        if ((arglist.length() > 2) and arglist.asBool(2)):
+#            self.phoenixFD = True
+#        if ((arglist.length() > 3) and arglist.asBool(3)):
+#            self.alembicSelection = True
+#
+#        #get all layers:
+#        #print ("rrSubmitZomb - get all layers")
+#        if (self.phoenixFD):
+#            if (not self.getPhoenixSim()):
+#                return False
+#        elif (self.alembicSelection):
+#            if (not self.getAlembicObj()):
+#                return False
+#        else:
+        if (not self.getAllLayers()):
+            #print ("rrSubmitZomb - unable to get render/layer information")
+            return False
 
         #write layers into file:
         print ("rrSubmitZomb - write layers into file.")
@@ -1707,8 +1707,9 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
         self.writeAllLayers(uiMode, customParams=sParamList)
 
         #call submitter
-        #print ("rrSubmitZomb - call submitter")
+
         if not argData.isFlagSet("noSubmit"):
+            print ("rrSubmitZomb - call submitter")
             self.submitLayers(uiMode)
 
         self.setResult(os.path.normpath(self.TempFileName))
