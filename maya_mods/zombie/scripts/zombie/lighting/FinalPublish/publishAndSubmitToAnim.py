@@ -1,16 +1,69 @@
-
+import os
 import maya.mel
-from dminutes import sceneManagerUI
+import maya.cmds as mc
+import pymel.core as pm
+from dminutes import sceneManager
+from dminutes import rendering
+from davos_maya.tool.general import infosFromScene
 
-bUiCreated = sceneManagerUI.launch(refreshSceneAssets=False)
-try:
-    publishAction = sceneManagerUI.SCENE_MANAGER.publish()
-finally:
-    if bUiCreated:
-        sceneManagerUI.kill()
+publishAction = 1
+sComment = 'Final Anim'
+scnInfos = infosFromScene()
 
-if sceneManagerUI.isLaunched():
-    sceneManagerUI.kill()
+mainFilePathS = pm.sceneName()
+if '08_render' in mainFilePathS:
+    try:
+        versionNumber = os.path.basename(mainFilePathS).split("-")[1]
+        versionNumber = versionNumber.split(".")[0]
+    except Exception as e:
+        pm.displayError(e.message)
+        versionNumber = "v000"
+
+paramRightCam = ["DefaultClientGroup=" + '1~ALL',
+                "CustomUserInfo=" + '1~0~Rendu Cam Right',
+                "CompanyProjectName=" + '0~tlm2',
+                "Priority=" + '1~10',
+                "CustomVersionName=" + '0~{}'.format(versionNumber),
+                "Color_ID=" + '1~10']
+
 if publishAction:
-    maya.mel.eval('rrSubmit')
+    sRenderType = mc.confirmDialog(title='RR Submitter',
+                                   message='Selectionnez le type de rendu !',
+                                   button=['Stills', 'Mono' , 'Stereo', 'Annuler'],
+                                   defaultButton='Mono',
+                                   cancelButton='Annuler',
+                                   dismissString='Annuler',
+                                   icon='question')
+
+    if sRenderType == 'Stills':
+        mc.rrSubmitZomb()
+
+    if sRenderType == 'Mono':
+        print '##### Initiate Left camera render (Mono) #####'
+        rendering.renderLeftCam()
+        scnMng = sceneManager.SceneManager(scnInfos)
+        sgVersData = {"sg_status_list":"rev"}
+        scnMng.publish(comment=sComment, sgVersionData=sgVersData, dryRun=False)
+        #maya.mel.eval('rrSubmitZomb -noUI')
+        mc.rrSubmitZomb(noUI=True)
+
+    elif sRenderType == 'Stereo':
+        print '##### Initiate Left and Right cameras render (Stereo) #####'
+        rendering.renderLeftCam()
+        scnMng = sceneManager.SceneManager(scnInfos)
+        sgVersData = {"sg_status_list":"rev"}
+        scnMng.publish(comment=sComment, sgVersionData=sgVersData, dryRun=False)
+        # Submit to Left Cam to RR
+        mc.rrSubmitZomb(noUI=True)
+
+        # Increment and save scene
+        rendering.renderRightCam()
+        mc.file(mf=1)
+        pm.mel.incrementAndSaveScene(1)
+        # Submit to Right Cam to RR
+        mc.rrSubmitZomb(noUI=True, parameter=paramRightCam)
+    else:
+        print r'##### Not a conform scene, need to be in form sqXXXX_shXXXXx_render-v000.000 (edit mode) #####'
+        pass
+
 
