@@ -88,8 +88,8 @@ class DavosSetup(ToolSetup):
             "xgenToolkit.mll",
             ]
 
-        if os.environ.get("DAVOS_SITE", "") == "dmn_paris":
-            sPluginList.append("rrSubmit_Maya_2016+Z2K.py")
+        if os.environ.get("DAVOS_SITE", "") in ("dmn_paris", "dmn_angouleme"):
+            sPluginList.append("rrSubmit_Maya_Z2K.py")
 
         self.neededPlugins = sPluginList
 
@@ -175,7 +175,7 @@ class DavosSetup(ToolSetup):
             except Exception as e:
                 pm.displayInfo("Could not kill 'sceneManagerUI': {}".format(toStr(e)))
 
-        sPlugin = "rrSubmit_Maya_2016+Z2K.py"
+        sPlugin = "rrSubmit_Maya_Z2K.py"
         if sPlugin in self.neededPlugins:
             if pm.pluginInfo(sPlugin, q=True, loaded=True):
                 try:
@@ -211,9 +211,9 @@ class DavosSetup(ToolSetup):
 
         sPluginList = self.neededPlugins
 
-        sPlugin = "rrSubmit_Maya_2016+Z2K.py"
+        sPlugin = "rrSubmit_Maya_Z2K.py"
         if sPlugin in sPluginList:
-            sOldPlugin = "rrSubmit_Maya_Z2K.py"
+            sOldPlugin = "rrSubmit_Maya_2016+Z2K.py"
             #print sOldPlugin.center(60, "#"), pm.pluginInfo(sOldPlugin, q=True, autoload=True), pm.pluginInfo(sOldPlugin, q=True, loaded=True)
             try:
                 if pm.pluginInfo(sOldPlugin, q=True, autoload=True):
@@ -249,10 +249,13 @@ class DavosSetup(ToolSetup):
         sCurScnPath = self.currentSceneName
         if sCurScnPath and ("/private/" in sCurScnPath.lower()):
             sRefResPath = osp.normpath(mFileObj.resolvedFullName()).replace("\\", "/")
+
             if ("/set/" in sRefResPath) and ("/ref/" in sRefResPath):
+
                 sCopiedXgnFileList = self.copiedXgnFileNames
                 sCurScnDir = osp.dirname(sCurScnPath)
                 sAstDirPath = osp.normpath(sRefResPath.rsplit("/ref/", 1)[0])
+
                 for sXgnFilePath in glob.iglob(sAstDirPath + "\\*.xgen"):
                     
                     sFilename = osp.basename(sXgnFilePath)

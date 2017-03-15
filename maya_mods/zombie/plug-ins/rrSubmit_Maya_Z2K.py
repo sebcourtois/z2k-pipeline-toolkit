@@ -1463,7 +1463,6 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
             self.subE(rootElement, "SubmitterParameter", "CustomVersionName=" + '0~{}'.format(versionNumber))
             self.subE(rootElement, "SubmitterParameter", "Color_ID=" + '1~10')
 
-
         elif "02_layout" in mainFilePathS:
             self.subE(rootElement, "SubmitterParameter", "PPLAY-SetupCaches=" + '1~1')
             self.subE(rootElement, "SubmitterParameter", "PPFL-MakeQTMovies=" + '1~1')
