@@ -645,8 +645,8 @@ def publishLayer(layerPathS = "",destination = "output", comment="my comment", g
                 log.printL("i","rename '{}' -> to -> '{}'".format(layerPathS, versionDirS+"/"+layerNameNextVerS))
                 os.rename(layerPathS, versionDirS+"/"+layerNameNextVerS)
             except OSError:
-                log.printL("e","rename failed '{}' -> to -> '{}'".format(layerPathS, versionDirS+"/"+layerNameNextVerS), guiPopUp = True)
-                #shutil.copytree(layerPathS, versionDirS+"/"+layerNameNextVerS, symlinks=False, ignore=None)
+                log.printL("e","rename failed, copying '{}' -> to -> '{}'".format(layerPathS, versionDirS+"/"+layerNameNextVerS), guiPopUp = True)
+                shutil.copytree(layerPathS, versionDirS+"/"+layerNameNextVerS, symlinks=False, ignore=None)
                 #shutil.move(layerPathS, versionDirS+"/"+layerNameNextVerS)
         return layerNameNextVerS
 

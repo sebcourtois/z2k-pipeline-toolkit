@@ -2,13 +2,14 @@
 import sys
 import os
 from collections import OrderedDict
+from itertools import groupby
 
 from PySide import QtGui
 from PySide.QtGui import QTreeWidgetItemIterator
 from PySide.QtCore import Qt
 
 #from pytd.util.qtutils import setWaitCursor
-from pytd.util.fsutils import pathJoin
+from pytd.util.fsutils import pathJoin, pathResolve
 from pytd.util.sysutils import qtGuiApp, inDevMode
 from pytd.gui.dialogs import QuickTreeDialog
 
@@ -104,3 +105,13 @@ def initProject(sProjName=""):
 def genShotNames(iSeq, *shotNums):
     for n in shotNums:
         yield "sq{:04d}_sh{:04d}a".format(iSeq, n)
+
+def iterLatestOutputLayers(sShot, sEye):
+
+    sSeq = sShot.split("_", 1)[0]
+    p = pathResolve("$ZOMB_OUTPUT_PATH/{sequence}/{shot}/{eye}/_version"
+                    .format(sequence=sSeq, shot=sShot, eye=sEye))
+    sLyrList = sorted((s for s in os.listdir(p) if s.startswith("lyr_")), reverse=True)
+    grpIter = groupby(sLyrList, key=lambda s: s.rsplit("-v", 1)[0])
+    return (pathJoin(p, next(g)) for _, g in grpIter)
+

@@ -1,4 +1,5 @@
 
+import os
 import os.path as osp
 import traceback
 from pprint import pprint
@@ -10,6 +11,8 @@ from pytd.util.fsutils import pathJoin, pathNorm, pathEqual
 
 from davos.core.damproject import DamProject
 from davos.core.utils import mkVersionSuffix
+
+from zomblib import damutils
 
 from pytaya.core import system as myasys
 from pytaya.core.cleaning import deleteAllJunkShapes
@@ -153,6 +156,7 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
 
     srcScnInfos = myagen.infosFromScene(sSrcScnPath)
     #damShot = scnInfos["dam_entity"]
+    sShotName = srcScnInfos["name"]
     srcScn = srcScnInfos["rc_entry"]
     bPublicSrc = srcScn.isPublic()
     if bPublicSrc and not srcScn.isVersionFile():
@@ -169,6 +173,29 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
 
     myasys.openScene(sSrcScnPath, force=True, fail=False, lrd="none")
 
+
+    for sLyrPath in damutils.iterLatestOutputLayers(sShotName, "left"):
+        numFrames = len(os.listdir(sLyrPath))
+        if numFrames > 1:
+            continue
+
+        sRndLyr = osp.basename(sLyrPath).rsplit("-v", 1)[0]
+        if mc.objExists(sRndLyr) and (mc.nodeType(sRndLyr) == "renderLayer"):
+            if numFrames == 0:
+                raise EnvironmentError("'{}' has NO rendered image in '{}'"
+                                       .format(sRndLyr, sLyrPath))
+            elif numFrames == 1:
+                sEndFrameAttr = "defaultRenderGlobals.endFrame"
+                sMsg = "1 frame found in '{}'...\n".format(sLyrPath)
+                sMsg += "...so overriding '{}' to 101 for '{}'".format(sEndFrameAttr,
+                                                                       sRndLyr)
+                pm.displayWarning(sMsg)
+                mc.editRenderLayerAdjustment(sEndFrameAttr, layer=sRndLyr)
+                mc.setAttr(sEndFrameAttr, 101)
+        elif numFrames == 1:
+            pm.displayError("No such renderLayer: '{}'".format(sRndLyr))
+
+
     params = [
         "SendJobDisabled=" + '1~1',
         "DefaultClientGroup=" + '1~ALL',
@@ -183,12 +210,14 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
         if step:
             mc.setAttr("defaultRenderGlobals.byFrameStep", step)
 
-        sFilePath = mc.rrSubmitZomb(parameter=params, noSubmit=True)
-        print "\n", sFilePath.center(120, "-")
-        with open(sFilePath, 'r') as fileobj:
-            for l in fileobj:
-                print l.strip()
-        print sFilePath.center(120, "-"), "\n"
+        sFilePath = mc.rrSubmitZomb(noSubmit=dryRun, parameter=params)
+
+        if dryRun:
+            print "\n", sFilePath.center(120, "-")
+            with open(sFilePath, 'r') as fileobj:
+                for l in fileobj:
+                    print l.strip()
+            print sFilePath.center(120, "-"), "\n"
 
     finally:
         mc.setAttr("defaultRenderGlobals.byFrameStep", curStep)

@@ -1644,7 +1644,11 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
         print("rrSubmitZomb v 7.0.24")
 
         argData = MArgParser(self.syntax(), arglist)
-        numParams = argData.numberOfFlagUses("parameter");
+
+        bNoSubmit = argData.isFlagSet("noSubmit")
+        bNoUI = argData.isFlagSet("noUI")
+
+        numParams = argData.numberOfFlagUses("parameter")
         sParamList = []
         if numParams:
             for i in xrange(numParams):
@@ -1653,11 +1657,13 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
                 sParamList.append(parArgs.asString(0))
 
         #check if we are in console batch mode
-        uiMode = (not cmds.about(batch=True)) and (not argData.isFlagSet("noUI"))
+        uiMode = (not cmds.about(batch=True)) and (not bNoUI)
 
         # Ask for scene save:
         if (uiMode and (cmds.file(q=True, mf=True))):  # //Ignore ifcheck
-            ConfirmResult = (cmds.confirmDialog(message="Scene should be saved before network rendering.\n Save scene?", button=['Yes', 'No', 'Cancel'], defaultButton='Yes', cancelButton='Cancel', dismissString='Cancel'))
+            ConfirmResult = (cmds.confirmDialog(message="Scene should be saved before network rendering.\n Save scene?",
+                                                button=['Yes', 'No', 'Cancel'], defaultButton='Yes',
+                                                cancelButton='Cancel', dismissString='Cancel'))
             if (ConfirmResult == "Cancel"):
                 return True
             elif (ConfirmResult == "Yes"):
@@ -1703,12 +1709,10 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
 
         #write layers into file:
         print ("rrSubmitZomb - write layers into file.")
-
         self.writeAllLayers(uiMode, customParams=sParamList)
 
         #call submitter
-
-        if not argData.isFlagSet("noSubmit"):
+        if not bNoSubmit:
             print ("rrSubmitZomb - call submitter")
             self.submitLayers(uiMode)
 

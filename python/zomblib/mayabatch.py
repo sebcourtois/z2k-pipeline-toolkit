@@ -6,7 +6,7 @@ import traceback
 from collections import OrderedDict
 
 from pytd.util.fsutils import jsonRead, pathNorm
-from pytd.util.sysutils import timer
+from pytd.util.sysutils import timer, toStr
 
 @timer
 def execJob(lines):
@@ -38,14 +38,14 @@ def processJobsFromFile(sJobFilePath):
         try:
             execJob(lines)#exec("\n".join(lines), {})
         except Warning as w:
-            print "WARNING: " + w.message
+            print "WARNING: " + toStr(w)
         except StandardError as e:
             if job.get("fail", False):
                 raise
             lines = [""] + traceback.format_exc().splitlines(True)
-            print "!ERROR! ".join(lines)
+            print "!ERROR ".join(lines)
             numErrors += 1
-            errorDct[sTitle] = e.message
+            errorDct[sTitle] = toStr(e)
 
         sMsg = "##### DONE WITH {}/{} JOB: {}".format(i + 1, numJobs, sTitle)
         #sSepLine = max(len(sMsg), 120) * "#"
