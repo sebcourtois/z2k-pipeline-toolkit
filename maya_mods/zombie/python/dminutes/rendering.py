@@ -809,7 +809,7 @@ def renderLeftCam():
     createOptions()
     shotName = ''
     if not pm.sceneName() == '' :
-        mainFilePathS = mc.file(q=True, sn=True)
+        mainFilePathS = pm.sceneName()
         shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
     imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
@@ -834,7 +834,7 @@ def renderRightCam():
     createOptions()
     shotName = ''
     if not pm.sceneName() == '' :
-        mainFilePathS = mc.file(q=True, sn=True)
+        mainFilePathS = pm.sceneName()
         shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
     imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
