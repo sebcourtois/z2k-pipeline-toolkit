@@ -48,7 +48,7 @@ if publishAction:
         mc.rrSubmitZomb(noUI=True)
 
     elif sRenderType == 'Stereo':
-        print '##### Initiate Left and Right cameras render (Stereo) #####'
+        print '##### Initiate Left and Right cameras renders (Stereo) #####'
         rendering.renderLeftCam()
         scnMng = sceneManager.SceneManager(scnInfos)
         sgVersData = {"sg_status_list":"rev"}
@@ -56,10 +56,14 @@ if publishAction:
         # Submit to Left Cam to RR
         mc.rrSubmitZomb(noUI=True)
 
-        # Increment and save scene
+        # Set camera output for right eye
         rendering.renderRightCam()
+
+        # Rename and save scene
+        sName = mainFilePathS.split('.')[0]
         mc.file(mf=1)
-        pm.mel.incrementAndSaveScene(1)
+        mc.file(rn=sName + '_Right.ma')
+        mc.file(save=True)
         # Submit to Right Cam to RR
         mc.rrSubmitZomb(noUI=True, parameter=paramRightCam)
     else:
