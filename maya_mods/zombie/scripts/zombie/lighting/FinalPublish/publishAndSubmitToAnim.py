@@ -60,7 +60,7 @@ if publishAction:
         rendering.renderRightCam()
 
         # Rename and save scene
-        sName = mainFilePathS.split('.')[0]
+        sName = mainFilePathS.rsplit('.')[0]
         mc.file(mf=1)
         mc.file(rn=sName + '_Right.ma')
         mc.file(save=True)
