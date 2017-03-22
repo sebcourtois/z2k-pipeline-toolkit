@@ -65,7 +65,7 @@ if publishAction:
 #                print '##### Send to Royal Render frame : ' + frame + ' #####\n'
 #                mc.setAttr('defaultRenderGlobals.startFrame', frame)
 #                mc.setAttr('defaultRenderGlobals.endFrame', frame)
-        mc.rrSubmitZomb(noUI=True, parameter=paramStills)
+        mc.rrSubmitZomb(noUI=False, parameter=paramStills)
 
 #        mc.setAttr('defaultRenderGlobals.startFrame', startFrameOrig)
 #        mc.setAttr('defaultRenderGlobals.endFrame', endFrameOrig)
