@@ -5,12 +5,27 @@ import pymel.core as pm
 from dminutes import sceneManager
 from dminutes import rendering
 from davos_maya.tool.general import infosFromScene
+from davos.core.damproject import DamProject
 
+scnInfos = infosFromScene()
+shotName = scnInfos['dam_entity'].name
+proj = DamProject("zombillenium")
+#damShot = proj._shotgundb.sg.find_one('Shot', [['code', 'is', shotName]], ['sg_keyframe'])
+
+#keyFrames = list()
+#frames = []
+#if damShot['sg_keyframe'] != None :
+#    keyFrames = damShot['sg_keyframe'].split(',')
+#
+#
+#if keyFrames != None:
+#    for each in keyFrames:
+#        frames.append(each.replace(' ',''))
+        
 publishAction = 1
 sComment = 'Final Anim'
-scnInfos = infosFromScene()
-
 mainFilePathS = pm.sceneName()
+
 if '08_render' in mainFilePathS:
     try:
         versionNumber = os.path.basename(mainFilePathS).split("-")[1]
@@ -22,7 +37,14 @@ if '08_render' in mainFilePathS:
 paramRightCam = ["DefaultClientGroup=" + '1~ALL',
                 "CustomUserInfo=" + '1~0~Rendu Cam Right',
                 "CompanyProjectName=" + '0~tlm2',
-                "Priority=" + '1~10',
+                "Priority=" + '1~20',
+                "CustomVersionName=" + '0~{}'.format(versionNumber),
+                "Color_ID=" + '1~10']
+
+paramStills = ["DefaultClientGroup=" + '1~ALL',
+                "CustomUserInfo=" + '1~0~Rendu Stills',
+                #"CompanyProjectName=" + '0~Stills',
+                "Priority=" + '1~70',
                 "CustomVersionName=" + '0~{}'.format(versionNumber),
                 "Color_ID=" + '1~10']
 
@@ -36,7 +58,17 @@ if publishAction:
                                    icon='question')
 
     if sRenderType == 'Stills':
-        mc.rrSubmitZomb()
+#        startFrameOrig = mc.getAttr('defaultRenderGlobals.startFrame')
+#        endFrameOrig = mc.getAttr('defaultRenderGlobals.endFrame')
+#        if frames != None:
+#            for frame in frames:
+#                print '##### Send to Royal Render frame : ' + frame + ' #####\n'
+#                mc.setAttr('defaultRenderGlobals.startFrame', frame)
+#                mc.setAttr('defaultRenderGlobals.endFrame', frame)
+        mc.rrSubmitZomb(noUI=True, parameter=paramStills)
+
+#        mc.setAttr('defaultRenderGlobals.startFrame', startFrameOrig)
+#        mc.setAttr('defaultRenderGlobals.endFrame', endFrameOrig)
 
     if sRenderType == 'Mono':
         print '##### Initiate Left camera render (Mono) #####'
@@ -66,8 +98,5 @@ if publishAction:
         mc.file(save=True)
         # Submit to Right Cam to RR
         mc.rrSubmitZomb(noUI=True, parameter=paramRightCam)
-    else:
-        print r'##### Not a conform scene, need to be in form sqXXXX_shXXXXx_render-v000.000 (edit mode) #####'
-        pass
 
 

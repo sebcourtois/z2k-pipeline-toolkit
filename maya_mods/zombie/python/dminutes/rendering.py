@@ -359,6 +359,11 @@ def fixToonWeight():
     else:
         pass
 
+def fixCrowdShadowOpacity():
+    cwps = mc.ls('*cwp_*:*dmnToon*')
+    [mc.setAttr(cwp + '.shadowOpacity', 1, 1, 1, type='double3') for cwp in cwps if cwps]
+
+
 def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , gui = True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="setRenderCamera")
 
