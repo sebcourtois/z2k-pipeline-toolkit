@@ -1274,3 +1274,6 @@ def createCopyBat(gui=True):
 
 
     return dict(resultB=log.resultB, logL=log.logL)
+
+
+
