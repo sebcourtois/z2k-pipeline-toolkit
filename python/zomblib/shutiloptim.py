@@ -11,6 +11,17 @@ from os.path import abspath
 import fnmatch
 #import collections
 import errno
+import traceback
+
+osp = os.path
+
+try:
+    from pytd.util import fsutils
+except ImportError:
+    CopyProgress = None
+else:
+    reload(fsutils)
+    CopyProgress = fsutils.CopyProgress
 
 try:
     from pwd import getpwnam
@@ -43,13 +54,23 @@ try:
 except NameError:
     WindowsError = None
 
-def copyfileobj(fsrc, fdst, length=16 * 1024):
+def copyfileobj(fsrc, fdst, length=16 * 1024, progress=None):
     """copy data from file-like object fsrc to file-like object fdst"""
-    while 1:
+
+    copiedSize = 0
+    while True:
         buf = fsrc.read(length)
         if not buf:
             break
         fdst.write(buf)
+
+        if progress:
+            copiedSize += len(buf)
+            try:
+                progress.update(copiedSize)
+            except:
+                traceback.print_exc()
+                progress = None
 
 def _samefile(src, dst):
     # Macintosh, Unix.
@@ -63,12 +84,14 @@ def _samefile(src, dst):
     return (os.path.normcase(os.path.abspath(src)) ==
             os.path.normcase(os.path.abspath(dst)))
 
-def copyfile(src, dst, buffer_size=256 * 1024):
+def copyfile(src, dst, buffer_size=512 * 1024, show_progress=True):
     """Copy data from src to dst"""
+
     if _samefile(src, dst):
         raise Error("`%s` and `%s` are the same file" % (src, dst))
 
-    for fn in [src, dst]:
+    progress = None
+    for fn in (dst, src):
         try:
             st = os.stat(fn)
         except OSError:
@@ -81,13 +104,32 @@ def copyfile(src, dst, buffer_size=256 * 1024):
 
         if fn == src:
             # Optimize the buffer for small files
-            buffer_size = min(buffer_size, st.st_size)
+            srcSize = st.st_size
+            buffer_size = min(buffer_size, srcSize)
             if buffer_size == 0:
                 buffer_size = 1024
+                numChunks = 1
+            else:
+                numChunks = srcSize / buffer_size
+
+            show_progress = (show_progress and (numChunks >= 100))
+            if show_progress and CopyProgress:
+                progress = CopyProgress(srcSize, src)
+
+    sAction = "Copying"
+    if osp.normcase(osp.basename(src)) == osp.normcase(osp.basename(dst)):
+        print("\n{} {}\n     to {}".format(sAction, src, osp.dirname(dst)))
+    else:
+        print("\n{} {}\n     as {}".format(sAction, src, dst))
 
     with open(src, 'rb') as fsrc:
         with open(dst, 'wb') as fdst:
-            copyfileobj(fsrc, fdst, length=buffer_size)
+            try:
+                copyfileobj(fsrc, fdst, length=buffer_size, progress=progress)
+            except:
+                if progress:
+                    progress.closeDialog()
+                raise
 
 def copymode(src, dst):
     """Copy mode bits from src to dst"""

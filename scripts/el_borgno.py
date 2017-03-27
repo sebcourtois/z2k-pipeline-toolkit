@@ -177,32 +177,56 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
                            .format(sSrcRcName.replace("_scene", "")))
 
 
-    filters = [["content", "is", sTask],
-               ["entity.Shot.code", "in", sgShotDct.keys()]]
-    fields = ["entity.Shot.code", "sg_status_list"]
+    filters = [["content", "in", ("rendering", "render_stereo")],
+               ["entity.Shot.id", "in", tuple(d["id"] for d in sgShotDct.itervalues())]]
+    fields = ["content", "entity.Shot.code", "sg_status_list", "sg_operators"]
     sgTaskList = proj._shotgundb.sg.find("Task", filters, fields)
-    sgTaskDct = dict((d["entity.Shot.code"], d) for d in sgTaskList)
+    sgTaskDct = {}
+    for sgTask in sgTaskList:
+        sgTaskDct.setdefault(sgTask["entity.Shot.code"], {}).update({sgTask.pop("content"):sgTask})
+
 
     for i, (damShot, srcScn, dstScn) in enumerate(izip(damShotList, srcScnList, dstScnList)):
+
+        bIgnore = False
 
         if sDstRcName and (not dstScn):
             continue
 
-        sShotName = damShot.name
-        sgTask = sgTaskDct[sShotName]
+        if sDstRcName and noPublish:
+            bIgnore = True
+        else:
+            sShotName = damShot.name
+            shotTasks = sgTaskDct[sShotName]
 
-        if sgTask["sg_status_list"] not in ("wfa", "cmpt"):
+            sTask = "rendering"
+            sgTask = shotTasks[sTask]
+            if sgTask["sg_status_list"] not in ("wfa", "cmpt"):
+                bIgnore = True
+                sMsg = ("'{}' task is NOT 'WaitingForApproval' or 'Complete'."
+                        .format("|".join(s for s in (sStep, sTask) if s)))
+                errorDct.setdefault(damShot.name, []).append(sMsg)
 
-            if sDstRcName:
-                dstScnList[i] = None
-            else:
-                srcScnList[i] = None
 
-            sMsg = ("Status of '{}' task NOT FINAL or COMPLETE."
-                    .format("|".join(s for s in (sStep, sTask) if s)))
-            errorDct.setdefault(damShot.name, []).append(sMsg)
+            sTask = "render_stereo"
+            sgTask = shotTasks[sTask]
+            sOpeList = tuple(op["name"].lower() for op in sgTask["sg_operators"])
 
-        elif noPublish:
+            if "el borgno" not in sOpeList:
+                if not dryRun:
+                    bIgnore = True
+                sMsg = ("'{}' task NOT ASSIGNED to 'El Borgno'."
+                        .format("|".join(s for s in (sStep, sTask) if s)))
+                errorDct.setdefault(damShot.name, []).append(sMsg)
+
+            if sgTask["sg_status_list"] not in ("rdy",):
+                if not dryRun:
+                    bIgnore = True
+                sMsg = ("'{}' task is NOT 'Ready to Start'."
+                        .format("|".join(s for s in (sStep, sTask) if s)))
+                errorDct.setdefault(damShot.name, []).append(sMsg)
+
+        if bIgnore:
             if sDstRcName:
                 dstScnList[i] = None
             else:
@@ -312,7 +336,7 @@ from dminutes import batchprocess
 reload(batchprocess)
 
 print "{shot}", "{src_scene}", "publish={publish}", "dryRun={dryRun}"
-batchprocess.submitElBorgno("{src_scene}", step=10)
+batchprocess.submitElBorgno("{src_scene}", step=10, dryRun={dryRun})
 """
     for kwargs in (d.copy() for d in jobArgsList):
 

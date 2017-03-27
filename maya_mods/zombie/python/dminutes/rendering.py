@@ -359,6 +359,11 @@ def fixToonWeight():
     else:
         pass
 
+def fixCrowdShadowOpacity():
+    cwps = mc.ls('*cwp_*:*dmnToon*')
+    [mc.setAttr(cwp + '.shadowOpacity', 1, 1, 1, type='double3') for cwp in cwps if cwps]
+
+
 def setRenderCamera(leftCam = True, rightCam = True, updateStereoCam = False , gui = True):
     log = miscUtils.LogBuilder(gui=gui, funcName ="setRenderCamera")
 
@@ -809,7 +814,7 @@ def renderLeftCam():
     createOptions()
     shotName = ''
     if not pm.sceneName() == '' :
-        mainFilePathS = mc.file(q=True, sn=True)
+        mainFilePathS = pm.sceneName()
         shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
     imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
@@ -834,7 +839,7 @@ def renderRightCam():
     createOptions()
     shotName = ''
     if not pm.sceneName() == '' :
-        mainFilePathS = mc.file(q=True, sn=True)
+        mainFilePathS = pm.sceneName()
         shotName = mainFilePathS.split('/')[-1].split('_')[0] + '_' + mainFilePathS.split('/')[-1].split('_')[1]
     imageFileName = pm.getAttr('defaultRenderGlobals.imageFilePrefix')
     if pm.window("unifiedRenderGlobalsWindow", exists=True):
