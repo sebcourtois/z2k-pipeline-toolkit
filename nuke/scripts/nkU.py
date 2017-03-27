@@ -184,20 +184,14 @@ class dataFile():
             self.log.printL("","ver: '{}'".format(self.ver))
             self.log.printL("","increment: '{}'".format(self.increment))
 
-    def initNukeEnvVar(self):
+    def initNukeEnvVar(self, custOutputS=""):
         if self.seq and self.shot and self.user and self.depDir:
 
             departementS =self.depDir
-            """
-            if self.seq in ["sq0350","sq0520","sq0230","sq0530","sq0300","sq0150","sq0170","sq0450"]:
-                try:
-                    os.environ["ZOMB_OUTPUT_PATH"] = normPath(os.environ["ZOMB_OUTPUT_PATH_BIS"])
-                except:
-                    print "#### warning : 'ZOMB_OUTPUT_PATH_BIS' is not defined"
-                    if  "zombidamas" in os.environ["ZOMB_OUTPUT_PATH"]:
-                        print "#### warning : 'ZOMB_OUTPUT_PATH' = //JAKKU/zombillenium2/output"
-                        os.environ["ZOMB_OUTPUT_PATH"] ="//JAKKU/zombillenium2/output"
-            """
+            if  custOutputS :
+                os.environ["ZOMB_OUTPUT_PATH"] = normPath(custOutputS)
+                print "custOutputS",custOutputS
+
 
             outputDirS = os.environ["ZOMB_OUTPUT_PATH"]+"/"+self.seq+"/"+self.shot
             shotDirS = os.environ["ZOMB_SHOT_PATH"]+"/"+self.seq+"/"+self.shot
@@ -249,12 +243,12 @@ class dataFile():
 
 
 
-def initNukeShot(fileNameS= ""):
+def initNukeShot(fileNameS= "", custOutputS=""):
     try:
         print "runing: 'initNukeShot()'"
         df=dataFile(fileNameS)
         df.printData()
-        df.initNukeEnvVar()
+        df.initNukeEnvVar(custOutputS)
     except Exception,err:
         print "warning: error while running 'initNukeShot()'"
         print err
