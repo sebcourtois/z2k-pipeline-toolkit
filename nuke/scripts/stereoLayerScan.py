@@ -181,7 +181,7 @@ def stereoLayerScanFn(inSeqList= sSeqList,  outputDir = ""):
 
         seqDirL = os.listdir(seqDir)
 
-        slogSeqPath = osp.normpath(osp.join(seqDir, "log_stereoScan_"+sDate+".txt"))
+        slogSeqPath = osp.normpath(osp.join(outputDir, "log_stereoScan_"+seqName+"_"+sDate+".txt"))
         with open(slogSeqPath, "w") as logFile:
             for shotName in shotNameList:
                 damShot = proj.getShot(shotName)
@@ -274,7 +274,7 @@ def stereoLayerScanFn(inSeqList= sSeqList,  outputDir = ""):
                             txt = "        stereo: {}".format('check failed, left and right have a different frame number')
                             log.printL("", txt)
                             logFile.write(txt + "\n")
-                            
+
                     if unPubLyrPathNkL:
                         txt = "        Unpublished layers: {}".format(unPubLyrPathNkL)
                         log.printL("", txt)
