@@ -1272,8 +1272,32 @@ def createCopyBat(gui=True):
     renderBatch_obj.close()
     print "#### Info: copy.bat created: {}".format(os.path.normpath(copyBatFile))
 
-
     return dict(resultB=log.resultB, logL=log.logL)
 
 
+
+def getLayer():
+    log = LogBuilder(gui=gui, funcName ="getLayer")
+    exrDirS = ""
+    publishedLayersPathL = []
+    unPublishedLayersPathL = []
+    publishedLayersNameL=[]
+    for each in nuke.allNodes('Read'):
+        if not 'read_exr' in each['name'].getValue() and each['disable'].getValue()== 0.0:
+            print each['name'].getValue()
+            exrDirS= nuke.filename(each)
+            layerDirS = os.path.dirname(exrDirS)
+            if "_version" in  layerDirS:
+                publishedLayersPathL.append(layerDirS)
+                publishedLayersNameL.append(os.path.basename(layerDirS))
+            else:
+                unPublishedLayersPathL.append(layerDirS)
+                
+    return dict(resultB=log.resultB, logL=log.logL, pubLyrPathL = publishedLayersPathL, pubLyrNameL = publishedLayersNameL, unPubLyrPathL = unPublishedLayersPathL) 
+
+
+def getNukeLayers(shotNameS=""): 
+    osp.normpath(osp.join(os.environ["ZOMB_SHOT_PATH"], shotNameS.split("_")[0], shotNameS, "10_compo",shotNameS+"_compo.nk"))
+    nuke.scriptOpen( nukeScriptS )
+    resultD = nkU.getLayer()
 
