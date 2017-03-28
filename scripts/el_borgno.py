@@ -213,8 +213,7 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
             sOpeList = tuple(op["name"].lower() for op in sgTask["sg_operators"])
 
             if "el borgno" not in sOpeList:
-                if not dryRun:
-                    bIgnore = True
+                bIgnore = True
                 sMsg = ("'{}' task NOT ASSIGNED to 'El Borgno'."
                         .format("|".join(s for s in (sStep, sTask) if s)))
                 errorDct.setdefault(damShot.name, []).append(sMsg)

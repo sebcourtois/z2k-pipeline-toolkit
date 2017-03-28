@@ -26,6 +26,7 @@ from dminutes import geocaching
 from dminutes import finalLayout
 from dminutes import shotconformation as shotconfo
 from dminutes import sceneManager
+from dminutes import rendering
 
 reload(geocaching)
 reload(finalLayout)
@@ -35,6 +36,8 @@ reload(shotconfo)
 reload(publishing)
 reload(myasys)
 reload(sceneManager)
+reload(rendering)
+
 
 def quitWithStatus(func):
     def doIt(*args, **kwargs):
@@ -155,13 +158,24 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
     mc.loadPlugin("rrSubmit_Maya_Z2K.py")
 
     srcScnInfos = myagen.infosFromScene(sSrcScnPath)
-    #damShot = scnInfos["dam_entity"]
-    sShotName = srcScnInfos["name"]
+    damShot = srcScnInfos["dam_entity"]
+    proj = damShot.project
+    sShotName = damShot.name
+
     srcScn = srcScnInfos["rc_entry"]
     bPublicSrc = srcScn.isPublic()
     if bPublicSrc and not srcScn.isVersionFile():
         raise ValueError("Source scene is NOT a version file: '{}'"
                          .format(sSrcScnPath))
+
+    filters = [ ['project', 'is', {'type':'Project', 'id':67}],
+                ['content', 'is', "render_stereo"],
+                ['entity.Shot.code', 'is', sShotName],
+                ]
+    fields = ["content", "entity.Shot.code", "sg_status_list", "sg_operators"]
+    sgStereoTask = proj._shotgundb.sg.find_one("Task", filters, fields)
+    if not sgStereoTask:
+        raise EnvironmentError("No 'render_stereo' task found for '{}'".format(sShotName))
 
     sVersSuffix = mkVersionSuffix(srcScn.versionFromName())
     headFile = srcScn.getHeadFile(dbNode=False)
@@ -171,7 +185,7 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
                                              sourceFile=srcScn)
     sSrcScnPath = privScn.absPath()
 
-    myasys.openScene(sSrcScnPath, force=True, fail=False, lrd="none")
+    myasys.openScene(sSrcScnPath, force=True, fail=False)#, lrd="none")
 
 
     for sLyrPath in damutils.iterLatestOutputLayers(sShotName, "left"):
@@ -195,15 +209,21 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
         elif numFrames == 1:
             pm.displayError("No such renderLayer: '{}'".format(sRndLyr))
 
+    rendering.updateStereoCam(gui=False)
+    rendering.renderRightCam()
+
+    pm.saveFile(force=True)
 
     params = [
-        "SendJobDisabled=" + '1~1',
         "DefaultClientGroup=" + '1~ALL',
         "CustomUserInfo=" + '1~0~Rendu Cam Right',
         "CompanyProjectName=" + '0~el-borgno',
         "CustomVersionName=" + '0~{}'.format(sVersSuffix.strip("-")),
         "Color_ID=" + '1~10',
         ]
+
+    if dryRun:
+        params.append("SendJobDisabled=" + '1~1')
 
     curStep = mc.getAttr("defaultRenderGlobals.byFrameStep")
     try:
@@ -218,10 +238,11 @@ def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
                 for l in fileobj:
                     print l.strip()
             print sFilePath.center(120, "-"), "\n"
-
     finally:
         mc.setAttr("defaultRenderGlobals.byFrameStep", curStep)
 
+    if not dryRun:
+        pprint(proj.updateSgEntity(sgStereoTask, sg_status_list="clc"))
 
 def publishCfxCaches(sSrcScnPath, publish=False, dryRun=False):
 
