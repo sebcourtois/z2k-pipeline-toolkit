@@ -23,5 +23,4 @@ else:
 
 
 
-
 nkU.publishCompo(dryRun=False, gui = False, commentS=commentS, sgVersionData=statusD) 

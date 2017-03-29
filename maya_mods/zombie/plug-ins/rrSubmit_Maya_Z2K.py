@@ -330,7 +330,7 @@ class rrMayaLayer:
 
 
     def CalcImageExtension(self):
-        print 50 * "!", self.renderer, self.tempImageExtension, self.tempImfKeyPlugin
+        #print 50 * "!", self.renderer, self.tempImageExtension, self.tempImfKeyPlugin
         #renderMan:
         if (self.renderer == "renderMan"):
             rmanImages = maya.mel.eval('rman getPrefAsArray ImageFormatQuantizationTable;')
