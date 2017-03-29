@@ -1178,8 +1178,8 @@ def rrSetNewTempFileName(uiMode):
     else:
         nam = "/tmp/"
     nam += "rrSubmitMaya_"
-    if (uiMode):
-        nam += str(random.randrange(1000, 10000, 1))
+#    if (uiMode):
+    nam += str(random.randrange(1000, 10000, 1))
     nam += ".xml"
     return nam
 
