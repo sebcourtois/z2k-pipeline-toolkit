@@ -394,7 +394,6 @@ def submitElBorgno(sSrcScnPath, stills=False, dryRun=False):
         sCieProjName += "-stills"
     else:
         sCieProjName += "-anim"
-
     if dryRun:
         sCieProjName += "-test"
 
@@ -416,5 +415,7 @@ def submitElBorgno(sSrcScnPath, stills=False, dryRun=False):
         _submitAnim(shot=sShotName, noSubmit=False, parameter=params, step=iStep)
 
     if not dryRun:
-        pprint(proj.updateSgEntity(sgStereoTask, sg_status_list="clc"))
+        sDetailStatus = "stills en calcul" if stills else "anim en calcul"
+        pprint(proj.updateSgEntity(sgStereoTask, sg_status_list="clc", 
+                                   sg_detail_status=sDetailStatus))
 
