@@ -1630,10 +1630,15 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
     @staticmethod
     def createSyntax():
         syntax = MSyntax()
+
         syntax.addFlag("-p", "-parameter", MSyntax.kString)
-        syntax.makeFlagMultiUse("-p")
         syntax.addFlag("-nui", "-noUI")
         syntax.addFlag("-ns", "-noSubmit")
+
+        syntax.makeFlagMultiUse("-p")
+#        syntax.enableQuery(True)
+#        syntax.enableEdit(False)
+
         return syntax
 
     ########################################
