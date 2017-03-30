@@ -8,21 +8,20 @@ from davos_maya.tool.general import infosFromScene
 from davos.core.damproject import DamProject
 
 scnInfos = infosFromScene()
-shotName = scnInfos['dam_entity'].name
+shotName = scnInfos['name']
 proj = DamProject("zombillenium")
-#damShot = proj._shotgundb.sg.find_one('Shot', [['code', 'is', shotName]], ['sg_keyframe'])
 
-#keyFrames = list()
-#frames = []
-#if damShot['sg_keyframe'] != None :
-#    keyFrames = damShot['sg_keyframe'].split(',')
-#
-#
-#if keyFrames != None:
-#    for each in keyFrames:
-#        frames.append(each.replace(' ',''))
+dShotInfos = proj._shotgundb.sg.find_one('Shot', [['code', 'is', shotName]], ['id'])
+filters = [
+            ['entity', 'is', {'type':'Shot', 'id': dShotInfos['id']}],
+            ['content', 'is', 'rendering']
+           ]
+fields = ['sg_keyframe']
+
+result = proj._shotgundb.sg.find("Task", filters, fields)
+sKeyframesL = result[0]['sg_keyframe'].replace(' ', '').split(',')
         
-publishAction = 1
+bPublishAction = True
 sComment = 'Final Anim'
 mainFilePathS = pm.sceneName()
 
@@ -43,41 +42,85 @@ paramRightCam = ["DefaultClientGroup=" + '1~ALL',
 
 paramStills = ["DefaultClientGroup=" + '1~ALL',
                 "CustomUserInfo=" + '1~0~Rendu Stills',
-                #"CompanyProjectName=" + '0~Stills',
+                "CompanyProjectName=" + '0~Stills',
                 "Priority=" + '1~70',
                 "CustomVersionName=" + '0~{}'.format(versionNumber),
                 "Color_ID=" + '1~10']
 
-if publishAction:
+if bPublishAction:
     sRenderType = mc.confirmDialog(title='RR Submitter',
                                    message='Selectionnez le type de rendu !',
-                                   button=['Stills', 'Mono' , 'Stereo', 'Annuler'],
+                                   button=['Stills', 'Left', 'Right', 'Stereo', 'Annuler'],
                                    defaultButton='Mono',
                                    cancelButton='Annuler',
                                    dismissString='Annuler',
                                    icon='question')
 
     if sRenderType == 'Stills':
-#        startFrameOrig = mc.getAttr('defaultRenderGlobals.startFrame')
-#        endFrameOrig = mc.getAttr('defaultRenderGlobals.endFrame')
-#        if frames != None:
-#            for frame in frames:
-#                print '##### Send to Royal Render frame : ' + frame + ' #####\n'
-#                mc.setAttr('defaultRenderGlobals.startFrame', frame)
-#                mc.setAttr('defaultRenderGlobals.endFrame', frame)
-        mc.rrSubmitZomb(noUI=False, parameter=paramStills)
+        sStepFrameValue = int(mc.getAttr('defaultRenderGlobals.byFrameStep'))
+        sStartFrameValue = int(mc.getAttr('defaultRenderGlobals.startFrame'))
+        sEndFrameValue = int(mc.getAttr('defaultRenderGlobals.endFrame'))
 
-#        mc.setAttr('defaultRenderGlobals.startFrame', startFrameOrig)
-#        mc.setAttr('defaultRenderGlobals.endFrame', endFrameOrig)
+        for keyFrame in sKeyframesL:
+            if keyFrame and 'step' in keyFrame:
+                steps = int(keyFrame.replace('step', ''))
+                print '##### Set the step value {} #####'.format(steps)
+                mc.setAttr('defaultRenderGlobals.byFrameStep', steps)
 
-    if sRenderType == 'Mono':
-        print '##### Initiate Left camera render (Mono) #####'
+                ##### Submit with steps #####
+                mc.rrSubmitZomb(noUI=True, parameter=paramStills)
+
+        print '##### restore shot step value :: {} #####'.format(sStepFrameValue)
+        mc.setAttr('defaultRenderGlobals.byFrameStep', sStepFrameValue)
+
+        for keyFrame in sKeyframesL:
+            if keyFrame and not 'step' in keyFrame:
+                print '##### Send to Royal Render frame : ' + keyFrame + ' #####\n'
+                mc.setAttr('defaultRenderGlobals.startFrame', keyFrame)
+                mc.setAttr('defaultRenderGlobals.endFrame', keyFrame)
+
+                mc.rrSubmitZomb(noUI=True, parameter=paramStills)
+
+        print '##### restore shot start-end value :: {0} - {1} #####'.format(sStartFrameValue, sEndFrameValue)
+        mc.setAttr('defaultRenderGlobals.startFrame', sStartFrameValue)
+        mc.setAttr('defaultRenderGlobals.endFrame', sEndFrameValue)
+
+    if sRenderType == 'Left':
+        print '##### Initiate Left camera render #####'
         rendering.renderLeftCam()
         scnMng = sceneManager.SceneManager(scnInfos)
         sgVersData = {"sg_status_list":"rev"}
         scnMng.publish(comment=sComment, sgVersionData=sgVersData, dryRun=False)
         #maya.mel.eval('rrSubmitZomb -noUI')
         mc.rrSubmitZomb(noUI=True)
+
+    if sRenderType == 'Right':
+        print '##### Initiate Right camera render #####'
+        rendering.renderRightCam()
+
+        # Rename and save scene
+        sName = mainFilePathS.rsplit('.')[0]
+        if 'Right' not in sName:
+            mc.file(mf=1)
+            mc.file(rn=sName + '_Right.ma')
+            mc.file(save=True)
+            scnMng = sceneManager.SceneManager(scnInfos)
+            sgVersData = {"sg_status_list":"rev"}
+            scnMng.publish(comment=sComment, sgVersionData=sgVersData, dryRun=False)
+            #maya.mel.eval('rrSubmitZomb -noUI')
+            mc.rrSubmitZomb(noUI=True, parameter=paramRightCam)
+
+        elif 'Right' in sName:
+            mc.file(mf=1)
+            mc.file(save=True)
+#            scnMng = sceneManager.SceneManager(scnInfos)
+#            sgVersData = {"sg_status_list":"rev"}
+#            scnMng.publish(comment=sComment, sgVersionData=sgVersData, dryRun=False)
+            #maya.mel.eval('rrSubmitZomb -noUI')
+            mc.rrSubmitZomb(noUI=True)
+        else:
+            print "##### Please open your shot in edit mode !! ######"
+            pass
 
     elif sRenderType == 'Stereo':
         print '##### Initiate Left and Right cameras renders (Stereo) #####'
