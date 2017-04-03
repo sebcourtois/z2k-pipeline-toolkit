@@ -860,3 +860,38 @@ def renderRightCam():
     aiAovPOutName = '//' + '/'.join(shotNameL) + '/render/right/<RenderLayer>_P32/' + shotName
     pm.setAttr('aiAOVDriverP32.prefix', aiAovPOutName, type='string')
 
+
+def createPublishRightBatch():
+    """
+    this  script creates a publishRightLayers.bat file in the private maya working dir, this bath file can be used tu publish layers from the right cam only
+
+    """
+    log = miscUtils.LogBuilder(gui=False, funcName ="")
+    try:
+        davosUser = os.environ["DAVOS_USER"]
+    except:
+        raise ValueError("#### Error: DAVOS_USER environement variable is not defined, please log to davos")
+
+    workingFile = mc.file(q=True, sn=True)
+    workingDir = os.path.dirname(workingFile)
+    publishRightLyrBat = miscUtils.normPath(os.path.join(workingDir, "publishRightLayers.bat"))
+    setupEnvTools = os.path.normpath(os.path.join(os.environ["Z2K_LAUNCH_SCRIPT"]))
+    userprofile = os.path.normpath(os.path.join(os.environ["USERPROFILE"]))
+    setupEnvToolsNetwork = setupEnvTools.replace(userprofile, '%USERPROFILE%')
+    outputFilePath, outputImageName = getRenderOutput()
+
+    setupEnvToolsNetwork = setupEnvToolsNetwork.replace('%USERPROFILE%', '"%USERPROFILE%')
+    publishRightLayers =os.path.join(setupEnvToolsNetwork.split('launcher')[0],'scripts','publishRightLayers.py')
+    finalCommand = r'"C:\Python27\python.exe" ' + setupEnvToolsNetwork + '" launch "C:\Python27\python.exe" '+ publishRightLayers+'" %renderPath% %*'
+
+    if not os.path.isfile(publishRightLyrBat) and "shot" in publishRightLyrBat :
+        with open(publishRightLyrBat, "w") as renderBatch_obj:
+            renderBatch_obj.write('set renderPath=' + os.path.normpath(outputFilePath) + '\n')
+            renderBatch_obj.write(finalCommand + "\n")
+            renderBatch_obj.write("\n")
+            renderBatch_obj.write("pause\n")
+            renderBatch_obj.close()
+            print "#### Info: publishRightLayers.bat created: {}".format(os.path.normpath(publishRightLyrBat))
+
+
+
