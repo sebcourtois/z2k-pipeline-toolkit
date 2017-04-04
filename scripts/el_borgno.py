@@ -224,10 +224,17 @@ def submit(in_damShotList, stills=False, dryRun=False, prompt=True, sgShots=None
                         .format(sTask))
                 errorDct.setdefault(damShot.name, []).append(sMsg)
 
-            if sgTask["sg_status_list"] not in ("rdy",):
+            sStatus = sgTask["sg_status_list"]
+            if sStatus != "rdy":
+
                 if not dryRun:
                     bIgnore = True
-                sMsg = ("'{}' task is NOT 'Ready to Start'.".format(sTask))
+                    
+                if sStatus == "clc":
+                    sMsg = ("'{}' task is already on 'Calcul'.".format(sTask))
+                else:
+                    sMsg = ("'{}' task is NOT 'Ready to Start'.".format(sTask))
+
                 errorDct.setdefault(damShot.name, []).append(sMsg)
 
         if bIgnore:

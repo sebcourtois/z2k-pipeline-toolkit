@@ -374,48 +374,60 @@ def submitElBorgno(sSrcScnPath, stills=False, dryRun=False):
     headFile = srcScn.getHeadFile(dbNode=False)
 
     sSuffix = "".join((sVersSuffix, "-elborgno"))
-    privScn, _ = headFile.copyToPrivateSpace(suffix=sSuffix, existing="replace",
-                                             sourceFile=srcScn)
+    privScn, bCopied = headFile.copyToPrivateSpace(suffix=sSuffix, existing="keep",
+                                                   sourceFile=srcScn)
     sSrcScnPath = privScn.absPath()
+    bSrcScnExists = (not bCopied)
+    try:
+        if bSrcScnExists:
+            print (" '{}' already exists: submitting without changes "
+                   .format(privScn.name).center(120, "-"))
+            myasys.openScene(sSrcScnPath, force=True, fail=False, lrd="none")
+        else:
+            myasys.openScene(sSrcScnPath, force=True, fail=False)
 
-    if dryRun:
-        myasys.openScene(sSrcScnPath, force=True, fail=False, lrd="none")
-    else:
-        myasys.openScene(sSrcScnPath, force=True, fail=False)
+            rendering.updateStereoCam(gui=False)
+            rendering.renderRightCam()
 
-    rendering.updateStereoCam(gui=False)
-    rendering.renderRightCam()
+            pm.saveFile(force=True)
 
-    if not dryRun:
-        pm.saveFile(force=True)
+        sCieProjName = "el-borgno"
+        if stills:
+            sCieProjName += "-stills"
+        else:
+            sCieProjName += "-anim"
 
-    sCieProjName = "el-borgno"
-    if stills:
-        sCieProjName += "-stills"
-    else:
-        sCieProjName += "-anim"
-    if dryRun:
-        sCieProjName += "-test"
+        if dryRun:
+            sCieProjName += "-test"
 
-    params = [
+        params = [
+        "PreviewGamma2.2=" + '0~1',
         "DefaultClientGroup=" + '1~ALL',
-        "CustomUserInfo=" + '1~0~Rendu Cam Right',
+        "CustomUserInfo=" + '1~0~Rendu El Borgno',
         "CompanyProjectName=" + '0~{}'.format(sCieProjName),
         "CustomVersionName=" + '0~{}'.format(sVersSuffix.strip("-")),
-        "Color_ID=" + '1~10']
+        "Color_ID=" + '1~11']
 
-    if dryRun:
-        params.append("SendJobDisabled=" + '1~1')
+        if dryRun:
+            params.append("SendJobDisabled=" + '1~1')
 
-    if iFrameList:
-        for iFrame in iFrameList:
-            _submitFrame(frame=iFrame, noSubmit=False, parameter=params)
+        if iFrameList:
+            for iFrame in iFrameList:
+                _submitFrame(frame=iFrame, noSubmit=False, parameter=params)
 
-    if (not stills) or (stills and iStep):
-        _submitAnim(shot=sShotName, noSubmit=False, parameter=params, step=iStep)
+        if (not stills) or (stills and iStep):
+            _submitAnim(shot=sShotName, noSubmit=False, parameter=params, step=iStep)
+
+    except Exception as e:
+        if not bSrcScnExists:
+            try:
+                os.remove(sSrcScnPath)
+            except OSError:
+                traceback.print_exc()
+        raise e
 
     if not dryRun:
         sDetailStatus = "stills en calcul" if stills else "anim en calcul"
-        pprint(proj.updateSgEntity(sgStereoTask, sg_status_list="clc", 
+        pprint(proj.updateSgEntity(sgStereoTask, sg_status_list="clc",
                                    sg_detail_status=sDetailStatus))
 
