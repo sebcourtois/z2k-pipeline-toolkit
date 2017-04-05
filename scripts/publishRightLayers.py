@@ -236,9 +236,16 @@ def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, dryRun 
 
             validRightLyrB = False
             publishStateS = ""
+
             if  leftLayerKeyS in rightUnPubLayerInfoD.keys():
-                if not leftLayerKeyS in rightLayerInfoD.keys():
-                    logS = moveLayer(sourcePathS=normPath(osp.join(inRenderDirS,leftLayerKeyS)), targetPathS=normPath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version",leftLayerKeyS)), dryRun= dryRun)
+                targetPathS=normPath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version",leftLayerKeyS))
+                removedtargetDirB = False
+                if not os.listdir(targetPathS):
+                    removedtargetDirB = True
+                    shutil.rmtree(targetPathS)
+
+                if not leftLayerKeyS in rightLayerInfoD.keys() or removedtargetDirB:
+                    logS = moveLayer(sourcePathS=normPath(osp.join(inRenderDirS,leftLayerKeyS)), targetPathS=targetPathS, dryRun= dryRun)
                     publishLogL.append(logS)
                     rightLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version")))
                     publishStateS = "        ### published succesfully ###"
@@ -247,7 +254,6 @@ def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, dryRun 
 
 
             if not leftLayerKeyS in rightLayerInfoD.keys():
-                print rightLayerInfoD.keys()
                 txt = "        right : {}{}".format('missing layer',publishStateS)
                 log.printL("", txt)
                 logFile.write(txt + "\n")
