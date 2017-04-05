@@ -10,7 +10,9 @@ import argparse
 import subprocess
 from pprint import pprint
 
-from pytd.util.sysutils import grouper, inDevMode, toStr
+from PySide import QtGui
+
+from pytd.util.sysutils import grouper, inDevMode, toStr, qtGuiApp
 from pytd.util.logutils import confirmMessage
 from pytd.util.fsutils import pathJoin, pathSuffixed, jsonWrite
 
@@ -24,6 +26,10 @@ LAUNCH_TIME = None
 def launch(shots=None, stills=False, dryRun=False, noPublish=False, timestamp=None, dialogParent=None):
 
     global LAUNCH_TIME
+
+    app = qtGuiApp()
+    if not app:
+        app = QtGui.QApplication(sys.argv)
 
     proj = damutils.initProject()
 
@@ -78,8 +84,7 @@ def launch(shots=None, stills=False, dryRun=False, noPublish=False, timestamp=No
     sTitle = "EL BORGNO"
     print "\n", sTitle.center(len(sTitle) + 2).center(120, "-")
     kwargs = dict(stills=stills, dryRun=dryRun, prompt=bPrompt, noPublish=noPublish)
-    if inDevMode():
-        pprint(kwargs)
+    pprint(kwargs)
     print ""
 
     damShotList = list(proj.getShot(s) for s in sShotList)
@@ -245,6 +250,8 @@ def submit(in_damShotList, stills=False, dryRun=False, prompt=True, sgShots=None
 
     bPublish = True if sDstRcName and (not noPublish) else False
 
+    print " Shot status ".center(100, "-") + "\n"
+
     for i, (damShot, srcScn, dstScn) in enumerate(izip(damShotList, srcScnList, dstScnList)):
 
         sShotName = damShot.name
@@ -274,8 +281,9 @@ def submit(in_damShotList, stills=False, dryRun=False, prompt=True, sgShots=None
             sMsgList.extend("ERROR: " + s for s in sErrorList)
 
         sSep = "\n" + (len(sShotName) * " ") + " - "
-        print "{} - {}".format(sShotName, sSep.join(sMsgList))#, damShot, srcScn, dstScn
+        print "{} - {}\n".format(sShotName, sSep.join(sMsgList))#, damShot, srcScn, dstScn
 
+    print " Shot status ".center(100, "-")
 
     dstScnList = list(dst for shot, src, dst in izip(damShotList, srcScnList, dstScnList) if shot and src)
     damShotList = list(shot for shot in damShotList if shot)
