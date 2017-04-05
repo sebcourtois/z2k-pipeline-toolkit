@@ -111,11 +111,9 @@ def getImgSeqInfo(lyrPathS = "",  gui = False):
 
 
 
-
-
 def getLayerInfo(layerPathS="", gui = False, lastVerOnly = True):
     log = LogBuilder(gui=gui, funcName ="getLayerInfo")
-    layerInfoD = {}
+    layerInfoD = OrderedDict()
     if  not osp.isdir(layerPathS):
         txt = "Directory could not be found: '{}'\n".format(layerPathS)
         log.printL("e", txt)
@@ -123,6 +121,7 @@ def getLayerInfo(layerPathS="", gui = False, lastVerOnly = True):
         return layerInfoD
     else:
         versDirL = os.listdir(layerPathS)
+        versDirL.sort()
         proccedLayerPairL = []
         for each in versDirL:
             if re.match('^lyr_[a-zA-Z0-9_]{0,128}-v[0-9]{3}$', each):

@@ -1,179 +1,322 @@
 import os
 import sys
 import re
-import shutil
+from zomblib import shutiloptim as shutil
+from collections import OrderedDict
+osp = os.path
+from datetime import datetime
+
+from zomblib import damutils
+from davos.core.damproject import DamProject
+
+renderPath =  sys.argv[-1]
+print 'renderPath',renderPath
+
+
+
+class LogBuilder():
+    
+    def __init__(self,gui=True, funcName ="", logL = None, resultB = True, logFile = ""):
+        self.gui = gui
+        if not logL:
+            logL = []
+        self.funcName = funcName
+        self.logL = logL
+        self.resultB = resultB
+        self.logFile = logFile
+        if self.funcName:
+            self.funcName = "'"+self.funcName+"' "
+
+        if self.logFile:
+            print "toto"
+
+    def printL(self,style = "i",msg = "", guiPopUp = False ):
+        self.style = style
+        self.msg = msg
+
+        if not self.gui:
+            self.guiPopUp = False
+        else:
+            self.guiPopUp = guiPopUp
+
+      
+        if self.style == "t":
+            self.formMsg = '\n----------- '+self.msg    
+        elif self.style == "e":
+            self.formMsg = "#### {:>7}: {}{}".format("Error",self.funcName,self.msg)
+            if self.guiPopUp: mc.confirmDialog( title='Error: '+self.funcName, message=self.msg, button=['Ok'], defaultButton='Ok' )
+            self.resultB = False
+        elif self.style == "w":
+            self.formMsg = "#### {:>7}: {}{}".format("Warning",self.funcName,self.msg)
+            if self.guiPopUp: mc.confirmDialog( title='Warning: '+self.funcName, message=self.msg, button=['Ok'], defaultButton='Ok' )
+        elif self.style == "i":
+            self.formMsg = "#### {:>7}: {}{}".format("Info",self.funcName,self.msg)
+            if self.guiPopUp: mc.confirmDialog( title='Info: '+self.funcName, message=self.msg, button=['Ok'], defaultButton='Ok' )
+        else:
+            self.formMsg = "{}{}".format(self.funcName,self.msg)
+
+
+        print self.formMsg
+
+        self.logL.append(self.formMsg)
+    
 
 def normPath(p):
     return os.path.normpath(p).replace("\\",'/')
 
 
-def getLastVersionLayers(inDirS=""):
-	allLayerL=[]
-	for each in os.listdir(inDirS):
-		if re.match('.*-v[0-9]{3}$', each):
-			if not "-v000" in each:
-				allLayerL.append(each)
-	lastVersLayerL=[]
-	baseNameDoneL=[]
-	for each in allLayerL:
-		lyrBaseNameS = each.split("-v")[0]
-		layerTypeL = []
-		if lyrBaseNameS not in baseNameDoneL:
-			for eachItem in allLayerL:
-				if lyrBaseNameS == eachItem.split("-v")[0]:
-					layerTypeL.append(eachItem)
-			layerTypeL.sort()
-			lastVersLayerL.append(layerTypeL[-1])
-			baseNameDoneL.append(lyrBaseNameS)
-	return lastVersLayerL
+def getImgSeqInfo(lyrPathS = "",  gui = False):
+    log = LogBuilder(gui=gui, funcName ="getImgSeqInfo")
+    missingFrameL =[]
+    frameNumberI = 0
+    lastImgI = 0
+    firstImgI = 0
 
-def getExrCount(inDirS=""):
-	exrCountI = 0
-	if os.path.isdir(inDirS):
-		for each in os.listdir(inDirS):
-			if re.match('.*\.[0-9]{4}\.exr$', each):
-				exrCountI +=1
-	return exrCountI
+    exrL = []
+    imgNumL = []
+    imgRadicalL=[]
+    for each in os.listdir(lyrPathS):
+        if re.match('^[a-zA-Z0-9_]{0,128}.[0-9]{4}.exr$', each):
+            if each.split(".")[0] not in imgRadicalL:
+                imgRadicalL.append(each.split(".")[0])
+            exrL.append(each)
+            imgNumL.append(int(each.split(".")[1]))
+
+    if not exrL:
+        return dict(resultB=log.resultB, logL=log.logL, firstImgI=0, lastImgI=0, missingFrameL=missingFrameL, frameNumberI=0)
+
+    if len(imgRadicalL)!=1:
+        log.printL("e","'{}' several 'name.####.ext' image sequence found in: '{}'".format(lyrPathS))
+        return dict(resultB=log.resultB, logL=log.logL, firstImgI=0, lastImgI=0, missingFrameL=missingFrameL, frameNumberI=0)
+
+    exrL.sort()
+    imgNumL.sort()
+    imgNameS = exrL[0]
+    imgRadS = imgNameS.split(".")[0]
+    imgExtS = imgNameS.split(".")[-1]
+
+    firstImgI = int(exrL[0].split(".")[1])
+    lastImgI= int(exrL[-1].split(".")[1])
+
+    missingFrameI = lastImgI-firstImgI+1-len(exrL)
+    missingFrameL = []
+    if missingFrameI:
+        n = int (firstImgI)
+        while n<lastImgI:
+            if n not in imgNumL:
+                missingFrameL.append(n)
+            n+=1
+    return dict(resultB=log.resultB, logL=log.logL, firstImgI=firstImgI, lastImgI=lastImgI, missingFrameL=missingFrameL, frameNumberI=len(exrL))
 
 
-def moveLayer2output(layerPathS="", publishDirS="", gui = True):
-    publishedLayerL=[]
-    layerNameS = os.path.basename(layerPathS)
-    versionDirS = publishDirS+"/_version"
 
-    #get the nextversion layer name
-    if not os.path.isdir(versionDirS):
-        os.makedirs(versionDirS)
-        nextVersionS = "v001"
-        layerNameNextVerS = layerNameS+"-v001"
+def getLayerInfo(layerPathS="", gui = False, lastVerOnly = True, specificLayerOnlyL =[]):
+    log = LogBuilder(gui=gui, funcName ="getLayerInfo")
+    layerInfoD = OrderedDict()
+    if  not osp.isdir(layerPathS):
+        txt = "Directory could not be found: '{}'\n".format(layerPathS)
+        log.printL("e", txt)
+        logFile.write("####   Error: "+txt + "\n")
+        return layerInfoD
     else:
-        itemDirL = os.listdir(versionDirS)
-        for each in itemDirL:
-            if layerNameS+"-v" in each:
-                publishedLayerL.append(each)
-        publishedLayerL.sort()
-        if publishedLayerL:
-            verI = int(publishedLayerL[-1].split("-v")[-1])
-            nextVersionS = "v"+'{0:03d}'.format(verI+1)
-            layerNameNextVerS = layerNameS+"-"+nextVersionS
+        versDirL = os.listdir(layerPathS)
+        versDirL.sort()
+        proccedLayerPairL = []
+        for each in versDirL:
+            if specificLayerOnlyL and each not in specificLayerOnlyL:
+                continue
+
+            if re.match('^lyr_[a-zA-Z0-9_]{0,128}-v[0-9]{3}$', each):
+                #get the last version published
+                lastVerS=""
+                lastVersLyrS=""        
+
+                lyrBaseNameS=each.split("-v")[0]
+                if lyrBaseNameS not in proccedLayerPairL:
+                    layerPairL = []
+                    for eachItem in versDirL:
+                        if lyrBaseNameS == eachItem.split("-v")[0]:
+                            layerPairL.append(eachItem)
+                    layerPairL.sort()
+                    if layerPairL and lastVerOnly:
+                        lastVersLyrS = layerPairL[-1]
+                        lastVerS = str(lastVersLyrS.split("-v")[-1])
+                        resultD = getImgSeqInfo(lyrPathS = osp.normpath(osp.join(layerPathS,lastVersLyrS)),  gui = False)
+                        imgSeqDataD = {'firstFrame': resultD["firstImgI"], 'lastFrame': resultD["lastImgI"], 'frameNumber': resultD["frameNumberI"], "missingFrameL": resultD["missingFrameL"] }
+                        layerInfoD[lastVersLyrS] = dict(imgSeqDataD)
+                        proccedLayerPairL.append(each)
+
+        return layerInfoD 
+
+
+def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, dryRun = False):
+    log = LogBuilder(gui=False, funcName ="")
+    if dryRun:
+        rmRightPubLayerB=False
+
+    proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal", standalone=True)
+    proj.loadEnviron()
+    inRenderDirS =normPath(inRenderDirS)
+
+    def moveLayer(sourcePathS="", targetPathS="", dryRun= False):
+        if not dryRun:
+            try:
+                logS = "rename  '{}'\n    ->  '{}'".format(sourcePathS, targetPathS)
+                os.rename(sourcePathS, targetPathS)
+            except OSError:
+                logS = "copying '{}'\n    ->  '{}'".format(sourcePathS, targetPathS)
+                shutil.copytree(sourcePathS, targetPathS, symlinks=False, ignore=None)
+                #shutil.move(sourcePathS, targetPathS)
         else:
-            layerNameNextVerS = layerNameS+"-v001"
+            logS = "dry run '{}' -> to -> '{}'".format(sourcePathS, targetPathS)
+        return logS
+
+
+    #shotDir = osp.normpath(osp.join(os.environ["ZOMB_SHOT_LOC"], "zomb", "shot"))
+    if not outputDir:
+        outputDir = os.environ["ZOMB_OUTPUT_PATH"]
+
+    seqNameS = inRenderDirS.split("/")[-5]
+    shotNameS = inRenderDirS.split("/")[-4]
+
+    leftLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'left', "_version")))
+    rightLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version")))
+    rightUnPubLayerInfoD = getLayerInfo(layerPathS = inRenderDirS)
+    #print 'leftLayerInfoD', leftLayerInfoD
+    #print 'rightLayerInfoD', rightLayerInfoD
+
+    unusedLayerL =[]
+    pubLyrNameNkL = []
+    unPubLyrPathNkL = []
+    publishLogL = []
+
+    damShot = proj.getShot(shotNameS)
+    sgShot = damShot.getSgInfo()
+    sgDurationI = damutils.getShotDuration(sgShot)
+    sgFirstFrameI = 101
+    sgLastFrameI = sgDurationI + 100
+    sgRangeL = [sgFirstFrameI, sgLastFrameI]
+
+
+    oDate = datetime.today()
+    sDate = str(oDate.year) + "-" + str(oDate.month) + "-" + str(oDate.day)
+    logFilePathS = osp.normpath(osp.join(os.path.dirname(os.path.dirname(inRenderDirS)), "log_rightLayerPublish_"+seqNameS+"_"+sDate+".txt"))
+    with open(logFilePathS, "w") as logFile:
+        log.printL("", shotNameS+' '+str(sgRangeL))
+        logFile.write(shotNameS+' '+str(sgRangeL)+ "\n")
+        for leftLayerKeyS, leftLayerValueD in leftLayerInfoD.iteritems():
+            if leftLayerKeyS not in pubLyrNameNkL and pubLyrNameNkL:
+                unusedLayerL.append(leftLayerKeyS)
+                continue
+            txt = "    {}".format(leftLayerKeyS)
+            log.printL("", txt)
+            logFile.write(txt + "\n")
+
+            validLeftLyrB = False
+            if leftLayerInfoD[leftLayerKeyS]['frameNumber']==0:
+                txt = "        left  : {}".format('Empty layer, frameNumber = 0')
+                log.printL("", txt)
+                logFile.write(txt + "")
+            elif leftLayerInfoD[leftLayerKeyS]['missingFrameL']:
+                txt = "        left  : Missing frames {}'".format(leftLayerInfoD[leftLayerKeyS]['missingFrameL'])
+                log.printL("", txt)
+                logFile.write(txt + "\n")
+            else :
+                if leftLayerInfoD[leftLayerKeyS]['frameNumber'] != sgDurationI:
+                    layerRangeL = [leftLayerInfoD[leftLayerKeyS]['firstFrame'], leftLayerInfoD[leftLayerKeyS]['lastFrame']]
+                    txt = "        left  : {}".format('OK '+str(layerRangeL))
+                    log.printL("", txt)
+                    logFile.write(txt + "\n")
+                    validLeftLyrB = True
+                else:
+                    txt = "        left  : {}".format('OK')
+                    log.printL("", txt)
+                    logFile.write(txt + "\n")
+                    validLeftLyrB = True
+
+            validRightLyrB = False
+            publishStateS = ""
+            if  leftLayerKeyS in rightUnPubLayerInfoD.keys():
+                if not leftLayerKeyS in rightLayerInfoD.keys():
+                    logS = moveLayer(sourcePathS=normPath(osp.join(inRenderDirS,leftLayerKeyS)), targetPathS=normPath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version",leftLayerKeyS)), dryRun= dryRun)
+                    publishLogL.append(logS)
+                    rightLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version")))
+                    publishStateS = "        ### published succesfully ###"
+                else:
+                    publishStateS = "        ### layer available for publish in your private ###"
+
+
+            if not leftLayerKeyS in rightLayerInfoD.keys():
+                print rightLayerInfoD.keys()
+                txt = "        right : {}{}".format('missing layer',publishStateS)
+                log.printL("", txt)
+                logFile.write(txt + "\n")
+            elif rightLayerInfoD[leftLayerKeyS]['frameNumber']==0:
+                txt = "        right : {}{}".format('Empty layer, frameNumber = 0',publishStateS)
+                log.printL("", txt)
+                logFile.write(txt + "\n")
+            elif rightLayerInfoD[leftLayerKeyS]['missingFrameL']:
+                txt = "        right : Missing frames {}{}".format(rightLayerInfoD[leftLayerKeyS]['missingFrameL'],publishStateS)
+                log.printL("", txt)
+                logFile.write(txt + "\n")
+            else :
+                if rightLayerInfoD[leftLayerKeyS]['frameNumber'] != sgDurationI:
+                    layerRangeL = [rightLayerInfoD[leftLayerKeyS]['firstFrame'], rightLayerInfoD[leftLayerKeyS]['lastFrame']]
+                    txt = "        right : {}{}".format('OK '+str(layerRangeL), publishStateS)
+                    log.printL("", txt)
+                    logFile.write(txt + "\n")
+                    validRightLyrB = True
+                else:
+                    txt = "        right : {}{}".format('OK', publishStateS)
+                    log.printL("", txt)
+                    logFile.write(txt + "\n")
+                    validRightLyrB = True
+
+
+            if not validLeftLyrB or not validRightLyrB:
+                txt = "        stereo: {}".format('check failed, one of your layer is not valid')
+                log.printL("", txt)
+                logFile.write(txt + "\n")
+            else:
+                if rightLayerInfoD[leftLayerKeyS]['frameNumber'] == leftLayerInfoD[leftLayerKeyS]['frameNumber']:
+                    txt = "        stereo: {}".format('OK')
+                    log.printL("", txt)
+                    logFile.write(txt + "\n")
+                else:
+                    txt = "        stereo: {}".format('check failed, left and right have a different frame number')
+                    log.printL("", txt)
+                    logFile.write(txt + "\n")
+
+            if unPubLyrPathNkL:
+                txt = "        Unpublished layers: {}".format(unPubLyrPathNkL)
+                log.printL("", txt)
+                logFile.write(txt + "\n")
+            if unusedLayerL:
+                txt = "        Unused layers: {}".format(unusedLayerL)
+                log.printL("", txt)
+                logFile.write(txt + "\n")
         
 
-    if not dryRun:
-        try:
-            os.rename(layerPathS, versionDirS+"/"+layerNameNextVerS)
-            #shutil.move(layerPathS, versionDirS+"/"+layerNameNextVerS)
-        except Exception,err:
-            raise err
+            #print leftLayerKeyS, rightLayerInfoD[leftLayerKeyS]
+            #print "" 
+        print ""
+        logFile.write("\n")
+        print ""
+        logFile.write("\n")
 
-    return layerNameNextVerS
-
-
-
-
-
-
-#print 'Argument List:', sys.argv
-cwdS =  sys.argv[-1]
-
-if "private" in cwdS:
-	cwdElemL =normPath(cwdS).split("/private/")[-1].split("/")
-	shotS = cwdElemL[-2]
-	seqS = cwdElemL[-3]
-else:
-	err = "#### error: current working dir is not a 'private' directory structure: "+cwdS
-	raise Exception(err)
-
-privRight_pathS =  os.path.join(cwdS,"render","right")
-if not os.path.exists(privRight_pathS):
-	err = "#### error: no render right directory found, nothing to publish: "+privRight_pathS
-	raise Exception(err)
-
-outputS = os.environ["ZOMB_OUTPUT_PATH"]
-outputLeftPathS =  normPath(os.path.join(outputS,seqS,shotS,"left","_version"))
-outputRightPathS =  normPath(os.path.join(outputS,seqS,shotS,"right","_version"))
-
-outLeft_lastVerLyrL = getLastVersionLayers(outputLeftPathS)
-outRight_lastVerLyrL = getLastVersionLayers(outputRightPathS)
-
-privRight_dirL=[]
-for each in os.listdir(privRight_pathS):
-	if os.path.isdir(privRight_pathS+"/"+each):
-		privRight_dirL.append(each)
+        if publishLogL:
+            txt = "publish log:"
+            log.printL("", txt)
+            logFile.write(txt + "\n")
+            for each in publishLogL:
+                log.printL("", each)
+                logFile.write(each + "\n")
 
 
 
-print "------------- publish right camera -------------"
 
-for each in privRight_dirL:
-	print ""
-	print "--- "+each
-	outLeft_lastVerDirS = ""
-	for eachItem in outLeft_lastVerLyrL:
-		if each in eachItem:
-			outLeft_lastVerDirS = eachItem
-			continue
-
-	source_PathS = normPath(privRight_pathS+"/"+each)
-	target_PathS = normPath(outputRightPathS+"/"+outLeft_lastVerDirS)
-
-	privRight_exrCountI = getExrCount(inDirS=source_PathS)
-	outLeft_exrCountI = getExrCount(inDirS=outputLeftPathS+"/"+outLeft_lastVerDirS)
-	outRight_exrCountI = getExrCount(inDirS=target_PathS)
-
-	if outLeft_exrCountI == 0:
-		print "#### warning: nothing to publish, empty directory: "+source_PathS
-		continue
-
-	if outRight_exrCountI!=0:
-		print "#### error: can't publish, right layer already exists: "+target_PathS
-		continue
-
-	elif os.path.isdir(target_PathS):
-		try:
-			shutil.rmtree(target_PathS, ignore_errors=False, onerror=None)
-		except Exception,err:
-			raise err
-
-	try:
-		if not os.path.isdir(privRight_pathS):
-			os.makedirs(privRight_pathS)
-		os.rename(source_PathS, target_PathS)
-		#shutil.move(source_PathS, target_PathS)
-		print "    move : '{}'".format(source_PathS)
-		print "    to --> '{}'".format(target_PathS)
-	except Exception,err:
-		raise err
 	
+layerScan(inRenderDirS= renderPath)
 
-
-print ""
-print "------------- listing -------------"
-
-for each in outLeft_lastVerLyrL:
-	print ""
-	print "--- "+each
-
-
-	left_pathS = normPath(outputLeftPathS+"/"+each)
-	right_PathS = normPath(outputRightPathS+"/"+each)
-
-	outLeft_exrCountI = getExrCount(inDirS=left_pathS)
-	outRight_exrCountI = getExrCount(inDirS=right_PathS)
-
-	if outLeft_exrCountI == outRight_exrCountI:
-		print "OK"
-	else:
-		print "missmach frame number: left={}, right={}".format(outLeft_exrCountI,outRight_exrCountI)
-
-
-# contenu du publishRightLayer.bat a creer dans le repertoire private
-#rem set pythonFile="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\scripts\publishRightLayers.py"
-#set pythonFile="C:\Users\%USERNAME%\DEVSPACE\git\z2k-pipeline-toolkit\scripts\publishRightLayers.py"
-#set setup_env_tools="C:\Users\%USERNAME%\DEVSPACE\git\z2k-pipeline-toolkit\launchers\paris\setup_env_tools.py"
-
-#C:\Python27\python.exe %setup_env_tools% launch C:\Python27\python.exe %pythonFile% %~dp0 %*
-#pause
 
 
