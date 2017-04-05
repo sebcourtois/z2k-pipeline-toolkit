@@ -63,7 +63,7 @@ def _samefile(src, dst):
     return (os.path.normcase(os.path.abspath(src)) ==
             os.path.normcase(os.path.abspath(dst)))
 
-def copyfile(src, dst, buffer_size=256 * 1024):
+def copyfile(src, dst, buffer_size=512 * 1024):
     """Copy data from src to dst"""
     if _samefile(src, dst):
         raise Error("`%s` and `%s` are the same file" % (src, dst))

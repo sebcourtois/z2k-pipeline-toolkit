@@ -3,6 +3,7 @@ import os
 import os.path as osp
 import traceback
 from pprint import pprint
+import re
 
 import maya.cmds as mc
 import pymel.core as pm
@@ -26,6 +27,7 @@ from dminutes import geocaching
 from dminutes import finalLayout
 from dminutes import shotconformation as shotconfo
 from dminutes import sceneManager
+from dminutes import rendering
 
 reload(geocaching)
 reload(finalLayout)
@@ -35,6 +37,8 @@ reload(shotconfo)
 reload(publishing)
 reload(myasys)
 reload(sceneManager)
+reload(rendering)
+
 
 def quitWithStatus(func):
     def doIt(*args, **kwargs):
@@ -150,79 +154,6 @@ def exportLayoutInfos(sSrcScnPath, publish=False, dryRun=False):
     geocaching.conformAbcNodeNames()
     geocaching.exportLayoutInfo(publish=publish, dryRun=dryRun, sceneInfos=scnInfos)
 
-def submitElBorgno(sSrcScnPath, step=None, dryRun=False):
-
-    mc.loadPlugin("rrSubmit_Maya_Z2K.py")
-
-    srcScnInfos = myagen.infosFromScene(sSrcScnPath)
-    #damShot = scnInfos["dam_entity"]
-    sShotName = srcScnInfos["name"]
-    srcScn = srcScnInfos["rc_entry"]
-    bPublicSrc = srcScn.isPublic()
-    if bPublicSrc and not srcScn.isVersionFile():
-        raise ValueError("Source scene is NOT a version file: '{}'"
-                         .format(sSrcScnPath))
-
-    sVersSuffix = mkVersionSuffix(srcScn.versionFromName())
-    headFile = srcScn.getHeadFile(dbNode=False)
-
-    sSuffix = "".join((sVersSuffix, "-elborgno"))
-    privScn, _ = headFile.copyToPrivateSpace(suffix=sSuffix, existing="replace",
-                                             sourceFile=srcScn)
-    sSrcScnPath = privScn.absPath()
-
-    myasys.openScene(sSrcScnPath, force=True, fail=False, lrd="none")
-
-
-    for sLyrPath in damutils.iterLatestOutputLayers(sShotName, "left"):
-        numFrames = len(os.listdir(sLyrPath))
-        if numFrames > 1:
-            continue
-
-        sRndLyr = osp.basename(sLyrPath).rsplit("-v", 1)[0]
-        if mc.objExists(sRndLyr) and (mc.nodeType(sRndLyr) == "renderLayer"):
-            if numFrames == 0:
-                raise EnvironmentError("'{}' has NO rendered image in '{}'"
-                                       .format(sRndLyr, sLyrPath))
-            elif numFrames == 1:
-                sEndFrameAttr = "defaultRenderGlobals.endFrame"
-                sMsg = "1 frame found in '{}'...\n".format(sLyrPath)
-                sMsg += "...so overriding '{}' to 101 for '{}'".format(sEndFrameAttr,
-                                                                       sRndLyr)
-                pm.displayWarning(sMsg)
-                mc.editRenderLayerAdjustment(sEndFrameAttr, layer=sRndLyr)
-                mc.setAttr(sEndFrameAttr, 101)
-        elif numFrames == 1:
-            pm.displayError("No such renderLayer: '{}'".format(sRndLyr))
-
-
-    params = [
-        "SendJobDisabled=" + '1~1',
-        "DefaultClientGroup=" + '1~ALL',
-        "CustomUserInfo=" + '1~0~Rendu Cam Right',
-        "CompanyProjectName=" + '0~el-borgno',
-        "CustomVersionName=" + '0~{}'.format(sVersSuffix.strip("-")),
-        "Color_ID=" + '1~10',
-        ]
-
-    curStep = mc.getAttr("defaultRenderGlobals.byFrameStep")
-    try:
-        if step:
-            mc.setAttr("defaultRenderGlobals.byFrameStep", step)
-
-        sFilePath = mc.rrSubmitZomb(noSubmit=dryRun, parameter=params)
-
-        if dryRun:
-            print "\n", sFilePath.center(120, "-")
-            with open(sFilePath, 'r') as fileobj:
-                for l in fileobj:
-                    print l.strip()
-            print sFilePath.center(120, "-"), "\n"
-
-    finally:
-        mc.setAttr("defaultRenderGlobals.byFrameStep", curStep)
-
-
 def publishCfxCaches(sSrcScnPath, publish=False, dryRun=False):
 
 #    raise RuntimeError("Bypassing job")
@@ -330,3 +261,173 @@ def publishCfxCaches(sSrcScnPath, publish=False, dryRun=False):
     finally:
         if publish:
             pubDstScn.setLocked(False)
+
+
+def _submitAnim(**kwargs):
+
+    sShotName = kwargs.pop("shot")
+    iStep = kwargs.pop("step", None)
+    bNoSubmit = kwargs.get("noSubmit", False)
+
+    for sLyrPath in damutils.iterLatestOutputLayers(sShotName, "left"):
+        numFrames = len(os.listdir(sLyrPath))
+        if numFrames > 1:
+            continue
+
+        sRndLyr = osp.basename(sLyrPath).rsplit("-v", 1)[0]
+        if mc.objExists(sRndLyr) and (mc.nodeType(sRndLyr) == "renderLayer"):
+            if numFrames == 0:
+                raise EnvironmentError("'{}' has NO rendered image in '{}'"
+                                       .format(sRndLyr, sLyrPath))
+            elif numFrames == 1:
+                sEndFrameAttr = "defaultRenderGlobals.endFrame"
+                sMsg = "1 frame found in '{}'...\n".format(sLyrPath)
+                sMsg += "...so overriding '{}' to 101 for '{}'".format(sEndFrameAttr,
+                                                                       sRndLyr)
+                pm.displayWarning(sMsg)
+                mc.editRenderLayerAdjustment(sEndFrameAttr, layer=sRndLyr)
+                mc.setAttr(sEndFrameAttr, 101)
+        elif numFrames == 1:
+            pm.displayError("No such renderLayer: '{}'".format(sRndLyr))
+
+    curStep = mc.getAttr("defaultRenderGlobals.byFrameStep")
+    try:
+        if iStep:
+            mc.setAttr("defaultRenderGlobals.byFrameStep", iStep)
+
+        sFilePath = mc.rrSubmitZomb(**kwargs)
+
+        if bNoSubmit:
+            print "\n", sFilePath.center(120, "-")
+            with open(sFilePath, 'r') as fileobj:
+                for l in fileobj:
+                    print l.strip()
+            print sFilePath.center(120, "-"), "\n"
+    finally:
+        mc.setAttr("defaultRenderGlobals.byFrameStep", curStep)
+
+def _submitFrame(**kwargs):
+
+    iFrame = kwargs.pop("frame")
+    bNoSubmit = kwargs.get("noSubmit", False)
+
+    curStart = mc.getAttr("defaultRenderGlobals.startFrame")
+    curEnd = mc.getAttr("defaultRenderGlobals.endFrame")
+    curStep = mc.getAttr("defaultRenderGlobals.byFrameStep")
+    try:
+        mc.setAttr("defaultRenderGlobals.byFrameStep", 1.0)
+        mc.setAttr("defaultRenderGlobals.startFrame", iFrame)
+        mc.setAttr("defaultRenderGlobals.endFrame", iFrame)
+
+        sFilePath = mc.rrSubmitZomb(**kwargs)
+
+        if bNoSubmit:
+            print "\n", sFilePath.center(120, "-")
+            with open(sFilePath, 'r') as fileobj:
+                for l in fileobj:
+                    print l.strip()
+            print sFilePath.center(120, "-"), "\n"
+    finally:
+        mc.setAttr("defaultRenderGlobals.byFrameStep", curStep)
+        mc.setAttr("defaultRenderGlobals.startFrame", curStart)
+        mc.setAttr("defaultRenderGlobals.endFrame", curEnd)
+
+def submitElBorgno(sSrcScnPath, stills=False, dryRun=False):
+
+    mc.loadPlugin("rrSubmit_Maya_Z2K.py")
+
+    srcScnInfos = myagen.infosFromScene(sSrcScnPath)
+    damShot = srcScnInfos["dam_entity"]
+    proj = damShot.project
+    sShotName = damShot.name
+
+    srcScn = srcScnInfos["rc_entry"]
+    bPublicSrc = srcScn.isPublic()
+    if bPublicSrc and not srcScn.isVersionFile():
+        raise ValueError("Source scene is NOT a version file: '{}'"
+                         .format(sSrcScnPath))
+
+    filters = [ ['project', 'is', {'type':'Project', 'id':67}],
+                ['content', 'in', ("rendering", "render_stereo")],
+                ['entity.Shot.code', 'is', sShotName], ]
+    fields = ["content", "entity.Shot.code", "sg_status_list", "sg_operators", "sg_keyframe"]
+    sgTaskList = proj._shotgundb.sg.find("Task", filters, fields)
+    if not sgTaskList:
+        raise EnvironmentError("No rendering tasks found for '{}'".format(sShotName))
+
+    sgTaskDct = dict((d["content"], d) for d in sgTaskList)
+    sgStereoTask = sgTaskDct["render_stereo"]
+
+    iFrameList = iStep = None
+    if stills:
+        sgRenderTask = sgTaskDct["rendering"]
+        sKeyFrame = sgRenderTask["sg_keyframe"]
+        sFrameList = re.findall("[^\s,]+", sKeyFrame.lower())
+        if 'step' in sFrameList:
+            i = sFrameList.index('step')
+            iStep = int(sFrameList[i + 1])
+            sFrameList.remove('step')
+            del sFrameList[i + 1]
+        iFrameList = tuple(int(s) for s in sFrameList)
+
+    sVersSuffix = mkVersionSuffix(srcScn.versionFromName())
+    headFile = srcScn.getHeadFile(dbNode=False)
+
+    sSuffix = "".join((sVersSuffix, "-elborgno"))
+    privScn, bCopied = headFile.copyToPrivateSpace(suffix=sSuffix, existing="keep",
+                                                   sourceFile=srcScn)
+    sSrcScnPath = privScn.absPath()
+    bSrcScnExists = (not bCopied)
+    try:
+        if bSrcScnExists:
+            print (" '{}' already exists: submitting without changes "
+                   .format(privScn.name).center(120, "-"))
+            myasys.openScene(sSrcScnPath, force=True, fail=False, lrd="none")
+        else:
+            myasys.openScene(sSrcScnPath, force=True, fail=False)
+
+            rendering.updateStereoCam(gui=False)
+            rendering.renderRightCam()
+
+            pm.saveFile(force=True)
+
+        sCieProjName = "el-borgno"
+        if stills:
+            sCieProjName += "-stills"
+        else:
+            sCieProjName += "-anim"
+
+        if dryRun:
+            sCieProjName += "-test"
+
+        params = [
+        "PreviewGamma2.2=" + '0~1',
+        "DefaultClientGroup=" + '1~ALL',
+        "CustomUserInfo=" + '1~0~Rendu El Borgno',
+        "CompanyProjectName=" + '0~{}'.format(sCieProjName),
+        "CustomVersionName=" + '0~{}'.format(sVersSuffix.strip("-")),
+        "Color_ID=" + '1~11']
+
+        if dryRun:
+            params.append("SendJobDisabled=" + '1~1')
+
+        if iFrameList:
+            for iFrame in iFrameList:
+                _submitFrame(frame=iFrame, noSubmit=False, parameter=params)
+
+        if (not stills) or (stills and iStep):
+            _submitAnim(shot=sShotName, noSubmit=False, parameter=params, step=iStep)
+
+    except Exception as e:
+        if not bSrcScnExists:
+            try:
+                os.remove(sSrcScnPath)
+            except OSError:
+                traceback.print_exc()
+        raise e
+
+    if not dryRun:
+        sDetailStatus = "stills en calcul" if stills else "anim en calcul"
+        pprint(proj.updateSgEntity(sgStereoTask, sg_status_list="clc",
+                                   sg_detail_status=sDetailStatus))
+

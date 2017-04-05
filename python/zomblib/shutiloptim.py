@@ -114,7 +114,7 @@ def copyfile(src, dst, buffer_size=512 * 1024, show_progress=True):
 
             show_progress = (show_progress and (numChunks >= 100))
             if show_progress and CopyProgress:
-                progress = CopyProgress(srcSize, src)
+                progress = CopyProgress(srcSize, src, latency=0.0)
 
     sAction = "Copying"
     if osp.normcase(osp.basename(src)) == osp.normcase(osp.basename(dst)):

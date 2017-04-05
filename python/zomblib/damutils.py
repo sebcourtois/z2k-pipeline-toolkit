@@ -106,12 +106,15 @@ def genShotNames(iSeq, *shotNums):
     for n in shotNums:
         yield "sq{:04d}_sh{:04d}a".format(iSeq, n)
 
-def iterLatestOutputLayers(sShot, sEye):
+def iterLatestOutputLayers(sShotName, sEye):
 
-    sSeq = sShot.split("_", 1)[0]
+    sSeq = sShotName.split("_", 1)[0]
     p = pathResolve("$ZOMB_OUTPUT_PATH/{sequence}/{shot}/{eye}/_version"
-                    .format(sequence=sSeq, shot=sShot, eye=sEye))
-    sLyrList = sorted((s for s in os.listdir(p) if s.startswith("lyr_")), reverse=True)
-    grpIter = groupby(sLyrList, key=lambda s: s.rsplit("-v", 1)[0])
-    return (pathJoin(p, next(g)) for _, g in grpIter)
+                    .format(sequence=sSeq, shot=sShotName, eye=sEye))
+
+    if os.path.isdir(p):
+        sLyrList = sorted((s for s in os.listdir(p) if s.startswith("lyr_")), reverse=True)
+        grpIter = groupby(sLyrList, key=lambda s: s.rsplit("-v", 1)[0])
+        for _, g in grpIter:
+            yield pathJoin(p, next(g))
 

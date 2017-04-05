@@ -87,10 +87,10 @@ class dataFile():
                 fileNameS=  nuke.root()["argv0"].getValue()
 
         if nuke.GUI:
-			from zomblib import damutils
-			from davos.core.damproject import DamProject
-			proj = DamProject("zombillenium", empty=(not nuke.GUI))
-			proj.loadEnviron()
+            from zomblib import damutils
+            from davos.core.damproject import DamProject
+            proj = DamProject("zombillenium", empty=(not nuke.GUI))
+            proj.loadEnviron()
 
 
         self.fileNameS=normPath(fileNameS)
@@ -508,7 +508,7 @@ def conformReadNode(readNodeL=[], gui=True, conformPathB = True, createEmptyRigh
         if not "MONO" in labelS:
             each['label'].setValue(newLabelS)
         if "MONO" in labelS:
-           each['label'].setValue("MONO\n"+newLabelS)
+            each['label'].setValue("MONO\n" + newLabelS)
 
 
         # conform node color
@@ -576,7 +576,7 @@ def getImgSeqInfo(filePathS = "", nodeNameS ="", gui = True):
         if  len(eachSplitL)==3 and eachSplitL[0]==imgRadS and eachSplitL[-1]==imgExtS:
             try:
                 imgNumL.append(int(eachSplitL[1]))
-            except Exception,err:
+            except Exception as err:
                 txt = "eachSplitL : {} ".format(eachSplitL)
                 log.printL("e",txt)
 
@@ -1187,7 +1187,7 @@ def createNukeBatchMovie(nodeList=[], gui=True):
     renderBatch_obj = open(renderBatchFile, "w")
 
     if os.environ["davos_site"] == "dmn_paris":
-         renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\nuke10.bat"'''+"\n")
+        renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\nuke10.bat"''' + "\n")
     elif os.environ["davos_site"] == "dmn_angouleme":
         renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\angouleme\nuke10.bat"'''+"\n")
     else:
@@ -1216,7 +1216,7 @@ def createPublishBat(gui=True):
     renderBatch_obj = open(publishBatFile, "w")
 
     if os.environ["davos_site"] == "dmn_paris":
-         renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\nuke10.bat"'''+"\n")
+        renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\paris\nuke10.bat"''' + "\n")
     elif os.environ["davos_site"] == "dmn_angouleme":
         renderBatch_obj.write(r'''set nuke="C:\Users\%USERNAME%\zombillenium\z2k-pipeline-toolkit\launchers\angouleme\nuke10.bat"'''+"\n")
     else:
@@ -1249,7 +1249,7 @@ def createCopyBat(gui=True):
             exrDirS =  os.path.dirname(exrFileNameS)
 
     if os.environ["davos_site"] == "dmn_paris":
-         partageDirS = r"//Zombiwalk/z2k/06_PARTAGE/alex/test"
+        partageDirS = r"//Zombiwalk/z2k/06_PARTAGE/alex/test"
     elif os.environ["davos_site"] == "dmn_angouleme":
         partageDirS = r"//zombillenium/zombidamas/partage/04_SQ_REF_LIGHTCOMP"
     else:

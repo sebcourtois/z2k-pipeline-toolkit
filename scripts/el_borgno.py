@@ -10,7 +10,9 @@ import argparse
 import subprocess
 from pprint import pprint
 
-from pytd.util.sysutils import grouper, inDevMode, toStr
+from PySide import QtGui
+
+from pytd.util.sysutils import grouper, inDevMode, toStr, qtGuiApp
 from pytd.util.logutils import confirmMessage
 from pytd.util.fsutils import pathJoin, pathSuffixed, jsonWrite
 
@@ -21,9 +23,13 @@ from collections import OrderedDict
 
 LAUNCH_TIME = None
 
-def launch(shots=None, dryRun=False, noPublish=False, timestamp=None, dialogParent=None):
+def launch(shots=None, stills=False, dryRun=False, noPublish=False, timestamp=None, dialogParent=None):
 
     global LAUNCH_TIME
+
+    app = qtGuiApp()
+    if not app:
+        app = QtGui.QApplication(sys.argv)
 
     proj = damutils.initProject()
 
@@ -50,6 +56,9 @@ def launch(shots=None, dryRun=False, noPublish=False, timestamp=None, dialogPare
         print cmdArgs
         if cmdArgs:
 
+            if stills and ("--stills" not in cmdArgs):
+                cmdArgs.append("--stills")
+
             if dryRun and ("--dry" not in cmdArgs):
                 cmdArgs.append("--dry")
 
@@ -74,23 +83,19 @@ def launch(shots=None, dryRun=False, noPublish=False, timestamp=None, dialogPare
 
     sTitle = "EL BORGNO"
     print "\n", sTitle.center(len(sTitle) + 2).center(120, "-")
-    kwargs = dict(dryRun=dryRun, prompt=bPrompt, noPublish=noPublish)
-    if inDevMode():
-        pprint(kwargs)
+    kwargs = dict(stills=stills, dryRun=dryRun, prompt=bPrompt, noPublish=noPublish)
+    pprint(kwargs)
     print ""
 
     damShotList = list(proj.getShot(s) for s in sShotList)
     submit(damShotList, sgShots=sgShots, **kwargs)
 
-def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=False):
+def submit(in_damShotList, stills=False, dryRun=False, prompt=True, sgShots=None, noPublish=False):
 
     sSrcRcName = "rendering_scene"
     sDstRcName = ""
 #    if not sDstRcName:
 #        noPublish = True
-
-    sStep = ""
-    sTask = "rendering"
 
     damShotList = in_damShotList[:]
     proj = damShotList[0].project
@@ -179,7 +184,7 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
 
     filters = [["content", "in", ("rendering", "render_stereo")],
                ["entity.Shot.id", "in", tuple(d["id"] for d in sgShotDct.itervalues())]]
-    fields = ["content", "entity.Shot.code", "sg_status_list", "sg_operators"]
+    fields = ["content", "entity.Shot.code", "sg_status_list", "sg_operators", "sg_keyframe"]
     sgTaskList = proj._shotgundb.sg.find("Task", filters, fields)
     sgTaskDct = {}
     for sgTask in sgTaskList:
@@ -189,6 +194,7 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
     for i, (damShot, srcScn, dstScn) in enumerate(izip(damShotList, srcScnList, dstScnList)):
 
         bIgnore = False
+        damShot.sgTasks = None
 
         if sDstRcName and (not dstScn):
             continue
@@ -197,33 +203,43 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
             bIgnore = True
         else:
             sShotName = damShot.name
-            shotTasks = sgTaskDct[sShotName]
+            shotTaskDct = sgTaskDct[sShotName]
+            damShot.sgTasks = shotTaskDct
 
             sTask = "rendering"
-            sgTask = shotTasks[sTask]
+            sgTask = shotTaskDct[sTask]
             if sgTask["sg_status_list"] not in ("wfa", "cmpt"):
                 bIgnore = True
                 sMsg = ("'{}' task is NOT 'WaitingForApproval' or 'Complete'."
-                        .format("|".join(s for s in (sStep, sTask) if s)))
+                        .format(sTask))
                 errorDct.setdefault(damShot.name, []).append(sMsg)
 
+            if stills and (not sgTask.get("sg_keyframe")):
+                bIgnore = True
+                sMsg = ("No keyframe defined on '{}' task".format(sTask))
+                errorDct.setdefault(damShot.name, []).append(sMsg)
 
             sTask = "render_stereo"
-            sgTask = shotTasks[sTask]
+            sgTask = shotTaskDct[sTask]
             sOpeList = tuple(op["name"].lower() for op in sgTask["sg_operators"])
 
             if "el borgno" not in sOpeList:
-                if not dryRun:
-                    bIgnore = True
+                bIgnore = True
                 sMsg = ("'{}' task NOT ASSIGNED to 'El Borgno'."
-                        .format("|".join(s for s in (sStep, sTask) if s)))
+                        .format(sTask))
                 errorDct.setdefault(damShot.name, []).append(sMsg)
 
-            if sgTask["sg_status_list"] not in ("rdy",):
+            sStatus = sgTask["sg_status_list"]
+            if sStatus != "rdy":
+
                 if not dryRun:
                     bIgnore = True
-                sMsg = ("'{}' task is NOT 'Ready to Start'."
-                        .format("|".join(s for s in (sStep, sTask) if s)))
+                    
+                if sStatus == "clc":
+                    sMsg = ("'{}' task is already on 'Calcul'.".format(sTask))
+                else:
+                    sMsg = ("'{}' task is NOT 'Ready to Start'.".format(sTask))
+
                 errorDct.setdefault(damShot.name, []).append(sMsg)
 
         if bIgnore:
@@ -233,6 +249,8 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
                 srcScnList[i] = None
 
     bPublish = True if sDstRcName and (not noPublish) else False
+
+    print " Shot status ".center(100, "-") + "\n"
 
     for i, (damShot, srcScn, dstScn) in enumerate(izip(damShotList, srcScnList, dstScnList)):
 
@@ -246,9 +264,15 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
 
         sMsgList = []
         if srcScn:
-            sMsg = "ok to submit "
+            sMsg = "ok to submit"
+            if stills and damShot.sgTasks:
+                sgTask = damShot.sgTasks["rendering"]
+                sKeyFrame = sgTask["sg_keyframe"]
+                sMsg += (" stills: {}".format(sKeyFrame))
+
             if dstScn:
-                sMsg += "and publish"
+                sMsg += " and publish"
+
             sMsgList.append(sMsg)
 
         sErrorList = errorDct.get(sShotName, [])
@@ -257,8 +281,9 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
             sMsgList.extend("ERROR: " + s for s in sErrorList)
 
         sSep = "\n" + (len(sShotName) * " ") + " - "
-        print "{} - {}".format(sShotName, sSep.join(sMsgList))#, damShot, srcScn, dstScn
+        print "{} - {}\n".format(sShotName, sSep.join(sMsgList))#, damShot, srcScn, dstScn
 
+    print " Shot status ".center(100, "-")
 
     dstScnList = list(dst for shot, src, dst in izip(damShotList, srcScnList, dstScnList) if shot and src)
     damShotList = list(shot for shot in damShotList if shot)
@@ -276,7 +301,8 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
         sMsg = "None of the {} selected shots can be submitted.".format(numInputShots)
         res = confirmMessage("SORRY !", sMsg, ["Refresh", "Quit"])
         if res == "Refresh":
-            return submit(in_damShotList, dryRun=dryRun, prompt=prompt, sgShots=sgShots, noPublish=noPublish)
+            return submit(in_damShotList, stills=stills, dryRun=dryRun,
+                          prompt=prompt, sgShots=sgShots, noPublish=noPublish)
         return
 
     prompt = True
@@ -296,7 +322,8 @@ def submit(in_damShotList, dryRun=False, prompt=True, sgShots=None, noPublish=Fa
             sys.exit(0)
             #raise RuntimeWarning("Canceled !")
         elif res == "Refresh":
-            return submit(in_damShotList, dryRun=dryRun, prompt=prompt, sgShots=sgShots, noPublish=noPublish)
+            return submit(in_damShotList, stills=stills, dryRun=dryRun,
+                          prompt=prompt, sgShots=sgShots, noPublish=noPublish)
 
     sCode = """
 from zomblib import damutils;reload(damutils);damutils.initProject()
@@ -304,8 +331,11 @@ from zomblib import damutils;reload(damutils);damutils.initProject()
     jobList = [{"title":"Batch initialization", "py_lines":[sCode], "fail":True}]
 
     jobArgsList = tuple(dict(shot=shot.name, src_scene=src.absPath(),
-                             publish=True if dst else False, dryRun=dryRun)
+                             stills=stills,
+                             publish=True if dst else False,
+                             dryRun=dryRun)
                         for shot, src, dst in izip(damShotList, srcScnList, dstScnList))
+
     jobList.extend(generMayaJobs(jobArgsList))
 
     sJobFilePath = makeOutputPath("mayabatch.json", timestamp=LAUNCH_TIME)
@@ -335,8 +365,8 @@ def generMayaJobs(jobArgsList):
 from dminutes import batchprocess
 reload(batchprocess)
 
-print "{shot}", "{src_scene}", "publish={publish}", "dryRun={dryRun}"
-batchprocess.submitElBorgno("{src_scene}", step=10, dryRun={dryRun})
+print "{shot}", "{src_scene}", "stills={stills}", "dryRun={dryRun}"
+batchprocess.submitElBorgno("{src_scene}", stills={stills}, dryRun={dryRun})
 """
     for kwargs in (d.copy() for d in jobArgsList):
 
@@ -383,6 +413,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     #parser.add_argument("resource")
+    parser.add_argument("--stills", action="store_true")
     parser.add_argument("--dry", action="store_true")
     parser.add_argument("--no-publish", action="store_true")
     parser.add_argument("--time", type=int, default=None)
@@ -394,7 +425,7 @@ if __name__ == "__main__":
 #        ns.no_publish = True
 
     try:
-        launch(shots=ns.shots, dryRun=ns.dry, timestamp=ns.time, noPublish=ns.no_publish)
+        launch(shots=ns.shots, stills=ns.stills, dryRun=ns.dry, timestamp=ns.time, noPublish=ns.no_publish)
     except Exception as e:
         os.environ["PYTHONINSPECT"] = "1"
         if isinstance(e, Warning):

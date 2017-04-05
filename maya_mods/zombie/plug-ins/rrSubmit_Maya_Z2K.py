@@ -330,7 +330,7 @@ class rrMayaLayer:
 
 
     def CalcImageExtension(self):
-        print 50 * "!", self.renderer, self.tempImageExtension, self.tempImfKeyPlugin
+        #print 50 * "!", self.renderer, self.tempImageExtension, self.tempImfKeyPlugin
         #renderMan:
         if (self.renderer == "renderMan"):
             rmanImages = maya.mel.eval('rman getPrefAsArray ImageFormatQuantizationTable;')
@@ -1178,8 +1178,8 @@ def rrSetNewTempFileName(uiMode):
     else:
         nam = "/tmp/"
     nam += "rrSubmitMaya_"
-    if (uiMode):
-        nam += str(random.randrange(1000, 10000, 1))
+#    if (uiMode):
+    nam += str(random.randrange(1000, 10000, 1))
     nam += ".xml"
     return nam
 
@@ -1630,10 +1630,15 @@ class rrPlugin(OpenMayaMPx.MPxCommand):
     @staticmethod
     def createSyntax():
         syntax = MSyntax()
+
         syntax.addFlag("-p", "-parameter", MSyntax.kString)
-        syntax.makeFlagMultiUse("-p")
         syntax.addFlag("-nui", "-noUI")
         syntax.addFlag("-ns", "-noSubmit")
+
+        syntax.makeFlagMultiUse("-p")
+#        syntax.enableQuery(True)
+#        syntax.enableEdit(False)
+
         return syntax
 
     ########################################
