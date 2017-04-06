@@ -65,16 +65,17 @@ def withErrorDialog(func):
         except Warning:
             raise
         except Exception as e:
-            pc.confirmDialog(title='SORRY !',
-                             message=toStr(e),
-                             button=["OK"],
-                             defaultButton="OK",
-                             cancelButton="OK",
-                             dismissString="OK",
-                             icon="critical")
-            if not inDevMode():
-                pc.mel.ScriptEditor()
-                pc.mel.handleScriptEditorAction("maximizeHistory")
+            if not mc.about(batch=True):
+                pc.confirmDialog(title='SORRY !',
+                                 message=toStr(e),
+                                 button=["OK"],
+                                 defaultButton="OK",
+                                 cancelButton="OK",
+                                 dismissString="OK",
+                                 icon="critical")
+                if not inDevMode():
+                    pc.mel.ScriptEditor()
+                    pc.mel.handleScriptEditorAction("maximizeHistory")
             raise
         return res
     return doIt
