@@ -12,7 +12,7 @@ import pymel.core as pc
 #import pymel.util as pmu
 import maya.cmds as mc
 
-from pytd.util.sysutils import toStr, timer
+from pytd.util.sysutils import toStr, timer, inDevMode
 from pytd.util.fsutils import jsonWrite, pathResolve, jsonRead, copyFile
 
 from zomblib.editing import makeFilePath, movieToJpegSequence, convToH264
@@ -72,6 +72,9 @@ def withErrorDialog(func):
                              cancelButton="OK",
                              dismissString="OK",
                              icon="critical")
+            if not inDevMode():
+                pc.mel.ScriptEditor()
+                pc.mel.handleScriptEditorAction("maximizeHistory")
             raise
         return res
     return doIt
