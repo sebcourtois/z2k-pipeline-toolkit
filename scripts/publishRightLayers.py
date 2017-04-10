@@ -3,6 +3,7 @@ import sys
 import re
 from zomblib import shutiloptim as shutil
 from collections import OrderedDict
+import subprocess
 osp = os.path
 from datetime import datetime
 
@@ -116,7 +117,7 @@ def getLayerInfo(layerPathS="", gui = False, lastVerOnly = True, specificLayerOn
     if  not osp.isdir(layerPathS):
         txt = "Directory could not be found: '{}'\n".format(layerPathS)
         log.printL("e", txt)
-        logFile.write("####   Error: "+txt + "\n")
+        #logFile.write("####   Error: "+txt + "\n")
         return layerInfoD
     else:
         versDirL = os.listdir(layerPathS)
@@ -156,25 +157,152 @@ def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, dryRun 
 
     proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal", standalone=True)
     proj.loadEnviron()
+
     inRenderDirS =normPath(inRenderDirS)
-
-    def moveLayer(sourcePathS="", targetPathS="", dryRun= False):
-        if not dryRun:
-            try:
-                logS = "rename  '{}'\n    ->  '{}'".format(sourcePathS, targetPathS)
-                os.rename(sourcePathS, targetPathS)
-            except OSError:
-                logS = "copying '{}'\n    ->  '{}'".format(sourcePathS, targetPathS)
-                shutil.copytree(sourcePathS, targetPathS, symlinks=False, ignore=None)
-                #shutil.move(sourcePathS, targetPathS)
-        else:
-            logS = "dry run '{}' -> to -> '{}'".format(sourcePathS, targetPathS)
-        return logS
-
-
-    #shotDir = osp.normpath(osp.join(os.environ["ZOMB_SHOT_LOC"], "zomb", "shot"))
     if not outputDir:
         outputDir = os.environ["ZOMB_OUTPUT_PATH"]
+    outputTrashDirS = normPath(osp.join(osp.dirname(outputDir),"outputTrash"))
+
+
+
+    def renameDir(sourcePathS="", targetPathS="", dryRun= False, verboseB = False):
+        log = LogBuilder(gui=False, funcName ="renameDir")
+        logL = []
+
+        if os.path.isdir(targetPathS):
+            if os.listdir(targetPathS):
+                txt = "target dir is a non empty directory: {}".format(targetPathS)
+                log.printL("e", txt)
+                return  dict(resultB=log.resultB, logL=log.logL)
+            else:
+                try:
+                    os.rmdir(targetPathS)
+                except Exception as err:
+                    txt = "target directory already exists and could not be removed: {}".format(targetPathS)
+                    log.printL("e", txt)
+                    log.printL("e", err)
+                    return dict(resultB=log.resultB, logL=log.logL)
+        try:
+            os.rename(sourcePathS,sourcePathS)
+        except Exception as err:
+            txt = "could not rename directory: {}".format(sourcePathS)
+            log.printL("e", txt)
+            log.printL("e", err)
+            return dict(resultB=log.resultB, logL=log.logL)
+
+        if not dryRun:
+                os.rename(sourcePathS,targetPathS)
+                txt = "rename: {}\n{}".format(sourcePathS,targetPathS)
+                log.printL("i", txt)
+        else:
+            txt = "dryRun rename: {}\n{}".format(sourcePathS,targetPathS)
+            log.printL("i", txt)
+
+        return dict(resultB=log.resultB, logL=log.logL)
+
+
+    def renameDirContent(sourcePathS="", targetPathS="", dryRun= False, verboseB= False):
+        log = LogBuilder(gui=False, funcName ="renameDirContent")
+        logL = []
+
+        if os.path.isdir(targetPathS):
+            if os.listdir(targetPathS):
+                txt = "target dir is a non empty directory: {}".format(targetPathS)
+                log.printL("e", txt)
+                return  dict(resultB=log.resultB, logL=log.logL)
+        else:
+            os.makedirs(targetPathS)
+
+        sourcePathContentL = os.listdir(sourcePathS)
+        if sourcePathContentL:
+            failedElemL = []
+            for each in sourcePathContentL:
+                if "." in each:
+                    try:
+                        os.rename(normPath(osp.join(sourcePathS, each)),normPath(osp.join(sourcePathS, each)))
+                    except Exception as err:
+                        txt = "could not rename: {}".format(normPath(osp.join(sourcePathS, each)))
+                        log.printL("e", txt)
+                        log.printL("e", err)
+                        failedElemL.append(each)
+
+            if failedElemL:
+                return  dict(resultB=log.resultB, logL=log.logL)
+
+
+        if not dryRun:
+            for each in sourcePathContentL:
+                if "." in each:
+                    os.rename(normPath(osp.join(sourcePathS, each)),normPath(osp.join(targetPathS, each)))
+            if not os.listdir(sourcePathS):
+                try:
+                    os.rmdir(sourcePathS)
+                except:
+                    pass
+            if verboseB:
+                txt = "rename: {}\n{}".format(sourcePathS,targetPathS)
+                log.printL("i", txt)
+
+        else:
+            txt = "dryRun rename: {}\n{}".format(sourcePathS,targetPathS)
+            log.printL("i", txt)
+
+        return dict(resultB=log.resultB, logL=log.logL)
+
+
+    def pubRightLayer(sourcePathS="", targetPathS="", trashRootS="",dryRun= dryRun):
+        log = LogBuilder(gui=False, funcName ="pubRightLayer")
+
+        sourcePathS = normPath(sourcePathS)
+        targetPathS = normPath(targetPathS)
+        trashRootS = normPath(trashRootS)
+
+        if not osp.isdir(trashRootS):
+            os.makedirs(trashRootS)
+
+
+
+        if osp.isdir(targetPathS):
+            if os.listdir(targetPathS):
+                trashContentL = os.listdir(trashRootS)
+                sourceNameS= osp.basename(sourcePathS)
+                inTrashL=[]
+                for each in trashContentL:
+                    if sourceNameS in each and "-t" in each:
+                        inTrashL.append(each)
+                if inTrashL:
+                    inTrashL.sort()
+                    lastTrashVersionI= int(inTrashL[-1].split("-t")[-1])
+                    nextTrashVersionS = "t"+'{0:03d}'.format(lastTrashVersionI+1)
+                else:
+                    nextTrashVersionS = "t001"
+
+                trashPathS = normPath(osp.join(trashRootS, sourceNameS+"-"+nextTrashVersionS))
+                resultD = renameDir(sourcePathS=targetPathS, targetPathS=trashPathS, dryRun= dryRun)
+                log.logL.extend(resultD['logL'])
+                if not resultD["resultB"]:
+                    result2D = renameDirContent(sourcePathS=targetPathS, targetPathS=trashPathS, dryRun= dryRun)
+                    log.logL.extend(result2D['logL'])
+                    if not result2D["resultB"]:
+                        txt = "could not move old published layer to trash: {}".format(targetPathS)
+                        log.printL("e", txt)     
+                        return dict(resultB=log.resultB, logL=log.logL)
+
+
+        resultD = renameDir(sourcePathS=sourcePathS, targetPathS=targetPathS, dryRun= dryRun)
+        log.logL.extend(resultD['logL'])
+        if not resultD["resultB"]:
+            result2D = renameDirContent(sourcePathS=sourcePathS, targetPathS=targetPathS, dryRun= dryRun)
+            log.logL.extend(result2D['logL'])
+            if not result2D["resultB"]:
+                txt = "could not move layer to target directory: {}".format(targetPathS)
+                log.printL("e", txt)     
+                return dict(resultB=log.resultB, logL=log.logL)
+
+        return dict(resultB=log.resultB, logL=log.logL)
+
+
+
 
     seqNameS = inRenderDirS.split("/")[-5]
     shotNameS = inRenderDirS.split("/")[-4]
@@ -182,8 +310,7 @@ def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, dryRun 
     leftLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'left', "_version")))
     rightLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version")))
     rightUnPubLayerInfoD = getLayerInfo(layerPathS = inRenderDirS)
-    #print 'leftLayerInfoD', leftLayerInfoD
-    #print 'rightLayerInfoD', rightLayerInfoD
+
 
     unusedLayerL =[]
     pubLyrNameNkL = []
@@ -204,33 +331,34 @@ def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, dryRun 
     with open(logFilePathS, "w") as logFile:
         log.printL("", shotNameS+' '+str(sgRangeL))
         logFile.write(shotNameS+' '+str(sgRangeL)+ "\n")
+        logList = []
         for leftLayerKeyS, leftLayerValueD in leftLayerInfoD.iteritems():
             if leftLayerKeyS not in pubLyrNameNkL and pubLyrNameNkL:
                 unusedLayerL.append(leftLayerKeyS)
                 continue
             txt = "    {}".format(leftLayerKeyS)
-            log.printL("", txt)
+            logList.append(txt)
             logFile.write(txt + "\n")
 
             validLeftLyrB = False
             if leftLayerInfoD[leftLayerKeyS]['frameNumber']==0:
                 txt = "        left  : {}".format('Empty layer, frameNumber = 0')
-                log.printL("", txt)
+                logList.append(txt)
                 logFile.write(txt + "")
             elif leftLayerInfoD[leftLayerKeyS]['missingFrameL']:
                 txt = "        left  : Missing frames {}'".format(leftLayerInfoD[leftLayerKeyS]['missingFrameL'])
-                log.printL("", txt)
+                logList.append(txt)
                 logFile.write(txt + "\n")
             else :
                 if leftLayerInfoD[leftLayerKeyS]['frameNumber'] != sgDurationI:
                     layerRangeL = [leftLayerInfoD[leftLayerKeyS]['firstFrame'], leftLayerInfoD[leftLayerKeyS]['lastFrame']]
                     txt = "        left  : {}".format('OK '+str(layerRangeL))
-                    log.printL("", txt)
+                    logList.append(txt)
                     logFile.write(txt + "\n")
                     validLeftLyrB = True
                 else:
                     txt = "        left  : {}".format('OK')
-                    log.printL("", txt)
+                    logList.append(txt)
                     logFile.write(txt + "\n")
                     validLeftLyrB = True
 
@@ -239,80 +367,80 @@ def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, dryRun 
 
             if  leftLayerKeyS in rightUnPubLayerInfoD.keys():
                 targetPathS=normPath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version",leftLayerKeyS))
-                removedtargetDirB = False
-                if not os.listdir(targetPathS):
-                    removedtargetDirB = True
-                    shutil.rmtree(targetPathS)
-
-                if not leftLayerKeyS in rightLayerInfoD.keys() or removedtargetDirB:
-                    logS = moveLayer(sourcePathS=normPath(osp.join(inRenderDirS,leftLayerKeyS)), targetPathS=targetPathS, dryRun= dryRun)
-                    publishLogL.append(logS)
-                    rightLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version")))
-                    publishStateS = "        ### published succesfully ###"
+                resultD = pubRightLayer(sourcePathS=normPath(osp.join(inRenderDirS,leftLayerKeyS)), targetPathS=targetPathS, trashRootS=osp.normpath(osp.join(outputTrashDirS, seqNameS, shotNameS, 'right', "_version")),dryRun= dryRun)
+                if not resultD["resultB"]:
+                    publishLogL.extend(resultD["logL"])
+                    publishStateS = "        ### published failed:    "+resultD["logL"][-1]
                 else:
-                    publishStateS = "        ### layer available for publish in your private ###"
+                    publishStateS = "        ### published succesfully ###"
+
+                rightLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version")))
 
 
             if not leftLayerKeyS in rightLayerInfoD.keys():
                 txt = "        right : {}{}".format('missing layer',publishStateS)
-                log.printL("", txt)
+                logList.append(txt)
                 logFile.write(txt + "\n")
             elif rightLayerInfoD[leftLayerKeyS]['frameNumber']==0:
                 txt = "        right : {}{}".format('Empty layer, frameNumber = 0',publishStateS)
-                log.printL("", txt)
+                logList.append(txt)
                 logFile.write(txt + "\n")
             elif rightLayerInfoD[leftLayerKeyS]['missingFrameL']:
                 txt = "        right : Missing frames {}{}".format(rightLayerInfoD[leftLayerKeyS]['missingFrameL'],publishStateS)
-                log.printL("", txt)
+                logList.append(txt)
                 logFile.write(txt + "\n")
             else :
                 if rightLayerInfoD[leftLayerKeyS]['frameNumber'] != sgDurationI:
                     layerRangeL = [rightLayerInfoD[leftLayerKeyS]['firstFrame'], rightLayerInfoD[leftLayerKeyS]['lastFrame']]
                     txt = "        right : {}{}".format('OK '+str(layerRangeL), publishStateS)
-                    log.printL("", txt)
+                    logList.append(txt)
                     logFile.write(txt + "\n")
                     validRightLyrB = True
                 else:
                     txt = "        right : {}{}".format('OK', publishStateS)
-                    log.printL("", txt)
+                    logList.append(txt)
                     logFile.write(txt + "\n")
                     validRightLyrB = True
 
 
             if not validLeftLyrB or not validRightLyrB:
                 txt = "        stereo: {}".format('check failed, one of your layer is not valid')
-                log.printL("", txt)
+                logList.append(txt)
                 logFile.write(txt + "\n")
             else:
                 if rightLayerInfoD[leftLayerKeyS]['frameNumber'] == leftLayerInfoD[leftLayerKeyS]['frameNumber']:
                     txt = "        stereo: {}".format('OK')
-                    log.printL("", txt)
+                    logList.append(txt)
                     logFile.write(txt + "\n")
                 else:
                     txt = "        stereo: {}".format('check failed, left and right have a different frame number')
-                    log.printL("", txt)
+                    logList.append(txt)
                     logFile.write(txt + "\n")
 
             if unPubLyrPathNkL:
                 txt = "        Unpublished layers: {}".format(unPubLyrPathNkL)
-                log.printL("", txt)
+                logList.append(txt)
                 logFile.write(txt + "\n")
             if unusedLayerL:
                 txt = "        Unused layers: {}".format(unusedLayerL)
-                log.printL("", txt)
+                logList.append(txt)
                 logFile.write(txt + "\n")
         
 
-            #print leftLayerKeyS, rightLayerInfoD[leftLayerKeyS]
-            #print "" 
+
         print ""
         logFile.write("\n")
         print ""
         logFile.write("\n")
 
+        for each in logList:
+            print each
+        print ""
+        print ""
+
         if publishLogL:
-            txt = "publish log:"
-            log.printL("", txt)
+            txt = "publish log detail:"
+            print txt
             logFile.write(txt + "\n")
             for each in publishLogL:
                 log.printL("", each)
