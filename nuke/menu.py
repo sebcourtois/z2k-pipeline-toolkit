@@ -58,7 +58,8 @@ nuke.menu( 'Nuke' ).addCommand( 'Zombi/publish/publish compositing', lambda: nkU
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/publish/publish all inputs', lambda: nkU.publishNode(readNodeL=nuke.allNodes('Read'),guiPopUp = True) )
 nuke.menu( 'Nuke' ).addCommand( 'Zombi/publish/publish selected inputs', lambda: nkU.publishNode(readNodeL=nuke.selectedNodes('Read'),guiPopUp = True) )
 
-nuke.menu( 'Nuke' ).addCommand( 'Zombi/import stereo Info', lambda: nkU.getStereoInfo() )
+nuke.menu( 'Nuke' ).addCommand( 'Zombi/stereo/create layer breakdown files', lambda: nkU.createLayerBreakdown(gui = False))
+nuke.menu( 'Nuke' ).addCommand( 'Zombi/stereo/import stereo Info', lambda: nkU.getStereoInfo() )
 # myMenu = myToolbar.addMenu( 'zomb Tools' )
 # myToolbar.addCommand( 'init nuke shot', lambda: nkU.initNukeShot() )
 

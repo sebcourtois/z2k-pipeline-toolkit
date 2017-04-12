@@ -1,4 +1,5 @@
 import os
+osp = os.path
 import re
 import subprocess
 import datetime
@@ -1270,24 +1271,51 @@ def createCopyBat(gui=True):
 
 
 
-def getLayer():
-    log = LogBuilder(gui=gui, funcName ="getLayer")
+def createLayerBreakdown(gui = False):
+    log = LogBuilder(gui=gui, funcName ="createLayerBreakdown")
+    from pytd.util.fsutils import jsonWrite, jsonRead
     exrDirS = ""
-    publishedLayersPathL = []
-    unPublishedLayersPathL = []
-    publishedLayersNameL=[]
+    publishedLayersD = {}
+    unPublishedLayersD = {}
     for each in nuke.allNodes('Read'):
-        if not 'read_exr' in each['name'].getValue() and each['disable'].getValue()== 0.0:
-            print each['name'].getValue()
-            exrDirS= nuke.filename(each)
+        exrDirS= nuke.filename(each)
+        if not 'read_exr' in each['name'].getValue() and each['disable'].getValue()== 0.0 and exrDirS:
             layerDirS = os.path.dirname(exrDirS)
-            if "_version" in  layerDirS:
-                publishedLayersPathL.append(layerDirS)
-                publishedLayersNameL.append(os.path.basename(layerDirS))
+            if os.environ["OUTPUT_DIR"] in  layerDirS and "_version" in exrDirS and "-v" in exrDirS:
+                publishedLayersD[os.path.basename(layerDirS)] = layerDirS
             else:
-                unPublishedLayersPathL.append(layerDirS)
+                unPublishedLayersD[os.path.basename(layerDirS)] = layerDirS
+
+    layerBreakdown_txt = normPath(os.path.join(os.environ["OUTPUT_DIR"],"layerBreakdown.txt"))
+    layerBreakdown_obj = open(layerBreakdown_txt, "w")
+    layerBreakdown_obj.write(r'''    Properly published layers: '''+"\n")
+    print '    Properly published layers: '
+    for eachKey in sorted(publishedLayersD, key=publishedLayersD.get, reverse=True):
+        txt = "{:<48}    -->     '{:>3}'".format(eachKey,publishedLayersD[eachKey])
+        layerBreakdown_obj.write(txt+"\n")
+        print txt
+
+    layerBreakdown_obj.write("\n")
+    layerBreakdown_obj.write("\n")
+    print ""
+    print ""
+
+    layerBreakdown_obj.write(r'''    Other layers: '''+"\n")
+    print '    Other layers: '
+    for eachKey in sorted(unPublishedLayersD, key=unPublishedLayersD.get, reverse=True):
+        txt = "{:<48}    -->     '{:>3}'".format(eachKey,unPublishedLayersD[eachKey])
+        layerBreakdown_obj.write(txt+"\n")
+        print txt
+    layerBreakdown_obj.close()
+
+    layerBreakdown_json = normPath(os.path.join(os.environ["OUTPUT_DIR"],"layerBreakdown.json"))
+    jsonWrite(layerBreakdown_json, {'unPublishedLayersD':unPublishedLayersD,'publishedLayersD':publishedLayersD})
+
+    
+    print "#### Info: layerBreakdown.txt  created: {}".format(layerBreakdown_txt)
+    print "#### Info: layerBreakdown.json created: {}".format(layerBreakdown_json)
                 
-    return dict(resultB=log.resultB, logL=log.logL, pubLyrPathL = publishedLayersPathL, pubLyrNameL = publishedLayersNameL, unPubLyrPathL = unPublishedLayersPathL) 
+    return dict(resultB=log.resultB, logL=log.logL, publishedLayersD = publishedLayersD, unPublishedLayersD = unPublishedLayersD) 
 
 
 def getNukeLayers(shotNameS=""): 
