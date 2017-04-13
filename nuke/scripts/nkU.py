@@ -1290,7 +1290,7 @@ def createLayerBreakdown(gui = False):
     layerBreakdown_obj = open(layerBreakdown_txt, "w")
     layerBreakdown_obj.write(r'''    Properly published layers: '''+"\n")
     print '    Properly published layers: '
-    for eachKey in sorted(publishedLayersD, key=publishedLayersD.get, reverse=True):
+    for eachKey in sorted(publishedLayersD, key=publishedLayersD.get):
         txt = "{:<48}    -->     '{:>3}'".format(eachKey,publishedLayersD[eachKey])
         layerBreakdown_obj.write(txt+"\n")
         print txt
@@ -1302,7 +1302,7 @@ def createLayerBreakdown(gui = False):
 
     layerBreakdown_obj.write(r'''    Other layers: '''+"\n")
     print '    Other layers: '
-    for eachKey in sorted(unPublishedLayersD, key=unPublishedLayersD.get, reverse=True):
+    for eachKey in sorted(unPublishedLayersD, key=unPublishedLayersD.get):
         txt = "{:<48}    -->     '{:>3}'".format(eachKey,unPublishedLayersD[eachKey])
         layerBreakdown_obj.write(txt+"\n")
         print txt

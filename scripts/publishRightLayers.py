@@ -9,6 +9,7 @@ from datetime import datetime
 
 from zomblib import damutils
 from davos.core.damproject import DamProject
+from pytd.util.fsutils import jsonWrite, jsonRead
 
 renderPath =  sys.argv[-1]
 print 'renderPath',renderPath
@@ -124,33 +125,37 @@ def getLayerInfo(layerPathS="", gui = False, lastVerOnly = True, specificLayerOn
         versDirL.sort()
         proccedLayerPairL = []
         for each in versDirL:
-            if specificLayerOnlyL and each not in specificLayerOnlyL:
-                continue
+            if specificLayerOnlyL: 
+                if each in specificLayerOnlyL:
+                    resultD = getImgSeqInfo(lyrPathS = osp.normpath(osp.join(layerPathS,each)),  gui = False)
+                    imgSeqDataD = {'firstFrame': resultD["firstImgI"], 'lastFrame': resultD["lastImgI"], 'frameNumber': resultD["frameNumberI"], "missingFrameL": resultD["missingFrameL"] }
+                    layerInfoD[each] = dict(imgSeqDataD)
+                    proccedLayerPairL.append(each)
+            else:
+                if re.match('^lyr_[a-zA-Z0-9_]{0,128}-v[0-9]{3}$', each):
+                    #get the last version published
+                    lastVerS=""
+                    lastVersLyrS=""        
 
-            if re.match('^lyr_[a-zA-Z0-9_]{0,128}-v[0-9]{3}$', each):
-                #get the last version published
-                lastVerS=""
-                lastVersLyrS=""        
-
-                lyrBaseNameS=each.split("-v")[0]
-                if lyrBaseNameS not in proccedLayerPairL:
-                    layerPairL = []
-                    for eachItem in versDirL:
-                        if lyrBaseNameS == eachItem.split("-v")[0]:
-                            layerPairL.append(eachItem)
-                    layerPairL.sort()
-                    if layerPairL and lastVerOnly:
-                        lastVersLyrS = layerPairL[-1]
-                        lastVerS = str(lastVersLyrS.split("-v")[-1])
-                        resultD = getImgSeqInfo(lyrPathS = osp.normpath(osp.join(layerPathS,lastVersLyrS)),  gui = False)
-                        imgSeqDataD = {'firstFrame': resultD["firstImgI"], 'lastFrame': resultD["lastImgI"], 'frameNumber': resultD["frameNumberI"], "missingFrameL": resultD["missingFrameL"] }
-                        layerInfoD[lastVersLyrS] = dict(imgSeqDataD)
-                        proccedLayerPairL.append(each)
+                    lyrBaseNameS=each.split("-v")[0]
+                    if lyrBaseNameS not in proccedLayerPairL:
+                        layerPairL = []
+                        for eachItem in versDirL:
+                            if lyrBaseNameS == eachItem.split("-v")[0]:
+                                layerPairL.append(eachItem)
+                        layerPairL.sort()
+                        if layerPairL and lastVerOnly:
+                            lastVersLyrS = layerPairL[-1]
+                            lastVerS = str(lastVersLyrS.split("-v")[-1])
+                            resultD = getImgSeqInfo(lyrPathS = osp.normpath(osp.join(layerPathS,lastVersLyrS)),  gui = False)
+                            imgSeqDataD = {'firstFrame': resultD["firstImgI"], 'lastFrame': resultD["lastImgI"], 'frameNumber': resultD["frameNumberI"], "missingFrameL": resultD["missingFrameL"] }
+                            layerInfoD[lastVersLyrS] = dict(imgSeqDataD)
+                            proccedLayerPairL.append(each)
 
         return layerInfoD 
 
 
-def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, dryRun = False):
+def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, useBreakDown = True, dryRun = False):
     log = LogBuilder(gui=False, funcName ="")
     if dryRun:
         rmRightPubLayerB=False
@@ -253,14 +258,13 @@ def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, dryRun 
     def pubRightLayer(sourcePathS="", targetPathS="", trashRootS="",dryRun= dryRun):
         log = LogBuilder(gui=False, funcName ="pubRightLayer")
 
+
         sourcePathS = normPath(sourcePathS)
         targetPathS = normPath(targetPathS)
         trashRootS = normPath(trashRootS)
 
         if not osp.isdir(trashRootS):
             os.makedirs(trashRootS)
-
-
 
         if osp.isdir(targetPathS):
             if os.listdir(targetPathS):
@@ -307,9 +311,24 @@ def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, dryRun 
     seqNameS = inRenderDirS.split("/")[-5]
     shotNameS = inRenderDirS.split("/")[-4]
 
-    leftLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'left', "_version")))
-    rightLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version")))
-    rightUnPubLayerInfoD = getLayerInfo(layerPathS = inRenderDirS)
+
+    publishedLayersD = {}
+    unPublishedLayersD = {}
+    layerBreakdown_json = normPath(osp.join(outputDir, seqNameS, shotNameS, 'layerBreakdown.json'))
+    if osp.isfile(layerBreakdown_json):
+        layerBreakdownD = jsonRead(layerBreakdown_json)
+        publishedLayersD = layerBreakdownD['publishedLayersD']
+        unPublishedLayersD = layerBreakdownD['unPublishedLayersD']
+  
+    if not publishedLayersD.keys() and useBreakDown:
+        txt = "no breakdown file or empty published layer list: {}".format(layerBreakdown_json)
+        log.printL("e", txt)
+        return
+
+
+    leftLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'left', "_version")),specificLayerOnlyL = publishedLayersD.keys())
+    rightLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version")),specificLayerOnlyL = publishedLayersD.keys())
+    rightUnPubLayerInfoD = getLayerInfo(layerPathS = inRenderDirS,specificLayerOnlyL = publishedLayersD.keys())
 
 
     unusedLayerL =[]
@@ -374,7 +393,7 @@ def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, dryRun 
                 else:
                     publishStateS = "        ### published succesfully ###"
 
-                rightLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version")))
+                rightLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version")),specificLayerOnlyL = publishedLayersD.keys())
 
 
             if not leftLayerKeyS in rightLayerInfoD.keys():
