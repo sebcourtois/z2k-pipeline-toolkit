@@ -4,6 +4,8 @@ import maya.cmds as mc
 import pymel.core as pm
 from dminutes import sceneManager
 from dminutes import rendering
+reload (rendering)
+
 from davos_maya.tool.general import infosFromScene
 from davos.core.damproject import DamProject
 
@@ -40,8 +42,15 @@ paramRightCam = ["DefaultClientGroup=" + '1~ALL',
                 "CustomVersionName=" + '0~{}'.format(versionNumber),
                 "Color_ID=" + '1~10']
 
-paramStills = ["DefaultClientGroup=" + '1~ALL',
-                "CustomUserInfo=" + '1~0~Rendu Stills',
+paramStillsLeft = ["DefaultClientGroup=" + '1~FX',
+                "CustomUserInfo=" + '1~0~Rendu Stills Left',
+                "CompanyProjectName=" + '0~Stills',
+                "Priority=" + '1~70',
+                "CustomVersionName=" + '0~{}'.format(versionNumber),
+                "Color_ID=" + '1~10']
+
+paramStillsRight = ["DefaultClientGroup=" + '1~FX',
+                "CustomUserInfo=" + '1~0~Rendu Stills Right',
                 "CompanyProjectName=" + '0~Stills',
                 "Priority=" + '1~70',
                 "CustomVersionName=" + '0~{}'.format(versionNumber),
@@ -50,13 +59,14 @@ paramStills = ["DefaultClientGroup=" + '1~ALL',
 if bPublishAction:
     sRenderType = mc.confirmDialog(title='RR Submitter',
                                    message='Selectionnez le type de rendu !',
-                                   button=['Stills', 'Left', 'Right', 'Stereo', 'Annuler'],
+                                   button=['Stills Left', 'Stills Right', 'Left', 'Right', 'Stereo', 'Annuler'],
                                    defaultButton='Mono',
                                    cancelButton='Annuler',
                                    dismissString='Annuler',
                                    icon='question')
 
-    if sRenderType == 'Stills':
+    if sRenderType == 'Stills Left':
+        rendering.renderLeftCam()
         sStepFrameValue = int(mc.getAttr('defaultRenderGlobals.byFrameStep'))
         sStartFrameValue = int(mc.getAttr('defaultRenderGlobals.startFrame'))
         sEndFrameValue = int(mc.getAttr('defaultRenderGlobals.endFrame'))
@@ -68,7 +78,7 @@ if bPublishAction:
                 mc.setAttr('defaultRenderGlobals.byFrameStep', steps)
 
                 ##### Submit with steps #####
-                mc.rrSubmitZomb(noUI=True, parameter=paramStills)
+                mc.rrSubmitZomb(noUI=True, parameter=paramStillsLeft)
 
         print '##### restore shot step value :: {} #####'.format(sStepFrameValue)
         mc.setAttr('defaultRenderGlobals.byFrameStep', sStepFrameValue)
@@ -80,6 +90,46 @@ if bPublishAction:
                 mc.setAttr('defaultRenderGlobals.endFrame', keyFrame)
 
                 mc.rrSubmitZomb(noUI=True, parameter=paramStills)
+
+        print '##### restore shot start-end value :: {0} - {1} #####'.format(sStartFrameValue, sEndFrameValue)
+        mc.setAttr('defaultRenderGlobals.startFrame', sStartFrameValue)
+        mc.setAttr('defaultRenderGlobals.endFrame', sEndFrameValue)
+
+    if sRenderType == 'Stills Right':
+        rendering.createPublishRightBatch()
+        rendering.renderRightCam()
+        sStepFrameValue = int(mc.getAttr('defaultRenderGlobals.byFrameStep'))
+        sStartFrameValue = int(mc.getAttr('defaultRenderGlobals.startFrame'))
+        sEndFrameValue = int(mc.getAttr('defaultRenderGlobals.endFrame'))
+        sName = mainFilePathS.rsplit('.')[0]
+        if 'Right' not in sName:
+            mc.file(mf=1)
+            mc.file(rn=sName + '_Right.ma')
+            mc.file(save=True)
+        elif 'Right' in sName:
+            mc.file(mf=1)
+            mc.file(save=True)
+
+        for keyFrame in sKeyframesL:
+            if keyFrame and 'step' in keyFrame:
+                steps = int(keyFrame.replace('step', ''))
+                print '##### Set the step value {} #####'.format(steps)
+                mc.setAttr('defaultRenderGlobals.byFrameStep', steps)
+
+                ##### Submit with steps #####
+                #maya.mel.eval('rrSubmitZomb -noUI')
+                mc.rrSubmitZomb(noUI=True, parameter=paramStillsRight)
+
+        print '##### restore shot step value :: {} #####'.format(sStepFrameValue)
+        mc.setAttr('defaultRenderGlobals.byFrameStep', sStepFrameValue)
+
+        for keyFrame in sKeyframesL:
+            if keyFrame and not 'step' in keyFrame:
+                print '##### Send to Royal Render frame : ' + keyFrame + ' #####\n'
+                mc.setAttr('defaultRenderGlobals.startFrame', keyFrame)
+                mc.setAttr('defaultRenderGlobals.endFrame', keyFrame)
+
+                mc.rrSubmitZomb(noUI=True, parameter=paramStillsRight)
 
         print '##### restore shot start-end value :: {0} - {1} #####'.format(sStartFrameValue, sEndFrameValue)
         mc.setAttr('defaultRenderGlobals.startFrame', sStartFrameValue)
