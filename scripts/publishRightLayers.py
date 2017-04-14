@@ -319,16 +319,20 @@ def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, useBrea
         layerBreakdownD = jsonRead(layerBreakdown_json)
         publishedLayersD = layerBreakdownD['publishedLayersD']
         unPublishedLayersD = layerBreakdownD['unPublishedLayersD']
-  
+
+    unVersionedPublishedlryL = []  
     if not publishedLayersD.keys() and useBreakDown:
         txt = "no breakdown file or empty published layer list: {}".format(layerBreakdown_json)
         log.printL("e", txt)
         return
+    else:
+        for each in publishedLayersD.keys():
+            unVersionedPublishedlryL.append(each.split("-v")[0])
 
 
     leftLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'left', "_version")),specificLayerOnlyL = publishedLayersD.keys())
     rightLayerInfoD = getLayerInfo(layerPathS = osp.normpath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version")),specificLayerOnlyL = publishedLayersD.keys())
-    rightUnPubLayerInfoD = getLayerInfo(layerPathS = inRenderDirS,specificLayerOnlyL = publishedLayersD.keys())
+    rightUnPubLayerInfoD = getLayerInfo(layerPathS = inRenderDirS,specificLayerOnlyL = unVersionedPublishedlryL)
 
 
     unusedLayerL =[]
@@ -383,10 +387,9 @@ def layerScan(inRenderDirS= "",  outputDir = "", rmRightPubLayerB=False, useBrea
 
             validRightLyrB = False
             publishStateS = ""
-
-            if  leftLayerKeyS in rightUnPubLayerInfoD.keys():
+            if  leftLayerKeyS.split("-v")[0] in rightUnPubLayerInfoD.keys():
                 targetPathS=normPath(osp.join(outputDir, seqNameS, shotNameS, 'right', "_version",leftLayerKeyS))
-                resultD = pubRightLayer(sourcePathS=normPath(osp.join(inRenderDirS,leftLayerKeyS)), targetPathS=targetPathS, trashRootS=osp.normpath(osp.join(outputTrashDirS, seqNameS, shotNameS, 'right', "_version")),dryRun= dryRun)
+                resultD = pubRightLayer(sourcePathS=normPath(osp.join(inRenderDirS,leftLayerKeyS.split("-v")[0])), targetPathS=targetPathS, trashRootS=osp.normpath(osp.join(outputTrashDirS, seqNameS, shotNameS, 'right', "_version")),dryRun= dryRun)
                 if not resultD["resultB"]:
                     publishLogL.extend(resultD["logL"])
                     publishStateS = "        ### published failed:    "+resultD["logL"][-1]
