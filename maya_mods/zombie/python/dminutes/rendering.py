@@ -882,12 +882,16 @@ def createPublishRightBatch():
     publishRightLyrBat = miscUtils.normPath(os.path.join(workingDir, "publishRightLayers.bat"))
     setupEnvTools = os.path.normpath(os.path.join(os.environ["Z2K_LAUNCH_SCRIPT"]))
     userprofile = os.path.normpath(os.path.join(os.environ["USERPROFILE"]))
-    setupEnvToolsNetwork = setupEnvTools.replace(userprofile, '%USERPROFILE%')
+
+    if userprofile in setupEnvTools:
+        setupEnvToolsNetwork = setupEnvTools.replace(userprofile, '%USERPROFILE%')
+    else:
+        setupEnvToolsNetwork = setupEnvTools
+
     outputFilePath, outputImageName = getRenderOutput()
 
-    setupEnvToolsNetwork = setupEnvToolsNetwork.replace('%USERPROFILE%', '"%USERPROFILE%')
     publishRightLayers =os.path.join(setupEnvToolsNetwork.split('launcher')[0],'scripts','publishRightLayers.py')
-    finalCommand = r'"C:\Python27\python.exe" ' + setupEnvToolsNetwork + '" launch "C:\Python27\python.exe" '+ publishRightLayers+'" %renderPath% %*'
+    finalCommand = r'"C:\Python27\python.exe" ' +'"'+ setupEnvToolsNetwork + '" launch "C:\Python27\python.exe" '+ publishRightLayers+'" %renderPath% %*'
 
     if not os.path.isfile(publishRightLyrBat) and "shot" in publishRightLyrBat :
         with open(publishRightLyrBat, "w") as renderBatch_obj:
