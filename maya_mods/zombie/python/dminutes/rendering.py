@@ -904,3 +904,37 @@ def createPublishRightBatch():
 
 
 
+def layerForStereoOnly():
+    from pytd.util.fsutils import jsonWrite, jsonRead
+    log = miscUtils.LogBuilder(gui=False, funcName ="layerForStereoOnly")
+
+    mainFilePath = mc.file(q=True, sn=True)
+    mainFilePathElem = mainFilePath.split("/")
+    layerBreakdown_json = miscUtils.pathJoin(os.environ["ZOMB_OUTPUT_PATH"], mainFilePathElem[-4], mainFilePathElem[-3],"layerBreakdown.json")
+
+    if os.path.isfile(layerBreakdown_json):
+        txt = "Loading info from: '{}'".format(layerBreakdown_json)
+        log.printL("i", txt)
+    else:
+        txt = "could not find: '{}'".format(layerBreakdown_json)
+        log.printL("e", txt)
+        return
+
+    resultD = jsonRead(layerBreakdown_json)
+    activeLayerL = []
+    for each in  resultD['publishedLayersD'].keys():
+        activeLayerL.append(each.split('-v')[0])
+
+    for each in mc.ls("*",type="renderLayer"):
+        if each == 'defaultRenderLayer':
+            continue
+        elif each in activeLayerL:
+            txt = "Active layer: '{}'".format(each)
+            log.printL("i", txt)
+            mc.setAttr(each + '.renderable', 1)
+        else:
+            txt = "Inactive layer: '{}'".format(each)
+            log.printL("i", txt)
+            mc.setAttr(each + '.renderable', 0)
+            
+    return dict(resultB=log.resultB, logL=log.logL)
