@@ -239,7 +239,11 @@ def h264ToProres(inSeqList, shotStep='01_previz'):
                 videoList = []
                 for each in os.listdir(inDir):
                     if re.match('^sq[0-9]{4}_sh[0-9]{4}[a-z]{1}_[a-zA-Z0-9\-]{1,24}.mov$', each):
-                        videoList.append(each)
+                        if shotStep == "10_compo":
+                            if "_compo" in each:
+                                videoList.append(each)
+                        else:
+                            videoList.append(each)
                 if len (videoList) < 2:
                     print "#### {:>7}: no video found in directory: '{}'".format("Warning", inDir)
                     continue
