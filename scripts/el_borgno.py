@@ -326,7 +326,7 @@ def submit(in_damShotList, stills=False, dryRun=False, prompt=True, sgShots=None
                           prompt=prompt, sgShots=sgShots, noPublish=noPublish)
 
     sCode = """
-from zomblib import damutils;reload(damutils);damutils.initProject()
+from zomblib import damutils;reload(damutils);damutils.initProject();from dminutes import rendering;reload (rendering);rendering.layerForStereoOnly()
 """
     jobList = [{"title":"Batch initialization", "py_lines":[sCode], "fail":True}]
 
