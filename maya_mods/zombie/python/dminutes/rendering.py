@@ -871,6 +871,7 @@ def createPublishRightBatch():
     this  script creates a publishRightLayers.bat file in the private maya working dir, this bath file can be used tu publish layers from the right cam only
 
     """
+    log = miscUtils.LogBuilder(gui=False, funcName ="createPublishRightBatch")
     mainFilePath = mc.file(q=True, sn=True)
     if not mainFilePath:
         txt = "empty scene, skipping layer activation/desactivation ".format()
