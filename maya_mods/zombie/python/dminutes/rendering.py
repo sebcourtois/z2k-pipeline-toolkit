@@ -891,7 +891,7 @@ def createPublishRightBatch():
     outputFilePath, outputImageName = getRenderOutput()
 
     publishRightLayers =os.path.join(setupEnvToolsNetwork.split('launcher')[0],'scripts','publishRightLayers.py')
-    finalCommand = r'"C:\Python27\python.exe" ' +'"'+ setupEnvToolsNetwork + '" launch "C:\Python27\python.exe" "'+ publishRightLayers+'" %renderPath% %*'
+    finalCommand = r'"C:\Python27\python.exe" ' +'"'+ setupEnvToolsNetwork + '" launch "C:\Python27\python.exe" '+'"'+ publishRightLayers+'" %renderPath% %*'
 
     if not os.path.isfile(publishRightLyrBat) and "shot" in publishRightLyrBat :
         with open(publishRightLyrBat, "w") as renderBatch_obj:
