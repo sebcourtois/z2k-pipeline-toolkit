@@ -326,7 +326,7 @@ def submit(in_damShotList, stills=False, dryRun=False, prompt=True, sgShots=None
                           prompt=prompt, sgShots=sgShots, noPublish=noPublish)
 
     sCode = """
-from zomblib import damutils;reload(damutils);damutils.initProject();from dminutes import rendering;reload (rendering);rendering.layerForStereoOnly()
+from zomblib import damutils;reload(damutils);damutils.initProject();from dminutes import rendering;reload (rendering);rendering.layerForStereoOnly();rendering.createPublishRightBatch()
 """
     jobList = [{"title":"Batch initialization", "py_lines":[sCode], "fail":True}]
 
@@ -344,6 +344,7 @@ from zomblib import damutils;reload(damutils);damutils.initProject();from dminut
     sLogFilePath = makeOutputPath("mayabatch.log", timestamp=LAUNCH_TIME)
 
     return mayaBatch.launch(sJobFilePath, logTo=sLogFilePath)
+
 
 def _assertedLatestVersion(scnFile, refresh=False):
 
