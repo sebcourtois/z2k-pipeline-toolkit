@@ -909,9 +909,13 @@ def layerForStereoOnly():
     log = miscUtils.LogBuilder(gui=False, funcName ="layerForStereoOnly")
 
     mainFilePath = mc.file(q=True, sn=True)
-    print 'mainFilePath',mainFilePath
     mainFilePathElem = mainFilePath.split("/")
-    print 'mainFilePathElem',mainFilePathElem
+
+    if not mainFilePath:
+        txt = "empty scene, skipping layer activation/desactivation ".format()
+        log.printL("e", txt)
+        return dict(resultB=log.resultB, logL=log.logL)
+        
     layerBreakdown_json = miscUtils.pathJoin(os.environ["ZOMB_OUTPUT_PATH"], mainFilePathElem[-4], mainFilePathElem[-3],"layerBreakdown.json")
 
     if os.path.isfile(layerBreakdown_json):
