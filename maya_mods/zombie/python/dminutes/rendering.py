@@ -873,6 +873,13 @@ def createPublishRightBatch():
     this  script creates a publishRightLayers.bat file in the private maya working dir, this bath file can be used tu publish layers from the right cam only
 
     """
+    log = miscUtils.LogBuilder(gui=False, funcName ="createPublishRightBatch")
+    mainFilePath = mc.file(q=True, sn=True)
+    if not mainFilePath:
+        txt = "empty scene, skipping layer activation/desactivation ".format()
+        log.printL("e", txt)
+        return dict(resultB=log.resultB, logL=log.logL)
+        
     log = miscUtils.LogBuilder(gui=False, funcName ="")
     try:
         davosUser = os.environ["DAVOS_USER"]
@@ -912,6 +919,12 @@ def layerForStereoOnly():
 
     mainFilePath = mc.file(q=True, sn=True)
     mainFilePathElem = mainFilePath.split("/")
+
+    if not mainFilePath:
+        txt = "empty scene, skipping layer activation/desactivation ".format()
+        log.printL("e", txt)
+        return dict(resultB=log.resultB, logL=log.logL)
+
     layerBreakdown_json = miscUtils.pathJoin(os.environ["ZOMB_OUTPUT_PATH"], mainFilePathElem[-4], mainFilePathElem[-3],"layerBreakdown.json")
 
     if os.path.isfile(layerBreakdown_json):
