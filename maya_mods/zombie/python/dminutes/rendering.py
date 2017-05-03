@@ -877,7 +877,6 @@ def createPublishRightBatch():
         log.printL("e", txt)
         return dict(resultB=log.resultB, logL=log.logL)
         
-
     log = miscUtils.LogBuilder(gui=False, funcName ="")
     try:
         davosUser = os.environ["DAVOS_USER"]
