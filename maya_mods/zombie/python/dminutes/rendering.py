@@ -863,8 +863,10 @@ def renderRightCam():
         pass
     shotNameL = mainFilePathS.split('/')[2:-1]
     aiAovPOutName = '//' + '/'.join(shotNameL) + '/render/right/<RenderLayer>_P32/' + shotName
-    pm.setAttr('aiAOVDriverP32.prefix', aiAovPOutName, type='string')
-
+    if pm.objExists('aiAOVDriverP32'):
+        pm.setAttr('aiAOVDriverP32.prefix', aiAovPOutName, type='string')
+    else:
+        pass
 
 def createPublishRightBatch():
     """
