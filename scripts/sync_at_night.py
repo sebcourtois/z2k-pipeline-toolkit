@@ -137,6 +137,9 @@ def launch(proj, batch=False, dryRun=True):
     logResources(dbNodeList, htmlPath=p)
     print "\n", "log file: {}".format(osp.normpath(p))
 
+    if not batch:
+        launch(proj, batch=batch, dryRun=dryRun)
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -145,7 +148,8 @@ if __name__ == "__main__":
     ns = parser.parse_args()
 
     try:
-        proj = DamProject("zombillenium", shotgun=False, checkTemplates=False)
+        proj = DamProject("zombillenium", user="rrender", password="arn0ld&r0yal",
+                          shotgun=False, checkTemplates=False)
         launch(proj, batch=ns.batch, dryRun=ns.dry)
     except Exception as e:
         os.environ["PYTHONINSPECT"] = "1"
