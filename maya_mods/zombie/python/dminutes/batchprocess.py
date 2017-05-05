@@ -388,6 +388,8 @@ def submitElBorgno(sSrcScnPath, stills=False, dryRun=False):
 
             rendering.updateStereoCam(gui=False)
             rendering.renderRightCam()
+            rendering.layerForStereoOnly()
+            rendering.createPublishRightBatch()
 
             pm.saveFile(force=True)
 
